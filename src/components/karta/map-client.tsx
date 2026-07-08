@@ -8,6 +8,8 @@ import {
   OVERLAY_LAYERS,
   MAP_VIEWS,
   KVART_CENTER,
+  KVART_BBOX,
+  KVART_PLACES,
   type OverlayLayer,
 } from "@/lib/map-views";
 
@@ -48,9 +50,39 @@ export function MapClient() {
         attributionControl: true,
       });
       map.setMaxBounds([
-        [43.5, 16.45],
-        [43.55, 16.54],
+        [43.495, 16.44],
+        [43.555, 16.55],
       ]);
+
+      // Granica područja: obuhvat kvarta (isti kao koordinate u podnožju).
+      const [w, s, e, n] = KVART_BBOX;
+      const bounds: [[number, number], [number, number]] = [
+        [s, w],
+        [n, e],
+      ];
+      L.rectangle(bounds, {
+        color: "#059669",
+        weight: 2.5,
+        dashArray: "7 6",
+        fill: false,
+        interactive: false,
+      }).addTo(map);
+      // Uokviri granicu s marginom da se cijeli obrub vidi.
+      map.fitBounds(bounds, { padding: [26, 26] });
+
+      // Oznake dvaju kvartova.
+      for (const p of KVART_PLACES) {
+        L.marker([p.lat, p.lon], {
+          interactive: false,
+          keyboard: false,
+          icon: L.divIcon({
+            className: "",
+            iconSize: [0, 0],
+            html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:800 15px/1 system-ui,sans-serif;letter-spacing:.03em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.7)">${p.name}</span>`,
+          }),
+        }).addTo(map);
+      }
+
       mapRef.current = map;
       setReady(true);
     })();

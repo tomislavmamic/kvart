@@ -17,6 +17,16 @@ export const KVART_BBOX: [number, number, number, number] = [
 
 export const KVART_CENTER: [number, number] = [43.5265, 16.494];
 
+/**
+ * Središta dvaju kvartova (OSM place=neighbourhood) — za oznake na karti.
+ * Kvartovi u OSM-u postoje samo kao točke, ne kao poligoni granica, pa se
+ * kao "granica područja" na karti crta obuhvat (KVART_BBOX).
+ */
+export const KVART_PLACES: { name: string; lat: number; lon: number }[] = [
+  { name: "Dračevac", lat: 43.526, lon: 16.5008 },
+  { name: "Bilice", lat: 43.5269, lon: 16.4875 },
+];
+
 export interface BaseLayer {
   id: string;
   label: string;
