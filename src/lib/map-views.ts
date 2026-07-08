@@ -291,6 +291,81 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
 
+  // ---------- Planirana infrastruktura (ISPU IS_* listovi) ----------
+  // Konvencija listova: IS_1 promet · IS_2 elektroničke komunikacije i
+  // energetika · IS_3 vodoopskrba · IS_4 odvodnja (otpadne/oborinske).
+  // Oznake potvrditi prema legendi lista (GetLegendGraphic) pri ugradnji.
+  {
+    id: "plan-promet",
+    label: "Planirane prometnice (GUP)",
+    type: "wms",
+    url: "https://gis1.mgipu.hr/srv1/PPRasterZ17_Public/wms",
+    wmsLayers: "HR_ISPU_GUP1_04090_R07_IS_1_1",
+    wmsCrs: "EPSG:4326",
+    attribution: "ISPU © MGIPU",
+    color: "#dc2626",
+    defaultOpacity: 0.65,
+    phase: 1,
+  },
+  {
+    id: "plan-energetika",
+    label: "Plan: telekomunikacije i energetika (GUP)",
+    type: "wms",
+    url: "https://gis1.mgipu.hr/srv1/PPRasterZ17_Public/wms",
+    wmsLayers: "HR_ISPU_GUP1_04090_R07_IS_2_1",
+    wmsCrs: "EPSG:4326",
+    attribution: "ISPU © MGIPU",
+    color: "#facc15",
+    defaultOpacity: 0.65,
+    phase: 1,
+  },
+  {
+    id: "plan-vodoopskrba",
+    label: "Plan: vodoopskrba (GUP)",
+    type: "wms",
+    url: "https://gis1.mgipu.hr/srv1/PPRasterZ17_Public/wms",
+    wmsLayers: "HR_ISPU_GUP1_04090_R07_IS_3_2",
+    wmsCrs: "EPSG:4326",
+    attribution: "ISPU © MGIPU",
+    color: "#0ea5e9",
+    defaultOpacity: 0.65,
+    phase: 1,
+  },
+  {
+    id: "plan-odvodnja",
+    label: "Plan: odvodnja — otpadne i oborinske vode (GUP)",
+    type: "wms",
+    url: "https://gis1.mgipu.hr/srv1/PPRasterZ17_Public/wms",
+    wmsLayers: "HR_ISPU_GUP1_04090_R07_IS_4_1,HR_ISPU_GUP1_04090_R07_IS_4_2",
+    wmsCrs: "EPSG:4326",
+    attribution: "ISPU © MGIPU",
+    color: "#7c3aed",
+    defaultOpacity: 0.65,
+    phase: 1,
+  },
+  {
+    id: "plan-lokalni-is",
+    label: "Detaljni planovi infrastrukture (UPU/DPU)",
+    type: "wms",
+    url: "https://gis1.mgipu.hr/srv1/PPRasterZ17_Public/wms",
+    wmsLayers:
+      "HR_ISPU_UPU2_04090_R01_IS_1_1,HR_ISPU_UPU1_04090_R01_IS_1_1,HR_ISPU_DPU36_04090_R04_IS_1_1,HR_ISPU_DPU5_04090_R01_IS_1_1",
+    wmsCrs: "EPSG:4326",
+    attribution: "ISPU © MGIPU",
+    color: "#f472b6",
+    defaultOpacity: 0.65,
+    phase: 1,
+  },
+  {
+    id: "plan-optika",
+    label: "Plan gradnje svjetlovodne mreže (operateri)",
+    type: "geojson",
+    url: "/geo/plan-optika.geojson",
+    attribution: "HAKOM — Objedinjeni plan (Uredba 2025)",
+    color: "#fb923c",
+    phase: 1,
+  },
+
   // ---------- Okoliš i rizici ----------
   {
     id: "poplave",
@@ -366,5 +441,19 @@ export const MAP_VIEWS: MapView[] = [
     description:
       "Gdje plavi, gdje ljeti gori i kakav zrak dišemo.",
     layerIds: ["poplave", "vrucina", "zrak", "nepropusnost"],
+  },
+  {
+    id: "planirano",
+    label: "Planirano",
+    description:
+      "Buduća infrastruktura iz važećih planova: prometnice, energetika i telekomunikacije, vodoopskrba, odvodnja te plan gradnje optike.",
+    layerIds: [
+      "plan-promet",
+      "plan-energetika",
+      "plan-vodoopskrba",
+      "plan-odvodnja",
+      "plan-lokalni-is",
+      "plan-optika",
+    ],
   },
 ];
