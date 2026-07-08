@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/prijedlozi", label: "Problemi i prijedlozi" },
   { href: "/dokumenti", label: "Dokumenti" },
+  { href: "/podaci", label: "Prostorni podaci" },
   { href: "/o-inicijativi", label: "O inicijativi" },
 ];
 
