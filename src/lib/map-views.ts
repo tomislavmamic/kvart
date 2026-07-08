@@ -66,11 +66,11 @@ export const BASE_LAYERS: BaseLayer[] = [
     attribution: "DOF 2023 © Državna geodetska uprava (Otvorena dozvola)",
   },
   {
-    id: "osm",
+    id: "karta",
     label: "Ulična karta",
     type: "xyz",
-    url: "https://tiles.openfreemap.org/styles/liberty", // TODO: raster fallback ili MapLibre-in-Leaflet
-    attribution: "© OpenStreetMap contributors (ODbL)",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    attribution: "© OpenStreetMap contributors © CARTO",
   },
 ];
 
@@ -358,7 +358,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   },
   {
     id: "plan-optika",
-    label: "Plan gradnje svjetlovodne mreže (operateri)",
+    label: "Plan telekom infrastrukture (zone)",
     type: "geojson",
     url: "/geo/plan-optika.geojson",
     attribution: "HAKOM — Objedinjeni plan (Uredba 2025)",
