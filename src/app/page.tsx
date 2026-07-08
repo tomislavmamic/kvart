@@ -1,65 +1,164 @@
-import Image from "next/image";
+import Link from "next/link";
+import { getStats, getRecentUpdates } from "@/lib/queries";
+import { StatusBadge } from "@/components/status-badge";
+import { formatDate } from "@/lib/format";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+const WHATSAPP_URL =
+  process.env.NEXT_PUBLIC_WHATSAPP_URL ?? "https://chat.whatsapp.com/";
+
+export default async function HomePage() {
+  const [stats, updates] = await Promise.all([getStats(), getRecentUpdates(5)]);
+
+  // Random start point for the hero pan so it doesn't always begin at the
+  // west (Bilice) edge. Negative delay starts the animation mid-cycle; the
+  // full there-and-back cycle is 180s (90s each way). Fresh per request.
+  const heroPanDelay = `-${(Math.random() * 180).toFixed(1)}s`;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-12">
+      {/* Maketa A — puni format: satelitska traka Bilice—Dračevac preko cijele
+          širine i visine, dijagonalno zatamnjenje slijeva, tekst dolje-lijevo.
+          Traka se probija iz sredinskog kontejnera na punu širinu ekrana.
+          (DOF 2023, geoportal.dgu.hr, Otvorena dozvola — atribucija je uvjet.) */}
+      <section className="hero-viewport relative left-1/2 -ml-[50vw] -mt-8 w-screen overflow-hidden bg-emerald-950 text-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/photos/kvart-strip.jpg"
+          alt="Zračna snimka Dračevca i Bilica"
+          className="hero-pan absolute inset-y-0 left-0 h-full w-auto max-w-none"
+          style={{ animationDelay: heroPanDelay }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        {/* Mobil: zatamnjenje pri dnu. Desktop: dijagonalno slijeva. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/95 via-emerald-950/45 to-transparent sm:hidden" />
+        <div className="absolute inset-0 hidden sm:block sm:bg-[linear-gradient(75deg,rgba(2,44,34,0.9)_0%,rgba(2,44,34,0.55)_36%,rgba(2,44,34,0.06)_63%,transparent_80%)]" />
+
+        <div className="relative mx-auto flex min-h-[82vh] max-w-5xl flex-col justify-end px-4 pb-14 pt-28 sm:min-h-[86vh] sm:px-6">
+          <div className="max-w-xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">
+              Dračevac · Bilice · Split
+            </p>
+            <h1 className="mt-3 text-4xl font-extrabold leading-[1.08] sm:text-5xl">
+              Ovo je naš kvart.
+              <br />
+              Učinimo ga boljim.
+            </h1>
+            <p className="mt-4 text-lg text-emerald-50/90">
+              Prijavi problem, prati što je poslano Gradu i što je riješeno.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/prijavi"
+                className="rounded-full bg-white px-6 py-3 font-semibold text-emerald-800 hover:bg-emerald-50"
+              >
+                Prijavi problem
+              </Link>
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-white/70 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+              >
+                WhatsApp grupa
+              </a>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <a
+          href="https://geoportal.dgu.hr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-3 right-4 text-[11px] text-white/70 hover:text-white"
+        >
+          DOF 2023 · Državna geodetska uprava
+        </a>
+      </section>
+
+      <section className="grid grid-cols-3 gap-4">
+        <Stat value={stats.rijeseno} label="riješeno" />
+        <Stat value={stats.uTijeku} label="u tijeku ili kod Grada" />
+        <Stat value={stats.ukupno} label="ukupno prijedloga" />
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Najnovije aktivnosti</h2>
+          <Link
+            href="/prijedlozi"
+            className="text-sm font-medium text-emerald-700 hover:underline"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Svi prijedlozi →
+          </Link>
         </div>
-      </main>
+        <ul className="mt-4 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
+          {updates.length === 0 && (
+            <li className="p-5 text-sm text-zinc-500">
+              Još nema objavljenih prijedloga. Budite prvi —{" "}
+              <Link href="/prijavi" className="text-emerald-700 underline">
+                prijavite problem
+              </Link>
+              .
+            </li>
+          )}
+          {updates.map((u) => (
+            <li key={u.id} className="flex items-start justify-between gap-4 p-4">
+              <div>
+                <Link
+                  href={`/prijedlozi/${u.proposalSlug}`}
+                  className="font-medium hover:underline"
+                >
+                  {u.proposalTitle}
+                </Link>
+                {u.note && (
+                  <p className="mt-0.5 text-sm text-zinc-600">{u.note}</p>
+                )}
+                <p className="mt-0.5 text-xs text-zinc-400">
+                  {formatDate(u.createdAt)}
+                </p>
+              </div>
+              <StatusBadge status={u.status} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-zinc-200 bg-white p-6">
+        <h2 className="text-xl font-bold">Kako ovo funkcionira?</h2>
+        <ol className="mt-4 grid gap-4 text-sm text-zinc-700 sm:grid-cols-3">
+          <li className="rounded-lg bg-zinc-50 p-4">
+            <span className="font-bold text-emerald-700">1. Prijavite</span>
+            <p className="mt-1">
+              Ispunite kratki obrazac — bez registracije. Moderatori pregledavaju
+              i objavljuju prijave.
+            </p>
+          </li>
+          <li className="rounded-lg bg-zinc-50 p-4">
+            <span className="font-bold text-emerald-700">2. Raspravite</span>
+            <p className="mt-1">
+              Svaki prijedlog ima raspravu na Redditu, a brze dogovore vodimo u
+              WhatsApp grupi.
+            </p>
+          </li>
+          <li className="rounded-lg bg-zinc-50 p-4">
+            <span className="font-bold text-emerald-700">3. Pratite</span>
+            <p className="mt-1">
+              Javno bilježimo kad je prijedlog poslan Gradu i svaki odgovor —
+              do rješenja.
+            </p>
+          </li>
+        </ol>
+      </section>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-5 text-center">
+      <div className="text-3xl font-bold text-emerald-700">{value}</div>
+      <div className="mt-1 text-xs text-zinc-500 sm:text-sm">{label}</div>
     </div>
   );
 }
