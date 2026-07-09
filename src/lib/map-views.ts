@@ -10,22 +10,25 @@
  * panelu dok ne bude spreman.
  */
 
-/** Obuhvat kvarta: [zapad, jug, istok, sjever] (EPSG:4326). */
+/**
+ * Obuhvat prikupljanja podataka: [zapad, jug, istok, sjever] (EPSG:4326).
+ * Namjerno širi od samih kvartova — koristi ga skripta za izvlačenje i
+ * maksimalne granice karte. Za stvarnu granicu kvartova vidi granica.geojson.
+ */
 export const KVART_BBOX: [number, number, number, number] = [
   16.47, 43.51, 16.52, 43.54,
 ];
 
-export const KVART_CENTER: [number, number] = [43.5265, 16.494];
-
 /**
- * Središta dvaju kvartova (OSM place=neighbourhood) — za oznake na karti.
- * Kvartovi u OSM-u postoje samo kao točke, ne kao poligoni granica, pa se
- * kao "granica područja" na karti crta obuhvat (KVART_BBOX).
+ * Stvarni obuhvat kvartova Dračevac + Bilice, izveden iz službenih poligona
+ * (data/sources/…kmz → public/geo/granica.geojson). Koristi se za koordinate
+ * u podnožju i za uokvirivanje karte.
  */
-export const KVART_PLACES: { name: string; lat: number; lon: number }[] = [
-  { name: "Dračevac", lat: 43.526, lon: 16.5008 },
-  { name: "Bilice", lat: 43.5269, lon: 16.4875 },
+export const NEIGHBORHOOD_EXTENT: [number, number, number, number] = [
+  16.48846, 43.52055, 16.51005, 43.52932,
 ];
+
+export const KVART_CENTER: [number, number] = [43.5249, 16.4993];
 
 export interface BaseLayer {
   id: string;

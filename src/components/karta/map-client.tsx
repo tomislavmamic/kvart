@@ -8,8 +8,6 @@ import {
   OVERLAY_LAYERS,
   MAP_VIEWS,
   KVART_CENTER,
-  KVART_BBOX,
-  KVART_PLACES,
   type OverlayLayer,
 } from "@/lib/map-views";
 
@@ -50,41 +48,45 @@ export function MapClient() {
         attributionControl: true,
       });
       map.setMaxBounds([
-        [43.495, 16.44],
-        [43.555, 16.55],
+        [43.505, 16.46],
+        [43.545, 16.53],
       ]);
-
-      // Granica područja: obuhvat kvarta (isti kao koordinate u podnožju).
-      const [w, s, e, n] = KVART_BBOX;
-      const bounds: [[number, number], [number, number]] = [
-        [s, w],
-        [n, e],
-      ];
-      L.rectangle(bounds, {
-        color: "#059669",
-        weight: 2.5,
-        dashArray: "7 6",
-        fill: false,
-        interactive: false,
-      }).addTo(map);
-      // Uokviri granicu s marginom da se cijeli obrub vidi.
-      map.fitBounds(bounds, { padding: [26, 26] });
-
-      // Oznake dvaju kvartova.
-      for (const p of KVART_PLACES) {
-        L.marker([p.lat, p.lon], {
-          interactive: false,
-          keyboard: false,
-          icon: L.divIcon({
-            className: "",
-            iconSize: [0, 0],
-            html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:800 15px/1 system-ui,sans-serif;letter-spacing:.03em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.7)">${p.name}</span>`,
-          }),
-        }).addTo(map);
-      }
-
       mapRef.current = map;
       setReady(true);
+
+      // Stvarna granica kvartova (službeni poligoni) + oznake u središtu svakog.
+      try {
+        const fc = (await (
+          await fetch("/geo/granica.geojson")
+        ).json()) as GeoJSON.FeatureCollection;
+        const boundary = L.geoJSON(fc, {
+          interactive: false,
+          style: {
+            color: "#059669",
+            weight: 2.5,
+            dashArray: "7 6",
+            fillColor: "#059669",
+            fillOpacity: 0.06,
+          },
+          onEachFeature: (f, lyr) => {
+            const name = (f.properties as { naziv?: string })?.naziv;
+            if (!name || !("getBounds" in lyr)) return;
+            const c = (lyr as LeafletNS.Polygon).getBounds().getCenter();
+            L.marker(c, {
+              interactive: false,
+              keyboard: false,
+              icon: L.divIcon({
+                className: "",
+                iconSize: [0, 0],
+                html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:800 15px/1 system-ui,sans-serif;letter-spacing:.03em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.7)">${name}</span>`,
+              }),
+            }).addTo(map);
+          },
+        }).addTo(map);
+        map.fitBounds(boundary.getBounds(), { padding: [34, 34] });
+      } catch {
+        map.setView(KVART_CENTER, 15);
+      }
     })();
     return () => {
       cancelled = true;

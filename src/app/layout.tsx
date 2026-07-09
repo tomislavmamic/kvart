@@ -3,11 +3,11 @@ import Link from "next/link";
 import "./globals.css";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 import { SiteHeader } from "@/components/site-header";
-import { KVART_BBOX } from "@/lib/map-views";
+import { NEIGHBORHOOD_EXTENT } from "@/lib/map-views";
 
 // [zapad, jug, istok, sjever] → čitljiv raspon (decimalni zarez, hrvatski).
-const [bboxW, bboxS, bboxE, bboxN] = KVART_BBOX;
-const deg = (v: number) => v.toFixed(2).replace(".", ",");
+const [bboxW, bboxS, bboxE, bboxN] = NEIGHBORHOOD_EXTENT;
+const deg = (v: number) => v.toFixed(3).replace(".", ",");
 const KVART_COORDS = `${deg(bboxS)}°–${deg(bboxN)}° S · ${deg(bboxW)}°–${deg(bboxE)}° I`;
 
 export const metadata: Metadata = {
