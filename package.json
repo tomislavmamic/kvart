@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:push": "drizzle-kit push",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
-    "extract-geo": "tsx scripts/extract-geodata.ts"
+    "extract-geo": "tsx scripts/extract-geodata.ts",
+    "clip-geo": "tsx scripts/clip-geodata.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.5.0",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@turf/turf": "^7.3.5",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^19",

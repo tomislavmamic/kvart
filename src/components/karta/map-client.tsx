@@ -47,9 +47,11 @@ export function MapClient() {
         zoomControl: true,
         attributionControl: true,
       });
+      // Ograniči pomicanje na kvart + ~700 m rezerve — karta je o Dračevcu
+      // i Bilicama, ne o cijelom Splitu.
       map.setMaxBounds([
-        [43.505, 16.46],
-        [43.545, 16.53],
+        [43.514, 16.481],
+        [43.536, 16.518],
       ]);
       mapRef.current = map;
       setReady(true);
@@ -360,15 +362,38 @@ export function MapClient() {
         )}
       </div>
 
-      <p className="mt-3 text-xs text-zinc-400">
-        Simulirani prikaz koristi službene otvorene servise (DGU, ISPU/MGIPU,
-        Hrvatske vode, Copernicus, Promet Split, HAKOM…). Puni popis izvora i
-        licenci na stranici{" "}
-        <a href="/podaci" className="underline">
-          Prostorni podaci
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <a
+          href="/geo/granica.geojson"
+          download="granica-dracevac-bilice.geojson"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+            className="h-4 w-4"
+          >
+            <path
+              d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15h12"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Preuzmi granicu (GeoJSON)
         </a>
-        .
-      </p>
+        <p className="max-w-md text-xs text-zinc-400">
+          Simulirani prikaz koristi službene otvorene servise (DGU, ISPU/MGIPU,
+          Hrvatske vode, Copernicus, Promet Split, HAKOM…). Puni popis izvora i
+          licenci na stranici{" "}
+          <a href="/podaci" className="underline">
+            Prostorni podaci
+          </a>
+          .
+        </p>
+      </div>
     </div>
   );
 }

@@ -10,8 +10,14 @@
 import { writeFile, readFile, mkdir } from "fs/promises";
 import path from "path";
 import osmtogeojson from "osmtogeojson";
+import type { FeatureCollection } from "geojson";
+import { loadMask, clipToBoundary, type Mask } from "./clip-lib";
 
 const OUT_DIR = path.join(process.cwd(), "public", "geo");
+
+// Maska granice kvarta — svaki sloj se reže na nju prije spremanja.
+// Popuni se na početku main(); dok nije spremna, sloj se sprema neodrezan.
+let boundaryMask: Mask | null = null;
 
 // bbox kvarta [zapad, jug, istok, sjever]
 const [W, S, E, N] = [16.47, 43.51, 16.52, 43.54];
@@ -22,12 +28,21 @@ type FC = { type: "FeatureCollection"; features: unknown[] };
 const emptyFC = (): FC => ({ type: "FeatureCollection", features: [] });
 
 async function save(name: string, fc: FC): Promise<void> {
+  // Odreži na granicu kvarta (ako je maska spremna) — ne prikazujemo
+  // podatke izvan Dračevca i Bilica. `granica` je sama maska; nju ne dira.
+  const clipped =
+    boundaryMask && name !== "granica"
+      ? (clipToBoundary(
+          fc as unknown as FeatureCollection,
+          boundaryMask
+        ) as unknown as FC)
+      : fc;
   await writeFile(
     path.join(OUT_DIR, `${name}.geojson`),
-    JSON.stringify(fc),
+    JSON.stringify(clipped),
     "utf-8"
   );
-  console.log(`  ✓ ${name}.geojson — ${fc.features.length} objekata`);
+  console.log(`  ✓ ${name}.geojson — ${clipped.features.length} objekata`);
 }
 
 /** Overpass upit → GeoJSON (uz osmtogeojson). Retry na 429/504. */
@@ -94,6 +109,15 @@ async function run<T extends FC>(
 async function main(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   console.log("Izvlačim vektorske slojeve za kvart…");
+  try {
+    boundaryMask = await loadMask();
+  } catch (e) {
+    console.warn(
+      `  ! maska granice nedostupna (${
+        e instanceof Error ? e.message : e
+      }) — slojevi se neće rezati`
+    );
+  }
 
   // ---- OSM teme (Overpass) ----
   await run("zgrade", () => overpass(`way["building"](${OVERPASS_BBOX})`));
@@ -149,17 +173,17 @@ async function main(): Promise<void> {
     return { type: "FeatureCollection", features };
   });
 
-  // ---- Javne zelene površine (NIPP WFS) ----
-  await run("zelene-povrsine", async () => {
-    const url =
-      "https://transformiraj.nipp.hr/ows/services/org.5.59bbbf71-e456-4838-8cff-e368eaf92acb_wfs" +
-      "?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=lcv:LandCoverUnit" +
-      "&outputFormat=application/geo%2Bjson" +
-      `&BBOX=${S},${W},${N},${E},urn:ogc:def:crs:EPSG::4326`;
-    const res = await fetch(url, { headers: { "User-Agent": UA } });
-    if (!res.ok) throw new Error(`WFS HTTP ${res.status}`);
-    return (await res.json()) as FC;
-  });
+  // ---- Zelene površine (OSM) ----
+  // NIPP WFS "LandCoverUnit" nema pokrivenost za Dračevac/Bilice (svi objekti
+  // padaju južno od kvarta), pa zelenilo uzimamo iz OSM-a: parkovi, travnjaci,
+  // šuma, makija/šikara — stvarni zeleni pokrov našeg područja.
+  await run("zelene-povrsine", () =>
+    overpass(
+      `way["leisure"~"park|garden|nature_reserve"](${OVERPASS_BBOX});` +
+        `way["landuse"~"grass|forest|recreation_ground|meadow|village_green"](${OVERPASS_BBOX});` +
+        `way["natural"~"wood|scrub|grassland"](${OVERPASS_BBOX})`
+    )
+  );
 
   // ---- Toponimi (RGI WFS) ----
   await run("toponimi", async () => {

@@ -179,10 +179,10 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   },
   {
     id: "zelene-povrsine",
-    label: "Javne zelene površine",
+    label: "Zelene površine (parkovi, šuma, makija)",
     type: "geojson",
     url: "/geo/zelene-povrsine.geojson",
-    attribution: "Grad Split (otvoreni podaci, NIPP)",
+    attribution: "© OpenStreetMap contributors",
     color: "#22c55e",
     phase: 1,
   },
