@@ -32,6 +32,8 @@ import type {
   Feature,
   FeatureCollection,
   Geometry,
+  LineString,
+  MultiLineString,
   MultiPolygon,
   Polygon,
 } from "geojson";
@@ -105,9 +107,9 @@ export function clipToBoundary<T extends FeatureCollection>(
     if (type === "LineString" || type === "MultiLineString") {
       try {
         const clipped = bboxClip(
-          f as Feature<Geometry>,
+          f as Feature<LineString | MultiLineString>,
           mask.bbox
-        ) as Feature<Geometry>;
+        );
         if (isEmptyGeometry(clipped.geometry)) continue;
         clipped.properties = f.properties;
         kept.push(clipped);
