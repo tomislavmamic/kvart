@@ -10,8 +10,19 @@
 import { writeFile, readFile, mkdir } from "fs/promises";
 import path from "path";
 import osmtogeojson from "osmtogeojson";
+import proj4 from "proj4";
 import type { FeatureCollection } from "geojson";
 import { loadMask, clipToBoundary, type Mask } from "./clip-lib";
+
+// HTRS96/TM — izvorni sustav Hrvatskih cesta. Servis pri izlazu u
+// geografske sustave zaokružuje koordinate na 2 decimale (~1 km), pa
+// tražimo izvorni 3765 i reprojiciramo lokalno.
+proj4.defs(
+  "EPSG:3765",
+  "+proj=tmerc +lat_0=0 +lon_0=16.5 +k=0.9999 +x_0=500000 +y_0=0 " +
+    "+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+);
+const from3765 = proj4("EPSG:3765", "EPSG:4326");
 
 const OUT_DIR = path.join(process.cwd(), "public", "geo");
 
@@ -240,6 +251,69 @@ async function main(): Promise<void> {
     const json = (await res.json()) as FC;
     if (!json.features) throw new Error("HAKOM: nema features");
     return json;
+  });
+
+  // ---- Hrvatske ceste — javne ceste (INSPIRE WFS 2.0) ----
+  // Prava vektorska geometrija, ne raster: zamjenjuje istoimeni WMS sloj.
+  // Poslužitelj vraća GML 3.2 i najviše 50 objekata po upitu.
+  await run("ceste", async () => {
+    // bbox kvarta iz WGS84 u HTRS96/TM (izvorni sustav servisa)
+    const [minX, minY] = from3765.inverse([W, S]).map(Math.floor);
+    const [maxX, maxY] = from3765.inverse([E, N]).map(Math.ceil);
+    const crs = "http://www.opengis.net/def/crs/EPSG/0/3765";
+    const features: unknown[] = [];
+
+    for (let start = 0; start < 1000; start += 50) {
+      const params = new URLSearchParams({
+        service: "WFS",
+        version: "2.0.0",
+        request: "GetFeature",
+        typeNames: "hc_inspire_tn-ro:RoadLink",
+        srsName: crs,
+        bbox: `${minX},${minY},${maxX},${maxY},${crs}`,
+        count: "50",
+        startIndex: String(start),
+      });
+      const res = await fetch(
+        `https://geoportal.hrvatske-ceste.hr/inspire/tn-ro/wfs?${params}`,
+        { headers: { "User-Agent": UA } }
+      );
+      if (!res.ok) throw new Error(`HC WFS HTTP ${res.status}`);
+      const xml = await res.text();
+
+      const members = xml.split("<wfs:member>").slice(1);
+      if (members.length === 0) break;
+
+      for (const m of members) {
+        const pos = /<gml:posList[^>]*>([^<]+)<\/gml:posList>/.exec(m);
+        if (!pos) continue;
+        const nums = pos[1].trim().split(/\s+/).map(Number);
+        const coords: [number, number][] = [];
+        for (let i = 0; i + 1 < nums.length; i += 2) {
+          const [lon, lat] = from3765.forward([nums[i], nums[i + 1]]);
+          coords.push([
+            Number(lon.toFixed(6)),
+            Number(lat.toFixed(6)),
+          ]);
+        }
+        if (coords.length < 2) continue;
+        const id = /<hc_inspire_tn-ro:RoadLink gml:id="([^"]+)"/.exec(m);
+        const localId = /<base:localId>([^<]+)<\/base:localId>/.exec(m);
+        features.push({
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: coords },
+          properties: {
+            id: id?.[1] ?? null,
+            localId: localId?.[1] ?? null,
+            izvor: "Hrvatske ceste (INSPIRE WFS)",
+          },
+        });
+      }
+      const matched = /numberMatched="(\d+)"/.exec(xml);
+      if (matched && start + 50 >= Number(matched[1])) break;
+    }
+    if (features.length === 0) throw new Error("HC WFS: nema objekata");
+    return { type: "FeatureCollection", features };
   });
 
   console.log("Gotovo.");
