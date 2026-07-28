@@ -1,0 +1,149 @@
+[
+ {
+  "list": "0_Granica obuhvata_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "granica": 1351
+  }
+ },
+ {
+  "list": "1_Detaljna namjena površina_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "granica": 1351,
+   "parcelacija": 3988,
+   "gradivi-dio": 1137,
+   "promet": 4389
+  }
+ },
+ {
+  "list": "2a1_Prometna mreža_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "promet": 4389,
+   "granica": 1351,
+   "parcelacija": 3988,
+   "gradivi-dio": 2784
+  }
+ },
+ {
+  "list": "2a2_Prometna mreža_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "promet": 4389,
+   "parcelacija": 3988,
+   "zgrade-postojece": 175,
+   "granica": 1351
+  }
+ },
+ {
+  "list": "2b_Vodoopskrbna mreža_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "vodoopskrba": 3953,
+   "gradivi-dio": 2784,
+   "granica": 1351,
+   "parcelacija": 3988,
+   "zgrade-postojece": 997
+  }
+ },
+ {
+  "list": "2c_Kanalizacijska mreža_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "gradivi-dio": 2784,
+   "parcelacija": 3988,
+   "odvodnja": 4946,
+   "bujica": 193,
+   "zgrade-postojece": 997,
+   "granica": 1351,
+   "oborinska": 2738
+  }
+ },
+ {
+  "list": "2d_Elektroopskrba-javna rasvjeta_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "gradivi-dio": 2784,
+   "parcelacija": 3988,
+   "struja": 2404,
+   "zgrade-postojece": 997,
+   "plin": 2399,
+   "granica": 1351
+  }
+ },
+ {
+  "list": "2e_Elektroničke komunikacije_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "gradivi-dio": 2784,
+   "telekom": 4110,
+   "granica": 1351,
+   "parcelacija": 3988,
+   "zgrade-postojece": 997
+  }
+ },
+ {
+  "list": "3_Uvjeti korištenja uređenja i zaštite površina_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "promet": 4389,
+   "gradivi-dio": 1647,
+   "parcelacija": 3988,
+   "zgrade-postojece": 175,
+   "granica": 1351
+  }
+ },
+ {
+  "list": "4a.Uvjeti gradnje-Plan parcelacije_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "parcelacija": 3988,
+   "zgrade-postojece": 997,
+   "granica": 1351
+  }
+ },
+ {
+  "list": "4b.Uvjeti gradnje-Urbanistički parametri_ID_DPU_DRACEVAC",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "promet": 4389,
+   "parcelacija": 3988,
+   "gradivi-dio": 1137,
+   "zgrade-postojece": 997,
+   "granica": 1351
+  }
+ },
+ {
+  "list": "4.3_Prikaz Izmjena i dopuna grafickog dijela",
+  "plan": "GUP Split — nacrt izmjena i dopuna 2024.",
+  "status": "ok",
+  "mjerilo": 10000,
+  "teme": {
+   "gup-nacrt-namjena": 36806
+  }
+ },
+ {
+  "list": "1. Koristenje i namjena",
+  "plan": "UPU Bilice sjever",
+  "status": "ok",
+  "mjerilo": 1000,
+  "teme": {
+   "namjena-poslovna": 1948,
+   "namjena-proizvodna": 402,
+   "granica-obalni-pojas": 134,
+   "namjena-zelenilo": 691
+  }
+ }
+]
