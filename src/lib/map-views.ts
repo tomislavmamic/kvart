@@ -58,8 +58,56 @@ export interface OverlayLayer {
   /** Boja za legendu/stil vektorskih slojeva. */
   color: string;
   defaultOpacity?: number;
+  /** Naslov sklopive skupine u bočnoj traci. */
+  group: string;
   /** 1 = spremno u prvoj verziji; 2 = kasnija faza. */
   phase: 1 | 2;
+}
+
+/**
+ * Slojevi stupaju u dvije vrste odnosa, i svaki traži svoju kontrolu.
+ *
+ * 1. Neovisni slojevi prikazuju različite stvari i mogu supostojati —
+ *    kvačica, pa ih se pali koliko god treba.
+ * 2. Vrijednosti jedne DIMENZIJE prikazuju istu veličinu u različitim
+ *    stanjima (namjena 2008., 2015., 2024.). Dvije upaljene ne daju
+ *    usporedbu nego kašu, pa se bira točno jedna.
+ * 3. USPOREDBA je izvedena iz dviju vrijednosti dimenzije. Nije ni stvar
+ *    ni stanje nego odnos, pa se crta kao natpis preko odabrane godine.
+ *
+ * Posljedica koja rješava staru grešku legende: budući da sve vrijednosti
+ * dimenzije dijele isti ključ boja, legenda pripada dimenziji, a ne sloju.
+ * Ako se dvjema vrijednostima ne može napisati zajednička legenda, onda to
+ * i nisu stanja iste veličine i ne pripadaju istoj dimenziji.
+ */
+export interface LegendEntry {
+  boja: string;
+  kod: string;
+  opis: string;
+}
+
+export interface DimensionValue {
+  /** Sloj iz OVERLAY_LAYERS koji crta to stanje. */
+  layerId: string;
+  label: string;
+}
+
+export interface Dimension {
+  id: string;
+  label: string;
+  values: DimensionValue[];
+  legend: LegendEntry[];
+}
+
+export interface Comparison {
+  id: string;
+  dimensionId: string;
+  label: string;
+  /** Sloj iz OVERLAY_LAYERS s izračunatim razlikama. */
+  layerId: string;
+  /** Stanja iz kojih je razlika izvedena — treba ih klizač za usporedbu. */
+  fromLayerId: string;
+  toLayerId: string;
 }
 
 export interface MapView {
@@ -67,6 +115,10 @@ export interface MapView {
   label: string;
   description: string;
   layerIds: string[];
+  /** Pogled koji uspoređuje stanja izlaže biralo te dimenzije. */
+  dimensionId?: string;
+  defaultValueLayerId?: string;
+  defaultComparisonId?: string;
 }
 
 export const BASE_LAYERS: BaseLayer[] = [
@@ -99,6 +151,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#eab308",
     defaultOpacity: 0.6,
+    group: "Urbanizam",
     phase: 1,
   },
   {
@@ -111,6 +164,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#f97316",
     defaultOpacity: 0.6,
+    group: "Urbanizam",
     phase: 1,
   },
   {
@@ -123,6 +177,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#a855f7",
     defaultOpacity: 0.6,
+    group: "Urbanizam",
     phase: 1,
   },
   {
@@ -135,6 +190,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#a855f7",
     defaultOpacity: 0.6,
+    group: "Urbanizam",
     phase: 1,
   },
   {
@@ -144,6 +200,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/zgrade.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#78716c",
+    group: "Urbanizam",
     phase: 1,
   },
   {
@@ -153,6 +210,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/popis-2021.geojson",
     attribution: "© Eurostat (Census Grid 2021)",
     color: "#6366f1",
+    group: "Urbanizam",
     phase: 1,
   },
 
@@ -165,6 +223,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "© Copernicus Land Monitoring Service",
     color: "#16a34a",
     defaultOpacity: 0.65,
+    group: "Krajobraz",
     phase: 1,
   },
   {
@@ -175,6 +234,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "© Copernicus Land Monitoring Service",
     color: "#9ca3af",
     defaultOpacity: 0.65,
+    group: "Krajobraz",
     phase: 1,
   },
   {
@@ -184,6 +244,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/zelene-povrsine.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#22c55e",
+    group: "Krajobraz",
     phase: 1,
   },
   {
@@ -195,6 +256,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "© Državna geodetska uprava",
     color: "#a8a29e",
     defaultOpacity: 0.5,
+    group: "Krajobraz",
     phase: 1,
   },
   {
@@ -204,6 +266,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/toponimi.geojson",
     attribution: "RGI © Državna geodetska uprava",
     color: "#0ea5e9",
+    group: "Krajobraz",
     phase: 1,
   },
   {
@@ -213,6 +276,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/stabla.geojson",
     attribution: "Grad Split / Parkovi i nasadi",
     color: "#15803d",
+    group: "Mobilnost",
     phase: 2, // host split-gisportal.gdi.net nedostupan tijekom istraživanja
   },
 
@@ -224,16 +288,19 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/stajalista.geojson",
     attribution: "Promet Split (javni API)",
     color: "#047857",
+    group: "Mobilnost",
     phase: 1,
   },
   {
+    // Bio WMS raster; sada pravi vektor iz INSPIRE WFS-a istog servisa
+    // (dohvat u scripts/extract-geodata.ts, sloj "ceste").
     id: "javne-ceste",
     label: "Javne ceste (nadležnost)",
-    type: "wms",
-    url: "https://geoportal.hrvatske-ceste.hr/inspire/tn-ro/wms",
-    wmsLayers: "TN.RoadTransportNetwork.RoadLink",
+    type: "geojson",
+    url: "/geo/ceste.geojson",
     attribution: "© Hrvatske ceste",
     color: "#f59e0b",
+    group: "Mobilnost",
     phase: 1,
   },
   {
@@ -243,6 +310,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/pjesacke.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#14b8a6",
+    group: "Mobilnost",
     phase: 1,
   },
   {
@@ -252,6 +320,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/parkiralista.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#64748b",
+    group: "Mobilnost",
     phase: 1,
   },
   {
@@ -261,6 +330,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/api/autobusi",
     attribution: "Promet Split (javni API)",
     color: "#047857",
+    group: "Mobilnost",
     phase: 2,
   },
 
@@ -272,6 +342,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/struja.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#facc15",
+    group: "Infrastruktura",
     phase: 1,
   },
   {
@@ -281,6 +352,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/internet.geojson",
     attribution: "HAKOM (javni preglednik)",
     color: "#f97316",
+    group: "Infrastruktura",
     phase: 1,
   },
   {
@@ -290,6 +362,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/api/solar",
     attribution: "PVGIS © European Union",
     color: "#fbbf24",
+    group: "Infrastruktura",
     phase: 1,
   },
 
@@ -301,6 +374,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/sadrzaji.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#8b5cf6",
+    group: "Javni prostori",
     phase: 1,
   },
 
@@ -318,6 +392,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#dc2626",
     defaultOpacity: 0.65,
+    group: "Planirana infrastruktura",
     phase: 1,
   },
   {
@@ -330,6 +405,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#facc15",
     defaultOpacity: 0.65,
+    group: "Planirana infrastruktura",
     phase: 1,
   },
   {
@@ -342,6 +418,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#0ea5e9",
     defaultOpacity: 0.65,
+    group: "Planirana infrastruktura",
     phase: 1,
   },
   {
@@ -354,6 +431,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#7c3aed",
     defaultOpacity: 0.65,
+    group: "Planirana infrastruktura",
     phase: 1,
   },
   {
@@ -367,8 +445,202 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "ISPU © MGIPU",
     color: "#f472b6",
     defaultOpacity: 0.65,
+    group: "Planirana infrastruktura",
     phase: 1,
   },
+  // ---------- DPU radne zone Dračevac (vektorizirano iz PDF-a) ----------
+  // Izvučeno iz službenih CAD listova plana i georeferencirano prema ISPU
+  // obuhvatu — vidi scripts/vectorize-plans.py. Ovo su jedini vektorski
+  // podaci o vodovodu, odvodnji i telekomu koje uopće imamo: u OSM-u ih za
+  // ovo područje nema nijedan objekt.
+  {
+    id: "dpu-vodoopskrba",
+    label: "Vodoopskrba (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/vodoopskrba.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#0ea5e9",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-odvodnja",
+    label: "Odvodnja otpadnih voda (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/odvodnja.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#a16207",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-oborinska",
+    label: "Oborinska odvodnja (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/oborinska.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#0891b2",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-struja",
+    label: "Elektroopskrba i javna rasvjeta (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/struja.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#dc2626",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-telekom",
+    label: "Telekom kanalizacija (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/telekom.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#c026d3",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-plin",
+    label: "Planirani plinovod (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/plin.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#f59e0b",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-granica",
+    label: "Granica obuhvata DPU-a Dračevac",
+    type: "geojson",
+    url: "/geo/planovi/granica.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#15803d",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-gradivi-dio",
+    label: "Gradivi dio parcela (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/gradivi-dio.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#7c3aed",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-parcelacija",
+    label: "Plan parcelacije (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/parcelacija.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#78716c",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+
+  // ---------- Namjena iz GUP-a (vektorizirano iz listova) ----------
+  // Plohe su dobivene praćenjem rastera (scripts/trace-plans.py), jer su na
+  // listovima nacrtane kao šrafura, ne kao poligoni. Boje su očitane iz
+  // tumača znakova; ondje gdje plan dvjema namjenama daje istu boju (I/K,
+  // M/K5), oznaka to i kaže.
+  //
+  // Lista iz 2008. ovdje NEMA namjerno. Skripta ga i dalje prati i razliku
+  // 2008.→2015. i dalje računa (0,8 ha, tri plohe — listovi su gotovo isti
+  // crtež), ali taj je list jedini vidljivo krivo smješten: pri velikom
+  // mjerilu rub plohe siječe cestu umjesto da ide njome. Za usporedbu koju
+  // nacrt traži — važeći plan protiv prijedloga — on ionako ne treba, pa se
+  // ne objavljuje dok se smještanje ne popravi (vidi zaglavlje skripte).
+  {
+    id: "gup-2015-namjena",
+    label: "GUP 2015. — namjena (uklj. ID 2014.)",
+    type: "geojson",
+    url: "/geo/planovi/gup-2015-namjena.geojson",
+    attribution:
+      "GUP Splita, neslužbeni pročišćeni prikaz 2015. — plohe praćene iz PDF lista",
+    color: "#e0a000",
+    group: "GUP — namjena",
+    phase: 1,
+  },
+  {
+    id: "gup-2024-namjena",
+    label: "GUP — nacrt 2024. (namjena)",
+    type: "geojson",
+    url: "/geo/planovi/gup-2024-namjena.geojson",
+    attribution:
+      "Nacrt ID GUP-a Splita 2024. (javna rasprava) — plohe praćene iz PDF lista",
+    color: "#80e000",
+    group: "GUP — namjena",
+    phase: 1,
+  },
+  // Razlike su računate nad klasificiranim rasterima na istoj mreži od 1 m,
+  // pa su točne, a ne približno preklapanje poligona. Tanke trake uz svaku
+  // granicu (posljedica ±2–5 m georeferenciranja) uklonjene su otvaranjem:
+  // u sloju 2015.→2024. nijedan m² promjene nije uži od 20 m.
+  //
+  // Nacrt uz izmijenjene plohe otiskuje broj stavke iz svog popisa izmjena,
+  // pa svaka ploha koju je moguće pripisati nosi i službeni opis odluke.
+  {
+    id: "gup-promjene-2015-2024",
+    label: "Promjene namjene 2015. → nacrt 2024.",
+    type: "geojson",
+    url: "/geo/planovi/gup-promjene-2015-2024.geojson",
+    attribution:
+      "Izračunato iz lista GUP-a 2015. i nacrta ID 2024. (javna rasprava)",
+    color: "#dc2626",
+    group: "GUP — namjena",
+    phase: 1,
+  },
+
+  // ---------- UPU Bilice sjever (vektorizirano iz PDF-a) ----------
+  // List nema imenovane CAD slojeve, pa je namjena razvrstana po boji ispune
+  // prema tumaču znakova otisnutom na samom listu.
+  {
+    id: "upu-namjena-poslovna",
+    label: "Poslovna namjena K (UPU Bilice sjever)",
+    type: "geojson",
+    url: "/geo/planovi/namjena-poslovna.geojson",
+    attribution: "UPU Bilice sjever, Grad Split — vektorizirano iz PDF-a",
+    color: "#f97316",
+    group: "UPU Bilice sjever",
+    phase: 1,
+  },
+  {
+    id: "upu-namjena-proizvodna",
+    label: "Proizvodna namjena I (UPU Bilice sjever)",
+    type: "geojson",
+    url: "/geo/planovi/namjena-proizvodna.geojson",
+    attribution: "UPU Bilice sjever, Grad Split — vektorizirano iz PDF-a",
+    color: "#9333ea",
+    group: "UPU Bilice sjever",
+    phase: 1,
+  },
+  {
+    id: "upu-namjena-zelenilo",
+    label: "Pejzažno i zaštitno zelenilo Z5 (UPU Bilice sjever)",
+    type: "geojson",
+    url: "/geo/planovi/namjena-zelenilo.geojson",
+    attribution: "UPU Bilice sjever, Grad Split — vektorizirano iz PDF-a",
+    color: "#65a30d",
+    group: "UPU Bilice sjever",
+    phase: 1,
+  },
+  {
+    id: "upu-obalni-pojas",
+    label: "Granica zaštićenog obalnog pojasa (UPU Bilice sjever)",
+    type: "geojson",
+    url: "/geo/planovi/granica-obalni-pojas.geojson",
+    attribution: "UPU Bilice sjever, Grad Split — vektorizirano iz PDF-a",
+    color: "#166534",
+    group: "UPU Bilice sjever",
+    phase: 1,
+  },
+
   {
     id: "plan-optika",
     label: "Plan telekom infrastrukture (zone)",
@@ -376,6 +648,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/plan-optika.geojson",
     attribution: "HAKOM — Objedinjeni plan (Uredba 2025)",
     color: "#fb923c",
+    group: "UPU Bilice sjever",
     phase: 1,
   },
 
@@ -390,6 +663,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "© Hrvatske vode",
     color: "#3b82f6",
     defaultOpacity: 0.6,
+    group: "Okoliš i rizici",
     phase: 1,
   },
   {
@@ -399,6 +673,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/vrucina.geojson",
     attribution: "Landsat © USGS",
     color: "#ef4444",
+    group: "Okoliš i rizici",
     phase: 2, // traži jednokratnu izradu u Earth Engineu
   },
   {
@@ -408,6 +683,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/api/zrak",
     attribution: "MINGOR/DHMZ",
     color: "#94a3b8",
+    group: "Okoliš i rizici",
     phase: 2,
   },
 ];
@@ -431,15 +707,58 @@ export const MAP_VIEWS: MapView[] = [
     id: "urbanizam",
     label: "Urbanizam",
     description:
-      "Što se gdje smije graditi: GUP, UPU i DPU planovi, zgrade i gustoća stanovništva.",
-    layerIds: ["gup-namjena", "gradevinska-podrucja", "upu-bilice-sjever", "dpu-dracevac", "zgrade", "stanovnistvo"],
+      "Što se gdje smije graditi: UPU i DPU planovi, zgrade i gustoća " +
+      "stanovništva. Podloga je namjena iz GUP-a na snazi; što joj nacrt " +
+      "mijenja vidi se u pogledu „Nacrt GUP-a”.",
+    dimensionId: "gup-godina",
+    defaultValueLayerId: "gup-2015-namjena",
+    layerIds: [
+      "gradevinska-podrucja",
+      "upu-bilice-sjever",
+      "dpu-dracevac",
+      // vektorizirana namjena iz samih listova — za razliku od gornjih
+      // ISPU rastera ovo je prava geometrija koja se može upitati
+      "upu-namjena-poslovna",
+      "upu-namjena-proizvodna",
+      "upu-namjena-zelenilo",
+      "dpu-granica",
+      "dpu-gradivi-dio",
+      "zgrade",
+      "stanovnistvo",
+    ],
+  },
+  {
+    id: "nacrt-gupa",
+    label: "Nacrt GUP-a",
+    description:
+      "Karta je nacrt izmjena GUP-a iz 2024., a crveno obrubljeno je ono što " +
+      "on mijenja u odnosu na plan koji je na snazi — 9,4 ha na 24 mjesta. " +
+      "Klik na plohu daje staru i novu namjenu te, gdje je moguće, stavku " +
+      "popisa izmjena kojom nacrt tu promjenu sam obrazlaže. Biralom se " +
+      "podloga prebacuje na plan na snazi.",
+    layerIds: [],
+    dimensionId: "gup-godina",
+    defaultValueLayerId: "gup-2024-namjena",
+    defaultComparisonId: "promjene-2015-2024",
   },
   {
     id: "infrastruktura",
     label: "Infrastruktura",
     description:
-      "Struja, internet i energetika. (Vodovod i kanalizacija nisu otvoreni podaci.)",
-    layerIds: ["struja", "internet", "solar"],
+      "Struja, internet i energetika. Vodovod, odvodnja, plin i telekom postoje " +
+      "samo za radnu zonu Dračevac — izvučeni su iz grafičkih listova DPU-a jer " +
+      "ih ni ViK ni HEP ni OSM ne objavljuju.",
+    layerIds: [
+      "struja",
+      "internet",
+      "solar",
+      "dpu-vodoopskrba",
+      "dpu-odvodnja",
+      "dpu-oborinska",
+      "dpu-struja",
+      "dpu-telekom",
+      "dpu-plin",
+    ],
   },
   {
     id: "javni-prostori",
@@ -470,3 +789,60 @@ export const MAP_VIEWS: MapView[] = [
     ],
   },
 ];
+
+/**
+ * Namjena prostora kroz generacije GUP-a. Sve vrijednosti dijele ključ boja
+ * otisnut u tumaču znakova samih listova, pa im je legenda zajednička.
+ *
+ * `gup-namjena` (službeni ISPU raster plana na snazi) namjerno je vrijednost
+ * ove dimenzije, a ne samostalan sloj: prikazuje istu veličinu kao i naši
+ * praćeni slojevi, pa upaljen uz njih daje dvije karte namjene jednu preko
+ * druge — točno kašu zbog koje je dimenzija i uvedena.
+ */
+export const NAMJENA_LEGENDA: LegendEntry[] = [
+  { boja: "#ffff00", kod: "S", opis: "Stambena" },
+  { boja: "#e0a000", kod: "M", opis: "Mješovita (stanovanje + poslovno)" },
+  { boja: "#f46040", kod: "D", opis: "Javna i društvena" },
+  { boja: "#a02080", kod: "I / K", opis: "Gospodarska i poslovna" },
+  { boja: "#c02000", kod: "T", opis: "Ugostiteljsko-turistička" },
+  { boja: "#20a0c0", kod: "L", opis: "Luke" },
+  { boja: "#006000", kod: "R1", opis: "Športski centar" },
+  { boja: "#c0e080", kod: "R2", opis: "Rekreacija" },
+  { boja: "#40c0c0", kod: "R3", opis: "Kupalište" },
+  { boja: "#40c040", kod: "Z1", opis: "Javne zelene površine" },
+  { boja: "#80e000", kod: "Z5", opis: "Zaštitno i pejsažno zelenilo" },
+  { boja: "#a000c0", kod: "N", opis: "Posebna namjena" },
+];
+
+export const DIMENSIONS: Dimension[] = [
+  {
+    id: "gup-godina",
+    label: "Namjena prema planu iz",
+    legend: NAMJENA_LEGENDA,
+    values: [
+      { layerId: "gup-2024-namjena", label: "2024. (nacrt)" },
+      { layerId: "gup-2015-namjena", label: "2015. (na snazi)" },
+      { layerId: "gup-namjena", label: "ISPU raster" },
+    ],
+  },
+];
+
+export const COMPARISONS: Comparison[] = [
+  {
+    id: "promjene-2015-2024",
+    dimensionId: "gup-godina",
+    label: "2015. → nacrt 2024.",
+    layerId: "gup-promjene-2015-2024",
+    fromLayerId: "gup-2015-namjena",
+    toLayerId: "gup-2024-namjena",
+  },
+];
+
+/**
+ * Slojevi kojima upravlja dimenzija ili usporedba ne smiju se nuditi i kao
+ * slobodne kvačice — inače se ista veličina opet može naslagati sama na se.
+ */
+export const UPRAVLJANI_SLOJEVI: ReadonlySet<string> = new Set([
+  ...DIMENSIONS.flatMap((d) => d.values.map((v) => v.layerId)),
+  ...COMPARISONS.map((c) => c.layerId),
+]);

@@ -1,17 +1,34 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type * as LeafletNS from "leaflet";
 import {
   BASE_LAYERS,
   OVERLAY_LAYERS,
   MAP_VIEWS,
+  DIMENSIONS,
+  COMPARISONS,
+  UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
+  type Comparison,
+  type Dimension,
+  type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
+const DIM_BY_ID = new Map(DIMENSIONS.map((d) => [d.id, d]));
+
+/** Početni izbor vrijednosti za dimenziju koju pogled izlaže. */
+function dimenzijaPogleda(view: MapView): Record<string, string> {
+  if (!view.dimensionId) return {};
+  const d = DIM_BY_ID.get(view.dimensionId);
+  if (!d) return {};
+  return {
+    [d.id]: view.defaultValueLayerId ?? d.values[0].layerId,
+  };
+}
 
 export function MapClient() {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -30,7 +47,21 @@ export function MapClient() {
   const [activeIds, setActiveIds] = useState<Set<string>>(
     () => new Set(phase1(MAP_VIEWS[0].layerIds))
   );
-  const [panelOpen, setPanelOpen] = useState(false);
+  // Otvorena po dolasku: u njoj su i pogledi, pa zatvorena skriva navigaciju.
+  const [panelOpen, setPanelOpen] = useState(true);
+  // Odabrana vrijednost po dimenziji i uključena usporedba. Ovo su odvojene
+  // kontrole namjerno: koju godinu gledaš i koju promjenu ističeš dvije su
+  // različite odluke.
+  const [dimValue, setDimValue] = useState<Record<string, string>>(() =>
+    dimenzijaPogleda(MAP_VIEWS[0])
+  );
+  const [comparisonId, setComparisonId] = useState<string | null>(
+    () => MAP_VIEWS[0].defaultComparisonId ?? null
+  );
+  // "obris" = odabrana godina + crtkani obrisi promjena; "klizac" = obje
+  // godine jedna uz drugu s razdjelnikom.
+  const [nacin, setNacin] = useState<"obris" | "klizac">("obris");
+
 
   // ---- init map once ----
   useEffect(() => {
@@ -44,7 +75,7 @@ export function MapClient() {
         zoom: 15,
         minZoom: 12,
         maxZoom: 19,
-        zoomControl: true,
+        zoomControl: false,
         attributionControl: true,
       });
       // Ograniči pomicanje na kvart + ~700 m rezerve — karta je o Dračevcu
@@ -53,6 +84,13 @@ export function MapClient() {
         [43.514, 16.481],
         [43.536, 16.518],
       ]);
+      // Vektorski slojevi svi crtaju u zajedničko overlayPane, pa se ne mogu
+      // rezati pojedinačno. Svaka strana klizača dobiva svoje okno.
+      for (const ime of ["sbs-lijevo", "sbs-desno"]) {
+        const okno = map.createPane(ime);
+        okno.style.zIndex = "400";
+      }
+      L.control.zoom({ position: "topright" }).addTo(map);
       mapRef.current = map;
       setReady(true);
 
@@ -125,7 +163,39 @@ export function MapClient() {
     baseRef.current = layer;
   }, [baseId, ready]);
 
-  // ---- sync overlays with activeIds ----
+  // Što se crta = neovisni slojevi + odabrana vrijednost svake dimenzije
+  // + sloj usporedbe ako je uključen.
+  const usporedba = comparisonId
+    ? (COMPARISONS.find((x) => x.id === comparisonId) ?? null)
+    : null;
+  const klizac = nacin === "klizac" && usporedba !== null;
+
+  const renderIds = useMemo(() => {
+    const out = new Set(activeIds);
+    if (klizac && usporedba) {
+      // Obje godine odjednom, ali razdvojene razdjelnikom pa se ne miješaju.
+      out.add(usporedba.fromLayerId);
+      out.add(usporedba.toLayerId);
+      return out;
+    }
+    for (const layerId of Object.values(dimValue)) out.add(layerId);
+    if (usporedba) out.add(usporedba.layerId);
+    return out;
+  }, [activeIds, dimValue, usporedba, klizac]);
+
+  /** layerId → okno, da klizač može odrezati svaku stranu zasebno. */
+  const okna = useMemo<Record<string, string>>(
+    () =>
+      klizac && usporedba
+        ? {
+            [usporedba.fromLayerId]: "sbs-lijevo",
+            [usporedba.toLayerId]: "sbs-desno",
+          }
+        : {},
+    [klizac, usporedba]
+  );
+
+  // ---- sync overlays with renderIds ----
   useEffect(() => {
     const L = LRef.current;
     const map = mapRef.current;
@@ -133,13 +203,13 @@ export function MapClient() {
 
     // remove no-longer-active
     for (const [id, inst] of overlayInstances.current) {
-      if (!activeIds.has(id)) {
+      if (!renderIds.has(id)) {
         map.removeLayer(inst);
         overlayInstances.current.delete(id);
       }
     }
     // add newly-active
-    for (const id of activeIds) {
+    for (const id of renderIds) {
       if (overlayInstances.current.has(id)) continue;
       const layer = OVERLAY_BY_ID.get(id);
       if (!layer || layer.phase !== 1) continue;
@@ -147,7 +217,7 @@ export function MapClient() {
       addOverlay(L, map, layer);
     }
     // solar click handler
-    const solarActive = activeIds.has("solar");
+    const solarActive = renderIds.has("solar");
     if (solarActive && !solarHandler.current) {
       const handler = (e: LeafletNS.LeafletMouseEvent) =>
         showSolar(L, map, e.latlng);
@@ -159,7 +229,75 @@ export function MapClient() {
       solarHandler.current = null;
       map.getContainer().style.cursor = "";
     }
-  }, [activeIds, ready]);
+  }, [renderIds, ready, okna]);
+
+  // ---- klizač za usporedbu dviju godina ----
+  // Pisano ručno, a ne preko leaflet-side-by-side: taj dodatak iznutra radi
+  // require('./layout.css'), a Turbopack tu tvornicu ne isporuči modulu
+  // povučenom dinamičkim import()-om, pa uvoz padne. Sama je logika kratka:
+  // razdjelnik + `clip` na oba okna, preračunat pri svakom pomaku karte.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const lijevo = map.getPane("sbs-lijevo");
+    const desno = map.getPane("sbs-desno");
+    if (!lijevo || !desno) return;
+    if (!klizac) {
+      lijevo.style.clip = "";
+      desno.style.clip = "";
+      return;
+    }
+
+    let omjer = 0.5;
+    const drska = document.createElement("div");
+    drska.setAttribute("role", "separator");
+    drska.setAttribute("aria-label", "Razdjelnik usporedbe");
+    drska.style.cssText =
+      "position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;" +
+      "background:#fff;box-shadow:0 0 4px rgba(0,0,0,.5);cursor:ew-resize;" +
+      "z-index:400;touch-action:none";
+    map.getContainer().appendChild(drska);
+
+    const osvjezi = () => {
+      const velicina = map.getSize();
+      const nw = map.containerPointToLayerPoint([0, 0]);
+      const se = map.containerPointToLayerPoint([velicina.x, velicina.y]);
+      const rez = nw.x + velicina.x * omjer;
+      lijevo.style.clip = `rect(${nw.y}px,${rez}px,${se.y}px,${nw.x}px)`;
+      desno.style.clip = `rect(${nw.y}px,${se.x}px,${se.y}px,${rez}px)`;
+      drska.style.left = `${velicina.x * omjer}px`;
+    };
+
+    const pomak = (e: PointerEvent) => {
+      const okvir = map.getContainer().getBoundingClientRect();
+      omjer = Math.min(1, Math.max(0, (e.clientX - okvir.left) / okvir.width));
+      osvjezi();
+    };
+    const kraj = (e: PointerEvent) => {
+      drska.releasePointerCapture(e.pointerId);
+      drska.removeEventListener("pointermove", pomak);
+      map.dragging.enable();
+    };
+    const pocetak = (e: PointerEvent) => {
+      e.preventDefault();
+      drska.setPointerCapture(e.pointerId);
+      drska.addEventListener("pointermove", pomak);
+      map.dragging.disable();
+    };
+    drska.addEventListener("pointerdown", pocetak);
+    drska.addEventListener("pointerup", kraj);
+    map.on("move zoom resize", osvjezi);
+    osvjezi();
+
+    return () => {
+      map.off("move zoom resize", osvjezi);
+      drska.removeEventListener("pointerdown", pocetak);
+      drska.removeEventListener("pointerup", kraj);
+      drska.remove();
+      lijevo.style.clip = "";
+      desno.style.clip = "";
+    };
+  }, [klizac, usporedba, ready, renderIds]);
 
   function addOverlay(
     L: typeof LeafletNS,
@@ -180,18 +318,47 @@ export function MapClient() {
       return;
     }
     // geojson — lazy fetch + cache
+    const okno = okna[layer.id];
     const placeholder = L.layerGroup().addTo(map);
+    if (okno) {
+      // leaflet-side-by-side reže `layer.getContainer()`. Grupa ga nema, ali
+      // njezino okno sadrži točno taj sloj, pa je to ispravan spremnik.
+      (placeholder as unknown as { getContainer: () => HTMLElement }).getContainer =
+        () => map.getPane(okno) as HTMLElement;
+    }
     overlayInstances.current.set(layer.id, placeholder);
     loadGeoJSON(layer.url)
       .then((fc) => {
         if (!overlayInstances.current.has(layer.id)) return; // toggled off meanwhile
         const gj = L.geoJSON(fc, {
-          style: () => ({
-            color: layer.color,
-            weight: 2,
-            fillColor: layer.color,
-            fillOpacity: 0.25,
-          }),
+          ...(okno ? { pane: okno } : {}),
+          // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
+          // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
+          style: (f) => {
+            const p = f?.properties as
+              | { boja?: string; promjena?: string }
+              | undefined;
+            const own = p?.boja;
+            const c = /^#[0-9a-f]{6}$/i.test(own ?? "") ? own! : layer.color;
+            // Sloj razlika ide PREKO sloja godine, pa ne smije imati punu
+            // ispunu iz iste palete — inače se dvije karte namjene stope u
+            // kašu. Ostaje jak obrub, a ispod se vidi namjena te godine.
+            if (p?.promjena) {
+              return {
+                color: layer.color,
+                weight: 3,
+                dashArray: "6 4",
+                fillColor: c,
+                fillOpacity: 0.12,
+              };
+            }
+            return {
+              color: c,
+              weight: own ? 1 : 2,
+              fillColor: c,
+              fillOpacity: own ? 0.55 : 0.25,
+            };
+          },
           pointToLayer: (_f, latlng) =>
             L.circleMarker(latlng, {
               radius: 5,
@@ -202,8 +369,13 @@ export function MapClient() {
             }),
           onEachFeature: (f, lyr) => {
             const p = f.properties ?? {};
-            const label =
-              p.naziv ?? p.geografskoime ?? p.name ?? p.NAZIV ?? null;
+            if (p.promjena) {
+              lyr.bindPopup(popupPromjene(p));
+              return;
+            }
+            const label = p.namjena
+              ? `${p.namjena}${p.godina ? ` — GUP ${p.godina}.` : ""}`
+              : (p.naziv ?? p.geografskoime ?? p.name ?? p.NAZIV ?? null);
             if (label) lyr.bindPopup(String(label));
           },
         });
@@ -257,7 +429,8 @@ export function MapClient() {
     if (!view) return;
     setViewId(id);
     setActiveIds(new Set(phase1(view.layerIds)));
-    setPanelOpen(false);
+    setDimValue(dimenzijaPogleda(view));
+    setComparisonId(view.defaultComparisonId ?? null);
   }
   function toggleLayer(id: string) {
     setActiveIds((prev) => {
@@ -268,50 +441,30 @@ export function MapClient() {
   }
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
+  const usporedbeDimenzije = COMPARISONS.filter(
+    (c) => c.dimensionId === currentView?.dimensionId
+  );
+  const aktivnaDimenzija = currentView?.dimensionId
+    ? DIM_BY_ID.get(currentView.dimensionId)
+    : undefined;
   const legendLayers = [...activeIds]
     .map((id) => OVERLAY_BY_ID.get(id))
     .filter((l): l is OverlayLayer => Boolean(l) && l!.phase === 1);
 
   return (
-    <div className="relative">
-      {/* view chips */}
-      <div className="flex flex-wrap items-center gap-2 pb-3">
-        {MAP_VIEWS.map((v) => (
-          <button
-            key={v.id}
-            onClick={() => selectView(v.id)}
-            className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
-              v.id === viewId
-                ? "border-emerald-600 bg-emerald-600 text-white"
-                : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100"
-            }`}
-          >
-            {v.label}
-          </button>
-        ))}
-        <button
-          onClick={() => setPanelOpen((v) => !v)}
-          className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
-            panelOpen
-              ? "border-zinc-700 bg-zinc-800 text-white"
-              : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100"
-          }`}
-        >
-          ⚙ Prilagodi
-        </button>
-      </div>
-      {currentView && !panelOpen && (
-        <p className="pb-3 text-sm text-zinc-500">{currentView.description}</p>
-      )}
+    // Puna širina: korijenski layout drži sadržaj u max-w-5xl, a karta se od
+    // toga otima jer joj je prostor sam sadržaj. `overflow-x-clip` na <body>
+    // hvata 100vw šire od stupca sa scrollbarom.
+    <div className="relative left-1/2 w-screen -translate-x-1/2">
 
-      <div className="relative overflow-hidden rounded-xl border border-zinc-200">
+      <div className="relative overflow-hidden border-y border-zinc-200">
         <div
           ref={mapDiv}
-          className="h-[62vh] min-h-[420px] w-full bg-zinc-100"
+          className="h-[calc(100vh-4.5rem)] min-h-[520px] w-full bg-zinc-100"
         />
 
         {/* base switch */}
-        <div className="absolute right-3 top-3 z-[500] flex gap-1 rounded-lg bg-white/90 p-1 text-xs shadow">
+        <div className="absolute right-3 top-[5.5rem] z-[1000] flex gap-1 rounded-lg bg-white/90 p-1 text-xs shadow">
           {BASE_LAYERS.map((b) => (
             <button
               key={b.id}
@@ -327,39 +480,28 @@ export function MapClient() {
           ))}
         </div>
 
-        {/* legend */}
-        {legendLayers.length > 0 && (
-          <div className="absolute bottom-6 left-3 z-[500] max-w-[220px] rounded-lg bg-white/92 p-3 text-xs shadow">
-            <p className="mb-1 font-bold uppercase tracking-wide text-zinc-500">
-              {currentView?.label ?? "Slojevi"}
-            </p>
-            {legendLayers.map((l) => (
-              <div key={l.id} className="flex items-center gap-2 py-0.5">
-                <span
-                  className="h-3 w-3 shrink-0 rounded-sm"
-                  style={{ background: l.color }}
-                />
-                <span className="text-zinc-700">{l.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* customization panel */}
-        {panelOpen && (
-          <div className="absolute inset-y-0 left-0 z-[600] w-72 max-w-[80%] overflow-y-auto border-r border-zinc-200 bg-white p-4 shadow-lg">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-bold">Svi slojevi</h3>
-              <button
-                onClick={() => setPanelOpen(false)}
-                className="text-sm text-zinc-500 hover:text-zinc-800"
-              >
-                Zatvori
-              </button>
-            </div>
-            <LayerPanel activeIds={activeIds} onToggle={toggleLayer} />
-          </div>
-        )}
+        <Sidebar
+          views={MAP_VIEWS}
+          viewId={viewId}
+          onSelectView={selectView}
+          currentView={currentView}
+          dimenzija={aktivnaDimenzija}
+          dimValue={dimValue}
+          onDimValue={(dimId, layerId) =>
+            setDimValue((p) => ({ ...p, [dimId]: layerId }))
+          }
+          usporedbe={usporedbeDimenzije}
+          comparisonId={comparisonId}
+          onComparison={setComparisonId}
+          nacin={nacin}
+          onNacin={setNacin}
+          klizac={klizac}
+          activeIds={activeIds}
+          onToggle={toggleLayer}
+          legendLayers={legendLayers}
+          open={panelOpen}
+          onOpen={setPanelOpen}
+        />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -398,48 +540,279 @@ export function MapClient() {
   );
 }
 
-// group overlays by section for the panel
-function LayerPanel({
-  activeIds,
-  onToggle,
-}: {
+/**
+ * Bočna traka unutar karte. Sve kontrole žive ovdje, a ne iznad karte —
+ * karti je prostor sam sadržaj, pa je ne treba stiskati trakama.
+ *
+ * Skupine su izvorni `<details>`: sklapanje i tipkovnica dolaze besplatno,
+ * bez knjižnice, a 48 slojeva se više ne pregledava beskrajnim listanjem.
+ */
+function Sidebar(props: {
+  views: typeof MAP_VIEWS;
+  viewId: string;
+  onSelectView: (id: string) => void;
+  currentView?: MapView;
+  dimenzija?: Dimension;
+  dimValue: Record<string, string>;
+  onDimValue: (dimId: string, layerId: string) => void;
+  usporedbe: Comparison[];
+  comparisonId: string | null;
+  onComparison: (id: string | null) => void;
+  nacin: "obris" | "klizac";
+  onNacin: (n: "obris" | "klizac") => void;
+  klizac: boolean;
   activeIds: Set<string>;
   onToggle: (id: string) => void;
+  legendLayers: OverlayLayer[];
+  open: boolean;
+  onOpen: (v: boolean) => void;
 }) {
+  const { dimenzija, currentView } = props;
+  const skupine = [...new Set(OVERLAY_LAYERS.map((l) => l.group))];
+  const brojUSkupini = (g: string) =>
+    OVERLAY_LAYERS.filter(
+      (l) => l.group === g && !UPRAVLJANI_SLOJEVI.has(l.id) && props.activeIds.has(l.id)
+    ).length;
+
+  if (!props.open) {
+    return (
+      <button
+        onClick={() => props.onOpen(true)}
+        className="absolute left-3 top-3 z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
+      >
+        ☰ Slojevi
+      </button>
+    );
+  }
+
   return (
-    <div className="space-y-3 text-sm">
-      {OVERLAY_LAYERS.map((l) => (
-        <label
-          key={l.id}
-          className={`flex items-start gap-2 ${
-            l.phase === 2 ? "opacity-45" : ""
-          }`}
+    <div className="absolute inset-y-0 left-0 z-[1100] flex w-80 max-w-[85%] flex-col border-r border-zinc-200 bg-white/95 backdrop-blur">
+      <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
+        <span className="text-sm font-bold">Karta kvarta</span>
+        <button
+          onClick={() => props.onOpen(false)}
+          aria-label="Sakrij bočnu traku"
+          className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
         >
-          <input
-            type="checkbox"
-            checked={activeIds.has(l.id)}
-            disabled={l.phase === 2}
-            onChange={() => onToggle(l.id)}
-            className="mt-0.5 accent-emerald-600"
-          />
-          <span className="flex items-center gap-2">
-            <span
-              className="h-3 w-3 shrink-0 rounded-sm"
-              style={{ background: l.color }}
-            />
-            <span>
-              {l.label}
-              {l.phase === 2 && (
-                <span className="ml-1 text-xs text-zinc-400">(uskoro)</span>
-              )}
-            </span>
-          </span>
-        </label>
-      ))}
+          ⟨ sakrij
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 py-3 text-xs">
+        <p className="mb-1 font-bold uppercase tracking-wide text-zinc-500">
+          Pogled
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {props.views.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => props.onSelectView(v.id)}
+              className={`rounded-full border px-2.5 py-1 font-semibold ${
+                v.id === props.viewId
+                  ? "border-emerald-600 bg-emerald-600 text-white"
+                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+        {currentView && (
+          <p className="mt-2 text-zinc-500">{currentView.description}</p>
+        )}
+
+        {dimenzija && (
+          <div className="mt-4 rounded-lg bg-zinc-100 p-2">
+            <p className="mb-1 font-semibold text-zinc-600">
+              {props.klizac ? "Klizač uspoređuje" : dimenzija.label}
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {dimenzija.values.map((v) => (
+                <button
+                  key={v.layerId}
+                  onClick={() => props.onDimValue(dimenzija.id, v.layerId)}
+                  className={`rounded px-2 py-1 font-medium ${
+                    props.dimValue[dimenzija.id] === v.layerId
+                      ? "bg-emerald-600 text-white"
+                      : "bg-white text-zinc-700 hover:bg-zinc-200"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+            {props.usporedbe.length > 0 && (
+              <>
+                <p className="mb-1 mt-2 font-semibold text-zinc-600">
+                  Istakni promjene
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    onClick={() => props.onComparison(null)}
+                    className={`rounded px-2 py-1 font-medium ${
+                      props.comparisonId === null
+                        ? "bg-zinc-800 text-white"
+                        : "bg-white text-zinc-700 hover:bg-zinc-200"
+                    }`}
+                  >
+                    ne
+                  </button>
+                  {props.usporedbe.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => props.onComparison(c.id)}
+                      className={`rounded px-2 py-1 font-medium ${
+                        props.comparisonId === c.id
+                          ? "bg-red-600 text-white"
+                          : "bg-white text-zinc-700 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {props.comparisonId && (
+              <>
+                <p className="mb-1 mt-2 font-semibold text-zinc-600">Prikaz</p>
+                <div className="flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["obris", "obrisi promjena"],
+                      ["klizac", "klizač"],
+                    ] as const
+                  ).map(([id, oznaka]) => (
+                    <button
+                      key={id}
+                      onClick={() => props.onNacin(id)}
+                      className={`rounded px-2 py-1 font-medium ${
+                        props.nacin === id
+                          ? "bg-zinc-800 text-white"
+                          : "bg-white text-zinc-700 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {oznaka}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {dimenzija && (
+          <div className="mt-4">
+            <p className="mb-1 font-bold uppercase tracking-wide text-zinc-500">
+              Namjena
+            </p>
+            {dimenzija.legend.map((e) => (
+              <div key={e.kod} className="flex items-center gap-2 py-0.5">
+                <span
+                  className="h-3 w-3 shrink-0 rounded-sm border border-black/10"
+                  style={{ background: e.boja }}
+                />
+                <span className="text-zinc-700">
+                  <span className="font-semibold">{e.kod}</span> — {e.opis}
+                </span>
+              </div>
+            ))}
+            {props.comparisonId && (
+              <div className="mt-1 flex items-center gap-2">
+                <span className="h-0 w-3 shrink-0 border-t-2 border-dashed border-red-600" />
+                <span className="text-zinc-700">Mijenja se</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <p className="mb-1 mt-4 font-bold uppercase tracking-wide text-zinc-500">
+          Slojevi
+        </p>
+        {skupine.map((g) => {
+          const uSkupini = OVERLAY_LAYERS.filter(
+            (l) => l.group === g && !UPRAVLJANI_SLOJEVI.has(l.id)
+          );
+          if (uSkupini.length === 0) return null;
+          const n = brojUSkupini(g);
+          return (
+            <details key={g} open={n > 0} className="border-b border-zinc-100">
+              <summary className="cursor-pointer select-none py-1.5 font-semibold text-zinc-700">
+                {g}
+                {n > 0 && (
+                  <span className="ml-1 rounded-full bg-emerald-100 px-1.5 text-emerald-800">
+                    {n}
+                  </span>
+                )}
+              </summary>
+              <div className="space-y-1 pb-2 pl-1">
+                {uSkupini.map((l) => (
+                  <label
+                    key={l.id}
+                    className={`flex items-start gap-2 ${
+                      l.phase === 2 ? "opacity-45" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={props.activeIds.has(l.id)}
+                      disabled={l.phase === 2}
+                      onChange={() => props.onToggle(l.id)}
+                      className="mt-0.5 accent-emerald-600"
+                    />
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-sm"
+                        style={{ background: l.color }}
+                      />
+                      <span>
+                        {l.label}
+                        {l.phase === 2 && (
+                          <span className="ml-1 text-zinc-400">(uskoro)</span>
+                        )}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 function phase1(ids: string[]): string[] {
   return ids.filter((id) => OVERLAY_BY_ID.get(id)?.phase === 1);
+}
+
+function esc(v: unknown): string {
+  return String(v).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!
+  );
+}
+
+/**
+ * Skočni prozor plohe koja se mijenja.
+ *
+ * Ako nacrt tu promjenu sam obrazlaže brojem stavke iz svog popisa izmjena,
+ * navodi se doslovno — to je jedini dio prikaza koji ne izvodimo mi nego ga
+ * plan tvrdi o sebi, pa stoji odvojeno od naše računice.
+ */
+function popupPromjene(p: Record<string, unknown>): string {
+  const ha = Number(p.povrsina_m2) / 1e4;
+  const glava =
+    `<b>${esc(p.iz_namjena)} → ${esc(p.u_namjena)}</b><br>` +
+    `<span style="color:#6b746d">${esc(p.iz_kod)} → ${esc(p.u_kod)} · ` +
+    `${ha.toLocaleString("hr-HR", { maximumFractionDigits: 2 })} ha · ` +
+    `nacrt ${esc(p.do_godine)}. prema planu iz ${esc(p.od_godine)}.</span>`;
+  if (!p.stavka) return glava;
+  return (
+    glava +
+    `<hr style="margin:6px 0;border:0;border-top:1px solid #e4e4e7">` +
+    `<span style="color:#3f3f46">Nacrt to navodi kao stavku ` +
+    `<b>${esc(p.stavka)}</b>:<br><i>„${esc(p.stavka_tekst)}”</i></span>`
+  );
 }

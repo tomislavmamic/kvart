@@ -10,14 +10,9 @@ export const metadata: Metadata = {
 export default function MapPage() {
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Karta kvarta</h1>
-        <p className="mt-2 max-w-2xl text-zinc-600">
-          Odaberite pogled i istražite Dračevac i Bilice kroz otvorene podatke —
-          što je planirano, gdje je zelenilo, kako stoji infrastruktura i gdje su
-          rizici. Za slobodno kombiniranje slojeva otvorite „Prilagodi”.
-        </p>
-      </div>
+      {/* Naslov i opis žive u bočnoj traci; ovdje ostaju samo za čitače
+          zaslona i tražilice, da karta dobije cijelu visinu prozora. */}
+      <h1 className="sr-only">Karta kvarta</h1>
       <MapClient />
     </div>
   );
