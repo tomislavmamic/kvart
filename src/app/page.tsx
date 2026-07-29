@@ -146,8 +146,8 @@ export default async function HomePage() {
           <li className="rounded-lg bg-zinc-50 p-4">
             <span className="font-bold text-emerald-700">2. Raspravite</span>
             <p className="mt-1">
-              Svaki prijedlog ima raspravu na Redditu, a brze dogovore vodimo u
-              WhatsApp grupi.
+              Razgovor i dogovor idu u WhatsApp grupi kvarta — ondje se najbrže
+              vidi koga još muči isto.
             </p>
           </li>
           <li className="rounded-lg bg-zinc-50 p-4">

@@ -6,14 +6,16 @@ import { STATUSES } from "@/lib/constants";
 export const metadata: Metadata = { title: "O inicijativi" };
 
 /**
- * Bez zamjenske vrijednosti, i to namjerno.
+ * Reddit je odložen: razgovor kvarta vodi se u WhatsApp grupi.
  *
- * Prije je stajalo `?? "DracevacBilice"`, a ta zajednica ne postoji —
- * poveznica je vodila na Redditovu stranicu „We couldn't find that
- * community”, uz koju Reddit sam predlaže nasumične zajednice, među njima i
- * one označene NSFW. Za susjedsku inicijativu to je gore nego da poveznice
- * nema. Dok se subreddit ne otvori i ne postavi NEXT_PUBLIC_SUBREDDIT, o
- * Redditu se ne piše ništa.
+ * Zajednica r/DracevacBilice nikad nije otvorena — poveznica je vodila na
+ * Redditovu stranicu „We couldn't find that community”, uz koju Reddit sam
+ * predlaže nasumične zajednice, među njima i one označene NSFW.
+ *
+ * Ostaje uvjetovan prikaz umjesto brisanja: polje `redditUrl` po prijedlogu
+ * i dalje postoji u bazi i administraciji, pa se otvaranjem subreddita i
+ * postavljanjem NEXT_PUBLIC_SUBREDDIT sve vrati bez ikakve izmjene koda.
+ * Dok varijable nema, o Redditu se ne piše ništa.
  */
 const SUBREDDIT = process.env.NEXT_PUBLIC_SUBREDDIT?.trim() || null;
 
@@ -43,16 +45,25 @@ export default function AboutPage() {
 
       <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <h2 className="text-lg font-bold">Gdje se odvija razgovor?</h2>
+
+        {/* WhatsApp je jedini živi kanal kvarta, pa ne stoji kao natuknica
+            među ostalima nego ima svoj okvir i dugme. */}
+        {WHATSAPP_URL && (
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <p className="font-semibold text-emerald-900">
+              WhatsApp grupa kvarta
+            </p>
+            <p className="mt-1 text-sm text-emerald-900/80">
+              Svakodnevni razgovor, brze obavijesti i dogovori. Ondje se
+              najbrže vidi koga još muči isto.
+            </p>
+            <span className="mt-3 inline-block">
+              <WhatsAppButton large />
+            </span>
+          </div>
+        )}
+
         <ul className="mt-3 space-y-3 text-sm text-zinc-700">
-          {WHATSAPP_URL && (
-            <li>
-              <strong>WhatsApp grupa</strong> — svakodnevni razgovor i brze
-              obavijesti. <span className="block sm:inline" />
-              <span className="mt-2 inline-block">
-                <WhatsAppButton />
-              </span>
-            </li>
-          )}
           {SUBREDDIT && (
             <li>
               <strong>Reddit</strong> — dublja rasprava o pojedinim
