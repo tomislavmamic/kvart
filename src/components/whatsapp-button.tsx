@@ -1,7 +1,28 @@
-const WHATSAPP_URL =
-  process.env.NEXT_PUBLIC_WHATSAPP_URL ?? "https://chat.whatsapp.com/";
+/**
+ * Poziv na WhatsApp grupu, ali samo ako grupa doista postoji.
+ *
+ * Prije je varijabla imala zamjensku vrijednost "https://chat.whatsapp.com/",
+ * pa se dugme crtalo i kad pozivnica nije postavljena — stanar bi kliknuo
+ * najuočljivije zeleno dugme na stranici i završio na općoj stranici
+ * WhatsAppa. Mrtav poziv na akciju gori je nego nijedan, pa se sada ne crta
+ * ništa dok se ne postavi prava pozivnica.
+ *
+ * Pozivnica je oblika https://chat.whatsapp.com/<kod>; prazna putanja ili
+ * ostatak predloška (REPLACE_…) znače da nije konfigurirana.
+ */
+export const WHATSAPP_URL: string | null = (() => {
+  const v = process.env.NEXT_PUBLIC_WHATSAPP_URL?.trim();
+  if (!v || v.includes("REPLACE")) return null;
+  try {
+    const u = new URL(v);
+    return u.pathname.replace(/\/+$/, "").length > 1 ? v : null;
+  } catch {
+    return null;
+  }
+})();
 
 export function WhatsAppButton({ large = false }: { large?: boolean }) {
+  if (!WHATSAPP_URL) return null;
   return (
     <a
       href={WHATSAPP_URL}
