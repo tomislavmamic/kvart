@@ -223,6 +223,10 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     label: "Krošnje — pokrivenost 10 m",
     type: "wms",
     url: "https://image.discomap.eea.europa.eu/arcgis/services/GioLandPublic/HRL_TreeCoverDensity_2018/ImageServer/WMSServer",
+    // Bez ovoga Leaflet šalje `layers=undefined` i poslužitelj ne vrati
+    // ništa — pogled „Krajobraz” je zato imao 40 slomljenih pločica već pri
+    // dolasku. Ime sloja je iz GetCapabilities istog servisa.
+    wmsLayers: "HRL_TreeCoverDensity_2018",
     attribution: "© Copernicus Land Monitoring Service",
     color: "#16a34a",
     defaultOpacity: 0.65,
@@ -234,6 +238,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     label: "Nepropusnost tla (zabetoniranost)",
     type: "wms",
     url: "https://image.discomap.eea.europa.eu/arcgis/services/GioLandPublic/HRL_ImperviousnessDensity_2018/ImageServer/WMSServer",
+    wmsLayers: "HRL_ImperviousnessDensity_2018",
     attribution: "© Copernicus Land Monitoring Service",
     color: "#9ca3af",
     defaultOpacity: 0.65,

@@ -781,6 +781,12 @@ function dodajSloj(
           const p = f?.properties as
             | { boja?: string; promjena?: string; highway?: string }
             | undefined;
+          // Prometne površine iz plana su plohe, ali se crtaju obrisom kao
+          // i ulice — 4339 punih poligona pretvori radnu zonu u mrlju, a
+          // rub asfalta je ono što se zapravo želi vidjeti.
+          if ((p as { tema?: string } | undefined)?.tema === "promet") {
+            return { color: layer.color, weight: 1, opacity: 0.9, fill: false };
+          }
           // Ulica se crta samo obrisom: bez ispune, debljinom po razredu.
           const ulica = stilUlice(p?.highway);
           if (ulica) {
