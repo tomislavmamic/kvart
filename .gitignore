@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# preuzeti izvorni planovi sa split.hr (~265 MB PDF-ova) — prevelik za git
+/data/sources/planovi/
+
+# python bytecode iz scripts/vectorize-plans.py
+__pycache__/
+
+# PNG predlošci za /admin/georef (18 MB) — izrađuje ih
+# scripts/render-plan-previews.py, alat postoji samo u razvoju
+/public/geo/planovi/preview/

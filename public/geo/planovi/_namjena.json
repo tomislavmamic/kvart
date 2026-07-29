@@ -1,0 +1,280 @@
+{
+ "godine": [
+  {
+   "id": "gup-2008-namjena",
+   "godina": 2008,
+   "naziv": "GUP Split 2008. — korištenje i namjena prostora",
+   "pokriveno_3765": [
+    497574,
+    4818898,
+    501617,
+    4822231
+   ],
+   "kvart_3765": [
+    497574,
+    4818898,
+    501617,
+    4822231
+   ],
+   "put": "/Users/tomo/projects/kvart/public/geo/planovi/gup-2008-namjena.geojson",
+   "ploha": 126,
+   "mb": 0.207094,
+   "po_klasi": {
+    "M1": 213.8,
+    "I": 103.9,
+    "K": 83.2,
+    "Z5": 57.3,
+    "M/K5": 54.6,
+    "K3": 41.3,
+    "R1": 10.0,
+    "I/K": 8.5,
+    "D": 6.7,
+    "D5": 6.2,
+    "R2": 4.1,
+    "Z1": 3.4,
+    "D6": 2.8,
+    "D4": 1.8
+   }
+  },
+  {
+   "id": "gup-2015-namjena",
+   "godina": 2015,
+   "naziv": "GUP Split 2015. (pročišćeni, uklj. ID 2014.) — korištenje i namjena",
+   "pokriveno_3765": [
+    497574,
+    4818898,
+    501617,
+    4822231
+   ],
+   "kvart_3765": [
+    497574,
+    4818898,
+    501617,
+    4822231
+   ],
+   "put": "/Users/tomo/projects/kvart/public/geo/planovi/gup-2015-namjena.geojson",
+   "ploha": 123,
+   "mb": 0.206677,
+   "po_klasi": {
+    "M1": 215.3,
+    "I": 99.4,
+    "K": 82.8,
+    "Z5": 57.2,
+    "K3": 41.4,
+    "K5": 35.4,
+    "M/K5": 12.9,
+    "R1": 9.9,
+    "I/K": 8.2,
+    "D": 6.4,
+    "D5": 5.6,
+    "R2": 4.1,
+    "Z1": 3.6,
+    "D6": 2.7,
+    "D4": 1.8
+   }
+  },
+  {
+   "id": "gup-2024-namjena",
+   "godina": 2024,
+   "naziv": "GUP Split — nacrt izmjena i dopuna 2024., korištenje i namjena",
+   "pokriveno_3765": [
+    497574,
+    4818898,
+    501617,
+    4822231
+   ],
+   "kvart_3765": [
+    497574,
+    4818898,
+    501617,
+    4822231
+   ],
+   "put": "/Users/tomo/projects/kvart/public/geo/planovi/gup-2024-namjena.geojson",
+   "ploha": 167,
+   "mb": 0.256255,
+   "po_klasi": {
+    "M1": 210.4,
+    "I": 105.4,
+    "K": 83.8,
+    "Z5": 58.5,
+    "K3": 41.4,
+    "K5": 40.3,
+    "R1": 11.1,
+    "M/K5": 8.5,
+    "I/K": 7.7,
+    "D": 7.4,
+    "Z1": 6.5,
+    "D5": 5.0,
+    "R2": 4.4,
+    "Z3": 4.1,
+    "D4": 4.0,
+    "D6": 2.6,
+    "L": 2.3,
+    "D8": 1.3,
+    "D3": 0.4
+   }
+  }
+ ],
+ "razlike": [
+  {
+   "id": "gup-promjene-2008-2015",
+   "od_godine": 2008,
+   "do_godine": 2015,
+   "ploha": 3,
+   "mb": 0.0029,
+   "promjene": [
+    {
+     "iz_kod": "D5",
+     "u_kod": "M1",
+     "iz": "škola",
+     "u": "pretežito stambena",
+     "ha": 0.3
+    },
+    {
+     "iz_kod": "K",
+     "u_kod": "K5",
+     "iz": "poslovna",
+     "u": "poslovna sa stanovanjem",
+     "ha": 0.3
+    },
+    {
+     "iz_kod": "Z5",
+     "u_kod": "K5",
+     "iz": "zaštitno zelenilo",
+     "u": "poslovna sa stanovanjem",
+     "ha": 0.2
+    }
+   ],
+   "stavke": [],
+   "ha_po_promjeni": {
+    "D5 → M1": 0.3,
+    "K → K5": 0.3,
+    "Z5 → K5": 0.2
+   }
+  },
+  {
+   "id": "gup-promjene-2015-2024",
+   "od_godine": 2015,
+   "do_godine": 2024,
+   "ploha": 24,
+   "mb": 0.024269,
+   "promjene": [
+    {
+     "iz_kod": "M1",
+     "u_kod": "Z3",
+     "iz": "pretežito stambena",
+     "u": "uređeno zelenilo",
+     "ha": 3.2
+    },
+    {
+     "iz_kod": "M1",
+     "u_kod": "Z1",
+     "iz": "pretežito stambena",
+     "u": "javni park",
+     "ha": 1.7
+    },
+    {
+     "iz_kod": "I",
+     "u_kod": "M1",
+     "iz": "gospodarska (proizvodna)",
+     "u": "pretežito stambena",
+     "ha": 0.9
+    },
+    {
+     "iz_kod": "M1",
+     "u_kod": "Z5",
+     "iz": "pretežito stambena",
+     "u": "zaštitno zelenilo",
+     "ha": 0.8
+    },
+    {
+     "iz_kod": "M1",
+     "u_kod": "D4",
+     "iz": "pretežito stambena",
+     "u": "predškolska ustanova",
+     "ha": 0.8
+    },
+    {
+     "iz_kod": "I",
+     "u_kod": "Z5",
+     "iz": "gospodarska (proizvodna)",
+     "u": "zaštitno zelenilo",
+     "ha": 0.5
+    },
+    {
+     "iz_kod": "M/K5",
+     "u_kod": "R1",
+     "iz": "mješovita",
+     "u": "športski centar",
+     "ha": 0.4
+    },
+    {
+     "iz_kod": "M1",
+     "u_kod": "D3",
+     "iz": "pretežito stambena",
+     "u": "zdravstvo",
+     "ha": 0.3
+    },
+    {
+     "iz_kod": "M1",
+     "u_kod": "D8",
+     "iz": "pretežito stambena",
+     "u": "vjerski objekt",
+     "ha": 0.3
+    },
+    {
+     "iz_kod": "Z5",
+     "u_kod": "Z1",
+     "iz": "zaštitno zelenilo",
+     "u": "javni park",
+     "ha": 0.3
+    },
+    {
+     "iz_kod": "Z1",
+     "u_kod": "D4",
+     "iz": "javni park",
+     "u": "predškolska ustanova",
+     "ha": 0.2
+    }
+   ],
+   "stavke": [
+    {
+     "broj": "1.7",
+     "tekst": "Ucrtane postojeće zelene površine i zelene površine iz planova užeg područja (prenamjena, većinom iz mješovite)",
+     "ha": 5.7,
+     "ploha": 13,
+     "promjene": {
+      "M1 → Z5": 0.8,
+      "M1 → Z3": 3.0,
+      "M1 → Z1": 1.7,
+      "I → Z5": 0.3
+     }
+    },
+    {
+     "broj": "1.11",
+     "tekst": "Označene postojeće (prenamjena, većinom iz M1 i M2, ma Mejašima iz IS4) i nove planirane zone javne i društvene namjene",
+     "ha": 1.1,
+     "ploha": 3,
+     "promjene": {
+      "M1 → D4": 0.5,
+      "M1 → D3": 0.3,
+      "M1 → D8": 0.3
+     }
+    }
+   ],
+   "ha_po_promjeni": {
+    "M1 → Z3": 3.2,
+    "M1 → Z1": 1.7,
+    "I → M1": 0.9,
+    "M1 → Z5": 0.8,
+    "M1 → D4": 0.8,
+    "I → Z5": 0.5,
+    "M/K5 → R1": 0.4,
+    "M1 → D3": 0.3,
+    "M1 → D8": 0.3,
+    "Z5 → Z1": 0.3,
+    "Z1 → D4": 0.2
+   }
+  }
+ ]
+}

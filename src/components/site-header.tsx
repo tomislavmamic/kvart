@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
   { href: "/prijedlozi", label: "Problemi i prijedlozi" },
+  { href: "/karta", label: "Karta" },
+  { href: "/plan", label: "Izmjene GUP-a" },
   { href: "/dokumenti", label: "Dokumenti" },
   { href: "/podaci", label: "Prostorni podaci" },
   { href: "/o-inicijativi", label: "O inicijativi" },
