@@ -555,6 +555,68 @@ def na_mrezu(klase: np.ndarray, ishodiste: tuple[float, float],
     return cilj.GetRasterBand(1).ReadAsArray()
 
 
+# --- Prometnice ------------------------------------------------------------
+# Ceste na listovima GUP-a nisu obojene: nacrtane su kao BIJELI koridori
+# omeđeni debelim crnim rubom, između obojenih ploha namjene. Razvrstavanje
+# po paleti ih zato baca — bijelo nema zasićenja i ne odgovara nijednoj
+# namjeni — pa se vade zasebnim prolazom i ne diraju ni namjenu ni razlike.
+#
+# Bijelo ima i IZVAN obuhvata plana, a to nije cesta nego neiscrtan papir.
+# Oblik ga ne odaje: ulična mreža je povezana, pa je cijela jedan poligon, a
+# ondje gdje dotakne rub obuhvata stopi se s pozadinom u mrlju od 133 ha
+# koja zbog razvedenosti prolazi i test širine. Zato se ne filtrira oblikom
+# nego područjem: uzima se samo bijelo UNUTAR nacrtanog dijela lista, a taj
+# se dobiva morfološkim zatvaranjem ploha namjene — zatvaranje premosti
+# koridore (široke ~15–30 m) i ostavi obuhvat kao punu masku.
+BIJELO_NAJMANJE = 235   # najniži kanal — ispod toga nije papir nego crtež
+BIJELO_RAZMAK = 12      # max-min; bijelo je neutralno, boje nisu
+RADIJUS_ZATVARANJA = 30  # px = m; mora nadmašiti najširi koridor
+NAJUZA_CESTA = 300      # m² — ispod toga je razmak između ploha, ne cesta
+
+
+def prometnice(rgb: np.ndarray, ishodiste: tuple[float, float],
+               plan: dict, namjena: np.ndarray) -> list[dict]:
+    """Koridori prometnica s lista, kao poligoni u EPSG:4326.
+
+    `namjena` je već razvrstana mreža klasa iste veličine — služi samo za
+    određivanje nacrtanog dijela lista, ne ulazi u rezultat.
+    """
+    a = rgb.astype(np.int16)
+    bijelo = ((a.min(axis=2) >= BIJELO_NAJMANJE) &
+              ((a.max(axis=2) - a.min(axis=2)) <= BIJELO_RAZMAK))
+    unutra = _erozija(_dilatacija(namjena > 0, RADIJUS_ZATVARANJA),
+                      RADIJUS_ZATVARANJA)
+    klase = na_mrezu(bijelo.astype(np.uint8), ishodiste, plan) & unutra
+
+    mem, sloj = poligoniziraj(klase.astype(np.uint8), "cesta")
+    iz_ = osr.SpatialReference(); iz_.ImportFromEPSG(3765)
+    u = osr.SpatialReference(); u.ImportFromEPSG(4326)
+    u.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    tr = osr.CoordinateTransformation(iz_, u)
+
+    znacajke = []
+    for f in sloj:
+        if not f.GetField("cesta"):
+            continue
+        g = f.GetGeometryRef()
+        p = g.GetArea()
+        if p < NAJUZA_CESTA:
+            continue
+        o = g.Boundary().Length()
+        sirina = 4.0 * p / o if o else 0.0
+        g = bez_sitnih_rupa(g)
+        g.Transform(tr)
+        znacajke.append({
+            "type": "Feature",
+            "properties": {"tema": "promet", "godina": plan["godina"],
+                           "sirina_m": round(sirina, 1),
+                           "povrsina_m2": round(p)},
+            "geometry": json.loads(g.ExportToJson()),
+        })
+    del mem
+    return znacajke
+
+
 def poligoniziraj(klase: np.ndarray, polje: str = "klasa"):
     """Klase na zajedničkoj mreži → OGR sloj poligona u EPSG:3765."""
     H, W = klase.shape
@@ -878,6 +940,14 @@ def main() -> None:
         plan["stavke_oznake"] = procitaj_stavke(plan)
         if plan["stavke_oznake"]:
             print(f"    {len(plan['stavke_oznake'])} oznaka stavki izmjena")
+        ceste = prometnice(rgb, ishodiste, plan, klase)
+        oznaka_c = f"gup-{plan['godina']}-promet"
+        sirovo_c = os.path.join(RAD, f"{oznaka_c}-sirovo.geojson")
+        with open(sirovo_c, "w", encoding="utf-8") as fh:
+            json.dump({"type": "FeatureCollection", "features": ceste},
+                      fh, ensure_ascii=False)
+        pojednostavi(sirovo_c, os.path.join(OUT, f"{oznaka_c}.geojson"))
+        print(f"    {len(ceste)} koridora prometnica")
         mem, sloj = poligoniziraj(klase)
         r = izvezi(sloj, plan, oznake)
         del mem

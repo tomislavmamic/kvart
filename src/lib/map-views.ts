@@ -616,6 +616,32 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     group: "GUP — namjena",
     phase: 1,
   },
+  // Prometnice s listova GUP-a. Ceste ondje nisu obojene nego nacrtane kao
+  // bijeli koridori omeđeni crnim rubom, pa ih razvrstavanje po paleti baca;
+  // vade se zasebnim prolazom (prometnice() u trace-plans.py) i crtaju
+  // obrisom, kao rub asfalta.
+  {
+    id: "gup-2024-promet",
+    label: "Prometnice — nacrt 2024.",
+    type: "geojson",
+    url: "/geo/planovi/gup-2024-promet.geojson",
+    attribution:
+      "Nacrt ID GUP-a Splita 2024. (javna rasprava) — koridori praćeni iz PDF lista",
+    color: "#f472b6",
+    group: "GUP — namjena",
+    phase: 1,
+  },
+  {
+    id: "gup-2015-promet",
+    label: "Prometnice — GUP 2015. (na snazi)",
+    type: "geojson",
+    url: "/geo/planovi/gup-2015-promet.geojson",
+    attribution:
+      "GUP Splita, pročišćeni prikaz 2015. — koridori praćeni iz PDF lista",
+    color: "#c084fc",
+    group: "GUP — namjena",
+    phase: 1,
+  },
   // Razlike su računate nad klasificiranim rasterima na istoj mreži od 1 m,
   // pa su točne, a ne približno preklapanje poligona. Tanke trake uz svaku
   // granicu (posljedica ±2–5 m georeferenciranja) uklonjene su otvaranjem:
@@ -757,7 +783,14 @@ export const MAP_VIEWS: MapView[] = [
       "ograničenje), pješačke staze, te planirane prometne površine iz DPU-a " +
       "radne zone Dračevac. GUP-ov list prometa zasad postoji samo kao " +
       "raster — vidi „Planirano”.",
-    layerIds: ["ulice", "pjesacke", "dpu-promet", "javne-ceste", "parkiralista"],
+    layerIds: [
+      "ulice",
+      "pjesacke",
+      "gup-2024-promet",
+      "dpu-promet",
+      "javne-ceste",
+      "parkiralista",
+    ],
   },
   {
     id: "urbanizam",
@@ -792,7 +825,7 @@ export const MAP_VIEWS: MapView[] = [
       "Klik na plohu daje staru i novu namjenu te, gdje je moguće, stavku " +
       "popisa izmjena kojom nacrt tu promjenu sam obrazlaže. Biralom se " +
       "podloga prebacuje na plan na snazi.",
-    layerIds: [],
+    layerIds: ["gup-2024-promet"],
     dimensionId: "gup-godina",
     defaultValueLayerId: "gup-2024-namjena",
     defaultComparisonId: "promjene-2015-2024",
