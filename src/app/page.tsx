@@ -14,6 +14,14 @@ export default async function HomePage() {
   // Random start point for the hero pan so it doesn't always begin at the
   // west (Bilice) edge. Negative delay starts the animation mid-cycle; the
   // full there-and-back cycle is 180s (90s each way). Fresh per request.
+  //
+  // react-hooks/purity flags Math.random() in render, and for a client
+  // component it would be right — server and client would disagree at
+  // hydration. This is a server component on a force-dynamic page: the value
+  // is drawn once per request, baked into the HTML, and never re-rendered on
+  // the client, so there is nothing to mismatch. Moving it to an effect would
+  // only add a visible jump from the west edge to the random offset.
+  // eslint-disable-next-line react-hooks/purity
   const heroPanDelay = `-${(Math.random() * 180).toFixed(1)}s`;
 
   return (

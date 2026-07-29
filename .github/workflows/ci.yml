@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  provjera:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipovi
+        run: npx tsc --noEmit
+
+      - name: Gradnja
+        run: npm run build
+        env:
+          # Gradnja uvlači route-ove koji čitaju bazu; za tipove i bundle
+          # dovoljan je bilo kakav valjan URL, upit se ne izvodi.
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+
+      # Registar slojeva je običan objekt: sintaksno je ispravan i kad
+      # pokazuje na datoteku koje nema ili na WMS bez imena sloja. Ova
+      # provjera hvata upravo to — vidi scripts/check-layers.ts.
+      #
+      # Zove vanjske servise, pa ne smije rušiti tuđi PR kad je ISPU dolje:
+      # skripta na pad vanjskog servisa daje upozorenje, a izlazi s 1 samo
+      # kad je nešto u našem registru krivo.
+      - name: Slojevi karte
+        run: npm run check-layers

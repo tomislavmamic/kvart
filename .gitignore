@@ -49,3 +49,7 @@ __pycache__/
 # PNG predlošci za /admin/georef (18 MB) — izrađuje ih
 # scripts/render-plan-previews.py, alat postoji samo u razvoju
 /public/geo/planovi/preview/
+
+# preuzeti prostorni arhivi u korijenu (SHP.zip i sl.) — prevelik za git,
+# a `git add -A` ih inače pokupi
+/*.zip
