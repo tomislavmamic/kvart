@@ -307,7 +307,7 @@ export const DATASET_SECTIONS: DatasetSection[] = [
       },
       {
         name: "Hrvatske ceste — javne ceste (WMS + WFS)",
-        desc: "Osi javnih cesta (državne/županijske/lokalne) — korisno i za utvrđivanje nadležnosti nad pojedinom cestom. Uz WMS radi i WFS 2.0 s pravom vektorskom geometrijom: tipovi Road, RoadLink, RoadLinkSequence i RoadNode; 22.940 RoadLinkova u RH, 128 unutar bboxa kvarta.",
+        desc: "Osi javnih cesta. Uz WMS radi i WFS 2.0 s pravom vektorskom geometrijom: tipovi Road, RoadLink, RoadLinkSequence i RoadNode; 22.940 RoadLinkova u RH, 128 unutar bboxa kvarta. Servis daje SAMO geometriju — ni RoadLink ni Road nemaju broj, razred ni upravitelja ceste, pa se nadležnost (državna/županijska/lokalna) iz njega ne može utvrditi, koliko god naziv sloja to obećavao.",
         endpoints: [
           "https://geoportal.hrvatske-ceste.hr/inspire/tn-ro/wms  (TN.RoadTransportNetwork.RoadLink)",
           "https://geoportal.hrvatske-ceste.hr/inspire/tn-ro/wfs  (GML 3.2, EPSG:3765)",

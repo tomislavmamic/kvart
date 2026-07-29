@@ -137,6 +137,14 @@ async function main(): Promise<void> {
       `way["highway"~"footway|path|steps|pedestrian"](${OVERPASS_BBOX})`
     )
   );
+  // Vozna ulična mreža. Namjerno bez pješačkih tipova — oni su gore, u
+  // vlastitom sloju. `highway` nosi razred ceste, pa se crta obrisom
+  // debljine po razredu umjesto rasterom prelijepljenim preko karte.
+  await run("ulice", () =>
+    overpass(
+      `way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|road|track)(_link)?$"](${OVERPASS_BBOX})`
+    )
+  );
   await run("parkiralista", () =>
     overpass(
       `nwr["amenity"="parking"](${OVERPASS_BBOX})`

@@ -211,7 +211,10 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution: "© Eurostat (Census Grid 2021)",
     color: "#6366f1",
     group: "Urbanizam",
-    phase: 1,
+    // Nema izvedbe: mrežu Eurostatova popisa nitko još ne dohvaća, pa
+    // datoteke na disku nema. Dok je bio phase 1, pogled „Urbanizam” nudio
+    // je upaljenu kvačicu koja ne crta ništa.
+    phase: 2,
   },
 
   // ---------- Krajobraz ----------
@@ -295,11 +298,29 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     // Bio WMS raster; sada pravi vektor iz INSPIRE WFS-a istog servisa
     // (dohvat u scripts/extract-geodata.ts, sloj "ceste").
     id: "javne-ceste",
-    label: "Javne ceste (nadležnost)",
+    // Ne piše „nadležnost”: INSPIRE servis Hrvatskih cesta objavljuje samo
+    // geometriju. Ni RoadLink ni Road nemaju ni broj ni razred ni upravitelja
+    // ceste — provjereno na samom servisu — pa se državna, županijska i
+    // lokalna cesta iz ovih podataka ne mogu razlikovati.
+    label: "Javne ceste (osi)",
     type: "geojson",
     url: "/geo/ceste.geojson",
     attribution: "© Hrvatske ceste",
     color: "#f59e0b",
+    group: "Mobilnost",
+    phase: 1,
+  },
+  {
+    // Vozna ulična mreža kao obris, ne kao raster. OSM je jedini izvor koji
+    // za kvart daje potpunu mrežu s razredom i imenom ulice: servis
+    // Hrvatskih cesta pokriva samo državne pravce (26 dionica u obuhvatu),
+    // a ISPU nudi isključivo slike.
+    id: "ulice",
+    label: "Ulice i ceste (obris)",
+    type: "geojson",
+    url: "/geo/ulice.geojson",
+    attribution: "© OpenStreetMap contributors",
+    color: "#e2e8f0",
     group: "Mobilnost",
     phase: 1,
   },
@@ -514,6 +535,18 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    // Planirane prometne površine iz DPU-a — prava geometrija, za razliku
+    // od rasterskog GUP-ovog lista prometa. Pokriva samo radnu zonu.
+    id: "dpu-promet",
+    label: "Planirane prometne površine (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/promet.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#fb7185",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
     id: "dpu-granica",
     label: "Granica obuhvata DPU-a Dračevac",
     type: "geojson",
@@ -700,8 +733,26 @@ export const MAP_VIEWS: MapView[] = [
     id: "mobilnost",
     label: "Mobilnost",
     description:
-      "Autobusi, ceste s nadležnošću, pješačke staze i parkirališta.",
-    layerIds: ["stajalista", "javne-ceste", "pjesacke", "parkiralista", "zivi-autobusi"],
+      "Autobusi, ulična mreža, pješačke staze i parkirališta.",
+    layerIds: [
+      "stajalista",
+      "ulice",
+      "pjesacke",
+      "parkiralista",
+      "javne-ceste",
+      "zivi-autobusi",
+    ],
+  },
+  {
+    id: "ceste",
+    label: "Ceste i ulice",
+    description:
+      "Cijela cestovna mreža obrisom, bez rasterskih preklopa: postojeće " +
+      "ulice iz OSM-a s razredom i imenom (klik daje podlogu, površinu i " +
+      "ograničenje), pješačke staze, te planirane prometne površine iz DPU-a " +
+      "radne zone Dračevac. GUP-ov list prometa zasad postoji samo kao " +
+      "raster — vidi „Planirano”.",
+    layerIds: ["ulice", "pjesacke", "dpu-promet", "javne-ceste", "parkiralista"],
   },
   {
     id: "urbanizam",

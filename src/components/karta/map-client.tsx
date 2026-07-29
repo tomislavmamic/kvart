@@ -35,7 +35,9 @@ export function MapClient() {
   const mapRef = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
   const baseRef = useRef<LeafletNS.TileLayer | null>(null);
-  const overlayInstances = useRef<Map<string, LeafletNS.Layer>>(new Map());
+  // Uz sam sloj pamti se i okno u kojem je stvoren: klizač sloj seli u
+  // rezano okno, a sloj se u Leafletu ne može premjestiti nakon stvaranja.
+  const overlayInstances = useRef<Map<string, Postavljeni>>(new Map());
   const geojsonCache = useRef<Map<string, GeoJSON.FeatureCollection>>(new Map());
   const solarHandler = useRef<((e: LeafletNS.LeafletMouseEvent) => void) | null>(
     null
@@ -201,26 +203,29 @@ export function MapClient() {
     const map = mapRef.current;
     if (!L || !map || !ready) return;
 
-    // remove no-longer-active
+    // Miču se ugašeni slojevi, ali i oni kojima se promijenilo okno —
+    // paljenje klizača sloj mora preseliti u rezano okno, a Leaflet okno
+    // postojećem sloju ne mijenja, pa se mora stvoriti iznova. Bez toga
+    // odabrana godina ostane izvan reza i klizač naizgled ne radi.
     for (const [id, inst] of overlayInstances.current) {
-      if (!renderIds.has(id)) {
-        map.removeLayer(inst);
+      if (!renderIds.has(id) || inst.okno !== okna[id]) {
+        map.removeLayer(inst.sloj);
         overlayInstances.current.delete(id);
       }
     }
-    // add newly-active
     for (const id of renderIds) {
       if (overlayInstances.current.has(id)) continue;
       const layer = OVERLAY_BY_ID.get(id);
       if (!layer || layer.phase !== 1) continue;
       if (layer.type === "api") continue; // handled separately (solar)
-      addOverlay(L, map, layer);
+      dodajSloj(L, map, layer, okna[id], overlayInstances.current,
+        geojsonCache.current);
     }
     // solar click handler
     const solarActive = renderIds.has("solar");
     if (solarActive && !solarHandler.current) {
       const handler = (e: LeafletNS.LeafletMouseEvent) =>
-        showSolar(L, map, e.latlng);
+        prikaziSolar(L, map, e.latlng);
       map.on("click", handler);
       solarHandler.current = handler;
       map.getContainer().style.cursor = "crosshair";
@@ -299,130 +304,6 @@ export function MapClient() {
     };
   }, [klizac, usporedba, ready, renderIds]);
 
-  function addOverlay(
-    L: typeof LeafletNS,
-    map: LeafletNS.Map,
-    layer: OverlayLayer
-  ) {
-    if (layer.type === "wms") {
-      const wms = L.tileLayer.wms(layer.url, {
-        layers: layer.wmsLayers,
-        format: "image/png",
-        transparent: true,
-        opacity: layer.defaultOpacity ?? 0.7,
-        crs: layer.wmsCrs === "EPSG:4326" ? L.CRS.EPSG4326 : undefined,
-        attribution: layer.attribution,
-      });
-      wms.addTo(map);
-      overlayInstances.current.set(layer.id, wms);
-      return;
-    }
-    // geojson — lazy fetch + cache
-    const okno = okna[layer.id];
-    const placeholder = L.layerGroup().addTo(map);
-    if (okno) {
-      // leaflet-side-by-side reže `layer.getContainer()`. Grupa ga nema, ali
-      // njezino okno sadrži točno taj sloj, pa je to ispravan spremnik.
-      (placeholder as unknown as { getContainer: () => HTMLElement }).getContainer =
-        () => map.getPane(okno) as HTMLElement;
-    }
-    overlayInstances.current.set(layer.id, placeholder);
-    loadGeoJSON(layer.url)
-      .then((fc) => {
-        if (!overlayInstances.current.has(layer.id)) return; // toggled off meanwhile
-        const gj = L.geoJSON(fc, {
-          ...(okno ? { pane: okno } : {}),
-          // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
-          // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
-          style: (f) => {
-            const p = f?.properties as
-              | { boja?: string; promjena?: string }
-              | undefined;
-            const own = p?.boja;
-            const c = /^#[0-9a-f]{6}$/i.test(own ?? "") ? own! : layer.color;
-            // Sloj razlika ide PREKO sloja godine, pa ne smije imati punu
-            // ispunu iz iste palete — inače se dvije karte namjene stope u
-            // kašu. Ostaje jak obrub, a ispod se vidi namjena te godine.
-            if (p?.promjena) {
-              return {
-                color: layer.color,
-                weight: 3,
-                dashArray: "6 4",
-                fillColor: c,
-                fillOpacity: 0.12,
-              };
-            }
-            return {
-              color: c,
-              weight: own ? 1 : 2,
-              fillColor: c,
-              fillOpacity: own ? 0.55 : 0.25,
-            };
-          },
-          pointToLayer: (_f, latlng) =>
-            L.circleMarker(latlng, {
-              radius: 5,
-              color: "#fff",
-              weight: 1.5,
-              fillColor: layer.color,
-              fillOpacity: 1,
-            }),
-          onEachFeature: (f, lyr) => {
-            const p = f.properties ?? {};
-            if (p.promjena) {
-              lyr.bindPopup(popupPromjene(p));
-              return;
-            }
-            const label = p.namjena
-              ? `${p.namjena}${p.godina ? ` — GUP ${p.godina}.` : ""}`
-              : (p.naziv ?? p.geografskoime ?? p.name ?? p.NAZIV ?? null);
-            if (label) lyr.bindPopup(String(label));
-          },
-        });
-        gj.addTo(placeholder);
-      })
-      .catch(() => {});
-  }
-
-  async function loadGeoJSON(url: string): Promise<GeoJSON.FeatureCollection> {
-    const cached = geojsonCache.current.get(url);
-    if (cached) return cached;
-    const res = await fetch(url);
-    const fc = (await res.json()) as GeoJSON.FeatureCollection;
-    geojsonCache.current.set(url, fc);
-    return fc;
-  }
-
-  async function showSolar(
-    L: typeof LeafletNS,
-    map: LeafletNS.Map,
-    latlng: LeafletNS.LatLng
-  ) {
-    const popup = L.popup()
-      .setLatLng(latlng)
-      .setContent("Računam solarni potencijal…")
-      .openOn(map);
-    try {
-      const res = await fetch(
-        `/api/solar?lat=${latlng.lat.toFixed(5)}&lon=${latlng.lng.toFixed(5)}`
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        popup.setContent(data.error ?? "Nema podataka.");
-        return;
-      }
-      popup.setContent(
-        `<b>Solarni potencijal</b><br>~<b>${data.kwhPerKwp.toLocaleString(
-          "hr-HR"
-        )} kWh</b> godišnje po 1 kWp<br><span style="color:#6b746d">iradijacija ${data.irradiation.toLocaleString(
-          "hr-HR"
-        )} kWh/m²</span>`
-      );
-    } catch {
-      popup.setContent("Greška pri dohvaćanju.");
-    }
-  }
-
   // ---- UI actions ----
   function selectView(id: string) {
     const view = MAP_VIEWS.find((v) => v.id === id);
@@ -435,7 +316,8 @@ export function MapClient() {
   function toggleLayer(id: string) {
     setActiveIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -785,6 +667,220 @@ function Sidebar(props: {
 
 function phase1(ids: string[]): string[] {
   return ids.filter((id) => OVERLAY_BY_ID.get(id)?.phase === 1);
+}
+
+/**
+ * Obris ulice po razredu iz OSM-a.
+ *
+ * Ceste su linije, ne plohe, pa ih ispuna ne opisuje — nosi ih debljina.
+ * Hijerarhija je namjerno gruba: magistrala, ulica, servisni put, makadam.
+ * Boje su svijetle jer je podloga ortofoto.
+ */
+const STIL_ULICE: Record<string, { boja: string; debljina: number; crtkano?: string }> = {
+  motorway: { boja: "#38bdf8", debljina: 4 },
+  trunk: { boja: "#38bdf8", debljina: 4 },
+  primary: { boja: "#38bdf8", debljina: 3.5 },
+  secondary: { boja: "#7dd3fc", debljina: 3 },
+  tertiary: { boja: "#7dd3fc", debljina: 2.5 },
+  residential: { boja: "#e2e8f0", debljina: 2 },
+  living_street: { boja: "#e2e8f0", debljina: 2 },
+  unclassified: { boja: "#e2e8f0", debljina: 2 },
+  road: { boja: "#e2e8f0", debljina: 2 },
+  service: { boja: "#cbd5e1", debljina: 1.2 },
+  track: { boja: "#a8a29e", debljina: 1.2, crtkano: "4 3" },
+};
+
+/** "trunk_link" se crta kao "trunk" — spojnica je istog razreda kao cesta. */
+function stilUlice(razred: string | undefined) {
+  if (!razred) return null;
+  return STIL_ULICE[razred] ?? STIL_ULICE[razred.replace(/_link$/, "")] ?? null;
+}
+
+const IME_RAZREDA: Record<string, string> = {
+  motorway: "autocesta",
+  trunk: "brza cesta",
+  primary: "glavna cesta",
+  secondary: "županijska cesta",
+  tertiary: "lokalna cesta",
+  residential: "stambena ulica",
+  living_street: "ulica smirenog prometa",
+  unclassified: "nerazvrstana cesta",
+  road: "cesta",
+  service: "servisni put",
+  track: "makadam / poljski put",
+};
+
+/** Sloj na karti, uz okno u kojem je stvoren — vidi overlayInstances. */
+interface Postavljeni {
+  sloj: LeafletNS.Layer;
+  okno: string | undefined;
+}
+
+async function ucitajGeoJSON(
+  url: string,
+  spremnik: Map<string, GeoJSON.FeatureCollection>
+): Promise<GeoJSON.FeatureCollection> {
+  const spremljeno = spremnik.get(url);
+  if (spremljeno) return spremljeno;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  const fc = (await res.json()) as GeoJSON.FeatureCollection;
+  spremnik.set(url, fc);
+  return fc;
+}
+
+/**
+ * Stvara sloj na karti i upisuje ga u registar postavljenih.
+ *
+ * Živi izvan komponente jer je čista funkcija nad proslijeđenim stanjem —
+ * unutar nje eslint je s pravom prigovarao da je efekt zove prije nego što
+ * je deklarirana, a i dependency lista bi je morala nositi.
+ */
+function dodajSloj(
+  L: typeof LeafletNS,
+  map: LeafletNS.Map,
+  layer: OverlayLayer,
+  okno: string | undefined,
+  registar: Map<string, Postavljeni>,
+  spremnik: Map<string, GeoJSON.FeatureCollection>
+) {
+  if (layer.type === "wms") {
+    const wms = L.tileLayer.wms(layer.url, {
+      layers: layer.wmsLayers,
+      format: "image/png",
+      transparent: true,
+      opacity: layer.defaultOpacity ?? 0.7,
+      crs: layer.wmsCrs === "EPSG:4326" ? L.CRS.EPSG4326 : undefined,
+      attribution: layer.attribution,
+    });
+    wms.addTo(map);
+    registar.set(layer.id, { sloj: wms, okno });
+    return;
+  }
+  // geojson — dohvat na zahtjev. Atribucija ide na samu grupu: registar je
+  // nosi za svaki sloj, a bez ovoga Leaflet ju je ispisivao samo za WMS,
+  // pa su OSM, Hrvatske ceste i gradski planovi ostajali nenavedeni.
+  const grupa = L.layerGroup([], { attribution: layer.attribution }).addTo(map);
+  if (okno) {
+    // Klizač reže `layer.getContainer()`. Grupa ga nema, ali njezino okno
+    // sadrži točno taj sloj, pa je to ispravan spremnik.
+    (grupa as unknown as { getContainer: () => HTMLElement }).getContainer =
+      () => map.getPane(okno) as HTMLElement;
+  }
+  registar.set(layer.id, { sloj: grupa, okno });
+  ucitajGeoJSON(layer.url, spremnik)
+    .then((fc) => {
+      // Provjerava se identitet, ne samo prisutnost: sloj je u međuvremenu
+      // mogao biti ugašen pa ponovno stvoren u drugom oknu.
+      if (registar.get(layer.id)?.sloj !== grupa) return;
+      const gj = L.geoJSON(fc, {
+        ...(okno ? { pane: okno } : {}),
+        // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
+        // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
+        style: (f) => {
+          const p = f?.properties as
+            | { boja?: string; promjena?: string; highway?: string }
+            | undefined;
+          // Ulica se crta samo obrisom: bez ispune, debljinom po razredu.
+          const ulica = stilUlice(p?.highway);
+          if (ulica) {
+            return {
+              color: ulica.boja,
+              weight: ulica.debljina,
+              opacity: 0.95,
+              lineCap: "round" as const,
+              lineJoin: "round" as const,
+              ...(ulica.crtkano ? { dashArray: ulica.crtkano } : {}),
+              fill: false,
+            };
+          }
+          const own = p?.boja;
+          const c = /^#[0-9a-f]{6}$/i.test(own ?? "") ? own! : layer.color;
+          // Sloj razlika ide PREKO sloja godine, pa ne smije imati punu
+          // ispunu iz iste palete — inače se dvije karte namjene stope u
+          // kašu. Ostaje jak obrub, a ispod se vidi namjena te godine.
+          if (p?.promjena) {
+            return {
+              color: layer.color,
+              weight: 3,
+              dashArray: "6 4",
+              fillColor: c,
+              fillOpacity: 0.12,
+            };
+          }
+          return {
+            color: c,
+            weight: own ? 1 : 2,
+            fillColor: c,
+            fillOpacity: own ? 0.55 : 0.25,
+          };
+        },
+        pointToLayer: (_f, latlng) =>
+          L.circleMarker(latlng, {
+            radius: 5,
+            color: "#fff",
+            weight: 1.5,
+            fillColor: layer.color,
+            fillOpacity: 1,
+          }),
+        onEachFeature: (f, lyr) => {
+          const p = f.properties ?? {};
+          if (p.promjena) {
+            lyr.bindPopup(popupPromjene(p));
+            return;
+          }
+          if (p.highway) {
+            const razred = IME_RAZREDA[p.highway.replace(/_link$/, "")] ?? p.highway;
+            lyr.bindPopup(
+              `<b>${esc(p.name ?? "bezimena ulica")}</b><br>` +
+                `<span style="color:#6b746d">${esc(razred)}` +
+                (p.surface ? ` · ${esc(p.surface)}` : "") +
+                (p.maxspeed ? ` · ${esc(p.maxspeed)} km/h` : "") +
+                `</span>`
+            );
+            return;
+          }
+          const label = p.namjena
+            ? `${p.namjena}${p.godina ? ` — GUP ${p.godina}.` : ""}`
+            : (p.naziv ?? p.geografskoime ?? p.name ?? p.NAZIV ?? null);
+          if (label) lyr.bindPopup(String(label));
+        },
+      });
+      gj.addTo(grupa);
+    })
+    .catch((e) => {
+      console.warn(`Sloj ${layer.id} nije učitan:`, e);
+    });
+}
+
+async function prikaziSolar(
+  L: typeof LeafletNS,
+  map: LeafletNS.Map,
+  latlng: LeafletNS.LatLng
+) {
+  const popup = L.popup()
+    .setLatLng(latlng)
+    .setContent("Računam solarni potencijal…")
+    .openOn(map);
+  try {
+    const res = await fetch(
+      `/api/solar?lat=${latlng.lat.toFixed(5)}&lon=${latlng.lng.toFixed(5)}`
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      popup.setContent(data.error ?? "Nema podataka.");
+      return;
+    }
+    popup.setContent(
+      `<b>Solarni potencijal</b><br>~<b>${data.kwhPerKwp.toLocaleString(
+        "hr-HR"
+      )} kWh</b> godišnje po 1 kWp<br><span style="color:#6b746d">iradijacija ${data.irradiation.toLocaleString(
+        "hr-HR"
+      )} kWh/m²</span>`
+    );
+  } catch {
+    popup.setContent("Greška pri dohvaćanju.");
+  }
 }
 
 function esc(v: unknown): string {
