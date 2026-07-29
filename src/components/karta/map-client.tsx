@@ -696,6 +696,22 @@ function stilUlice(razred: string | undefined) {
   return STIL_ULICE[razred] ?? STIL_ULICE[razred.replace(/_link$/, "")] ?? null;
 }
 
+/**
+ * Prometni sloj je jedan, a vrste se razlikuju crtom.
+ *
+ * Postojeće je puna linija, planirano crtkana — to je jedina razlika koja
+ * korisnika zanima prije nego što klikne. Ulice uz to nose i debljinu po
+ * razredu (vidi STIL_ULICE), pa im ovdje stoji samo zamjenska vrijednost.
+ */
+const STIL_VRSTE: Record<string, { boja: string; debljina: number; crtkano?: string }> = {
+  ulica: { boja: "#e2e8f0", debljina: 2 },
+  pjesacka: { boja: "#14b8a6", debljina: 1.5, crtkano: "2 3" },
+  drzavna: { boja: "#f59e0b", debljina: 3 },
+  "koridor-nacrt": { boja: "#f472b6", debljina: 1.2, crtkano: "5 4" },
+  "koridor-vazeci": { boja: "#c084fc", debljina: 1.2, crtkano: "5 4" },
+  "dpu-povrsina": { boja: "#fb7185", debljina: 1, crtkano: "3 3" },
+};
+
 const IME_RAZREDA: Record<string, string> = {
   motorway: "autocesta",
   trunk: "brza cesta",
@@ -781,24 +797,25 @@ function dodajSloj(
           const p = f?.properties as
             | { boja?: string; promjena?: string; highway?: string }
             | undefined;
-          // Prometne površine iz plana su plohe, ali se crtaju obrisom kao
-          // i ulice — 4339 punih poligona pretvori radnu zonu u mrlju, a
-          // rub asfalta je ono što se zapravo želi vidjeti.
-          if ((p as { tema?: string } | undefined)?.tema === "promet") {
-            return { color: layer.color, weight: 1, opacity: 0.9, fill: false };
-          }
-          // Ulica se crta samo obrisom: bez ispune, debljinom po razredu.
-          const ulica = stilUlice(p?.highway);
-          if (ulica) {
-            return {
-              color: ulica.boja,
-              weight: ulica.debljina,
-              opacity: 0.95,
-              lineCap: "round" as const,
-              lineJoin: "round" as const,
-              ...(ulica.crtkano ? { dashArray: ulica.crtkano } : {}),
-              fill: false,
-            };
+          // Sve prometno je jedan sloj i crta se samo obrisom — plohe iz
+          // plana pune bi radnu zonu pretvorile u mrlju, a rub asfalta je
+          // ono što se zapravo želi vidjeti. Ulici razred određuje debljinu,
+          // ostalima vrsta.
+          const vrsta = (p as { vrsta?: string } | undefined)?.vrsta;
+          if (vrsta) {
+            const s = stilUlice(p?.highway) ?? STIL_VRSTE[vrsta];
+            if (s) {
+              return {
+                color: s.boja,
+                weight: s.debljina,
+                opacity: 0.95,
+                lineCap: "round" as const,
+                lineJoin: "round" as const,
+                ...(s.crtkano ? { dashArray: s.crtkano } : {}),
+                ...(vrsta === "pjesacka" ? { dashArray: "2 3" } : {}),
+                fill: false,
+              };
+            }
           }
           const own = p?.boja;
           const c = /^#[0-9a-f]{6}$/i.test(own ?? "") ? own! : layer.color;
@@ -835,13 +852,16 @@ function dodajSloj(
             lyr.bindPopup(popupPromjene(p));
             return;
           }
-          if (p.highway) {
-            const razred = IME_RAZREDA[p.highway.replace(/_link$/, "")] ?? p.highway;
+          if (p.vrsta) {
+            const razred = p.highway
+              ? (IME_RAZREDA[p.highway.replace(/_link$/, "")] ?? p.highway)
+              : p.opis_vrste;
             lyr.bindPopup(
-              `<b>${esc(p.name ?? "bezimena ulica")}</b><br>` +
+              `<b>${esc(p.name ?? p.opis_vrste ?? "prometnica")}</b><br>` +
                 `<span style="color:#6b746d">${esc(razred)}` +
                 (p.surface ? ` · ${esc(p.surface)}` : "") +
                 (p.maxspeed ? ` · ${esc(p.maxspeed)} km/h` : "") +
+                (p.postojece === false ? " · planirano" : "") +
                 `</span>`
             );
             return;

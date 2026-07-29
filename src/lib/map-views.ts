@@ -300,42 +300,18 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
-    // Bio WMS raster; sada pravi vektor iz INSPIRE WFS-a istog servisa
-    // (dohvat u scripts/extract-geodata.ts, sloj "ceste").
-    id: "javne-ceste",
-    // Ne piše „nadležnost”: INSPIRE servis Hrvatskih cesta objavljuje samo
-    // geometriju. Ni RoadLink ni Road nemaju ni broj ni razred ni upravitelja
-    // ceste — provjereno na samom servisu — pa se državna, županijska i
-    // lokalna cesta iz ovih podataka ne mogu razlikovati.
-    label: "Javne ceste (osi)",
+    // Sve prometno u jednom sloju. Dolazi iz tri cjevovoda — OSM, listovi
+    // GUP-a i CAD listovi DPU-a — ali za stanara je to jedna stvar: gdje se
+    // vozi i hoda, sad i planirano. Spaja ih scripts/merge-roads.py, a
+    // razlikuje svojstvo `vrsta`: postojeće je puna crta, planirano crtkana.
+    id: "ceste-sve",
+    label: "Ceste, ulice i staze",
     type: "geojson",
-    url: "/geo/ceste.geojson",
-    attribution: "© Hrvatske ceste",
-    color: "#f59e0b",
-    group: "Mobilnost",
-    phase: 1,
-  },
-  {
-    // Vozna ulična mreža kao obris, ne kao raster. OSM je jedini izvor koji
-    // za kvart daje potpunu mrežu s razredom i imenom ulice: servis
-    // Hrvatskih cesta pokriva samo državne pravce (26 dionica u obuhvatu),
-    // a ISPU nudi isključivo slike.
-    id: "ulice",
-    label: "Ulice i ceste (obris)",
-    type: "geojson",
-    url: "/geo/ulice.geojson",
-    attribution: "© OpenStreetMap contributors",
+    url: "/geo/ceste-sve.geojson",
+    attribution:
+      "© OpenStreetMap contributors · Hrvatske ceste (INSPIRE WFS) · GUP i " +
+      "DPU Splita — vektorizirano iz PDF-a",
     color: "#e2e8f0",
-    group: "Mobilnost",
-    phase: 1,
-  },
-  {
-    id: "pjesacke",
-    label: "Pješačke staze i nogostupi",
-    type: "geojson",
-    url: "/geo/pjesacke.geojson",
-    attribution: "© OpenStreetMap contributors",
-    color: "#14b8a6",
     group: "Mobilnost",
     phase: 1,
   },
@@ -540,14 +516,25 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
-    // Planirane prometne površine iz DPU-a — prava geometrija, za razliku
-    // od rasterskog GUP-ovog lista prometa. Pokriva samo radnu zonu.
-    id: "dpu-promet",
-    label: "Planirane prometne površine (DPU Dračevac)",
+    // Bujični kanali iz DPU-a. Jedini vektorski podatak o bujicama koji
+    // postoji — u OSM-u ih za ovo područje nema, a kvart je pod Kozjakom pa
+    // ih se tiče gdje voda ide.
+    id: "dpu-bujica",
+    label: "Bujični kanali (DPU Dračevac)",
     type: "geojson",
-    url: "/geo/planovi/promet.geojson",
+    url: "/geo/planovi/bujica.geojson",
     attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
-    color: "#fb7185",
+    color: "#0284c7",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-zgrade",
+    label: "Postojeće zgrade po planu (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/zgrade-postojece.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#a8a29e",
     group: "DPU radne zone Dračevac",
     phase: 1,
   },
@@ -620,28 +607,6 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   // bijeli koridori omeđeni crnim rubom, pa ih razvrstavanje po paleti baca;
   // vade se zasebnim prolazom (prometnice() u trace-plans.py) i crtaju
   // obrisom, kao rub asfalta.
-  {
-    id: "gup-2024-promet",
-    label: "Prometnice — nacrt 2024.",
-    type: "geojson",
-    url: "/geo/planovi/gup-2024-promet.geojson",
-    attribution:
-      "Nacrt ID GUP-a Splita 2024. (javna rasprava) — koridori praćeni iz PDF lista",
-    color: "#f472b6",
-    group: "GUP — namjena",
-    phase: 1,
-  },
-  {
-    id: "gup-2015-promet",
-    label: "Prometnice — GUP 2015. (na snazi)",
-    type: "geojson",
-    url: "/geo/planovi/gup-2015-promet.geojson",
-    attribution:
-      "GUP Splita, pročišćeni prikaz 2015. — koridori praćeni iz PDF lista",
-    color: "#c084fc",
-    group: "GUP — namjena",
-    phase: 1,
-  },
   // Razlike su računate nad klasificiranim rasterima na istoj mreži od 1 m,
   // pa su točne, a ne približno preklapanje poligona. Tanke trake uz svaku
   // granicu (posljedica ±2–5 m georeferenciranja) uklonjene su otvaranjem:
@@ -767,10 +732,8 @@ export const MAP_VIEWS: MapView[] = [
       "Autobusi, ulična mreža, pješačke staze i parkirališta.",
     layerIds: [
       "stajalista",
-      "ulice",
-      "pjesacke",
+      "ceste-sve",
       "parkiralista",
-      "javne-ceste",
       "zivi-autobusi",
     ],
   },
@@ -778,17 +741,13 @@ export const MAP_VIEWS: MapView[] = [
     id: "ceste",
     label: "Ceste i ulice",
     description:
-      "Cijela cestovna mreža obrisom, bez rasterskih preklopa: postojeće " +
-      "ulice iz OSM-a s razredom i imenom (klik daje podlogu, površinu i " +
-      "ograničenje), pješačke staze, te planirane prometne površine iz DPU-a " +
-      "radne zone Dračevac. GUP-ov list prometa zasad postoji samo kao " +
-      "raster — vidi „Planirano”.",
+      "Cijela prometna mreža u jednom sloju i samo obrisom, bez rasterskih " +
+      "preklopa. Puna crta je postojeće — ulice iz OSM-a s razredom i imenom " +
+      "(klik daje podlogu i ograničenje) te državne ceste; crtkana je " +
+      "planirano — koridori s listova GUP-a i prometne površine iz DPU-a " +
+      "radne zone Dračevac.",
     layerIds: [
-      "ulice",
-      "pjesacke",
-      "gup-2024-promet",
-      "dpu-promet",
-      "javne-ceste",
+      "ceste-sve",
       "parkiralista",
     ],
   },
@@ -825,7 +784,7 @@ export const MAP_VIEWS: MapView[] = [
       "Klik na plohu daje staru i novu namjenu te, gdje je moguće, stavku " +
       "popisa izmjena kojom nacrt tu promjenu sam obrazlaže. Biralom se " +
       "podloga prebacuje na plan na snazi.",
-    layerIds: ["gup-2024-promet"],
+    layerIds: ["ceste-sve"],
     dimensionId: "gup-godina",
     defaultValueLayerId: "gup-2024-namjena",
     defaultComparisonId: "promjene-2015-2024",

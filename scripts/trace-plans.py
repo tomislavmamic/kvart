@@ -145,34 +145,57 @@ STAVKE: dict[str, tuple[str, str]] = {
 }
 
 
-def procitaj_stavke(plan: dict) -> list[dict]:
-    """Brojevi stavki izmjena otisnuti na samom listu, s položajem na tlu.
+RIJEC = re.compile(
+    r'<word xMin="([\d.]+)" yMin="([\d.]+)" '
+    r'xMax="([\d.]+)" yMax="([\d.]+)">(.*?)</word>')
 
-    Čita se tekstualni sloj PDF-a, ne slika: nacrt iz 2024. je CAD izvoz pa
-    su natpisi živi tekst. OCR ovdje ne treba.
+
+def rijeci_lista(plan: dict) -> list[tuple[float, float, str]]:
+    """Riječi tekstualnog sloja lista, s položajem na tlu (EPSG:3765).
+
+    Listovi koji su CAD izvoz nose žive natpise, pa ih ne treba čitati OCR-om
+    sa slike. Vraća samo riječi unutar kvarta i lijevo od tumača znakova —
+    isti se kodovi i brojevi stavki pojavljuju i u legendi desno od crteža.
     """
-    if not plan.get("stavke"):
+    if not plan.get("zivi_tekst"):
         return []
     _, visina = stranica(plan["pdf"])
     izlaz = os.path.join(RAD, f"{plan['id']}-tekst.xml")
-    subprocess.run(["pdftotext", "-f", "1", "-l", "1", "-bbox",
-                    plan["pdf"], izlaz], check=True, capture_output=True)
+    if not os.path.exists(izlaz):
+        subprocess.run(["pdftotext", "-f", "1", "-l", "1", "-bbox",
+                        plan["pdf"], izlaz], check=True, capture_output=True)
     with open(izlaz, encoding="utf-8") as fh:
         xml = fh.read()
 
     x0, y0, x1, y1 = KVART_3765
-    nadene: list[dict] = []
-    uzorak = re.compile(
-        r'<word xMin="([\d.]+)" yMin="([\d.]+)" '
-        r'xMax="([\d.]+)" yMax="([\d.]+)">(.*?)</word>')
-    for m in uzorak.finditer(xml):
+    nadene: list[tuple[float, float, str]] = []
+    for m in RIJEC.finditer(xml):
         lx, ly, dx, dy = (float(v) for v in m.groups()[:4])
-        rijec = unescape(m.group(5))
-        if rijec not in STAVKE or lx > STUPAC_TUMACA_PT:
+        if lx > STUPAC_TUMACA_PT:
             continue
         u, v = u_tocke_lista(plan, (lx + dx) / 2, (ly + dy) / 2, visina)
         X, Y = u_tlo(plan, u, v)
-        if not (x0 <= X <= x1 and y0 <= Y <= y1):
+        if x0 <= X <= x1 and y0 <= Y <= y1:
+            nadene.append((X, Y, unescape(m.group(5))))
+    return nadene
+
+
+def oznake_iz_teksta(plan: dict) -> list[dict]:
+    """Oznake namjene iz tekstualnog sloja — zamjena za OCR gdje ga ima.
+
+    Na nacrtu iz 2024. ovo daje 181 oznaku umjesto 79 koliko ih pročita
+    tesseract, i to točnih umjesto pogođenih: list je CAD izvoz, pa je
+    prepoznavanje sa slike ondje bilo posve nepotrebno.
+    """
+    return [{"tekst": t, "x": X, "y": Y}
+            for X, Y, t in rijeci_lista(plan) if t in VOKABULAR]
+
+
+def procitaj_stavke(plan: dict) -> list[dict]:
+    """Brojevi stavki izmjena otisnuti na samom listu, s položajem na tlu."""
+    nadene: list[dict] = []
+    for X, Y, rijec in rijeci_lista(plan):
+        if rijec not in STAVKE:
             continue
         t = ogr.Geometry(ogr.wkbPoint)
         t.AddPoint(X, Y)
@@ -303,9 +326,9 @@ PLANOVI: list[dict] = [
         # ručno smješteno na /admin/georef (mjerilo prilijepljeno na 1:10 000)
         "afin": (M_PO_PT, 490300.41, 4817117.25),
         "zakret": 0.0,
-        # Jedini list koji uz izmijenjene plohe otiskuje broj stavke iz
-        # popisa izmjena — vidi STAVKE i procitaj_stavke().
-        "stavke": True,
+        # Jedini list koji je CAD izvoz sa živim natpisima: oznake namjene
+        # i brojevi stavki izmjena čitaju se iz teksta, ne OCR-om.
+        "zivi_tekst": True,
     },
 ]
 
@@ -935,8 +958,12 @@ def main() -> None:
         klase = na_mrezu(popuni(klasificiraj(rgb), tamno), ishodiste, plan)
         udio = (klase > 0).mean() * 100
         print(f"    raster {rgb.shape[1]}×{rgb.shape[0]} px, klasificirano {udio:.0f}%")
-        oznake = procitaj_oznake(rgb, ishodiste, plan)
-        print(f"    pročitano {len(oznake)} oznaka namjene")
+        oznake = oznake_iz_teksta(plan)
+        izvor = "iz teksta PDF-a"
+        if not oznake:
+            oznake = procitaj_oznake(rgb, ishodiste, plan)
+            izvor = "OCR-om"
+        print(f"    pročitano {len(oznake)} oznaka namjene {izvor}")
         plan["stavke_oznake"] = procitaj_stavke(plan)
         if plan["stavke_oznake"]:
             print(f"    {len(plan['stavke_oznake'])} oznaka stavki izmjena")
