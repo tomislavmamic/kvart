@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "extract-geo": "tsx scripts/extract-geodata.ts",
-    "clip-geo": "tsx scripts/clip-geodata.ts"
+    "clip-geo": "tsx scripts/clip-geodata.ts",
+    "check-layers": "tsx scripts/check-layers.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.5.0",
