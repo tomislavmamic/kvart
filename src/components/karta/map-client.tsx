@@ -17,6 +17,7 @@ import {
   type OverlayLayer,
 } from "@/lib/map-views";
 import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
+import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
 const DIM_BY_ID = new Map(DIMENSIONS.map((d) => [d.id, d]));
@@ -64,6 +65,37 @@ export function MapClient() {
   // "obris" = odabrana godina + crtkani obrisi promjena; "klizac" = obje
   // godine jedna uz drugu s razdjelnikom.
   const [nacin, setNacin] = useState<"obris" | "klizac">("obris");
+  // Dosje kliknute čestice. Stoji u ploči, ne u skočnom prozoru — vidi
+  // DosjePlaca. `null` znači da nijedna čestica nije odabrana.
+  const [dosje, setDosje] = useState<Dosje | null>(null);
+  const [dosjeUcitavanje, setDosjeUcitavanje] = useState(false);
+  const [dosjeGreska, setDosjeGreska] = useState<string | null>(null);
+  // Svaki klik dobiva svoj broj; kad se odgovor vrati, upisuje se samo ako
+  // je u međuvremenu nije pretekao noviji klik.
+  const dosjeZahtjev = useRef(0);
+
+  const otvoriDosje = useRef((lat: number, lng: number) => {
+    const moj = ++dosjeZahtjev.current;
+    setDosje(null);
+    setDosjeGreska(null);
+    setDosjeUcitavanje(true);
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/cestica?lat=${lat.toFixed(6)}&lng=${lng.toFixed(6)}`
+        );
+        const d = (await res.json()) as Dosje & { error?: string };
+        if (moj !== dosjeZahtjev.current) return;
+        if (!res.ok) setDosjeGreska(d.error ?? "Nema podataka.");
+        else setDosje(d);
+      } catch {
+        if (moj === dosjeZahtjev.current)
+          setDosjeGreska("Greška pri dohvaćanju.");
+      } finally {
+        if (moj === dosjeZahtjev.current) setDosjeUcitavanje(false);
+      }
+    })();
+  });
 
 
   // ---- init map once ----
@@ -220,7 +252,7 @@ export function MapClient() {
       if (!layer || layer.phase !== 1) continue;
       if (layer.type === "api") continue; // handled separately (solar)
       dodajSloj(L, map, layer, okna[id], overlayInstances.current,
-        geojsonCache.current);
+        geojsonCache.current, otvoriDosje.current);
     }
     // solar click handler
     const solarActive = renderIds.has("solar");
@@ -385,6 +417,20 @@ export function MapClient() {
           open={panelOpen}
           onOpen={setPanelOpen}
         />
+
+        {(dosje || dosjeUcitavanje || dosjeGreska) && (
+          <DosjePlaca
+            dosje={dosje}
+            ucitavanje={dosjeUcitavanje}
+            greska={dosjeGreska}
+            onClose={() => {
+              dosjeZahtjev.current++;
+              setDosje(null);
+              setDosjeGreska(null);
+              setDosjeUcitavanje(false);
+            }}
+          />
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -759,7 +805,8 @@ function dodajSloj(
   layer: OverlayLayer,
   okno: string | undefined,
   registar: Map<string, Postavljeni>,
-  spremnik: Map<string, GeoJSON.FeatureCollection>
+  spremnik: Map<string, GeoJSON.FeatureCollection>,
+  otvoriDosje: (lat: number, lng: number) => void
 ) {
   if (layer.type === "wms") {
     const wms = L.tileLayer.wms(layer.url, {
@@ -855,7 +902,7 @@ function dodajSloj(
           if (SLOJEVI_DOSJEA.has(layer.id)) {
             lyr.on("click", (e) => {
               const { lat, lng } = (e as LeafletNS.LeafletMouseEvent).latlng;
-              void prikaziDosje(L, map, L.latLng(lat, lng));
+              otvoriDosje(lat, lng);
             });
             return;
           }
@@ -914,93 +961,134 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar-vlasnistvo",
 ]);
 
-interface DosjeStavka {
-  sloj: string;
-  broj: number;
-  primjeri: string[];
-  poveznica?: string;
-}
-interface DosjeSkupina {
-  naslov: string;
-  stavke: DosjeStavka[];
-}
-interface DosjeOdgovor {
-  cestica: Record<string, unknown> | null;
-  skupine: DosjeSkupina[];
-  pretrazeno: number;
-}
 
 /**
- * Dosje čestice — sve što slojevi znaju o jednom komadu zemlje.
+ * Ploča s dosjeom čestice.
  *
- * Račun je na poslužitelju (/api/cestica): slojevi teže 7,6 MB, a odgovor
- * nekoliko kilobajta, pa se ne isplati slati podatke pregledniku da bi
- * odgovorio na jedan klik. Sadržaj je visok i uzak, zato se skroluje.
+ * Dosje ne stane u skočni prozor: sedam tema i do šezdesetak redaka u
+ * stupcu širokom 300 px daje traku kroz koju se samo skrola. Ploča ide uz
+ * rub karte, pa se teme mogu složiti u više stupaca i pregled stane na
+ * jedan zaslon. Uz to ne pokriva kliknutu česticu.
  */
-async function prikaziDosje(
-  L: typeof LeafletNS,
-  map: LeafletNS.Map,
-  latlng: LeafletNS.LatLng
-) {
-  const popup = L.popup({ maxWidth: 340, minWidth: 300 })
-    .setLatLng(latlng)
-    .setContent("Skupljam podatke o čestici…")
-    .openOn(map);
-  try {
-    const res = await fetch(
-      `/api/cestica?lat=${latlng.lat.toFixed(6)}&lng=${latlng.lng.toFixed(6)}`
-    );
-    const d = (await res.json()) as DosjeOdgovor & { error?: string };
-    if (!res.ok) {
-      popup.setContent(esc(d.error ?? "Nema podataka."));
-      return;
-    }
-    popup.setContent(dosjeHtml(d));
-  } catch {
-    popup.setContent("Greška pri dohvaćanju.");
-  }
-}
-
-function dosjeHtml(d: DosjeOdgovor): string {
-  const c = d.cestica;
-  const glava = c
-    ? `<b>k.č. ${esc(c.cestica)}${c.ko ? `, k.o. ${esc(c.ko)}` : ""}</b>` +
-      (c.povrsina
-        ? `<br><span style="color:#6b746d">${Number(
-            c.povrsina
-          ).toLocaleString("hr-HR", { maximumFractionDigits: 0 })} m²</span>`
-        : "")
-    : `<b>Odabrana točka</b><br><span style="color:#6b746d">izvan katastarske čestice</span>`;
-
-  const dijelovi = d.skupine.map((s) => {
-    const redci = s.stavke
-      .map((st) => {
-        const brojka =
-          st.broj > st.primjeri.length ? ` <span style="color:#9aa3a0">×${st.broj}</span>` : "";
-        const veza = st.poveznica
-          ? ` <a href="${esc(st.poveznica)}" target="_blank" rel="noopener noreferrer" style="color:#047857">↗</a>`
-          : "";
-        return (
-          `<div style="margin:3px 0"><b style="font-weight:600">${esc(st.sloj)}</b>${brojka}${veza}` +
-          `<div style="color:#6b746d">${st.primjeri.map(esc).join("<br>")}</div></div>`
-        );
-      })
-      .join("");
-    return (
-      `<div style="margin-top:8px"><div style="font-size:11px;letter-spacing:.06em;` +
-      `text-transform:uppercase;color:#9aa3a0">${esc(s.naslov)}</div>${redci}</div>`
-    );
-  });
-
-  const prazno =
-    d.skupine.length === 0
-      ? `<div style="margin-top:8px;color:#6b746d">Nijedan sloj ovdje nema ništa.</div>`
-      : "";
-
+function DosjePlaca({
+  dosje,
+  ucitavanje,
+  greska,
+  onClose,
+}: {
+  dosje: Dosje | null;
+  ucitavanje: boolean;
+  greska: string | null;
+  onClose: () => void;
+}) {
+  const c = dosje?.cestica;
   return (
-    `<div style="max-height:340px;overflow-y:auto">${glava}${dijelovi.join("")}${prazno}` +
-    `<div style="margin-top:10px;padding-top:6px;border-top:1px solid #e4e4e7;` +
-    `font-size:11px;color:#9aa3a0">pretraženo ${d.pretrazeno} slojeva</div></div>`
+    <aside
+      // Na uskom zaslonu ploča sjeda uz dno (karta ostaje vidljiva iznad),
+      // na širokom ide uz desni rub — ispod prekidača podloge i zumiranja,
+      // koji ondje već stoje.
+      className="pointer-events-auto absolute inset-x-2 bottom-2 z-[1000] max-h-[62%] overflow-y-auto rounded-xl border border-zinc-200 bg-white/97 shadow-lg backdrop-blur sm:inset-x-auto sm:right-3 sm:top-[9rem] sm:bottom-3 sm:max-h-none sm:w-[min(34rem,46vw)] lg:w-[min(44rem,48vw)]"
+      aria-label="Podaci o čestici"
+    >
+      <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-zinc-200 bg-white/97 px-4 py-3">
+        <div>
+          {c ? (
+            <>
+              <h2 className="text-base font-bold leading-tight">
+                k.č. {String(c.cestica)}
+                {c.ko ? `, k.o. ${String(c.ko)}` : ""}
+              </h2>
+              {typeof c.povrsina === "number" && (
+                <p className="text-sm text-zinc-500">
+                  {c.povrsina.toLocaleString("hr-HR", {
+                    maximumFractionDigits: 0,
+                  })}{" "}
+                  m²
+                </p>
+              )}
+            </>
+          ) : (
+            <h2 className="text-base font-bold leading-tight">
+              {ucitavanje ? "Skupljam podatke…" : "Odabrana točka"}
+            </h2>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="-mr-1 -mt-1 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+          aria-label="Zatvori"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="px-4 py-3">
+        {ucitavanje && <p className="text-sm text-zinc-500">Skupljam podatke…</p>}
+        {greska && <p className="text-sm text-rose-700">{greska}</p>}
+        {dosje && !ucitavanje && (
+          <>
+            {dosje.skupine.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                Nijedan sloj ovdje nema ništa.
+              </p>
+            ) : (
+              // Stupci su CSS-ovi, ne mreža: teme su različito visoke, pa ih
+              // `columns` složi jednu ispod druge bez praznina koje bi mreža
+              // ostavila. `break-inside` drži temu na okupu.
+              <div className="gap-x-6 sm:columns-1 lg:columns-2 [column-fill:balance]">
+                {dosje.skupine.map((s) => (
+                  <section
+                    key={s.naslov}
+                    className="mb-4 break-inside-avoid"
+                  >
+                    <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                      {s.naslov}
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {s.stavke.map((st) => (
+                        <li key={st.sloj} className="text-sm leading-snug">
+                          <div className="flex flex-wrap items-baseline gap-x-1.5">
+                            <span className="font-semibold text-zinc-800">
+                              {st.sloj}
+                            </span>
+                            {st.broj > 1 && (
+                              <span className="text-xs text-zinc-400">
+                                ×{st.broj}
+                              </span>
+                            )}
+                            <span className="rounded bg-zinc-100 px-1 text-[10px] uppercase tracking-wide text-zinc-500">
+                              {ODNOS_NATPIS[st.odnos]}
+                            </span>
+                            {st.poveznica && (
+                              <a
+                                href={st.poveznica}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-emerald-700 underline"
+                              >
+                                dokument ↗
+                              </a>
+                            )}
+                          </div>
+                          <div className="text-[13px] text-zinc-500">
+                            {st.primjeri.map((p, i) => (
+                              <div key={i}>{p}</div>
+                            ))}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            )}
+            <p className="mt-2 border-t border-zinc-200 pt-2 text-[11px] text-zinc-400">
+              pretraženo {dosje.pretrazeno} slojeva
+            </p>
+          </>
+        )}
+      </div>
+    </aside>
   );
 }
 

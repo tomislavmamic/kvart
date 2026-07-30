@@ -22,90 +22,98 @@ import {
 import type { Feature, FeatureCollection, Position } from "geojson";
 import { OVERLAY_LAYERS } from "./map-views";
 import { opisObjekta } from "./polja";
+import { TEME, type Dosje, type Odnos, type Stavka, type Tema } from "./dosje-oblik";
+
+export type { Dosje } from "./dosje-oblik";
 
 const GEO = path.join(process.cwd(), "public", "geo");
 
 /**
- * Kako se sloj odnosi prema čestici. Razlika je u čitanju, ne u računu:
- * „nad” su područja u kojima čestica leži, „na” je ono što na njoj stoji,
- * „kroz” je ono što je presijeca. Slojevi kojih ovdje nema ne ulaze u dosje
- * — npr. druge inačice istih čestica, koje bi samo ponovile isti redak.
+ * Jedna tablica za oboje — tema i odnos po sloju. Dva odvojena popisa istih
+ * id-eva razišla bi se prvom izmjenom. Sloja kojeg ovdje nema u dosjeu nema:
+ * tako ispadaju druge inačice istih čestica, koje bi samo ponovile redak.
  */
-type Odnos = "nad" | "na" | "kroz";
+const U_DOSJEU: Record<string, { tema: Tema; odnos: Odnos }> = {
+  // uprava i planovi
+  kotar: { tema: "uprava", odnos: "nad" },
+  naselja: { tema: "uprava", odnos: "nad" },
+  "granice-ko": { tema: "uprava", odnos: "nad" },
+  "popisni-krugovi": { tema: "uprava", odnos: "nad" },
+  "statisticki-krugovi": { tema: "uprava", odnos: "nad" },
+  "planovi-obuhvat": { tema: "uprava", odnos: "nad" },
+  "planovi-obuhvat-pp": { tema: "uprava", odnos: "nad" },
+  "komunalna-naknada": { tema: "uprava", odnos: "nad" },
+  "kiosci-zone": { tema: "uprava", odnos: "nad" },
+  "kiosci-plan": { tema: "uprava", odnos: "na" },
+  "kulturno-dobro": { tema: "uprava", odnos: "nad" },
 
-const ODNOSI: Record<string, Odnos> = {
-  // područja u kojima čestica leži
-  kotar: "nad",
-  naselja: "nad",
-  "granice-ko": "nad",
-  "popisni-krugovi": "nad",
-  "statisticki-krugovi": "nad",
-  "planovi-obuhvat": "nad",
-  "planovi-obuhvat-pp": "nad",
-  "komunalna-naknada": "nad",
-  "rasvjeta-zone": "nad",
-  "zelene-zone": "nad",
-  "vodovod-podrucja": "nad",
-  "kiosci-zone": "nad",
-  "kulturno-dobro": "nad",
+  // zemljište i zgrade
+  "katastar-objekti": { tema: "zemljiste", odnos: "na" },
+  "zgrade-2025": { tema: "zemljiste", odnos: "na" },
+  "zgrade-visine": { tema: "zemljiste", odnos: "na" },
+  "korisna-povrsina": { tema: "zemljiste", odnos: "na" },
+  "zgrade-adrese": { tema: "zemljiste", odnos: "na" },
+  "kucni-brojevi": { tema: "zemljiste", odnos: "na" },
+  adrese: { tema: "zemljiste", odnos: "na" },
+  "solar-krovovi": { tema: "zemljiste", odnos: "na" },
 
-  // što stoji na čestici
-  "zgrade-2025": "na",
-  "zgrade-visine": "na",
-  "korisna-povrsina": "na",
-  "katastar-objekti": "na",
-  "kucni-brojevi": "na",
-  adrese: "na",
-  "zgrade-adrese": "na",
-  "solar-krovovi": "na",
-  rasvjeta: "na",
-  "rasvjeta-mjesta": "na",
-  "rasvjeta-trafostanice": "na",
-  "prometni-znakovi": "na",
-  "pjesacki-prijelazi": "na",
-  izbocine: "na",
-  hidranti: "na",
-  trafostanice: "na",
-  "trafostanice-plohe": "na",
-  "trafostanica-110": "na",
-  "struja-nn-stupovi": "na",
-  "struja-nn-ormarici": "na",
-  "struja-stupovi-vn": "na",
-  "odvodnja-okna": "na",
-  "odvodnja-slivnici": "na",
-  "odvodnja-gradevine": "na",
-  "vodovod-spojevi": "na",
-  "vodovod-zatvaraci": "na",
-  "telekom-sahte": "na",
-  "telekom-ht-zdenci": "na",
-  "telekom-ht-stupovi": "na",
-  igralista: "na",
-  "zelenilo-oprema": "na",
-  "zelenilo-kosevi": "na",
-  "zelenilo-vjezbaliste": "na",
-  "zelenilo-stabla": "na",
-  "stajalista-grad": "na",
-  nadstresnice: "na",
-  "parkiraliste-grad": "na",
-  "kiosci-plan": "na",
+  // promet
+  "ceste-nerazvrstane": { tema: "promet", odnos: "kroz" },
+  "ceste-dionice": { tema: "promet", odnos: "kroz" },
+  "ulice-osi": { tema: "promet", odnos: "kroz" },
+  "drzavne-ceste": { tema: "promet", odnos: "kroz" },
+  nogostupi: { tema: "promet", odnos: "kroz" },
+  "odbojne-ograde": { tema: "promet", odnos: "kroz" },
+  "pjesacki-prijelazi": { tema: "promet", odnos: "na" },
+  izbocine: { tema: "promet", odnos: "na" },
+  "prometni-znakovi": { tema: "promet", odnos: "na" },
+  "stajalista-grad": { tema: "promet", odnos: "na" },
+  nadstresnice: { tema: "promet", odnos: "na" },
+  "parkiraliste-grad": { tema: "promet", odnos: "na" },
 
-  // što česticu presijeca
-  vodovod: "kroz",
-  "vodovod-kanali": "kroz",
-  odvodnja: "kroz",
-  "odvodnja-tlacni": "kroz",
-  "struja-nn": "kroz",
-  "struja-sn": "kroz",
-  "struja-vn-110": "kroz",
-  "telekom-trase": "kroz",
-  "telekom-ht-podzemno": "kroz",
-  "telekom-ht-nadzemno": "kroz",
-  "ceste-nerazvrstane": "kroz",
-  "ceste-dionice": "kroz",
-  "ulice-osi": "kroz",
-  "drzavne-ceste": "kroz",
-  nogostupi: "kroz",
-  "odbojne-ograde": "kroz",
+  // voda i odvodnja
+  vodovod: { tema: "voda", odnos: "kroz" },
+  "vodovod-kanali": { tema: "voda", odnos: "kroz" },
+  "vodovod-spojevi": { tema: "voda", odnos: "na" },
+  "vodovod-zatvaraci": { tema: "voda", odnos: "na" },
+  "vodovod-podrucja": { tema: "voda", odnos: "nad" },
+  hidranti: { tema: "voda", odnos: "na" },
+  odvodnja: { tema: "voda", odnos: "kroz" },
+  "odvodnja-tlacni": { tema: "voda", odnos: "kroz" },
+  "odvodnja-okna": { tema: "voda", odnos: "na" },
+  "odvodnja-slivnici": { tema: "voda", odnos: "na" },
+  "odvodnja-gradevine": { tema: "voda", odnos: "na" },
+
+  // struja
+  "struja-nn": { tema: "struja", odnos: "kroz" },
+  "struja-sn": { tema: "struja", odnos: "kroz" },
+  "struja-vn-110": { tema: "struja", odnos: "kroz" },
+  "struja-nn-stupovi": { tema: "struja", odnos: "na" },
+  "struja-nn-ormarici": { tema: "struja", odnos: "na" },
+  "struja-stupovi-vn": { tema: "struja", odnos: "na" },
+  trafostanice: { tema: "struja", odnos: "na" },
+  "trafostanice-plohe": { tema: "struja", odnos: "na" },
+  "trafostanica-110": { tema: "struja", odnos: "na" },
+
+  // telekom i rasvjeta
+  "telekom-trase": { tema: "veze", odnos: "kroz" },
+  "telekom-ht-podzemno": { tema: "veze", odnos: "kroz" },
+  "telekom-ht-nadzemno": { tema: "veze", odnos: "kroz" },
+  "telekom-sahte": { tema: "veze", odnos: "na" },
+  "telekom-ht-zdenci": { tema: "veze", odnos: "na" },
+  "telekom-ht-stupovi": { tema: "veze", odnos: "na" },
+  rasvjeta: { tema: "veze", odnos: "na" },
+  "rasvjeta-mjesta": { tema: "veze", odnos: "na" },
+  "rasvjeta-trafostanice": { tema: "veze", odnos: "na" },
+  "rasvjeta-zone": { tema: "veze", odnos: "nad" },
+
+  // zelenilo i javni prostor
+  "zelene-zone": { tema: "zelenilo", odnos: "nad" },
+  "zelenilo-oprema": { tema: "zelenilo", odnos: "na" },
+  "zelenilo-kosevi": { tema: "zelenilo", odnos: "na" },
+  "zelenilo-vjezbaliste": { tema: "zelenilo", odnos: "na" },
+  "zelenilo-stabla": { tema: "zelenilo", odnos: "na" },
+  igralista: { tema: "zelenilo", odnos: "na" },
 };
 
 /** Najviše stavki po sloju u odgovoru — ostatak se izbroji, ne nabraja. */
@@ -146,32 +154,6 @@ function okviriSijeku(
   return !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
 }
 
-export interface Stavka {
-  sloj: string;
-  broj: number;
-  primjeri: string[];
-  /** Poveznica na dokument, ako je objekt nosi (obuhvati planova). */
-  poveznica?: string;
-}
-
-export interface Skupina {
-  naslov: string;
-  stavke: Stavka[];
-}
-
-export interface Dosje {
-  cestica: Record<string, unknown> | null;
-  skupine: Skupina[];
-  /** Slojevi koji su pretraženi — da se vidi da prazno znači „nema”. */
-  pretrazeno: number;
-}
-
-const NASLOVI: Record<Odnos, string> = {
-  nad: "Čestica leži u",
-  na: "Na čestici",
-  kroz: "Kroz česticu prolazi",
-};
-
 /**
  * Sastavi dosje za točku. Čestica se traži u sloju katastra; ako je nema
  * (rub kvarta, more, neobuhvaćeno), dosje se svejedno sastavlja oko točke,
@@ -203,12 +185,13 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
   const metaOkvir = turfBbox(meta) as [number, number, number, number];
   const sredina = cestica ? pointOnFeature(cestica as Feature<never>) : null;
 
-  const skupine: Record<Odnos, Stavka[]> = { nad: [], na: [], kroz: [] };
+  const poTemi = new Map<Tema, Stavka[]>();
   let pretrazeno = 0;
 
   for (const sloj of OVERLAY_LAYERS) {
-    const odnos = ODNOSI[sloj.id];
-    if (!odnos || sloj.type !== "geojson") continue;
+    const upis = U_DOSJEU[sloj.id];
+    if (!upis || sloj.type !== "geojson") continue;
+    const { tema, odnos } = upis;
     const u = await ucitaj(sloj.url);
     if (!u) continue;
     pretrazeno++;
@@ -237,23 +220,40 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
     const poveznica = pogodci
       .map((f) => f.properties?.poveznica)
       .find((v): v is string => typeof v === "string" && /^https?:\/\//.test(v));
-    skupine[odnos].push({
+    // Jednaki opisi se sažimaju: tri „Tlačni vod” jedan ispod drugoga
+    // zauzimaju tri retka, a kažu ono što brojka uz naslov već kaže.
+    // Praznog opisa nema smisla ispisivati — broj objekata je sve što o
+    // takvom sloju znamo.
+    const primjeri: string[] = [];
+    for (const f of pogodci) {
+      const opis = opisObjekta(
+        (f.properties ?? {}) as Record<string, unknown>,
+        3
+      );
+      if (opis === "objekt" || primjeri.includes(opis)) continue;
+      primjeri.push(opis);
+      if (primjeri.length === NAJVISE_PO_SLOJU) break;
+    }
+
+    const stavke = poTemi.get(tema) ?? [];
+    stavke.push({
       sloj: sloj.label,
       broj: pogodci.length,
-      primjeri: pogodci
-        .slice(0, NAJVISE_PO_SLOJU)
-        .map((f) =>
-          opisObjekta((f.properties ?? {}) as Record<string, unknown>, 3)
-        ),
+      odnos,
+      primjeri,
       ...(poveznica ? { poveznica } : {}),
     });
+    poTemi.set(tema, stavke);
   }
 
   return {
     cestica: cestica ? ((cestica.properties ?? {}) as Record<string, unknown>) : null,
-    skupine: (["nad", "na", "kroz"] as const)
-      .filter((o) => skupine[o].length > 0)
-      .map((o) => ({ naslov: NASLOVI[o], stavke: skupine[o] })),
+    // Redoslijed tema je zadan, ne po broju pogodaka: dosje se čita više
+    // puta i mora svaki put izgledati isto, inače se ne pamti gdje što stoji.
+    skupine: TEME.filter((t) => (poTemi.get(t.id)?.length ?? 0) > 0).map((t) => ({
+      naslov: t.naslov,
+      stavke: poTemi.get(t.id)!,
+    })),
     pretrazeno,
   };
 }
