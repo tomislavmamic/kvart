@@ -161,6 +161,10 @@ async function main(): Promise<number> {
     ["/geo/planovi/gup-2008-namjena.geojson", "list 2008. nije na karti"],
     ["/geo/planovi/gup-promjene-2008-2015.geojson", "list 2008. nije na karti"],
     ["/geo/granica.geojson", "čita ga karta izravno, ne kroz registar"],
+    [
+      "/geo/grad/katastar-vlasnistvo.geojson",
+      "samo lokalno — osobni podaci, nije u gitu (vidi SAMO_LOKALNO)",
+    ],
   ]);
   const koristeno = new Set(OVERLAY_LAYERS.map((l) => l.url));
   for (const u of await sveGeojson(path.join(JAVNO, "geo"))) {
@@ -169,8 +173,13 @@ async function main(): Promise<number> {
   }
   // I obrnuto: ako je nešto na popisu namjerno neprikazanih, a u međuvremenu
   // je dobilo sloj, popis je zastario i treba ga skratiti.
+  //
+  // Iznimka su slojevi koji su namjerno u oba stanja: pod `next dev` ih
+  // registar ima, u gradnji nema. Za njih „sad je na sloju” nije zastarjelost
+  // nego očekivano, pa bi upozorenje bilo lažna uzbuna.
+  const DVOSTRUKO = new Set(["/geo/grad/katastar-vlasnistvo.geojson"]);
   for (const [u, zasto] of namjerno)
-    if (koristeno.has(u))
+    if (koristeno.has(u) && !DVOSTRUKO.has(u))
       upozorenje("—", `${u} je sad na sloju — makni ga s popisa („${zasto}”)`);
 
   console.log("");

@@ -970,9 +970,62 @@ const IME_POLJA: Record<string, string> = {
   cestica: "čestica",
   cestice: "čestice",
   datacija: "datacija",
-  status: "status zaštite",
+  status: "status",
   adresa: "adresa",
   napomena: "napomena",
+  // zgrade i površine
+  krov: "krov",
+  visina: "visina (m)",
+  kota_dna: "kota dna (m n.m.)",
+  kota_vrha: "kota vrha (m n.m.)",
+  kota_terena: "kota terena (m n.m.)",
+  obujam: "obujam (m³)",
+  // sunce
+  razred: "razred",
+  kwh_min: "najmanje (kWh/m²)",
+  kwh_max: "najviše (kWh/m²)",
+  kwh_prosjek: "prosjek (kWh/m²)",
+  // katastar i zemljišna knjiga
+  zk_status: "zemljišnoknjižno stanje",
+  zk_oblik: "oblik vlasništva",
+  zk_vlasnik: "vlasnik",
+  zk_teret: "teret",
+  zk_teret_vrsta: "vrsta tereta",
+  // adrese i popis
+  ulica: "ulica",
+  naselje: "naselje",
+  kotar: "kotar",
+  sifra: "šifra",
+  popisni_krug: "popisni krug",
+  statisticki_krug: "statistički krug",
+  sruseno: "srušeno",
+  // mreže
+  sustav: "sustav",
+  tlacna_zona: "tlačna zona",
+  izvod: "izvod",
+  vodic: "vodič",
+  faze: "broj faza",
+  funkcija: "funkcija",
+  vod: "vod",
+  prijenos: "prijenosni odnos",
+  oblik: "oblik",
+  sliv: "sliv",
+  dubina: "dubina (mm)",
+  namjena: "namjena",
+  uzemljenje: "uzemljenje",
+  zona: "zona",
+  ugradeno: "ugrađeno",
+  izgraden: "izgrađen",
+  // zelenilo i komunalno
+  zelena_povrsina: "zelena površina",
+  vrsta_stabla: "vrsta stabla",
+  lokacija: "lokacija",
+  vlasnik: "vlasnik",
+  polozaj: "položaj",
+  plan: "plan",
+  zaduzeno: "zaduženo (EUR)",
+  naplaceno: "naplaćeno (EUR)",
+  postotak_naplate: "naplata (%)",
   opis: "opis",
 };
 /** Redom kojim se traži naslov; prvo pronađeno postaje podebljana glava. */
@@ -1019,6 +1072,16 @@ function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
           : String(v);
       return `${esc(ime)}: ${esc(tekst)}`;
     });
+  // Obuhvati planova nose poveznicu na sam dokument na split.hr. Ispisana
+  // kao tekst ne vrijedi ništa — cijela je poanta da se s karte može otići
+  // čitati plan koji na tom mjestu vrijedi.
+  const url = typeof p.poveznica === "string" ? p.poveznica : null;
+  if (url && /^https?:\/\//.test(url)) {
+    redci.push(
+      `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" ` +
+        `style="color:#047857">otvori dokument plana ↗</a>`
+    );
+  }
   const glava = `<b>${esc(naslov.glava)}</b>`;
   if (redci.length === 0) return glava;
   return (

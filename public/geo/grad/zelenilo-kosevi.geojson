@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","name":"Javne_zelene_povrsine_Kosevi","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"xy_coordinate_resolution":0.000001,"features":[{"type":"Feature","properties":{"vrsta":"Koš","zelena_povrsina":"ZP Mejaši"},"geometry":{"type":"Point","coordinates":[16.501893,43.527205]}}]}
