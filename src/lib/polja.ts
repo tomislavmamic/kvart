@@ -10,6 +10,7 @@
  * interne šifre, pa je ovaj popis ujedno odluka što je vrijedno pokazati.
  */
 export const IME_POLJA: Record<string, string> = {
+  broj: "broj",
   vrsta: "vrsta",
   tip: "tip",
   medij: "sadržaj",

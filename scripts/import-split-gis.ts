@@ -480,7 +480,10 @@ const SLOJEVI: Sloj[] = [
     ime: "telekom-ht-podzemno",
     izvor:
       "SPLIT_EXPORT_BAZA/DTK_TELEKOMUNIKACIJE_HT_2023/Split_HT_podzemne_trase.shp",
-    polja: { name: "oznaka", width: "sirina" },
+    // `width` se ne preuzima: vrijednosti idu do nekoliko stotina, dakle
+    // nisu metri, a izvoz nigdje ne kaže koja je mjera. Krivo označena
+    // jedinica gora je od izostavljenog podatka.
+    polja: { name: "oznaka" },
   },
   {
     ime: "telekom-ht-nadzemno",

@@ -74,8 +74,15 @@ export function MapClient() {
   // je u međuvremenu nije pretekao noviji klik.
   const dosjeZahtjev = useRef(0);
 
-  const otvoriDosje = useRef((lat: number, lng: number) => {
+  // Trenutačno istaknuta čestica — drži se da je se može vratiti u izvorni
+  // stil kad se odabere druga ili kad se ploča zatvori.
+  const istaknuto = useRef<Isticanje | null>(null);
+
+  const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
     const moj = ++dosjeZahtjev.current;
+    istaknuto.current?.vrati();
+    istaknuto.current = oznaci ?? null;
+    oznaci?.istakni();
     setDosje(null);
     setDosjeGreska(null);
     setDosjeUcitavanje(true);
@@ -425,6 +432,8 @@ export function MapClient() {
             greska={dosjeGreska}
             onClose={() => {
               dosjeZahtjev.current++;
+              istaknuto.current?.vrati();
+              istaknuto.current = null;
               setDosje(null);
               setDosjeGreska(null);
               setDosjeUcitavanje(false);
@@ -806,7 +815,7 @@ function dodajSloj(
   okno: string | undefined,
   registar: Map<string, Postavljeni>,
   spremnik: Map<string, GeoJSON.FeatureCollection>,
-  otvoriDosje: (lat: number, lng: number) => void
+  otvoriDosje: (lat: number, lng: number, oznaci?: Isticanje) => void
 ) {
   if (layer.type === "wms") {
     const wms = L.tileLayer.wms(layer.url, {
@@ -902,7 +911,17 @@ function dodajSloj(
           if (SLOJEVI_DOSJEA.has(layer.id)) {
             lyr.on("click", (e) => {
               const { lat, lng } = (e as LeafletNS.LeafletMouseEvent).latlng;
-              otvoriDosje(lat, lng);
+              const put = lyr as LeafletNS.Path;
+              otvoriDosje(lat, lng, {
+                istakni: () => {
+                  put.setStyle(STIL_ODABRANO);
+                  put.bringToFront();
+                },
+                // Vraćanje ide preko sloja koji je česticu i nacrtao —
+                // izvorni stil dolazi iz `style` funkcije i drugdje ga
+                // nemamo zapisanog.
+                vrati: () => gj.resetStyle(put),
+              });
             });
             return;
           }
@@ -960,6 +979,27 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar",
   "katastar-vlasnistvo",
 ]);
+
+/**
+ * Kako izgleda odabrana čestica.
+ *
+ * Tamni obrub i topla ispuna drže se odvojeno od palete slojeva (smeđa
+ * katastra, zelena/siva vlasništva), pa se odabir čita kao odabir, a ne
+ * kao još jedna vrsta podatka. Bez toga se, dok je ploča otvorena, ne vidi
+ * o kojoj je čestici riječ.
+ */
+const STIL_ODABRANO: LeafletNS.PathOptions = {
+  color: "#0f172a",
+  weight: 3,
+  fillColor: "#f59e0b",
+  fillOpacity: 0.3,
+};
+
+/** Poziva se pri odabiru čestice i pri zatvaranju ploče. */
+interface Isticanje {
+  istakni: () => void;
+  vrati: () => void;
+}
 
 
 /**

@@ -34,21 +34,23 @@ const GEO = path.join(process.cwd(), "public", "geo");
  * tako ispadaju druge inačice istih čestica, koje bi samo ponovile redak.
  */
 const U_DOSJEU: Record<string, { tema: Tema; odnos: Odnos }> = {
-  // uprava i planovi
-  kotar: { tema: "uprava", odnos: "nad" },
-  naselja: { tema: "uprava", odnos: "nad" },
-  "granice-ko": { tema: "uprava", odnos: "nad" },
-  "popisni-krugovi": { tema: "uprava", odnos: "nad" },
-  "statisticki-krugovi": { tema: "uprava", odnos: "nad" },
+  // Uprava i planovi.
+  //
+  // Ovdje NEMA kotara, naselja, granice k.o., popisnog i statističkog kruga,
+  // zone kioska, zone rasvjete, vodoopskrbnog područja, zelene zone ni
+  // naplate komunalne naknade. Mjereno na 40 nasumičnih čestica: svaki od
+  // tih redaka pojavljuje se na 39/40 čestica i ima jednu do tri različite
+  // vrijednosti — dakle opisuje kvart, a ne česticu na koju je netko
+  // kliknuo. Slojevi su i dalje na karti; samo ne troše dosje.
+  //
+  // Planovi ostaju iako su slično stalni: oni odgovaraju na pitanje po
+  // kojem se planu ovdje gradi i nose poveznicu na sam dokument.
   "planovi-obuhvat": { tema: "uprava", odnos: "nad" },
   "planovi-obuhvat-pp": { tema: "uprava", odnos: "nad" },
-  "komunalna-naknada": { tema: "uprava", odnos: "nad" },
-  "kiosci-zone": { tema: "uprava", odnos: "nad" },
   "kiosci-plan": { tema: "uprava", odnos: "na" },
   "kulturno-dobro": { tema: "uprava", odnos: "nad" },
 
   // zemljište i zgrade
-  "katastar-objekti": { tema: "zemljiste", odnos: "na" },
   "zgrade-2025": { tema: "zemljiste", odnos: "na" },
   "zgrade-visine": { tema: "zemljiste", odnos: "na" },
   "korisna-povrsina": { tema: "zemljiste", odnos: "na" },
@@ -76,7 +78,6 @@ const U_DOSJEU: Record<string, { tema: Tema; odnos: Odnos }> = {
   "vodovod-kanali": { tema: "voda", odnos: "kroz" },
   "vodovod-spojevi": { tema: "voda", odnos: "na" },
   "vodovod-zatvaraci": { tema: "voda", odnos: "na" },
-  "vodovod-podrucja": { tema: "voda", odnos: "nad" },
   hidranti: { tema: "voda", odnos: "na" },
   odvodnja: { tema: "voda", odnos: "kroz" },
   "odvodnja-tlacni": { tema: "voda", odnos: "kroz" },
@@ -105,10 +106,8 @@ const U_DOSJEU: Record<string, { tema: Tema; odnos: Odnos }> = {
   rasvjeta: { tema: "veze", odnos: "na" },
   "rasvjeta-mjesta": { tema: "veze", odnos: "na" },
   "rasvjeta-trafostanice": { tema: "veze", odnos: "na" },
-  "rasvjeta-zone": { tema: "veze", odnos: "nad" },
 
   // zelenilo i javni prostor
-  "zelene-zone": { tema: "zelenilo", odnos: "nad" },
   "zelenilo-oprema": { tema: "zelenilo", odnos: "na" },
   "zelenilo-kosevi": { tema: "zelenilo", odnos: "na" },
   "zelenilo-vjezbaliste": { tema: "zelenilo", odnos: "na" },
@@ -118,6 +117,67 @@ const U_DOSJEU: Record<string, { tema: Tema; odnos: Odnos }> = {
 
 /** Najviše stavki po sloju u odgovoru — ostatak se izbroji, ne nabraja. */
 const NAJVISE_PO_SLOJU = 6;
+
+/**
+ * Polja koja u dosjeu ne idu, iako ih skočni prozor sloja pokazuje.
+ *
+ * Dosje odgovara na „što je ovdje”, a ne „kako je zavedeno”. Šifra izvoda
+ * iz trafostanice, oznaka vodiča ili broj popisnog kruga stanaru ne znače
+ * ništa, a zauzmu redak. Isto vrijedi za grad, naselje i kotar — to je
+ * cijeli kvart, pa ne govori o čestici.
+ */
+const BEZ_U_DOSJEU = new Set([
+  "grad", "naselje", "kotar", "sifra", "popisni_krug", "statisticki_krug",
+  "izvod", "vodic", "sustav", "tlacna_zona", "status", "ko", "zona",
+  "funkcija", "faze", "sliv", "uzemljenje", "namjena", "plan",
+  // pogonske oznake (1KV733/3, 4DV1481/123, stup 9922) — šifre kojima se
+  // vodi mreža, ne podatak o mjestu
+  "oznaka", "vod",
+]);
+
+/** Godine izvan ovoga su očita greška u izvoru (nalazi se i „3974”). */
+const NAJRANIJA_GODINA = 1850;
+/** Isto za datume: rasvjeta ima ugradnje zavedene kao „1111-01-01”. */
+const BESMISLEN_DATUM = /^(0{4}|1{4}|1[0-7]\d\d)-/;
+
+/**
+ * Naziv plana bez oznake objave. „PPUG Splita (Sl.gl. Grada Splita 31/05,
+ * 38/20 i 46/20 - pt)” je kao redak u dosjeu tri četvrtine šifre; broj
+ * službenog glasnika treba onome tko plan traži, a ne onome tko gleda što
+ * mu vrijedi na čestici. Puni naziv i dalje stoji iza poveznice.
+ */
+function skratiNaziv(v: string): string {
+  return v.replace(/\s*\(\s*(sl\.?\s*gl|služb).*$/i, "").trim();
+}
+
+/**
+ * Duljina iznad koje se vrijednost krati. Opis prometnog znaka je cijeli
+ * odlomak pravilnika („Sadrži pobliže objašnjenje prometnog znaka riječima
+ * ili simbolom…”) i sam bi progutao stupac. Krati se, a ne izbacuje, jer
+ * ista rubrika kod kulturnog dobra nosi ono najzanimljivije.
+ */
+const NAJDULJI_ISPIS = 72;
+
+/** Očisti svojstva prije ispisa u dosjeu. */
+function zaDosje(p: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(p)) {
+    if (BEZ_U_DOSJEU.has(k) || v === null || v === "") continue;
+    if (k === "godina" && (typeof v !== "number" || v < NAJRANIJA_GODINA))
+      continue;
+    if (typeof v !== "string") {
+      out[k] = v;
+      continue;
+    }
+    if (BESMISLEN_DATUM.test(v)) continue;
+    const cisto = k === "naziv" ? skratiNaziv(v) : v;
+    out[k] =
+      cisto.length > NAJDULJI_ISPIS
+        ? cisto.slice(0, NAJDULJI_ISPIS).trimEnd() + "…"
+        : cisto;
+  }
+  return out;
+}
 
 interface Ucitano {
   fc: FeatureCollection;
@@ -227,8 +287,8 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
     const primjeri: string[] = [];
     for (const f of pogodci) {
       const opis = opisObjekta(
-        (f.properties ?? {}) as Record<string, unknown>,
-        3
+        zaDosje((f.properties ?? {}) as Record<string, unknown>),
+        2
       );
       if (opis === "objekt" || primjeri.includes(opis)) continue;
       primjeri.push(opis);
