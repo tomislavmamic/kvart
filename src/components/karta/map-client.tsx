@@ -16,6 +16,7 @@ import {
   type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
+import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
 const DIM_BY_ID = new Map(DIMENSIONS.map((d) => [d.id, d]));
@@ -848,6 +849,16 @@ function dodajSloj(
           }),
         onEachFeature: (f, lyr) => {
           const p = f.properties ?? {};
+          // Katastar je jedini sloj kod kojeg klik ne pita „što je ovo”, nego
+          // „što je sve ovdje” — pa umjesto vlastitih polja otvara dosje
+          // sastavljen od svih slojeva. Ostali slojevi ostaju sami sebi.
+          if (SLOJEVI_DOSJEA.has(layer.id)) {
+            lyr.on("click", (e) => {
+              const { lat, lng } = (e as LeafletNS.LeafletMouseEvent).latlng;
+              void prikaziDosje(L, map, L.latLng(lat, lng));
+            });
+            return;
+          }
           if (p.promjena) {
             lyr.bindPopup(popupPromjene(p));
             return;
@@ -895,6 +906,102 @@ function dodajSloj(
     .catch((e) => {
       console.warn(`Sloj ${layer.id} nije učitan:`, e);
     });
+}
+
+/** Slojevi kod kojih klik otvara dosje čestice umjesto vlastitih polja. */
+const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
+  "katastar",
+  "katastar-vlasnistvo",
+]);
+
+interface DosjeStavka {
+  sloj: string;
+  broj: number;
+  primjeri: string[];
+  poveznica?: string;
+}
+interface DosjeSkupina {
+  naslov: string;
+  stavke: DosjeStavka[];
+}
+interface DosjeOdgovor {
+  cestica: Record<string, unknown> | null;
+  skupine: DosjeSkupina[];
+  pretrazeno: number;
+}
+
+/**
+ * Dosje čestice — sve što slojevi znaju o jednom komadu zemlje.
+ *
+ * Račun je na poslužitelju (/api/cestica): slojevi teže 7,6 MB, a odgovor
+ * nekoliko kilobajta, pa se ne isplati slati podatke pregledniku da bi
+ * odgovorio na jedan klik. Sadržaj je visok i uzak, zato se skroluje.
+ */
+async function prikaziDosje(
+  L: typeof LeafletNS,
+  map: LeafletNS.Map,
+  latlng: LeafletNS.LatLng
+) {
+  const popup = L.popup({ maxWidth: 340, minWidth: 300 })
+    .setLatLng(latlng)
+    .setContent("Skupljam podatke o čestici…")
+    .openOn(map);
+  try {
+    const res = await fetch(
+      `/api/cestica?lat=${latlng.lat.toFixed(6)}&lng=${latlng.lng.toFixed(6)}`
+    );
+    const d = (await res.json()) as DosjeOdgovor & { error?: string };
+    if (!res.ok) {
+      popup.setContent(esc(d.error ?? "Nema podataka."));
+      return;
+    }
+    popup.setContent(dosjeHtml(d));
+  } catch {
+    popup.setContent("Greška pri dohvaćanju.");
+  }
+}
+
+function dosjeHtml(d: DosjeOdgovor): string {
+  const c = d.cestica;
+  const glava = c
+    ? `<b>k.č. ${esc(c.cestica)}${c.ko ? `, k.o. ${esc(c.ko)}` : ""}</b>` +
+      (c.povrsina
+        ? `<br><span style="color:#6b746d">${Number(
+            c.povrsina
+          ).toLocaleString("hr-HR", { maximumFractionDigits: 0 })} m²</span>`
+        : "")
+    : `<b>Odabrana točka</b><br><span style="color:#6b746d">izvan katastarske čestice</span>`;
+
+  const dijelovi = d.skupine.map((s) => {
+    const redci = s.stavke
+      .map((st) => {
+        const brojka =
+          st.broj > st.primjeri.length ? ` <span style="color:#9aa3a0">×${st.broj}</span>` : "";
+        const veza = st.poveznica
+          ? ` <a href="${esc(st.poveznica)}" target="_blank" rel="noopener noreferrer" style="color:#047857">↗</a>`
+          : "";
+        return (
+          `<div style="margin:3px 0"><b style="font-weight:600">${esc(st.sloj)}</b>${brojka}${veza}` +
+          `<div style="color:#6b746d">${st.primjeri.map(esc).join("<br>")}</div></div>`
+        );
+      })
+      .join("");
+    return (
+      `<div style="margin-top:8px"><div style="font-size:11px;letter-spacing:.06em;` +
+      `text-transform:uppercase;color:#9aa3a0">${esc(s.naslov)}</div>${redci}</div>`
+    );
+  });
+
+  const prazno =
+    d.skupine.length === 0
+      ? `<div style="margin-top:8px;color:#6b746d">Nijedan sloj ovdje nema ništa.</div>`
+      : "";
+
+  return (
+    `<div style="max-height:340px;overflow-y:auto">${glava}${dijelovi.join("")}${prazno}` +
+    `<div style="margin-top:10px;padding-top:6px;border-top:1px solid #e4e4e7;` +
+    `font-size:11px;color:#9aa3a0">pretraženo ${d.pretrazeno} slojeva</div></div>`
+  );
 }
 
 async function prikaziSolar(
@@ -949,85 +1056,6 @@ function esc(v: unknown): string {
  * Uvoz je već izbacio prazne vrijednosti, tako da je prisutnost polja ujedno
  * i znak da ga vrijedi pokazati.
  */
-const IME_POLJA: Record<string, string> = {
-  vrsta: "vrsta",
-  tip: "tip",
-  medij: "sadržaj",
-  materijal: "materijal",
-  promjer: "promjer (mm)",
-  profil: "profil (mm)",
-  napon: "napon (kV)",
-  izvedba: "izvedba",
-  godina: "godina izgradnje",
-  sirina: "širina (m)",
-  duljina: "duljina (m)",
-  povrsina: "površina (m²)",
-  tlocrt: "tlocrt (m²)",
-  korisna: "korisna površina (m²)",
-  upravitelj: "upravitelj",
-  grad: "grad",
-  ko: "katastarska općina",
-  cestica: "čestica",
-  cestice: "čestice",
-  datacija: "datacija",
-  status: "status",
-  adresa: "adresa",
-  napomena: "napomena",
-  // zgrade i površine
-  krov: "krov",
-  visina: "visina (m)",
-  kota_dna: "kota dna (m n.m.)",
-  kota_vrha: "kota vrha (m n.m.)",
-  kota_terena: "kota terena (m n.m.)",
-  obujam: "obujam (m³)",
-  // sunce
-  razred: "razred",
-  kwh_min: "najmanje (kWh/m²)",
-  kwh_max: "najviše (kWh/m²)",
-  kwh_prosjek: "prosjek (kWh/m²)",
-  // katastar i zemljišna knjiga
-  zk_status: "zemljišnoknjižno stanje",
-  zk_oblik: "oblik vlasništva",
-  zk_vlasnik: "vlasnik",
-  zk_teret: "teret",
-  zk_teret_vrsta: "vrsta tereta",
-  // adrese i popis
-  ulica: "ulica",
-  naselje: "naselje",
-  kotar: "kotar",
-  sifra: "šifra",
-  popisni_krug: "popisni krug",
-  statisticki_krug: "statistički krug",
-  sruseno: "srušeno",
-  // mreže
-  sustav: "sustav",
-  tlacna_zona: "tlačna zona",
-  izvod: "izvod",
-  vodic: "vodič",
-  faze: "broj faza",
-  funkcija: "funkcija",
-  vod: "vod",
-  prijenos: "prijenosni odnos",
-  oblik: "oblik",
-  sliv: "sliv",
-  dubina: "dubina (mm)",
-  namjena: "namjena",
-  uzemljenje: "uzemljenje",
-  zona: "zona",
-  ugradeno: "ugrađeno",
-  izgraden: "izgrađen",
-  // zelenilo i komunalno
-  zelena_povrsina: "zelena površina",
-  vrsta_stabla: "vrsta stabla",
-  lokacija: "lokacija",
-  vlasnik: "vlasnik",
-  polozaj: "položaj",
-  plan: "plan",
-  zaduzeno: "zaduženo (EUR)",
-  naplaceno: "naplaćeno (EUR)",
-  postotak_naplate: "naplata (%)",
-  opis: "opis",
-};
 /** Redom kojim se traži naslov; prvo pronađeno postaje podebljana glava. */
 const NASLOV_POLJA = ["naziv", "ulica", "oznaka", "broj", "vrsta", "tip"];
 
@@ -1064,14 +1092,7 @@ function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
         p[k] !== undefined &&
         p[k] !== null
     )
-    .map(([k, ime]) => {
-      const v = p[k];
-      const tekst =
-        typeof v === "number"
-          ? v.toLocaleString("hr-HR", { maximumFractionDigits: 1 })
-          : String(v);
-      return `${esc(ime)}: ${esc(tekst)}`;
-    });
+    .map(([k, ime]) => `${esc(ime)}: ${esc(vrijednostPolja(p[k]))}`);
   // Obuhvati planova nose poveznicu na sam dokument na split.hr. Ispisana
   // kao tekst ne vrijedi ništa — cijela je poanta da se s karte može otići
   // čitati plan koji na tom mjestu vrijedi.

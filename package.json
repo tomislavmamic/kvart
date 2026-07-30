@@ -15,6 +15,7 @@
     "import-grad-geo": "tsx scripts/import-split-gis.ts"
   },
   "dependencies": {
+    "@turf/turf": "^7.3.5",
     "@vercel/blob": "^2.5.0",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.3",
@@ -27,7 +28,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@turf/turf": "^7.3.5",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/proj4": "^2.5.6",
