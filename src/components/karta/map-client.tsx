@@ -852,7 +852,12 @@ function dodajSloj(
             lyr.bindPopup(popupPromjene(p));
             return;
           }
-          if (p.vrsta) {
+          // Uvjet ide na `opis_vrste`, a ne na `vrsta`: `opis_vrste` postavlja
+          // samo merge-roads.py i nosi ga svaka prometnica, dok `vrsta` ima i
+          // pola slojeva iz gradskog GIS-a (kotar, rasvjeta, kulturno dobro…).
+          // Dok se granalo po `vrsta`, klik na kotar Mejaši davao je natpis
+          // „prometnica”.
+          if (p.opis_vrste) {
             const razred = p.highway
               ? (IME_RAZREDA[p.highway.replace(/_link$/, "")] ?? p.highway)
               : p.opis_vrste;
@@ -866,9 +871,22 @@ function dodajSloj(
             );
             return;
           }
-          const label = p.namjena
-            ? `${p.namjena}${p.godina ? ` — GUP ${p.godina}.` : ""}`
-            : (p.naziv ?? p.geografskoime ?? p.name ?? p.NAZIV ?? null);
+          // Namjena ide prva: ona ima svoj oblik natpisa (s godinom GUP-a)
+          // koji općeniti ispis polja ne bi pogodio.
+          if (p.namjena) {
+            lyr.bindPopup(
+              `${p.namjena}${p.godina ? ` — GUP ${p.godina}.` : ""}`
+            );
+            return;
+          }
+          // Slojevi gradskog GIS-a imaju vlastiti ispis polja. Vezan je uz
+          // putanju, a ne uz oblik podataka, da općeniti ispis ne počne
+          // iskakati i nad OSM slojevima koji dosad nisu imali skočni prozor.
+          if (layer.url.startsWith("/geo/grad/")) {
+            lyr.bindPopup(popupGrad(p, layer.label));
+            return;
+          }
+          const label = p.naziv ?? p.geografskoime ?? p.name ?? p.NAZIV ?? null;
           if (label) lyr.bindPopup(String(label));
         },
       });
@@ -923,6 +941,92 @@ function esc(v: unknown): string {
  * navodi se doslovno — to je jedini dio prikaza koji ne izvodimo mi nego ga
  * plan tvrdi o sebi, pa stoji odvojeno od naše računice.
  */
+/**
+ * Skočni prozor za slojeve iz GIS izvoza Grada (scripts/import-split-gis.ts).
+ *
+ * Ti slojevi nemaju zajednički oblik — cesta nosi upravitelja, cijev promjer,
+ * čestica broj — pa se natpis sastavlja od onoga što objekt doista ima.
+ * Uvoz je već izbacio prazne vrijednosti, tako da je prisutnost polja ujedno
+ * i znak da ga vrijedi pokazati.
+ */
+const IME_POLJA: Record<string, string> = {
+  vrsta: "vrsta",
+  tip: "tip",
+  medij: "sadržaj",
+  materijal: "materijal",
+  promjer: "promjer (mm)",
+  profil: "profil (mm)",
+  napon: "napon (kV)",
+  izvedba: "izvedba",
+  godina: "godina izgradnje",
+  sirina: "širina (m)",
+  duljina: "duljina (m)",
+  povrsina: "površina (m²)",
+  tlocrt: "tlocrt (m²)",
+  korisna: "korisna površina (m²)",
+  upravitelj: "upravitelj",
+  grad: "grad",
+  ko: "katastarska općina",
+  cestica: "čestica",
+  cestice: "čestice",
+  datacija: "datacija",
+  status: "status zaštite",
+  adresa: "adresa",
+  napomena: "napomena",
+  opis: "opis",
+};
+/** Redom kojim se traži naslov; prvo pronađeno postaje podebljana glava. */
+const NASLOV_POLJA = ["naziv", "ulica", "oznaka", "broj", "vrsta", "tip"];
+
+/**
+ * Naslov + polja koja je naslov već potrošio (da se ne ponove u tijelu).
+ * Adresa i čestica imaju ustaljen zapis koji redoslijed polja ne pogađa:
+ * kućni broj se piše „Dračevac 48”, a čestica „k.č. 392/3”.
+ */
+function naslovGrada(
+  p: Record<string, unknown>
+): { glava: string; potroseno: string[] } | null {
+  if (p.ulica != null && p.broj != null) {
+    return { glava: `${p.ulica} ${p.broj}`, potroseno: ["ulica", "broj"] };
+  }
+  if (p.cestica != null) {
+    const ko = p.ko != null ? `, k.o. ${p.ko}` : "";
+    return { glava: `k.č. ${p.cestica}${ko}`, potroseno: ["cestica", "ko"] };
+  }
+  const kljuc = NASLOV_POLJA.find((k) => p[k] !== undefined && p[k] !== null);
+  return kljuc ? { glava: String(p[kljuc]), potroseno: [kljuc] } : null;
+}
+
+/**
+ * `nazivSloja` je zaliha za objekte bez ikakva imena — zgradu, pješački
+ * prijelaz ili izbočinu. Bez njega bi klik na njih davao ništa, a upravo je
+ * „što je ovo?” jedino pitanje koje stanar nad takvom točkom ima.
+ */
+function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
+  const naslov = naslovGrada(p) ?? { glava: nazivSloja, potroseno: [] };
+  const redci = Object.entries(IME_POLJA)
+    .filter(
+      ([k]) =>
+        !naslov.potroseno.includes(k) &&
+        p[k] !== undefined &&
+        p[k] !== null
+    )
+    .map(([k, ime]) => {
+      const v = p[k];
+      const tekst =
+        typeof v === "number"
+          ? v.toLocaleString("hr-HR", { maximumFractionDigits: 1 })
+          : String(v);
+      return `${esc(ime)}: ${esc(tekst)}`;
+    });
+  const glava = `<b>${esc(naslov.glava)}</b>`;
+  if (redci.length === 0) return glava;
+  return (
+    glava +
+    `<br><span style="color:#6b746d">${redci.join("<br>")}</span>`
+  );
+}
+
 function popupPromjene(p: Record<string, unknown>): string {
   const ha = Number(p.povrsina_m2) / 1e4;
   const glava =

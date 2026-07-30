@@ -11,7 +11,8 @@
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "extract-geo": "tsx scripts/extract-geodata.ts",
     "clip-geo": "tsx scripts/clip-geodata.ts",
-    "check-layers": "tsx scripts/check-layers.ts"
+    "check-layers": "tsx scripts/check-layers.ts",
+    "import-grad-geo": "tsx scripts/import-split-gis.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.5.0",

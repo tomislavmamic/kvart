@@ -204,6 +204,51 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    // Službena granica mjesne samouprave. Dračevac i Bilice nisu zasebni
+    // kotarevi nego dio Gradskog kotara Mejaši — a to je adresa na koju
+    // prijedlog iz kvarta zapravo ide.
+    id: "kotar",
+    label: "Gradski kotar / mjesni odbor",
+    type: "geojson",
+    url: "/geo/grad/kotar.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#be123c",
+    group: "Urbanizam",
+    phase: 1,
+  },
+  {
+    id: "katastar",
+    label: "Katastarske čestice (2024.)",
+    type: "geojson",
+    url: "/geo/grad/katastar.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#a16207",
+    group: "Urbanizam",
+    phase: 1,
+  },
+  {
+    // Gradski sloj objekata iz 2025. — noviji i potpuniji od OSM-ova
+    // („zgrade”), a uz tlocrt nosi i korisnu površinu.
+    id: "zgrade-2025",
+    label: "Zgrade — evidencija Grada (2025.)",
+    type: "geojson",
+    url: "/geo/grad/zgrade-2025.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#57534e",
+    group: "Urbanizam",
+    phase: 1,
+  },
+  {
+    id: "kucni-brojevi",
+    label: "Kućni brojevi",
+    type: "geojson",
+    url: "/geo/grad/kucni-brojevi.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#0f766e",
+    group: "Urbanizam",
+    phase: 1,
+  },
+  {
     id: "stanovnistvo",
     label: "Stanovništvo (Popis 2021., 1 km)",
     type: "geojson",
@@ -316,6 +361,59 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    // Odgovara na pitanje „tko ovo održava”: nerazvrstane ceste su u
+    // nadležnosti Grada, pa je pritužba na rupu ili rasvjetu njegova stvar,
+    // a ne Hrvatskih cesta. Svojstvo `upravitelj` nosi taj podatak.
+    id: "ceste-nerazvrstane",
+    label: "Nerazvrstane ceste (nadležnost Grada)",
+    type: "geojson",
+    url: "/geo/grad/ceste-nerazvrstane.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#fb923c",
+    group: "Mobilnost",
+    phase: 1,
+  },
+  {
+    id: "nogostupi",
+    label: "Nogostupi (sa širinom)",
+    type: "geojson",
+    url: "/geo/grad/nogostupi.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#38bdf8",
+    group: "Mobilnost",
+    phase: 1,
+  },
+  {
+    id: "pjesacki-prijelazi",
+    label: "Pješački prijelazi",
+    type: "geojson",
+    url: "/geo/grad/pjesacki-prijelazi.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#f8fafc",
+    group: "Mobilnost",
+    phase: 1,
+  },
+  {
+    id: "izbocine",
+    label: "Izbočine za usporavanje",
+    type: "geojson",
+    url: "/geo/grad/izbocine.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#ef4444",
+    group: "Mobilnost",
+    phase: 1,
+  },
+  {
+    id: "prometni-znakovi",
+    label: "Prometni znakovi",
+    type: "geojson",
+    url: "/geo/grad/prometni-znakovi.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#2563eb",
+    group: "Mobilnost",
+    phase: 1,
+  },
+  {
     id: "parkiralista",
     label: "Parkirališta",
     type: "geojson",
@@ -348,6 +446,69 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    id: "vodovod",
+    label: "Vodovodna mreža",
+    type: "geojson",
+    url: "/geo/grad/vodovod.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#0284c7",
+    group: "Infrastruktura",
+    phase: 1,
+  },
+  {
+    // `medij` razlikuje oborinsku, fekalnu i mješovitu odvodnju — po tome se
+    // vidi gdje kiša i kanalizacija dijele istu cijev, što je uzrok
+    // prelijevanja za kojim se stanari najčešće javljaju.
+    id: "odvodnja",
+    label: "Odvodnja (oborinska, fekalna, mješovita)",
+    type: "geojson",
+    url: "/geo/grad/odvodnja.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#7c3aed",
+    group: "Infrastruktura",
+    phase: 1,
+  },
+  {
+    id: "hidranti",
+    label: "Hidranti",
+    type: "geojson",
+    url: "/geo/grad/hidranti.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#dc2626",
+    group: "Infrastruktura",
+    phase: 1,
+  },
+  {
+    id: "trafostanice",
+    label: "Trafostanice (SN)",
+    type: "geojson",
+    url: "/geo/grad/trafostanice.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#eab308",
+    group: "Infrastruktura",
+    phase: 1,
+  },
+  {
+    id: "rasvjeta",
+    label: "Javna rasvjeta (stupovi)",
+    type: "geojson",
+    url: "/geo/grad/rasvjeta.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#fde047",
+    group: "Infrastruktura",
+    phase: 1,
+  },
+  {
+    id: "telekom-trase",
+    label: "Telekom — trase DTK",
+    type: "geojson",
+    url: "/geo/grad/telekom-trase.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#c084fc",
+    group: "Infrastruktura",
+    phase: 1,
+  },
+  {
     id: "internet",
     label: "Dostupne brzine interneta",
     type: "geojson",
@@ -376,6 +537,31 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     url: "/geo/sadrzaji.geojson",
     attribution: "© OpenStreetMap contributors",
     color: "#8b5cf6",
+    group: "Javni prostori",
+    phase: 1,
+  },
+
+  {
+    id: "igralista",
+    label: "Dječja igrališta",
+    type: "geojson",
+    url: "/geo/grad/igralista.geojson",
+    attribution: "Grad Split — GIS izvoz",
+    color: "#ec4899",
+    group: "Javni prostori",
+    phase: 1,
+  },
+  {
+    // Kroz kvart prolazi trasa Dioklecijanova vodovoda — zaštićeno
+    // arheološko dobro, pa gradnja iznad njega ima posebne uvjete.
+    id: "kulturno-dobro",
+    label: "Zaštićena kulturna dobra",
+    type: "geojson",
+    url: "/geo/grad/kulturno-dobro.geojson",
+    attribution:
+      "Registar kulturnih dobara — Ministarstvo kulture i medija · " +
+      "Grad Split (GIS izvoz)",
+    color: "#b45309",
     group: "Javni prostori",
     phase: 1,
   },
@@ -452,9 +638,13 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   },
   // ---------- DPU radne zone Dračevac (vektorizirano iz PDF-a) ----------
   // Izvučeno iz službenih CAD listova plana i georeferencirano prema ISPU
-  // obuhvatu — vidi scripts/vectorize-plans.py. Ovo su jedini vektorski
-  // podaci o vodovodu, odvodnji i telekomu koje uopće imamo: u OSM-u ih za
-  // ovo područje nema nijedan objekt.
+  // obuhvatu — vidi scripts/vectorize-plans.py. U OSM-u za ovo područje
+  // nema nijednog takvog objekta.
+  //
+  // Otkad postoji GIS izvoz Grada (scripts/import-split-gis.ts), za iste
+  // vodove imamo i izvedeno stanje. Slojevi se ne preklapaju nego dopunjuju:
+  // ovo je ono što plan propisuje, „Vodovodna mreža” i „Odvodnja” su ono što
+  // je u zemlji — pa se po razlici vidi što od plana još nije izvedeno.
   {
     id: "dpu-vodoopskrba",
     label: "Vodoopskrba (DPU Dračevac)",
@@ -729,10 +919,17 @@ export const MAP_VIEWS: MapView[] = [
     id: "mobilnost",
     label: "Mobilnost",
     description:
-      "Autobusi, ulična mreža, pješačke staze i parkirališta.",
+      "Autobusi, ulična mreža, pješačke staze i parkirališta, te ono po čemu " +
+      "se pješice zapravo hoda — nogostupi sa širinom, prijelazi, izbočine " +
+      "za usporavanje i prometni znakovi.",
     layerIds: [
       "stajalista",
       "ceste-sve",
+      "ceste-nerazvrstane",
+      "nogostupi",
+      "pjesacki-prijelazi",
+      "izbocine",
+      "prometni-znakovi",
       "parkiralista",
       "zivi-autobusi",
     ],
@@ -745,9 +942,11 @@ export const MAP_VIEWS: MapView[] = [
       "preklopa. Puna crta je postojeće — ulice iz OSM-a s razredom i imenom " +
       "(klik daje podlogu i ograničenje) te državne ceste; crtkana je " +
       "planirano — koridori s listova GUP-a i prometne površine iz DPU-a " +
-      "radne zone Dračevac.",
+      "radne zone Dračevac. Zaseban sloj nerazvrstanih cesta pokazuje koje " +
+      "dionice održava Grad Split — to je nadležnost na koju ide prijava.",
     layerIds: [
       "ceste-sve",
+      "ceste-nerazvrstane",
       "parkiralista",
     ],
   },
@@ -771,6 +970,10 @@ export const MAP_VIEWS: MapView[] = [
       "upu-namjena-zelenilo",
       "dpu-granica",
       "dpu-gradivi-dio",
+      "kotar",
+      "katastar",
+      "zgrade-2025",
+      "kucni-brojevi",
       "zgrade",
       "stanovnistvo",
     ],
@@ -793,10 +996,18 @@ export const MAP_VIEWS: MapView[] = [
     id: "infrastruktura",
     label: "Infrastruktura",
     description:
-      "Struja, internet i energetika. Vodovod, odvodnja, plin i telekom postoje " +
-      "samo za radnu zonu Dračevac — izvučeni su iz grafičkih listova DPU-a jer " +
-      "ih ni ViK ni HEP ni OSM ne objavljuju.",
+      "Izvedeno stanje mreža iz evidencije Grada: vodovod, odvodnja s " +
+      "razlikovanjem oborinske i fekalne, hidranti, trafostanice, stupovi " +
+      "javne rasvjete i trase telekoma. Uz to slojevi iz DPU-a radne zone " +
+      "Dračevac, koji pokazuju što je planom propisano — po razlici se vidi " +
+      "što još nije izvedeno.",
     layerIds: [
+      "vodovod",
+      "odvodnja",
+      "hidranti",
+      "trafostanice",
+      "rasvjeta",
+      "telekom-trase",
       "struja",
       "internet",
       "solar",
@@ -812,8 +1023,15 @@ export const MAP_VIEWS: MapView[] = [
     id: "javni-prostori",
     label: "Javni prostori",
     description:
-      "Škole, igrališta, sportski tereni, zelene površine i ostali javni sadržaji.",
-    layerIds: ["sadrzaji", "zelene-povrsine"],
+      "Škole, igrališta, sportski tereni, zelene površine i ostali javni " +
+      "sadržaji, uz zaštićena kulturna dobra — kroz kvart prolazi trasa " +
+      "Dioklecijanova vodovoda.",
+    layerIds: [
+      "sadrzaji",
+      "igralista",
+      "kulturno-dobro",
+      "zelene-povrsine",
+    ],
   },
   {
     id: "okolis-rizici",
