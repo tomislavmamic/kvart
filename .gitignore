@@ -53,3 +53,12 @@ __pycache__/
 # preuzeti prostorni arhivi u korijenu (SHP.zip i sl.) — prevelik za git,
 # a `git add -A` ih inače pokupi
 /*.zip
+
+# Katastarske čestice s vlasništvom: stupci iz zemljišne knjige imenuju
+# fizičke osobe, uz OIB, i bilježe hipoteke i služnosti. Repozitorij je
+# javan, pa bi commit bio objava osobnih podataka — i trajna, jer datoteka
+# ostaje u povijesti i nakon što je se obriše.
+#
+# Sloj zato postoji samo lokalno: izrađuje ga `npm run import-grad-geo`, a
+# karta ga prikazuje samo pod `next dev` (vidi SAMO_LOKALNO u map-views.ts).
+/public/geo/grad/katastar-vlasnistvo.geojson

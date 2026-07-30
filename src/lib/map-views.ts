@@ -139,6 +139,161 @@ export const BASE_LAYERS: BaseLayer[] = [
   },
 ];
 
+/**
+ * Slojevi iz GIS izvoza Grada Splita (scripts/import-split-gis.ts).
+ *
+ * Njih je 70 i svi dijele oblik — statični GeoJSON pod /geo/grad/, ista
+ * atribucija, faza 1 — pa stoje kao tablica umjesto kao 70 gotovo
+ * jednakih objekata. Redak je [id, natpis, skupina, boja]; `id` je ujedno
+ * ime datoteke, čime se gubi cijela vrsta greške u kojoj se to dvoje
+ * raziđe. Poredak unutar skupine je poredak u bočnoj traci.
+ */
+const GRAD_SLOJEVI = [
+  // --- Urbanizam ---
+  ["kotar", "Gradski kotar / mjesni odbor", "Urbanizam", "#be123c"],
+  ["naselja", "Naselja (službena granica)", "Urbanizam", "#9f1239"],
+  ["planovi-obuhvat", "Prostorni planovi — što gdje vrijedi", "Urbanizam", "#7c3aed"],
+  ["planovi-obuhvat-pp", "Obuhvati planova (PPUG, GUP, UPU)", "Urbanizam", "#8b5cf6"],
+  ["zgrade-2025", "Zgrade — evidencija Grada (2025.)", "Urbanizam", "#57534e"],
+  ["zgrade-visine", "Zgrade s visinom i obujmom", "Urbanizam", "#44403c"],
+  ["korisna-povrsina", "Korisna površina zgrada", "Urbanizam", "#78716c"],
+  ["kiosci-plan", "Plan kioska", "Urbanizam", "#a8a29e"],
+  ["kiosci-zone", "Zone kioska", "Urbanizam", "#d6d3d1"],
+  ["komunalna-naknada", "Naplata komunalne naknade", "Urbanizam", "#f59e0b"],
+
+  // --- Katastar i adrese ---
+  ["katastar", "Katastarske čestice (2024.)", "Katastar i adrese", "#a16207"],
+  ["katastar-vlasnistvo", "Čestice s vlasništvom i teretima", "Katastar i adrese", "#854d0e"],
+  ["katastar-objekti", "Katastarski objekti", "Katastar i adrese", "#ca8a04"],
+  ["granice-ko", "Granice katastarskih općina", "Katastar i adrese", "#713f12"],
+  ["kucni-brojevi", "Kućni brojevi", "Katastar i adrese", "#0f766e"],
+  ["adrese", "Adrese s popisnim krugom", "Katastar i adrese", "#0d9488"],
+  ["zgrade-adrese", "Zgrade s kućnim brojem", "Katastar i adrese", "#115e59"],
+  ["popisni-krugovi", "Popisni krugovi (Popis 2021.)", "Katastar i adrese", "#6366f1"],
+  ["statisticki-krugovi", "Statistički krugovi", "Katastar i adrese", "#818cf8"],
+
+  // --- Mobilnost ---
+  ["ceste-nerazvrstane", "Nerazvrstane ceste (nadležnost Grada)", "Mobilnost", "#fb923c"],
+  ["ceste-dionice", "Dionice cesta (s imenima)", "Mobilnost", "#f97316"],
+  ["ulice-osi", "Osi ulica (službeni nazivi)", "Mobilnost", "#ea580c"],
+  ["ulice-podrucja", "Područja ulica", "Mobilnost", "#fdba74"],
+  ["drzavne-ceste", "Državne ceste (D1, D8, D432)", "Mobilnost", "#dc2626"],
+  ["nogostupi", "Nogostupi (sa širinom)", "Mobilnost", "#38bdf8"],
+  ["pjesacki-prijelazi", "Pješački prijelazi", "Mobilnost", "#f8fafc"],
+  ["izbocine", "Izbočine za usporavanje", "Mobilnost", "#ef4444"],
+  ["prometni-znakovi", "Prometni znakovi", "Mobilnost", "#2563eb"],
+  ["odbojne-ograde", "Odbojne ograde", "Mobilnost", "#64748b"],
+  ["stajalista-grad", "Autobusna stajališta (Grad)", "Mobilnost", "#047857"],
+  ["nadstresnice", "Nadstrešnice na stajalištima", "Mobilnost", "#059669"],
+  ["parkiraliste-grad", "Javno parkiralište", "Mobilnost", "#475569"],
+
+  // --- Voda i odvodnja ---
+  ["vodovod", "Vodovodna mreža", "Voda i odvodnja", "#0284c7"],
+  ["vodovod-spojevi", "Vodovod — spojevi", "Voda i odvodnja", "#0369a1"],
+  ["vodovod-zatvaraci", "Vodovod — zatvarači", "Voda i odvodnja", "#075985"],
+  ["vodovod-kanali", "Vodovod — kanali", "Voda i odvodnja", "#0c4a6e"],
+  ["vodovod-podrucja", "Vodoopskrbna područja", "Voda i odvodnja", "#7dd3fc"],
+  ["hidranti", "Hidranti", "Voda i odvodnja", "#dc2626"],
+  ["odvodnja", "Odvodnja (oborinska, fekalna, mješovita)", "Voda i odvodnja", "#7c3aed"],
+  ["odvodnja-okna", "Odvodnja — revizijska okna", "Voda i odvodnja", "#6d28d9"],
+  ["odvodnja-slivnici", "Slivnici (gdje kiša ulazi u sustav)", "Voda i odvodnja", "#a78bfa"],
+  ["odvodnja-tlacni", "Odvodnja — tlačni vodovi", "Voda i odvodnja", "#5b21b6"],
+  ["odvodnja-gradevine", "Odvodnja — građevine", "Voda i odvodnja", "#c4b5fd"],
+
+  // --- Struja i sunce ---
+  ["struja-nn", "Niskonaponska mreža i kućni priključci", "Struja i sunce", "#facc15"],
+  ["struja-nn-stupovi", "Niskonaponski stupovi", "Struja i sunce", "#eab308"],
+  ["struja-nn-ormarici", "Kabelski ormarići (KRO)", "Struja i sunce", "#ca8a04"],
+  ["struja-sn", "Srednjenaponska mreža (do 35 kV)", "Struja i sunce", "#f97316"],
+  ["struja-vn-110", "Dalekovodi 110 kV i 220 kV", "Struja i sunce", "#b91c1c"],
+  ["struja-stupovi-vn", "Stupovi SN i VN mreže", "Struja i sunce", "#9a3412"],
+  ["trafostanice", "Trafostanice (SN) — točke", "Struja i sunce", "#fbbf24"],
+  ["trafostanice-plohe", "Trafostanice (SN) — tlocrt", "Struja i sunce", "#f59e0b"],
+  ["trafostanica-110", "Trafostanica 110/35 kV Meterize", "Struja i sunce", "#7f1d1d"],
+  ["solar-krovovi", "Solarni potencijal po plohi krova", "Struja i sunce", "#fde047"],
+
+  // --- Telekom i rasvjeta ---
+  ["telekom-trase", "Telekom — trase DTK", "Telekom i rasvjeta", "#c084fc"],
+  ["telekom-sahte", "Telekom — šahte DTK", "Telekom i rasvjeta", "#a855f7"],
+  ["telekom-ht-podzemno", "HT — podzemne trase", "Telekom i rasvjeta", "#9333ea"],
+  ["telekom-ht-nadzemno", "HT — nadzemne trase", "Telekom i rasvjeta", "#d8b4fe"],
+  ["telekom-ht-zdenci", "HT — zdenci (s adresom)", "Telekom i rasvjeta", "#7e22ce"],
+  ["telekom-ht-stupovi", "HT — stupovi", "Telekom i rasvjeta", "#6b21a8"],
+  ["rasvjeta", "Javna rasvjeta (stupovi)", "Telekom i rasvjeta", "#fde047"],
+  ["rasvjeta-mjesta", "Rasvjetna mjesta (s ugradnjom)", "Telekom i rasvjeta", "#fef08a"],
+  ["rasvjeta-zone", "Zone javne rasvjete", "Telekom i rasvjeta", "#fef9c3"],
+  ["rasvjeta-trafostanice", "Rasvjeta — trafostanice", "Telekom i rasvjeta", "#facc15"],
+
+  // --- Javni prostori ---
+  ["igralista", "Dječja igrališta", "Javni prostori", "#ec4899"],
+  ["kulturno-dobro", "Zaštićena kulturna dobra", "Javni prostori", "#b45309"],
+  ["zelene-zone", "Zelene površine (ZP Mejaši)", "Javni prostori", "#16a34a"],
+  ["zelenilo-oprema", "Klupe i stolovi za piknik", "Javni prostori", "#15803d"],
+  ["zelenilo-kosevi", "Koševi za otpad", "Javni prostori", "#166534"],
+  ["zelenilo-vjezbaliste", "Vježbalište na otvorenom", "Javni prostori", "#22c55e"],
+  // Natpis se namjerno razlikuje od sloja `zeleni-katastar`: ondje je riječ
+  // o zelenom katastru sa split-gisportala, a ovdje o jedinom stablu koje
+  // gradska evidencija u kvartu uopće bilježi.
+  ["zelenilo-stabla", "Stabla u evidenciji Grada", "Javni prostori", "#14532d"],
+] as const satisfies ReadonlyArray<readonly [string, string, string, string]>;
+
+/**
+ * Slojevi koji postoje samo na razvojnom stroju.
+ *
+ * Čestice s vlasništvom imenuju fizičke osobe, uz OIB, i bilježe hipoteke i
+ * služnosti. Repozitorij je javan, pa commit te datoteke JEST objava — i to
+ * trajna, jer ostaje u povijesti i nakon brisanja. Zato datoteka nije u
+ * gitu (vidi .gitignore), a sloj se ne upisuje u registar izvan razvoja:
+ * inače bi na produkciji stajala kvačica koja ne crta ništa.
+ *
+ * Uvjet je `NODE_ENV === "development"`, dakle samo `next dev`. Svaka
+ * gradnja — i lokalna i na Vercelu, uključujući preglede grana — sloj
+ * izostavlja. Provjera se obavlja pri gradnji, pa kod uopće ne dospije u
+ * produkcijski svežanj.
+ */
+const SAMO_LOKALNO: ReadonlySet<string> = new Set(["katastar-vlasnistvo"]);
+const JE_RAZVOJ = process.env.NODE_ENV === "development";
+
+const ATRIBUCIJA_GRADA = "Grad Split — GIS izvoz";
+
+/** Slojevi čiji podatak potječe od nekog drugog, pa im atribucija nije ista. */
+const ATRIBUCIJA_IZNIMKE: Record<string, string> = {
+  "kulturno-dobro":
+    "Registar kulturnih dobara — Ministarstvo kulture i medija · " +
+    "Grad Split (GIS izvoz)",
+  "struja-nn": "HEP ODS · Grad Split (GIS izvoz)",
+  "struja-nn-stupovi": "HEP ODS · Grad Split (GIS izvoz)",
+  "struja-nn-ormarici": "HEP ODS · Grad Split (GIS izvoz)",
+  "struja-sn": "HEP ODS · Grad Split (GIS izvoz)",
+  "struja-vn-110": "HEP ODS · Grad Split (GIS izvoz)",
+  "struja-stupovi-vn": "HEP ODS · Grad Split (GIS izvoz)",
+  "trafostanice": "HEP ODS · Grad Split (GIS izvoz)",
+  "trafostanice-plohe": "HEP ODS · Grad Split (GIS izvoz)",
+  "trafostanica-110": "HEP ODS · Grad Split (GIS izvoz)",
+  "telekom-ht-podzemno": "Hrvatski telekom · Grad Split (GIS izvoz)",
+  "telekom-ht-nadzemno": "Hrvatski telekom · Grad Split (GIS izvoz)",
+  "telekom-ht-zdenci": "Hrvatski telekom · Grad Split (GIS izvoz)",
+  "telekom-ht-stupovi": "Hrvatski telekom · Grad Split (GIS izvoz)",
+  "popisni-krugovi": "SRPJ — Državna geodetska uprava · Grad Split (GIS izvoz)",
+  "statisticki-krugovi":
+    "SRPJ — Državna geodetska uprava · Grad Split (GIS izvoz)",
+};
+
+function gradniSloj(
+  [id, label, group, color]: (typeof GRAD_SLOJEVI)[number]
+): OverlayLayer {
+  return {
+    id,
+    label,
+    type: "geojson",
+    url: `/geo/grad/${id}.geojson`,
+    attribution: ATRIBUCIJA_IZNIMKE[id] ?? ATRIBUCIJA_GRADA,
+    color,
+    group,
+    phase: 1,
+  };
+}
+
 export const OVERLAY_LAYERS: OverlayLayer[] = [
   // ---------- Urbanizam ----------
   {
@@ -380,6 +535,7 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
 
+
   // ---------- Planirana infrastruktura (ISPU IS_* listovi) ----------
   // Konvencija listova: IS_1 promet · IS_2 elektroničke komunikacije i
   // energetika · IS_3 vodoopskrba · IS_4 odvodnja (otpadne/oborinske).
@@ -452,9 +608,13 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   },
   // ---------- DPU radne zone Dračevac (vektorizirano iz PDF-a) ----------
   // Izvučeno iz službenih CAD listova plana i georeferencirano prema ISPU
-  // obuhvatu — vidi scripts/vectorize-plans.py. Ovo su jedini vektorski
-  // podaci o vodovodu, odvodnji i telekomu koje uopće imamo: u OSM-u ih za
-  // ovo područje nema nijedan objekt.
+  // obuhvatu — vidi scripts/vectorize-plans.py. U OSM-u za ovo područje
+  // nema nijednog takvog objekta.
+  //
+  // Otkad postoji GIS izvoz Grada (scripts/import-split-gis.ts), za iste
+  // vodove imamo i izvedeno stanje. Slojevi se ne preklapaju nego dopunjuju:
+  // ovo je ono što plan propisuje, „Vodovodna mreža” i „Odvodnja” su ono što
+  // je u zemlji — pa se po razlici vidi što od plana još nije izvedeno.
   {
     id: "dpu-vodoopskrba",
     label: "Vodoopskrba (DPU Dračevac)",
@@ -715,6 +875,9 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     group: "Okoliš i rizici",
     phase: 2,
   },
+  ...GRAD_SLOJEVI.filter(
+    ([id]) => JE_RAZVOJ || !SAMO_LOKALNO.has(id)
+  ).map(gradniSloj),
 ];
 
 export const MAP_VIEWS: MapView[] = [
@@ -729,11 +892,25 @@ export const MAP_VIEWS: MapView[] = [
     id: "mobilnost",
     label: "Mobilnost",
     description:
-      "Autobusi, ulična mreža, pješačke staze i parkirališta.",
+      "Autobusi, ulična mreža, pješačke staze i parkirališta, te ono po čemu " +
+      "se pješice zapravo hoda — nogostupi sa širinom, prijelazi, izbočine " +
+      "za usporavanje i prometni znakovi.",
     layerIds: [
       "stajalista",
       "ceste-sve",
+      "ceste-nerazvrstane",
+      "ceste-dionice",
+      "ulice-osi",
+      "drzavne-ceste",
+      "nogostupi",
+      "pjesacki-prijelazi",
+      "izbocine",
+      "prometni-znakovi",
+      "odbojne-ograde",
+      "stajalista-grad",
+      "nadstresnice",
       "parkiralista",
+      "parkiraliste-grad",
       "zivi-autobusi",
     ],
   },
@@ -745,9 +922,11 @@ export const MAP_VIEWS: MapView[] = [
       "preklopa. Puna crta je postojeće — ulice iz OSM-a s razredom i imenom " +
       "(klik daje podlogu i ograničenje) te državne ceste; crtkana je " +
       "planirano — koridori s listova GUP-a i prometne površine iz DPU-a " +
-      "radne zone Dračevac.",
+      "radne zone Dračevac. Zaseban sloj nerazvrstanih cesta pokazuje koje " +
+      "dionice održava Grad Split — to je nadležnost na koju ide prijava.",
     layerIds: [
       "ceste-sve",
+      "ceste-nerazvrstane",
       "parkiralista",
     ],
   },
@@ -771,6 +950,11 @@ export const MAP_VIEWS: MapView[] = [
       "upu-namjena-zelenilo",
       "dpu-granica",
       "dpu-gradivi-dio",
+      "kotar",
+      "naselja",
+      "planovi-obuhvat",
+      "zgrade-2025",
+      "zgrade-visine",
       "zgrade",
       "stanovnistvo",
     ],
@@ -793,10 +977,33 @@ export const MAP_VIEWS: MapView[] = [
     id: "infrastruktura",
     label: "Infrastruktura",
     description:
-      "Struja, internet i energetika. Vodovod, odvodnja, plin i telekom postoje " +
-      "samo za radnu zonu Dračevac — izvučeni su iz grafičkih listova DPU-a jer " +
-      "ih ni ViK ni HEP ni OSM ne objavljuju.",
+      "Izvedeno stanje mreža iz evidencije Grada: vodovod, odvodnja s " +
+      "razlikovanjem oborinske i fekalne, hidranti, trafostanice, stupovi " +
+      "javne rasvjete i trase telekoma. Uz to slojevi iz DPU-a radne zone " +
+      "Dračevac, koji pokazuju što je planom propisano — po razlici se vidi " +
+      "što još nije izvedeno.",
     layerIds: [
+      "vodovod",
+      "vodovod-spojevi",
+      "vodovod-zatvaraci",
+      "hidranti",
+      "odvodnja",
+      "odvodnja-okna",
+      "odvodnja-slivnici",
+      "odvodnja-tlacni",
+      "struja-nn",
+      "struja-nn-stupovi",
+      "struja-sn",
+      "struja-vn-110",
+      "trafostanice",
+      "trafostanice-plohe",
+      "solar-krovovi",
+      "rasvjeta",
+      "rasvjeta-mjesta",
+      "telekom-trase",
+      "telekom-sahte",
+      "telekom-ht-podzemno",
+      "telekom-ht-zdenci",
       "struja",
       "internet",
       "solar",
@@ -812,8 +1019,46 @@ export const MAP_VIEWS: MapView[] = [
     id: "javni-prostori",
     label: "Javni prostori",
     description:
-      "Škole, igrališta, sportski tereni, zelene površine i ostali javni sadržaji.",
-    layerIds: ["sadrzaji", "zelene-povrsine"],
+      "Škole, igrališta, sportski tereni, zelene površine i ostali javni " +
+      "sadržaji, uz zaštićena kulturna dobra — kroz kvart prolazi trasa " +
+      "Dioklecijanova vodovoda.",
+    layerIds: [
+      "sadrzaji",
+      "igralista",
+      "zelene-zone",
+      "zelenilo-oprema",
+      "zelenilo-vjezbaliste",
+      "zelenilo-kosevi",
+      "kulturno-dobro",
+      "zelene-povrsine",
+    ],
+  },
+  {
+    id: "katastar",
+    label: "Katastar i adrese",
+    description:
+      "Čestice, kućni brojevi i granice katastarskih općina, uz popisne " +
+      "krugove Popisa 2021. Podatak o vlasništvu postoji u gradskoj " +
+      "evidenciji, ali ovdje se ne objavljuje: imenuje fizičke osobe uz OIB " +
+      "i bilježi hipoteke, pa stoji samo na razvojnom stroju.",
+    layerIds: [
+      "katastar",
+      "katastar-vlasnistvo",
+      "katastar-objekti",
+      "granice-ko",
+      "kucni-brojevi",
+      "adrese",
+      "popisni-krugovi",
+    ],
+  },
+  {
+    id: "planovi-obuhvat",
+    label: "Koji plan vrijedi",
+    description:
+      "Za svako mjesto u kvartu: koji ga prostorni planovi pokrivaju. Klik " +
+      "na plohu daje naziv plana i poveznicu na sam dokument na split.hr, " +
+      "pa se s karte može otići čitati odredbe koje ondje vrijede.",
+    layerIds: ["planovi-obuhvat", "planovi-obuhvat-pp", "kotar", "naselja"],
   },
   {
     id: "okolis-rizici",
