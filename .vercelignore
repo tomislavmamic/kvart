@@ -1,0 +1,32 @@
+# Što se NE šalje Vercelu pri objavi iz radnog direktorija.
+#
+# Postoji zato što se ovaj projekt objavljuje i preko `vercel --prod`, a
+# tada se šalje sadržaj mape, ne ono što je u gitu. Čim ova datoteka
+# postoji, Vercel prestaje gledati .gitignore — pa sve što ne smije van
+# mora pisati ovdje, uključujući stvari koje .gitignore već pokriva.
+
+# Tajne. .env.local nosi lozinku moderatora, potpisni ključ sesije i
+# pristupne podatke baze; predložak (.env.example) smije van jer u njemu
+# nema nijedne prave vrijednosti.
+.env
+.env.*
+!.env.example
+
+# Katastarske čestice s vlasništvom: imenuju fizičke osobe uz OIB i
+# bilježe hipoteke. Datoteka postoji samo na razvojnom stroju (vidi
+# .gitignore i SAMO_LOKALNO u src/lib/map-views.ts). Bez ovog retka
+# objava iz radnog direktorija poslala bi je na javnu stranicu — što
+# .gitignore ne može spriječiti jer ovdje git nije u igri.
+/public/geo/grad/katastar-vlasnistvo.geojson
+
+# Izvorna građa: prevelika, a za rad stranice nepotrebna.
+/*.zip
+/data/sources/
+/public/geo/planovi/preview/
+
+# Rezultati gradnje i alati — Vercel gradi iznova.
+/.next/
+/node_modules/
+/.git/
+__pycache__/
+*.tsbuildinfo
