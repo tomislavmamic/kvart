@@ -24,6 +24,11 @@
 /data/sources/
 /public/geo/planovi/preview/
 
+# Podloge za širi obuhvat: 42 MB ulaza iz kojih je izračunata analiza.
+# Objavljuje se rezultat (/public/geo/analiza/ i slobodne-cestice.html),
+# ne građa — stranica nosi geometriju u sebi i ove datoteke ne dohvaća.
+/public/geo/sire/
+
 # Rezultati gradnje i alati — Vercel gradi iznova.
 /.next/
 /node_modules/

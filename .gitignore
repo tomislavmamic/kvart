@@ -65,3 +65,9 @@ __pycache__/
 # Sloj zato postoji samo lokalno: izrađuje ga `npm run import-grad-geo`, a
 # karta ga prikazuje samo pod `next dev` (vidi SAMO_LOKALNO u map-views.ts).
 /public/geo/grad/katastar-vlasnistvo.geojson
+
+# Podloge za širi obuhvat (42 MB) — katastar, zgrade i ceste izrezani iz
+# SHP.zip za prozor praćene namjene. Nisu u gitu jer ih `npm run
+# izvadi-sire` u minuti izvadi iz arhive, a rezultat analize (mali
+# GeoJSON u /public/geo/analiza/ i gotova stranica) jest.
+/public/geo/sire/

@@ -220,7 +220,10 @@ export function MapClient() {
       out.add(usporedba.toLayerId);
       return out;
     }
-    for (const layerId of Object.values(dimValue)) out.add(layerId);
+    // Prazna vrijednost znači ugašenu podlogu — dimenzija smije biti i
+    // nijedna. Bez toga se izvedeni slojevi (npr. slobodne čestice) ne mogu
+    // gledati bez šarene namjene ispod, koja ih preglasa.
+    for (const layerId of Object.values(dimValue)) if (layerId) out.add(layerId);
     if (usporedba) out.add(usporedba.layerId);
     return out;
   }, [activeIds, dimValue, usporedba, klizac]);
@@ -565,6 +568,20 @@ function Sidebar(props: {
               {props.klizac ? "Klizač uspoređuje" : dimenzija.label}
             </p>
             <div className="flex flex-wrap gap-1">
+              {/* Klizač uspoređuje dvije godine, pa ondje ugasiti podlogu
+                  nema smisla — nema što uspoređivati. */}
+              {!props.klizac && (
+                <button
+                  onClick={() => props.onDimValue(dimenzija.id, "")}
+                  className={`rounded px-2 py-1 font-medium ${
+                    !props.dimValue[dimenzija.id]
+                      ? "bg-zinc-800 text-white"
+                      : "bg-white text-zinc-700 hover:bg-zinc-200"
+                  }`}
+                >
+                  bez podloge
+                </button>
+              )}
               {dimenzija.values.map((v) => (
                 <button
                   key={v.layerId}
@@ -639,7 +656,9 @@ function Sidebar(props: {
           </div>
         )}
 
-        {dimenzija && (
+        {/* Legenda pripada podlozi, pa s ugašenom podlogom nema što tumačiti —
+            inače objašnjava boje kojih na karti nema. */}
+        {dimenzija && (props.dimValue[dimenzija.id] || props.klizac) && (
           <div className="mt-4">
             <p className="mb-1 font-bold uppercase tracking-wide text-zinc-500">
               Namjena
