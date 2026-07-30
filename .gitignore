@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# …osim predloška: on nosi samo imena varijabli i objašnjenja, nijednu
+# pravu vrijednost, a bez njega se ne vidi što treba postaviti.
+!.env.example
 
 # vercel
 .vercel

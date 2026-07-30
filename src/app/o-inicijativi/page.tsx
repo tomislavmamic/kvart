@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+import { WhatsAppButton, WHATSAPP_URL } from "@/components/whatsapp-button";
 import { STATUSES } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "O inicijativi" };
 
-const SUBREDDIT = process.env.NEXT_PUBLIC_SUBREDDIT ?? "DracevacBilice";
+/**
+ * Reddit je odložen: razgovor kvarta vodi se u WhatsApp grupi.
+ *
+ * Zajednica r/DracevacBilice nikad nije otvorena — poveznica je vodila na
+ * Redditovu stranicu „We couldn't find that community”, uz koju Reddit sam
+ * predlaže nasumične zajednice, među njima i one označene NSFW.
+ *
+ * Ostaje uvjetovan prikaz umjesto brisanja: polje `redditUrl` po prijedlogu
+ * i dalje postoji u bazi i administraciji, pa se otvaranjem subreddita i
+ * postavljanjem NEXT_PUBLIC_SUBREDDIT sve vrati bez ikakve izmjene koda.
+ * Dok varijable nema, o Redditu se ne piše ništa.
+ */
+const SUBREDDIT = process.env.NEXT_PUBLIC_SUBREDDIT?.trim() || null;
 
 const STATUS_EXPLANATIONS: Record<keyof typeof STATUSES, string> = {
   objavljeno: "prijedlog je pregledan i javno objavljen na stranici",
@@ -33,25 +45,39 @@ export default function AboutPage() {
 
       <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <h2 className="text-lg font-bold">Gdje se odvija razgovor?</h2>
-        <ul className="mt-3 space-y-3 text-sm text-zinc-700">
-          <li>
-            <strong>WhatsApp grupa</strong> — svakodnevni razgovor i brze
-            obavijesti. <span className="block sm:inline" />
-            <span className="mt-2 inline-block">
-              <WhatsAppButton />
+
+        {/* WhatsApp je jedini živi kanal kvarta, pa ne stoji kao natuknica
+            među ostalima nego ima svoj okvir i dugme. */}
+        {WHATSAPP_URL && (
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <p className="font-semibold text-emerald-900">
+              WhatsApp grupa kvarta
+            </p>
+            <p className="mt-1 text-sm text-emerald-900/80">
+              Svakodnevni razgovor, brze obavijesti i dogovori. Ondje se
+              najbrže vidi koga još muči isto.
+            </p>
+            <span className="mt-3 inline-block">
+              <WhatsAppButton large />
             </span>
-          </li>
-          <li>
-            <strong>Reddit</strong> — dublja rasprava o pojedinim prijedlozima:{" "}
-            <a
-              href={`https://www.reddit.com/r/${SUBREDDIT}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-700 underline"
-            >
-              r/{SUBREDDIT}
-            </a>
-          </li>
+          </div>
+        )}
+
+        <ul className="mt-3 space-y-3 text-sm text-zinc-700">
+          {SUBREDDIT && (
+            <li>
+              <strong>Reddit</strong> — dublja rasprava o pojedinim
+              prijedlozima:{" "}
+              <a
+                href={`https://www.reddit.com/r/${SUBREDDIT}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-700 underline"
+              >
+                r/{SUBREDDIT}
+              </a>
+            </li>
+          )}
           <li>
             <strong>Ova stranica</strong> — trajna evidencija: prijedlozi,
             statusi, dokumenti.{" "}

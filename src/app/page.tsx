@@ -2,11 +2,10 @@ import Link from "next/link";
 import { getStats, getRecentUpdates } from "@/lib/queries";
 import { StatusBadge } from "@/components/status-badge";
 import { formatDate } from "@/lib/format";
+import { WHATSAPP_URL } from "@/components/whatsapp-button";
 
 export const dynamic = "force-dynamic";
 
-const WHATSAPP_URL =
-  process.env.NEXT_PUBLIC_WHATSAPP_URL ?? "https://chat.whatsapp.com/";
 
 export default async function HomePage() {
   const [stats, updates] = await Promise.all([getStats(), getRecentUpdates(5)]);
@@ -62,14 +61,16 @@ export default async function HomePage() {
               >
                 Prijavi problem
               </Link>
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-white/70 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
-              >
-                WhatsApp grupa
-              </a>
+              {WHATSAPP_URL && (
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-white/70 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+                >
+                  WhatsApp grupa
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -145,8 +146,8 @@ export default async function HomePage() {
           <li className="rounded-lg bg-zinc-50 p-4">
             <span className="font-bold text-emerald-700">2. Raspravite</span>
             <p className="mt-1">
-              Svaki prijedlog ima raspravu na Redditu, a brze dogovore vodimo u
-              WhatsApp grupi.
+              Razgovor i dogovor idu u WhatsApp grupi kvarta — ondje se najbrže
+              vidi koga još muči isto.
             </p>
           </li>
           <li className="rounded-lg bg-zinc-50 p-4">
