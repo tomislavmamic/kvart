@@ -76,6 +76,11 @@ export interface Namjena {
   nacrt: { kod: string; opis: string } | null;
   /** Popunjeno ako je čestica u izvedenom sloju slobodnih čestica. */
   slobodna: { slobodno_m2: number; bez_pristupa: boolean } | null;
+  /**
+   * Zašto čestica NIJE u tom sloju, kad namjena inače dopušta stanovanje.
+   * Postoji da se odsutnost izriče: prešućena, čita se kao dopuštenje.
+   */
+  izvan: string | null;
 }
 
 export interface Dosje {

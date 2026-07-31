@@ -264,12 +264,64 @@ export function MapClient() {
   // Trenutačno istaknuta čestica — drži se da je se može vratiti u izvorni
   // stil kad se odabere druga ili kad se ploča zatvori.
   const istaknuto = useRef<Isticanje | null>(null);
+  /** Biljeg na točki dosjea — postoji i kad nijedan poligon nije pogođen. */
+  const biljeg = useRef<LeafletNS.Marker | null>(null);
+
+  const postaviBiljeg = (lat: number, lng: number) => {
+    const L = LRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    biljeg.current?.remove();
+    biljeg.current = L.marker([lat, lng], {
+      interactive: false,
+      keyboard: false,
+      icon: L.divIcon({
+        className: "",
+        iconSize: [0, 0],
+        html:
+          '<span style="position:absolute;left:-11px;top:-11px;width:22px;' +
+          'height:22px;border-radius:9999px;border:3px solid #18181b;' +
+          'box-shadow:0 0 0 3px rgba(255,255,255,.9),0 1px 6px rgba(0,0,0,.5)">' +
+          "</span>",
+      }),
+    }).addTo(map);
+  };
+
+  const maknniBiljeg = () => {
+    biljeg.current?.remove();
+    biljeg.current = null;
+  };
+
+  const pomakniIzpodPloce = (lat: number, lng: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const v = map.getSize();
+    // Na uskom je ploča donjih 72 %, pa cilj ide u gornju trećinu; na
+    // širokom zauzima desnu stranu, pa cilj ide ulijevo od sredine.
+    const t = map.latLngToContainerPoint([lat, lng]);
+    // Širina se čita ovdje, a ne iz zatvorenja: `otvoriDosje` je stvoren
+    // jednom pri prvom iscrtavanju, pa bi `usko` iz njega zauvijek ostalo
+    // ono što je bilo na početku.
+    const naUskom = window.matchMedia("(max-width: 1023px)").matches;
+    const cilj = naUskom
+      ? { x: v.x / 2, y: v.y * 0.17 }
+      : { x: v.x * 0.28, y: v.y / 2 };
+    map.panBy([t.x - cilj.x, t.y - cilj.y], { animate: true, duration: 0.4 });
+  };
 
   const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
     const moj = ++dosjeZahtjev.current;
     istaknuto.current?.vrati();
     istaknuto.current = oznaci ?? null;
     oznaci?.istakni();
+    // Bez oznake na karti dosje opisuje česticu koju nitko ne vidi. Ploha
+    // se istakne samo kad je klik pogodio poligon katastra; klik na prazno
+    // i duboka poveznica nisu imali ništa. Biljeg stoji uvijek.
+    postaviBiljeg(lat, lng);
+    // I pomakni kartu tako da čestica ne završi ispod ploče: ploča zauzima
+    // desnu polovicu na širokom i donjih 72 % na uskom zaslonu, pa se
+    // središte pomiče u preostali dio, a ne na sredinu prozora.
+    pomakniIzpodPloce(lat, lng);
     setCestica([lat, lng]);
     setDosje(null);
     setDosjeGreska(null);
@@ -668,6 +720,7 @@ export function MapClient() {
     dosjeZahtjev.current++;
     istaknuto.current?.vrati();
     istaknuto.current = null;
+    maknniBiljeg();
     setDosje(null);
     setDosjeGreska(null);
     setDosjeUcitavanje(false);
@@ -830,6 +883,13 @@ function TrakaPogleda({
   viewId: string;
   onSelectView: (id: string) => void;
 }) {
+  // Traka je šira od zaslona, a odabrani čip zna biti tisuću piksela desno.
+  // Poveznica iz WhatsAppa tako otvara pogled na kojem ništa ne izgleda
+  // odabrano — pa se aktivni čip sam dovuče u vidno polje.
+  const aktivni = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    aktivni.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [viewId]);
   return (
     <nav
       aria-label="Pogled"
@@ -840,6 +900,8 @@ function TrakaPogleda({
           key={v.id}
           onClick={() => onSelectView(v.id)}
           aria-current={v.id === viewId}
+          aria-pressed={v.id === viewId}
+          ref={v.id === viewId ? aktivni : undefined}
           className={`fokus meta-cip shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
             v.id === viewId
               ? "border-emerald-700 bg-emerald-700 text-white"
@@ -900,7 +962,7 @@ function Sidebar(props: {
         onClick={() => props.onOpen(true)}
         className={
           usko
-            ? "fokus absolute inset-x-0 bottom-0 z-[1050] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] pt-3 pb-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur"
+            ? "fokus meta absolute inset-x-0 bottom-0 z-[1050] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur"
             : "fokus absolute left-3 top-16 z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
         }
       >
@@ -947,6 +1009,7 @@ function Sidebar(props: {
                   key={v.id}
                   onClick={() => props.onSelectView(v.id)}
                   aria-current={v.id === props.viewId}
+                  aria-pressed={v.id === props.viewId}
                   className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
                     v.id === props.viewId
                       ? "border-emerald-700 bg-emerald-700 text-white"
@@ -1142,7 +1205,7 @@ function Kvacica({
   return (
     <label
       className={`meta flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-50 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emerald-700 ${
-        sloj.phase === 2 ? "opacity-60" : ""
+        sloj.phase === 2 ? "cursor-not-allowed" : ""
       }`}
     >
       <input
@@ -1166,7 +1229,21 @@ function Kvacica({
         )}
         {stanje === "greska" && (
           <span className="ml-1.5 font-medium text-rose-700">
-            nije se učitao
+            nije se učitao{" "}
+            <button
+              type="button"
+              onClick={(e) => {
+                // Ponovni pokušaj je gašenje pa paljenje: sloj se briše iz
+                // registra i sljedeći prolaz ga dohvaća iznova.
+                e.preventDefault();
+                e.stopPropagation();
+                onToggle(sloj.id);
+                setTimeout(() => onToggle(sloj.id), 0);
+              }}
+              className="fokus underline hover:text-rose-900"
+            >
+              pokušaj ponovno
+            </button>
           </span>
         )}
       </span>
@@ -1388,7 +1465,7 @@ function Cip({
   // Bijelo na emerald-600 daje 3,65 : 1 — ispod praga. Filled stanje zato
   // stoji na emerald-700 (5,43 : 1). Vidi The Contrast Floor Rule.
   const izabrano = crveni
-    ? "bg-red-700 text-white"
+    ? "bg-rose-700 text-white"
     : tamni
       ? "bg-zinc-800 text-white"
       : "bg-emerald-700 text-white";
@@ -1676,6 +1753,13 @@ function dodajSloj(
 const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar",
   "katastar-vlasnistvo",
+  // Izvedeni sloj mora voditi u dosje, ne u skočni prozor s „M/K5”.
+  //
+  // Bio je običan sloj s natpisom, pa je u pogledu „Gdje se može graditi
+  // stan” dodir na zelenu česticu vraćao dva znaka i gasio klik na kartu —
+  // vlastita analiza inicijative stajala je na putu čitanju vlastite
+  // analize. Ovdje je odgovor dosje, koji tu istu analizu i ispisuje.
+  "stambeno-slobodno",
 ]);
 
 /**
@@ -1907,22 +1991,30 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
       </p>
     );
   }
-  const { kod, opis, godina, stanovanje, nacrt, slobodna } = namjena;
+  const { kod, opis, godina, stanovanje, nacrt, slobodna, izvan } = namjena;
+  // Boja slijedi ISHOD, ne namjenu.
+  //
+  // Prije je okvir bio zelen čim namjena dopušta stanovanje — pa je zaključana
+  // čestica dobivala zeleni okvir oko rečenice „ovdje se ne gradi”, a K5 s
+  // četiri zgrade zeleni okvir bez ijedne ograde. Boja koja proturječi
+  // rečenici pokraj sebe je gore od nikakve, i krši One Green Rule: maslina
+  // označava ono na što se može djelovati, ne raspoloženje.
+  const povoljno = stanovanje && slobodna !== null && !slobodna.bez_pristupa;
   return (
     <section
       className={`mb-3 rounded-lg border px-3 py-2.5 ${
-        stanovanje
+        povoljno
           ? "border-emerald-200 bg-emerald-50"
           : "border-zinc-200 bg-zinc-50"
       }`}
     >
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
         Namjena
       </h3>
       <p className="mt-0.5 text-base font-semibold leading-snug text-zinc-900">
         <span className="font-mono">{kod}</span> — {opis}
       </p>
-      <p className="mt-1 text-sm font-medium text-zinc-800">
+      <p className="mt-1 text-base font-medium leading-snug text-zinc-800">
         {stanovanje
           ? "Ova namjena dopušta stanovanje."
           : "Ova namjena ne dopušta stanovanje."}
@@ -1932,7 +2024,7 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
       </p>
 
       {nacrt && (
-        <p className="mt-2 border-t border-black/10 pt-2 text-sm text-zinc-800">
+        <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
           Nacrt izmjena iz 2024. ovdje predlaže{" "}
           <span className="font-mono font-semibold">{nacrt.kod}</span> —{" "}
           {nacrt.opis}.
@@ -1940,7 +2032,7 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
       )}
 
       {slobodna && (
-        <p className="mt-2 border-t border-black/10 pt-2 text-sm text-zinc-800">
+        <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
           {slobodna.bez_pristupa ? (
             <>
               Čestica je u sloju slobodnih, ali{" "}
@@ -1959,7 +2051,14 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
         </p>
       )}
 
-      <p className="mt-2 text-xs text-zinc-500">
+      {/* Odsutnost se izriče. Prešućena, čita se kao dopuštenje. */}
+      {!slobodna && izvan && (
+        <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
+          Nije u sloju slobodnih čestica — {izvan}.
+        </p>
+      )}
+
+      <p className="mt-2 text-xs text-zinc-600">
         Uputa gdje gledati, ne potvrda — mjerodavni su akt i uvjeti gradnje.
       </p>
     </section>
