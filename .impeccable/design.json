@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T00:00:00.000Z",
+  "title": "Design System: Naš kvart",
+  "extensions": {
+    "colorMeta": {
+      "maslina": {
+        "role": "primary",
+        "displayName": "Maslina",
+        "canonical": "#007956",
+        "tonalRamp": ["#002c22", "#004e3b", "#005f46", "#007956", "#009767", "#00d294", "#5ee9b5", "#d0fae5"]
+      },
+      "maslina-zivo": {
+        "role": "primary",
+        "displayName": "Maslina živa",
+        "canonical": "#009767",
+        "tonalRamp": ["#002c22", "#004e3b", "#005f46", "#007956", "#009767", "#00d294", "#5ee9b5", "#d0fae5"]
+      },
+      "maslina-noc": {
+        "role": "primary",
+        "displayName": "Maslina noć",
+        "canonical": "#002c22",
+        "tonalRamp": ["#002c22", "#004e3b", "#005f46", "#007956", "#009767", "#00d294", "#5ee9b5", "#ecfdf5"]
+      },
+      "maslina-vez": { "role": "primary", "displayName": "Maslina vez", "canonical": "#ecfdf5" },
+      "maslina-rub": { "role": "primary", "displayName": "Maslina rub", "canonical": "#a4f4cf" },
+      "papir": { "role": "neutral", "displayName": "Papir", "canonical": "#ffffff" },
+      "kamen-tlo": {
+        "role": "neutral",
+        "displayName": "Kamen tlo",
+        "canonical": "#e4e4e7",
+        "tonalRamp": ["#09090b", "#18181b", "#3f3f46", "#52525c", "#71717b", "#9f9fa9", "#e4e4e7", "#fafafa"]
+      },
+      "kamen-plitko": { "role": "neutral", "displayName": "Kamen plitko", "canonical": "#f4f4f5" },
+      "kamen-rub": { "role": "neutral", "displayName": "Kamen rub", "canonical": "#d4d4d8" },
+      "kamen-tih": { "role": "neutral", "displayName": "Kamen tih", "canonical": "#9f9fa9" },
+      "kamen-drugi": { "role": "neutral", "displayName": "Kamen drugi", "canonical": "#71717b" },
+      "kamen-tekst": { "role": "neutral", "displayName": "Kamen tekst", "canonical": "#52525c" },
+      "kamen-tinta": {
+        "role": "neutral",
+        "displayName": "Kamen tinta",
+        "canonical": "#18181b",
+        "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525c", "#71717b", "#9f9fa9", "#d4d4d8"]
+      },
+      "status-objavljeno": { "role": "tertiary", "displayName": "Objavljeno", "canonical": "#005986" },
+      "status-poslano": { "role": "tertiary", "displayName": "Poslano gradu", "canonical": "#5d0ec0" },
+      "status-u-tijeku": { "role": "tertiary", "displayName": "U tijeku", "canonical": "#953d00" },
+      "status-rijeseno": { "role": "tertiary", "displayName": "Riješeno", "canonical": "#005f46" },
+      "status-odbijeno": { "role": "tertiary", "displayName": "Odbijeno", "canonical": "#a30037" },
+      "status-ceka": { "role": "tertiary", "displayName": "Na čekanju", "canonical": "#3f3f46" },
+      "whatsapp": { "role": "secondary", "displayName": "WhatsApp brand green", "canonical": "#25d366" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The home hero only. One per site, never one per page." },
+      "headline": { "displayName": "Headline", "purpose": "The page h1. Every route opens with exactly one." },
+      "title": { "displayName": "Title", "purpose": "Section and card headings inside a page." },
+      "body": { "displayName": "Body", "purpose": "Running prose a resident actually reads. Never smaller than 1rem." },
+      "dense": { "displayName": "Dense", "purpose": "Instrument chrome only — map panels, layer lists, metadata rows." },
+      "label": { "displayName": "Label", "purpose": "Uppercase eyebrows structuring a group of controls or content." },
+      "data": { "displayName": "Data", "purpose": "Coordinates, areas, parcel numbers — anything that aligns in a column." }
+    },
+    "shadows": [
+      {
+        "name": "floating-chrome",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Panels that genuinely float above the map. The only resting shadow in the system."
+      },
+      {
+        "name": "hover-lift",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Faintest possible response on an interactive card, paired with a border shift to Maslina."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px #ffffff, 0 0 0 4px #007956",
+        "purpose": "Visible keyboard focus. Required on every interactive element; WCAG AA is the floor."
+      }
+    ],
+    "motion": [
+      { "name": "state", "value": "150ms ease", "purpose": "Colour and border transitions on hover/focus. Colour only — no movement." },
+      { "name": "hero-pan", "value": "90s ease-in-out infinite alternate", "purpose": "The aerial strip drifting west-east behind the home hero." },
+      { "name": "reduced-motion", "value": "prefers-reduced-motion: reduce → animation: none", "purpose": "The hero rests at the Dračevac end instead of panning. Every animation must have this branch." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single most useful next action in a view. Exactly one per screen.",
+      "html": "<button class='ds-btn-primary'>Prijavi problem</button>",
+      "css": ".ds-btn-primary { background: #009767; color: #fff; font: 600 0.875rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 0.75rem 1.5rem; border: none; border-radius: 9999px; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: #007956; } .ds-btn-primary:focus-visible { outline: 2px solid #007956; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Companion action. White ground, operable border, never competes with the primary.",
+      "html": "<button class='ds-btn-secondary'>Preuzmi granicu (GeoJSON)</button>",
+      "css": ".ds-btn-secondary { background: #fff; color: #52525c; font: 600 0.875rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 0.5rem 1rem; border: 1px solid #d4d4d8; border-radius: 0.5rem; cursor: pointer; transition: background 150ms ease, border-color 150ms ease; } .ds-btn-secondary:hover { background: #f4f4f5; } .ds-btn-secondary:focus-visible { outline: 2px solid #007956; outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Signature component. Six statuses as dark ink on a pale ground; read by colour before it is read as text.",
+      "html": "<span class='ds-badge ds-badge--poslano'>Poslano gradu</span> <span class='ds-badge ds-badge--rijeseno'>Riješeno</span> <span class='ds-badge ds-badge--odbijeno'>Odbijeno</span> <span class='ds-badge ds-badge--ceka'>Na čekanju</span>",
+      "css": ".ds-badge { display: inline-block; border-radius: 9999px; padding: 0.125rem 0.625rem; font: 600 0.75rem/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; white-space: nowrap; } .ds-badge--objavljeno { background: #dff2fe; color: #005986; } .ds-badge--poslano { background: #ede9fe; color: #5d0ec0; } .ds-badge--u-tijeku { background: #fef3c6; color: #953d00; } .ds-badge--rijeseno { background: #d0fae5; color: #005f46; } .ds-badge--odbijeno { background: #ffe4e6; color: #a30037; } .ds-badge--ceka { background: #e4e4e7; color: #3f3f46; }"
+    },
+    {
+      "name": "Proposal Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "One entry in the register. No outline — it stands on the kamen-tlo ground. Hover shifts to a Maslina ring; the shadow only confirms it.",
+      "html": "<div class='ds-card-stage'><a class='ds-card' href='#'><div class='ds-card__top'><h3 class='ds-card__title'>Rasvjeta ne radi u Dračevačkoj</h3><span class='ds-badge ds-badge--poslano'>Poslano gradu</span></div><p class='ds-card__body'>Tri stupa javne rasvjete ne rade više od mjesec dana, ulica je navečer potpuno mračna.</p><div class='ds-card__meta'><span class='ds-card__place'>Dračevac</span><span>Javna rasvjeta</span><span>ažurirano 12. srpnja 2026.</span></div></a></div>",
+      "css": ".ds-card-stage { background: #e4e4e7; padding: 1rem; border-radius: 0.875rem; } .ds-card { display: block; background: #fff; border: none; border-radius: 0.75rem; padding: 1.25rem; text-decoration: none; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: box-shadow 150ms ease; } .ds-card:hover { box-shadow: 0 0 0 2px #00d294, 0 1px 2px 0 rgb(0 0 0 / 0.05); } .ds-card:focus-visible { outline: 2px solid #007956; outline-offset: 2px; } .ds-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; } .ds-card__title { margin: 0; font-size: 1rem; font-weight: 600; color: #18181b; } .ds-card__body { margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.5; color: #52525c; } .ds-card__meta { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin-top: 0.75rem; font-size: 0.75rem; color: #71717b; } .ds-card__place { font-weight: 500; color: #007956; } .ds-badge { display: inline-block; border-radius: 9999px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; } .ds-badge--poslano { background: #ede9fe; color: #5d0ec0; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Form field. The focus ring shown here is the doctrine — the incumbent form fields are missing it.",
+      "html": "<label class='ds-field'><span class='ds-field__label'>Naslov problema</span><input class='ds-input' type='text' placeholder='Npr. rasvjeta ne radi u Dračevačkoj' /></label>",
+      "css": ".ds-field { display: block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-field__label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 600; color: #3f3f46; } .ds-input { width: 100%; background: #fff; color: #18181b; border: 1px solid #d4d4d8; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font: 400 1rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input::placeholder { color: #9f9fa9; } .ds-input:hover { border-color: #9f9fa9; } .ds-input:focus { outline: none; border-color: #007956; box-shadow: 0 0 0 2px rgb(0 121 86 / 0.25); }"
+    },
+    {
+      "name": "View Chip",
+      "kind": "chip",
+      "refersTo": "chip-view",
+      "description": "Single-choice selector on the map. Selected fills with Maslina; a neutral 'none' state fills with ink instead.",
+      "html": "<div class='ds-chips'><button class='ds-chip ds-chip--on'>Svi slojevi</button><button class='ds-chip'>Krajobraz</button><button class='ds-chip'>Mobilnost</button><button class='ds-chip ds-chip--none'>bez podloge</button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-chip { background: #fff; color: #3f3f46; border: 1px solid #d4d4d8; border-radius: 9999px; padding: 0.25rem 0.625rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 150ms ease, color 150ms ease; } .ds-chip:hover { background: #f4f4f5; } .ds-chip:focus-visible { outline: 2px solid #007956; outline-offset: 2px; } .ds-chip--on { background: #009767; border-color: #009767; color: #fff; } .ds-chip--on:hover { background: #007956; } .ds-chip--none { background: #27272a; border-color: #27272a; color: #fff; }"
+    },
+    {
+      "name": "Floating Map Panel",
+      "kind": "custom",
+      "refersTo": "panel-floating",
+      "description": "Signature component. Translucent white over the map with a collapse control and dense controls inside.",
+      "html": "<aside class='ds-panel'><header class='ds-panel__head'><span class='ds-panel__title'>Podloga</span><button class='ds-panel__collapse'>sakrij ⟩</button></header><div class='ds-panel__body'><p class='ds-panel__eyebrow'>Namjena prema planu iz</p><div class='ds-chips'><button class='ds-chip ds-chip--none'>bez podloge</button><button class='ds-chip'>2024. (nacrt)</button><button class='ds-chip ds-chip--on'>2015. (na snazi)</button></div></div></aside>",
+      "css": ".ds-panel { width: 14rem; background: rgb(255 255 255 / 0.95); backdrop-filter: blur(8px); border: 1px solid #e4e4e7; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); overflow: hidden; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-panel__head { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e4e4e7; } .ds-panel__title { font-size: 0.875rem; font-weight: 700; color: #18181b; } .ds-panel__collapse { background: none; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; color: #71717b; cursor: pointer; } .ds-panel__collapse:hover { background: #f4f4f5; } .ds-panel__body { padding: 0.5rem 0.75rem 0.75rem; } .ds-panel__eyebrow { margin: 0 0 0.375rem; font-size: 0.75rem; font-weight: 600; color: #52525c; }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Uppercase eyebrow structuring a group. Sparse by design — it organises, it does not decorate.",
+      "html": "<p class='ds-eyebrow'>U ovom pogledu</p>",
+      "css": ".ds-eyebrow { margin: 0; font: 700 0.75rem/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: #71717b; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Zemljovid i zapisnik",
+    "overview": "This system runs on two registers with different authority, and knowing which one you are in is the first design decision on any screen. The minutes are everything the initiative writes: proposals, statuses, documents, the record of what was sent to the City and what came back. That register is ours to design, and it is deliberately plain — a municipal register that earns trust by being legible, dated and sourced rather than by being persuasive. The map is everything the initiative did not author: land-use colours printed in the GUP's own tumač znakova, seventy city-GIS layers, cadastral boundaries. That register is inherited. Its colours are evidence, and evidence does not get restyled to match a brand.\n\nThe material world is paper and stone. A quiet off-white ground, white surfaces laid on it, olive used sparingly for anything you can act on. There are no webfonts and no illustration; the only image in the product is a real aerial photograph of the two neighbourhoods, and the only saturated colour outside the accent is either a status or something the plan itself coloured. Corners are generously rounded because the thing is read by neighbours on a phone, not by analysts at a desk — the shape is warm even where the palette is sober.\n\nWhat it is not: this is not a campaign. There are no slogans, no party colours, no candidate faces. It is also not a SaaS product borrowing institutional weight it hasn't got — no gradient hero, no abstract 3D, no logo wall. And it is emphatically not the 2009 municipal portal that residents already expect when they hear \"prostorni plan\": no grey nested tables, no clip-art, nothing that breaks on a phone.",
+    "keyCharacteristics": [
+      "Two registers: authored minutes (designed) and inherited map (never restyled).",
+      "Paper on stone: the ground is deep enough to separate surfaces on its own, so neither shadow nor outline has to.",
+      "Olive marks action and affiliation only — never decoration.",
+      "Zero font bytes: the system stack, on purpose.",
+      "Warm geometry, sober colour: pills and generous radii, restrained palette.",
+      "Phone in the street is the design scene, not the desktop."
+    ],
+    "rules": [
+      {
+        "name": "The Two Registers Rule",
+        "body": "Colour that came from an official document is evidence, not decoration. GUP land-use fills, city-GIS layer colours and plan legends are reproduced exactly as the source prints them, including when they clash with Maslina and Kamen. Never harmonise a plan's palette to the brand; the whole value of the map is that it shows what the plan says.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Green Rule",
+        "body": "Maslina marks two things only: something you can act on, and something that belongs to the kvart. It is never a background for mood, never a decorative rule, never a heading colour. If a green element does not answer \"act\" or \"ours\", it is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rose-Not-Red Rule",
+        "body": "Refusal and error use Rose, never a pure alarm red. The register reports outcomes; it does not editorialise them. Red is reserved for map semantics that are genuinely about danger or exclusion.",
+        "section": "colors"
+      },
+      {
+        "name": "The Zero-Byte Rule",
+        "body": "No webfonts. Not a display face, not an icon font, not \"just one weight\". The system stack is a commitment to the slow-connection requirement, and it is not up for renegotiation on aesthetic grounds.",
+        "section": "typography"
+      },
+      {
+        "name": "The Reading-Size Rule",
+        "body": "Prose is 1rem. The 0.875rem Dense role is for instrument chrome only — map panels, dense tables, metadata lines. A paragraph a resident is expected to read is never set at Dense, no matter how much copy needs to fit. Audit test: if it is a sentence in a <p> that carries meaning, it is 1rem or larger.",
+        "section": "typography"
+      },
+      {
+        "name": "The Croatian Typographic Rule",
+        "body": "Decimal comma, not point. Croatian plural forms (1 ploha / 2–4 plohe / 5+ ploha). Dates in Croatian format. This applies to every number the interface renders, including in map tooltips and downloads.",
+        "section": "typography"
+      },
+      {
+        "name": "The Bottom-Sheet Fallback Rule",
+        "body": "When two floating panels cannot both fit beside the content at a given width, the secondary one becomes a bottom sheet rather than shrinking. Three squeezed columns serve nobody.",
+        "section": "layout"
+      },
+      {
+        "name": "The 1.2 : 1 Rule",
+        "body": "A border is added when the contrast ratio between a surface and whatever sits behind it falls below 1.2 : 1, and not otherwise. That threshold keeps lines exactly where tone genuinely cannot work: form fields and secondary buttons (white on white), and floating panels over the map, where the ground is an aerial photograph with no tone to step against. Audit test: name the two colours and compute the ratio. If it is above 1.2 : 1, the border is decoration.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Climbing-Ramp Rule",
+        "body": "The neutral ramp goes one way — ground up to paper. A panel nested inside a card does not step back down to a grey; it stays white with more space around it, or it steps up. Three greys nested inside each other read as mush no matter how carefully the steps are chosen.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Resting-Flat Rule",
+        "body": "Nothing has a shadow at rest unless it is physically floating over other content. If you are tempted to add a resting shadow to make a card \"pop\", the fix is a tonal step or more space around it.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Pressable-Is-Round Rule",
+        "body": "If it is pressable and small, it is a pill. If it holds content, it is a card radius. Never a pill container or a square button.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do reproduce plan and GIS colours exactly as the source document prints them, even when they clash with the palette. The map is evidence.",
+      "Do set prose at 1rem or larger; reserve 0.875rem for instrument chrome.",
+      "Do give every interactive element a visible focus state — a 2px Maslina ring. WCAG AA is the floor, and the current form fields do not meet it.",
+      "Do separate surfaces by climbing the neutral ramp (kamen-tlo → kamen-plitko → papir), and add a 1px line only where the ratio between a surface and its backdrop falls below 1.2 : 1.",
+      "Do move the ground before removing borders. On a #fafafa page the two are not interchangeable — deleting the line there deletes the card.",
+      "Do put exactly one filled Maslina action in a view, and make it the most useful next step.",
+      "Do state absence plainly in empty states — \"Još nema objavljenih dokumenata\" — rather than hiding the section. An honest gap is part of the record.",
+      "Do cite the source next to any figure or layer, and keep licence attribution visible; it is a condition of use, not a courtesy.",
+      "Do design the phone first: single column, thumb-reachable, tap targets no smaller than 44px.",
+      "Do write every number in Croatian conventions — decimal comma, correct plural form, Croatian dates."
+    ],
+    "donts": [
+      "Don't add a webfont. Not for headings, not for icons, not \"just one weight\".",
+      "Don't restyle, recolour or \"clean up\" a plan's palette to match the brand.",
+      "Don't use Maslina decoratively — no green mood backgrounds, no green section rules, no green headings. It marks action and affiliation only.",
+      "Don't give surfaces a resting shadow to make them pop; use a tonal step or more space.",
+      "Don't outline a card that already stands on kamen-tlo. The ground and the border are the same value doing the same job, and doing it twice reads as a boxed-in layout.",
+      "Don't nest a grey panel inside a card. If a group needs distinguishing, give it space or step it up, never back down the ramp.",
+      "Don't ship a campaign artefact: no slogans, no party colours, no candidate imagery, no rallying language.",
+      "Don't borrow SaaS credibility devices — gradient heroes, abstract 3D, stock photography of smiling people, \"trusted by\" logo walls. The initiative is informal and the design should not pretend otherwise.",
+      "Don't reproduce the 2009 municipal portal: no grey nested data tables, no clip-art iconography, nothing that breaks below 640px.",
+      "Don't invent a figure, a status, a count or a citation to fill a layout. If the data is not there, the design must show that it is not there.",
+      "Don't borrow the WhatsApp green for anything other than the WhatsApp button."
+    ]
+  }
+}

@@ -49,6 +49,10 @@ next-env.d.ts
 # python bytecode iz scripts/vectorize-plans.py
 __pycache__/
 
+# Dnevnik sesija alata za dizajn: lokalno stanje za nastavak nakon prekida,
+# ne izvorni kod. Postavke (config.json) ostaju u gitu jer vrijede za projekt.
+/.impeccable/live/sessions/
+
 # PNG predlošci za /admin/georef (18 MB) — izrađuje ih
 # scripts/render-plan-previews.py, alat postoji samo u razvoju
 /public/geo/planovi/preview/
