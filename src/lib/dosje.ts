@@ -21,7 +21,7 @@ import {
 } from "@turf/turf";
 import type { Feature, FeatureCollection, Position } from "geojson";
 import { OVERLAY_LAYERS } from "./map-views";
-import { opisObjekta } from "./polja";
+import { opisObjekta, vrijednostPolja } from "./polja";
 import {
   TEME,
   type Dosje,
@@ -337,6 +337,69 @@ function okviriSijeku(
  * (rub kvarta, more, neobuhvaćeno), dosje se svejedno sastavlja oko točke,
  * jer je i tada korisno vidjeti što je ondje.
  */
+/**
+ * Čestice i adrese koje odgovaraju upisanom nizu.
+ *
+ * Traži se i po broju čestice („392/3”, „392”) i po adresi („Mostine 12”),
+ * jer susjed jedno od toga sigurno zna, a rijetko oboje. Vraća se točka po
+ * pogotku, pa je karta može otvoriti kao i svaki drugi dosje.
+ *
+ * Točka je `pointOnFeature`, ne centroid: centroid udubljene čestice zna
+ * pasti izvan nje, a onda bi dosje opisao susjedovu zemlju.
+ */
+export async function nadiCestice(upit: string): Promise<
+  { naziv: string; opis: string; lat: number; lng: number }[]
+> {
+  const q = upit.toLocaleLowerCase("hr-HR").trim();
+  const out: { naziv: string; opis: string; lat: number; lng: number }[] = [];
+
+  const kat = await ucitaj("/geo/grad/katastar.geojson");
+  if (kat) {
+    for (const f of kat.fc.features) {
+      const br = String(f.properties?.cestica ?? "");
+      if (!br) continue;
+      const brl = br.toLocaleLowerCase("hr-HR");
+      // Točan pogodak, pa početak — „392” ne smije dati „1392”.
+      if (brl !== q && !brl.startsWith(q + "/") && !brl.startsWith(q)) continue;
+      const t = pointOnFeature(f as Feature<never>);
+      const [lng, lat] = t.geometry.coordinates as [number, number];
+      out.push({
+        naziv: `k.č. ${br}`,
+        opis: `k.o. ${f.properties?.ko ?? ""} · ${Math.round(
+          Number(f.properties?.povrsina ?? 0)
+        ).toLocaleString("hr-HR")} m²`,
+        lat,
+        lng,
+      });
+      if (out.length >= 8) return out;
+    }
+  }
+
+  if (out.length === 0) {
+    const adr = await ucitaj("/geo/grad/adrese.geojson");
+    if (adr) {
+      // Isti kućni broj zna imati više točaka (ulaz, zgrada, parcela), pa se
+      // ponavljanja izbacuju — osam puta „Mostine 1” nije osam rezultata.
+      const vidjeno = new Set<string>();
+      for (const f of adr.fc.features) {
+        const ul = String(f.properties?.ulica ?? "");
+        const br = String(f.properties?.broj ?? "");
+        if (!ul) continue;
+        const puna = `${ul} ${br}`.trim();
+        if (!puna.toLocaleLowerCase("hr-HR").includes(q)) continue;
+        const naziv = vrijednostPolja(puna);
+        if (vidjeno.has(naziv)) continue;
+        vidjeno.add(naziv);
+        const t = pointOnFeature(f as Feature<never>);
+        const [lng, lat] = t.geometry.coordinates as [number, number];
+        out.push({ naziv, opis: "adresa", lat, lng });
+        if (out.length >= 8) break;
+      }
+    }
+  }
+  return out;
+}
+
 export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
   const tocka = { type: "Point", coordinates: [lng, lat] as Position } as const;
 

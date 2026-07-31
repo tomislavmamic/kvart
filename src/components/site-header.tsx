@@ -165,7 +165,7 @@ export function PlutajuciIzbornik() {
   return (
     // Iznad ploča karte (z-1100), inače bi ga bočna traka prekrila.
     <div ref={okvir} className="fixed left-3 top-3 z-[1200]">
-      <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white/95 py-1 pl-4 pr-1 shadow-lg backdrop-blur">
+      <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white py-1 pl-4 pr-1 shadow-lg">
         <Link href="/" className="text-sm font-bold tracking-tight">
           Naš kvart{" "}
           <span className="hidden font-normal text-emerald-700 sm:inline">
