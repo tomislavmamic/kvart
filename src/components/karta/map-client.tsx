@@ -790,6 +790,7 @@ export function MapClient() {
         onComparison={setComparisonId}
         nacin={nacin}
         onNacin={setNacin}
+        onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
         open={panelOpen}
         onOpen={otvoriTraku}
         usko={usko}
@@ -846,7 +847,7 @@ function StanjePodloge({
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-auto absolute left-1/2 top-3 z-[1050] flex -translate-x-1/2 items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs shadow backdrop-blur"
+      className="pointer-events-auto absolute left-1/2 top-3 z-[1050] flex -translate-x-1/2 items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow"
     >
       {stanje === "ucitava" ? (
         <>
@@ -912,26 +913,35 @@ function TrakaPogleda({
       className={`fokus meta-cip shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
         v.id === viewId
           ? "border-emerald-700 bg-emerald-700 text-white"
-          : "border-zinc-200 bg-white/95 text-zinc-700 backdrop-blur"
+          : "border-zinc-200 bg-white text-zinc-700"
       }`}
     >
       {v.label}
     </button>
   );
   return (
+    // „Više” stoji IZVAN klizne trake, prikvačeno uz desni rub.
+    //
+    // Mjereno na 390 px: tri pitanja + „Više” traže 515 px, pa je „Više”
+    // počinjalo na x=425 — potpuno izvan zaslona, iza sakrivenog klizača,
+    // bez ijednog znaka da ondje išta ima. Deset pogleda bilo je dostupno
+    // samo pokretom koji se ne da otkriti. Sad se traka kliže ispod njega,
+    // a prijelaz je omekšan da se vidi da ima još.
     <nav
       aria-label="Pogled"
-      className="absolute inset-x-0 top-16 z-[1050] flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="absolute inset-x-0 top-16 z-[1050] flex items-start gap-1.5 px-3 pb-1"
     >
-      {pitanja.map(cip)}
+      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pr-6 [mask-image:linear-gradient(90deg,#000_calc(100%-1.5rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {pitanja.map(cip)}
+        {vise && nacini.map(cip)}
+      </div>
       <button
         onClick={() => setVise((v) => !v)}
         aria-expanded={vise}
-        className="fokus meta-cip shrink-0 whitespace-nowrap rounded-full border border-dashed border-zinc-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm backdrop-blur"
+        className="fokus meta-cip shrink-0 whitespace-nowrap rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm"
       >
         {vise ? "Manje" : `Više (${nacini.length})`}
       </button>
-      {vise && nacini.map(cip)}
     </nav>
   );
 }
@@ -962,26 +972,12 @@ function Sidebar(props: {
   onComparison: (id: string | null) => void;
   nacin: "obris" | "klizac";
   onNacin: (n: "obris" | "klizac") => void;
+  onOtvoriCesticu: (lat: number, lng: number) => void;
   open: boolean;
   onOpen: (v: boolean) => void;
   usko: boolean;
 }) {
   const { currentView, usko } = props;
-  const [trazi, setTrazi] = useState("");
-  // Pretraga ide bez dijakritike i bez obzira na veličinu slova: „daljnovod”
-  // se ne piše, ali „dalekovod” se traži i s „č” i bez njega.
-  const bezKvacica = (v: string) =>
-    v.toLocaleLowerCase("hr-HR").normalize("NFD").replace(/\p{M}/gu, "");
-  const upit = bezKvacica(trazi.trim());
-  const nadeni =
-    upit === ""
-      ? []
-      : OVERLAY_LAYERS.filter(
-          (l) =>
-            !UPRAVLJANI_SLOJEVI.has(l.id) &&
-            (bezKvacica(l.label).includes(upit) ||
-              bezKvacica(l.group).includes(upit))
-        );
   // Slojeve kojima upravlja biralo desno ovdje se ne nudi ni kad ih pogled
   // spominje — inače bi ista podloga imala i kvačicu i čip.
   const odabrani = (currentView?.layerIds ?? [])
@@ -995,6 +991,46 @@ function Sidebar(props: {
         l.group === g && !UPRAVLJANI_SLOJEVI.has(l.id) && !podignuti.has(l.id)
     );
 
+  const [trazi, setTrazi] = useState("");
+  // Pretraga ide bez dijakritike i bez obzira na veličinu slova: „daljnovod”
+  // se ne piše, ali „dalekovod” se traži i s „č” i bez njega.
+  const bezKvacica = (v: string) =>
+    v.toLocaleLowerCase("hr-HR").normalize("NFD").replace(/\p{M}/gu, "");
+  const upit = bezKvacica(trazi.trim());
+  const nadeni =
+    upit === ""
+      ? []
+      : OVERLAY_LAYERS.filter(
+          (l) =>
+            !UPRAVLJANI_SLOJEVI.has(l.id) &&
+            !podignuti.has(l.id) &&
+            (bezKvacica(l.label).includes(upit) ||
+              bezKvacica(l.group).includes(upit))
+        );
+  // Sloj koji je pogled već podigao gore ne ponavlja se u rezultatima (jedan
+  // sloj, jedna kvačica), ali se ni ne prešućuje: „nema ništa” dok stoji dva
+  // reda više bilo bi laž.
+  const nadeniPodignuti =
+    upit === ""
+      ? []
+      : odabrani.filter(
+          (l) =>
+            bezKvacica(l.label).includes(upit) ||
+            bezKvacica(l.group).includes(upit)
+        );
+  // Slojevi kojima upravlja biralo podloge nemaju kvačicu, ali se traže —
+  // „namjena” i „gup” su najtraženiji pojmovi na stranici, a vraćali su
+  // sve osim onoga što se tražilo. Prikazuju se kao uputa, ne kao kvačica.
+  const nadeniUpravljani =
+    upit === ""
+      ? []
+      : OVERLAY_LAYERS.filter(
+          (l) =>
+            UPRAVLJANI_SLOJEVI.has(l.id) &&
+            (bezKvacica(l.label).includes(upit) ||
+              bezKvacica(l.group).includes(upit))
+        );
+
   // Zatvorena: na širokom zaslonu gumb uz rub, na uskom vrpca uz dno —
   // ondje je palac, a i sve ostalo se na telefonu otvara odozdo.
   if (!props.open) {
@@ -1003,7 +1039,7 @@ function Sidebar(props: {
         onClick={() => props.onOpen(true)}
         className={
           usko
-            ? "fokus meta absolute inset-x-0 bottom-0 z-[1050] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur"
+            ? "fokus meta absolute inset-x-0 bottom-0 z-[1050] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)]"
             : "fokus absolute left-3 top-16 z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
         }
       >
@@ -1021,8 +1057,8 @@ function Sidebar(props: {
     <div
       className={
         usko
-          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white/97 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur"
-          : "absolute bottom-3 left-3 top-16 z-[1100] flex w-80 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white/95 shadow-lg backdrop-blur"
+          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)]"
+          : "absolute bottom-3 left-3 top-16 z-[1100] flex w-80 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg"
       }
     >
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
@@ -1177,6 +1213,8 @@ function Sidebar(props: {
           </div>
         )}
 
+        <TraziCesticu onOtvori={props.onOtvoriCesticu} />
+
         {odabrani.length > 0 && (
           <>
             <p className="mb-1 mt-4 text-xs font-bold uppercase tracking-wide text-zinc-500">
@@ -1209,26 +1247,53 @@ function Sidebar(props: {
             <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
           <input
-            type="search"
+            type="text"
             value={trazi}
             onChange={(e) => setTrazi(e.target.value)}
             placeholder="Traži sloj…"
             aria-label="Traži sloj po imenu"
-            className="meta w-full bg-transparent py-1.5 text-sm outline-none placeholder:text-zinc-500"
+            className="meta w-full bg-transparent py-1.5 text-sm outline-none placeholder:text-zinc-600"
           />
           {trazi && (
             <button
               onClick={() => setTrazi("")}
               aria-label="Očisti pretraživanje"
-              className="fokus shrink-0 rounded px-1 text-zinc-500 hover:text-zinc-800"
+              className="fokus meta shrink-0 rounded px-2 text-zinc-600 hover:text-zinc-900"
             >
               ✕
             </button>
           )}
         </label>
 
+        {trazi.trim() !== "" && nadeniPodignuti.length > 0 && (
+          <p className="mb-2 rounded-lg bg-zinc-50 p-2 text-zinc-700">
+            {nadeniPodignuti.map((l) => l.label).join(", ")} — već je gore, u{" "}
+            <b className="font-semibold">U ovom pogledu</b>.
+          </p>
+        )}
+
+        {trazi.trim() !== "" && nadeniUpravljani.length > 0 && (
+          <div className="mb-2 space-y-1 rounded-lg bg-zinc-50 p-2">
+            {nadeniUpravljani.map((l) => (
+              <div key={l.id} className="flex items-start gap-2">
+                <span
+                  aria-hidden
+                  className="mt-1 h-3 w-3 shrink-0 rounded-sm border border-black/20"
+                  style={{ background: l.color }}
+                />
+                <p className="text-zinc-700">
+                  {l.label} — nije kvačica nego podloga, bira se u{" "}
+                  <b className="font-semibold">Podloga i plan</b>.
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {trazi.trim() !== "" ? (
-          nadeni.length === 0 ? (
+          nadeni.length === 0 &&
+          nadeniUpravljani.length === 0 &&
+          nadeniPodignuti.length === 0 ? (
             <p className="py-2 text-zinc-600">
               Nijedan sloj ne odgovara upitu „{trazi}”.
             </p>
@@ -1242,7 +1307,7 @@ function Sidebar(props: {
                     stanje={props.slojStanje[l.id]}
                     onToggle={props.onToggle}
                   />
-                  <p className="pl-8 text-xs text-zinc-500">{l.group}</p>
+                  <p className="pl-8 text-xs text-zinc-600">{l.group}</p>
                 </div>
               ))}
             </div>
@@ -1318,6 +1383,99 @@ function Sidebar(props: {
           .
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Traženje čestice po broju ili adresi.
+ *
+ * Ovo je tipkovnički put do dosjea, kojeg dosad nije bilo: geometrija na
+ * karti nema `tabindex`, pa je korisnik koji ne rukuje mišem mogao proći
+ * kroz svaku kontrolu na stranici i ne otvoriti nijednu česticu — a dosje
+ * je jedino zbog čega stranica postoji. WCAG AA je zapisan kao pod.
+ *
+ * Usput odgovara i na pitanje koje mišem nema odgovora: „znam svoj broj
+ * čestice, gdje je?”
+ */
+function TraziCesticu({
+  onOtvori,
+}: {
+  onOtvori: (lat: number, lng: number) => void;
+}) {
+  const [q, setQ] = useState("");
+  // Rezultat nosi upit za koji je dobiven. Time se „učitavam” i „nema ništa”
+  // IZVODE iz stanja umjesto da se postavljaju — efekt tako ne dira stanje
+  // sinkrono, pa nema kaskadnog iscrtavanja pri svakom slovu.
+  const [odgovor, setOdgovor] = useState<{
+    q: string;
+    lista: { naziv: string; opis: string; lat: number; lng: number }[];
+  }>({ q: "", lista: [] });
+  const zahtjev = useRef(0);
+  const upit = q.trim();
+  const svjez = odgovor.q === upit;
+  const ucitava = upit !== "" && !svjez;
+  const prazno = upit !== "" && svjez && odgovor.lista.length === 0;
+
+  useEffect(() => {
+    const u = q.trim();
+    if (u === "") return;
+    const moj = ++zahtjev.current;
+    // Odgoda, da se ne šalje zahtjev na svako slovo.
+    const t = setTimeout(() => {
+      void (async () => {
+        try {
+          const r = await fetch(`/api/cestica/trazi?q=${encodeURIComponent(u)}`);
+          const d = (await r.json()) as {
+            pogodci?: { naziv: string; opis: string; lat: number; lng: number }[];
+          };
+          if (moj === zahtjev.current) setOdgovor({ q: u, lista: d.pogodci ?? [] });
+        } catch {
+          if (moj === zahtjev.current) setOdgovor({ q: u, lista: [] });
+        }
+      })();
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  return (
+    <div className="mt-4">
+      <label className="block">
+        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">
+          Nađi česticu
+        </span>
+        <input
+          type="text"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="k.č. 392/3 ili Mostine 1"
+          className="fokus meta w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-600"
+        />
+      </label>
+      {ucitava && <p className="mt-1 text-xs text-zinc-600">Tražim…</p>}
+      {prazno && (
+        <p className="mt-1 text-xs text-zinc-600">
+          Ništa pod „{upit}”. Broj čestice ide s kosom crtom, npr. 392/3.
+        </p>
+      )}
+      {svjez && odgovor.lista.length > 0 && (
+        <ul className="mt-1 space-y-0.5">
+          {odgovor.lista.map((p) => (
+            <li key={`${p.naziv}-${p.lat}-${p.lng}`}>
+              <button
+                onClick={() => {
+                  onOtvori(p.lat, p.lng);
+                  setQ("");
+                }}
+                className="fokus meta flex w-full items-baseline gap-2 rounded px-1 text-left hover:bg-zinc-100"
+              >
+                <span className="font-medium text-zinc-900">{p.naziv}</span>
+                <span className="text-xs text-zinc-600">{p.opis}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -1467,7 +1625,7 @@ function Kontrole(props: {
         onClick={() => props.onOpen(true)}
         className={
           usko
-            ? "fokus meta absolute right-3 top-28 z-[1100] rounded-full border border-zinc-200 bg-white/95 px-3 py-2 text-sm font-semibold shadow backdrop-blur"
+            ? "fokus meta absolute right-3 top-28 z-[1100] rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold shadow"
             : "fokus absolute right-3 top-[5.5rem] z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
         }
       >
@@ -1480,8 +1638,8 @@ function Kontrole(props: {
     <div
       className={
         usko
-          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white/97 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur"
-          : "absolute right-3 top-[5.5rem] z-[1100] flex max-h-[calc(100%-7rem)] w-56 max-w-[70vw] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white/95 shadow backdrop-blur"
+          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)]"
+          : "absolute right-3 top-[5.5rem] z-[1100] flex max-h-[calc(100%-7rem)] w-56 max-w-[70vw] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow"
       }
     >
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
@@ -1961,8 +2119,8 @@ interface Isticanje {
  */
 const DOSJE_SVUDA =
   "pointer-events-auto absolute inset-x-0 bottom-0 z-[1150] max-h-[72%] " +
-  "overflow-y-auto rounded-t-xl border-t border-zinc-200 bg-white/97 " +
-  "shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur";
+  "overflow-y-auto rounded-t-xl border-t border-zinc-200 bg-white " +
+  "shadow-[0_-8px_24px_rgba(0,0,0,0.12)]";
 const DOSJE_SAM =
   " lg:inset-x-auto lg:right-3 lg:top-[9rem] lg:bottom-3 lg:max-h-none " +
   "lg:rounded-xl lg:border lg:shadow-lg lg:w-[min(44rem,48vw)]";
@@ -2005,7 +2163,7 @@ function DosjePlaca({
       }
       aria-label="Podaci o čestici"
     >
-      <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-zinc-200 bg-white/97 px-4 py-3">
+      <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3">
         <div>
           {c ? (
             <>
@@ -2195,7 +2353,7 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
         </p>
       )}
 
-      <p className="mt-2 text-xs text-zinc-600">
+      <p className="mt-2 text-sm text-zinc-700">
         Uputa gdje gledati, ne potvrda — mjerodavni su akt i uvjeti gradnje.
       </p>
     </section>
