@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -65,29 +65,7 @@ export function SiteHeader() {
           aria-controls="mobile-nav"
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 sm:hidden"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            {open ? (
-              <>
-                <line x1="6" y1="6" x2="18" y2="18" />
-                <line x1="6" y1="18" x2="18" y2="6" />
-              </>
-            ) : (
-              <>
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </>
-            )}
-          </svg>
+          <Hamburger open={open} />
         </button>
       </div>
 
@@ -123,5 +101,117 @@ export function SiteHeader() {
         </nav>
       )}
     </header>
+  );
+}
+
+function Hamburger({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      {open ? (
+        <>
+          <line x1="6" y1="6" x2="18" y2="18" />
+          <line x1="6" y1="18" x2="18" y2="6" />
+        </>
+      ) : (
+        <>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Izbornik za stranice na kojima sadržaj uzima cijeli prozor.
+ *
+ * Traka preko cijele širine ondje pojede 4,5 rem karte i ništa ne vrati:
+ * na karti se navigacija koristi jednom, pri odlasku. Zato je skupljena u
+ * pločicu koja pluta iznad sadržaja, a popis stranica se otvara klikom —
+ * i na širokom zaslonu, gdje bi stao. Klik izvan i Escape je zatvaraju,
+ * jer otvoren panel ovdje pokriva kartu, a ne prazan prostor.
+ */
+export function PlutajuciIzbornik() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const okvir = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const klik = (e: MouseEvent) => {
+      if (!okvir.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const tipka = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", klik);
+    document.addEventListener("keydown", tipka);
+    return () => {
+      document.removeEventListener("mousedown", klik);
+      document.removeEventListener("keydown", tipka);
+    };
+  }, [open]);
+
+  return (
+    // Iznad ploča karte (z-1100), inače bi ga bočna traka prekrila.
+    <div ref={okvir} className="fixed left-3 top-3 z-[1200]">
+      <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white/95 py-1 pl-4 pr-1 shadow-lg backdrop-blur">
+        <Link href="/" className="text-sm font-bold tracking-tight">
+          Naš kvart{" "}
+          <span className="hidden font-normal text-emerald-700 sm:inline">
+            Dračevac · Bilice
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
+          aria-expanded={open}
+          aria-controls="plutajuci-izbornik"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-700 hover:bg-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600"
+        >
+          <Hamburger open={open} />
+        </button>
+      </div>
+
+      {open && (
+        <nav
+          id="plutajuci-izbornik"
+          className="mt-2 flex w-64 flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-2 text-sm shadow-lg"
+        >
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              className={
+                pathname === link.href
+                  ? "rounded-lg bg-zinc-100 px-3 py-2 font-medium text-zinc-900"
+                  : "rounded-lg px-3 py-2 text-zinc-700 hover:bg-zinc-100"
+              }
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            href="/prijavi"
+            onClick={() => setOpen(false)}
+            className="mt-1 rounded-full bg-emerald-600 px-4 py-2 text-center font-semibold text-white hover:bg-emerald-700"
+          >
+            Prijavi problem
+          </Link>
+        </nav>
+      )}
+    </div>
   );
 }

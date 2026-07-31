@@ -79,6 +79,12 @@ export interface OverlayLayer {
  * dimenzije dijele isti ključ boja, legenda pripada dimenziji, a ne sloju.
  * Ako se dvjema vrijednostima ne može napisati zajednička legenda, onda to
  * i nisu stanja iste veličine i ne pripadaju istoj dimenziji.
+ *
+ * Biralo dimenzije stoji uz odabir podloge (desna ploča karte), ne među
+ * kvačicama: ono ne pali još jedan sloj nego mijenja ono što je ispod svega,
+ * pa pripada onamo gdje se bira i ortofoto. Zato je dostupno u svakom
+ * pogledu, a pogled mu zadaje samo početnu vrijednost — prazna znači
+ * ugašenu podlogu.
  */
 export interface LegendEntry {
   boja: string;
@@ -114,8 +120,16 @@ export interface MapView {
   id: string;
   label: string;
   description: string;
+  /**
+   * Slojevi koje pogled bira. Bočna traka ih diže u skupinu „U ovom
+   * pogledu”, a iz skupina po izvoru ih izostavlja — svaki sloj tako stoji
+   * na točno jednom mjestu i nema dviju kvačica za istu stvar.
+   */
   layerIds: string[];
-  /** Pogled koji uspoređuje stanja izlaže biralo te dimenzije. */
+  /**
+   * Početno stanje dimenzije. Biralo je uz podlogu i vidi se uvijek (vidi
+   * komentar uz Dimension); pogled ga ne izlaže nego samo namješta.
+   */
   dimensionId?: string;
   defaultValueLayerId?: string;
   defaultComparisonId?: string;
@@ -910,7 +924,27 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   ).map(gradniSloj),
 ];
 
+/**
+ * Pogledi. Prvi je ujedno i početni.
+ *
+ * „Svi slojevi” namjerno ne bira ništa: kurirani pogled je dobar kad znaš
+ * što tražiš, a loš kad ne znaš — sedamdesetak slojeva koje nijedan pogled
+ * ne spominje inače se ne može ni naslutiti. Zato registar ima i ulaz na
+ * kojem stoji cijeli, složen po izvoru, i s kojeg se pali kvačicu po
+ * kvačicu. Ostali pogledi su prečaci: svoj izbor dižu na vrh bočne trake,
+ * pa se vidi što pogled tvrdi, a ostatak ostaje dohvatljiv ispod.
+ */
 export const MAP_VIEWS: MapView[] = [
+  {
+    id: "svi-slojevi",
+    label: "Svi slojevi",
+    description:
+      `Cijeli registar — ${OVERLAY_LAYERS.filter((l) => l.phase === 1).length} ` +
+      "slojeva složenih po izvoru i temi, ništa upaljeno unaprijed. Otvori " +
+      "skupinu i pali što te zanima. Namjena iz GUP-a nije među kvačicama " +
+      "nego je podloga — bira se desno, uz ortofoto.",
+    layerIds: [],
+  },
   {
     id: "krajobraz",
     label: "Krajobraz",
