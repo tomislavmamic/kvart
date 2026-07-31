@@ -192,7 +192,13 @@ async function namjenaNaTocki(
 
   // Izvedeni sloj nosi svoju geometriju po čestici, pa se traži pogodak u
   // njoj, a ne u točki — čestica je ono što je taj sloj i računao.
+  //
+  // Kad čestice NEMA u sloju, to se mora reći, a ne prešutjeti: zeleni
+  // okvir bez ijedne ograde na K5 čestici s četiri zgrade čita se kao
+  // dopuštenje. Razlog se izvodi iz istih podataka po kojima ga je i
+  // slobodne-parcele.py izbacio.
   let slobodna: Namjena["slobodna"] = null;
+  let izvan: string | null = null;
   const u = await ucitaj("/geo/analiza/stambeno-slobodno.geojson");
   if (u && cestica) {
     const br = String((cestica.properties ?? {}).cestica ?? "");
@@ -207,6 +213,7 @@ async function namjenaNaTocki(
         slobodno_m2: Number(f.properties?.slobodno_m2 ?? 0),
         bez_pristupa: Boolean(f.properties?.bez_pristupa),
       };
+    else if (STANOVANJE.has(kod)) izvan = await zastoNije(cestica);
   }
 
   return {
@@ -216,7 +223,34 @@ async function namjenaNaTocki(
     stanovanje: STANOVANJE.has(kod),
     nacrt,
     slobodna,
+    izvan,
   };
+}
+
+/**
+ * Zašto čestica nije u sloju slobodnih.
+ *
+ * Sloj je presjek uvjeta i izbacuje bez objašnjenja; ovdje se pogađa onaj
+ * koji je najvjerojatnije presudio, po istim podacima. Formulacija je
+ * namjerno oprezna („najvjerojatnije”): točan razlog zna samo skripta, a
+ * lažna preciznost je gora od poštene nesigurnosti.
+ */
+async function zastoNije(cestica: Feature): Promise<string> {
+  const zgrade = await ucitaj("/geo/grad/zgrade-2025.geojson");
+  if (zgrade) {
+    for (const f of zgrade.fc.features) {
+      try {
+        if (booleanIntersects(cestica as never, f as never))
+          return "na njoj već stoji zgrada";
+      } catch {
+        /* neispravna geometrija — preskoči */
+      }
+    }
+  }
+  const povrsina = Number((cestica.properties ?? {}).povrsina ?? 0);
+  if (povrsina > 0 && povrsina < 300)
+    return "manja je od najmanje građevne čestice (300 m² po Odredbama)";
+  return "ne prolazi jedan od uvjeta iz analize (cesta, koridor ili premala nakupina)";
 }
 
 /** Godine izvan ovoga su očita greška u izvoru (nalazi se i „3974”). */

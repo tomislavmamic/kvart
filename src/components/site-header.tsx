@@ -63,7 +63,7 @@ export function SiteHeader() {
           aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
           aria-expanded={open}
           aria-controls="mobile-nav"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 sm:hidden"
+          className="fokus meta inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 sm:hidden"
         >
           <Hamburger open={open} />
         </button>
@@ -178,7 +178,7 @@ export function PlutajuciIzbornik() {
           aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
           aria-expanded={open}
           aria-controls="plutajuci-izbornik"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-700 hover:bg-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600"
+          className="fokus meta inline-flex h-8 w-8 min-w-11 items-center justify-center rounded-full text-zinc-700 hover:bg-zinc-100"
         >
           <Hamburger open={open} />
         </button>
