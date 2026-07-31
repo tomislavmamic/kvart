@@ -29,6 +29,10 @@
 # ne građa — stranica nosi geometriju u sebi i ove datoteke ne dohvaća.
 /public/geo/sire/
 
+# Metapodaci macOS-a. Nisu tajna, ali .DS_Store nosi popis imena datoteka iz
+# mape u kojoj je nastao, a objava iz radnog direktorija ih inače pošalje sve.
+.DS_Store
+
 # Rezultati gradnje i alati — Vercel gradi iznova.
 /.next/
 /node_modules/
