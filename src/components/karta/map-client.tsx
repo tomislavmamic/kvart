@@ -1,7 +1,14 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import type * as LeafletNS from "leaflet";
 import {
   BASE_LAYERS,
@@ -12,7 +19,6 @@ import {
   UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
   type Comparison,
-  type Dimension,
   type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
@@ -20,16 +26,131 @@ import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
-const DIM_BY_ID = new Map(DIMENSIONS.map((d) => [d.id, d]));
 
-/** Početni izbor vrijednosti za dimenziju koju pogled izlaže. */
-function dimenzijaPogleda(view: MapView): Record<string, string> {
-  if (!view.dimensionId) return {};
-  const d = DIM_BY_ID.get(view.dimensionId);
-  if (!d) return {};
-  return {
-    [d.id]: view.defaultValueLayerId ?? d.values[0].layerId,
+/**
+ * Stanje karte u adresi.
+ *
+ * Karta je bila jedina stranica koja ne proizvodi poveznicu: pogled, slojevi,
+ * podloga i odabrana čestica živjeli su samo u Reactu, a adresa je do kraja
+ * ostajala `/karta`. Za inicijativu čiji je jedini živi kanal WhatsApp grupa
+ * to znači da se najveća površina ne može podijeliti — susjed koji nađe da mu
+ * čestica leži pod dalekovodom nema što poslati.
+ *
+ * Zapisuje se `replaceState`, ne `pushState`: paljenje sloja nije navigacija i
+ * ne smije puniti povijest, inače „natrag” postane petnaest kvačica unatrag.
+ */
+const P = {
+  pogled: "pogled",
+  sloj: "sloj",
+  podloga: "podloga",
+  namjena: "namjena",
+  usporedba: "usporedba",
+  prikaz: "prikaz",
+  cestica: "kc",
+  sredina: "c",
+  zum: "z",
+} as const;
+
+interface StanjeKarte {
+  viewId: string;
+  activeIds: string[];
+  baseId: string;
+  dimValue: Record<string, string>;
+  comparisonId: string | null;
+  nacin: "obris" | "klizac";
+  cestica: [number, number] | null;
+}
+
+/**
+ * Adresa kakva je bila pri UČITAVANJU stranice, ne pri montiranju komponente.
+ *
+ * Modul-razina namjerno. U razvoju React montira dvaput (StrictMode), a između
+ * dva montiranja karta je već jednom zapisala svoje zadano središte u adresu —
+ * pa bi druga snimka pročitala ono što je aplikacija upravo pregazila i duboka
+ * poveznica bi se opet izgubila. Ovdje se čita jednom po učitavanju stranice i
+ * pamti do kraja.
+ */
+let PRVA_ADRESA: (Partial<StanjeKarte> & {
+  sredina?: [number, number];
+  zum?: number;
+}) | null = null;
+
+function prvaAdresa() {
+  PRVA_ADRESA ??= izAdrese();
+  return PRVA_ADRESA;
+}
+
+function izAdrese(): Partial<StanjeKarte> & {
+  sredina?: [number, number];
+  zum?: number;
+} {
+  if (typeof window === "undefined") return {};
+  const q = new URLSearchParams(window.location.search);
+  const par = (v: string | null): [number, number] | undefined => {
+    const d = v?.split(",").map(Number);
+    return d?.length === 2 && d.every(Number.isFinite)
+      ? [d[0], d[1]]
+      : undefined;
   };
+  const pogled = q.get(P.pogled);
+  const namjena = q.get(P.namjena);
+  const out: Partial<StanjeKarte> & {
+    sredina?: [number, number];
+    zum?: number;
+  } = {};
+  if (pogled && MAP_VIEWS.some((v) => v.id === pogled)) out.viewId = pogled;
+  const slojevi = q.getAll(P.sloj).filter((id) => OVERLAY_BY_ID.has(id));
+  if (q.has(P.sloj)) out.activeIds = slojevi;
+  const podloga = q.get(P.podloga);
+  if (podloga && BASE_LAYERS.some((b) => b.id === podloga)) out.baseId = podloga;
+  // Prazan `namjena=` je valjano stanje („bez podloge”), pa se razlikuje
+  // od izostanka parametra — has() umjesto istinitosti vrijednosti.
+  if (q.has(P.namjena) && DIMENSIONS.length)
+    out.dimValue = { [DIMENSIONS[0].id]: namjena ?? "" };
+  const usp = q.get(P.usporedba);
+  if (usp !== null)
+    out.comparisonId = COMPARISONS.some((c) => c.id === usp) ? usp : null;
+  const prikaz = q.get(P.prikaz);
+  if (prikaz === "klizac" || prikaz === "obris") out.nacin = prikaz;
+  out.cestica = par(q.get(P.cestica)) ?? null;
+  out.sredina = par(q.get(P.sredina));
+  const z = Number(q.get(P.zum));
+  if (Number.isFinite(z) && z >= 12 && z <= 19) out.zum = z;
+  return out;
+}
+
+function uAdresu(s: StanjeKarte, sredina: [number, number], zum: number) {
+  const q = new URLSearchParams();
+  q.set(P.pogled, s.viewId);
+  for (const id of s.activeIds) q.append(P.sloj, id);
+  q.set(P.podloga, s.baseId);
+  for (const d of DIMENSIONS) q.set(P.namjena, s.dimValue[d.id] ?? "");
+  if (s.comparisonId) q.set(P.usporedba, s.comparisonId);
+  if (s.nacin !== "obris") q.set(P.prikaz, s.nacin);
+  if (s.cestica) q.set(P.cestica, s.cestica.map((n) => n.toFixed(6)).join(","));
+  q.set(P.sredina, sredina.map((n) => n.toFixed(5)).join(","));
+  q.set(P.zum, String(zum));
+  window.history.replaceState(null, "", `?${q}`);
+}
+
+/**
+ * Početna vrijednost svake dimenzije za odabrani pogled.
+ *
+ * Upisuju se SVE dimenzije, ne samo ona koju pogled spominje: biralo stoji
+ * uz podlogu i vidi se uvijek, pa dimenzija koju pogled ne namješta mora
+ * imati definirano stanje — prazan niz, dakle ugašena podloga. Bez toga bi
+ * biralo pri promjeni pogleda ostalo bez ijednog odabranog čipa, a stara
+ * podloga bi ostala na karti.
+ */
+function dimenzijaPogleda(view: MapView): Record<string, string> {
+  return Object.fromEntries(
+    DIMENSIONS.map((d) => [
+      d.id,
+      view.dimensionId === d.id
+        ? (view.defaultValueLayerId ?? d.values[0].layerId)
+        : "",
+    ])
+  );
 }
 
 export function MapClient() {
@@ -45,14 +166,74 @@ export function MapClient() {
     null
   );
 
+  // Adresa se NE čita pri prvom iscrtavanju.
+  //
+  // `/karta` je statički prerendana: poslužitelj ne zna upit, pa bi svako
+  // čitanje `window.location` u inicijalizatoru stanja dalo drugačiji prvi
+  // kadar na klijentu nego u HTML-u i srušilo hidraciju. Prvi kadar zato
+  // uvijek pokazuje zadani pogled, a adresa se primijeni odmah nakon
+  // montiranja — jedan kadar razlike umjesto slomljenog stabla.
+  //
+  // `useSyncExternalStore` je za to i napravljen: poslužiteljski snimak je
+  // prazan niz, klijentski je pravi upit, i React sam ponovno iscrta nakon
+  // hidracije umjesto da prijavi razliku.
+  const upit = useSyncExternalStore(
+    () => () => {},
+    () => window.location.search,
+    () => ""
+  );
+  const [hidriran, setHidriran] = useState(false);
+  // Snimka upita, uzeta prije nego što išta stigne pisati u adresu.
+  //
+  // Prije se `izAdrese()` zvao lijeno, tek nakon dva await-a u pokretanju
+  // karte — a dotad je karta već poslala `moveend` sa zadanog središta i
+  // `uAdresu()` je adresu prepisao. Duboka poveznica se tako uništavala
+  // sama: `c` i `z` su se čitali iz URL-a koji je aplikacija u međuvremenu
+  // pregazila, pa je z=18 uvijek ispadao z=15.
+
   const [ready, setReady] = useState(false);
   const [baseId, setBaseId] = useState("dof");
   const [viewId, setViewId] = useState(MAP_VIEWS[0].id);
   const [activeIds, setActiveIds] = useState<Set<string>>(
     () => new Set(phase1(MAP_VIEWS[0].layerIds))
   );
-  // Otvorena po dolasku: u njoj su i pogledi, pa zatvorena skriva navigaciju.
-  const [panelOpen, setPanelOpen] = useState(true);
+  // Stanje podloge: `null` dok se ne zna, pa poruka ne bljesne bez potrebe.
+  const [podlogaStanje, setPodlogaStanje] = useState<
+    "ucitava" | "gotovo" | "greska" | null
+  >(null);
+  // Slojevi koji se dohvaćaju ili nisu uspjeli — kvačica to mora pokazati,
+  // inače je upaljen sloj koji ništa ne crta isto što i prazan prostor.
+  const [slojStanje, setSlojStanje] = useState<
+    Record<string, "ucitava" | "greska">
+  >({});
+  // Uske zaslone se ne pogađa širinom nego ULAZOM i prostorom: `usko` je
+  // istinito kad nema mjesta za dvije lebdeće ploče pokraj karte.
+  const usko = useUsko();
+  // Ploče su otvorene po dolasku na širokom zaslonu; na uskom NISU, jer bi
+  // pokrile upravo ono zbog čega se stranica otvara. Vidi PlohaSlojeva.
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [kontroleOpen, setKontroleOpen] = useState(false);
+  // Na uskom zaslonu smije biti otvorena najviše jedna ploča. Dvije se ondje
+  // preklapaju i druga viri ispod prve kao greška iscrtavanja.
+  const otvoriTraku = (v: boolean) => {
+    setPanelOpen(v);
+    if (v && usko) setKontroleOpen(false);
+  };
+  const otvoriKontrole = (v: boolean) => {
+    setKontroleOpen(v);
+    if (v && usko) setPanelOpen(false);
+  };
+  // Kad se širina promijeni (i pri prvom mjerenju na klijentu), ploče se
+  // vraćaju na zadano za tu širinu: na širokom obje otvorene, na uskom
+  // nijedna. Namješta se tijekom iscrtavanja, a ne u efektu — efekt bi
+  // ovdje značio jedan iscrtan kadar s krivim stanjem, pa bi na telefonu
+  // ploče bljesnule preko karte prije nego što se sklope.
+  const [zadnjeUsko, setZadnjeUsko] = useState<boolean | null>(null);
+  if (zadnjeUsko !== usko) {
+    setZadnjeUsko(usko);
+    setPanelOpen(!usko);
+    setKontroleOpen(!usko);
+  }
   // Odabrana vrijednost po dimenziji i uključena usporedba. Ovo su odvojene
   // kontrole namjerno: koju godinu gledaš i koju promjenu ističeš dvije su
   // različite odluke.
@@ -70,19 +251,79 @@ export function MapClient() {
   const [dosje, setDosje] = useState<Dosje | null>(null);
   const [dosjeUcitavanje, setDosjeUcitavanje] = useState(false);
   const [dosjeGreska, setDosjeGreska] = useState<string | null>(null);
+  // Točka po kojoj je dosje otvoren — jedino što ide u adresu, jer čestica
+  // se iz nje uvijek može ponovno pogoditi.
+  const [cestica, setCestica] = useState<[number, number] | null>(null);
   // Svaki klik dobiva svoj broj; kad se odgovor vrati, upisuje se samo ako
   // je u međuvremenu nije pretekao noviji klik.
   const dosjeZahtjev = useRef(0);
+  // Klik na objekt sloja i klik na kartu stižu oba do karte. Ova oznaka
+  // razlikuje „pogodio sam nešto” od „pogodio sam prazno”, pa dosje ne
+  // iskoči preko skočnog prozora koji je upravo otvoren.
+  const pogodakSloja = useRef(0);
 
   // Trenutačno istaknuta čestica — drži se da je se može vratiti u izvorni
   // stil kad se odabere druga ili kad se ploča zatvori.
   const istaknuto = useRef<Isticanje | null>(null);
+  /** Biljeg na točki dosjea — postoji i kad nijedan poligon nije pogođen. */
+  const biljeg = useRef<LeafletNS.Marker | null>(null);
+
+  const postaviBiljeg = (lat: number, lng: number) => {
+    const L = LRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    biljeg.current?.remove();
+    biljeg.current = L.marker([lat, lng], {
+      interactive: false,
+      keyboard: false,
+      icon: L.divIcon({
+        className: "",
+        iconSize: [0, 0],
+        html:
+          '<span style="position:absolute;left:-11px;top:-11px;width:22px;' +
+          'height:22px;border-radius:9999px;border:3px solid #18181b;' +
+          'box-shadow:0 0 0 3px rgba(255,255,255,.9),0 1px 6px rgba(0,0,0,.5)">' +
+          "</span>",
+      }),
+    }).addTo(map);
+  };
+
+  const maknniBiljeg = () => {
+    biljeg.current?.remove();
+    biljeg.current = null;
+  };
+
+  const pomakniIzpodPloce = (lat: number, lng: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const v = map.getSize();
+    // Na uskom je ploča donjih 72 %, pa cilj ide u gornju trećinu; na
+    // širokom zauzima desnu stranu, pa cilj ide ulijevo od sredine.
+    const t = map.latLngToContainerPoint([lat, lng]);
+    // Širina se čita ovdje, a ne iz zatvorenja: `otvoriDosje` je stvoren
+    // jednom pri prvom iscrtavanju, pa bi `usko` iz njega zauvijek ostalo
+    // ono što je bilo na početku.
+    const naUskom = window.matchMedia("(max-width: 1023px)").matches;
+    const cilj = naUskom
+      ? { x: v.x / 2, y: v.y * 0.17 }
+      : { x: v.x * 0.28, y: v.y / 2 };
+    map.panBy([t.x - cilj.x, t.y - cilj.y], { animate: true, duration: 0.4 });
+  };
 
   const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
     const moj = ++dosjeZahtjev.current;
     istaknuto.current?.vrati();
     istaknuto.current = oznaci ?? null;
     oznaci?.istakni();
+    // Bez oznake na karti dosje opisuje česticu koju nitko ne vidi. Ploha
+    // se istakne samo kad je klik pogodio poligon katastra; klik na prazno
+    // i duboka poveznica nisu imali ništa. Biljeg stoji uvijek.
+    postaviBiljeg(lat, lng);
+    // I pomakni kartu tako da čestica ne završi ispod ploče: ploča zauzima
+    // desnu polovicu na širokom i donjih 72 % na uskom zaslonu, pa se
+    // središte pomiče u preostali dio, a ne na sredinu prozora.
+    pomakniIzpodPloce(lat, lng);
+    setCestica([lat, lng]);
     setDosje(null);
     setDosjeGreska(null);
     setDosjeUcitavanje(true);
@@ -105,6 +346,31 @@ export function MapClient() {
   });
 
 
+  // Adresa se primjenjuje tijekom iscrtavanja, čim klijentski snimak stigne
+  // — isti obrazac kao kod širine ploča, i jedini koji ne uvodi kadar s
+  // krivim stanjem.
+  if (!hidriran && upit !== "") {
+    const a = prvaAdresa();
+    const pogled = MAP_VIEWS.find((v) => v.id === a.viewId);
+    if (pogled) {
+      setViewId(pogled.id);
+      setDimValue(dimenzijaPogleda(pogled));
+      setComparisonId(pogled.defaultComparisonId ?? null);
+      if (!a.activeIds) setActiveIds(new Set(phase1(pogled.layerIds)));
+    }
+    if (a.activeIds) setActiveIds(new Set(a.activeIds));
+    if (a.baseId) setBaseId(a.baseId);
+    if (a.dimValue) setDimValue((p) => ({ ...p, ...a.dimValue }));
+    if (a.comparisonId !== undefined) setComparisonId(a.comparisonId);
+    if (a.nacin) setNacin(a.nacin);
+    if (a.cestica) setCestica(a.cestica);
+    setHidriran(true);
+  }
+
+  // Snimka upita, uzeta prije nego što išta stigne pisati u adresu. Ovaj
+  // efekt je prvi po redu, a pisač adrese čeka `ready`, koji se postavlja
+  // tek unutar sljedećeg efekta — pa je izvorni upit ovdje zajamčeno još
+  // netaknut.
   // ---- init map once ----
   useEffect(() => {
     let cancelled = false;
@@ -112,9 +378,17 @@ export function MapClient() {
       const L = (await import("leaflet")).default;
       if (cancelled || !mapDiv.current) return;
       LRef.current = L;
+      // Karta se STVARA na mjestu iz adrese, a ne skače na njega poslije.
+      //
+      // Prije je nastajala na zadanom središtu, pa se tek nakon dohvata
+      // granice pomicala — a u tom razmaku je već poslala `moveend`, pisač
+      // adrese je zapisao zadano, i duboka poveznica se gubila. Uz to je
+      // pomak dolazio na kartu koja je u međuvremenu mogla biti uklonjena
+      // (dvostruko montiranje u razvoju), pa se nije ni dogodio.
+      const adr = prvaAdresa();
       const map = L.map(mapDiv.current, {
-        center: KVART_CENTER,
-        zoom: 15,
+        center: adr.sredina ?? KVART_CENTER,
+        zoom: adr.zum ?? 15,
         minZoom: 12,
         maxZoom: 19,
         zoomControl: false,
@@ -133,6 +407,21 @@ export function MapClient() {
         okno.style.zIndex = "400";
       }
       L.control.zoom({ position: "topright" }).addTo(map);
+
+      // Klik na praznu kartu otvara dosje.
+      //
+      // Prije je dosje visio o pogotku u poligon katastra, pa je u pogledu
+      // „Katastar i adrese” svaki dodir hvatala ploha popisnog kruga i
+      // vraćala šifru statističkog kruga, a drugdje se nije događalo ništa.
+      // Dosje ionako pita poslužitelj po koordinati, ne po objektu, pa mu
+      // poligon nije ni trebao. Slojevi sa skočnim prozorom postavljaju
+      // `pogodakSloja` pa njihov klik ovdje ne odjekne dvaput.
+      map.on("click", (e) => {
+        if (Date.now() - pogodakSloja.current < 60) return;
+        if (solarHandler.current) return; // solarni način ima svoj klik
+        otvoriDosje.current(e.latlng.lat, e.latlng.lng);
+      });
+
       mapRef.current = map;
       setReady(true);
 
@@ -141,6 +430,7 @@ export function MapClient() {
         const fc = (await (
           await fetch("/geo/granica.geojson")
         ).json()) as GeoJSON.FeatureCollection;
+        if (cancelled) return;
         const boundary = L.geoJSON(fc, {
           interactive: false,
           style: {
@@ -165,10 +455,15 @@ export function MapClient() {
             }).addTo(map);
           },
         }).addTo(map);
-        map.fitBounds(boundary.getBounds(), { padding: [34, 34] });
+        // Granica se uokviruje samo ako adresa nije rekla kamo gledati.
+        if (!(adr.sredina && adr.zum))
+          map.fitBounds(boundary.getBounds(), { padding: [34, 34] });
       } catch {
-        map.setView(KVART_CENTER, 15);
+        /* bez granice karta ostaje ondje gdje je i stvorena */
       }
+
+      // Čestica iz adrese: otvori dosje čim je karta spremna.
+      if (adr.cestica) otvoriDosje.current(adr.cestica[0], adr.cestica[1]);
     })();
     return () => {
       cancelled = true;
@@ -200,10 +495,56 @@ export function MapClient() {
         maxZoom: 19,
       });
     }
+    // Podloga je najteža stvar na stranici i jedina koja stiže izvana. Dok
+    // je nema, karta je siva ploha bez ijedne riječi — a „sporija veza je
+    // normalna” je zapisana obveza, pa je to redovito stanje, ne rub.
+    //
+    // Broje se pločice koje su pale: jedna promašena pločica nije kvar
+    // (poslužitelj ih zna odbiti pod opterećenjem), ali tri jesu.
+    let pale = 0;
+    setPodlogaStanje("ucitava");
+    layer.on("loading", () => setPodlogaStanje("ucitava"));
+    layer.on("load", () => {
+      pale = 0;
+      setPodlogaStanje("gotovo");
+    });
+    layer.on("tileerror", () => {
+      if (++pale >= 3) setPodlogaStanje("greska");
+    });
     layer.addTo(map);
     layer.bringToBack();
     baseRef.current = layer;
+    return () => {
+      layer.off();
+    };
   }, [baseId, ready]);
+
+  // ---- adresa: zapiši stanje kad se promijeni ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || (upit !== "" && !hidriran)) return;
+    const zapisi = () => {
+      const c = map.getCenter();
+      uAdresu(
+        {
+          viewId,
+          activeIds: [...activeIds],
+          baseId,
+          dimValue,
+          comparisonId,
+          nacin,
+          cestica,
+        },
+        [c.lat, c.lng],
+        map.getZoom()
+      );
+    };
+    zapisi();
+    map.on("moveend zoomend", zapisi);
+    return () => {
+      map.off("moveend zoomend", zapisi);
+    };
+  }, [viewId, activeIds, baseId, dimValue, comparisonId, nacin, cestica, ready, hidriran, upit]);
 
   // Što se crta = neovisni slojevi + odabrana vrijednost svake dimenzije
   // + sloj usporedbe ako je uključen.
@@ -262,7 +603,15 @@ export function MapClient() {
       if (!layer || layer.phase !== 1) continue;
       if (layer.type === "api") continue; // handled separately (solar)
       dodajSloj(L, map, layer, okna[id], overlayInstances.current,
-        geojsonCache.current, otvoriDosje.current);
+        geojsonCache.current, otvoriDosje.current, pogodakSloja,
+        (id, stanje) =>
+          setSlojStanje((p) => {
+            if (stanje) return { ...p, [id]: stanje };
+            if (!(id in p)) return p;
+            const rest = { ...p };
+            delete rest[id];
+            return rest;
+          }));
     }
     // solar click handler
     const solarActive = renderIds.has("solar");
@@ -332,6 +681,7 @@ export function MapClient() {
       drska.addEventListener("pointermove", pomak);
       map.dragging.disable();
     };
+    drska.classList.add("klizac-rucka");
     drska.addEventListener("pointerdown", pocetak);
     drska.addEventListener("pointerup", kraj);
     map.on("move zoom resize", osvjezi);
@@ -366,112 +716,668 @@ export function MapClient() {
   }
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
-  const usporedbeDimenzije = COMPARISONS.filter(
-    (c) => c.dimensionId === currentView?.dimensionId
-  );
-  const aktivnaDimenzija = currentView?.dimensionId
-    ? DIM_BY_ID.get(currentView.dimensionId)
-    : undefined;
-  const legendLayers = [...activeIds]
-    .map((id) => OVERLAY_BY_ID.get(id))
-    .filter((l): l is OverlayLayer => Boolean(l) && l!.phase === 1);
+
+  const zatvoriDosje = () => {
+    dosjeZahtjev.current++;
+    istaknuto.current?.vrati();
+    istaknuto.current = null;
+    maknniBiljeg();
+    setDosje(null);
+    setDosjeGreska(null);
+    setDosjeUcitavanje(false);
+    setCestica(null);
+  };
+
+  // Escape zatvara ono što je najgore otvoreno — dosje prije ploča. Prije
+  // nije zatvarao ništa osim izbornika, pa je tipkovnicom karta bila zamka.
+  useEffect(() => {
+    const naTipku = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (dosje || dosjeUcitavanje || dosjeGreska) zatvoriDosje();
+      else if (kontroleOpen && usko) setKontroleOpen(false);
+      else if (panelOpen && usko) setPanelOpen(false);
+    };
+    document.addEventListener("keydown", naTipku);
+    return () => document.removeEventListener("keydown", naTipku);
+  });
 
   return (
-    // Puna širina: korijenski layout drži sadržaj u max-w-5xl, a karta se od
-    // toga otima jer joj je prostor sam sadržaj. `overflow-x-clip` na <body>
-    // hvata 100vw šire od stupca sa scrollbarom.
-    <div className="relative left-1/2 w-screen -translate-x-1/2">
+    // Cijeli prozor. `fixed inset-0`, a ne visina u `vh`: karta je sama
+    // sebi stranica — nema ničega iznad ni ispod, pa nema ni listanja koje
+    // bi pomicalo ploče, ni razmimoilaženja s trakom mobilnog preglednika.
+    <div className="fixed inset-0 overflow-hidden bg-zinc-100">
+      <div ref={mapDiv} className="h-full w-full bg-zinc-100" />
 
-      <div className="relative overflow-hidden border-y border-zinc-200">
-        <div
-          ref={mapDiv}
-          className="h-[calc(100vh-4.5rem)] min-h-[520px] w-full bg-zinc-100"
-        />
+      <StanjePodloge stanje={podlogaStanje} naUlicnu={() => setBaseId("karta")} />
 
-        {/* base switch */}
-        <div className="absolute right-3 top-[5.5rem] z-[1000] flex gap-1 rounded-lg bg-white/90 p-1 text-xs shadow">
-          {BASE_LAYERS.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => setBaseId(b.id)}
-              className={`rounded px-2 py-1 font-medium ${
-                b.id === baseId
-                  ? "bg-emerald-600 text-white"
-                  : "text-zinc-700 hover:bg-zinc-100"
-              }`}
-            >
-              {b.label}
-            </button>
-          ))}
-        </div>
-
-        <Sidebar
+      {/* Traka pogleda. Na uskom zaslonu stoji IZVAN bočne trake i uvijek je
+          vidljiva: dok je bila u njoj, zatvaranje trake da bi se vidjela
+          karta odnosilo je i cijelu navigaciju. */}
+      {usko && (
+        <TrakaPogleda
           views={MAP_VIEWS}
           viewId={viewId}
           onSelectView={selectView}
-          currentView={currentView}
-          dimenzija={aktivnaDimenzija}
-          dimValue={dimValue}
-          onDimValue={(dimId, layerId) =>
-            setDimValue((p) => ({ ...p, [dimId]: layerId }))
-          }
-          usporedbe={usporedbeDimenzije}
-          comparisonId={comparisonId}
-          onComparison={setComparisonId}
-          nacin={nacin}
-          onNacin={setNacin}
-          klizac={klizac}
-          activeIds={activeIds}
-          onToggle={toggleLayer}
-          legendLayers={legendLayers}
-          open={panelOpen}
-          onOpen={setPanelOpen}
         />
+      )}
 
-        {(dosje || dosjeUcitavanje || dosjeGreska) && (
-          <DosjePlaca
-            dosje={dosje}
-            ucitavanje={dosjeUcitavanje}
-            greska={dosjeGreska}
-            onClose={() => {
-              dosjeZahtjev.current++;
-              istaknuto.current?.vrati();
-              istaknuto.current = null;
-              setDosje(null);
-              setDosjeGreska(null);
-              setDosjeUcitavanje(false);
-            }}
+      <Kontrole
+        baseId={baseId}
+        onBase={setBaseId}
+        dimValue={dimValue}
+        onDimValue={(dimId, layerId) =>
+          setDimValue((p) => ({ ...p, [dimId]: layerId }))
+        }
+        comparisonId={comparisonId}
+        klizac={klizac}
+        open={kontroleOpen}
+        onOpen={otvoriKontrole}
+        usko={usko}
+      />
+
+      <Sidebar
+        views={MAP_VIEWS}
+        viewId={viewId}
+        onSelectView={selectView}
+        currentView={currentView}
+        activeIds={activeIds}
+        onToggle={toggleLayer}
+        slojStanje={slojStanje}
+        usporedbe={COMPARISONS.filter(
+          (c) => c.dimensionId === currentView?.dimensionId
+        )}
+        comparisonId={comparisonId}
+        onComparison={setComparisonId}
+        nacin={nacin}
+        onNacin={setNacin}
+        onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
+        open={panelOpen}
+        onOpen={otvoriTraku}
+        usko={usko}
+      />
+
+      {(dosje || dosjeUcitavanje || dosjeGreska) && (
+        <DosjePlaca
+          uzKontrole={kontroleOpen && !usko}
+          dosje={dosje}
+          ucitavanje={dosjeUcitavanje}
+          greska={dosjeGreska}
+          onClose={zatvoriDosje}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Ima li mjesta za dvije lebdeće ploče pokraj karte?
+ *
+ * Prag je 1024 px, a ne `sm`: bočna traka je 20 rem, desna ploča 14 rem, i
+ * tek iznad tisuću piksela između njih ostane karte vrijedne gledanja.
+ */
+function useUsko(): boolean {
+  const [usko, setUsko] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const na = () => setUsko(mq.matches);
+    na();
+    mq.addEventListener("change", na);
+    return () => mq.removeEventListener("change", na);
+  }, []);
+  return usko;
+}
+
+/**
+ * Stanje podloge: jedina poruka koja se sama pojavi na karti.
+ *
+ * Ortofoto je najteža stvar na stranici i dolazi s tuđeg poslužitelja. Dok
+ * ga nema, karta je siva ploha — a bez ijedne riječi to se čita kao kvar, ne
+ * kao čekanje. Kad doista padne, nudi se ulična karta: lakša je i uvijek
+ * radi, pa je bolja od praznine.
+ */
+function StanjePodloge({
+  stanje,
+  naUlicnu,
+}: {
+  stanje: "ucitava" | "gotovo" | "greska" | null;
+  naUlicnu: () => void;
+}) {
+  if (stanje === null || stanje === "gotovo") return null;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-auto absolute left-1/2 top-3 z-[1050] flex -translate-x-1/2 items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs shadow"
+    >
+      {stanje === "ucitava" ? (
+        <>
+          <span
+            aria-hidden
+            className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-emerald-700"
           />
+          <span className="text-zinc-600">Učitavam ortofoto…</span>
+        </>
+      ) : (
+        <>
+          <span className="text-zinc-700">Ortofoto se ne učitava.</span>
+          <button
+            onClick={naUlicnu}
+            className="fokus rounded-full bg-emerald-700 px-2.5 py-1 font-semibold text-white hover:bg-emerald-800"
+          >
+            Uličnu kartu
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Vodoravna traka pogleda za uski zaslon.
+ *
+ * Pogled je jedina prava navigacija ove stranice. U bočnoj traci je bio
+ * dostupan samo dok ona pokriva kartu, što je na telefonu značilo „ili
+ * gledaš kartu ili znaš gdje si”. Ovdje stoji iznad svega, jednoredno, i
+ * kliže vodoravno.
+ */
+function TrakaPogleda({
+  views,
+  viewId,
+  onSelectView,
+}: {
+  views: typeof MAP_VIEWS;
+  viewId: string;
+  onSelectView: (id: string) => void;
+}) {
+  // Traka je šira od zaslona, a odabrani čip zna biti tisuću piksela desno.
+  // Poveznica iz WhatsAppa tako otvara pogled na kojem ništa ne izgleda
+  // odabrano — pa se aktivni čip sam dovuče u vidno polje.
+  const aktivni = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    aktivni.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [viewId]);
+  // „Više” se otvara samo ako je u njemu ono što je odabrano — inače traka
+  // pri dolasku pokazuje tri pitanja i ništa drugo.
+  const [vise, setVise] = useState(
+    () => views.find((v) => v.id === viewId)?.razina === "nacin"
+  );
+  const pitanja = views.filter((v) => v.razina === "pitanje");
+  const nacini = views.filter((v) => v.razina === "nacin");
+  const cip = (v: MapView) => (
+    <button
+      key={v.id}
+      onClick={() => onSelectView(v.id)}
+      aria-current={v.id === viewId}
+      aria-pressed={v.id === viewId}
+      ref={v.id === viewId ? aktivni : undefined}
+      className={`fokus meta-cip shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
+        v.id === viewId
+          ? "border-emerald-700 bg-emerald-700 text-white"
+          : "border-zinc-200 bg-white text-zinc-700"
+      }`}
+    >
+      {v.label}
+    </button>
+  );
+  return (
+    // „Više” stoji IZVAN klizne trake, prikvačeno uz desni rub.
+    //
+    // Mjereno na 390 px: tri pitanja + „Više” traže 515 px, pa je „Više”
+    // počinjalo na x=425 — potpuno izvan zaslona, iza sakrivenog klizača,
+    // bez ijednog znaka da ondje išta ima. Deset pogleda bilo je dostupno
+    // samo pokretom koji se ne da otkriti. Sad se traka kliže ispod njega,
+    // a prijelaz je omekšan da se vidi da ima još.
+    <nav
+      aria-label="Pogled"
+      className="absolute inset-x-0 top-16 z-[1050] flex items-start gap-1.5 px-3 pb-1"
+    >
+      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pr-6 [mask-image:linear-gradient(90deg,#000_calc(100%-1.5rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {pitanja.map(cip)}
+        {vise && nacini.map(cip)}
+      </div>
+      <button
+        onClick={() => setVise((v) => !v)}
+        aria-expanded={vise}
+        className="fokus meta-cip shrink-0 whitespace-nowrap rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm"
+      >
+        {vise ? "Manje" : `Više (${nacini.length})`}
+      </button>
+    </nav>
+  );
+}
+
+/**
+ * Bočna traka unutar karte: pogledi i kvačice slojeva.
+ *
+ * Skupine su izvorni `<details>`: sklapanje i tipkovnica dolaze besplatno,
+ * bez knjižnice, a stotinjak slojeva se više ne pregledava beskrajnim
+ * listanjem.
+ *
+ * Ono što je pogled odabrao diže se u vlastitu skupinu na vrhu i iz skupine
+ * po izvoru se briše. Duplikat bi značio dvije kvačice za isti sloj, pa bi
+ * gašenje na jednom mjestu naizgled ne bi radilo na drugom; ovako svaki
+ * sloj stoji točno jednom, a odgovor na „što ovaj pogled zapravo pokazuje”
+ * ne traži prelistavanje četrnaest skupina.
+ */
+function Sidebar(props: {
+  views: typeof MAP_VIEWS;
+  viewId: string;
+  onSelectView: (id: string) => void;
+  currentView?: MapView;
+  activeIds: Set<string>;
+  onToggle: (id: string) => void;
+  slojStanje: Record<string, "ucitava" | "greska">;
+  usporedbe: Comparison[];
+  comparisonId: string | null;
+  onComparison: (id: string | null) => void;
+  nacin: "obris" | "klizac";
+  onNacin: (n: "obris" | "klizac") => void;
+  onOtvoriCesticu: (lat: number, lng: number) => void;
+  open: boolean;
+  onOpen: (v: boolean) => void;
+  usko: boolean;
+}) {
+  const { currentView, usko } = props;
+  // Slojeve kojima upravlja biralo desno ovdje se ne nudi ni kad ih pogled
+  // spominje — inače bi ista podloga imala i kvačicu i čip.
+  const odabrani = (currentView?.layerIds ?? [])
+    .map((id) => OVERLAY_BY_ID.get(id))
+    .filter((l): l is OverlayLayer => !!l && !UPRAVLJANI_SLOJEVI.has(l.id));
+  const podignuti = new Set(odabrani.map((l) => l.id));
+  const skupine = [...new Set(OVERLAY_LAYERS.map((l) => l.group))];
+  const uSkupini = (g: string) =>
+    OVERLAY_LAYERS.filter(
+      (l) =>
+        l.group === g && !UPRAVLJANI_SLOJEVI.has(l.id) && !podignuti.has(l.id)
+    );
+
+  const [trazi, setTrazi] = useState("");
+  // Pretraga ide bez dijakritike i bez obzira na veličinu slova: „daljnovod”
+  // se ne piše, ali „dalekovod” se traži i s „č” i bez njega.
+  const bezKvacica = (v: string) =>
+    v.toLocaleLowerCase("hr-HR").normalize("NFD").replace(/\p{M}/gu, "");
+  const upit = bezKvacica(trazi.trim());
+  const nadeni =
+    upit === ""
+      ? []
+      : OVERLAY_LAYERS.filter(
+          (l) =>
+            !UPRAVLJANI_SLOJEVI.has(l.id) &&
+            !podignuti.has(l.id) &&
+            (bezKvacica(l.label).includes(upit) ||
+              bezKvacica(l.group).includes(upit))
+        );
+  // Sloj koji je pogled već podigao gore ne ponavlja se u rezultatima (jedan
+  // sloj, jedna kvačica), ali se ni ne prešućuje: „nema ništa” dok stoji dva
+  // reda više bilo bi laž.
+  const nadeniPodignuti =
+    upit === ""
+      ? []
+      : odabrani.filter(
+          (l) =>
+            bezKvacica(l.label).includes(upit) ||
+            bezKvacica(l.group).includes(upit)
+        );
+  // Slojevi kojima upravlja biralo podloge nemaju kvačicu, ali se traže —
+  // „namjena” i „gup” su najtraženiji pojmovi na stranici, a vraćali su
+  // sve osim onoga što se tražilo. Prikazuju se kao uputa, ne kao kvačica.
+  const nadeniUpravljani =
+    upit === ""
+      ? []
+      : OVERLAY_LAYERS.filter(
+          (l) =>
+            UPRAVLJANI_SLOJEVI.has(l.id) &&
+            (bezKvacica(l.label).includes(upit) ||
+              bezKvacica(l.group).includes(upit))
+        );
+
+  // Zatvorena: na širokom zaslonu gumb uz rub, na uskom vrpca uz dno —
+  // ondje je palac, a i sve ostalo se na telefonu otvara odozdo.
+  if (!props.open) {
+    return (
+      <button
+        onClick={() => props.onOpen(true)}
+        className={
+          usko
+            ? "fokus meta absolute inset-x-0 bottom-0 z-[1050] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)]"
+            : "fokus absolute left-3 top-16 z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
+        }
+      >
+        <span aria-hidden>☰</span> Slojevi
+        {props.activeIds.size > 0 && (
+          <span className="rounded-full bg-emerald-100 px-2 text-xs text-emerald-800">
+            {props.activeIds.size}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={
+        usko
+          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)]"
+          : "absolute bottom-3 left-3 top-16 z-[1100] flex w-80 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg"
+      }
+    >
+      <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
+        <span className="text-sm font-bold">Karta kvarta</span>
+        <button
+          onClick={() => props.onOpen(false)}
+          aria-label="Sakrij bočnu traku"
+          className="fokus meta rounded px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+        >
+          {usko ? "zatvori ⌄" : "⟨ sakrij"}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 py-3 text-sm">
+        {/* Na uskom zaslonu pogledi imaju vlastitu traku iznad karte, pa se
+            ovdje ne ponavljaju — dvije iste kontrole na jednom zaslonu. */}
+        {!usko && (
+          <>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+              Pitanja
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {props.views
+                .filter((v) => v.razina === "pitanje")
+                .map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => props.onSelectView(v.id)}
+                    aria-current={v.id === props.viewId}
+                    aria-pressed={v.id === props.viewId}
+                    className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                      v.id === props.viewId
+                        ? "border-emerald-700 bg-emerald-700 text-white"
+                        : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+            </div>
+            {/* Načini gledanja nisu pitanja i ne stoje uz njih. Skupljeni su
+                jer ih je devet, a otvoreni ako je odabran jedan od njih. */}
+            <details
+              open={
+                props.views.find((v) => v.id === props.viewId)?.razina ===
+                "nacin"
+              }
+              className="group mt-1.5"
+            >
+              <summary className="fokus meta flex cursor-pointer select-none items-center gap-1.5 py-1 text-xs font-semibold text-zinc-600 [&::-webkit-details-marker]:hidden">
+                <svg
+                  viewBox="0 0 12 12"
+                  aria-hidden
+                  className="h-3 w-3 shrink-0 transition-transform group-open:rotate-90"
+                >
+                  <path d="M4 2.5 8 6l-4 3.5z" fill="currentColor" />
+                </svg>
+                Načini gledanja
+              </summary>
+              <div className="flex flex-wrap gap-1 pt-1">
+                {props.views
+                  .filter((v) => v.razina === "nacin")
+                  .map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => props.onSelectView(v.id)}
+                      aria-current={v.id === props.viewId}
+                      aria-pressed={v.id === props.viewId}
+                      className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                        v.id === props.viewId
+                          ? "border-emerald-700 bg-emerald-700 text-white"
+                          : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                      }`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+              </div>
+            </details>
+          </>
+        )}
+        {currentView && <Opis view={currentView} />}
+
+        {/* Ključ boja izvedenog sloja stoji odmah uz opis, prije popisa
+            slojeva: on je odgovor na „zašto je moja čestica crvena”. */}
+        {currentView?.legend && (
+          <dl className="mt-2 space-y-1">
+            {currentView.legend.map((e) => (
+              <div key={e.kod} className="flex items-start gap-2">
+                <span
+                  aria-hidden
+                  className="mt-1 h-3 w-3 shrink-0 rounded-sm border border-black/20"
+                  style={{ background: e.boja }}
+                />
+                <dt className="sr-only">{e.kod}</dt>
+                <dd className="text-zinc-600">{e.opis}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {/* Usporedba živi u pogledu koji je i postavlja, ne u ploči podloge.
+            Ondje je bila u svakom pogledu iako je korisna u jednom. */}
+        {currentView?.usporedbe && props.usporedbe.length > 0 && (
+          <div className="mt-3 rounded-lg bg-zinc-100 p-2">
+            <p className="mb-1 text-xs font-semibold text-zinc-600">
+              Istakni promjene
+            </p>
+            <div className="flex flex-wrap gap-1">
+              <Cip
+                odabran={props.comparisonId === null}
+                tamni
+                onClick={() => props.onComparison(null)}
+              >
+                ne
+              </Cip>
+              {props.usporedbe.map((c) => (
+                <Cip
+                  key={c.id}
+                  odabran={props.comparisonId === c.id}
+                  crveni
+                  onClick={() => props.onComparison(c.id)}
+                >
+                  {c.label}
+                </Cip>
+              ))}
+            </div>
+            {props.comparisonId && (
+              <>
+                <p className="mb-1 mt-2 text-xs font-semibold text-zinc-600">
+                  Prikaz
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["obris", "obrisi promjena"],
+                      ["klizac", "klizač"],
+                    ] as const
+                  ).map(([id, oznaka]) => (
+                    <Cip
+                      key={id}
+                      odabran={props.nacin === id}
+                      tamni
+                      onClick={() => props.onNacin(id)}
+                    >
+                      {oznaka}
+                    </Cip>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <TraziCesticu onOtvori={props.onOtvoriCesticu} />
+
+        {odabrani.length > 0 && (
+          <>
+            <p className="mb-1 mt-4 text-xs font-bold uppercase tracking-wide text-zinc-500">
+              U ovom pogledu
+            </p>
+            <div className="space-y-1">
+              {odabrani.map((l) => (
+                <Kvacica
+                  key={l.id}
+                  sloj={l}
+                  upaljen={props.activeIds.has(l.id)}
+                  stanje={props.slojStanje[l.id]}
+                  onToggle={props.onToggle}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        <p className="mb-1 mt-4 text-xs font-bold uppercase tracking-wide text-zinc-500">
+          {odabrani.length > 0 ? "Ostali slojevi" : "Slojevi"}
+        </p>
+
+        {/* Pretraživanje. Sa 113 slojeva u četrnaest skupina „gdje je
+            dalekovod” je bilo prelistavanje; sad je jedan potez. Dok se
+            traži, skupine se ne prikazuju — hijerarhija je tu smetnja. */}
+        <label className="mb-2 flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emerald-700">
+          <svg viewBox="0 0 16 16" aria-hidden className="h-3.5 w-3.5 shrink-0 text-zinc-500">
+            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={trazi}
+            onChange={(e) => setTrazi(e.target.value)}
+            placeholder="Traži sloj…"
+            aria-label="Traži sloj po imenu"
+            className="meta w-full bg-transparent py-1.5 text-sm outline-none placeholder:text-zinc-600"
+          />
+          {trazi && (
+            <button
+              onClick={() => setTrazi("")}
+              aria-label="Očisti pretraživanje"
+              className="fokus meta shrink-0 rounded px-2 text-zinc-600 hover:text-zinc-900"
+            >
+              ✕
+            </button>
+          )}
+        </label>
+
+        {trazi.trim() !== "" && nadeniPodignuti.length > 0 && (
+          <p className="mb-2 rounded-lg bg-zinc-50 p-2 text-zinc-700">
+            {nadeniPodignuti.map((l) => l.label).join(", ")} — već je gore, u{" "}
+            <b className="font-semibold">U ovom pogledu</b>.
+          </p>
+        )}
+
+        {trazi.trim() !== "" && nadeniUpravljani.length > 0 && (
+          <div className="mb-2 space-y-1 rounded-lg bg-zinc-50 p-2">
+            {nadeniUpravljani.map((l) => (
+              <div key={l.id} className="flex items-start gap-2">
+                <span
+                  aria-hidden
+                  className="mt-1 h-3 w-3 shrink-0 rounded-sm border border-black/20"
+                  style={{ background: l.color }}
+                />
+                <p className="text-zinc-700">
+                  {l.label} — nije kvačica nego podloga, bira se u{" "}
+                  <b className="font-semibold">Podloga i plan</b>.
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {trazi.trim() !== "" ? (
+          nadeni.length === 0 &&
+          nadeniUpravljani.length === 0 &&
+          nadeniPodignuti.length === 0 ? (
+            <p className="py-2 text-zinc-600">
+              Nijedan sloj ne odgovara upitu „{trazi}”.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {nadeni.map((l) => (
+                <div key={l.id}>
+                  <Kvacica
+                    sloj={l}
+                    upaljen={props.activeIds.has(l.id)}
+                    stanje={props.slojStanje[l.id]}
+                    onToggle={props.onToggle}
+                  />
+                  <p className="pl-8 text-xs text-zinc-600">{l.group}</p>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+        skupine.map((g) => {
+          const slojevi = uSkupini(g);
+          if (slojevi.length === 0) return null;
+          const n = slojevi.filter((l) => props.activeIds.has(l.id)).length;
+          return (
+            <details key={g} open={n > 0} className="group border-b border-zinc-100">
+              <summary className="fokus meta flex cursor-pointer select-none items-center gap-1.5 py-2 font-semibold text-zinc-700 [&::-webkit-details-marker]:hidden">
+                {/* `display:flex` na <summary> gasi preglednikov trokutić, pa
+                    ga crtamo sami — inače 14 skupina izgleda kao 14 naslova,
+                    a ne kao 14 kontrola. */}
+                <svg
+                  viewBox="0 0 12 12"
+                  aria-hidden
+                  className="h-3 w-3 shrink-0 text-zinc-500 transition-transform group-open:rotate-90"
+                >
+                  <path d="M4 2.5 8 6l-4 3.5z" fill="currentColor" />
+                </svg>
+                {g}
+                {n > 0 && (
+                  <span className="ml-1 rounded-full bg-emerald-100 px-1.5 text-emerald-800">
+                    {n}
+                  </span>
+                )}
+              </summary>
+              <div className="space-y-1 pb-2 pl-1">
+                {slojevi.map((l) => (
+                  <Kvacica
+                    key={l.id}
+                    sloj={l}
+                    upaljen={props.activeIds.has(l.id)}
+                    stanje={props.slojStanje[l.id]}
+                    onToggle={props.onToggle}
+                  />
+                ))}
+              </div>
+            </details>
+          );
+        })
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      {/* Prije je stajalo ispod karte. Otkad karta uzima cijeli prozor,
+          „ispod” ne postoji, a oboje je i dalje potrebno: granicu se
+          preuzima, a izvore se mora navesti. */}
+      <div className="border-t border-zinc-200 px-3 py-2 text-xs leading-snug text-zinc-500">
         <a
           href="/geo/granica.geojson"
           download="granica-dracevac-bilice.geojson"
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100"
+          className="fokus meta inline-flex items-center gap-1.5 py-1 font-semibold text-zinc-700 hover:text-zinc-900"
         >
-          <svg
-            viewBox="0 0 20 20"
-            fill="none"
-            aria-hidden="true"
-            className="h-4 w-4"
-          >
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
             <path
               d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15h12"
               stroke="currentColor"
-              strokeWidth="1.6"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
           Preuzmi granicu (GeoJSON)
         </a>
-        <p className="max-w-md text-xs text-zinc-400">
-          Simulirani prikaz koristi službene otvorene servise (DGU, ISPU/MGIPU,
-          Hrvatske vode, Copernicus, Promet Split, HAKOM…). Puni popis izvora i
-          licenci na stranici{" "}
-          <a href="/podaci" className="underline">
+        <p className="mt-1">
+          Službeni otvoreni servisi (DGU, ISPU/MGIPU, Hrvatske vode,
+          Copernicus, Promet Split, HAKOM…). Puni popis izvora i licenci na{" "}
+          <a href="/podaci" className="fokus underline hover:text-zinc-800">
             Prostorni podaci
           </a>
           .
@@ -482,261 +1388,392 @@ export function MapClient() {
 }
 
 /**
- * Bočna traka unutar karte. Sve kontrole žive ovdje, a ne iznad karte —
- * karti je prostor sam sadržaj, pa je ne treba stiskati trakama.
+ * Traženje čestice po broju ili adresi.
  *
- * Skupine su izvorni `<details>`: sklapanje i tipkovnica dolaze besplatno,
- * bez knjižnice, a 48 slojeva se više ne pregledava beskrajnim listanjem.
+ * Ovo je tipkovnički put do dosjea, kojeg dosad nije bilo: geometrija na
+ * karti nema `tabindex`, pa je korisnik koji ne rukuje mišem mogao proći
+ * kroz svaku kontrolu na stranici i ne otvoriti nijednu česticu — a dosje
+ * je jedino zbog čega stranica postoji. WCAG AA je zapisan kao pod.
+ *
+ * Usput odgovara i na pitanje koje mišem nema odgovora: „znam svoj broj
+ * čestice, gdje je?”
  */
-function Sidebar(props: {
-  views: typeof MAP_VIEWS;
-  viewId: string;
-  onSelectView: (id: string) => void;
-  currentView?: MapView;
-  dimenzija?: Dimension;
+function TraziCesticu({
+  onOtvori,
+}: {
+  onOtvori: (lat: number, lng: number) => void;
+}) {
+  const [q, setQ] = useState("");
+  // Rezultat nosi upit za koji je dobiven. Time se „učitavam” i „nema ništa”
+  // IZVODE iz stanja umjesto da se postavljaju — efekt tako ne dira stanje
+  // sinkrono, pa nema kaskadnog iscrtavanja pri svakom slovu.
+  const [odgovor, setOdgovor] = useState<{
+    q: string;
+    lista: { naziv: string; opis: string; lat: number; lng: number }[];
+  }>({ q: "", lista: [] });
+  const zahtjev = useRef(0);
+  const upit = q.trim();
+  const svjez = odgovor.q === upit;
+  const ucitava = upit !== "" && !svjez;
+  const prazno = upit !== "" && svjez && odgovor.lista.length === 0;
+
+  useEffect(() => {
+    const u = q.trim();
+    if (u === "") return;
+    const moj = ++zahtjev.current;
+    // Odgoda, da se ne šalje zahtjev na svako slovo.
+    const t = setTimeout(() => {
+      void (async () => {
+        try {
+          const r = await fetch(`/api/cestica/trazi?q=${encodeURIComponent(u)}`);
+          const d = (await r.json()) as {
+            pogodci?: { naziv: string; opis: string; lat: number; lng: number }[];
+          };
+          if (moj === zahtjev.current) setOdgovor({ q: u, lista: d.pogodci ?? [] });
+        } catch {
+          if (moj === zahtjev.current) setOdgovor({ q: u, lista: [] });
+        }
+      })();
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  return (
+    <div className="mt-4">
+      <label className="block">
+        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">
+          Nađi česticu
+        </span>
+        <input
+          type="text"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="k.č. 392/3 ili Mostine 1"
+          className="fokus meta w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-600"
+        />
+      </label>
+      {ucitava && <p className="mt-1 text-xs text-zinc-600">Tražim…</p>}
+      {prazno && (
+        <p className="mt-1 text-xs text-zinc-600">
+          Ništa pod „{upit}”. Broj čestice ide s kosom crtom, npr. 392/3.
+        </p>
+      )}
+      {svjez && odgovor.lista.length > 0 && (
+        <ul className="mt-1 space-y-0.5">
+          {odgovor.lista.map((p) => (
+            <li key={`${p.naziv}-${p.lat}-${p.lng}`}>
+              <button
+                onClick={() => {
+                  onOtvori(p.lat, p.lng);
+                  setQ("");
+                }}
+                className="fokus meta flex w-full items-baseline gap-2 rounded px-1 text-left hover:bg-zinc-100"
+              >
+                <span className="font-medium text-zinc-900">{p.naziv}</span>
+                <span className="text-xs text-zinc-600">{p.opis}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Opis pogleda, skraćen ako je dug.
+ *
+ * Opisi su namjerno različite dužine: neki pogled je razumljiv iz naslova,
+ * a „Gdje se može graditi stan” mora izložiti sve pragove po kojima broji,
+ * jer bi inače tvrdio nešto neprovjerljivo. Nesažet, taj opis gura popis
+ * slojeva pet okretaja kotačića ispod ruba — pa se dugi kroji na četiri
+ * retka, a cijeli ostaje na jedan klik.
+ *
+ * Prag je na broju znakova, ne na izmjerenoj visini: mjerenje bi tražilo
+ * ResizeObserver i još jedno iscrtavanje, a jedino što odluka treba jest
+ * „staje li otprilike u četiri retka”.
+ */
+const DUG_OPIS = 240;
+
+function Opis({ view }: { view: MapView }) {
+  // Stanje pamti ID pogleda, ne zastavicu: promjena pogleda tako sama vraća
+  // opis na skraćeno, bez efekta koji to čisti.
+  const [otvoren, setOtvoren] = useState<string | null>(null);
+  const dug = view.description.length > DUG_OPIS;
+  const razvijen = otvoren === view.id;
+  return (
+    <div className="mt-2">
+      {/* Opis je proza, a proza je 1rem — Reading-Size Rule iz DESIGN.md.
+          Ostatak trake smije biti gušći; ovo je jedino što se ČITA. */}
+      <p
+        className={`text-base leading-normal text-zinc-600 ${
+          dug && !razvijen ? "line-clamp-4" : ""
+        }`}
+      >
+        {view.description}
+      </p>
+      {dug && (
+        <button
+          onClick={() => setOtvoren(razvijen ? null : view.id)}
+          className="fokus meta mt-0.5 py-1 text-sm font-semibold text-emerald-700 hover:underline"
+        >
+          {razvijen ? "manje ▴" : "cijeli opis ▾"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Jedan sloj u bočnoj traci — isti redak i u skupini pogleda i u izvornoj.
+ *
+ * Cijeli redak je meta, ne kvadratić od 13px: `meta` mu na dodirnim
+ * uređajima daje 44px visine, a na mišu ostaje gust, pa 114 slojeva ne
+ * naraste u pet metara popisa.
+ *
+ * Kvadratić boje ima obrub. Bez njega su svijetli slojevi bili nevidljivi —
+ * „Pješački prijelazi” je bijelo na bijelom.
+ */
+function Kvacica({
+  sloj,
+  upaljen,
+  stanje,
+  onToggle,
+}: {
+  sloj: OverlayLayer;
+  upaljen: boolean;
+  stanje?: "ucitava" | "greska";
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <label
+      className={`meta flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-50 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emerald-700 ${
+        sloj.phase === 2 ? "cursor-not-allowed" : ""
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={upaljen}
+        disabled={sloj.phase === 2}
+        onChange={() => onToggle(sloj.id)}
+        className="h-4 w-4 shrink-0 accent-emerald-700 outline-none"
+      />
+      <span
+        className="h-3 w-3 shrink-0 rounded-sm border border-black/20"
+        style={{ background: sloj.color }}
+      />
+      <span className={`leading-tight ${sloj.phase === 2 ? "text-zinc-500" : ""}`}>
+        {sloj.label}
+        {sloj.phase === 2 && (
+          <span className="ml-1 text-zinc-500">(još nema podataka)</span>
+        )}
+        {stanje === "ucitava" && (
+          <span className="ml-1.5 text-zinc-500">učitavam…</span>
+        )}
+        {stanje === "greska" && (
+          <span className="ml-1.5 font-medium text-rose-700">
+            nije se učitao{" "}
+            <button
+              type="button"
+              onClick={(e) => {
+                // Ponovni pokušaj je gašenje pa paljenje: sloj se briše iz
+                // registra i sljedeći prolaz ga dohvaća iznova.
+                e.preventDefault();
+                e.stopPropagation();
+                onToggle(sloj.id);
+                setTimeout(() => onToggle(sloj.id), 0);
+              }}
+              className="fokus underline hover:text-rose-900"
+            >
+              pokušaj ponovno
+            </button>
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
+
+/**
+ * Desna ploča: sve što se bira jednim odabirom, a ne kvačicom.
+ *
+ * Podloga (ortofoto ili ulična karta) i namjena iz GUP-a različite su
+ * stvari, ali ista vrsta odluke — ono što je ISPOD svega ostalog, i čega
+ * može biti samo jedno. Zato stoje zajedno i odvojeno od popisa slojeva:
+ * kvačica se pita „hoću li i ovo vidjeti”, a ovdje „na čemu gledam”.
+ *
+ * Biralo je izvan pogleda, pa je dostupno u svakom — pogled mu zadaje samo
+ * početnu vrijednost. Prije je stajalo u bočnoj traci i vidjelo se jedino u
+ * pogledima koji ga izrijekom izlažu, pa se namjena nije mogla podmetnuti
+ * pod, recimo, katastar.
+ */
+function Kontrole(props: {
+  baseId: string;
+  onBase: (id: string) => void;
   dimValue: Record<string, string>;
   onDimValue: (dimId: string, layerId: string) => void;
-  usporedbe: Comparison[];
   comparisonId: string | null;
-  onComparison: (id: string | null) => void;
-  nacin: "obris" | "klizac";
-  onNacin: (n: "obris" | "klizac") => void;
   klizac: boolean;
-  activeIds: Set<string>;
-  onToggle: (id: string) => void;
-  legendLayers: OverlayLayer[];
   open: boolean;
   onOpen: (v: boolean) => void;
+  usko: boolean;
 }) {
-  const { dimenzija, currentView } = props;
-  const skupine = [...new Set(OVERLAY_LAYERS.map((l) => l.group))];
-  const brojUSkupini = (g: string) =>
-    OVERLAY_LAYERS.filter(
-      (l) => l.group === g && !UPRAVLJANI_SLOJEVI.has(l.id) && props.activeIds.has(l.id)
-    ).length;
-
+  const { usko } = props;
   if (!props.open) {
     return (
       <button
         onClick={() => props.onOpen(true)}
-        className="absolute left-3 top-3 z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
+        className={
+          usko
+            ? "fokus meta absolute right-3 top-28 z-[1100] rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold shadow"
+            : "fokus absolute right-3 top-[5.5rem] z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
+        }
       >
-        ☰ Slojevi
+        Podloga <span aria-hidden>☰</span>
       </button>
     );
   }
 
   return (
-    <div className="absolute inset-y-0 left-0 z-[1100] flex w-80 max-w-[85%] flex-col border-r border-zinc-200 bg-white/95 backdrop-blur">
+    <div
+      className={
+        usko
+          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)]"
+          : "absolute right-3 top-[5.5rem] z-[1100] flex max-h-[calc(100%-7rem)] w-56 max-w-[70vw] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow"
+      }
+    >
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
-        <span className="text-sm font-bold">Karta kvarta</span>
+        <span className="text-sm font-bold">Podloga i plan</span>
         <button
           onClick={() => props.onOpen(false)}
-          aria-label="Sakrij bočnu traku"
-          className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+          aria-label="Sakrij izbor podloge"
+          className="fokus meta rounded px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
         >
-          ⟨ sakrij
+          {usko ? "zatvori ⌄" : "sakrij ⟩"}
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-3 text-xs">
-        <p className="mb-1 font-bold uppercase tracking-wide text-zinc-500">
-          Pogled
-        </p>
+      <div className="flex-1 overflow-y-auto px-3 py-2 text-xs">
         <div className="flex flex-wrap gap-1">
-          {props.views.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => props.onSelectView(v.id)}
-              className={`rounded-full border px-2.5 py-1 font-semibold ${
-                v.id === props.viewId
-                  ? "border-emerald-600 bg-emerald-600 text-white"
-                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-              }`}
+          {BASE_LAYERS.map((b) => (
+            <Cip
+              key={b.id}
+              odabran={b.id === props.baseId}
+              onClick={() => props.onBase(b.id)}
             >
-              {v.label}
-            </button>
+              {b.label}
+            </Cip>
           ))}
         </div>
-        {currentView && (
-          <p className="mt-2 text-zinc-500">{currentView.description}</p>
-        )}
 
-        {dimenzija && (
-          <div className="mt-4 rounded-lg bg-zinc-100 p-2">
-            <p className="mb-1 font-semibold text-zinc-600">
-              {props.klizac ? "Klizač uspoređuje" : dimenzija.label}
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {/* Klizač uspoređuje dvije godine, pa ondje ugasiti podlogu
-                  nema smisla — nema što uspoređivati. */}
-              {!props.klizac && (
-                <button
-                  onClick={() => props.onDimValue(dimenzija.id, "")}
-                  className={`rounded px-2 py-1 font-medium ${
-                    !props.dimValue[dimenzija.id]
-                      ? "bg-zinc-800 text-white"
-                      : "bg-white text-zinc-700 hover:bg-zinc-200"
-                  }`}
-                >
-                  bez podloge
-                </button>
-              )}
-              {dimenzija.values.map((v) => (
-                <button
-                  key={v.layerId}
-                  onClick={() => props.onDimValue(dimenzija.id, v.layerId)}
-                  className={`rounded px-2 py-1 font-medium ${
-                    props.dimValue[dimenzija.id] === v.layerId
-                      ? "bg-emerald-600 text-white"
-                      : "bg-white text-zinc-700 hover:bg-zinc-200"
-                  }`}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-            {props.usporedbe.length > 0 && (
-              <>
-                <p className="mb-1 mt-2 font-semibold text-zinc-600">
-                  Istakni promjene
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <button
-                    onClick={() => props.onComparison(null)}
-                    className={`rounded px-2 py-1 font-medium ${
-                      props.comparisonId === null
-                        ? "bg-zinc-800 text-white"
-                        : "bg-white text-zinc-700 hover:bg-zinc-200"
-                    }`}
-                  >
-                    ne
-                  </button>
-                  {props.usporedbe.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => props.onComparison(c.id)}
-                      className={`rounded px-2 py-1 font-medium ${
-                        props.comparisonId === c.id
-                          ? "bg-red-600 text-white"
-                          : "bg-white text-zinc-700 hover:bg-zinc-200"
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-            {props.comparisonId && (
-              <>
-                <p className="mb-1 mt-2 font-semibold text-zinc-600">Prikaz</p>
-                <div className="flex flex-wrap gap-1">
-                  {(
-                    [
-                      ["obris", "obrisi promjena"],
-                      ["klizac", "klizač"],
-                    ] as const
-                  ).map(([id, oznaka]) => (
-                    <button
-                      key={id}
-                      onClick={() => props.onNacin(id)}
-                      className={`rounded px-2 py-1 font-medium ${
-                        props.nacin === id
-                          ? "bg-zinc-800 text-white"
-                          : "bg-white text-zinc-700 hover:bg-zinc-200"
-                      }`}
-                    >
-                      {oznaka}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Legenda pripada podlozi, pa s ugašenom podlogom nema što tumačiti —
-            inače objašnjava boje kojih na karti nema. */}
-        {dimenzija && (props.dimValue[dimenzija.id] || props.klizac) && (
-          <div className="mt-4">
-            <p className="mb-1 font-bold uppercase tracking-wide text-zinc-500">
-              Namjena
-            </p>
-            {dimenzija.legend.map((e) => (
-              <div key={e.kod} className="flex items-center gap-2 py-0.5">
-                <span
-                  className="h-3 w-3 shrink-0 rounded-sm border border-black/10"
-                  style={{ background: e.boja }}
-                />
-                <span className="text-zinc-700">
-                  <span className="font-semibold">{e.kod}</span> — {e.opis}
-                </span>
-              </div>
-            ))}
-            {props.comparisonId && (
-              <div className="mt-1 flex items-center gap-2">
-                <span className="h-0 w-3 shrink-0 border-t-2 border-dashed border-red-600" />
-                <span className="text-zinc-700">Mijenja se</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        <p className="mb-1 mt-4 font-bold uppercase tracking-wide text-zinc-500">
-          Slojevi
-        </p>
-        {skupine.map((g) => {
-          const uSkupini = OVERLAY_LAYERS.filter(
-            (l) => l.group === g && !UPRAVLJANI_SLOJEVI.has(l.id)
-          );
-          if (uSkupini.length === 0) return null;
-          const n = brojUSkupini(g);
+        {DIMENSIONS.map((d) => {
+          const usporedbe = COMPARISONS.filter((c) => c.dimensionId === d.id);
+          const klizacOve =
+            props.klizac &&
+            usporedbe.some((c) => c.id === props.comparisonId);
+          const vrijednost = props.dimValue[d.id] ?? "";
           return (
-            <details key={g} open={n > 0} className="border-b border-zinc-100">
-              <summary className="cursor-pointer select-none py-1.5 font-semibold text-zinc-700">
-                {g}
-                {n > 0 && (
-                  <span className="ml-1 rounded-full bg-emerald-100 px-1.5 text-emerald-800">
-                    {n}
-                  </span>
-                )}
-              </summary>
-              <div className="space-y-1 pb-2 pl-1">
-                {uSkupini.map((l) => (
-                  <label
-                    key={l.id}
-                    className={`flex items-start gap-2 ${
-                      l.phase === 2 ? "opacity-45" : ""
-                    }`}
+            <div key={d.id} className="mt-3 border-t border-zinc-200 pt-2">
+              <p className="mb-1 font-semibold text-zinc-600">
+                {klizacOve ? "Klizač uspoređuje" : d.label}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {/* Klizač uspoređuje dvije godine, pa ondje ugasiti podlogu
+                    nema smisla — nema što uspoređivati. */}
+                {!klizacOve && (
+                  <Cip
+                    odabran={!vrijednost}
+                    tamni
+                    onClick={() => props.onDimValue(d.id, "")}
                   >
-                    <input
-                      type="checkbox"
-                      checked={props.activeIds.has(l.id)}
-                      disabled={l.phase === 2}
-                      onChange={() => props.onToggle(l.id)}
-                      className="mt-0.5 accent-emerald-600"
-                    />
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="h-3 w-3 shrink-0 rounded-sm"
-                        style={{ background: l.color }}
-                      />
-                      <span>
-                        {l.label}
-                        {l.phase === 2 && (
-                          <span className="ml-1 text-zinc-400">(uskoro)</span>
-                        )}
-                      </span>
-                    </span>
-                  </label>
+                    bez podloge
+                  </Cip>
+                )}
+                {d.values.map((v) => (
+                  <Cip
+                    key={v.layerId}
+                    odabran={vrijednost === v.layerId}
+                    onClick={() => props.onDimValue(d.id, v.layerId)}
+                  >
+                    {v.label}
+                  </Cip>
                 ))}
               </div>
-            </details>
+
+              {/* Usporedba i način prikaza više NISU ovdje.
+                  Ploča se zove „Podloga i plan” i drži ono što je ispod
+                  svega; usporedba je pitanje, korisna u jednom pogledu, pa
+                  stoji u njemu — vidi Usporedba u bočnoj traci. */}
+
+              {/* Legenda pripada podlozi, pa s ugašenom podlogom nema što
+                  tumačiti — inače objašnjava boje kojih na karti nema. */}
+              {(vrijednost || klizacOve) && (
+                <div className="mt-2">
+                  {d.legend.map((e) => (
+                    <div key={e.kod} className="flex items-center gap-2 py-0.5">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-sm border border-black/10"
+                        style={{ background: e.boja }}
+                      />
+                      <span className="text-zinc-700">
+                        <span className="font-semibold">{e.kod}</span> — {e.opis}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {usporedbe.some((c) => c.id === props.comparisonId) && (
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="h-0 w-3 shrink-0 border-t-2 border-dashed border-red-600" />
+                  <span className="text-zinc-700">Mijenja se</span>
+                </div>
+              )}
+            </div>
           );
         })}
+
+        {/* Izvor podloge stoji uz izbor podloge. Na uskom zaslonu ova ploha
+            zna pokriti Leafletovu atribuciju, a navođenje je uvjet dozvole,
+            pa mora postojati i ovdje. */}
+        <p className="mt-3 border-t border-zinc-200 pt-2 text-[11px] leading-snug text-zinc-500">
+          {BASE_LAYERS.find((b) => b.id === props.baseId)?.attribution}
+        </p>
       </div>
     </div>
+  );
+}
+
+/** Čip jednostrukog izbora. `tamni` je „ništa”, `crveni` je promjena. */
+function Cip({
+  odabran,
+  tamni,
+  crveni,
+  onClick,
+  children,
+}: {
+  odabran: boolean;
+  tamni?: boolean;
+  crveni?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  // Bijelo na emerald-600 daje 3,65 : 1 — ispod praga. Filled stanje zato
+  // stoji na emerald-700 (5,43 : 1). Vidi The Contrast Floor Rule.
+  const izabrano = crveni
+    ? "bg-rose-700 text-white"
+    : tamni
+      ? "bg-zinc-800 text-white"
+      : "bg-emerald-700 text-white";
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={odabran}
+      className={`fokus meta-cip rounded px-2 py-1 font-medium ${
+        odabran ? izabrano : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -834,7 +1871,9 @@ function dodajSloj(
   okno: string | undefined,
   registar: Map<string, Postavljeni>,
   spremnik: Map<string, GeoJSON.FeatureCollection>,
-  otvoriDosje: (lat: number, lng: number, oznaci?: Isticanje) => void
+  otvoriDosje: (lat: number, lng: number, oznaci?: Isticanje) => void,
+  pogodakSloja: { current: number },
+  stanje: (id: string, s: "ucitava" | "greska" | null) => void
 ) {
   if (layer.type === "wms") {
     const wms = L.tileLayer.wms(layer.url, {
@@ -860,13 +1899,16 @@ function dodajSloj(
       () => map.getPane(okno) as HTMLElement;
   }
   registar.set(layer.id, { sloj: grupa, okno });
+  stanje(layer.id, "ucitava");
   ucitajGeoJSON(layer.url, spremnik)
     .then((fc) => {
       // Provjerava se identitet, ne samo prisutnost: sloj je u međuvremenu
       // mogao biti ugašen pa ponovno stvoren u drugom oknu.
       if (registar.get(layer.id)?.sloj !== grupa) return;
+      stanje(layer.id, null);
       const gj = L.geoJSON(fc, {
         ...(okno ? { pane: okno } : {}),
+        ...(NEINTERAKTIVNE_PLOHE.has(layer.id) ? { interactive: false } : {}),
         // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
         // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
         style: (f) => {
@@ -924,6 +1966,11 @@ function dodajSloj(
           }),
         onEachFeature: (f, lyr) => {
           const p = f.properties ?? {};
+          // Svaki klik na objekt najavljuje se karti, da njezin vlastiti
+          // rukovatelj zna da prazno nije pogođeno.
+          lyr.on("click", () => {
+            pogodakSloja.current = Date.now();
+          });
           // Katastar je jedini sloj kod kojeg klik ne pita „što je ovo”, nego
           // „što je sve ovdje” — pa umjesto vlastitih polja otvara dosje
           // sastavljen od svih slojeva. Ostali slojevi ostaju sami sebi.
@@ -959,7 +2006,7 @@ function dodajSloj(
               : p.opis_vrste;
             lyr.bindPopup(
               `<b>${esc(p.name ?? p.opis_vrste ?? "prometnica")}</b><br>` +
-                `<span style="color:#6b746d">${esc(razred)}` +
+                `<span style="color:#71717b">${esc(razred)}` +
                 (p.surface ? ` · ${esc(p.surface)}` : "") +
                 (p.maxspeed ? ` · ${esc(p.maxspeed)} km/h` : "") +
                 (p.postojece === false ? " · planirano" : "") +
@@ -989,7 +2036,11 @@ function dodajSloj(
       gj.addTo(grupa);
     })
     .catch((e) => {
+      // Prije se ovdje samo pisalo u konzolu, pa je neuspio sloj izgledao
+      // točno kao sloj bez ijednog objekta: kvačica upaljena, karta prazna.
+      // Kvačica sad nosi stanje i nudi ponovni pokušaj.
       console.warn(`Sloj ${layer.id} nije učitan:`, e);
+      if (registar.get(layer.id)?.sloj === grupa) stanje(layer.id, "greska");
     });
 }
 
@@ -997,6 +2048,35 @@ function dodajSloj(
 const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar",
   "katastar-vlasnistvo",
+  // Izvedeni sloj mora voditi u dosje, ne u skočni prozor s „M/K5”.
+  //
+  // Bio je običan sloj s natpisom, pa je u pogledu „Gdje se može graditi
+  // stan” dodir na zelenu česticu vraćao dva znaka i gasio klik na kartu —
+  // vlastita analiza inicijative stajala je na putu čitanju vlastite
+  // analize. Ovdje je odgovor dosje, koji tu istu analizu i ispisuje.
+  "stambeno-slobodno",
+]);
+
+/**
+ * Statističke i upravne plohe koje pokrivaju cijeli kvart.
+ *
+ * One nisu objekti nego pozadina: popisni krug, zona rasvjete, područje
+ * ulice. Kao interaktivne pojedu svaki dodir — u pogledu „Katastar i adrese”
+ * ploha popisnog kruga leži preko cijelog kvarta, pa je klik na česticu
+ * uvijek vraćao šifru statističkog kruga umjesto dosjea.
+ *
+ * Ništa se ne gubi time što više ne primaju klik: dosje ionako ispituje SVE
+ * slojeve po koordinati, pa se popisni krug i dalje pojavi u njemu — samo
+ * kao jedan redak među ostalima, a ne kao odgovor na svako pitanje.
+ */
+const NEINTERAKTIVNE_PLOHE: ReadonlySet<string> = new Set([
+  "popisni-krugovi",
+  "statisticki-krugovi",
+  "ulice-podrucja",
+  "rasvjeta-zone",
+  "kiosci-zone",
+  "vodovod-podrucja",
+  "komunalna-naknada",
 ]);
 
 /**
@@ -1008,7 +2088,7 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
  * o kojoj je čestici riječ.
  */
 const STIL_ODABRANO: LeafletNS.PathOptions = {
-  color: "#0f172a",
+  color: "#18181b",
   weight: 3,
   fillColor: "#f59e0b",
   fillOpacity: 0.3,
@@ -1029,27 +2109,61 @@ interface Isticanje {
  * rub karte, pa se teme mogu složiti u više stupaca i pregled stane na
  * jedan zaslon. Uz to ne pokriva kliknutu česticu.
  */
+/**
+ * Uz desni rub, ali koliko prostora ostane.
+ *
+ * Zatvorena ploča podloge zauzima samo gumb, pa dosje počinje ispod njega i
+ * ide do ruba. Otvorena je široka 14 rem i visoka pola karte, pa se dosje
+ * mora odmaknuti — a ispod 1024 px za oboje jednostavno nema mjesta uz
+ * otvorenu bočnu traku, pa dosje ondje pada na oblik uz dno.
+ */
+const DOSJE_SVUDA =
+  "pointer-events-auto absolute inset-x-0 bottom-0 z-[1150] max-h-[72%] " +
+  "overflow-y-auto rounded-t-xl border-t border-zinc-200 bg-white " +
+  "shadow-[0_-8px_24px_rgba(0,0,0,0.12)]";
+const DOSJE_SAM =
+  " lg:inset-x-auto lg:right-3 lg:top-[9rem] lg:bottom-3 lg:max-h-none " +
+  "lg:rounded-xl lg:border lg:shadow-lg lg:w-[min(44rem,48vw)]";
+const DOSJE_UZ_KONTROLE =
+  " lg:inset-x-auto lg:right-[15.5rem] lg:top-[5.5rem] lg:bottom-3 " +
+  "lg:max-h-none lg:rounded-xl lg:border lg:shadow-lg lg:w-[min(34rem,40vw)]";
+
 function DosjePlaca({
+  uzKontrole,
   dosje,
   ucitavanje,
   greska,
   onClose,
 }: {
+  uzKontrole: boolean;
   dosje: Dosje | null;
   ucitavanje: boolean;
   greska: string | null;
   onClose: () => void;
 }) {
   const c = dosje?.cestica;
+  const okvir = useRef<HTMLElement>(null);
+  // Fokus ulazi u ploču kad se otvori. Prije je ostajao na kontejneru karte,
+  // pa je čitač zaslona javljao da se nešto dogodilo, ali ne i što.
+  useEffect(() => {
+    okvir.current?.focus();
+  }, []);
   return (
     <aside
-      // Na uskom zaslonu ploča sjeda uz dno (karta ostaje vidljiva iznad),
-      // na širokom ide uz desni rub — ispod prekidača podloge i zumiranja,
-      // koji ondje već stoje.
-      className="pointer-events-auto absolute inset-x-2 bottom-2 z-[1000] max-h-[62%] overflow-y-auto rounded-xl border border-zinc-200 bg-white/97 shadow-lg backdrop-blur sm:inset-x-auto sm:right-3 sm:top-[9rem] sm:bottom-3 sm:max-h-none sm:w-[min(34rem,46vw)] lg:w-[min(44rem,48vw)]"
+      ref={okvir}
+      tabIndex={-1}
+      role="dialog"
+      // Ploča prima fokus da čitač zaslona uđe u nju, ali ga ne obrubljuje:
+      // preglednikov plavi prsten na ploči od 44 rem izgleda kao pogreška, a
+      // ne kao pokazivač. Prsten pripada kontrolama u njoj.
+      className={
+        "outline-none " +
+        DOSJE_SVUDA +
+        (uzKontrole ? DOSJE_UZ_KONTROLE : DOSJE_SAM)
+      }
       aria-label="Podaci o čestici"
     >
-      <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-zinc-200 bg-white/97 px-4 py-3">
+      <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3">
         <div>
           {c ? (
             <>
@@ -1074,8 +2188,8 @@ function DosjePlaca({
         </div>
         <button
           onClick={onClose}
-          className="-mr-1 -mt-1 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-          aria-label="Zatvori"
+          className="fokus meta -mr-1 -mt-1 min-w-11 rounded px-3 py-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+          aria-label="Zatvori dosje čestice"
         >
           ✕
         </button>
@@ -1086,6 +2200,7 @@ function DosjePlaca({
         {greska && <p className="text-sm text-rose-700">{greska}</p>}
         {dosje && !ucitavanje && (
           <>
+            <NamjenaOdgovor namjena={dosje.namjena} />
             {dosje.skupine.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 Nijedan sloj ovdje nema ništa.
@@ -1100,7 +2215,7 @@ function DosjePlaca({
                     key={s.naslov}
                     className="mb-4 break-inside-avoid"
                   >
-                    <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                    <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                       {s.naslov}
                     </h3>
                     <ul className="space-y-1.5">
@@ -1111,11 +2226,11 @@ function DosjePlaca({
                               {st.sloj}
                             </span>
                             {st.broj > 1 && (
-                              <span className="text-xs text-zinc-400">
+                              <span className="text-xs text-zinc-500">
                                 ×{st.broj}
                               </span>
                             )}
-                            <span className="rounded bg-zinc-100 px-1 text-[10px] uppercase tracking-wide text-zinc-500">
+                            <span className="rounded bg-zinc-100 px-1 text-[11px] uppercase tracking-wide text-zinc-600">
                               {ODNOS_NATPIS[st.odnos]}
                             </span>
                             {st.poveznica && (
@@ -1141,13 +2256,107 @@ function DosjePlaca({
                 ))}
               </div>
             )}
-            <p className="mt-2 border-t border-zinc-200 pt-2 text-[11px] text-zinc-400">
-              pretraženo {dosje.pretrazeno} slojeva
+            <p className="mt-2 border-t border-zinc-200 pt-2 text-xs text-zinc-500">
+              pretraženo {dosje.pretrazeno} slojeva koji mogu nositi podatak o čestici
             </p>
           </>
         )}
       </div>
     </aside>
+  );
+}
+
+/**
+ * Namjena kao ODGOVOR, ne kao redak.
+ *
+ * Dosje je pedeset šest slojeva poredanih po temi, i u toj poredanoj hrpi
+ * pitanje s kojim je susjed došao — „smijem li ovdje graditi?” — nije imalo
+ * nijedan redak. Ovo stoji iznad svega ostalog, prije prvog naslova teme,
+ * jer je jedino što se traži prije nego što se išta drugo pogleda.
+ *
+ * Uz svaku tvrdnju ide izvor i godina. Namjena je pravna činjenica koja
+ * mijenja nečije planove; bez „po GUP-u 2015., na snazi” to je glasina.
+ */
+function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
+  if (!namjena) {
+    return (
+      <p className="mb-3 rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-600">
+        Za ovu točku nema plohe namjene na praćenom listu GUP-a. To ne znači
+        da namjene nema — znači da je ovdje ne možemo očitati.
+      </p>
+    );
+  }
+  const { kod, opis, godina, stanovanje, nacrt, slobodna, izvan } = namjena;
+  // Boja slijedi ISHOD, ne namjenu.
+  //
+  // Prije je okvir bio zelen čim namjena dopušta stanovanje — pa je zaključana
+  // čestica dobivala zeleni okvir oko rečenice „ovdje se ne gradi”, a K5 s
+  // četiri zgrade zeleni okvir bez ijedne ograde. Boja koja proturječi
+  // rečenici pokraj sebe je gore od nikakve, i krši One Green Rule: maslina
+  // označava ono na što se može djelovati, ne raspoloženje.
+  const povoljno = stanovanje && slobodna !== null && !slobodna.bez_pristupa;
+  return (
+    <section
+      className={`mb-3 rounded-lg border px-3 py-2.5 ${
+        povoljno
+          ? "border-emerald-200 bg-emerald-50"
+          : "border-zinc-200 bg-zinc-50"
+      }`}
+    >
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
+        Namjena
+      </h3>
+      <p className="mt-0.5 text-base font-semibold leading-snug text-zinc-900">
+        <span className="font-mono">{kod}</span> — {opis}
+      </p>
+      <p className="mt-1 text-base font-medium leading-snug text-zinc-800">
+        {stanovanje
+          ? "Ova namjena dopušta stanovanje."
+          : "Ova namjena ne dopušta stanovanje."}
+      </p>
+      <p className="mt-0.5 text-xs text-zinc-600">
+        po GUP-u {godina}., na snazi
+      </p>
+
+      {nacrt && (
+        <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
+          Nacrt izmjena iz 2024. ovdje predlaže{" "}
+          <span className="font-mono font-semibold">{nacrt.kod}</span> —{" "}
+          {nacrt.opis}.
+        </p>
+      )}
+
+      {slobodna && (
+        <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
+          {slobodna.bez_pristupa ? (
+            <>
+              Čestica je u sloju slobodnih, ali{" "}
+              <b className="font-semibold text-rose-800">nema pristup na cestu</b>{" "}
+              — bez služnosti ili nove ulice ovdje se ne gradi.
+            </>
+          ) : (
+            <>
+              Čestica je u sloju slobodnih:{" "}
+              <b className="font-semibold">
+                {Math.round(slobodna.slobodno_m2).toLocaleString("hr-HR")} m²
+              </b>{" "}
+              stvarno slobodne površine.
+            </>
+          )}
+        </p>
+      )}
+
+      {/* Odsutnost se izriče. Prešućena, čita se kao dopuštenje. */}
+      {!slobodna && izvan && (
+        <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
+          Nije u sloju slobodnih čestica — {izvan}.
+        </p>
+      )}
+
+      <p className="mt-2 text-sm text-zinc-700">
+        Uputa gdje gledati, ne potvrda — mjerodavni su akt i uvjeti gradnje.
+      </p>
+    </section>
   );
 }
 
@@ -1172,7 +2381,7 @@ async function prikaziSolar(
     popup.setContent(
       `<b>Solarni potencijal</b><br>~<b>${data.kwhPerKwp.toLocaleString(
         "hr-HR"
-      )} kWh</b> godišnje po 1 kWp<br><span style="color:#6b746d">iradijacija ${data.irradiation.toLocaleString(
+      )} kWh</b> godišnje po 1 kWp<br><span style="color:#71717b">iradijacija ${data.irradiation.toLocaleString(
         "hr-HR"
       )} kWh/m²</span>`
     );
@@ -1239,7 +2448,7 @@ function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
         p[k] !== undefined &&
         p[k] !== null
     )
-    .map(([k, ime]) => `${esc(ime)}: ${esc(vrijednostPolja(p[k]))}`);
+    .map(([k, ime]) => `${esc(ime)}: ${esc(vrijednostPolja(p[k], k))}`);
   // Obuhvati planova nose poveznicu na sam dokument na split.hr. Ispisana
   // kao tekst ne vrijedi ništa — cijela je poanta da se s karte može otići
   // čitati plan koji na tom mjestu vrijedi.
@@ -1254,7 +2463,7 @@ function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
   if (redci.length === 0) return glava;
   return (
     glava +
-    `<br><span style="color:#6b746d">${redci.join("<br>")}</span>`
+    `<br><span style="color:#71717b">${redci.join("<br>")}</span>`
   );
 }
 
@@ -1262,7 +2471,7 @@ function popupPromjene(p: Record<string, unknown>): string {
   const ha = Number(p.povrsina_m2) / 1e4;
   const glava =
     `<b>${esc(p.iz_namjena)} → ${esc(p.u_namjena)}</b><br>` +
-    `<span style="color:#6b746d">${esc(p.iz_kod)} → ${esc(p.u_kod)} · ` +
+    `<span style="color:#71717b">${esc(p.iz_kod)} → ${esc(p.u_kod)} · ` +
     `${ha.toLocaleString("hr-HR", { maximumFractionDigits: 2 })} ha · ` +
     `nacrt ${esc(p.do_godine)}. prema planu iz ${esc(p.od_godine)}.</span>`;
   if (!p.stavka) return glava;

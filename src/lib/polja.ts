@@ -90,10 +90,93 @@ export const IME_POLJA: Record<string, string> = {
   opis: "opis",
 };
 /** Vrijednost u obliku za prikaz — brojevi hrvatski, bez suvišnih decimala. */
-export function vrijednostPolja(v: unknown): string {
-  return typeof v === "number"
-    ? v.toLocaleString("hr-HR", { maximumFractionDigits: 1 })
-    : String(v);
+/**
+ * Šifrarnici iz izvoza koji nisu na hrvatskom.
+ *
+ * Gradski GIS ponegdje nosi engleske enume iz izvorne baze — `ROOF_NOT_FLAT`
+ * je doslovno ono što piše u sloju zgrada. Stranica je na hrvatskom bez
+ * iznimke, uključujući i vrijednosti, ne samo natpise: „krov: ROOF_NOT_FLAT”
+ * susjedu ne znači ništa, a odaje da ispod stoji nečiji izvoz.
+ *
+ * Vrijednost koje ovdje nema ispisuje se kako jest — bolje sirovo nego
+ * pogrešno prevedeno.
+ */
+const VRIJEDNOSTI: Record<string, string> = {
+  ROOF_NOT_FLAT: "kosi",
+  ROOF_FLAT: "ravni",
+  NOT_FLAT: "kosi",
+  FLAT: "ravni",
+  UNDEFINED: "nepoznato",
+  UNKNOWN: "nepoznato",
+  TRUE: "da",
+  FALSE: "ne",
+};
+
+/**
+ * Popravci koje izvoz nosi u sebi, a stanar ih ne bi trebao vidjeti.
+ *
+ * Dio vrijednosti je UTF-8 pročitan kao Latin-1 negdje uzvodno, pa u dosjeu
+ * osvane dvostruko kodirano slovo umjesto našega. Ne da se popraviti u
+ * izvoru (arhiva je takva), pa se ispravlja na izlazu: podatku kojemu je
+ * vjerodostojnost jedina imovina ne pristaje krivo kodiran prvi redak.
+ */
+function popraviKodiranje(s: string): string {
+  if (!/\u00c3|\u00c4|\u00c5/.test(s)) return s;
+  try {
+    // Vrati niz u bajtove po Latin-1 pa ga pročitaj kao UTF-8 — to je točno
+    // obrnuto od pogreške koja ga je i napravila.
+    const bajtovi = Uint8Array.from(s, (c) => c.charCodeAt(0) & 0xff);
+    const natrag = new TextDecoder("utf-8", { fatal: true }).decode(bajtovi);
+    return natrag;
+  } catch {
+    return s; // nije bila dvostruka kodna greška
+  }
+}
+
+/**
+ * Kratice koje ostaju velike. Bez ovoga „GUP SPLITA” postane „Gup Splita”,
+ * što je gore od izvornog vikanja — plan se zove GUP i tako se piše.
+ */
+const KRATICE = new Set([
+  "GUP", "PPUG", "PPUGS", "UPU", "DPU", "ID", "KO", "HEP", "HT", "DTK",
+  "NN", "SN", "VN", "TS", "KRO", "DOF", "EU", "RH",
+]);
+
+/** VELIKA IMENA IZ IZVORA („PUT MOSTINA”) u čitljiv oblik. */
+function izVelikih(s: string): string {
+  if (s.length < 4) return s;
+  if (s !== s.toLocaleUpperCase("hr-HR")) return s;
+  if (!/\p{L}/u.test(s)) return s;
+  return s
+    .split(/(\s+)/)
+    .map((rijec) => {
+      if (/^\s+$/.test(rijec) || KRATICE.has(rijec)) return rijec;
+      // Oznake namjene (K5, M1, Z5, D4) također ostaju kakve jesu.
+      if (/^[A-ZČĆŽŠĐ]\d+$/.test(rijec)) return rijec;
+      return rijec
+        .toLocaleLowerCase("hr-HR")
+        .replace(/(^|[(/-])(\p{L})/gu, (_m, p1: string, c: string) =>
+          p1 + c.toLocaleUpperCase("hr-HR")
+        );
+    })
+    .join("");
+}
+
+export function vrijednostPolja(v: unknown, kljuc?: string): string {
+  if (typeof v === "number")
+    return v.toLocaleString("hr-HR", { maximumFractionDigits: 1 });
+  let s = popraviKodiranje(String(v));
+  const poznato = VRIJEDNOSTI[s.toUpperCase()];
+  if (poznato) return poznato;
+  // Natpis polja već nosi mjernu jedinicu („napon (kV)”), pa je vrijednost
+  // ne ponavlja — prije je ispisivalo „0.4 kV kV”.
+  const natpis = kljuc ? (IME_POLJA[kljuc] ?? "") : "";
+  const jed = natpis.match(/\((.+?)\)\s*$/);
+  if (jed) s = s.replace(new RegExp("\\s*" + jed[1] + "\\s*$", "i"), "").trim();
+  // Decimalna točka iz izvora u hrvatski zarez, ali samo za čisti broj.
+  if (/^-?\d+\.\d+$/.test(s))
+    return Number(s).toLocaleString("hr-HR", { maximumFractionDigits: 2 });
+  return izVelikih(s);
 }
 
 /**
@@ -109,13 +192,13 @@ export function opisObjekta(
   najvise = 2
 ): string {
   const kljuc = NASLOVNA_POLJA.find((k) => p[k] != null && p[k] !== "");
-  const glava = kljuc ? vrijednostPolja(p[kljuc]) : null;
+  const glava = kljuc ? vrijednostPolja(p[kljuc], kljuc) : null;
   const dopune = Object.entries(p)
     .filter(
       ([k, v]) =>
         k !== kljuc && !BEZ_OPISA.has(k) && IME_POLJA[k] && v != null && v !== ""
     )
     .slice(0, najvise)
-    .map(([k, v]) => `${IME_POLJA[k]}: ${vrijednostPolja(v)}`);
+    .map(([k, v]) => `${IME_POLJA[k]}: ${vrijednostPolja(v, k)}`);
   return [glava, ...dopune].filter(Boolean).join(" · ") || "objekt";
 }
