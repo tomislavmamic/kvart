@@ -143,6 +143,27 @@ export interface MapView {
    * česticu crvenu i ne doznati znači li to dobro ili loše.
    */
   legend?: LegendEntry[];
+  /**
+   * Razina u traci pogleda.
+   *
+   * `pitanje` su načini na koje se u kvartu doista pita — „gdje se može
+   * graditi”, „što se mijenja”, „što ovdje vrijedi”. Njih je malo i stoje
+   * odmah, jer je to ono s čime susjed dolazi.
+   *
+   * `nacin` su načini gledanja: krajobraz, mobilnost, infrastruktura, cijeli
+   * registar. Nisu manje vrijedni, ali nisu pitanje — pa stoje iza „Više”.
+   * Trinaest ravnopravnih čipova u traci koja se ne vidi do kraja značilo je
+   * da nijedan nije istaknut, a onaj po koji se došlo bio je izvan zaslona.
+   */
+  razina: "pitanje" | "nacin";
+  /**
+   * Izlaže li pogled biralo usporedbe (i klizač).
+   *
+   * Prije je stajalo u desnoj ploči, uz podlogu, gdje ga je bilo u svakom
+   * pogledu iako je korisno u jednom. Ploča se zove „Podloga i plan”, a
+   * usporedba nije ni jedno ni drugo.
+   */
+  usporedbe?: boolean;
 }
 
 export const BASE_LAYERS: BaseLayer[] = [
@@ -944,10 +965,11 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
  * kvačicu. Ostali pogledi su prečaci: svoj izbor dižu na vrh bočne trake,
  * pa se vidi što pogled tvrdi, a ostatak ostaje dohvatljiv ispod.
  */
-export const MAP_VIEWS: MapView[] = [
+const POGLEDI: MapView[] = [
   {
     id: "svi-slojevi",
     label: "Svi slojevi",
+    razina: "nacin",
     description:
       `Cijeli registar — ${OVERLAY_LAYERS.filter((l) => l.phase === 1).length} ` +
       "slojeva složenih po izvoru i temi, ništa upaljeno unaprijed. Otvori " +
@@ -958,6 +980,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "krajobraz",
     label: "Krajobraz",
+    razina: "nacin",
     description:
       "Zelenilo, krošnje, zabetoniranost, reljef i stara imena predjela.",
     layerIds: ["krosnje", "zelene-povrsine", "nepropusnost", "reljef", "toponimi", "zeleni-katastar"],
@@ -965,6 +988,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "mobilnost",
     label: "Mobilnost",
+    razina: "nacin",
     description:
       "Autobusi, ulična mreža, pješačke staze i parkirališta, te ono po čemu " +
       "se pješice zapravo hoda — nogostupi sa širinom, prijelazi, izbočine " +
@@ -991,6 +1015,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "ceste",
     label: "Ceste i ulice",
+    razina: "nacin",
     description:
       "Cijela prometna mreža u jednom sloju i samo obrisom, bez rasterskih " +
       "preklopa. Puna crta je postojeće — ulice iz OSM-a s razredom i imenom " +
@@ -1007,6 +1032,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "urbanizam",
     label: "Urbanizam",
+    razina: "nacin",
     description:
       "Što se gdje smije graditi: UPU i DPU planovi, zgrade i gustoća " +
       "stanovništva. Podloga je namjena iz GUP-a na snazi; što joj nacrt " +
@@ -1035,7 +1061,9 @@ export const MAP_VIEWS: MapView[] = [
   },
   {
     id: "nacrt-gupa",
-    label: "Nacrt GUP-a",
+    label: "Što se mijenja?",
+    razina: "pitanje",
+    usporedbe: true,
     description:
       "Karta je nacrt izmjena GUP-a iz 2024., a crveno obrubljeno je ono što " +
       "on mijenja u odnosu na plan koji je na snazi — 9,4 ha na 24 mjesta. " +
@@ -1050,6 +1078,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "infrastruktura",
     label: "Infrastruktura",
+    razina: "nacin",
     description:
       "Izvedeno stanje mreža iz evidencije Grada: vodovod, odvodnja s " +
       "razlikovanjem oborinske i fekalne, hidranti, trafostanice, stupovi " +
@@ -1092,6 +1121,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "javni-prostori",
     label: "Javni prostori",
+    razina: "nacin",
     description:
       "Škole, igrališta, sportski tereni, zelene površine i ostali javni " +
       "sadržaji, uz zaštićena kulturna dobra — kroz kvart prolazi trasa " +
@@ -1110,6 +1140,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "katastar",
     label: "Katastar i adrese",
+    razina: "nacin",
     description:
       "Čestice, kućni brojevi i granice katastarskih općina, uz popisne " +
       "krugove Popisa 2021. Podatak o vlasništvu postoji u gradskoj " +
@@ -1127,7 +1158,8 @@ export const MAP_VIEWS: MapView[] = [
   },
   {
     id: "planovi-obuhvat",
-    label: "Koji plan vrijedi",
+    label: "Što vrijedi ovdje?",
+    razina: "pitanje",
     description:
       "Za svako mjesto u kvartu: koji ga prostorni planovi pokrivaju. Klik " +
       "na plohu daje naziv plana i poveznicu na sam dokument na split.hr, " +
@@ -1137,13 +1169,15 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "okolis-rizici",
     label: "Okoliš i rizici",
+    razina: "nacin",
     description:
       "Gdje plavi, gdje ljeti gori i kakav zrak dišemo.",
     layerIds: ["poplave", "vrucina", "zrak", "nepropusnost"],
   },
   {
     id: "gdje-se-moze-graditi",
-    label: "Gdje se može graditi stan",
+    label: "Gdje se može graditi?",
+    razina: "pitanje",
     description:
       "Čestice na kojima GUP dopušta stanovanje, kroz koje ne prolazi cesta " +
       "i na kojima nema zgrade. U kvartu ih je 56 u 21 nakupini, ukupno " +
@@ -1189,6 +1223,7 @@ export const MAP_VIEWS: MapView[] = [
   {
     id: "planirano",
     label: "Planirano",
+    razina: "nacin",
     description:
       "Buduća infrastruktura iz važećih planova: prometnice, energetika i telekomunikacije, vodoopskrba, odvodnja te plan gradnje optike.",
     layerIds: [
@@ -1200,6 +1235,28 @@ export const MAP_VIEWS: MapView[] = [
       "plan-optika",
     ],
   },
+];
+
+/**
+ * Pitanja idu prva, i to ovim redom — prvo je ujedno i dolazna stranica.
+ *
+ * Redoslijed stoji izrijekom, a ne po mjestu u izvoru: mjesto u izvoru prati
+ * povijest datoteke, a ovo je odluka o tome s čime se dolazi. „Gdje se može
+ * graditi?” je prvo jer je to jedino pitanje na koje ova stranica ima
+ * odgovor kakav za ovaj kvart ne postoji nigdje drugdje.
+ */
+const REDOSLIJED_PITANJA = [
+  "gdje-se-moze-graditi",
+  "nacrt-gupa",
+  "planovi-obuhvat",
+];
+
+export const MAP_VIEWS: MapView[] = [
+  ...POGLEDI.filter((v) => v.razina === "pitanje").sort(
+    (a, b) =>
+      REDOSLIJED_PITANJA.indexOf(a.id) - REDOSLIJED_PITANJA.indexOf(b.id)
+  ),
+  ...POGLEDI.filter((v) => v.razina === "nacin"),
 ];
 
 /**

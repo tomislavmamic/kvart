@@ -66,3 +66,24 @@ pitanje s kojim netko otvara kartu.
 4. Zadani pogled — tek nakon dogovora.
 
 Prva dva koraka ne traže nijednu odluku i mogu odmah.
+
+---
+
+## Izvedeno 2026-07-31
+
+Sva tri koraka. Uz jednu izmjenu prijedloga, u dogovoru:
+
+- **Pitanja su tri, ne četiri.** „Što je prijavljeno?” traži sloj prijedloga
+  koji još ne postoji — čip koji ne radi gori je od čipa kojeg nema. Ostaje u
+  `plan-prijedlozi-na-karti.md` i ulazi u traku kad sloj postoji.
+- **Pogledi se ne spajaju.** „Katastar i adrese” i „Koji plan vrijedi” su u
+  prijedlogu išli u jedno pitanje; spajanje bi promijenilo skup slojeva, što
+  je odluka o sadržaju, a ne o rasporedu. Umjesto toga je „Koji plan vrijedi”
+  preimenovan u „Što vrijedi ovdje?” i podignut, a „Katastar i adrese” je
+  ostao među načinima gledanja, cijel.
+- **Ništa nije izbrisano.** Deset pogleda stoji pod „Više” (u bočnoj traci
+  „Načini gledanja”), sa svojim ID-em i svojom adresom. Nijedna postojeća
+  poveznica ne puca.
+
+Dolazna stranica je „Gdje se može graditi?”. `?pogled=svi-slojevi` i dalje
+vrijedi i vodi u registar.

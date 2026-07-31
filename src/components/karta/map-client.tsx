@@ -18,6 +18,7 @@ import {
   COMPARISONS,
   UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
+  type Comparison,
   type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
@@ -768,9 +769,6 @@ export function MapClient() {
           setDimValue((p) => ({ ...p, [dimId]: layerId }))
         }
         comparisonId={comparisonId}
-        onComparison={setComparisonId}
-        nacin={nacin}
-        onNacin={setNacin}
         klizac={klizac}
         open={kontroleOpen}
         onOpen={otvoriKontrole}
@@ -785,6 +783,13 @@ export function MapClient() {
         activeIds={activeIds}
         onToggle={toggleLayer}
         slojStanje={slojStanje}
+        usporedbe={COMPARISONS.filter(
+          (c) => c.dimensionId === currentView?.dimensionId
+        )}
+        comparisonId={comparisonId}
+        onComparison={setComparisonId}
+        nacin={nacin}
+        onNacin={setNacin}
         open={panelOpen}
         onOpen={otvoriTraku}
         usko={usko}
@@ -890,27 +895,43 @@ function TrakaPogleda({
   useEffect(() => {
     aktivni.current?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [viewId]);
+  // „Više” se otvara samo ako je u njemu ono što je odabrano — inače traka
+  // pri dolasku pokazuje tri pitanja i ništa drugo.
+  const [vise, setVise] = useState(
+    () => views.find((v) => v.id === viewId)?.razina === "nacin"
+  );
+  const pitanja = views.filter((v) => v.razina === "pitanje");
+  const nacini = views.filter((v) => v.razina === "nacin");
+  const cip = (v: MapView) => (
+    <button
+      key={v.id}
+      onClick={() => onSelectView(v.id)}
+      aria-current={v.id === viewId}
+      aria-pressed={v.id === viewId}
+      ref={v.id === viewId ? aktivni : undefined}
+      className={`fokus meta-cip shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
+        v.id === viewId
+          ? "border-emerald-700 bg-emerald-700 text-white"
+          : "border-zinc-200 bg-white/95 text-zinc-700 backdrop-blur"
+      }`}
+    >
+      {v.label}
+    </button>
+  );
   return (
     <nav
       aria-label="Pogled"
       className="absolute inset-x-0 top-16 z-[1050] flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {views.map((v) => (
-        <button
-          key={v.id}
-          onClick={() => onSelectView(v.id)}
-          aria-current={v.id === viewId}
-          aria-pressed={v.id === viewId}
-          ref={v.id === viewId ? aktivni : undefined}
-          className={`fokus meta-cip shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
-            v.id === viewId
-              ? "border-emerald-700 bg-emerald-700 text-white"
-              : "border-zinc-200 bg-white/95 text-zinc-700 backdrop-blur"
-          }`}
-        >
-          {v.label}
-        </button>
-      ))}
+      {pitanja.map(cip)}
+      <button
+        onClick={() => setVise((v) => !v)}
+        aria-expanded={vise}
+        className="fokus meta-cip shrink-0 whitespace-nowrap rounded-full border border-dashed border-zinc-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm backdrop-blur"
+      >
+        {vise ? "Manje" : `Više (${nacini.length})`}
+      </button>
+      {vise && nacini.map(cip)}
     </nav>
   );
 }
@@ -936,11 +957,31 @@ function Sidebar(props: {
   activeIds: Set<string>;
   onToggle: (id: string) => void;
   slojStanje: Record<string, "ucitava" | "greska">;
+  usporedbe: Comparison[];
+  comparisonId: string | null;
+  onComparison: (id: string | null) => void;
+  nacin: "obris" | "klizac";
+  onNacin: (n: "obris" | "klizac") => void;
   open: boolean;
   onOpen: (v: boolean) => void;
   usko: boolean;
 }) {
   const { currentView, usko } = props;
+  const [trazi, setTrazi] = useState("");
+  // Pretraga ide bez dijakritike i bez obzira na veličinu slova: „daljnovod”
+  // se ne piše, ali „dalekovod” se traži i s „č” i bez njega.
+  const bezKvacica = (v: string) =>
+    v.toLocaleLowerCase("hr-HR").normalize("NFD").replace(/\p{M}/gu, "");
+  const upit = bezKvacica(trazi.trim());
+  const nadeni =
+    upit === ""
+      ? []
+      : OVERLAY_LAYERS.filter(
+          (l) =>
+            !UPRAVLJANI_SLOJEVI.has(l.id) &&
+            (bezKvacica(l.label).includes(upit) ||
+              bezKvacica(l.group).includes(upit))
+        );
   // Slojeve kojima upravlja biralo desno ovdje se ne nudi ni kad ih pogled
   // spominje — inače bi ista podloga imala i kvačicu i čip.
   const odabrani = (currentView?.layerIds ?? [])
@@ -1001,25 +1042,66 @@ function Sidebar(props: {
         {!usko && (
           <>
             <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
-              Pogled
+              Pitanja
             </p>
             <div className="flex flex-wrap gap-1">
-              {props.views.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => props.onSelectView(v.id)}
-                  aria-current={v.id === props.viewId}
-                  aria-pressed={v.id === props.viewId}
-                  className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                    v.id === props.viewId
-                      ? "border-emerald-700 bg-emerald-700 text-white"
-                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-                  }`}
-                >
-                  {v.label}
-                </button>
-              ))}
+              {props.views
+                .filter((v) => v.razina === "pitanje")
+                .map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => props.onSelectView(v.id)}
+                    aria-current={v.id === props.viewId}
+                    aria-pressed={v.id === props.viewId}
+                    className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                      v.id === props.viewId
+                        ? "border-emerald-700 bg-emerald-700 text-white"
+                        : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
             </div>
+            {/* Načini gledanja nisu pitanja i ne stoje uz njih. Skupljeni su
+                jer ih je devet, a otvoreni ako je odabran jedan od njih. */}
+            <details
+              open={
+                props.views.find((v) => v.id === props.viewId)?.razina ===
+                "nacin"
+              }
+              className="group mt-1.5"
+            >
+              <summary className="fokus meta flex cursor-pointer select-none items-center gap-1.5 py-1 text-xs font-semibold text-zinc-600 [&::-webkit-details-marker]:hidden">
+                <svg
+                  viewBox="0 0 12 12"
+                  aria-hidden
+                  className="h-3 w-3 shrink-0 transition-transform group-open:rotate-90"
+                >
+                  <path d="M4 2.5 8 6l-4 3.5z" fill="currentColor" />
+                </svg>
+                Načini gledanja
+              </summary>
+              <div className="flex flex-wrap gap-1 pt-1">
+                {props.views
+                  .filter((v) => v.razina === "nacin")
+                  .map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => props.onSelectView(v.id)}
+                      aria-current={v.id === props.viewId}
+                      aria-pressed={v.id === props.viewId}
+                      className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                        v.id === props.viewId
+                          ? "border-emerald-700 bg-emerald-700 text-white"
+                          : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                      }`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+              </div>
+            </details>
           </>
         )}
         {currentView && <Opis view={currentView} />}
@@ -1040,6 +1122,59 @@ function Sidebar(props: {
               </div>
             ))}
           </dl>
+        )}
+
+        {/* Usporedba živi u pogledu koji je i postavlja, ne u ploči podloge.
+            Ondje je bila u svakom pogledu iako je korisna u jednom. */}
+        {currentView?.usporedbe && props.usporedbe.length > 0 && (
+          <div className="mt-3 rounded-lg bg-zinc-100 p-2">
+            <p className="mb-1 text-xs font-semibold text-zinc-600">
+              Istakni promjene
+            </p>
+            <div className="flex flex-wrap gap-1">
+              <Cip
+                odabran={props.comparisonId === null}
+                tamni
+                onClick={() => props.onComparison(null)}
+              >
+                ne
+              </Cip>
+              {props.usporedbe.map((c) => (
+                <Cip
+                  key={c.id}
+                  odabran={props.comparisonId === c.id}
+                  crveni
+                  onClick={() => props.onComparison(c.id)}
+                >
+                  {c.label}
+                </Cip>
+              ))}
+            </div>
+            {props.comparisonId && (
+              <>
+                <p className="mb-1 mt-2 text-xs font-semibold text-zinc-600">
+                  Prikaz
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["obris", "obrisi promjena"],
+                      ["klizac", "klizač"],
+                    ] as const
+                  ).map(([id, oznaka]) => (
+                    <Cip
+                      key={id}
+                      odabran={props.nacin === id}
+                      tamni
+                      onClick={() => props.onNacin(id)}
+                    >
+                      {oznaka}
+                    </Cip>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {odabrani.length > 0 && (
@@ -1064,7 +1199,56 @@ function Sidebar(props: {
         <p className="mb-1 mt-4 text-xs font-bold uppercase tracking-wide text-zinc-500">
           {odabrani.length > 0 ? "Ostali slojevi" : "Slojevi"}
         </p>
-        {skupine.map((g) => {
+
+        {/* Pretraživanje. Sa 113 slojeva u četrnaest skupina „gdje je
+            dalekovod” je bilo prelistavanje; sad je jedan potez. Dok se
+            traži, skupine se ne prikazuju — hijerarhija je tu smetnja. */}
+        <label className="mb-2 flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emerald-700">
+          <svg viewBox="0 0 16 16" aria-hidden className="h-3.5 w-3.5 shrink-0 text-zinc-500">
+            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            value={trazi}
+            onChange={(e) => setTrazi(e.target.value)}
+            placeholder="Traži sloj…"
+            aria-label="Traži sloj po imenu"
+            className="meta w-full bg-transparent py-1.5 text-sm outline-none placeholder:text-zinc-500"
+          />
+          {trazi && (
+            <button
+              onClick={() => setTrazi("")}
+              aria-label="Očisti pretraživanje"
+              className="fokus shrink-0 rounded px-1 text-zinc-500 hover:text-zinc-800"
+            >
+              ✕
+            </button>
+          )}
+        </label>
+
+        {trazi.trim() !== "" ? (
+          nadeni.length === 0 ? (
+            <p className="py-2 text-zinc-600">
+              Nijedan sloj ne odgovara upitu „{trazi}”.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {nadeni.map((l) => (
+                <div key={l.id}>
+                  <Kvacica
+                    sloj={l}
+                    upaljen={props.activeIds.has(l.id)}
+                    stanje={props.slojStanje[l.id]}
+                    onToggle={props.onToggle}
+                  />
+                  <p className="pl-8 text-xs text-zinc-500">{l.group}</p>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+        skupine.map((g) => {
           const slojevi = uSkupini(g);
           if (slojevi.length === 0) return null;
           const n = slojevi.filter((l) => props.activeIds.has(l.id)).length;
@@ -1101,7 +1285,8 @@ function Sidebar(props: {
               </div>
             </details>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* Prije je stajalo ispod karte. Otkad karta uzima cijeli prozor,
@@ -1270,9 +1455,6 @@ function Kontrole(props: {
   dimValue: Record<string, string>;
   onDimValue: (dimId: string, layerId: string) => void;
   comparisonId: string | null;
-  onComparison: (id: string | null) => void;
-  nacin: "obris" | "klizac";
-  onNacin: (n: "obris" | "klizac") => void;
   klizac: boolean;
   open: boolean;
   onOpen: (v: boolean) => void;
@@ -1360,55 +1542,10 @@ function Kontrole(props: {
                 ))}
               </div>
 
-              {usporedbe.length > 0 && (
-                <>
-                  <p className="mb-1 mt-2 font-semibold text-zinc-600">
-                    Istakni promjene
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    <Cip
-                      odabran={props.comparisonId === null}
-                      tamni
-                      onClick={() => props.onComparison(null)}
-                    >
-                      ne
-                    </Cip>
-                    {usporedbe.map((c) => (
-                      <Cip
-                        key={c.id}
-                        odabran={props.comparisonId === c.id}
-                        crveni
-                        onClick={() => props.onComparison(c.id)}
-                      >
-                        {c.label}
-                      </Cip>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {usporedbe.some((c) => c.id === props.comparisonId) && (
-                <>
-                  <p className="mb-1 mt-2 font-semibold text-zinc-600">Prikaz</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(
-                      [
-                        ["obris", "obrisi promjena"],
-                        ["klizac", "klizač"],
-                      ] as const
-                    ).map(([id, oznaka]) => (
-                      <Cip
-                        key={id}
-                        odabran={props.nacin === id}
-                        tamni
-                        onClick={() => props.onNacin(id)}
-                      >
-                        {oznaka}
-                      </Cip>
-                    ))}
-                  </div>
-                </>
-              )}
+              {/* Usporedba i način prikaza više NISU ovdje.
+                  Ploča se zove „Podloga i plan” i drži ono što je ispod
+                  svega; usporedba je pitanje, korisna u jednom pogledu, pa
+                  stoji u njemu — vidi Usporedba u bočnoj traci. */}
 
               {/* Legenda pripada podlozi, pa s ugašenom podlogom nema što
                   tumačiti — inače objašnjava boje kojih na karti nema. */}
