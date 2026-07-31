@@ -3,6 +3,7 @@ name: Naš kvart
 description: The public record of a Split neighbourhood — a map and a set of minutes, read on a phone in the street.
 colors:
   maslina: "#007956"
+  maslina-tamna: "#005f46"
   maslina-zivo: "#009767"
   maslina-noc: "#002c22"
   maslina-vez: "#ecfdf5"
@@ -84,13 +85,13 @@ spacing:
   chapter: "3rem"
 components:
   button-primary:
-    backgroundColor: "{colors.maslina-zivo}"
+    backgroundColor: "{colors.maslina}"
     textColor: "{colors.papir}"
     rounded: "{rounded.full}"
     padding: "0.75rem 1.5rem"
     typography: "{typography.dense}"
   button-primary-hover:
-    backgroundColor: "{colors.maslina}"
+    backgroundColor: "{colors.maslina-tamna}"
   button-secondary:
     backgroundColor: "{colors.papir}"
     textColor: "{colors.kamen-tekst}"
@@ -120,7 +121,7 @@ components:
     rounded: "{rounded.full}"
     padding: "0.25rem 0.625rem"
   chip-view-selected:
-    backgroundColor: "{colors.maslina-zivo}"
+    backgroundColor: "{colors.maslina}"
     textColor: "{colors.papir}"
   panel-floating:
     backgroundColor: "{colors.papir}"
@@ -179,12 +180,17 @@ else is either a status or inherited from an official document.
 
 ### Primary
 
-- **Maslina** (`maslina`): the voice of the system. Links, accent text,
-  neighbourhood labels, the hover state of primary actions. This is the colour
-  that says *you can act on this or this belongs to us*.
-- **Maslina živa** (`maslina-zivo`): the surface of a primary action — the one
-  filled, pill-shaped button on a screen. Slightly brighter than Maslina so a
-  filled button reads as forward, not as a block of text colour.
+- **Maslina** (`maslina`): the voice of the system, and the ground of every
+  filled action. Links, accent text, neighbourhood labels, primary buttons,
+  selected chips. This is the colour that says *you can act on this or this
+  belongs to us*. It is the darkest green that still reads as green, chosen
+  because it is the lightest one that carries white text at 5.43 : 1 — see the
+  Contrast Floor Rule.
+- **Maslina tamna** (`maslina-tamna`): the hover and active state under a
+  filled action.
+- **Maslina živa** (`maslina-zivo`): a brighter green reserved for **non-text**
+  signalling — the hover ring on a card, a highlight stroke, a marker fill.
+  It carries white text at only 3.65 : 1 and must never sit under a label.
 - **Maslina noć** (`maslina-noc`): the dark ground behind the aerial hero, and
   the only near-black surface in the system. Deep enough that white type and a
   photograph both survive on it.
@@ -250,6 +256,13 @@ the whole value of the map is that it shows what the plan says.
 and something that belongs to the kvart. It is never a background for mood,
 never a decorative rule, never a heading colour. If a green element does not
 answer "act" or "ours", it is wrong.
+
+**The Contrast Floor Rule.** No white label on a green lighter than Maslina
+(`#007956`). Measured: white on `maslina` is 5.43 : 1 and passes; white on
+`maslina-zivo` is 3.65 : 1 and fails the 4.5 : 1 floor for normal text. The
+system's own accessibility commitment decides which green is allowed to carry a
+word, and the brighter one is for shapes, not sentences. *Audit test: every
+filled control ships its ratio, not a vibe.*
 
 **The Rose-Not-Red Rule.** Refusal and error use Rose, never a pure alarm red.
 The register reports outcomes; it does not editorialise them. Red is reserved
@@ -455,9 +468,11 @@ button.
 
 - **Style:** white ground, 1px `kamen-rub` border, control radius, `0.5rem
   0.75rem` padding, full width in forms.
-- **Focus:** a visible 2px Maslina ring, offset by 2px. *This is currently
-  missing from the form fields in the codebase and is a known gap against the
-  WCAG AA commitment — new work must not copy the incumbent here.*
+- **Focus:** a visible 2px Maslina ring, offset by 2px. *Currently unstyled
+  rather than suppressed: nothing in the codebase sets `outline-none`, so the
+  browser's default ring still appears. The gap is that focus is undesigned on
+  dense panels, not that it is invisible — but an authored ring is still
+  required, and new work must not copy the incumbent here.*
 - **Error:** Rose border with the message set in `status-odbijeno` beneath the
   field, never colour alone.
 

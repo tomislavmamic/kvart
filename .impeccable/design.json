@@ -8,56 +8,187 @@
         "role": "primary",
         "displayName": "Maslina",
         "canonical": "#007956",
-        "tonalRamp": ["#002c22", "#004e3b", "#005f46", "#007956", "#009767", "#00d294", "#5ee9b5", "#d0fae5"]
+        "tonalRamp": [
+          "#002c22",
+          "#004e3b",
+          "#005f46",
+          "#007956",
+          "#009767",
+          "#00d294",
+          "#5ee9b5",
+          "#d0fae5"
+        ]
+      },
+      "maslina-tamna": {
+        "role": "primary",
+        "displayName": "Maslina tamna",
+        "canonical": "#005f46"
       },
       "maslina-zivo": {
         "role": "primary",
-        "displayName": "Maslina živa",
+        "displayName": "Maslina živa (non-text only)",
         "canonical": "#009767",
-        "tonalRamp": ["#002c22", "#004e3b", "#005f46", "#007956", "#009767", "#00d294", "#5ee9b5", "#d0fae5"]
+        "tonalRamp": [
+          "#002c22",
+          "#004e3b",
+          "#005f46",
+          "#007956",
+          "#009767",
+          "#00d294",
+          "#5ee9b5",
+          "#d0fae5"
+        ]
       },
       "maslina-noc": {
         "role": "primary",
         "displayName": "Maslina noć",
         "canonical": "#002c22",
-        "tonalRamp": ["#002c22", "#004e3b", "#005f46", "#007956", "#009767", "#00d294", "#5ee9b5", "#ecfdf5"]
+        "tonalRamp": [
+          "#002c22",
+          "#004e3b",
+          "#005f46",
+          "#007956",
+          "#009767",
+          "#00d294",
+          "#5ee9b5",
+          "#ecfdf5"
+        ]
       },
-      "maslina-vez": { "role": "primary", "displayName": "Maslina vez", "canonical": "#ecfdf5" },
-      "maslina-rub": { "role": "primary", "displayName": "Maslina rub", "canonical": "#a4f4cf" },
-      "papir": { "role": "neutral", "displayName": "Papir", "canonical": "#ffffff" },
+      "maslina-vez": {
+        "role": "primary",
+        "displayName": "Maslina vez",
+        "canonical": "#ecfdf5"
+      },
+      "maslina-rub": {
+        "role": "primary",
+        "displayName": "Maslina rub",
+        "canonical": "#a4f4cf"
+      },
+      "papir": {
+        "role": "neutral",
+        "displayName": "Papir",
+        "canonical": "#ffffff"
+      },
       "kamen-tlo": {
         "role": "neutral",
         "displayName": "Kamen tlo",
         "canonical": "#e4e4e7",
-        "tonalRamp": ["#09090b", "#18181b", "#3f3f46", "#52525c", "#71717b", "#9f9fa9", "#e4e4e7", "#fafafa"]
+        "tonalRamp": [
+          "#09090b",
+          "#18181b",
+          "#3f3f46",
+          "#52525c",
+          "#71717b",
+          "#9f9fa9",
+          "#e4e4e7",
+          "#fafafa"
+        ]
       },
-      "kamen-plitko": { "role": "neutral", "displayName": "Kamen plitko", "canonical": "#f4f4f5" },
-      "kamen-rub": { "role": "neutral", "displayName": "Kamen rub", "canonical": "#d4d4d8" },
-      "kamen-tih": { "role": "neutral", "displayName": "Kamen tih", "canonical": "#9f9fa9" },
-      "kamen-drugi": { "role": "neutral", "displayName": "Kamen drugi", "canonical": "#71717b" },
-      "kamen-tekst": { "role": "neutral", "displayName": "Kamen tekst", "canonical": "#52525c" },
+      "kamen-plitko": {
+        "role": "neutral",
+        "displayName": "Kamen plitko",
+        "canonical": "#f4f4f5"
+      },
+      "kamen-rub": {
+        "role": "neutral",
+        "displayName": "Kamen rub",
+        "canonical": "#d4d4d8"
+      },
+      "kamen-tih": {
+        "role": "neutral",
+        "displayName": "Kamen tih",
+        "canonical": "#9f9fa9"
+      },
+      "kamen-drugi": {
+        "role": "neutral",
+        "displayName": "Kamen drugi",
+        "canonical": "#71717b"
+      },
+      "kamen-tekst": {
+        "role": "neutral",
+        "displayName": "Kamen tekst",
+        "canonical": "#52525c"
+      },
       "kamen-tinta": {
         "role": "neutral",
         "displayName": "Kamen tinta",
         "canonical": "#18181b",
-        "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525c", "#71717b", "#9f9fa9", "#d4d4d8"]
+        "tonalRamp": [
+          "#09090b",
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525c",
+          "#71717b",
+          "#9f9fa9",
+          "#d4d4d8"
+        ]
       },
-      "status-objavljeno": { "role": "tertiary", "displayName": "Objavljeno", "canonical": "#005986" },
-      "status-poslano": { "role": "tertiary", "displayName": "Poslano gradu", "canonical": "#5d0ec0" },
-      "status-u-tijeku": { "role": "tertiary", "displayName": "U tijeku", "canonical": "#953d00" },
-      "status-rijeseno": { "role": "tertiary", "displayName": "Riješeno", "canonical": "#005f46" },
-      "status-odbijeno": { "role": "tertiary", "displayName": "Odbijeno", "canonical": "#a30037" },
-      "status-ceka": { "role": "tertiary", "displayName": "Na čekanju", "canonical": "#3f3f46" },
-      "whatsapp": { "role": "secondary", "displayName": "WhatsApp brand green", "canonical": "#25d366" }
+      "status-objavljeno": {
+        "role": "tertiary",
+        "displayName": "Objavljeno",
+        "canonical": "#005986"
+      },
+      "status-poslano": {
+        "role": "tertiary",
+        "displayName": "Poslano gradu",
+        "canonical": "#5d0ec0"
+      },
+      "status-u-tijeku": {
+        "role": "tertiary",
+        "displayName": "U tijeku",
+        "canonical": "#953d00"
+      },
+      "status-rijeseno": {
+        "role": "tertiary",
+        "displayName": "Riješeno",
+        "canonical": "#005f46"
+      },
+      "status-odbijeno": {
+        "role": "tertiary",
+        "displayName": "Odbijeno",
+        "canonical": "#a30037"
+      },
+      "status-ceka": {
+        "role": "tertiary",
+        "displayName": "Na čekanju",
+        "canonical": "#3f3f46"
+      },
+      "whatsapp": {
+        "role": "secondary",
+        "displayName": "WhatsApp brand green",
+        "canonical": "#25d366"
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "The home hero only. One per site, never one per page." },
-      "headline": { "displayName": "Headline", "purpose": "The page h1. Every route opens with exactly one." },
-      "title": { "displayName": "Title", "purpose": "Section and card headings inside a page." },
-      "body": { "displayName": "Body", "purpose": "Running prose a resident actually reads. Never smaller than 1rem." },
-      "dense": { "displayName": "Dense", "purpose": "Instrument chrome only — map panels, layer lists, metadata rows." },
-      "label": { "displayName": "Label", "purpose": "Uppercase eyebrows structuring a group of controls or content." },
-      "data": { "displayName": "Data", "purpose": "Coordinates, areas, parcel numbers — anything that aligns in a column." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "The home hero only. One per site, never one per page."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The page h1. Every route opens with exactly one."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section and card headings inside a page."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running prose a resident actually reads. Never smaller than 1rem."
+      },
+      "dense": {
+        "displayName": "Dense",
+        "purpose": "Instrument chrome only — map panels, layer lists, metadata rows."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase eyebrows structuring a group of controls or content."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Coordinates, areas, parcel numbers — anything that aligns in a column."
+      }
     },
     "shadows": [
       {
@@ -77,13 +208,31 @@
       }
     ],
     "motion": [
-      { "name": "state", "value": "150ms ease", "purpose": "Colour and border transitions on hover/focus. Colour only — no movement." },
-      { "name": "hero-pan", "value": "90s ease-in-out infinite alternate", "purpose": "The aerial strip drifting west-east behind the home hero." },
-      { "name": "reduced-motion", "value": "prefers-reduced-motion: reduce → animation: none", "purpose": "The hero rests at the Dračevac end instead of panning. Every animation must have this branch." }
+      {
+        "name": "state",
+        "value": "150ms ease",
+        "purpose": "Colour and border transitions on hover/focus. Colour only — no movement."
+      },
+      {
+        "name": "hero-pan",
+        "value": "90s ease-in-out infinite alternate",
+        "purpose": "The aerial strip drifting west-east behind the home hero."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce → animation: none",
+        "purpose": "The hero rests at the Dračevac end instead of panning. Every animation must have this branch."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "lg", "value": "1024px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
     ]
   },
   "components": [
@@ -93,7 +242,7 @@
       "refersTo": "button-primary",
       "description": "The single most useful next action in a view. Exactly one per screen.",
       "html": "<button class='ds-btn-primary'>Prijavi problem</button>",
-      "css": ".ds-btn-primary { background: #009767; color: #fff; font: 600 0.875rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 0.75rem 1.5rem; border: none; border-radius: 9999px; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: #007956; } .ds-btn-primary:focus-visible { outline: 2px solid #007956; outline-offset: 2px; }"
+      "css": ".ds-btn-primary { background: #007956; color: #fff; font: 600 0.875rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 0.75rem 1.5rem; border: none; border-radius: 9999px; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: #005f46; } .ds-btn-primary:focus-visible { outline: 2px solid #007956; outline-offset: 2px; }"
     },
     {
       "name": "Secondary Button",
@@ -133,7 +282,7 @@
       "refersTo": "chip-view",
       "description": "Single-choice selector on the map. Selected fills with Maslina; a neutral 'none' state fills with ink instead.",
       "html": "<div class='ds-chips'><button class='ds-chip ds-chip--on'>Svi slojevi</button><button class='ds-chip'>Krajobraz</button><button class='ds-chip'>Mobilnost</button><button class='ds-chip ds-chip--none'>bez podloge</button></div>",
-      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-chip { background: #fff; color: #3f3f46; border: 1px solid #d4d4d8; border-radius: 9999px; padding: 0.25rem 0.625rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 150ms ease, color 150ms ease; } .ds-chip:hover { background: #f4f4f5; } .ds-chip:focus-visible { outline: 2px solid #007956; outline-offset: 2px; } .ds-chip--on { background: #009767; border-color: #009767; color: #fff; } .ds-chip--on:hover { background: #007956; } .ds-chip--none { background: #27272a; border-color: #27272a; color: #fff; }"
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-chip { background: #fff; color: #3f3f46; border: 1px solid #d4d4d8; border-radius: 9999px; padding: 0.25rem 0.625rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 150ms ease, color 150ms ease; } .ds-chip:hover { background: #f4f4f5; } .ds-chip:focus-visible { outline: 2px solid #007956; outline-offset: 2px; } .ds-chip--on { background: #007956; border-color: #007956; color: #fff; } .ds-chip--on:hover { background: #005f46; } .ds-chip--none { background: #27272a; border-color: #27272a; color: #fff; }"
     },
     {
       "name": "Floating Map Panel",
@@ -172,6 +321,11 @@
       {
         "name": "The One Green Rule",
         "body": "Maslina marks two things only: something you can act on, and something that belongs to the kvart. It is never a background for mood, never a decorative rule, never a heading colour. If a green element does not answer \"act\" or \"ours\", it is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contrast Floor Rule",
+        "body": "No white label on a green lighter than Maslina (#007956). Measured: white on maslina is 5.43 : 1 and passes; white on maslina-zivo is 3.65 : 1 and fails the 4.5 : 1 floor for normal text. The system's own accessibility commitment decides which green is allowed to carry a word, and the brighter one is for shapes, not sentences. Audit test: every filled control ships its ratio, not a vibe.",
         "section": "colors"
       },
       {
