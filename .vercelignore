@@ -28,5 +28,6 @@
 /.next/
 /node_modules/
 /.git/
+/.impeccable/
 __pycache__/
 *.tsbuildinfo
