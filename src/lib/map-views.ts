@@ -830,6 +830,36 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
 
+  // ---------- Izvedeni sloj: gdje se još može graditi stan ----------
+  // Presjek uvjeta, računat u scripts/slobodne-parcele.py: čestica je
+  // većinom u zoni GUP-a koja dopušta stanovanje (S, M, K5), nije sama
+  // cesta ni pod dalekovodom, na njoj nema zgrade, nije uska traka bez
+  // duge strane uz susjeda, i leži u nakupini dovoljnoj za građevnu
+  // česticu. Nije očitanje nego zaključak — pragovi i lijevak stoje u
+  // _stambeno-slobodno.json.
+  //
+  // Namjena ispod njega je praćeni raster, pa rub plohe zna odstupati
+  // nekoliko metara; zato se namjena čestici pripisuje većinom površine, a
+  // ne dodirom. Za pojedinačnu česticu ovo je uputa gdje gledati, a ne
+  // potvrda — mjerodavni su akt i uvjeti gradnje.
+  //
+  // Inačice po nacrtu 2024. NEMA jer bi bila ista datoteka. Registracijski
+  // robustan raster-diff kaže da nacrt unutar kvarta ne mijenja ništa
+  // (0,0 ha od svojih 9,57 ha), pa se rezultat ne mijenja. Ono što na
+  // sirovom listu 2024. izgleda kao 0,22 ha rekreacije u kvartu jest šum
+  // uklapanja i skripta ga odbacuje — vidi namjena_po_kodu().
+  {
+    id: "stambeno-slobodno",
+    label: "Slobodne čestice za stanovanje",
+    type: "geojson",
+    url: "/geo/analiza/stambeno-slobodno.geojson",
+    attribution:
+      "Izvedeno iz GUP-a 2015. (praćeno s lista), katastra i evidencije " +
+      "zgrada Grada Splita",
+    color: "#16a34a",
+    group: "GUP — namjena",
+    phase: 1,
+  },
   {
     id: "plan-optika",
     label: "Plan telekom infrastrukture (zone)",
@@ -1066,6 +1096,43 @@ export const MAP_VIEWS: MapView[] = [
     description:
       "Gdje plavi, gdje ljeti gori i kakav zrak dišemo.",
     layerIds: ["poplave", "vrucina", "zrak", "nepropusnost"],
+  },
+  {
+    id: "gdje-se-moze-graditi",
+    label: "Gdje se može graditi stan",
+    description:
+      "Čestice na kojima GUP dopušta stanovanje, kroz koje ne prolazi cesta " +
+      "i na kojima nema zgrade. U kvartu ih je 56 u 21 nakupini, ukupno " +
+      "5,0 ha katastarski — stvarno slobodnog je 4,0 ha, jer se broji samo " +
+      "dio čestice koji je U stambenoj zoni: čestica koja je pola K5 a pola " +
+      "zaštitno zelenilo ulazi u sloj, ali s njom ulazi samo ta polovica. " +
+      "Ispada sve čime cesta upravlja: i čestica koja JEST cesta, i ona kroz " +
+      "koju nerazvrstana cesta prolazi cijelom dužinom. Prag najmanje " +
+      "građevne čestice ide na NAKUPINU susjednih, ne na pojedinu, i traži " +
+      "POVEZAN komad — dvije polovice razdvojene cestom ne zbrajaju se u " +
+      "jednu građevnu. Njih 14 doseže 500 m², koliko Odredbe traže za " +
+      "slobodnostojeću građevinu. Uska traka (ispod 6 m, koliko pojedu dva " +
+      "propisana odmaka od 3 m) ulazi samo ako je uz susjeda prislonjena " +
+      "dugom stranom i time ga proširuje; nadovezana krajem ispada, jer " +
+      "dvije trake u nizu i dalje su traka. CRVENO je osam čestica u četiri " +
+      "nakupine do kojih ne dopire cesta: Odredbe traže da građevna čestica " +
+      "ima pristup na javnoprometnu površinu, a pristupni put najmanje 3 m, " +
+      "pa se ondje bez služnosti ili nove ulice ne gradi — zemljište je " +
+      "slobodno, ali zaključano. Pristup se sudi po nakupini, jer ako " +
+      "spojeni komad negdje dodiruje cestu, do njega se dolazi. Vrijedi i " +
+      "za plan na snazi i za nacrt iz 2024. — nacrt unutar kvarta ne " +
+      "mijenja nijednu plohu. Sve su u zoni K5, poslovnoj namjeni koja uz " +
+      "posao dopušta i stanovanje; čiste stambene zone (S, M1) u kvartu " +
+      "nema, jer je ovo radna zona.",
+    // Samo rezultat. Ortofoto ispod već pokazuje i zgrade i ceste, pa su
+    // katastar (1314 obrisa), zgrade i ceste-sve (5383 crte) ovdje bili
+    // čista mreža preko koje se sitne zelene čestice nisu vidjele. Stoje
+    // kvačicom kad zatrebaju.
+    layerIds: ["stambeno-slobodno"],
+    dimensionId: "gup-godina",
+    // Podloga namjene ugašena po dolasku: šarena je i preglasa sitne
+    // čestice zbog kojih se pogled i otvara. Bira se iz istog reda čipova.
+    defaultValueLayerId: "",
   },
   {
     id: "planirano",

@@ -165,10 +165,23 @@ async function main(): Promise<number> {
       "/geo/grad/katastar-vlasnistvo.geojson",
       "samo lokalno — osobni podaci, nije u gitu (vidi SAMO_LOKALNO)",
     ],
+    [
+      "/geo/analiza/stambeno-slobodno-sire.geojson",
+      "širi obuhvat — hrani samostalnu stranicu, ne kartu",
+    ],
   ]);
+  // Cijele mape koje nisu slojevi karte nego građa analize. Prefiksom, a ne
+  // popisom datoteka: sadržaj im propisuje skripta i mijenja se s njom, pa
+  // bi popis zastarijevao pri svakoj izmjeni i vikao bez potrebe.
+  const NAMJERNE_MAPE = new Map<string, string>([
+    ["/geo/sire/", "podloge za širi obuhvat — ulaz u slobodne-parcele.py"],
+  ]);
+  const uNamjernojMapi = (u: string) =>
+    [...NAMJERNE_MAPE.keys()].some((p) => u.startsWith(p));
+
   const koristeno = new Set(OVERLAY_LAYERS.map((l) => l.url));
   for (const u of await sveGeojson(path.join(JAVNO, "geo"))) {
-    if (koristeno.has(u) || namjerno.has(u)) continue;
+    if (koristeno.has(u) || namjerno.has(u) || uNamjernojMapi(u)) continue;
     upozorenje("—", `izrađeno, ali nije ni na jednom sloju: ${u}`);
   }
   // I obrnuto: ako je nešto na popisu namjerno neprikazanih, a u međuvremenu

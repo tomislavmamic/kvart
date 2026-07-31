@@ -1,0 +1,95 @@
+{
+ "godina": 2015,
+ "na_snazi": true,
+ "izvor_namjene": "public/geo/planovi/gup-2015-namjena.geojson",
+ "stambene_namjene": [
+  "K5",
+  "M/K5",
+  "M1",
+  "M2",
+  "M3",
+  "S"
+ ],
+ "pragovi": {
+  "udio_u_kvartu": 0.5,
+  "udio_namjene": 0.5,
+  "udio_je_cesta": 0.6,
+  "kroz_cesticu": 0.3,
+  "sitan_tlocrt_m2": 20.0,
+  "koridor_dalekovoda_m": 15.0,
+  "ppmin_pod_m2": 300.0,
+  "ppmin_slobodnostojeca_m2": 500.0,
+  "najuza_m": 6.0,
+  "udio_duge_strane": 0.5,
+  "pristup_m": 3.0
+ },
+ "rucno_izuzeto": {
+  "506/3": "izlaz iz tunela (podatak s terena, nema ga ni u jednom sloju)"
+ },
+ "lijevak": [
+  {
+   "korak": "čestice u kvartu",
+   "cestica": 1030,
+   "ha": 103.13
+  },
+  {
+   "korak": "u stambenoj zoni GUP-a",
+   "cestica": 321,
+   "ha": 24.77
+  },
+  {
+   "korak": "nije sama cesta",
+   "cestica": 284,
+   "ha": 23.04
+  },
+  {
+   "korak": "cesta ne prolazi kroz njih",
+   "cestica": 262,
+   "ha": 18.88
+  },
+  {
+   "korak": "neizgrađene",
+   "cestica": 84,
+   "ha": 5.31
+  },
+  {
+   "korak": "nisu uska traka (<6 m bez duge strane)",
+   "cestica": 61,
+   "ha": 5.1
+  },
+  {
+   "korak": "u nakupini ≥300 m² slobodnog",
+   "cestica": 56,
+   "ha": 5.03
+  }
+ ],
+ "rezultat": {
+  "cestica": 56,
+  "ha": 5.03,
+  "slobodna_ha": 3.95,
+  "bez_ijednog_tlocrta": {
+   "cestica": 39,
+   "ha": 2.95
+  },
+  "po_namjeni": {
+   "K5": {
+    "cestica": 50,
+    "ha": 3.89
+   },
+   "M/K5": {
+    "cestica": 6,
+    "ha": 0.09
+   }
+  },
+  "odbacene_premale": {
+   "skupina": 4,
+   "cestica": 5,
+   "ha": 0.06
+  },
+  "skupina": 21,
+  "skupina_od_500_m2": 14,
+  "skupina_bez_pristupa": 4,
+  "cestica_bez_pristupa": 8,
+  "odbacene_uske": 23
+ }
+}

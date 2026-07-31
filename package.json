@@ -12,7 +12,11 @@
     "extract-geo": "tsx scripts/extract-geodata.ts",
     "clip-geo": "tsx scripts/clip-geodata.ts",
     "check-layers": "tsx scripts/check-layers.ts",
-    "import-grad-geo": "tsx scripts/import-split-gis.ts"
+    "import-grad-geo": "tsx scripts/import-split-gis.ts",
+    "slobodne-parcele": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py",
+    "izvadi-sire": "/opt/homebrew/bin/python3 scripts/izvadi-sire.py",
+    "slobodne-sire": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py --obuhvat sire",
+    "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py"
   },
   "dependencies": {
     "@turf/turf": "^7.3.5",
