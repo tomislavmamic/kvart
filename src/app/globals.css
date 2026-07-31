@@ -36,3 +36,39 @@ body {
     transform: translateX(calc(-100% + 100cqw));
   }
 }
+
+/* Meta prstena fokusa iz DESIGN.md — 2px maslina, odmaknut. Stoji ovdje kao
+   klasa, a ne kao niz utilityja na svakom elementu, jer je pravilo sustava:
+   ako se mijenja, mijenja se na jednom mjestu. */
+.fokus:focus-visible {
+  outline: 2px solid #007956;
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* Dodirni cilj od 44px, ali SAMO na dodirnim uređajima.
+ *
+ * Isti popis od 114 slojeva mora podnijeti palac na kiši i miš za stolom.
+ * Da smo 44px propisali svuda, bočna traka bi na stolnom računalu narasla na
+ * pet metara i mišem bi se listala bez potrebe; da smo ostavili 16px svuda,
+ * na telefonu se ne bi mogao pogoditi. `pointer: coarse` razlikuje to dvoje
+ * po ULAZU, a ne po širini zaslona — laptop s dodirnikom dobiva velike mete
+ * jednako kao telefon. */
+@media (pointer: coarse) {
+  .meta {
+    min-height: 44px;
+  }
+  .meta-cip {
+    min-height: 44px;
+    padding-block: 0.625rem;
+  }
+}
+
+/* Ručka klizača: crta je tanka jer mora biti precizna, ali hvatište oko nje
+   je 44px — vidljivo je 4px, uhvatljivo je puno više. */
+.klizac-rucka::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: -20px;
+}

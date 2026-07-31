@@ -133,6 +133,16 @@ export interface MapView {
   dimensionId?: string;
   defaultValueLayerId?: string;
   defaultComparisonId?: string;
+  /**
+   * Ključ boja izvedenog sloja, ako ga pogled ima.
+   *
+   * Sloj koji sam računa značenje (zeleno = slobodno, crveno = bez pristupa)
+   * mora ga i objasniti, i to na zaslonu — ne u opisu. Za „Gdje se može
+   * graditi stan” je razlika crvenog i zelenog bila jedna rečenica usred
+   * 1400 znakova skraćenih na četiri retka, pa je stanar mogao vidjeti svoju
+   * česticu crvenu i ne doznati znači li to dobro ili loše.
+   */
+  legend?: LegendEntry[];
 }
 
 export const BASE_LAYERS: BaseLayer[] = [
@@ -1163,6 +1173,14 @@ export const MAP_VIEWS: MapView[] = [
     // čista mreža preko koje se sitne zelene čestice nisu vidjele. Stoje
     // kvačicom kad zatrebaju.
     layerIds: ["stambeno-slobodno"],
+    legend: [
+      { boja: "#16a34a", kod: "zeleno", opis: "slobodno i ima pristup na cestu" },
+      {
+        boja: "#dc2626",
+        kod: "crveno",
+        opis: "slobodno, ali bez pristupa — zaključano dok nema služnosti ili nove ulice",
+      },
+    ],
     dimensionId: "gup-godina",
     // Podloga namjene ugašena po dolasku: šarena je i preglasa sitne
     // čestice zbog kojih se pogled i otvara. Bira se iz istog reda čipova.

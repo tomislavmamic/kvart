@@ -90,10 +90,33 @@ export const IME_POLJA: Record<string, string> = {
   opis: "opis",
 };
 /** Vrijednost u obliku za prikaz — brojevi hrvatski, bez suvišnih decimala. */
+/**
+ * Šifrarnici iz izvoza koji nisu na hrvatskom.
+ *
+ * Gradski GIS ponegdje nosi engleske enume iz izvorne baze — `ROOF_NOT_FLAT`
+ * je doslovno ono što piše u sloju zgrada. Stranica je na hrvatskom bez
+ * iznimke, uključujući i vrijednosti, ne samo natpise: „krov: ROOF_NOT_FLAT”
+ * susjedu ne znači ništa, a odaje da ispod stoji nečiji izvoz.
+ *
+ * Vrijednost koje ovdje nema ispisuje se kako jest — bolje sirovo nego
+ * pogrešno prevedeno.
+ */
+const VRIJEDNOSTI: Record<string, string> = {
+  ROOF_NOT_FLAT: "kosi",
+  ROOF_FLAT: "ravni",
+  NOT_FLAT: "kosi",
+  FLAT: "ravni",
+  UNDEFINED: "nepoznato",
+  UNKNOWN: "nepoznato",
+  TRUE: "da",
+  FALSE: "ne",
+};
+
 export function vrijednostPolja(v: unknown): string {
-  return typeof v === "number"
-    ? v.toLocaleString("hr-HR", { maximumFractionDigits: 1 })
-    : String(v);
+  if (typeof v === "number")
+    return v.toLocaleString("hr-HR", { maximumFractionDigits: 1 });
+  const s = String(v);
+  return VRIJEDNOSTI[s.toUpperCase()] ?? s;
 }
 
 /**
