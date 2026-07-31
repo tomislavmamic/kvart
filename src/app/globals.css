@@ -72,3 +72,18 @@ body {
   inset-block: 0;
   inset-inline: -20px;
 }
+
+/* Atribucija mora ostati vidljiva.
+ *
+ * DOF 2023 se koristi pod Otvorenom dozvolom, a navođenje izvora je uvjet
+ * korištenja, ne ljubaznost. Otkad na uskom zaslonu uz dno stoji vrpca
+ * „Slojevi”, Leafletova atribucija je bila ispod nje — nevidljiva na
+ * platformi na kojoj je primarni korisnik, u svim stanjima.
+ *
+ * Podiže se iznad vrpce. Kad je ploha otvorena i pokrije i to, izvor nosi
+ * podnožje same plohe (obje ga imaju). */
+@media (max-width: 1023px) {
+  .leaflet-control-attribution {
+    margin-bottom: calc(3.25rem + env(safe-area-inset-bottom)) !important;
+  }
+}

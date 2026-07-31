@@ -22,7 +22,14 @@ import {
 import type { Feature, FeatureCollection, Position } from "geojson";
 import { OVERLAY_LAYERS } from "./map-views";
 import { opisObjekta } from "./polja";
-import { TEME, type Dosje, type Odnos, type Stavka, type Tema } from "./dosje-oblik";
+import {
+  TEME,
+  type Dosje,
+  type Namjena,
+  type Odnos,
+  type Stavka,
+  type Tema,
+} from "./dosje-oblik";
 
 export type { Dosje } from "./dosje-oblik";
 
@@ -134,6 +141,83 @@ const BEZ_U_DOSJEU = new Set([
   // vodi mreža, ne podatak o mjestu
   "oznaka", "vod",
 ]);
+
+/**
+ * Namjene koje dopuštaju stanovanje.
+ *
+ * Isti popis kojim računa scripts/slobodne-parcele.py — mora biti isti,
+ * inače bi dosje i izvedeni sloj tvrdili različito o istoj čestici. K5 je
+ * „poslovna namjena i stanovanje”, M/K5 je nerazlučena klasa čije obje
+ * članice stanovanje dopuštaju.
+ */
+const STANOVANJE = new Set(["S", "M1", "M2", "M3", "M/K5", "K5"]);
+
+/**
+ * Namjena na točki, po planu na snazi, uz nacrt i izvedeni sloj.
+ *
+ * Ide preko točke, ne preko preklopa površina: dosje odgovara „što vrijedi
+ * ovdje”, a ne „koliko posto čestice je u kojoj zoni”. Za drugo pitanje
+ * postoji izvedeni sloj, koji upravo tako i računa.
+ */
+async function namjenaNaTocki(
+  tocka: Feature,
+  cestica: Feature | null
+): Promise<Namjena | null> {
+  const uzmi = async (put: string) => {
+    const u = await ucitaj(put);
+    if (!u) return null;
+    for (const f of u.fc.features) {
+      try {
+        if (booleanPointInPolygon(tocka as never, f as never)) return f;
+      } catch {
+        /* neispravna geometrija — preskoči */
+      }
+    }
+    return null;
+  };
+
+  const sad = await uzmi("/geo/planovi/gup-2015-namjena.geojson");
+  if (!sad) return null;
+  const p = sad.properties ?? {};
+  const kod = String(p.kod ?? "");
+
+  const nacrtF = await uzmi("/geo/planovi/gup-2024-namjena.geojson");
+  const nacrtKod = String(nacrtF?.properties?.kod ?? "");
+  // Nacrt se navodi samo kad doista mijenja. Inače bi svaka čestica nosila
+  // redak „nacrt: isto”, što je šum na 24 od 24 mjesta koja se ne mijenjaju.
+  const nacrt =
+    nacrtF && nacrtKod && nacrtKod !== kod
+      ? { kod: nacrtKod, opis: String(nacrtF.properties?.namjena ?? "") }
+      : null;
+
+  // Izvedeni sloj nosi svoju geometriju po čestici, pa se traži pogodak u
+  // njoj, a ne u točki — čestica je ono što je taj sloj i računao.
+  let slobodna: Namjena["slobodna"] = null;
+  const u = await ucitaj("/geo/analiza/stambeno-slobodno.geojson");
+  if (u && cestica) {
+    const br = String((cestica.properties ?? {}).cestica ?? "");
+    const ko = String((cestica.properties ?? {}).ko ?? "");
+    const f = u.fc.features.find(
+      (x) =>
+        String(x.properties?.cestica ?? "") === br &&
+        String(x.properties?.ko ?? "") === ko
+    );
+    if (f)
+      slobodna = {
+        slobodno_m2: Number(f.properties?.slobodno_m2 ?? 0),
+        bez_pristupa: Boolean(f.properties?.bez_pristupa),
+      };
+  }
+
+  return {
+    kod,
+    opis: String(p.namjena ?? ""),
+    godina: Number(p.godina ?? 2015),
+    stanovanje: STANOVANJE.has(kod),
+    nacrt,
+    slobodna,
+  };
+}
 
 /** Godine izvan ovoga su očita greška u izvoru (nalazi se i „3974”). */
 const NAJRANIJA_GODINA = 1850;
@@ -308,6 +392,10 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
 
   return {
     cestica: cestica ? ((cestica.properties ?? {}) as Record<string, unknown>) : null,
+    namjena: await namjenaNaTocki(
+      { type: "Feature", properties: {}, geometry: tocka } as Feature,
+      cestica
+    ),
     // Redoslijed tema je zadan, ne po broju pogodaka: dosje se čita više
     // puta i mora svaki put izgledati isto, inače se ne pamti gdje što stoji.
     skupine: TEME.filter((t) => (poTemi.get(t.id)?.length ?? 0) > 0).map((t) => ({

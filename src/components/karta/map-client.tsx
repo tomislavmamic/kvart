@@ -60,6 +60,25 @@ interface StanjeKarte {
   cestica: [number, number] | null;
 }
 
+/**
+ * Adresa kakva je bila pri UČITAVANJU stranice, ne pri montiranju komponente.
+ *
+ * Modul-razina namjerno. U razvoju React montira dvaput (StrictMode), a između
+ * dva montiranja karta je već jednom zapisala svoje zadano središte u adresu —
+ * pa bi druga snimka pročitala ono što je aplikacija upravo pregazila i duboka
+ * poveznica bi se opet izgubila. Ovdje se čita jednom po učitavanju stranice i
+ * pamti do kraja.
+ */
+let PRVA_ADRESA: (Partial<StanjeKarte> & {
+  sredina?: [number, number];
+  zum?: number;
+}) | null = null;
+
+function prvaAdresa() {
+  PRVA_ADRESA ??= izAdrese();
+  return PRVA_ADRESA;
+}
+
 function izAdrese(): Partial<StanjeKarte> & {
   sredina?: [number, number];
   zum?: number;
@@ -163,6 +182,13 @@ export function MapClient() {
     () => ""
   );
   const [hidriran, setHidriran] = useState(false);
+  // Snimka upita, uzeta prije nego što išta stigne pisati u adresu.
+  //
+  // Prije se `izAdrese()` zvao lijeno, tek nakon dva await-a u pokretanju
+  // karte — a dotad je karta već poslala `moveend` sa zadanog središta i
+  // `uAdresu()` je adresu prepisao. Duboka poveznica se tako uništavala
+  // sama: `c` i `z` su se čitali iz URL-a koji je aplikacija u međuvremenu
+  // pregazila, pa je z=18 uvijek ispadao z=15.
 
   const [ready, setReady] = useState(false);
   const [baseId, setBaseId] = useState("dof");
@@ -271,7 +297,7 @@ export function MapClient() {
   // — isti obrazac kao kod širine ploča, i jedini koji ne uvodi kadar s
   // krivim stanjem.
   if (!hidriran && upit !== "") {
-    const a = izAdrese();
+    const a = prvaAdresa();
     const pogled = MAP_VIEWS.find((v) => v.id === a.viewId);
     if (pogled) {
       setViewId(pogled.id);
@@ -288,6 +314,10 @@ export function MapClient() {
     setHidriran(true);
   }
 
+  // Snimka upita, uzeta prije nego što išta stigne pisati u adresu. Ovaj
+  // efekt je prvi po redu, a pisač adrese čeka `ready`, koji se postavlja
+  // tek unutar sljedećeg efekta — pa je izvorni upit ovdje zajamčeno još
+  // netaknut.
   // ---- init map once ----
   useEffect(() => {
     let cancelled = false;
@@ -295,9 +325,17 @@ export function MapClient() {
       const L = (await import("leaflet")).default;
       if (cancelled || !mapDiv.current) return;
       LRef.current = L;
+      // Karta se STVARA na mjestu iz adrese, a ne skače na njega poslije.
+      //
+      // Prije je nastajala na zadanom središtu, pa se tek nakon dohvata
+      // granice pomicala — a u tom razmaku je već poslala `moveend`, pisač
+      // adrese je zapisao zadano, i duboka poveznica se gubila. Uz to je
+      // pomak dolazio na kartu koja je u međuvremenu mogla biti uklonjena
+      // (dvostruko montiranje u razvoju), pa se nije ni dogodio.
+      const adr = prvaAdresa();
       const map = L.map(mapDiv.current, {
-        center: KVART_CENTER,
-        zoom: 15,
+        center: adr.sredina ?? KVART_CENTER,
+        zoom: adr.zum ?? 15,
         minZoom: 12,
         maxZoom: 19,
         zoomControl: false,
@@ -339,6 +377,7 @@ export function MapClient() {
         const fc = (await (
           await fetch("/geo/granica.geojson")
         ).json()) as GeoJSON.FeatureCollection;
+        if (cancelled) return;
         const boundary = L.geoJSON(fc, {
           interactive: false,
           style: {
@@ -363,19 +402,15 @@ export function MapClient() {
             }).addTo(map);
           },
         }).addTo(map);
-        // Adresa ima prednost pred uokvirivanjem granice: tko je dobio
-        // poveznicu na točno mjesto, mora doći na to mjesto.
-        const a = izAdrese();
-        if (a.sredina && a.zum) map.setView(a.sredina, a.zum);
-        else map.fitBounds(boundary.getBounds(), { padding: [34, 34] });
+        // Granica se uokviruje samo ako adresa nije rekla kamo gledati.
+        if (!(adr.sredina && adr.zum))
+          map.fitBounds(boundary.getBounds(), { padding: [34, 34] });
       } catch {
-        const a = izAdrese();
-        map.setView(a.sredina ?? KVART_CENTER, a.zum ?? 15);
+        /* bez granice karta ostaje ondje gdje je i stvorena */
       }
 
       // Čestica iz adrese: otvori dosje čim je karta spremna.
-      const kc = izAdrese().cestica;
-      if (kc) otvoriDosje.current(kc[0], kc[1]);
+      if (adr.cestica) otvoriDosje.current(adr.cestica[0], adr.cestica[1]);
     })();
     return () => {
       cancelled = true;
@@ -705,7 +740,6 @@ export function MapClient() {
       {(dosje || dosjeUcitavanje || dosjeGreska) && (
         <DosjePlaca
           uzKontrole={kontroleOpen && !usko}
-          usko={usko}
           dosje={dosje}
           ucitavanje={dosjeUcitavanje}
           greska={dosjeGreska}
@@ -866,7 +900,7 @@ function Sidebar(props: {
         onClick={() => props.onOpen(true)}
         className={
           usko
-            ? "fokus absolute inset-x-0 bottom-0 z-[1100] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white/95 py-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur"
+            ? "fokus absolute inset-x-0 bottom-0 z-[1050] flex items-center justify-center gap-2 border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] pt-3 pb-3 text-sm font-semibold shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur"
             : "fokus absolute left-3 top-16 z-[1100] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold shadow hover:bg-zinc-50"
         }
       >
@@ -884,7 +918,7 @@ function Sidebar(props: {
     <div
       className={
         usko
-          ? "absolute inset-x-0 bottom-0 z-[1100] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white/97 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur"
+          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white/97 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur"
           : "absolute bottom-3 left-3 top-16 z-[1100] flex w-80 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white/95 shadow-lg backdrop-blur"
       }
     >
@@ -972,8 +1006,18 @@ function Sidebar(props: {
           if (slojevi.length === 0) return null;
           const n = slojevi.filter((l) => props.activeIds.has(l.id)).length;
           return (
-            <details key={g} open={n > 0} className="border-b border-zinc-100">
-              <summary className="fokus meta flex cursor-pointer select-none items-center py-2 font-semibold text-zinc-700">
+            <details key={g} open={n > 0} className="group border-b border-zinc-100">
+              <summary className="fokus meta flex cursor-pointer select-none items-center gap-1.5 py-2 font-semibold text-zinc-700 [&::-webkit-details-marker]:hidden">
+                {/* `display:flex` na <summary> gasi preglednikov trokutić, pa
+                    ga crtamo sami — inače 14 skupina izgleda kao 14 naslova,
+                    a ne kao 14 kontrola. */}
+                <svg
+                  viewBox="0 0 12 12"
+                  aria-hidden
+                  className="h-3 w-3 shrink-0 text-zinc-500 transition-transform group-open:rotate-90"
+                >
+                  <path d="M4 2.5 8 6l-4 3.5z" fill="currentColor" />
+                </svg>
                 {g}
                 {n > 0 && (
                   <span className="ml-1 rounded-full bg-emerald-100 px-1.5 text-emerald-800">
@@ -1112,9 +1156,11 @@ function Kvacica({
         className="h-3 w-3 shrink-0 rounded-sm border border-black/20"
         style={{ background: sloj.color }}
       />
-      <span className="leading-tight">
+      <span className={`leading-tight ${sloj.phase === 2 ? "text-zinc-500" : ""}`}>
         {sloj.label}
-        {sloj.phase === 2 && <span className="ml-1 text-zinc-500">(uskoro)</span>}
+        {sloj.phase === 2 && (
+          <span className="ml-1 text-zinc-500">(još nema podataka)</span>
+        )}
         {stanje === "ucitava" && (
           <span className="ml-1.5 text-zinc-500">učitavam…</span>
         )}
@@ -1175,7 +1221,7 @@ function Kontrole(props: {
     <div
       className={
         usko
-          ? "absolute inset-x-0 bottom-0 z-[1100] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white/97 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur"
+          ? "absolute inset-x-0 bottom-0 z-[1120] flex max-h-[72%] flex-col overflow-hidden rounded-t-xl border-t border-zinc-200 bg-white/97 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur"
           : "absolute right-3 top-[5.5rem] z-[1100] flex max-h-[calc(100%-7rem)] w-56 max-w-[70vw] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white/95 shadow backdrop-blur"
       }
     >
@@ -1313,6 +1359,13 @@ function Kontrole(props: {
             </div>
           );
         })}
+
+        {/* Izvor podloge stoji uz izbor podloge. Na uskom zaslonu ova ploha
+            zna pokriti Leafletovu atribuciju, a navođenje je uvjet dozvole,
+            pa mora postojati i ovdje. */}
+        <p className="mt-3 border-t border-zinc-200 pt-2 text-[11px] leading-snug text-zinc-500">
+          {BASE_LAYERS.find((b) => b.id === props.baseId)?.attribution}
+        </p>
       </div>
     </div>
   );
@@ -1698,14 +1751,12 @@ const DOSJE_UZ_KONTROLE =
 
 function DosjePlaca({
   uzKontrole,
-  usko,
   dosje,
   ucitavanje,
   greska,
   onClose,
 }: {
   uzKontrole: boolean;
-  usko: boolean;
   dosje: Dosje | null;
   ucitavanje: boolean;
   greska: string | null;
@@ -1723,7 +1774,6 @@ function DosjePlaca({
       ref={okvir}
       tabIndex={-1}
       role="dialog"
-      aria-modal={usko}
       // Ploča prima fokus da čitač zaslona uđe u nju, ali ga ne obrubljuje:
       // preglednikov plavi prsten na ploči od 44 rem izgleda kao pogreška, a
       // ne kao pokazivač. Prsten pripada kontrolama u njoj.
@@ -1759,7 +1809,7 @@ function DosjePlaca({
         </div>
         <button
           onClick={onClose}
-          className="fokus meta -mr-1 -mt-1 rounded px-3 py-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+          className="fokus meta -mr-1 -mt-1 min-w-11 rounded px-3 py-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
           aria-label="Zatvori dosje čestice"
         >
           ✕
@@ -1771,6 +1821,7 @@ function DosjePlaca({
         {greska && <p className="text-sm text-rose-700">{greska}</p>}
         {dosje && !ucitavanje && (
           <>
+            <NamjenaOdgovor namjena={dosje.namjena} />
             {dosje.skupine.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 Nijedan sloj ovdje nema ništa.
@@ -1796,11 +1847,11 @@ function DosjePlaca({
                               {st.sloj}
                             </span>
                             {st.broj > 1 && (
-                              <span className="text-xs text-zinc-400">
+                              <span className="text-xs text-zinc-500">
                                 ×{st.broj}
                               </span>
                             )}
-                            <span className="rounded bg-zinc-100 px-1 text-[10px] uppercase tracking-wide text-zinc-500">
+                            <span className="rounded bg-zinc-100 px-1 text-[11px] uppercase tracking-wide text-zinc-600">
                               {ODNOS_NATPIS[st.odnos]}
                             </span>
                             {st.poveznica && (
@@ -1826,13 +1877,92 @@ function DosjePlaca({
                 ))}
               </div>
             )}
-            <p className="mt-2 border-t border-zinc-200 pt-2 text-[11px] text-zinc-400">
-              pretraženo {dosje.pretrazeno} slojeva koji nose podatke o mjestu
+            <p className="mt-2 border-t border-zinc-200 pt-2 text-xs text-zinc-500">
+              pretraženo {dosje.pretrazeno} slojeva koji mogu nositi podatak o čestici
             </p>
           </>
         )}
       </div>
     </aside>
+  );
+}
+
+/**
+ * Namjena kao ODGOVOR, ne kao redak.
+ *
+ * Dosje je pedeset šest slojeva poredanih po temi, i u toj poredanoj hrpi
+ * pitanje s kojim je susjed došao — „smijem li ovdje graditi?” — nije imalo
+ * nijedan redak. Ovo stoji iznad svega ostalog, prije prvog naslova teme,
+ * jer je jedino što se traži prije nego što se išta drugo pogleda.
+ *
+ * Uz svaku tvrdnju ide izvor i godina. Namjena je pravna činjenica koja
+ * mijenja nečije planove; bez „po GUP-u 2015., na snazi” to je glasina.
+ */
+function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
+  if (!namjena) {
+    return (
+      <p className="mb-3 rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-600">
+        Za ovu točku nema plohe namjene na praćenom listu GUP-a. To ne znači
+        da namjene nema — znači da je ovdje ne možemo očitati.
+      </p>
+    );
+  }
+  const { kod, opis, godina, stanovanje, nacrt, slobodna } = namjena;
+  return (
+    <section
+      className={`mb-3 rounded-lg border px-3 py-2.5 ${
+        stanovanje
+          ? "border-emerald-200 bg-emerald-50"
+          : "border-zinc-200 bg-zinc-50"
+      }`}
+    >
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+        Namjena
+      </h3>
+      <p className="mt-0.5 text-base font-semibold leading-snug text-zinc-900">
+        <span className="font-mono">{kod}</span> — {opis}
+      </p>
+      <p className="mt-1 text-sm font-medium text-zinc-800">
+        {stanovanje
+          ? "Ova namjena dopušta stanovanje."
+          : "Ova namjena ne dopušta stanovanje."}
+      </p>
+      <p className="mt-0.5 text-xs text-zinc-600">
+        po GUP-u {godina}., na snazi
+      </p>
+
+      {nacrt && (
+        <p className="mt-2 border-t border-black/10 pt-2 text-sm text-zinc-800">
+          Nacrt izmjena iz 2024. ovdje predlaže{" "}
+          <span className="font-mono font-semibold">{nacrt.kod}</span> —{" "}
+          {nacrt.opis}.
+        </p>
+      )}
+
+      {slobodna && (
+        <p className="mt-2 border-t border-black/10 pt-2 text-sm text-zinc-800">
+          {slobodna.bez_pristupa ? (
+            <>
+              Čestica je u sloju slobodnih, ali{" "}
+              <b className="font-semibold text-rose-800">nema pristup na cestu</b>{" "}
+              — bez služnosti ili nove ulice ovdje se ne gradi.
+            </>
+          ) : (
+            <>
+              Čestica je u sloju slobodnih:{" "}
+              <b className="font-semibold">
+                {Math.round(slobodna.slobodno_m2).toLocaleString("hr-HR")} m²
+              </b>{" "}
+              stvarno slobodne površine.
+            </>
+          )}
+        </p>
+      )}
+
+      <p className="mt-2 text-xs text-zinc-500">
+        Uputa gdje gledati, ne potvrda — mjerodavni su akt i uvjeti gradnje.
+      </p>
+    </section>
   );
 }
 
@@ -1924,7 +2054,7 @@ function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
         p[k] !== undefined &&
         p[k] !== null
     )
-    .map(([k, ime]) => `${esc(ime)}: ${esc(vrijednostPolja(p[k]))}`);
+    .map(([k, ime]) => `${esc(ime)}: ${esc(vrijednostPolja(p[k], k))}`);
   // Obuhvati planova nose poveznicu na sam dokument na split.hr. Ispisana
   // kao tekst ne vrijedi ništa — cijela je poanta da se s karte može otići
   // čitati plan koji na tom mjestu vrijedi.

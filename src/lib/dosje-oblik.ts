@@ -54,8 +54,34 @@ export interface Skupina {
   stavke: Stavka[];
 }
 
+/**
+ * Odgovor na pitanje s kojim se u dosje i dolazi: što ovdje smijem?
+ *
+ * Dosad ga nije bilo. Dosje je pretraživao 56 slojeva i nijedan od njih nije
+ * bio namjena — susjed koji klikne vlastitu česticu doznao bi za trase DTK-a,
+ * koševe za otpad i vježbalište, a ne bi doznao dopušta li plan stanovanje.
+ * Pozicioniranje inicijative počiva na „gdje je stanovanje još moguće”, pa je
+ * to jedini redak koji ne smije biti jedan među pedeset šest.
+ *
+ * Stoji odvojeno od `skupine` upravo zato: skupine su popis onoga što se
+ * ovdje zateklo, ovo je odgovor.
+ */
+export interface Namjena {
+  kod: string;
+  opis: string;
+  godina: number;
+  /** Dopušta li ta namjena stanovanje — vidi STANOVANJE u dosje.ts. */
+  stanovanje: boolean;
+  /** Popunjeno samo ako nacrt 2024. na ovom mjestu mijenja namjenu. */
+  nacrt: { kod: string; opis: string } | null;
+  /** Popunjeno ako je čestica u izvedenom sloju slobodnih čestica. */
+  slobodna: { slobodno_m2: number; bez_pristupa: boolean } | null;
+}
+
 export interface Dosje {
   cestica: Record<string, unknown> | null;
+  /** Namjena po planu na snazi. `null` ako točka nije ni u jednoj plohi. */
+  namjena: Namjena | null;
   skupine: Skupina[];
   /** Slojevi koji su pretraženi — da se vidi da prazno znači „nema”. */
   pretrazeno: number;
