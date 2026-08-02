@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# isolated feature worktrees created by agent workflows
+/.worktrees/
+
 # next.js
 /.next/
 /out/
