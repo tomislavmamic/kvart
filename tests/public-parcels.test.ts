@@ -100,7 +100,7 @@ test("public parcel evidence is a production layer and a resident question", () 
   );
   const view = MAP_VIEWS.find((candidate) => candidate.id === "javno-evidentirano");
   assert.equal(view?.razina, "pitanje");
-  assert.deepEqual(view?.layerIds, ["javne-cestice"]);
+  assert.deepEqual(view?.layerIds, ["ciljana-provjera-vlasnistva"]);
 });
 
 test("dossier facts name coownership, draft purpose, and missing footprint evidence", () => {

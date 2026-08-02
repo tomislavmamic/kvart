@@ -15,6 +15,7 @@
     "check-layers": "tsx scripts/check-layers.ts",
     "import-grad-geo": "tsx scripts/import-split-gis.ts",
     "generate-public-parcels": "tsx scripts/generate-public-parcels.ts",
+    "verify-targeted-ownership": "tsx scripts/verify-targeted-ownership.ts",
     "slobodne-parcele": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py",
     "izvadi-sire": "/opt/homebrew/bin/python3 scripts/izvadi-sire.py",
     "slobodne-sire": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py --obuhvat sire",

@@ -78,3 +78,8 @@ __pycache__/
 # izvadi-sire` u minuti izvadi iz arhive, a rezultat analize (mali
 # GeoJSON u /public/geo/analiza/ i gotova stranica) jest.
 /public/geo/sire/
+
+# Privremeni OSS odgovori ciljane provjere vlasništva mogu sadržavati imena,
+# adrese i OIB-e fizičkih osoba. Generator ih koristi samo lokalno za nastavak
+# prekinutog rada; u Git i javni build ulazi isključivo sanitizirani GeoJSON.
+/.cache/targeted-ownership/

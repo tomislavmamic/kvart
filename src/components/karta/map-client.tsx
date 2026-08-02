@@ -38,11 +38,33 @@ import {
   type PublicParcelFilters,
   type PublicParcelProperties,
 } from "@/lib/public-parcels";
+import {
+  matchesTargetedOwnership,
+  OWNERSHIP_COHORT_LABELS,
+  OWNERSHIP_STATUS_LABELS,
+  PUBLIC_ENTITY_CATEGORY_LABELS,
+  summarizeTargetedOwnership,
+  targetedOwnershipDossierFacts,
+  validateTargetedOwnershipProperties,
+  type OwnershipCohort,
+  type OwnershipVerificationStatus,
+  type PublicEntityCategory,
+  type TargetedOwnershipFilters,
+  type TargetedOwnershipProperties,
+} from "@/lib/targeted-ownership";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
 const JAVNE_CESTICE_URL = "/geo/analiza/javne-cestice.geojson";
+const CILJANA_PROVJERA_URL = "/geo/analiza/ciljana-provjera-vlasnistva.geojson";
 const POCETNI_JAVNI_FILTRI: PublicParcelFilters = {
   levels: [],
+  purposes: [],
+  built: "all",
+};
+const POCETNI_CILJANI_FILTRI: TargetedOwnershipFilters = {
+  statuses: [],
+  entityCategories: [],
+  cohorts: [],
   purposes: [],
   built: "all",
 };
@@ -261,6 +283,12 @@ export function MapClient() {
   );
   const [javneCestice, setJavneCestice] = useState<
     Feature<Geometry, PublicParcelProperties>[] | null
+  >(null);
+  const [ciljaniFiltri, setCiljaniFiltri] = useState<TargetedOwnershipFilters>(
+    POCETNI_CILJANI_FILTRI
+  );
+  const [ciljanaProvjera, setCiljanaProvjera] = useState<
+    Feature<Geometry, TargetedOwnershipProperties>[] | null
   >(null);
   // Stanje podloge: `null` dok se ne zna, pa poruka ne bljesne bez potrebe.
   const [podlogaStanje, setPodlogaStanje] = useState<
@@ -661,6 +689,17 @@ export function MapClient() {
       }),
     [javniFiltri]
   );
+  const ciljaniFilterKey = useMemo(
+    () =>
+      JSON.stringify({
+        statuses: [...ciljaniFiltri.statuses].sort(),
+        entityCategories: [...ciljaniFiltri.entityCategories].sort(),
+        cohorts: [...ciljaniFiltri.cohorts].sort(),
+        purposes: [...ciljaniFiltri.purposes].sort(),
+        built: ciljaniFiltri.built,
+      }),
+    [ciljaniFiltri]
+  );
 
   // Panel treba iste podatke kao Leaflet, ali ne zaseban mrežni zahtjev:
   // ucitajGeoJSON dijeli LRU spremnik s crtežom sloja. Učitava se tek kad
@@ -688,6 +727,34 @@ export function MapClient() {
     };
   }, [ready, renderIds, javneCestice]);
 
+  useEffect(() => {
+    if (
+      !ready ||
+      !renderIds.has("ciljana-provjera-vlasnistva") ||
+      ciljanaProvjera
+    )
+      return;
+    let cancelled = false;
+    void ucitajGeoJSON(CILJANA_PROVJERA_URL, geojsonCache.current)
+      .then((collection) => {
+        const features = collection.features.map((feature) => {
+          validateTargetedOwnershipProperties(feature.properties);
+          return feature as Feature<Geometry, TargetedOwnershipProperties>;
+        });
+        if (!cancelled) setCiljanaProvjera(features);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSlojStanje((current) => ({
+            ...current,
+            "ciljana-provjera-vlasnistva": "greska",
+          }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, renderIds, ciljanaProvjera]);
+
   /** layerId → okno, da klizač može odrezati svaku stranu zasebno. */
   const okna = useMemo<Record<string, string>>(
     () =>
@@ -714,7 +781,9 @@ export function MapClient() {
       if (
         !renderIds.has(id) ||
         inst.okno !== okna[id] ||
-        (id === "javne-cestice" && inst.filterKey !== javniFilterKey)
+        (id === "javne-cestice" && inst.filterKey !== javniFilterKey) ||
+        (id === "ciljana-provjera-vlasnistva" &&
+          inst.filterKey !== ciljaniFilterKey)
       ) {
         map.removeLayer(inst.sloj);
         overlayInstances.current.delete(id);
@@ -736,7 +805,12 @@ export function MapClient() {
             return rest;
           }),
         id === "javne-cestice" ? javniFiltri : undefined,
-        id === "javne-cestice" ? javniFilterKey : undefined,
+        id === "ciljana-provjera-vlasnistva" ? ciljaniFiltri : undefined,
+        id === "javne-cestice"
+          ? javniFilterKey
+          : id === "ciljana-provjera-vlasnistva"
+            ? ciljaniFilterKey
+            : undefined,
       );
     }
     // solar click handler
@@ -752,7 +826,15 @@ export function MapClient() {
       solarHandler.current = null;
       map.getContainer().style.cursor = "";
     }
-  }, [renderIds, ready, okna, javniFiltri, javniFilterKey]);
+  }, [
+    renderIds,
+    ready,
+    okna,
+    javniFiltri,
+    javniFilterKey,
+    ciljaniFiltri,
+    ciljaniFilterKey,
+  ]);
 
   // ---- klizač za usporedbu dviju godina ----
   // Pisano ručno, a ne preko leaflet-side-by-side: taj dodatak iznutra radi
@@ -991,6 +1073,13 @@ export function MapClient() {
           toggleLayer("javne-cestice");
           setTimeout(() => toggleLayer("javne-cestice"), 0);
         }}
+        ciljanaProvjera={ciljanaProvjera}
+        ciljaniFiltri={ciljaniFiltri}
+        onCiljaniFiltri={setCiljaniFiltri}
+        onPonoviCiljanu={() => {
+          toggleLayer("ciljana-provjera-vlasnistva");
+          setTimeout(() => toggleLayer("ciljana-provjera-vlasnistva"), 0);
+        }}
         onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
         open={panelOpen}
         onOpen={otvoriTraku}
@@ -1187,6 +1276,10 @@ function Sidebar(props: {
   javniFiltri: PublicParcelFilters;
   onJavniFiltri: (filters: PublicParcelFilters) => void;
   onPonoviJavne: () => void;
+  ciljanaProvjera: Feature<Geometry, TargetedOwnershipProperties>[] | null;
+  ciljaniFiltri: TargetedOwnershipFilters;
+  onCiljaniFiltri: (filters: TargetedOwnershipFilters) => void;
+  onPonoviCiljanu: () => void;
   onOtvoriCesticu: (lat: number, lng: number) => void;
   open: boolean;
   onOpen: (v: boolean) => void;
@@ -1199,6 +1292,10 @@ function Sidebar(props: {
     .map((id) => OVERLAY_BY_ID.get(id))
     .filter((l): l is OverlayLayer => !!l && !UPRAVLJANI_SLOJEVI.has(l.id));
   const podignuti = new Set(odabrani.map((l) => l.id));
+  if (currentView?.id === "javno-evidentirano") {
+    podignuti.add("javne-cestice");
+    podignuti.add("ciljana-provjera-vlasnistva");
+  }
   const skupine = [...new Set(OVERLAY_LAYERS.map((l) => l.group))];
   const uSkupini = (g: string) =>
     OVERLAY_LAYERS.filter(
@@ -1360,6 +1457,25 @@ function Sidebar(props: {
         )}
 
         {currentView?.id === "javno-evidentirano" && (
+          <IzborJavnogDokaza
+            activeIds={props.activeIds}
+            onToggle={props.onToggle}
+          />
+        )}
+
+        {currentView?.id === "javno-evidentirano" &&
+          props.activeIds.has("ciljana-provjera-vlasnistva") && (
+          <CiljanaProvjeraFilteri
+            features={props.ciljanaProvjera}
+            filters={props.ciljaniFiltri}
+            onFilters={props.onCiljaniFiltri}
+            stanje={props.slojStanje["ciljana-provjera-vlasnistva"]}
+            onRetry={props.onPonoviCiljanu}
+          />
+        )}
+
+        {currentView?.id === "javno-evidentirano" &&
+          props.activeIds.has("javne-cestice") && (
           <JavneCesticeFilteri
             features={props.javneCestice}
             filters={props.javniFiltri}
@@ -1739,6 +1855,64 @@ function TraziCesticu({
   );
 }
 
+function IzborJavnogDokaza({
+  activeIds,
+  onToggle,
+}: {
+  activeIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const odaberi = (odabrani: string, ugasi: string) => {
+    if (!activeIds.has(odabrani)) onToggle(odabrani);
+    if (activeIds.has(ugasi)) onToggle(ugasi);
+  };
+  const opcije = [
+    {
+      id: "ciljana-provjera-vlasnistva",
+      ugasi: "javne-cestice",
+      naslov: "Provjerene",
+      opis: "30 ciljanih čestica",
+    },
+    {
+      id: "javne-cestice",
+      ugasi: "ciljana-provjera-vlasnistva",
+      naslov: "GIS izvoz",
+      opis: "81 izričito javna",
+    },
+  ];
+  return (
+    <fieldset className="mt-3">
+      <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+        Skup podataka
+      </legend>
+      <p className="mt-1 text-xs leading-normal text-zinc-600">
+        Prikazuje se jedan skup odjednom.
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-1 rounded-lg bg-zinc-100 p-1">
+        {opcije.map((opcija) => {
+          const odabran = activeIds.has(opcija.id);
+          return (
+            <button
+              key={opcija.id}
+              type="button"
+              aria-pressed={odabran}
+              onClick={() => odaberi(opcija.id, opcija.ugasi)}
+              className={`fokus meta min-h-11 rounded-md px-2 py-1.5 text-left ${
+                odabran
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900"
+              }`}
+            >
+              <span className="block text-sm font-bold">{opcija.naslov}</span>
+              <span className="block text-xs">{opcija.opis}</span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 function JavneCesticeFilteri({
   features,
   filters,
@@ -2012,6 +2186,297 @@ function JavneCesticeFilteri({
               na snazi.
             </p>
           </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function CiljanaProvjeraFilteri({
+  features,
+  filters,
+  onFilters,
+  stanje,
+  onRetry,
+}: {
+  features: Feature<Geometry, TargetedOwnershipProperties>[] | null;
+  filters: TargetedOwnershipFilters;
+  onFilters: (filters: TargetedOwnershipFilters) => void;
+  stanje?: "ucitava" | "greska";
+  onRetry: () => void;
+}) {
+  const summary = features
+    ? summarizeTargetedOwnership(features, filters)
+    : { count: 0, mapped_area_m2: 0 };
+  const statusCounts = features
+    ? features.reduce(
+        (counts, feature) => {
+          counts[feature.properties.verification_status] += 1;
+          return counts;
+        },
+        {
+          confirmed_public: 0,
+          mixed_public: 0,
+          cadastre_public: 0,
+          private_or_other: 0,
+          unresolved: 0,
+        } satisfies Record<OwnershipVerificationStatus, number>
+      )
+    : null;
+  const categoryOptions = features
+    ? [...
+        features.reduce((options, feature) => {
+          for (const entity of feature.properties.public_entities)
+            options.set(entity.category, (options.get(entity.category) ?? 0) + 1);
+          return options;
+        }, new Map<PublicEntityCategory, number>()),
+      ].sort((a, b) => a[0].localeCompare(b[0], "hr"))
+    : [];
+  const purposeOptions = features
+    ? [...
+        features.reduce((options, feature) => {
+          const code = feature.properties.purpose_primary_code ?? "unknown";
+          const current = options.get(code) ?? {
+            code,
+            label: feature.properties.purpose_primary_label ?? "Namjena nije određena",
+            count: 0,
+          };
+          current.count += 1;
+          options.set(code, current);
+          return options;
+        }, new Map<string, { code: string; label: string; count: number }>()),
+      ]
+        .map(([, option]) => option)
+        .sort((a, b) =>
+          a.code === "unknown"
+            ? 1
+            : b.code === "unknown"
+              ? -1
+              : a.code.localeCompare(b.code, "hr")
+        )
+    : [];
+  const active =
+    filters.statuses.length > 0 ||
+    filters.entityCategories.length > 0 ||
+    filters.cohorts.length > 0 ||
+    filters.purposes.length > 0 ||
+    filters.built !== "all";
+  const toggle = <T extends string>(values: T[], value: T): T[] =>
+    values.includes(value)
+      ? values.filter((candidate) => candidate !== value)
+      : [...values, value];
+
+  return (
+    <section
+      aria-label="Filtri ciljane provjere vlasništva"
+      className="mt-5 border-t border-zinc-200 pt-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-bold text-zinc-900">Ciljana provjera vlasništva</h3>
+        <span className="rounded-full bg-status-objavljeno-ground px-2 py-0.5 text-xs font-bold text-status-objavljeno">
+          30 čestica
+        </span>
+      </div>
+      <p className="mt-1 text-base leading-normal text-zinc-700">
+        Sve čestice na odabranom koridoru ceste i sve čestice od najmanje
+        10.000 m² provjerene su kroz javni OSS tok.
+      </p>
+
+      {stanje === "greska" ? (
+        <div className="mt-3 rounded-lg bg-status-odbijeno-ground px-3 py-2 text-sm text-status-odbijeno">
+          <p>Sloj ciljane provjere nije se učitao.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="fokus meta mt-1 min-h-11 font-semibold underline"
+          >
+            Pokušaj ponovno
+          </button>
+        </div>
+      ) : !features || stanje === "ucitava" ? (
+        <p role="status" aria-busy="true" className="mt-3 text-sm text-zinc-600">
+          Učitavam 30 ciljanih čestica…
+        </p>
+      ) : (
+        <>
+          <p role="status" aria-live="polite" className="mt-3 text-lg font-bold text-zinc-900">
+            {summary.count.toLocaleString("hr-HR")} {brojnica(summary.count, "čestica", "čestice", "čestica")} ·{" "}
+            {(summary.mapped_area_m2 / 10_000).toLocaleString("hr-HR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            ha u obuhvatu
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Status provjere
+            </legend>
+            <div className="mt-1 space-y-0.5">
+              {(Object.keys(OWNERSHIP_STATUS_LABELS) as OwnershipVerificationStatus[]).map(
+                (status) => (
+                  <label
+                    key={status}
+                    className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.statuses.includes(status)}
+                      onChange={() =>
+                        onFilters({ ...filters, statuses: toggle(filters.statuses, status) })
+                      }
+                      className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                    />
+                    <span className="flex-1 leading-tight">{OWNERSHIP_STATUS_LABELS[status]}</span>
+                    <span className="text-xs tabular-nums text-zinc-600">
+                      {statusCounts?.[status] ?? 0}
+                    </span>
+                  </label>
+                )
+              )}
+            </div>
+          </fieldset>
+
+          <details className="mt-3 border-t border-zinc-200 pt-3">
+            <summary className="fokus meta min-h-11 cursor-pointer rounded text-sm font-semibold text-maslina">
+              Vlasnik, skup, namjena i tlocrt
+            </summary>
+
+            <fieldset className="mt-2">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Prepoznati javni subjekt
+              </legend>
+              <div className="mt-1 space-y-0.5">
+                {categoryOptions.map(([category, count]) => (
+                  <label
+                    key={category}
+                    className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.entityCategories.includes(category)}
+                      onChange={() =>
+                        onFilters({
+                          ...filters,
+                          entityCategories: toggle(filters.entityCategories, category),
+                        })
+                      }
+                      className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                    />
+                    <span className="flex-1 leading-tight">
+                      {PUBLIC_ENTITY_CATEGORY_LABELS[category]}
+                    </span>
+                    <span className="text-xs tabular-nums text-zinc-600">{count}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-4">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Zašto je provjerena
+              </legend>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {(Object.keys(OWNERSHIP_COHORT_LABELS) as OwnershipCohort[]).map((cohort) => (
+                  <button
+                    key={cohort}
+                    type="button"
+                    aria-pressed={filters.cohorts.includes(cohort)}
+                    onClick={() =>
+                      onFilters({ ...filters, cohorts: toggle(filters.cohorts, cohort) })
+                    }
+                    className={`fokus meta-cip min-h-11 rounded-full border px-3 text-sm font-semibold ${
+                      filters.cohorts.includes(cohort)
+                        ? "border-maslina bg-maslina text-white"
+                        : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                    }`}
+                  >
+                    {OWNERSHIP_COHORT_LABELS[cohort]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-4">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Namjena prema GUP-u 2024. (nacrt)
+              </legend>
+              <div className="mt-1 space-y-0.5">
+                {purposeOptions.map((option) => (
+                  <label
+                    key={option.code}
+                    className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.purposes.includes(option.code)}
+                      onChange={() =>
+                        onFilters({
+                          ...filters,
+                          purposes: toggle(filters.purposes, option.code),
+                        })
+                      }
+                      className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                    />
+                    <span className="flex-1 leading-tight">
+                      {option.code === "unknown" ? "" : `${option.code} — `}
+                      {option.label}
+                    </span>
+                    <span className="text-xs tabular-nums text-zinc-600">{option.count}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-4">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Evidentirani tlocrt
+              </legend>
+              <div className="mt-1 grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+                {(
+                  [
+                    ["all", "Sve"],
+                    ["with_footprint", "Ima tlocrt"],
+                    ["without_footprint", "Nema tlocrt"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={filters.built === value}
+                    onClick={() => onFilters({ ...filters, built: value })}
+                    className={`fokus meta min-h-11 rounded-md px-2 text-xs font-semibold ${
+                      filters.built === value
+                        ? "bg-white text-zinc-900 shadow-sm"
+                        : "text-zinc-600 hover:text-zinc-900"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </details>
+
+          {summary.count === 0 && (
+            <p className="mt-3 border-t border-zinc-200 pt-3 text-sm text-zinc-700">
+              Nema ciljanih čestica za odabrane filtre.
+            </p>
+          )}
+          {active && (
+            <button
+              type="button"
+              onClick={() => onFilters(POCETNI_CILJANI_FILTRI)}
+              className="fokus meta mt-2 min-h-11 text-sm font-semibold text-maslina hover:underline"
+            >
+              Poništi filtre ciljane provjere
+            </button>
+          )}
+
+          <p className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-normal text-zinc-600">
+            Provjereno 2. 8. 2026. ZK list B ima prednost; katastarski posjednik
+            je označen kao slabiji dokaz. Privatna imena nisu objavljena. Ovo je
+            ciljana provjera 30 čestica, ne cjelovit popis javne imovine.
+          </p>
         </>
       )}
     </section>
@@ -2431,6 +2896,7 @@ function dodajSloj(
   pogodakSloja: { current: number },
   stanje: (id: string, s: "ucitava" | "greska" | null) => void,
   javniFiltri?: PublicParcelFilters,
+  ciljaniFiltri?: TargetedOwnershipFilters,
   filterKey?: string,
 ) {
   if (layer.type === "wms") {
@@ -2478,13 +2944,26 @@ function dodajSloj(
               },
             }
           : {}),
+        ...(layer.id === "ciljana-provjera-vlasnistva" && ciljaniFiltri
+          ? {
+              filter: (feature: GeoJSON.Feature) => {
+                try {
+                  validateTargetedOwnershipProperties(feature.properties);
+                  return matchesTargetedOwnership(feature.properties, ciljaniFiltri);
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
         ...(NEINTERAKTIVNE_PLOHE.has(layer.id) ? { interactive: false } : {}),
         // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
         // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
         style: (f) => {
           const p = f?.properties as
             | ({ boja?: string; promjena?: string; highway?: string } &
-                Partial<PublicParcelProperties>)
+                Partial<PublicParcelProperties> &
+                Partial<TargetedOwnershipProperties>)
             | undefined;
           if (layer.id === "javne-cestice") {
             const c =
@@ -2499,6 +2978,40 @@ function dodajSloj(
               dashArray: p?.ownership_form === "coownership" ? "7 5" : undefined,
               fillColor: c,
               fillOpacity: 0.48,
+            };
+          }
+          if (layer.id === "ciljana-provjera-vlasnistva") {
+            const status = p?.verification_status;
+            const c =
+              status === "confirmed_public"
+                ? "#007956"
+                : status === "cadastre_public"
+                  ? "#005986"
+                  : status === "mixed_public"
+                    ? "#5d0ec0"
+                    : status === "private_or_other"
+                      ? "#71717b"
+                      : "#953d00";
+            return {
+              color: c,
+              weight: status === "confirmed_public" ? 3 : 2.25,
+              dashArray:
+                status === "mixed_public"
+                  ? "8 5"
+                  : status === "cadastre_public"
+                    ? "6 4"
+                    : status === "unresolved"
+                      ? "2 5"
+                      : undefined,
+              fillColor: c,
+              fillOpacity:
+                status === "confirmed_public"
+                  ? 0.58
+                  : status === "cadastre_public"
+                    ? 0.38
+                    : status === "mixed_public"
+                      ? 0.34
+                      : 0.12,
             };
           }
           // Sve prometno je jedan sloj i crta se samo obrisom — plohe iz
@@ -2634,6 +3147,8 @@ function dodajSloj(
 const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar",
   "katastar-vlasnistvo",
+  "javne-cestice",
+  "ciljana-provjera-vlasnistva",
   // Izvedeni sloj mora voditi u dosje, ne u skočni prozor s „M/K5”.
   //
   // Bio je običan sloj s natpisom, pa je u pogledu „Gdje se može graditi
@@ -2858,6 +3373,9 @@ function DosjePlaca({
         {dosje && !ucitavanje && (
           <>
             <NamjenaOdgovor namjena={dosje.namjena} />
+            {dosje.ciljanaProvjeraVlasnistva && (
+              <CiljanaProvjeraOdgovor properties={dosje.ciljanaProvjeraVlasnistva} />
+            )}
             {dosje.javnaCestica && (
               <JavnaCesticaOdgovor properties={dosje.javnaCestica} />
             )}
@@ -2943,6 +3461,63 @@ function DosjePlaca({
         )}
       </div>
     </aside>
+  );
+}
+
+function CiljanaProvjeraOdgovor({
+  properties,
+}: {
+  properties: TargetedOwnershipProperties;
+}) {
+  const facts = targetedOwnershipDossierFacts(properties);
+  const publicStatus = ["confirmed_public", "cadastre_public", "mixed_public"].includes(
+    properties.verification_status
+  );
+  return (
+    <section
+      className={`mb-3 rounded-lg border px-3 py-2.5 ${
+        publicStatus
+          ? "border-maslina-rub bg-maslina-vez"
+          : properties.verification_status === "unresolved"
+            ? "border-status-u-tijeku-ground bg-status-u-tijeku-ground"
+            : "border-zinc-200 bg-zinc-50"
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-900">Ciljana provjera vlasništva</h3>
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+            publicStatus
+              ? "bg-status-rijeseno-ground text-status-rijeseno"
+              : properties.verification_status === "unresolved"
+                ? "bg-white text-status-u-tijeku"
+                : "bg-zinc-200 text-zinc-700"
+          }`}
+        >
+          {OWNERSHIP_STATUS_LABELS[properties.verification_status]}
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-800">
+        {facts.map((fact) => (
+          <li key={fact}>{fact}</li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs leading-normal text-zinc-600">
+        {properties.verified_at
+          ? `Provjereno ${formatPublicSourceDate(properties.verified_at)}. `
+          : "Nije razriješeno u automatskoj provjeri. "}
+        Privatna imena nisu objavljena. Službeni zapis provjeri na{" "}
+        <a
+          href="https://oss.uredjenazemlja.hr/map"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fokus font-semibold text-maslina underline"
+        >
+          Uređenoj zemlji
+        </a>
+        .
+      </p>
+    </section>
   );
 }
 

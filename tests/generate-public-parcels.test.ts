@@ -13,7 +13,7 @@ const polygon = (west: number, south: number, east: number, north: number): Poly
 const raw = (
   properties: Record<string, unknown>,
   geometry = polygon(16, 43, 16.001, 43.001),
-): Feature<Polygon> => ({ type: "Feature", geometry, properties });
+): Feature<Polygon, Record<string, unknown>> => ({ type: "Feature", geometry, properties });
 
 test("non-public source status is excluded", () => {
   const result = derivePublicParcel(

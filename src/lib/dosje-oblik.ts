@@ -7,6 +7,7 @@
  * konstanti.
 */
 import type { PublicParcelProperties } from "./public-parcels";
+import type { TargetedOwnershipProperties } from "./targeted-ownership";
 
 /** Kako sloj dodiruje česticu. */
 export type Odnos = "nad" | "na" | "kroz";
@@ -108,6 +109,8 @@ export interface Dosje {
   cestica: Record<string, unknown> | null;
   /** Sanitizirani javni status iz djelomične gradske GIS evidencije. */
   javnaCestica: PublicParcelProperties | null;
+  /** Sanitizirani rezultat ciljane provjere koridora i velikih čestica. */
+  ciljanaProvjeraVlasnistva: TargetedOwnershipProperties | null;
   /** Namjena po planu na snazi. `null` ako točka nije ni u jednoj plohi. */
   namjena: Namjena | null;
   skupine: Skupina[];

@@ -917,6 +917,17 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    id: "ciljana-provjera-vlasnistva",
+    label: "Ciljana provjera vlasništva",
+    type: "geojson",
+    url: "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
+    attribution:
+      "Uređena zemlja — ciljano provjereno 2. 8. 2026.; katastar i nacrt GUP-a 2024.",
+    color: "#007956",
+    group: "Katastar i adrese",
+    phase: 1,
+  },
+  {
     id: "plan-optika",
     label: "Plan telekom infrastrukture (zone)",
     type: "geojson",
@@ -1192,9 +1203,10 @@ const POGLEDI: MapView[] = [
     razina: "pitanje",
     description:
       "Djelomičan prikaz čestica koje dostupni GIS izvoz izričito označava " +
-      "kao Grad/JLS, Republiku Hrvatsku ili Županiju. Čestice bez statusa " +
-      "nisu proglašene privatnima, nego ostaju neklasificirane.",
-    layerIds: ["javne-cestice"],
+      "kao Grad/JLS, Republiku Hrvatsku ili Županiju, dopunjen ciljanom " +
+      "provjerom 30 čestica uz prometni koridor i velikih čestica. Čestice " +
+      "bez statusa nisu proglašene privatnima.",
+    layerIds: ["ciljana-provjera-vlasnistva"],
   },
   {
     id: "okolis-rizici",
