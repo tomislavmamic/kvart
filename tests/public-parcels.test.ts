@@ -106,9 +106,9 @@ test("dossier facts name coownership, draft purpose, and missing footprint evide
       built: false,
     }),
     [
-      "Županija · Suvlasništvo",
-      "K5 — Poslovna namjena i stanovanje · GUP 2024. (nacrt)",
-      "Nema evidentirani tlocrt ≥1 m² u korištenim slojevima",
+      "Javni status: Županija · Suvlasništvo",
+      "Pretežita namjena čestice: K5 — Poslovna namjena i stanovanje · GUP 2024. (nacrt)",
+      "Tlocrt: nije evidentiran preklop ≥1 m² u korištenim slojevima",
     ],
   );
 });

@@ -151,13 +151,13 @@ export function publicParcelDossierFacts(
   properties: PublicParcelProperties,
 ): [string, string, string] {
   const purpose = properties.purpose_primary_code
-    ? `${properties.purpose_primary_code} — ${properties.purpose_primary_label ?? properties.purpose_primary_code} · GUP 2024. (nacrt)`
-    : "Namjena nije određena · GUP 2024. (nacrt)";
+    ? `Pretežita namjena čestice: ${properties.purpose_primary_code} — ${properties.purpose_primary_label ?? properties.purpose_primary_code} · GUP 2024. (nacrt)`
+    : "Pretežita namjena čestice nije određena · GUP 2024. (nacrt)";
   return [
-    `${PUBLIC_LEVEL_LABELS[properties.public_level]} · ${OWNERSHIP_FORM_LABELS[properties.ownership_form]}`,
+    `Javni status: ${PUBLIC_LEVEL_LABELS[properties.public_level]} · ${OWNERSHIP_FORM_LABELS[properties.ownership_form]}`,
     purpose,
     properties.built
-      ? "Ima evidentirani tlocrt ≥1 m² u korištenim slojevima"
-      : "Nema evidentirani tlocrt ≥1 m² u korištenim slojevima",
+      ? "Tlocrt: evidentiran preklop ≥1 m² u korištenim slojevima"
+      : "Tlocrt: nije evidentiran preklop ≥1 m² u korištenim slojevima",
   ];
 }
