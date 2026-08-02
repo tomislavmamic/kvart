@@ -906,6 +906,28 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    id: "javne-cestice",
+    label: "Evidentirane javne čestice",
+    type: "geojson",
+    url: "/geo/analiza/javne-cestice.geojson",
+    attribution:
+      "GIS izvoz Grada Splita, 3. 10. 2025. — djelomična evidencija javnog statusa",
+    color: "#007956",
+    group: "Katastar i adrese",
+    phase: 1,
+  },
+  {
+    id: "ciljana-provjera-vlasnistva",
+    label: "Ciljana provjera vlasništva",
+    type: "geojson",
+    url: "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
+    attribution:
+      "Uređena zemlja — ciljano provjereno 2. 8. 2026.; katastar i nacrt GUP-a 2024.",
+    color: "#007956",
+    group: "Katastar i adrese",
+    phase: 1,
+  },
+  {
     id: "plan-optika",
     label: "Plan telekom infrastrukture (zone)",
     type: "geojson",
@@ -1176,6 +1198,17 @@ const POGLEDI: MapView[] = [
     layerIds: ["planovi-obuhvat", "planovi-obuhvat-pp", "kotar", "naselja"],
   },
   {
+    id: "javno-evidentirano",
+    label: "Što je javno evidentirano?",
+    razina: "pitanje",
+    description:
+      "Djelomičan prikaz čestica koje dostupni GIS izvoz izričito označava " +
+      "kao Grad/JLS, Republiku Hrvatsku ili Županiju, dopunjen ciljanom " +
+      "provjerom 30 čestica uz prometni koridor i velikih čestica. Čestice " +
+      "bez statusa nisu proglašene privatnima.",
+    layerIds: ["ciljana-provjera-vlasnistva"],
+  },
+  {
     id: "okolis-rizici",
     label: "Okoliš i rizici",
     razina: "nacin",
@@ -1256,6 +1289,7 @@ const POGLEDI: MapView[] = [
  */
 const REDOSLIJED_PITANJA = [
   "gdje-se-moze-graditi",
+  "javno-evidentirano",
   "nacrt-gupa",
   "planovi-obuhvat",
 ];
