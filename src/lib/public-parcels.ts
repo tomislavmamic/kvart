@@ -146,6 +146,14 @@ export function summarizePublicParcels(
   return { count, area_m2: Math.round(area_m2) };
 }
 
+/** Pretvara provjereni ISO datum u čitljiv hrvatski zapis bez vremenske zone. */
+export function formatPublicSourceDate(value: string): string {
+  const match = ISO_DATE.exec(value);
+  if (!match) return value;
+  const [year, month, day] = value.split("-").map(Number);
+  return `${day}. ${month}. ${year}.`;
+}
+
 /** Tri kratke dokazne rečenice koje dijele vidljivi dosje i njegovi testovi. */
 export function publicParcelDossierFacts(
   properties: PublicParcelProperties,

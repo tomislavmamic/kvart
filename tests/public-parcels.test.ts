@@ -4,6 +4,7 @@ import test from "node:test";
 import { pointOnFeature } from "@turf/turf";
 import type { Feature, Polygon } from "geojson";
 import {
+  formatPublicSourceDate,
   matchesPublicParcel,
   publicParcelDossierFacts,
   summarizePublicParcels,
@@ -37,6 +38,11 @@ const feature = (properties: PublicParcelProperties): Feature<Polygon, PublicPar
   type: "Feature",
   geometry: polygon,
   properties,
+});
+
+test("source date is shown in an unambiguous Croatian format", () => {
+  assert.equal(formatPublicSourceDate("2025-10-03"), "3. 10. 2025.");
+  assert.equal(formatPublicSourceDate("not-a-date"), "not-a-date");
 });
 
 test("validator rejects a non-public status and any source-only owner field", () => {

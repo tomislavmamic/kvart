@@ -28,6 +28,7 @@ import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
 import { NA_SNAZI, PRETHODNI, natpisPlana } from "@/lib/plan-status";
 import {
+  formatPublicSourceDate,
   matchesPublicParcel,
   PUBLIC_LEVEL_LABELS,
   publicParcelDossierFacts,
@@ -1354,7 +1355,9 @@ function Sidebar(props: {
             </details>
           </>
         )}
-        {currentView && <Opis view={currentView} />}
+        {currentView && currentView.id !== "javno-evidentirano" && (
+          <Opis view={currentView} />
+        )}
 
         {currentView?.id === "javno-evidentirano" && (
           <JavneCesticeFilteri
@@ -1797,7 +1800,7 @@ function JavneCesticeFilteri({
 
   return (
     <section aria-label="Filtri evidentiranih javnih čestica" className="mt-4">
-      <div className="rounded-lg bg-zinc-100 px-3 py-2.5 text-zinc-700">
+      <div className="border-y border-zinc-200 py-3 text-zinc-700">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
             Djelomična evidencija
@@ -1823,9 +1826,52 @@ function JavneCesticeFilteri({
           </button>
         </div>
       ) : !features || stanje === "ucitava" ? (
-        <p role="status" className="mt-3 text-sm text-zinc-600">
-          Učitavam evidentirane javne čestice…
-        </p>
+        <div className="mt-3 text-zinc-600" aria-busy="true">
+          <p role="status" className="text-sm">
+            Učitavam evidentirane javne čestice…
+          </p>
+
+          <fieldset disabled className="mt-3 opacity-60">
+            <legend className="text-xs font-bold uppercase tracking-wide">
+              Javna razina
+            </legend>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {["Sve", ...Object.values(PUBLIC_LEVEL_LABELS)].map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="meta-cip min-h-11 rounded-full border border-zinc-300 px-3 text-sm font-semibold"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset disabled className="mt-4 opacity-60">
+            <legend className="text-xs font-bold uppercase tracking-wide">
+              Namjena prema GUP-u 2024. (nacrt)
+            </legend>
+            <p className="mt-2 min-h-11 text-sm">Učitavam dostupne namjene…</p>
+          </fieldset>
+
+          <fieldset disabled className="mt-4 opacity-60">
+            <legend className="text-xs font-bold uppercase tracking-wide">
+              Evidentirani tlocrt
+            </legend>
+            <div className="mt-1 grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+              {["Sve", "Ima tlocrt", "Nema tlocrt"].map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="meta min-h-11 rounded-md px-2 text-xs font-semibold"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        </div>
       ) : (
         <>
           <p role="status" aria-live="polite" className="mt-3 text-lg font-bold text-zinc-900">
@@ -1927,7 +1973,7 @@ function JavneCesticeFilteri({
           </fieldset>
 
           {summary.count === 0 && (
-            <p className="mt-3 rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-700">
+            <p className="mt-3 border-t border-zinc-200 pt-3 text-sm text-zinc-700">
               Nema evidentiranih javnih čestica za odabrane filtre.
             </p>
           )}
@@ -2909,7 +2955,9 @@ function JavnaCesticaOdgovor({
   return (
     <section className="mb-3 rounded-lg bg-zinc-100 px-3 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-bold text-zinc-900">Javno vlasništvo</h3>
+        <h3 className="text-sm font-bold text-zinc-900">
+          Evidentirani javni status
+        </h3>
         <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
           djelomična evidencija
         </span>
@@ -2920,7 +2968,8 @@ function JavnaCesticaOdgovor({
         ))}
       </ul>
       <p className="mt-2 text-xs leading-normal text-zinc-600">
-        GIS izvoz Grada Splita, stanje izvornog sloja {properties.source_updated_at}.
+        GIS izvoz Grada Splita, stanje izvornog sloja{" "}
+        {formatPublicSourceDate(properties.source_updated_at)}.
         Informativni prikaz; vlasništvo provjeri na{" "}
         <a
           href="https://oss.uredjenazemlja.hr/map"
