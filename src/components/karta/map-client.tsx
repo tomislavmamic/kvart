@@ -30,6 +30,7 @@ import { NA_SNAZI, PRETHODNI, natpisPlana } from "@/lib/plan-status";
 import {
   matchesPublicParcel,
   PUBLIC_LEVEL_LABELS,
+  publicParcelDossierFacts,
   summarizePublicParcels,
   validatePublicParcelProperties,
   type PublicLevel,
@@ -2811,6 +2812,9 @@ function DosjePlaca({
         {dosje && !ucitavanje && (
           <>
             <NamjenaOdgovor namjena={dosje.namjena} />
+            {dosje.javnaCestica && (
+              <JavnaCesticaOdgovor properties={dosje.javnaCestica} />
+            )}
             {dosje.skupine.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 Nijedan sloj ovdje nema ništa.
@@ -2893,6 +2897,42 @@ function DosjePlaca({
         )}
       </div>
     </aside>
+  );
+}
+
+function JavnaCesticaOdgovor({
+  properties,
+}: {
+  properties: PublicParcelProperties;
+}) {
+  const facts = publicParcelDossierFacts(properties);
+  return (
+    <section className="mb-3 rounded-lg bg-zinc-100 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-900">Javno vlasništvo</h3>
+        <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+          djelomična evidencija
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-800">
+        {facts.map((fact) => (
+          <li key={fact}>{fact}</li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs leading-normal text-zinc-600">
+        GIS izvoz Grada Splita, stanje izvornog sloja {properties.source_updated_at}.
+        Informativni prikaz; vlasništvo provjeri na{" "}
+        <a
+          href="https://oss.uredjenazemlja.hr/map"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fokus font-semibold text-maslina underline"
+        >
+          Uređenoj zemlji
+        </a>
+        . Nacrt GUP-a 2024. nije plan na snazi.
+      </p>
+    </section>
   );
 }
 

@@ -24,6 +24,10 @@ import { OVERLAY_LAYERS } from "./map-views";
 import { NA_SNAZI, PRETHODNI } from "./plan-status";
 import { opisObjekta, vrijednostPolja } from "./polja";
 import {
+  validatePublicParcelProperties,
+  type PublicParcelProperties,
+} from "./public-parcels";
+import {
   TEME,
   type Dosje,
   type Namjena,
@@ -577,6 +581,24 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
   const metaOkvir = turfBbox(meta) as [number, number, number, number];
   const sredina = cestica ? pointOnFeature(cestica as Feature<never>) : null;
 
+  let javnaCestica: PublicParcelProperties | null = null;
+  const javniSloj = await ucitaj("/geo/analiza/javne-cestice.geojson");
+  if (javniSloj) {
+    for (let i = 0; i < javniSloj.fc.features.length; i++) {
+      const okvir = javniSloj.okviri[i];
+      if (lng < okvir[0] || lng > okvir[2] || lat < okvir[1] || lat > okvir[3]) continue;
+      const feature = javniSloj.fc.features[i];
+      try {
+        if (!booleanPointInPolygon(tocka, feature as Feature<never>)) continue;
+        validatePublicParcelProperties(feature.properties);
+        javnaCestica = feature.properties;
+        break;
+      } catch {
+        /* neispravan ili nesiguran javni zapis ne ide u dosje */
+      }
+    }
+  }
+
   const poTemi = new Map<Tema, Stavka[]>();
   let pretrazeno = 0;
 
@@ -640,6 +662,7 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
 
   return {
     cestica: cestica ? ((cestica.properties ?? {}) as Record<string, unknown>) : null,
+    javnaCestica,
     namjena: await namjenaNaTocki(
       { type: "Feature", properties: {}, geometry: tocka } as Feature,
       cestica

@@ -145,3 +145,19 @@ export function summarizePublicParcels(
   }
   return { count, area_m2: Math.round(area_m2) };
 }
+
+/** Tri kratke dokazne rečenice koje dijele vidljivi dosje i njegovi testovi. */
+export function publicParcelDossierFacts(
+  properties: PublicParcelProperties,
+): [string, string, string] {
+  const purpose = properties.purpose_primary_code
+    ? `${properties.purpose_primary_code} — ${properties.purpose_primary_label ?? properties.purpose_primary_code} · GUP 2024. (nacrt)`
+    : "Namjena nije određena · GUP 2024. (nacrt)";
+  return [
+    `${PUBLIC_LEVEL_LABELS[properties.public_level]} · ${OWNERSHIP_FORM_LABELS[properties.ownership_form]}`,
+    purpose,
+    properties.built
+      ? "Ima evidentirani tlocrt ≥1 m² u korištenim slojevima"
+      : "Nema evidentirani tlocrt ≥1 m² u korištenim slojevima",
+  ];
+}

@@ -5,7 +5,8 @@
  * povlači `fs`; preglednik treba samo oblik i natpise, a uvoz `fs`-a u
  * klijentski svežanj ne prolazi. Ovdje zato nema ničega osim tipova i
  * konstanti.
- */
+*/
+import type { PublicParcelProperties } from "./public-parcels";
 
 /** Kako sloj dodiruje česticu. */
 export type Odnos = "nad" | "na" | "kroz";
@@ -105,6 +106,8 @@ export interface Namjena {
 
 export interface Dosje {
   cestica: Record<string, unknown> | null;
+  /** Sanitizirani javni status iz djelomične gradske GIS evidencije. */
+  javnaCestica: PublicParcelProperties | null;
   /** Namjena po planu na snazi. `null` ako točka nije ni u jednoj plohi. */
   namjena: Namjena | null;
   skupine: Skupina[];

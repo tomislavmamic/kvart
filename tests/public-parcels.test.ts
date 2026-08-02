@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { pointOnFeature } from "@turf/turf";
 import type { Feature, Polygon } from "geojson";
 import {
   matchesPublicParcel,
+  publicParcelDossierFacts,
   summarizePublicParcels,
   validatePublicParcelProperties,
   type PublicParcelFilters,
   type PublicParcelProperties,
 } from "../src/lib/public-parcels";
 import { MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
+import { dosjeZaTocku } from "../src/lib/dosje";
 
 const base: PublicParcelProperties = {
   parcel_id: "SPLIT:100/1",
@@ -91,4 +95,32 @@ test("public parcel evidence is a production layer and a resident question", () 
   const view = MAP_VIEWS.find((candidate) => candidate.id === "javno-evidentirano");
   assert.equal(view?.razina, "pitanje");
   assert.deepEqual(view?.layerIds, ["javne-cestice"]);
+});
+
+test("dossier facts name coownership, draft purpose, and missing footprint evidence", () => {
+  assert.deepEqual(
+    publicParcelDossierFacts({
+      ...base,
+      public_level: "county",
+      ownership_form: "coownership",
+      built: false,
+    }),
+    [
+      "Županija · Suvlasništvo",
+      "K5 — Poslovna namjena i stanovanje · GUP 2024. (nacrt)",
+      "Nema evidentirani tlocrt ≥1 m² u korištenim slojevima",
+    ],
+  );
+});
+
+test("real parcel dossier returns the same sanitized public evidence", async () => {
+  const collection = JSON.parse(
+    await readFile("public/geo/analiza/javne-cestice.geojson", "utf8"),
+  ) as { features: Feature<Polygon, PublicParcelProperties>[] };
+  const selected = collection.features[0];
+  const point = pointOnFeature(selected);
+  const [lng, lat] = point.geometry.coordinates;
+  const dossier = await dosjeZaTocku(lng, lat);
+  assert.equal(dossier.javnaCestica?.parcel_id, selected.properties.parcel_id);
+  assert.equal("zk_vlasnik" in (dossier.javnaCestica ?? {}), false);
 });
