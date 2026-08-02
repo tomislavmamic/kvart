@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import type * as LeafletNS from "leaflet";
+import type { Feature, Geometry } from "geojson";
 import {
   BASE_LAYERS,
   OVERLAY_LAYERS,
@@ -26,8 +27,23 @@ import {
 import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
 import { NA_SNAZI, PRETHODNI, natpisPlana } from "@/lib/plan-status";
+import {
+  matchesPublicParcel,
+  PUBLIC_LEVEL_LABELS,
+  summarizePublicParcels,
+  validatePublicParcelProperties,
+  type PublicLevel,
+  type PublicParcelFilters,
+  type PublicParcelProperties,
+} from "@/lib/public-parcels";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
+const JAVNE_CESTICE_URL = "/geo/analiza/javne-cestice.geojson";
+const POCETNI_JAVNI_FILTRI: PublicParcelFilters = {
+  levels: [],
+  purposes: [],
+  built: "all",
+};
 
 /**
  * Traži li korisnik da se ne miče?
@@ -238,6 +254,12 @@ export function MapClient() {
   const [activeIds, setActiveIds] = useState<Set<string>>(
     () => new Set(phase1(MAP_VIEWS[0].layerIds))
   );
+  const [javniFiltri, setJavniFiltri] = useState<PublicParcelFilters>(
+    POCETNI_JAVNI_FILTRI
+  );
+  const [javneCestice, setJavneCestice] = useState<
+    Feature<Geometry, PublicParcelProperties>[] | null
+  >(null);
   // Stanje podloge: `null` dok se ne zna, pa poruka ne bljesne bez potrebe.
   const [podlogaStanje, setPodlogaStanje] = useState<
     "ucitava" | "gotovo" | "greska" | null
@@ -628,6 +650,42 @@ export function MapClient() {
     return out;
   }, [activeIds, dimValue, usporedba, klizac]);
 
+  const javniFilterKey = useMemo(
+    () =>
+      JSON.stringify({
+        levels: [...javniFiltri.levels].sort(),
+        purposes: [...javniFiltri.purposes].sort(),
+        built: javniFiltri.built,
+      }),
+    [javniFiltri]
+  );
+
+  // Panel treba iste podatke kao Leaflet, ali ne zaseban mrežni zahtjev:
+  // ucitajGeoJSON dijeli LRU spremnik s crtežom sloja. Učitava se tek kad
+  // je pitanje ili sam sloj doista uključen.
+  useEffect(() => {
+    if (!ready || !renderIds.has("javne-cestice") || javneCestice) return;
+    let cancelled = false;
+    void ucitajGeoJSON(JAVNE_CESTICE_URL, geojsonCache.current)
+      .then((collection) => {
+        const features = collection.features.map((feature) => {
+          validatePublicParcelProperties(feature.properties);
+          return feature as Feature<Geometry, PublicParcelProperties>;
+        });
+        if (!cancelled) setJavneCestice(features);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSlojStanje((current) => ({
+            ...current,
+            "javne-cestice": "greska",
+          }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, renderIds, javneCestice]);
+
   /** layerId → okno, da klizač može odrezati svaku stranu zasebno. */
   const okna = useMemo<Record<string, string>>(
     () =>
@@ -651,7 +709,11 @@ export function MapClient() {
     // postojećem sloju ne mijenja, pa se mora stvoriti iznova. Bez toga
     // odabrana godina ostane izvan reza i klizač naizgled ne radi.
     for (const [id, inst] of overlayInstances.current) {
-      if (!renderIds.has(id) || inst.okno !== okna[id]) {
+      if (
+        !renderIds.has(id) ||
+        inst.okno !== okna[id] ||
+        (id === "javne-cestice" && inst.filterKey !== javniFilterKey)
+      ) {
         map.removeLayer(inst.sloj);
         overlayInstances.current.delete(id);
       }
@@ -670,7 +732,10 @@ export function MapClient() {
             const rest = { ...p };
             delete rest[id];
             return rest;
-          }));
+          }),
+        id === "javne-cestice" ? javniFiltri : undefined,
+        id === "javne-cestice" ? javniFilterKey : undefined,
+      );
     }
     // solar click handler
     const solarActive = renderIds.has("solar");
@@ -685,7 +750,7 @@ export function MapClient() {
       solarHandler.current = null;
       map.getContainer().style.cursor = "";
     }
-  }, [renderIds, ready, okna]);
+  }, [renderIds, ready, okna, javniFiltri, javniFilterKey]);
 
   // ---- klizač za usporedbu dviju godina ----
   // Pisano ručno, a ne preko leaflet-side-by-side: taj dodatak iznutra radi
@@ -917,6 +982,13 @@ export function MapClient() {
         onComparison={setComparisonId}
         nacin={nacin}
         onNacin={setNacin}
+        javneCestice={javneCestice}
+        javniFiltri={javniFiltri}
+        onJavniFiltri={setJavniFiltri}
+        onPonoviJavne={() => {
+          toggleLayer("javne-cestice");
+          setTimeout(() => toggleLayer("javne-cestice"), 0);
+        }}
         onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
         open={panelOpen}
         onOpen={otvoriTraku}
@@ -1109,6 +1181,10 @@ function Sidebar(props: {
   onComparison: (id: string | null) => void;
   nacin: "obris" | "klizac";
   onNacin: (n: "obris" | "klizac") => void;
+  javneCestice: Feature<Geometry, PublicParcelProperties>[] | null;
+  javniFiltri: PublicParcelFilters;
+  onJavniFiltri: (filters: PublicParcelFilters) => void;
+  onPonoviJavne: () => void;
   onOtvoriCesticu: (lat: number, lng: number) => void;
   open: boolean;
   onOpen: (v: boolean) => void;
@@ -1278,6 +1354,16 @@ function Sidebar(props: {
           </>
         )}
         {currentView && <Opis view={currentView} />}
+
+        {currentView?.id === "javno-evidentirano" && (
+          <JavneCesticeFilteri
+            features={props.javneCestice}
+            filters={props.javniFiltri}
+            onFilters={props.onJavniFiltri}
+            stanje={props.slojStanje["javne-cestice"]}
+            onRetry={props.onPonoviJavne}
+          />
+        )}
 
         {/* Ključ boja izvedenog sloja stoji odmah uz opis, prije popisa
             slojeva: on je odgovor na „zašto je moja čestica crvena”. */}
@@ -1649,6 +1735,242 @@ function TraziCesticu({
   );
 }
 
+function JavneCesticeFilteri({
+  features,
+  filters,
+  onFilters,
+  stanje,
+  onRetry,
+}: {
+  features: Feature<Geometry, PublicParcelProperties>[] | null;
+  filters: PublicParcelFilters;
+  onFilters: (filters: PublicParcelFilters) => void;
+  stanje?: "ucitava" | "greska";
+  onRetry: () => void;
+}) {
+  const summary = features
+    ? summarizePublicParcels(features, filters)
+    : { count: 0, area_m2: 0 };
+  const purposeOptions = features
+    ? [...
+        features.reduce((options, feature) => {
+          const code = feature.properties.purpose_primary_code ?? "unknown";
+          const current = options.get(code) ?? {
+            code,
+            label:
+              feature.properties.purpose_primary_label ??
+              "Namjena nije određena",
+            count: 0,
+          };
+          current.count += 1;
+          options.set(code, current);
+          return options;
+        }, new Map<string, { code: string; label: string; count: number }>()).values(),
+      ].sort((a, b) =>
+        a.code === "unknown"
+          ? 1
+          : b.code === "unknown"
+            ? -1
+            : a.code.localeCompare(b.code, "hr")
+      )
+    : [];
+  const active =
+    filters.levels.length > 0 ||
+    filters.purposes.length > 0 ||
+    filters.built !== "all";
+  const reset = () => onFilters(POCETNI_JAVNI_FILTRI);
+  const toggleLevel = (level: PublicLevel) =>
+    onFilters({
+      ...filters,
+      levels: filters.levels.includes(level)
+        ? filters.levels.filter((candidate) => candidate !== level)
+        : [...filters.levels, level],
+    });
+  const togglePurpose = (code: string) =>
+    onFilters({
+      ...filters,
+      purposes: filters.purposes.includes(code)
+        ? filters.purposes.filter((candidate) => candidate !== code)
+        : [...filters.purposes, code],
+    });
+
+  return (
+    <section aria-label="Filtri evidentiranih javnih čestica" className="mt-4">
+      <div className="rounded-lg bg-zinc-100 px-3 py-2.5 text-zinc-700">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+            Djelomična evidencija
+          </span>
+          <span className="text-xs text-zinc-600">GIS izvoz · 3. 10. 2025.</span>
+        </div>
+        <p className="mt-2 text-sm leading-normal">
+          Prikazane su samo čestice izričito označene kao Grad/JLS, RH ili
+          Županija. <b className="font-semibold">1.060 čestica bez statusa</b>{" "}
+          nije klasificirano.
+        </p>
+      </div>
+
+      {stanje === "greska" ? (
+        <div className="mt-3 rounded-lg bg-status-odbijeno-ground px-3 py-2 text-sm text-status-odbijeno">
+          <p>Sloj evidentiranih javnih čestica nije se učitao.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="fokus meta mt-1 min-h-11 font-semibold underline"
+          >
+            Pokušaj ponovno
+          </button>
+        </div>
+      ) : !features || stanje === "ucitava" ? (
+        <p role="status" className="mt-3 text-sm text-zinc-600">
+          Učitavam evidentirane javne čestice…
+        </p>
+      ) : (
+        <>
+          <p role="status" aria-live="polite" className="mt-3 text-lg font-bold text-zinc-900">
+            {summary.count.toLocaleString("hr-HR")} {brojnica(summary.count, "čestica", "čestice", "čestica")} ·{" "}
+            {(summary.area_m2 / 10_000).toLocaleString("hr-HR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            ha
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Javna razina
+            </legend>
+            <div className="mt-1 flex flex-wrap gap-1">
+              <button
+                type="button"
+                aria-pressed={filters.levels.length === 0}
+                onClick={() => onFilters({ ...filters, levels: [] })}
+                className={`fokus meta-cip min-h-11 rounded-full border px-3 text-sm font-semibold ${
+                  filters.levels.length === 0
+                    ? "border-maslina bg-maslina text-white"
+                    : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Sve
+              </button>
+              {(Object.keys(PUBLIC_LEVEL_LABELS) as PublicLevel[]).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  aria-pressed={filters.levels.includes(level)}
+                  onClick={() => toggleLevel(level)}
+                  className={`fokus meta-cip min-h-11 rounded-full border px-3 text-sm font-semibold ${
+                    filters.levels.includes(level)
+                      ? "border-maslina bg-maslina text-white"
+                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  {PUBLIC_LEVEL_LABELS[level]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-4">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Namjena prema GUP-u 2024. (nacrt)
+            </legend>
+            <div className="mt-1 space-y-0.5">
+              {purposeOptions.map((option) => (
+                <label
+                  key={option.code}
+                  className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.purposes.includes(option.code)}
+                    onChange={() => togglePurpose(option.code)}
+                    className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                  />
+                  <span className="flex-1 leading-tight">
+                    {option.code === "unknown" ? "" : `${option.code} — `}
+                    {option.label}
+                  </span>
+                  <span className="text-xs tabular-nums text-zinc-600">{option.count}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-4">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Evidentirani tlocrt
+            </legend>
+            <div className="mt-1 grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+              {(
+                [
+                  ["all", "Sve"],
+                  ["with_footprint", "Ima tlocrt"],
+                  ["without_footprint", "Nema tlocrt"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={filters.built === value}
+                  onClick={() => onFilters({ ...filters, built: value })}
+                  className={`fokus meta min-h-11 rounded-md px-2 text-xs font-semibold ${
+                    filters.built === value
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-600 hover:text-zinc-900"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          {summary.count === 0 && (
+            <p className="mt-3 rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-700">
+              Nema evidentiranih javnih čestica za odabrane filtre.
+            </p>
+          )}
+
+          {active && (
+            <button
+              type="button"
+              onClick={reset}
+              className="fokus meta mt-2 min-h-11 text-sm font-semibold text-maslina hover:underline"
+            >
+              Poništi filtre
+            </button>
+          )}
+
+          <div className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-normal text-zinc-600">
+            <p className="flex flex-wrap gap-x-3 gap-y-1">
+              {(Object.keys(PUBLIC_LEVEL_LABELS) as PublicLevel[]).map((level) => (
+                <span key={level} className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className={`h-2.5 w-4 rounded-sm ${
+                      level === "state"
+                        ? "bg-status-objavljeno"
+                        : level === "county"
+                          ? "bg-status-u-tijeku"
+                          : "bg-maslina"
+                    }`}
+                  />
+                  {PUBLIC_LEVEL_LABELS[level]}
+                </span>
+              ))}
+            </p>
+            <p className="mt-2">
+              Crtkani obrub znači suvlasništvo. Informativni prikaz; provjeri
+              službeni podatak na Uređenoj zemlji. Nacrt GUP-a 2024. nije plan
+              na snazi.
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 /**
  * Opis pogleda, skraćen ako je dug.
  *
@@ -2011,6 +2333,8 @@ const IME_RAZREDA: Record<string, string> = {
 interface Postavljeni {
   sloj: LeafletNS.Layer;
   okno: string | undefined;
+  /** Samo izvedeni javni sloj: promjena filtra traži novu Leaflet grupu. */
+  filterKey?: string;
 }
 
 /**
@@ -2058,7 +2382,9 @@ function dodajSloj(
   spremnik: Map<string, GeoJSON.FeatureCollection>,
   otvoriDosje: (lat: number, lng: number, oznaci?: Isticanje) => void,
   pogodakSloja: { current: number },
-  stanje: (id: string, s: "ucitava" | "greska" | null) => void
+  stanje: (id: string, s: "ucitava" | "greska" | null) => void,
+  javniFiltri?: PublicParcelFilters,
+  filterKey?: string,
 ) {
   if (layer.type === "wms") {
     const wms = L.tileLayer.wms(layer.url, {
@@ -2083,7 +2409,7 @@ function dodajSloj(
     (grupa as unknown as { getContainer: () => HTMLElement }).getContainer =
       () => map.getPane(okno) as HTMLElement;
   }
-  registar.set(layer.id, { sloj: grupa, okno });
+  registar.set(layer.id, { sloj: grupa, okno, filterKey });
   stanje(layer.id, "ucitava");
   ucitajGeoJSON(layer.url, spremnik)
     .then((fc) => {
@@ -2093,13 +2419,41 @@ function dodajSloj(
       stanje(layer.id, null);
       const gj = L.geoJSON(fc, {
         ...(okno ? { pane: okno } : {}),
+        ...(layer.id === "javne-cestice" && javniFiltri
+          ? {
+              filter: (feature: GeoJSON.Feature) => {
+                try {
+                  validatePublicParcelProperties(feature.properties);
+                  return matchesPublicParcel(feature.properties, javniFiltri);
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
         ...(NEINTERAKTIVNE_PLOHE.has(layer.id) ? { interactive: false } : {}),
         // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
         // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
         style: (f) => {
           const p = f?.properties as
-            | { boja?: string; promjena?: string; highway?: string }
+            | ({ boja?: string; promjena?: string; highway?: string } &
+                Partial<PublicParcelProperties>)
             | undefined;
+          if (layer.id === "javne-cestice") {
+            const c =
+              p?.public_level === "state"
+                ? "#005986"
+                : p?.public_level === "county"
+                  ? "#953d00"
+                  : "#007956";
+            return {
+              color: c,
+              weight: 2.5,
+              dashArray: p?.ownership_form === "coownership" ? "7 5" : undefined,
+              fillColor: c,
+              fillOpacity: 0.48,
+            };
+          }
           // Sve prometno je jedan sloj i crta se samo obrisom — plohe iz
           // plana pune bi radnu zonu pretvorile u mrlju, a rub asfalta je
           // ono što se zapravo želi vidjeti. Ulici razred određuje debljinu,

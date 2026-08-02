@@ -8,6 +8,7 @@ import {
   type PublicParcelFilters,
   type PublicParcelProperties,
 } from "../src/lib/public-parcels";
+import { MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
 
 const base: PublicParcelProperties = {
   parcel_id: "SPLIT:100/1",
@@ -79,4 +80,15 @@ test("summary counts only matching features and rounds their literal area", () =
     summarizePublicParcels(features, { levels: ["city"], purposes: [], built: "all" }),
     { count: 2, area_m2: 2_000 },
   );
+});
+
+test("public parcel evidence is a production layer and a resident question", () => {
+  const layer = OVERLAY_LAYERS.find((candidate) => candidate.id === "javne-cestice");
+  assert.deepEqual(
+    layer && { url: layer.url, phase: layer.phase },
+    { url: "/geo/analiza/javne-cestice.geojson", phase: 1 },
+  );
+  const view = MAP_VIEWS.find((candidate) => candidate.id === "javno-evidentirano");
+  assert.equal(view?.razina, "pitanje");
+  assert.deepEqual(view?.layerIds, ["javne-cestice"]);
 });
