@@ -122,7 +122,7 @@ function DetailsForm({ proposal }: { proposal: Proposal }) {
         />
       </label>
       <FormMessage message={message} />
-      <button className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+      <button className="rounded-full bg-maslina px-5 py-2 text-sm font-semibold text-white hover:bg-maslina-tamna">
         Spremi promjene
       </button>
     </form>
@@ -183,7 +183,7 @@ function StatusForm({
         />
       </label>
       <FormMessage message={message} />
-      <button className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+      <button className="rounded-full bg-maslina px-5 py-2 text-sm font-semibold text-white hover:bg-maslina-tamna">
         Dodaj status
       </button>
     </form>

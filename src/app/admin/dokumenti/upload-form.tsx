@@ -50,7 +50,7 @@ export function UploadForm() {
       {error && <p className="text-sm text-rose-700">{error}</p>}
       <button
         disabled={pending}
-        className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+        className="rounded-full bg-maslina px-5 py-2 text-sm font-semibold text-white hover:bg-maslina-tamna disabled:opacity-50"
       >
         {pending ? "Učitavanje…" : "Učitaj dokument"}
       </button>

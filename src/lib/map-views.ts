@@ -799,11 +799,11 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   },
   {
     id: "gup-2024-namjena",
-    label: "GUP — nacrt 2024. (namjena)",
+    label: "GUP 2024. — namjena",
     type: "geojson",
     url: "/geo/planovi/gup-2024-namjena.geojson",
     attribution:
-      "Nacrt ID GUP-a Splita 2024. (javna rasprava) — plohe praćene iz PDF lista",
+      "GUP Splita 2024. — plohe praćene iz PDF lista",
     color: "#80e000",
     group: "GUP — namjena",
     phase: 1,
@@ -821,11 +821,11 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
   // pa svaka ploha koju je moguće pripisati nosi i službeni opis odluke.
   {
     id: "gup-promjene-2015-2024",
-    label: "Promjene namjene 2015. → nacrt 2024.",
+    label: "Promjene namjene 2015. → 2024.",
     type: "geojson",
     url: "/geo/planovi/gup-promjene-2015-2024.geojson",
     attribution:
-      "Izračunato iz lista GUP-a 2015. i nacrta ID 2024. (javna rasprava)",
+      "Izračunato iz listova GUP-a 2015. i 2024.",
     color: "#dc2626",
     group: "GUP — namjena",
     phase: 1,
@@ -1035,7 +1035,7 @@ const POGLEDI: MapView[] = [
     razina: "nacin",
     description:
       "Što se gdje smije graditi: UPU i DPU planovi, zgrade i gustoća " +
-      "stanovništva. Podloga je namjena iz GUP-a na snazi; što joj nacrt " +
+      "stanovništva. Podloga je namjena iz GUP-a na snazi; što joj prethodni " +
       "mijenja vidi se u pogledu „Nacrt GUP-a”.",
     dimensionId: "gup-godina",
     defaultValueLayerId: "gup-2015-namjena",
@@ -1061,12 +1061,14 @@ const POGLEDI: MapView[] = [
   },
   {
     id: "nacrt-gupa",
-    label: "Što se mijenja?",
+    label: "Što se promijenilo?",
     razina: "pitanje",
     usporedbe: true,
     description:
-      "Karta je nacrt izmjena GUP-a iz 2024., a crveno obrubljeno je ono što " +
-      "on mijenja u odnosu na plan koji je na snazi — 9,4 ha na 24 mjesta. " +
+      "Karta je GUP iz 2024., a crveno obrubljeno je ono što se u njemu " +
+      "promijenilo u odnosu na plan iz 2015. — 9,4 ha na 24 mjesta, sve IZVAN " +
+      "Dračevca i Bilica. Unutar kvarta se namjena nije promijenila: " +
+      "registracijski robustan raster-diff daje 0,0 ha od 9,57 ha. " +
       "Klik na plohu daje staru i novu namjenu te, gdje je moguće, stavku " +
       "popisa izmjena kojom nacrt tu promjenu sam obrazlaže. Biralom se " +
       "podloga prebacuje na plan na snazi.",
@@ -1084,7 +1086,15 @@ const POGLEDI: MapView[] = [
       "razlikovanjem oborinske i fekalne, hidranti, trafostanice, stupovi " +
       "javne rasvjete i trase telekoma. Uz to slojevi iz DPU-a radne zone " +
       "Dračevac, koji pokazuju što je planom propisano — po razlici se vidi " +
-      "što još nije izvedeno.",
+      "što još nije izvedeno. Solarni potencijal krovova nije upaljen odmah — " +
+      "sam je težak koliko sve ostalo zajedno, pa se pali kvačicom kad zatreba.",
+    // „solar-krovovi” je namjerno izvan ovog popisa.
+    //
+    // Sam nosi 2,8 MB raspakiranog GeoJSON-a — više od polovice svega što je
+    // ovaj pogled dosad povlačio (12,9 MB ukupno), a odgovara na pitanje koje
+    // nema veze s ostalih dvadeset devet slojeva ovdje: ovo je pogled na mreže
+    // koje su u zemlji, a solar je pogled na krovove. Ostaje u registru i pali
+    // se kvačicom; ne otvara se svakome tko dođe vidjeti gdje je vodovod.
     layerIds: [
       "vodovod",
       "vodovod-spojevi",
@@ -1100,7 +1110,6 @@ const POGLEDI: MapView[] = [
       "struja-vn-110",
       "trafostanice",
       "trafostanice-plohe",
-      "solar-krovovi",
       "rasvjeta",
       "rasvjeta-mjesta",
       "telekom-trase",
@@ -1300,7 +1309,7 @@ export const COMPARISONS: Comparison[] = [
   {
     id: "promjene-2015-2024",
     dimensionId: "gup-godina",
-    label: "2015. → nacrt 2024.",
+    label: "2015. → 2024.",
     layerId: "gup-promjene-2015-2024",
     fromLayerId: "gup-2015-namjena",
     toLayerId: "gup-2024-namjena",

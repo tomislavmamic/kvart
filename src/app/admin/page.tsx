@@ -81,7 +81,7 @@ export default async function AdminPage() {
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <form action={approveSubmission}>
                   <input type="hidden" name="id" value={sub.id} />
-                  <button className="rounded-full bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                  <button className="rounded-full bg-maslina px-4 py-1.5 text-sm font-semibold text-white hover:bg-maslina-tamna">
                     Objavi
                   </button>
                 </form>

@@ -25,7 +25,7 @@ export function LoginForm() {
       {error && <p className="text-sm text-rose-700">{error}</p>}
       <button
         type="submit"
-        className="w-full rounded-full bg-emerald-600 px-6 py-2.5 font-semibold text-white hover:bg-emerald-700"
+        className="w-full rounded-full bg-maslina px-6 py-2.5 font-semibold text-white hover:bg-maslina-tamna"
       >
         Prijava
       </button>

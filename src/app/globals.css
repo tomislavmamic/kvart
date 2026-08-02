@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+/* Paleta iz DESIGN.md, kao kod a ne kao proza.
+ *
+ * Dosad su imena („maslina”, „kamen tlo”) postojala samo u dokumentu, a kod je
+ * pisao `emerald-700` i `zinc-200`. Dvije stvari koje to skriva:
+ *
+ * 1. Već su se razišle. `emerald-700` u Tailwindu v4 daje #007a55, a DESIGN.md
+ *    za maslinu tvrdi #007956 — i `.fokus` je taj #007956 imao upisan ručno.
+ *    Prsten fokusa i ispuna gumba nisu bili ista boja, i ništa to nije moglo
+ *    primijetiti jer se nisu ni zvali isto.
+ * 2. Pravila su bila neprovjerljiva. „Nema bijelog natpisa na zelenom svjetlijem
+ *    od masline” ne može se provjeriti dok je maslina niz znakova u utilityju.
+ *
+ * Ovdje su samo AUTORSKE boje — one koje mi biramo. Boje iz planova i GIS-a
+ * grada namjerno NISU ovdje: one su dokaz, ne sustav, i ulaze iz podataka
+ * (vidi The Two Registers Rule). Token za njih bio bi poziv da ih se uskladi. */
+@theme {
+  --color-maslina: #007956;
+  --color-maslina-tamna: #005f46;
+  --color-maslina-zivo: #009767;
+  --color-maslina-noc: #002c22;
+  --color-maslina-vez: #ecfdf5;
+  --color-maslina-rub: #a4f4cf;
+
+  /* Kamen je istovjetan Tailwindovoj zinc ljestvici (kamen-tlo = zinc-200 do
+     zadnjeg bajta), pa postojeći `zinc-*` nije pogrešan — samo je bezimen.
+     Nova radnja uzima imena; zatečeno se ne prepisuje bez potrebe. */
+  --color-kamen-plitko: #f4f4f5;
+  --color-kamen-tlo: #e4e4e7;
+  --color-kamen-rub: #d4d4d8;
+  --color-kamen-tih: #9f9fa9;
+  --color-kamen-drugi: #71717b;
+  --color-kamen-tekst: #52525c;
+  --color-kamen-tinta: #18181b;
+
+  /* Odbijeno/greška: ruža, ne alarm-crvena. Vidi The Rose-Not-Red Rule. */
+  --color-odbijeno: #a30037;
+  --color-odbijeno-tamna: #8b002f;
+}
+
 body {
   font-family:
     system-ui,
@@ -41,9 +80,19 @@ body {
    klasa, a ne kao niz utilityja na svakom elementu, jer je pravilo sustava:
    ako se mijenja, mijenja se na jednom mjestu. */
 .fokus:focus-visible {
-  outline: 2px solid #007956;
+  outline: 2px solid var(--color-maslina);
   outline-offset: 2px;
   border-radius: inherit;
+}
+
+/* Sama karta je fokusabilna (Leaflet joj daje tabindex=0 i strelice pomiču
+ * prikaz), ali Leaflet gasi obrub — pa je bila JEDINI element na stranici bez
+ * ijednog znaka da drži fokus. Tipkovnicom se dolazilo na kartu i nije se
+ * imalo kako znati. Obrub ide prema unutra jer karta puni cijeli prozor, pa bi
+ * vanjski bio odrezan. */
+.leaflet-container:focus-visible {
+  outline: 2px solid var(--color-maslina);
+  outline-offset: -2px;
 }
 
 /* Dodirni cilj od 44px, ali SAMO na dodirnim uređajima.
@@ -61,6 +110,29 @@ body {
   .meta-cip {
     min-height: 44px;
     padding-block: 0.625rem;
+  }
+
+  /* Zumiranje je Leafletov DOM, pa ga `.meta` nije mogao dohvatiti — a to je
+   * glavna kontrola karte na platformi na kojoj je primarni korisnik. Ostajala
+   * je 30×30 dok je sve naše raslo na 44. Mjereno na uređaju: 30 px. */
+  .leaflet-control-zoom a {
+    min-width: 44px;
+    min-height: 44px;
+    line-height: 44px;
+  }
+}
+
+/* Vrtuljak čekanja bez vrtnje.
+ *
+ * Uz `prefers-reduced-motion` vrtnja se gasi, ali se NE gasi obavijest: kolut
+ * ostaje kao statičan znak, a rečenica „Učitavam ortofoto…” pokraj njega nosi
+ * cijelo značenje i bez pokreta. Gašenje same animacije bez zamjene ostavilo bi
+ * pun kolut koji izgleda kao kvar. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation: none;
+    border-top-color: var(--color-maslina);
+    border-right-color: var(--color-maslina);
   }
 }
 

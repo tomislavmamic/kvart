@@ -4,10 +4,17 @@ import { useState } from "react";
 import { submitProblem } from "@/lib/actions/public";
 import { NEIGHBORHOODS, CATEGORIES } from "@/lib/constants";
 
-export function SubmitForm() {
+export function SubmitForm({
+  lokacija,
+}: {
+  lokacija: { lat: number; lng: number; kc: string | null } | null;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
+  // Lokacija se može ukloniti. Prijava s karte ne smije značiti da se mora
+  // prijaviti baš ta točka — netko klikne susjednu česticu pa se predomisli.
+  const [saLokacijom, setSaLokacijom] = useState(true);
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
@@ -35,6 +42,39 @@ export function SubmitForm() {
 
   return (
     <form action={handleSubmit} className="space-y-5">
+      {/* Što se šalje uz prijavu, ispisano — a ne skriveno polje o kojem
+          prijavitelj ne zna. Lokacija ide u opis, jer tablica prijava nema
+          stupce za koordinate; moderator je vidi i prenosi na prijedlog. */}
+      {lokacija && saLokacijom && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-maslina-rub bg-maslina-vez px-3 py-2">
+          <p className="text-sm text-zinc-800">
+            <span className="font-semibold">Lokacija s karte:</span>{" "}
+            {lokacija.kc ? `k.č. ${lokacija.kc} · ` : ""}
+            <span className="font-mono text-xs">
+              {lokacija.lat.toFixed(5)}, {lokacija.lng.toFixed(5)}
+            </span>
+            <br />
+            <span className="text-zinc-600">
+              Šalje se uz prijavu da se ne mora opisivati riječima.
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setSaLokacijom(false)}
+            className="fokus meta shrink-0 rounded px-2 py-1 text-sm font-medium text-zinc-600 hover:text-zinc-900"
+          >
+            ukloni
+          </button>
+        </div>
+      )}
+      {lokacija && saLokacijom && (
+        <>
+          <input type="hidden" name="lat" value={lokacija.lat} />
+          <input type="hidden" name="lng" value={lokacija.lng} />
+          {lokacija.kc && <input type="hidden" name="kc" value={lokacija.kc} />}
+        </>
+      )}
+
       <Field label="Naslov *">
         <input
           name="title"
@@ -140,7 +180,7 @@ export function SubmitForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-full bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+        className="rounded-full bg-maslina px-6 py-3 font-semibold text-white hover:bg-maslina-tamna disabled:opacity-50"
       >
         {pending ? "Slanje…" : "Pošalji prijavu"}
       </button>

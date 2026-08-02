@@ -101,7 +101,9 @@ export default async function ProposalPage({
         <ol className="mt-4 space-y-0 border-l-2 border-zinc-200">
           {proposal.statusUpdates.map((update) => (
             <li key={update.id} className="relative pb-6 pl-6 last:pb-0">
-              <span className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-emerald-600" />
+              {/* Oznaka na crti vremena je oblik, ne natpis — pa smije nositi
+                  maslinu živu, koja je za to i rezervirana. */}
+              <span className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-maslina-zivo" />
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{STATUSES[update.status]}</span>
                 <span className="text-xs text-zinc-400">

@@ -40,7 +40,7 @@ export default async function ProposalsPage({
         <h1 className="text-2xl font-bold">Problemi i prijedlozi</h1>
         <Link
           href="/prijavi"
-          className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="rounded-full bg-maslina px-4 py-2 text-sm font-semibold text-white hover:bg-maslina-tamna"
         >
           Prijavi problem
         </Link>

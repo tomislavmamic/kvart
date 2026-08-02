@@ -54,9 +54,33 @@ export async function submitProblem(formData: FormData): Promise<SubmitResult> {
     }
   }
 
+  // Lokacija s karte, ako je došla.
+  //
+  // Tablica prijava nema stupce za koordinate (prijedlozi ih imaju), pa se
+  // dopisuje na kraj opisa, odvojena i označena — moderator je vidi i prenosi
+  // na prijedlog pri objavi. Vrijednosti se ovdje provjeravaju PONOVNO, jer
+  // su iz upita i prošle su kroz preglednik: poveznicom se ne smije podmetati
+  // tekst u prijavu.
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  const kcSirovi = String(formData.get("kc") ?? "");
+  const uOkviru =
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= 43.5 &&
+    lat <= 43.55 &&
+    lng >= 16.45 &&
+    lng <= 16.54;
+  const kc = /^[0-9]{1,6}(\/[0-9]{1,4})?$/.test(kcSirovi) ? kcSirovi : null;
+  const opis = uOkviru
+    ? `${description}\n\n— Lokacija s karte: ${
+        kc ? `k.č. ${kc}, ` : ""
+      }${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    : description;
+
   await db.insert(submissions).values({
     title,
-    description,
+    description: opis,
     neighborhood: neighborhood as Neighborhood,
     category: category as Category,
     submitterName,

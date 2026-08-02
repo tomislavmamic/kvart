@@ -72,8 +72,19 @@ export interface Namjena {
   godina: number;
   /** Dopušta li ta namjena stanovanje — vidi STANOVANJE u dosje.ts. */
   stanovanje: boolean;
-  /** Popunjeno samo ako nacrt 2024. na ovom mjestu mijenja namjenu. */
-  nacrt: { kod: string; opis: string } | null;
+  /**
+   * Je li ovo očitano s PRETHODNOG lista, jer onaj na snazi ovdje nema plohe.
+   * Tri slobodne čestice u kvartu su takve; šutnja bi ondje bila gora.
+   */
+  saPrethodnog: boolean;
+  /**
+   * Namjena po PRETHODNOM planu, ako se ovdje razlikuje od one na snazi.
+   *
+   * Popunjeno tek kad razlika preživi nesigurnost precrtavanja listova
+   * (±5 m) — vidi stabilnaRazlika() u dosje.ts. Bez toga je pomak ruba
+   * plohe izgledao kao promjena plana.
+   */
+  prije: { kod: string; opis: string } | null;
   /** Popunjeno ako je čestica u izvedenom sloju slobodnih čestica. */
   slobodna: { slobodno_m2: number; bez_pristupa: boolean } | null;
   /**
@@ -81,6 +92,15 @@ export interface Namjena {
    * Postoji da se odsutnost izriče: prešućena, čita se kao dopuštenje.
    */
   izvan: string | null;
+  /**
+   * Što fizički stoji na putu gradnji — dalekovod preko čestice, planirani
+   * cestovni koridor. Prazan niz znači „nijedna od onih koje umijemo naći”,
+   * a ne „nema nijedne”; zato se i ispisuje kao nalaz, ne kao jamstvo.
+   *
+   * Stoji uz presudu, a ne među temama: ondje je 110 kV izgledao isto kao
+   * okno telekoma i čitao se kao podatak, ne kao ograda.
+   */
+  zapreke: { vrsta: string; opis: string; izvor: string }[];
 }
 
 export interface Dosje {

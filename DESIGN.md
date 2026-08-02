@@ -264,6 +264,16 @@ system's own accessibility commitment decides which green is allowed to carry a
 word, and the brighter one is for shapes, not sentences. *Audit test: every
 filled control ships its ratio, not a vibe.*
 
+**The palette is code, not prose.** Since 2026-07-31 the authored colours are
+real tokens in `src/app/globals.css` (`@theme`), so `bg-maslina` and
+`text-odbijeno` are what the components actually say. This is load-bearing, not
+tidiness: while the names lived only in this document, `emerald-700` rendered
+`#007a55` and `.fokus` hardcoded `#007956`, and nothing could notice the two
+were meant to be one colour. Inherited colours are deliberately **not**
+tokenised — a token for a GUP fill would be an invitation to harmonise it. The
+Kamen ramp is byte-identical to Tailwind's `zinc`, so existing `zinc-*` is not
+a bug; new work takes the names.
+
 **The Rose-Not-Red Rule.** Refusal and error use Rose, never a pure alarm red.
 The register reports outcomes; it does not editorialise them. Red is reserved
 for map semantics that are genuinely about danger or exclusion.
@@ -434,9 +444,14 @@ button.
 
 - **Shape:** fully rounded pill for primary, control radius (0.5rem) for
   secondary and inline actions.
-- **Primary:** Maslina živa ground, white label, `0.75rem 1.5rem` padding.
+- **Primary:** Maslina ground, white label, `0.75rem 1.5rem` padding.
   Exactly one per view — the single most useful next action.
-- **Hover / Focus:** hover deepens to Maslina; focus shows a 2px Maslina
+  *This line used to say Maslina živa, contradicting both the frontmatter above
+  and the Contrast Floor Rule three sections up. The code followed this line:
+  every filled button on the site shipped white-on-`#009966` at 3.65 : 1, a
+  WCAG AA failure on the "Prijavi problem" action included. Fixed 2026-07-31;
+  the rule was right and the prose was wrong.*
+- **Hover / Focus:** hover deepens to Maslina tamna; focus shows a 2px Maslina
   outline offset from the shape. Transitions are colour-only, ~150ms.
 - **Secondary:** white ground, `kamen-rub` 1px border, `kamen-tekst` label;
   hover fills to `kamen-plitko`.

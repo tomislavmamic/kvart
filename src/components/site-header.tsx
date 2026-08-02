@@ -28,7 +28,7 @@ export function SiteHeader() {
           className="text-lg font-bold tracking-tight"
         >
           Naš kvart{" "}
-          <span className="font-normal text-emerald-700">
+          <span className="font-normal text-maslina">
             Dračevac · Bilice
           </span>
         </Link>
@@ -50,7 +50,7 @@ export function SiteHeader() {
           ))}
           <Link
             href="/prijavi"
-            className="rounded-full bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+            className="rounded-full bg-maslina px-4 py-2 font-semibold text-white hover:bg-maslina-tamna"
           >
             Prijavi problem
           </Link>
@@ -93,7 +93,7 @@ export function SiteHeader() {
             <Link
               href="/prijavi"
               onClick={close}
-              className="mt-1 rounded-full bg-emerald-600 px-4 py-2.5 text-center font-semibold text-white hover:bg-emerald-700"
+              className="mt-1 rounded-full bg-maslina px-4 py-2.5 text-center font-semibold text-white hover:bg-maslina-tamna"
             >
               Prijavi problem
             </Link>
@@ -166,10 +166,16 @@ export function PlutajuciIzbornik() {
     // Iznad ploča karte (z-1100), inače bi ga bočna traka prekrila.
     <div ref={okvir} className="fixed left-3 top-3 z-[1200]">
       <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white py-1 pl-4 pr-1 shadow-lg">
-        <Link href="/" className="text-sm font-bold tracking-tight">
+        {/* `meta` jer je ovo na karti jedini put natrag na ostatak stranice, a
+            mjereno je bilo 63×20 px — ispod dodirne mjere na uređaju na kojem
+            se karta i otvara. */}
+        <Link
+          href="/"
+          className="fokus meta flex items-center text-sm font-bold tracking-tight"
+        >
           Naš kvart{" "}
-          <span className="hidden font-normal text-emerald-700 sm:inline">
-            Dračevac · Bilice
+          <span className="hidden font-normal text-maslina sm:inline">
+            &nbsp;Dračevac · Bilice
           </span>
         </Link>
         <button
@@ -206,7 +212,7 @@ export function PlutajuciIzbornik() {
           <Link
             href="/prijavi"
             onClick={() => setOpen(false)}
-            className="mt-1 rounded-full bg-emerald-600 px-4 py-2 text-center font-semibold text-white hover:bg-emerald-700"
+            className="mt-1 rounded-full bg-maslina px-4 py-2 text-center font-semibold text-white hover:bg-maslina-tamna"
           >
             Prijavi problem
           </Link>

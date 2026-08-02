@@ -21,6 +21,7 @@ import {
 } from "@turf/turf";
 import type { Feature, FeatureCollection, Position } from "geojson";
 import { OVERLAY_LAYERS } from "./map-views";
+import { NA_SNAZI, PRETHODNI } from "./plan-status";
 import { opisObjekta, vrijednostPolja } from "./polja";
 import {
   TEME,
@@ -152,6 +153,54 @@ const BEZ_U_DOSJEU = new Set([
  */
 const STANOVANJE = new Set(["S", "M1", "M2", "M3", "M/K5", "K5"]);
 
+/** Nesigurnost precrtanih listova GUP-a, u metrima. Vidi /plan. */
+const NESIGURNOST_M = 6;
+
+/**
+ * Preživljava li razlika između dva lista vlastitu nesigurnost precrtavanja?
+ *
+ * Uzima osam točaka na krugu od 6 m oko pogotka i traži da SVE daju istu
+ * razliku. Ako ijedna ne da, točka leži na rubu plohe i razlika je artefakt
+ * precrtavanja, ne odluka plana — pa se ne izriče.
+ *
+ * Erozija umjesto praga na površini: pitanje dosjea je „što vrijedi na ovoj
+ * točki”, pa i provjera mora biti o točki. Površinski prag bi tražio presjek
+ * s česticom, a to je drugo pitanje i drugi sloj.
+ */
+async function stabilnaRazlika(
+  tocka: Feature,
+  kodPrije: string,
+  kodSad: string
+): Promise<boolean> {
+  const a = await ucitaj(PRETHODNI.url);
+  const b = await ucitaj(NA_SNAZI.url);
+  if (!a || !b) return false;
+  if (tocka.geometry.type !== "Point") return false;
+  const [lng, lat] = tocka.geometry.coordinates as [number, number];
+  const dLat = NESIGURNOST_M / 111320;
+  const dLng = NESIGURNOST_M / (111320 * Math.cos((lat * Math.PI) / 180));
+  const kodNa = (fc: typeof a.fc, t: [number, number]) => {
+    for (const f of fc.features) {
+      try {
+        if (booleanPointInPolygon(t as never, f as never))
+          return String(f.properties?.kod ?? "");
+      } catch {
+        /* neispravna geometrija — preskoči */
+      }
+    }
+    return null;
+  };
+  for (let i = 0; i < 8; i++) {
+    const kut = (i * Math.PI) / 4;
+    const t: [number, number] = [
+      lng + dLng * Math.cos(kut),
+      lat + dLat * Math.sin(kut),
+    ];
+    if (kodNa(a.fc, t) !== kodPrije || kodNa(b.fc, t) !== kodSad) return false;
+  }
+  return true;
+}
+
 /**
  * Namjena na točki, po planu na snazi, uz nacrt i izvedeni sloj.
  *
@@ -176,18 +225,46 @@ async function namjenaNaTocki(
     return null;
   };
 
-  const sad = await uzmi("/geo/planovi/gup-2015-namjena.geojson");
+  const prijeF = await uzmi(PRETHODNI.url);
+
+  // List na snazi ima rupa, pa se pada natrag na prethodni — i to se KAŽE.
+  //
+  // Izmjereno na 56 slobodnih čestica: tri (k.č. 517, 603/1, 612/3) nemaju
+  // plohu na listu 2024., a na listu 2015. su K5. Bez ovoga bi im dosje
+  // odgovorio „nema plohe namjene na praćenom listu” — dakle šutnjom, i to
+  // baš na česticama na kojima netko misli graditi. Namjena po starijem
+  // listu, jasno označena kao takva, bolja je od nikakve.
+  const naSnazi = await uzmi(NA_SNAZI.url);
+  const sad = naSnazi ?? prijeF;
   if (!sad) return null;
+  const saPrethodnog = naSnazi === null;
   const p = sad.properties ?? {};
   const kod = String(p.kod ?? "");
 
-  const nacrtF = await uzmi("/geo/planovi/gup-2024-namjena.geojson");
-  const nacrtKod = String(nacrtF?.properties?.kod ?? "");
+  const prijeKod = String(prijeF?.properties?.kod ?? "");
   // Nacrt se navodi samo kad doista mijenja. Inače bi svaka čestica nosila
   // redak „nacrt: isto”, što je šum na 24 od 24 mjesta koja se ne mijenjaju.
-  const nacrt =
-    nacrtF && nacrtKod && nacrtKod !== kod
-      ? { kod: nacrtKod, opis: String(nacrtF.properties?.namjena ?? "") }
+  //
+  // I samo kad razlika preživi vlastitu nesigurnost lista. Oba lista su
+  // PRECRTANA iz PDF-a i točna su na ±5 m (vidi /plan). Na granici dviju
+  // namjena to znači da razlika ne mora biti promjena plana nego pomak ruba:
+  // izmjereno na cijelom kvartu, 98,4 % površine se poklapa, a od 2,48 ha
+  // koje se razilaze najveći dio čine SIMETRIČNI parovi — K5→K 0,51 ha uz
+  // K→K5 0,50 ha, K5→Z5 0,20 ha uz Z5→K5 0,20 ha. Promjena plana nije
+  // simetrična; pomaknut rub jest.
+  //
+  // Provjereno na 56 slobodnih čestica: pet ih je nosilo redak „nacrt
+  // predlaže”, a nijedan nije preživio pomak od 6 m. Tri su glasila
+  // K5/M/K5 → Z5, dakle „nacrt ti od gradive čestice radi zaštitno
+  // zelenilo” — najteža rečenica koju ova stranica može izreći, i bila je
+  // šum. Slaže se i s time da nijedna od 24 plohe promjena ne pada u kvart.
+  const prije =
+    !saPrethodnog &&
+    prijeF &&
+    prijeKod &&
+    prijeKod !== kod &&
+    (await stabilnaRazlika(tocka, prijeKod, kod))
+      ? { kod: prijeKod, opis: String(prijeF.properties?.namjena ?? "") }
       : null;
 
   // Izvedeni sloj nosi svoju geometriju po čestici, pa se traži pogodak u
@@ -200,6 +277,7 @@ async function namjenaNaTocki(
   let slobodna: Namjena["slobodna"] = null;
   let izvan: string | null = null;
   const u = await ucitaj("/geo/analiza/stambeno-slobodno.geojson");
+  let udioKoridora = 0;
   if (u && cestica) {
     const br = String((cestica.properties ?? {}).cestica ?? "");
     const ko = String((cestica.properties ?? {}).ko ?? "");
@@ -208,23 +286,96 @@ async function namjenaNaTocki(
         String(x.properties?.cestica ?? "") === br &&
         String(x.properties?.ko ?? "") === ko
     );
-    if (f)
+    if (f) {
       slobodna = {
         slobodno_m2: Number(f.properties?.slobodno_m2 ?? 0),
         bez_pristupa: Boolean(f.properties?.bez_pristupa),
       };
-    else if (STANOVANJE.has(kod)) izvan = await zastoNije(cestica);
+      udioKoridora = Number(f.properties?.udio_koridora ?? 0);
+    } else if (STANOVANJE.has(kod)) izvan = await zastoNije(cestica);
   }
 
   return {
     kod,
     opis: String(p.namjena ?? ""),
-    godina: Number(p.godina ?? 2015),
+    godina: Number(p.godina ?? NA_SNAZI.godina),
     stanovanje: STANOVANJE.has(kod),
-    nacrt,
+    saPrethodnog,
+    prije,
     slobodna,
     izvan,
+    zapreke: await zapreke(cestica, udioKoridora),
   };
+}
+
+/**
+ * Što fizički stoji na putu gradnji na ovoj čestici.
+ *
+ * Postoji zato što je dosje umio reći „ova namjena dopušta stanovanje” i
+ * „2.945 m² stvarno slobodne površine” u zelenom okviru, a onda četiri
+ * zaslona niže, pod naslovom „Struja”, istim slovima kao okno telekoma,
+ * spomenuti da preko čestice prolaze dva dalekovoda od 110 kV. Provjereno na
+ * k.č. 401/1: točno to. Uz to je `udio_koridora` — koliko čestice pada u
+ * planirani cestovni koridor — bio izračunat, poslan pregledniku i nigdje
+ * ispisan, a nije mali: 42 od 56 slobodnih čestica ima koridor, do 57 %.
+ *
+ * Presuda u boji radnje uz prešućene zapreke gora je od nikakve presude.
+ * Ovo ih diže uz presudu i gasi zeleni okvir.
+ */
+const ZAPREKE_SLOJEVI: { id: string; url: string; opis: (n: number) => string }[] = [
+  {
+    id: "struja-vn-110",
+    url: "/geo/grad/struja-vn-110.geojson",
+    opis: (n) =>
+      n === 1
+        ? "preko čestice prolazi dalekovod visokog napona"
+        : `preko čestice prolaze ${n} ${brojnica(n, "dalekovod", "dalekovoda", "dalekovoda")} visokog napona`,
+  },
+];
+
+/** Hrvatska brojnica: 1 / 2–4 / 5+. */
+function brojnica(n: number, jedan: string, dva: string, pet: string): string {
+  const z = n % 10;
+  const z2 = n % 100;
+  if (z === 1 && z2 !== 11) return jedan;
+  if (z >= 2 && z <= 4 && (z2 < 12 || z2 > 14)) return dva;
+  return pet;
+}
+
+async function zapreke(
+  cestica: Feature | null,
+  udioKoridora: number
+): Promise<Namjena["zapreke"]> {
+  const out: Namjena["zapreke"] = [];
+  if (cestica) {
+    for (const s of ZAPREKE_SLOJEVI) {
+      const u = await ucitaj(s.url);
+      if (!u) continue;
+      let n = 0;
+      for (const f of u.fc.features) {
+        try {
+          if (booleanIntersects(cestica as never, f as never)) n++;
+        } catch {
+          /* neispravna geometrija — preskoči */
+        }
+      }
+      if (n > 0)
+        out.push({
+          vrsta: s.id,
+          opis: s.opis(n),
+          izvor: "elektroenergetska mreža, GIS Grada Splita",
+        });
+    }
+  }
+  // Koridor se ne broji ispod 5 %: ispod toga je najčešće rub koridora koji
+  // dotakne ugao čestice, a ne prepreka gradnji.
+  if (udioKoridora >= 0.05)
+    out.push({
+      vrsta: "koridor",
+      opis: `planirani cestovni koridor zauzima ${Math.round(udioKoridora * 100)} % čestice`,
+      izvor: "koridori iz GUP-a",
+    });
+  return out;
 }
 
 /**

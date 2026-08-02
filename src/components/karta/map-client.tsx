@@ -2,6 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -24,8 +25,48 @@ import {
 } from "@/lib/map-views";
 import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
+import { NA_SNAZI, PRETHODNI, natpisPlana } from "@/lib/plan-status";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
+
+/**
+ * Traži li korisnik da se ne miče?
+ *
+ * Čita se pri svakoj uporabi, a ne jednom: postavka se mijenja usred posjeta
+ * (iOS je veže uz uštedu baterije), a karta živi dugo.
+ */
+function bezPokreta(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+/**
+ * Hrvatska brojnica: 1 / 2–4 / 5+.
+ *
+ * Zapisana je u DESIGN.md kao pravilo koje vrijedi za SVAKI broj koji sučelje
+ * ispiše. „3 rezultata” i „1 rezultat” nisu isti oblik, a engleski `s` ovdje ne
+ * postoji. Izuzeci su 11–14, koji unatoč zadnjoj znamenki idu u peti oblik.
+ */
+function brojnica(n: number, jedan: string, dva: string, pet: string): string {
+  const zadnja = n % 10;
+  const zadnje2 = n % 100;
+  if (zadnja === 1 && zadnje2 !== 11) return jedan;
+  if (zadnja >= 2 && zadnja <= 4 && (zadnje2 < 12 || zadnje2 > 14)) return dva;
+  return pet;
+}
+
+/**
+ * Koliko raspakiranih slojeva smije ostati u memoriji.
+ *
+ * Spremnik je dosad rastao bez granice: gašenje sloja miče crtež s karte, ali
+ * razgrađeni GeoJSON je ostajao zauvijek. Prošetati kroz šest pogleda znači
+ * 65 datoteka i 20,7 MB raspakiranog teksta, a kao JS objekti to je višestruko
+ * više. Petnaest je otprilike dva puna pogleda — dovoljno da povratak na
+ * prethodni pogled bude trenutačan, premalo da se skupi cijeli registar.
+ */
+const SPREMNIK_MAX = 15;
 
 /**
  * Stanje karte u adresi.
@@ -288,11 +329,6 @@ export function MapClient() {
     }).addTo(map);
   };
 
-  const maknniBiljeg = () => {
-    biljeg.current?.remove();
-    biljeg.current = null;
-  };
-
   const pomakniIzpodPloce = (lat: number, lng: number) => {
     const map = mapRef.current;
     if (!map) return;
@@ -307,7 +343,12 @@ export function MapClient() {
     const cilj = naUskom
       ? { x: v.x / 2, y: v.y * 0.17 }
       : { x: v.x * 0.28, y: v.y / 2 };
-    map.panBy([t.x - cilj.x, t.y - cilj.y], { animate: true, duration: 0.4 });
+    // Odabir čestice pomiče kartu. Uz `prefers-reduced-motion` skok je
+    // trenutačan: ishod je isti kadar, samo bez putovanja do njega.
+    map.panBy([t.x - cilj.x, t.y - cilj.y], {
+      animate: !bezPokreta(),
+      duration: 0.4,
+    });
   };
 
   const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
@@ -386,6 +427,7 @@ export function MapClient() {
       // pomak dolazio na kartu koja je u međuvremenu mogla biti uklonjena
       // (dvostruko montiranje u razvoju), pa se nije ni dogodio.
       const adr = prvaAdresa();
+      const mirno = bezPokreta();
       const map = L.map(mapDiv.current, {
         center: adr.sredina ?? KVART_CENTER,
         zoom: adr.zum ?? 15,
@@ -393,6 +435,23 @@ export function MapClient() {
         maxZoom: 19,
         zoomControl: false,
         attributionControl: true,
+        // Platno umjesto SVG-a.
+        //
+        // Leaflet zadano crta svaki objekt kao <path> u DOM-u. Mjereno na
+        // pogledu „Infrastruktura”: 33 510 elemenata u jednom <svg>, iz 12,9 MB
+        // raspakiranog JSON-a, uz 15 dugih zadataka i 3,1 s blokiranog glavnog
+        // reda — i to na stolnom računalu i brzoj vezi. Telefon na 4G, koji je
+        // ovdje zapisan kao stvarni prizor, prolazi puno gore.
+        //
+        // Platno crta isti sadržaj bez ijednog čvora po objektu. `setStyle`,
+        // `bringToFront`, skočni prozori i klik rade jednako, pa isticanje
+        // odabrane čestice i dosje ostaju netaknuti.
+        preferCanvas: true,
+        // Pokret koji nitko nije tražio. Uz `prefers-reduced-motion` Leaflet
+        // inače i dalje animira zumiranje i prijelaz pločica.
+        zoomAnimation: !mirno,
+        fadeAnimation: !mirno,
+        markerZoomAnimation: !mirno,
       });
       // Ograniči pomicanje na kvart + ~700 m rezerve — karta je o Dračevcu
       // i Bilicama, ne o cijelom Splitu.
@@ -645,10 +704,31 @@ export function MapClient() {
       return;
     }
 
+    // Natpisi strana usporedbe — koriste se u `aria-valuetext`, pa moraju
+    // reći ŠTO se uspoređuje, a ne samo da se nešto uspoređuje.
+    const lijeviNatpis =
+      OVERLAY_BY_ID.get(usporedba?.fromLayerId ?? "")?.label ?? "lijeva strana";
+    const desniNatpis =
+      OVERLAY_BY_ID.get(usporedba?.toLayerId ?? "")?.label ?? "desna strana";
+
     let omjer = 0.5;
     const drska = document.createElement("div");
+    // Razdjelnik koji se DA pomaknuti tipkovnicom.
+    //
+    // Prije je bio `role="separator"` bez `tabindex`, bez `aria-valuenow` i
+    // samo s rukovateljima pokazivača — dakle usporedba dviju godina GUP-a,
+    // jedno od tri pitanja s kojima se dolazi na kartu, mišem je radila, a
+    // tipkovnicom nije postojala. To je WCAG 2.1.1, razina A, ne AA.
+    //
+    // ARIA za pomični razdjelnik traži `tabindex`, orijentaciju i trenutačnu
+    // vrijednost; bez `aria-valuenow` čitač zaslona javlja da nešto ima, ali
+    // ne i gdje stoji.
     drska.setAttribute("role", "separator");
     drska.setAttribute("aria-label", "Razdjelnik usporedbe");
+    drska.setAttribute("aria-orientation", "vertical");
+    drska.setAttribute("tabindex", "0");
+    drska.setAttribute("aria-valuemin", "0");
+    drska.setAttribute("aria-valuemax", "100");
     drska.style.cssText =
       "position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;" +
       "background:#fff;box-shadow:0 0 4px rgba(0,0,0,.5);cursor:ew-resize;" +
@@ -663,11 +743,50 @@ export function MapClient() {
       lijevo.style.clip = `rect(${nw.y}px,${rez}px,${se.y}px,${nw.x}px)`;
       desno.style.clip = `rect(${nw.y}px,${se.x}px,${se.y}px,${rez}px)`;
       drska.style.left = `${velicina.x * omjer}px`;
+      // Vrijednost se objavljuje pri svakom pomaku, i pokazivačem i tipkovnicom.
+      // `aria-valuetext` postoji jer „62” nikome ništa ne znači, a „62 %, lijevo
+      // 2015., desno nacrt 2024.” je ono što se zapravo gleda.
+      const posto = Math.round(omjer * 100);
+      drska.setAttribute("aria-valuenow", String(posto));
+      drska.setAttribute(
+        "aria-valuetext",
+        `${posto} % — lijevo ${lijeviNatpis}, desno ${desniNatpis}`
+      );
     };
 
     const pomak = (e: PointerEvent) => {
       const okvir = map.getContainer().getBoundingClientRect();
       omjer = Math.min(1, Math.max(0, (e.clientX - okvir.left) / okvir.width));
+      osvjezi();
+    };
+
+    /**
+     * Strelice pomiču rez, Home/End ga bacaju na rub.
+     *
+     * Korak je 2 % po pritisku i 10 % uz PageUp/PageDown — dovoljno sitno da se
+     * može namjestiti na granicu jedne čestice, dovoljno krupno da se prijeđe
+     * cijela karta bez pedeset pritisaka.
+     */
+    const naTipku = (e: KeyboardEvent) => {
+      const korak =
+        e.key === "PageUp" || e.key === "PageDown" ? 0.1 : 0.02;
+      let n = omjer;
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown")
+        n = omjer - korak;
+      else if (
+        e.key === "ArrowRight" ||
+        e.key === "ArrowUp" ||
+        e.key === "PageUp"
+      )
+        n = omjer + korak;
+      else if (e.key === "Home") n = 0;
+      else if (e.key === "End") n = 1;
+      else return;
+      e.preventDefault();
+      // Strelice inače pomiču samu kartu (Leaflet ih sluša na spremniku), pa bi
+      // se bez zaustavljanja rez i prikaz micali istodobno.
+      e.stopPropagation();
+      omjer = Math.min(1, Math.max(0, n));
       osvjezi();
     };
     const kraj = (e: PointerEvent) => {
@@ -681,9 +800,10 @@ export function MapClient() {
       drska.addEventListener("pointermove", pomak);
       map.dragging.disable();
     };
-    drska.classList.add("klizac-rucka");
+    drska.classList.add("klizac-rucka", "fokus");
     drska.addEventListener("pointerdown", pocetak);
     drska.addEventListener("pointerup", kraj);
+    drska.addEventListener("keydown", naTipku);
     map.on("move zoom resize", osvjezi);
     osvjezi();
 
@@ -691,6 +811,7 @@ export function MapClient() {
       map.off("move zoom resize", osvjezi);
       drska.removeEventListener("pointerdown", pocetak);
       drska.removeEventListener("pointerup", kraj);
+      drska.removeEventListener("keydown", naTipku);
       drska.remove();
       lijevo.style.clip = "";
       desno.style.clip = "";
@@ -717,16 +838,19 @@ export function MapClient() {
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
 
-  const zatvoriDosje = () => {
+  // Dira samo refove i postavljače stanja, koji su svi stalni — pa je i sama
+  // stalna, i smije stajati u popisu ovisnosti efekta ispod bez da ga budi.
+  const zatvoriDosje = useCallback(() => {
     dosjeZahtjev.current++;
     istaknuto.current?.vrati();
     istaknuto.current = null;
-    maknniBiljeg();
+    biljeg.current?.remove();
+    biljeg.current = null;
     setDosje(null);
     setDosjeGreska(null);
     setDosjeUcitavanje(false);
     setCestica(null);
-  };
+  }, []);
 
   // Escape zatvara ono što je najgore otvoreno — dosje prije ploča. Prije
   // nije zatvarao ništa osim izbornika, pa je tipkovnicom karta bila zamka.
@@ -739,7 +863,10 @@ export function MapClient() {
     };
     document.addEventListener("keydown", naTipku);
     return () => document.removeEventListener("keydown", naTipku);
-  });
+    // Popis ovisnosti je izričit. Bez njega se slušač skidao i vješao pri
+    // svakom iscrtavanju — radilo je, ali je svako pomicanje karte prolazilo
+    // kroz dvije izmjene slušača bez razloga.
+  }, [dosje, dosjeUcitavanje, dosjeGreska, kontroleOpen, panelOpen, usko, zatvoriDosje]);
 
   return (
     // Cijeli prozor. `fixed inset-0`, a ne visina u `vh`: karta je sama
@@ -799,6 +926,8 @@ export function MapClient() {
       {(dosje || dosjeUcitavanje || dosjeGreska) && (
         <DosjePlaca
           uzKontrole={kontroleOpen && !usko}
+          usko={usko}
+          tocka={cestica}
           dosje={dosje}
           ucitavanje={dosjeUcitavanje}
           greska={dosjeGreska}
@@ -853,7 +982,7 @@ function StanjePodloge({
         <>
           <span
             aria-hidden
-            className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-emerald-700"
+            className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-maslina"
           />
           <span className="text-zinc-600">Učitavam ortofoto…</span>
         </>
@@ -862,7 +991,7 @@ function StanjePodloge({
           <span className="text-zinc-700">Ortofoto se ne učitava.</span>
           <button
             onClick={naUlicnu}
-            className="fokus rounded-full bg-emerald-700 px-2.5 py-1 font-semibold text-white hover:bg-emerald-800"
+            className="fokus rounded-full bg-maslina px-2.5 py-1 font-semibold text-white hover:bg-maslina-tamna"
           >
             Uličnu kartu
           </button>
@@ -912,7 +1041,7 @@ function TrakaPogleda({
       ref={v.id === viewId ? aktivni : undefined}
       className={`fokus meta-cip shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
         v.id === viewId
-          ? "border-emerald-700 bg-emerald-700 text-white"
+          ? "border-maslina bg-maslina text-white"
           : "border-zinc-200 bg-white text-zinc-700"
       }`}
     >
@@ -927,9 +1056,17 @@ function TrakaPogleda({
     // bez ijednog znaka da ondje išta ima. Deset pogleda bilo je dostupno
     // samo pokretom koji se ne da otkriti. Sad se traka kliže ispod njega,
     // a prijelaz je omekšan da se vidi da ima još.
+    // Desni razmak drži trak dalje od Leafletovog zumiranja.
+    //
+    // Mjereno na 500 px: „Više” je sjedalo na x 409–488, a gumb „−” na
+    // 458–488 / y 42–72 — pa je čip svojim z-indexom (1050 protiv Leafletovih
+    // 1000) pokrivao donjih 8 px cijele širine gumba. Zumiranje je ondje bilo
+    // djelomično nepritisnjivo, i to na uskom zaslonu, gdje se karta i gleda.
+    // Razmak je računat na dodirnu mjeru zumiranja (44 px + 10 px odmaka), ne
+    // na mišju (30 px), jer je dodir slučaj koji mora proći.
     <nav
       aria-label="Pogled"
-      className="absolute inset-x-0 top-16 z-[1050] flex items-start gap-1.5 px-3 pb-1"
+      className="absolute inset-x-0 top-16 z-[1050] flex items-start gap-1.5 py-0 pb-1 pl-3 pr-16"
     >
       <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pr-6 [mask-image:linear-gradient(90deg,#000_calc(100%-1.5rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {pitanja.map(cip)}
@@ -1045,7 +1182,7 @@ function Sidebar(props: {
       >
         <span aria-hidden>☰</span> Slojevi
         {props.activeIds.size > 0 && (
-          <span className="rounded-full bg-emerald-100 px-2 text-xs text-emerald-800">
+          <span className="rounded-full bg-maslina-vez px-2 text-xs text-maslina-tamna">
             {props.activeIds.size}
           </span>
         )}
@@ -1091,7 +1228,7 @@ function Sidebar(props: {
                     aria-pressed={v.id === props.viewId}
                     className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
                       v.id === props.viewId
-                        ? "border-emerald-700 bg-emerald-700 text-white"
+                        ? "border-maslina bg-maslina text-white"
                         : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
                     }`}
                   >
@@ -1129,7 +1266,7 @@ function Sidebar(props: {
                       aria-pressed={v.id === props.viewId}
                       className={`fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
                         v.id === props.viewId
-                          ? "border-emerald-700 bg-emerald-700 text-white"
+                          ? "border-maslina bg-maslina text-white"
                           : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
                       }`}
                     >
@@ -1241,7 +1378,7 @@ function Sidebar(props: {
         {/* Pretraživanje. Sa 113 slojeva u četrnaest skupina „gdje je
             dalekovod” je bilo prelistavanje; sad je jedan potez. Dok se
             traži, skupine se ne prikazuju — hijerarhija je tu smetnja. */}
-        <label className="mb-2 flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emerald-700">
+        <label className="mb-2 flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina">
           <svg viewBox="0 0 16 16" aria-hidden className="h-3.5 w-3.5 shrink-0 text-zinc-500">
             <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
             <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -1264,6 +1401,24 @@ function Sidebar(props: {
             </button>
           )}
         </label>
+
+        {/* Isto kao kod traženja čestice: sa 113 slojeva pretraga je glavni put
+            do sloja, a rezultati su se dosad mijenjali bez ijedne riječi. */}
+        <p role="status" aria-live="polite" className="sr-only">
+          {upit === ""
+            ? ""
+            : (() => {
+                const n =
+                  nadeni.length +
+                  nadeniUpravljani.length +
+                  nadeniPodignuti.length;
+                // „Pronađeno” je bezlično, pa se slaže i s 1 i s 2 i s 5;
+                // „odgovara/odgovaraju” bi tražilo i slaganje glagola.
+                return n === 0
+                  ? `Nijedan sloj ne odgovara upitu ${trazi}.`
+                  : `Pronađeno: ${n} ${brojnica(n, "sloj", "sloja", "slojeva")}.`;
+              })()}
+        </p>
 
         {trazi.trim() !== "" && nadeniPodignuti.length > 0 && (
           <p className="mb-2 rounded-lg bg-zinc-50 p-2 text-zinc-700">
@@ -1332,7 +1487,7 @@ function Sidebar(props: {
                 </svg>
                 {g}
                 {n > 0 && (
-                  <span className="ml-1 rounded-full bg-emerald-100 px-1.5 text-emerald-800">
+                  <span className="ml-1 rounded-full bg-maslina-vez px-1.5 text-maslina-tamna">
                     {n}
                   </span>
                 )}
@@ -1452,6 +1607,20 @@ function TraziCesticu({
           className="fokus meta w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-600"
         />
       </label>
+      {/* Rezultati se objavljuju.
+          Traženje čestice postoji zato da se do dosjea može doći tipkovnicom.
+          Put je postojao, ali dolazak se nije čuo: rezultati bi se pojavili, a
+          čitač zaslona ne bi rekao ništa. `role="status"` je pristojan — čeka
+          stanku umjesto da prekida tipkanje. */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {ucitava
+          ? "Tražim…"
+          : prazno
+            ? `Nema rezultata za ${upit}.`
+            : svjez && odgovor.lista.length > 0
+              ? `${odgovor.lista.length} ${brojnica(odgovor.lista.length, "rezultat", "rezultata", "rezultata")}. Odaberi za otvaranje dosjea.`
+              : ""}
+      </p>
       {ucitava && <p className="mt-1 text-xs text-zinc-600">Tražim…</p>}
       {prazno && (
         <p className="mt-1 text-xs text-zinc-600">
@@ -1515,7 +1684,7 @@ function Opis({ view }: { view: MapView }) {
       {dug && (
         <button
           onClick={() => setOtvoren(razvijen ? null : view.id)}
-          className="fokus meta mt-0.5 py-1 text-sm font-semibold text-emerald-700 hover:underline"
+          className="fokus meta mt-0.5 py-1 text-sm font-semibold text-maslina hover:underline"
         >
           {razvijen ? "manje ▴" : "cijeli opis ▾"}
         </button>
@@ -1547,7 +1716,7 @@ function Kvacica({
 }) {
   return (
     <label
-      className={`meta flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-50 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emerald-700 ${
+      className={`meta flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-50 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina ${
         sloj.phase === 2 ? "cursor-not-allowed" : ""
       }`}
     >
@@ -1556,7 +1725,7 @@ function Kvacica({
         checked={upaljen}
         disabled={sloj.phase === 2}
         onChange={() => onToggle(sloj.id)}
-        className="h-4 w-4 shrink-0 accent-emerald-700 outline-none"
+        className="h-4 w-4 shrink-0 accent-maslina outline-none"
       />
       <span
         className="h-3 w-3 shrink-0 rounded-sm border border-black/20"
@@ -1571,7 +1740,7 @@ function Kvacica({
           <span className="ml-1.5 text-zinc-500">učitavam…</span>
         )}
         {stanje === "greska" && (
-          <span className="ml-1.5 font-medium text-rose-700">
+          <span className="ml-1.5 font-medium text-odbijeno">
             nije se učitao{" "}
             <button
               type="button"
@@ -1583,7 +1752,7 @@ function Kvacica({
                 onToggle(sloj.id);
                 setTimeout(() => onToggle(sloj.id), 0);
               }}
-              className="fokus underline hover:text-rose-900"
+              className="fokus underline hover:text-odbijeno-tamna"
             >
               pokušaj ponovno
             </button>
@@ -1757,13 +1926,13 @@ function Cip({
   onClick: () => void;
   children: ReactNode;
 }) {
-  // Bijelo na emerald-600 daje 3,65 : 1 — ispod praga. Filled stanje zato
-  // stoji na emerald-700 (5,43 : 1). Vidi The Contrast Floor Rule.
+  // Bijelo na maslini živoj daje 3,65 : 1 — ispod praga. Filled stanje zato
+  // stoji na maslini (5,43 : 1). Vidi The Contrast Floor Rule.
   const izabrano = crveni
-    ? "bg-rose-700 text-white"
+    ? "bg-odbijeno text-white"
     : tamni
       ? "bg-zinc-800 text-white"
-      : "bg-emerald-700 text-white";
+      : "bg-maslina text-white";
   return (
     <button
       onClick={onClick}
@@ -1844,16 +2013,32 @@ interface Postavljeni {
   okno: string | undefined;
 }
 
+/**
+ * Dohvat sloja uz spremnik ograničene veličine (LRU).
+ *
+ * `Map` u JS-u pamti redoslijed umetanja, pa je najstariji ključ uvijek prvi —
+ * a ponovno umetanje već postojećeg ključa ga premješta na kraj. To je cijeli
+ * LRU, bez knjižnice: pri pogotku se stavka izbaci pa vrati natrag.
+ */
 async function ucitajGeoJSON(
   url: string,
   spremnik: Map<string, GeoJSON.FeatureCollection>
 ): Promise<GeoJSON.FeatureCollection> {
   const spremljeno = spremnik.get(url);
-  if (spremljeno) return spremljeno;
+  if (spremljeno) {
+    spremnik.delete(url);
+    spremnik.set(url, spremljeno);
+    return spremljeno;
+  }
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   const fc = (await res.json()) as GeoJSON.FeatureCollection;
   spremnik.set(url, fc);
+  while (spremnik.size > SPREMNIK_MAX) {
+    const najstariji = spremnik.keys().next();
+    if (najstariji.done) break;
+    spremnik.delete(najstariji.value);
+  }
   return fc;
 }
 
@@ -2130,12 +2315,17 @@ const DOSJE_UZ_KONTROLE =
 
 function DosjePlaca({
   uzKontrole,
+  usko,
+  tocka,
   dosje,
   ucitavanje,
   greska,
   onClose,
 }: {
   uzKontrole: boolean;
+  usko: boolean;
+  /** Točka na kojoj je dosje otvoren — ide u prijavu, da se ne prepisuje. */
+  tocka: [number, number] | null;
   dosje: Dosje | null;
   ucitavanje: boolean;
   greska: string | null;
@@ -2145,14 +2335,56 @@ function DosjePlaca({
   const okvir = useRef<HTMLElement>(null);
   // Fokus ulazi u ploču kad se otvori. Prije je ostajao na kontejneru karte,
   // pa je čitač zaslona javljao da se nešto dogodilo, ali ne i što.
+  //
+  // I vraća se kamo je bio kad se zatvori. Bez toga fokus pada na početak
+  // dokumenta, pa je zatvaranje dosjea značilo ponovno prolaženje kroz cijelu
+  // stranicu da se dođe do sljedeće kontrole.
   useEffect(() => {
+    const odakle = document.activeElement as HTMLElement | null;
     okvir.current?.focus();
+    return () => {
+      if (odakle && document.contains(odakle)) odakle.focus();
+    };
   }, []);
+
+  /**
+   * Zamka za fokus, ali SAMO na uskom zaslonu.
+   *
+   * Ondje ploča pokriva donjih 72 % i karta iza nje se ne može ni vidjeti ni
+   * koristiti — to je modalno stanje, pa se tako i ponaša i tako se najavljuje.
+   * Na širokom zaslonu ista ploča stoji uz rub dok su bočna traka i biralo
+   * podloge i dalje na dohvat: ondje bi zamka bila kvar, a ne pomoć. Zato
+   * `aria-modal` ide uz zamku, a ne umjesto nje — obećanje čitaču zaslona da je
+   * ostatak nedostupan mora biti istinito.
+   */
+  useEffect(() => {
+    if (!usko) return;
+    const naTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !okvir.current) return;
+      const meta = okvir.current.querySelectorAll<HTMLElement>(
+        'a[href],button,input,select,textarea,summary,[tabindex]:not([tabindex="-1"])'
+      );
+      if (meta.length === 0) return;
+      const prvi = meta[0];
+      const zadnji = meta[meta.length - 1];
+      if (e.shiftKey && document.activeElement === prvi) {
+        e.preventDefault();
+        zadnji.focus();
+      } else if (!e.shiftKey && document.activeElement === zadnji) {
+        e.preventDefault();
+        prvi.focus();
+      }
+    };
+    document.addEventListener("keydown", naTab);
+    return () => document.removeEventListener("keydown", naTab);
+  }, [usko]);
+
   return (
     <aside
       ref={okvir}
       tabIndex={-1}
       role="dialog"
+      aria-modal={usko}
       // Ploča prima fokus da čitač zaslona uđe u nju, ali ga ne obrubljuje:
       // preglednikov plavi prsten na ploči od 44 rem izgleda kao pogreška, a
       // ne kao pokazivač. Prsten pripada kontrolama u njoj.
@@ -2196,8 +2428,32 @@ function DosjePlaca({
       </div>
 
       <div className="px-4 py-3">
+        {/* Ploča se najavi imenom, a sadržaj stigne poslije nje — naslov se
+            tiho prepiše iz „Skupljam podatke…” u „k.č. 275/9”. Bez ovoga je
+            čitač zaslona javljao otvaranje i onda šutio do kraja. */}
+        <p role="status" aria-live="polite" className="sr-only">
+          {ucitavanje
+            ? "Skupljam podatke o čestici…"
+            : greska
+              ? greska
+              : dosje
+                ? `${c ? `k.č. ${String(c.cestica)}. ` : ""}${
+                    dosje.namjena
+                      ? `Namjena ${dosje.namjena.kod}. ${
+                          dosje.namjena.stanovanje
+                            ? "Dopušta stanovanje."
+                            : "Ne dopušta stanovanje."
+                        } `
+                      : ""
+                  }${
+                    dosje.skupine.length === 0
+                      ? "Nijedan sloj ovdje nema ništa."
+                      : `${dosje.skupine.length} ${brojnica(dosje.skupine.length, "tema", "teme", "tema")} s podacima.`
+                  }`
+                : ""}
+        </p>
         {ucitavanje && <p className="text-sm text-zinc-500">Skupljam podatke…</p>}
-        {greska && <p className="text-sm text-rose-700">{greska}</p>}
+        {greska && <p className="text-sm text-odbijeno">{greska}</p>}
         {dosje && !ucitavanje && (
           <>
             <NamjenaOdgovor namjena={dosje.namjena} />
@@ -2238,7 +2494,7 @@ function DosjePlaca({
                                 href={st.poveznica}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-emerald-700 underline"
+                                className="text-xs text-maslina underline"
                               >
                                 dokument ↗
                               </a>
@@ -2259,6 +2515,26 @@ function DosjePlaca({
             <p className="mt-2 border-t border-zinc-200 pt-2 text-xs text-zinc-500">
               pretraženo {dosje.pretrazeno} slojeva koji mogu nositi podatak o čestici
             </p>
+
+            {/* Put iz nalaza u radnju.
+                Dosad se s karte nije moglo nikamo: tko je ovdje nešto našao,
+                morao je otvoriti izbornik, naći „Prijavi problem” i prepisati
+                lokaciju po sjećanju. Uspjeh je zapisan kao „više uključenih
+                susjeda”, a ovo je jedino mjesto na karti gdje netko već gleda
+                određenu točku i ima razlog. Lokacija ide sa sobom. */}
+            {tocka && (
+              <a
+                href={`/prijavi?lat=${tocka[0].toFixed(6)}&lng=${tocka[1].toFixed(
+                  6
+                )}${
+                  c?.cestica ? `&kc=${encodeURIComponent(String(c.cestica))}` : ""
+                }`}
+                className="fokus meta mt-3 inline-flex items-center gap-1.5 rounded-full bg-maslina px-4 py-2 text-sm font-semibold text-white hover:bg-maslina-tamna"
+              >
+                Prijavi problem ovdje
+                <span aria-hidden>→</span>
+              </a>
+            )}
           </>
         )}
       </div>
@@ -2286,7 +2562,8 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
       </p>
     );
   }
-  const { kod, opis, godina, stanovanje, nacrt, slobodna, izvan } = namjena;
+  const { kod, opis, godina, stanovanje, saPrethodnog, prije, slobodna, izvan, zapreke } =
+    namjena;
   // Boja slijedi ISHOD, ne namjenu.
   //
   // Prije je okvir bio zelen čim namjena dopušta stanovanje — pa je zaključana
@@ -2294,12 +2571,22 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
   // četiri zgrade zeleni okvir bez ijedne ograde. Boja koja proturječi
   // rečenici pokraj sebe je gore od nikakve, i krši One Green Rule: maslina
   // označava ono na što se može djelovati, ne raspoloženje.
-  const povoljno = stanovanje && slobodna !== null && !slobodna.bez_pristupa;
+  //
+  // Dopunjeno zaprekama. Prije je „ishod” znao samo za pristup na cestu, pa je
+  // k.č. 401/1 dobivala zeleni okvir i „2.945 m² stvarno slobodne površine”
+  // iako preko nje idu dva dalekovoda od 110 kV, a 30 % pada u planirani
+  // cestovni koridor. Zeleno oko rečenice koja ne zna za dalekovod nije
+  // ohrabrenje nego kriva tvrdnja.
+  const povoljno =
+    stanovanje &&
+    slobodna !== null &&
+    !slobodna.bez_pristupa &&
+    zapreke.length === 0;
   return (
     <section
       className={`mb-3 rounded-lg border px-3 py-2.5 ${
         povoljno
-          ? "border-emerald-200 bg-emerald-50"
+          ? "border-maslina-rub bg-maslina-vez"
           : "border-zinc-200 bg-zinc-50"
       }`}
     >
@@ -2314,15 +2601,27 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
           ? "Ova namjena dopušta stanovanje."
           : "Ova namjena ne dopušta stanovanje."}
       </p>
+      {/* Godina i pravni status dolaze iz jednog mjesta (plan-status.ts).
+          Dok navod odluke nije upisan, piše se godina bez tvrdnje „na snazi” —
+          „Ništa bez izvora” vrijedi i za pravni status akta. */}
       <p className="mt-0.5 text-xs text-zinc-600">
-        po GUP-u {godina}., na snazi
+        {natpisPlana({ ...NA_SNAZI, godina })}
       </p>
+      {/* Očitano sa starijeg lista, i to piše. Tri slobodne čestice u kvartu
+          nemaju plohu na listu na snazi; prešutjeti odakle podatak dolazi
+          značilo bi pripisati ga planu na kojem ga nema. */}
+      {saPrethodnog && (
+        <p className="mt-1 text-sm leading-snug text-zinc-700">
+          Na listu GUP-a {NA_SNAZI.godina}. ovdje nema plohe namjene, pa je
+          očitano s lista iz {PRETHODNI.godina}. Provjeri kod nadležne službe.
+        </p>
+      )}
 
-      {nacrt && (
+      {prije && (
         <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
-          Nacrt izmjena iz 2024. ovdje predlaže{" "}
-          <span className="font-mono font-semibold">{nacrt.kod}</span> —{" "}
-          {nacrt.opis}.
+          Po prethodnom planu ({PRETHODNI.godina}.) ovdje je bilo{" "}
+          <span className="font-mono font-semibold">{prije.kod}</span> —{" "}
+          {prije.opis}.
         </p>
       )}
 
@@ -2331,7 +2630,7 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
           {slobodna.bez_pristupa ? (
             <>
               Čestica je u sloju slobodnih, ali{" "}
-              <b className="font-semibold text-rose-800">nema pristup na cestu</b>{" "}
+              <b className="font-semibold text-odbijeno">nema pristup na cestu</b>{" "}
               — bez služnosti ili nove ulice ovdje se ne gradi.
             </>
           ) : (
@@ -2351,6 +2650,31 @@ function NamjenaOdgovor({ namjena }: { namjena: Dosje["namjena"] }) {
         <p className="mt-2 border-t border-black/10 pt-2 text-base leading-snug text-zinc-800">
           Nije u sloju slobodnih čestica — {izvan}.
         </p>
+      )}
+
+      {/* Zapreke idu IZNAD upute i ispod svega ostalog što je izrečeno —
+          dakle na kraj presude, a ne u temu „Struja” četiri zaslona niže.
+          Ruža, ne alarm-crvena: ovo je činjenica koja se bilježi. */}
+      {zapreke.length > 0 && (
+        <div className="mt-2 border-t border-black/10 pt-2">
+          <p className="text-base font-semibold leading-snug text-odbijeno">
+            {zapreke.length === 1
+              ? "Na čestici je zapreka gradnji:"
+              : "Na čestici su zapreke gradnji:"}
+          </p>
+          <ul className="mt-1 space-y-1">
+            {zapreke.map((z) => (
+              <li key={z.vrsta} className="text-base leading-snug text-zinc-800">
+                {z.opis}{" "}
+                <span className="text-xs text-zinc-600">({z.izvor})</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-sm text-zinc-700">
+            U zaštitnom pojasu dalekovoda i unutar koridora se ne gradi.
+            Provjeri kod nadležnih službi prije bilo kakve odluke.
+          </p>
+        </div>
       )}
 
       <p className="mt-2 text-sm text-zinc-700">
