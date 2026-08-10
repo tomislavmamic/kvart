@@ -9,50 +9,51 @@ import {
 export const metadata: Metadata = {
   title: "Kako mjerimo",
   description:
-    "Metodologija, umjeravanje, provjera kvalitete i ograničenja građanske mreže oko Karepovca.",
+    "Objašnjavamo kako ćemo provjeravati senzore, ocjenjivati pouzdanost mjerenja i prikazivati njihova ograničenja.",
 };
 
 export default function MetodologijaPage() {
   return (
     <div className="space-y-14">
-      <PageIntro title="Najprije provjera, tek onda broj">
+      <PageIntro title="Što provjeravamo prije objave mjerenja">
         <p>
-          Jeftin senzor može reagirati na temperaturu, vlagu i druge plinove,
-          a njegov odziv s vremenom odluta. Zbog toga uređaj ne postaje javna
-          postaja čim ga uključimo.
+          Jeftini senzori ne reagiraju samo na plin koji želimo pratiti. Na njih
+          utječu temperatura, vlaga, drugi plinovi i vrijeme uporabe. Zato
+          mjerenja nećemo objaviti čim uključimo uređaj.
         </p>
       </PageIntro>
 
       <section className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-12">
         <SectionHeading title="Što želimo pratiti">
           <p>
-            H₂S je prvi specifični plin za pilot. Senzori mirisnog otiska mogu
-            pomoći prepoznati događaj, ali nisu zamjena za identificirani plin.
-            NH₃ ulazi tek nakon uspješne provjere kandidata.
+            U početku želimo pratiti sumporovodik (H₂S). Promjene povezane s
+            neugodnim mirisom možemo pratiti dodatnim senzorima, ali iz njih
+            nećemo zaključivati o pojedinom plinu. Amonijak (NH₃) dodat ćemo
+            samo ako se senzor pokaže dovoljno pouzdanim.
           </p>
         </SectionHeading>
         <dl className="overflow-hidden rounded-xl border border-kamen-tlo bg-white">
-          <MethodRow term="H₂S" value="Primarni plin za prvi pilot; rezultat se objavljuje samo uz valjanu korekciju i oznaku kvalitete." />
-          <MethodRow term="Mirisni otisak" value="Dopunski kvalitativni signal za događaje i obrasce, bez tvrdnje da predstavlja jedan plin." />
-          <MethodRow term="NH₃" value="Opcionalno proširenje ako usporedni rad pokaže korisnu osjetljivost pri očekivanim niskim razinama." />
-          <MethodRow term="Vjetar" value="Neovisni ulaz za procijenjeni smjer širenja; nikada se ne pretvara u izmišljeno mjerenje između postaja." />
+          <MethodRow term="H₂S" value="Glavni plin u prvom pokusnom radu. Vrijednost ćemo objaviti samo uz provjeren ispravak i oznaku pouzdanosti." />
+          <MethodRow term="Pokazatelj neugodnog mirisa" value="Može upozoriti na pojavu ili promjenu mirisa, ali ne pokazuje koji je plin prisutan." />
+          <MethodRow term="NH₃" value="Dodat ćemo ga samo ako usporedna mjerenja pokažu da ga odabrani senzor može korisno pratiti pri očekivanim niskim koncentracijama." />
+          <MethodRow term="Vjetar" value="Smjer i brzina vjetra zaseban su podatak za procjenu mogućeg smjera širenja. Njime nećemo popunjavati mjesta na kojima nema mjerenja." />
         </dl>
       </section>
 
       <section>
-        <SectionHeading title="Pet vrata do javnog podatka">
+        <SectionHeading title="Kako provjeravamo uređaje">
           <p>
-            Svaki uređaj prolazi isti put. Neuspjeh na jednim vratima ostaje
-            vidljiv kao ograničenje, umjesto da se sakrije glađim grafikonom.
+            Svaki uređaj proći će isti postupak. Ako se u nekom koraku pokaže
+            nepouzdanim, to ćemo jasno navesti umjesto da podatke uljepšavamo.
           </p>
         </SectionHeading>
         <ol className="mt-8 grid gap-px overflow-hidden rounded-xl border border-kamen-tlo bg-kamen-tlo sm:grid-cols-5">
           {[
             ["Sastavljanje", "Verzija senzora, elektronike, kućišta i programa."],
-            ["Rad zajedno", "Razlike, šum, pomak, prekidi i utjecaj kućišta."],
+            ["Zajednička provjera", "Razlike, šum, pomak, prekidi i utjecaj kućišta."],
             ["Usporedba", "Rad uz prikladan referentni instrument kada je moguće."],
-            ["Umjeravanje", "Verzionirane korekcije, pogreška i poznata ograničenja."],
-            ["Pilot", "30 dana dostupnosti, održavanja i provjere lokacije."],
+            ["Ispravci", "Verzionirane korekcije, pogreška i poznata ograničenja."],
+            ["Pokusni rad", "30 dana dostupnosti, održavanja i provjere lokacije."],
           ].map(([title, body]) => (
             <li key={title} className="bg-white p-5">
               <h3 className="font-bold text-kamen-tinta">{title}</h3>

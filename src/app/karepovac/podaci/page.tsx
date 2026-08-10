@@ -9,33 +9,34 @@ import {
 export const metadata: Metadata = {
   title: "Podaci i izvori",
   description:
-    "Budući javni podaci, izvori, kvaliteta i otvoreni formati mreže oko Karepovca.",
+    "Saznajte koje ćemo podatke objavljivati uz svako mjerenje, kako ćemo označavati njihovu pouzdanost i u kojim će se datotekama moći preuzeti.",
 };
 
 export default function PodaciPage() {
   return (
     <div className="space-y-14">
-      <PageIntro title="Podaci će dolaziti s objašnjenjem, ne sami">
+      <PageIntro title="Uz svaki podatak objavit ćemo kada je i kako izmjeren">
         <p>
-          Svako javno očitanje treba odgovoriti gdje je nastalo, kada je zadnji
-          put bilo valjano, kako je obrađeno i smije li se uspoređivati s drugim
-          izvorom. Dok toga nema, nema ni datoteke za preuzimanje.
+          Uz svako mjerenje navest ćemo gdje je nastalo, kada je zadnji put bilo
+          valjano, kako smo ga obradili i s kojim se podacima smije
+          uspoređivati. Dok te informacije nisu spremne, nećemo nuditi ni
+          datoteke za preuzimanje.
         </p>
       </PageIntro>
 
       <PreparationNotice />
 
       <section>
-        <SectionHeading title="Što će sadržavati zapis postaje" />
+        <SectionHeading title="Što ćemo objaviti uz svako mjerenje" />
         <div className="mt-7 overflow-hidden rounded-xl border border-kamen-tlo bg-white">
           <dl className="divide-y divide-kamen-tlo">
             {[
-              ["Vrijeme", "vrijeme uzorka, zadnjeg primitka i zadnjeg valjanog mjerenja"],
-              ["Vrijednost", "sirova i korigirana vrijednost uz jedinicu i interval agregacije"],
-              ["Kvaliteta", "valjano, privremeno, sumnjivo, nevaljano, zastarjelo ili održavanje"],
-              ["Porijeklo", "postaja, vrsta senzora, verzija programa i verzija korekcije"],
-              ["Okolina", "temperatura i vlaga potrebne za tumačenje odziva senzora"],
-              ["Lokacija", "gruba javna lokacija koja štiti adresu domaćina"],
+              ["Vrijeme", "vrijeme mjerenja, vrijeme primitka i vrijeme zadnjeg valjanog mjerenja"],
+              ["Vrijednost", "izvorna i ispravljena vrijednost, mjerna jedinica i razdoblje koje prikazuje"],
+              ["Pouzdanost", "valjano, privremeno, sumnjivo, nevaljano, zastarjelo ili održavanje"],
+              ["Uređaj", "oznaka postaje, vrsta senzora te inačica programa i ispravka"],
+              ["Uvjeti", "temperatura i vlaga koje mogu utjecati na senzor"],
+              ["Lokacija", "približna lokacija koja ne otkriva kućnu adresu"],
             ].map(([term, detail]) => (
               <div key={term} className="grid gap-2 p-5 sm:grid-cols-[10rem_1fr] sm:gap-8 sm:p-6">
                 <dt className="font-bold text-kamen-tinta">{term}</dt>
@@ -48,11 +49,11 @@ export default function PodaciPage() {
 
       <section className="grid gap-8 lg:grid-cols-[1fr_1fr]">
         <div>
-          <SectionHeading title="Otvoreni formati">
+          <SectionHeading title="Datoteke za preuzimanje">
             <p>
-              Nakon provjere planiramo objaviti satne agregate za jednostavno
-              korištenje i sirove uzorke sa sačuvanim oznakama kvalitete za
-              stručnu analizu.
+              Nakon provjere objavit ćemo satne vrijednosti za jednostavnu
+              uporabu. Izvorna mjerenja s oznakama pouzdanosti bit će dostupna
+              za podrobniju analizu.
             </p>
           </SectionHeading>
           <div className="mt-6 rounded-xl border border-kamen-tlo bg-white p-6">
@@ -64,22 +65,22 @@ export default function PodaciPage() {
               ))}
             </div>
             <p className="mt-5 leading-7 text-kamen-tekst">
-              Licenca, shema, API i raspored osvježavanja bit će objavljeni
-              prije prvog javnog skupa.
+              Licencu, opis podataka, API i raspored osvježavanja objavit ćemo
+              prije prvog skupa podataka.
             </p>
           </div>
         </div>
 
         <div>
-          <SectionHeading title="Kad nešto nedostaje">
+          <SectionHeading title="Kad mjerenje nedostaje">
             <p>
-              Zastarjela postaja ostaje vidljiva, ali ne ulazi u trenutni sažetak
-              ni model. Praznina se ne popunjava interpolacijom koja izgleda kao
-              mjerenje.
+              Postaja koja se prestala javljati ostat će vidljiva, ali njezine
+              podatke nećemo uključiti u pregled trenutačnog stanja ni u
+              procjenu širenja. Mjesto bez mjerenja ostat će prazno.
             </p>
           </SectionHeading>
           <div className="mt-6 rounded-xl bg-kamen-tinta p-6 text-white">
-            <p className="text-sm font-bold text-zinc-300">Primjer poštenog stanja</p>
+            <p className="text-sm font-bold text-zinc-300">Primjer jasne obavijesti</p>
             <p className="mt-3 text-xl font-bold">Nema valjanog mjerenja</p>
             <p className="mt-2 leading-7 text-zinc-300">
               Prikazuje se vrijeme zadnjeg valjanog uzorka i razlog prekida —
