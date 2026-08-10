@@ -30,6 +30,7 @@ test("all public Karepovac pages are declared once", () => {
       "/karepovac/postaje",
     ],
   );
+  assert.equal(KAREPOVAC_NAV[4]?.label, "Novac i troškovi");
 });
 
 test("measurement, official source, and wind estimate stay distinct", () => {
@@ -38,11 +39,13 @@ test("measurement, official source, and wind estimate stay distinct", () => {
     ["community", "official", "estimated"],
   );
   assert.equal(new Set(KAREPOVAC_DATA_KINDS.map(({ label }) => label)).size, 3);
+  assert.equal(KAREPOVAC_DATA_KINDS[0]?.label, "Izmjereno na našoj postaji");
 });
 
 test("the preparation record covers every delivery phase and cost family", () => {
   assert.equal(KAREPOVAC_PHASES[0]?.status, "Sada");
-  assert.equal(KAREPOVAC_PHASES.at(-1)?.title, "Javna mjerenja");
+  assert.equal(KAREPOVAC_PHASES[0]?.title, "Dogovor o projektu");
+  assert.equal(KAREPOVAC_PHASES.at(-1)?.title, "Objava mjerenja");
   assert.ok(KAREPOVAC_PHASES.length >= 4);
 
   assert.deepEqual(

@@ -55,9 +55,9 @@ export function PreparationNotice({ compact = false }: { compact?: boolean }) {
           <p className="font-bold">Projekt je u pripremi</p>
           {!compact && (
             <p className="mt-1 leading-7">
-              Još nema javnih postaja, mjerenja ni procjene širenja. Na ovoj
-              stranici objavljujemo što mora biti provjereno prije nego što se
-              pojavi ijedan broj.
+              Još nismo postavili nijednu postaju pa nema ni naših mjerenja.
+              Ovdje ćemo objaviti rezultate tek kada provjerimo uređaje i način
+              mjerenja.
             </p>
           )}
         </div>
@@ -89,7 +89,7 @@ export function MonitoringField() {
       <div className="relative flex min-h-[320px] flex-col justify-between sm:min-h-[366px]">
         <div className="flex items-start justify-between gap-4">
           <p className="max-w-[14rem] text-sm font-semibold leading-5 text-kamen-drugi">
-            Prikaz je miran dok nema provjerenih ulaznih podataka.
+            Prikaz ostaje prazan dok ne dobijemo provjerena mjerenja.
           </p>
           <span className="rounded-full bg-kamen-plitko px-3 py-1.5 text-xs font-bold text-kamen-tekst">
             Bez podataka uživo
@@ -103,11 +103,11 @@ export function MonitoringField() {
         <dl className="grid gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-2">
           <div className="bg-white p-3">
             <dt className="font-semibold text-kamen-tinta">Mjerenja mreže</dt>
-            <dd className="mt-1 text-kamen-drugi">Nisu pokrenuta</dd>
+            <dd className="mt-1 text-kamen-drugi">Mjerenja još nisu počela</dd>
           </div>
           <div className="bg-white p-3">
             <dt className="font-semibold text-kamen-tinta">Procjena prema vjetru</dt>
-            <dd className="mt-1 text-kamen-drugi">Nije aktivna</dd>
+            <dd className="mt-1 text-kamen-drugi">Smjer širenja još ne procjenjujemo</dd>
           </div>
         </dl>
       </div>
@@ -117,12 +117,9 @@ export function MonitoringField() {
 
 export function EvidenceRegister() {
   const descriptions = {
-    community:
-      "Vrijednost i vrijeme s konkretne postaje, uz stanje kvalitete i kalibracije.",
-    official:
-      "Podatak nadležnog izvora, prikazan sa svojim vremenom objave i poveznicom.",
-    estimated:
-      "Odvojeni model smjera prema vjetru, s izvorom, vremenom i nesigurnošću.",
+    community: "Vrijednost izmjerena na pojedinoj postaji, uz vrijeme mjerenja i oznaku pouzdanosti.",
+    official: "Podatak koji je objavilo nadležno tijelo, uz vrijeme objave i poveznicu na izvor.",
+    estimated: "Procjena izrađena iz smjera i brzine vjetra, jasno odvojena od mjerenja.",
   } as const;
 
   return (

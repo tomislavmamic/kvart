@@ -3,7 +3,7 @@ export const KAREPOVAC_NAV = [
   { href: "/karepovac/ukljuci-se", label: "Uključi se" },
   { href: "/karepovac/metodologija", label: "Kako mjerimo" },
   { href: "/karepovac/podaci", label: "Podaci" },
-  { href: "/karepovac/financije", label: "Financije" },
+  { href: "/karepovac/financije", label: "Novac i troškovi" },
   { href: "/karepovac/postaje", label: "Postaje" },
 ] as const;
 
@@ -19,7 +19,7 @@ export const KAREPOVAC_PUBLIC_STATE = {
 export const KAREPOVAC_DATA_KINDS = [
   {
     id: "community",
-    label: "Izmjereno na postaji građanske mreže",
+    label: "Izmjereno na našoj postaji",
   },
   {
     id: "official",
@@ -34,43 +34,43 @@ export const KAREPOVAC_DATA_KINDS = [
 export const KAREPOVAC_PHASES = [
   {
     status: "Sada",
-    title: "Dogovor i izvedivost",
+    title: "Dogovor o projektu",
     description:
-      "Potvrditi odgovornu organizaciju, proračun, privatnost domaćina i mogućnost usporednog umjeravanja.",
+      "Odredit ćemo tko vodi projekt i tko smije primati donacije. Dogovorit ćemo kako čuvamo podatke stanovnika i možemo li senzore usporediti s pouzdanim mjerenjem.",
   },
   {
     status: "Sljedeće",
-    title: "Nabava i test na stolu",
+    title: "Nabava i početna provjera",
     description:
-      "Sastaviti najmanje tri jednaka H₂S čvora i provjeriti šum, pomak, vezu, napajanje i kućište.",
+      "Sastavit ćemo najmanje tri jednaka mjerna uređaja. Prije postavljanja provjerit ćemo rade li stabilno, šalju li podatke i štite li ih kućišta od vremenskih uvjeta.",
   },
   {
     status: "Prije objave",
     title: "Usporedba i umjeravanje",
     description:
-      "Postaje rade zajedno uz prikladan referentni instrument; tek izvještaj odlučuje što smijemo tvrditi.",
+      "Uređaji će neko vrijeme raditi jedni uz druge i uspoređivat ćemo ih s pouzdanim mjerenjem. Tek tada ćemo znati koje vrijednosti smijemo objaviti.",
   },
   {
     status: "Pilot",
-    title: "Mreža u vrtovima i na balkonima",
+    title: "Pokusni rad u kvartu",
     description:
-      "Odabrane lokacije prolaze 30 dana provjere dostupnosti, održavanja i zaštite privatnosti.",
+      "Postavit ćemo uređaje na odabrana mjesta i 30 dana pratiti rade li redovito, možemo li ih održavati i jesu li podaci stanovnika zaštićeni.",
   },
   {
     status: "Cilj",
-    title: "Javna mjerenja",
+    title: "Objava mjerenja",
     description:
-      "Objaviti provjerena mjerenja, stanje postaja, otvorene podatke i odvojenu procjenu smjera prema vjetru.",
+      "Objavit ćemo provjerena mjerenja, stanje svake postaje i podatke za preuzimanje. Procjenu smjera širenja prema vjetru prikazat ćemo odvojeno.",
   },
 ] as const;
 
 export const KAREPOVAC_BUDGET_CATEGORIES = [
-  { id: "sensors", label: "H₂S i odabrani senzorski moduli", amount: null },
-  { id: "controllers", label: "Upravljači i komunikacija", amount: null },
+  { id: "sensors", label: "Senzori za H₂S i druga odabrana mjerenja", amount: null },
+  { id: "controllers", label: "Upravljačka elektronika i prijenos podataka", amount: null },
   { id: "enclosures", label: "Kućišta i nosači otporni na vrijeme", amount: null },
   { id: "power", label: "Napajanje i solarna oprema", amount: null },
   { id: "calibration", label: "Umjeravanje i referentni rad", amount: null },
-  { id: "connectivity", label: "Povezivost i hosting", amount: null },
+  { id: "connectivity", label: "Veza s postajama i rad mrežne stranice", amount: null },
   { id: "maintenance", label: "Zamjenski senzori i održavanje", amount: null },
   { id: "contingency", label: "Pričuva za nepredviđeno", amount: null },
 ] as const;
