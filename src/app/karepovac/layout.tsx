@@ -6,7 +6,7 @@ import { KarepovacProjectNav } from "@/components/karepovac/project-nav";
 export const metadata: Metadata = {
   title: "Praćenje zraka oko Karepovca",
   description:
-    "Pripremamo mrežu mjernih postaja za praćenje sumporovodika, pojava neugodnog mirisa te smjera i brzine vjetra oko Karepovca.",
+    "Pripremamo mrežu mjernih postaja za praćenje sumporovodika, pojave neugodnog mirisa te smjera i brzine vjetra oko Karepovca.",
 };
 
 /**

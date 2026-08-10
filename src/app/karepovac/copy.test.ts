@@ -15,9 +15,14 @@ const COPY_FILES = [
   "src/app/karepovac/postaje/page.tsx",
 ] as const;
 
-const publicCopy = COPY_FILES.map((path) =>
-  readFileSync(join(process.cwd(), path), "utf8"),
-).join("\n");
+const copyByPath = Object.fromEntries(
+  COPY_FILES.map((path) => [
+    path,
+    readFileSync(join(process.cwd(), path), "utf8"),
+  ]),
+) as Record<(typeof COPY_FILES)[number], string>;
+
+const publicCopy = Object.values(copyByPath).join("\n");
 
 test("Karepovac copy avoids translated and bureaucratic phrases", () => {
   for (const phrase of [
@@ -34,21 +39,71 @@ test("Karepovac copy avoids translated and bureaucratic phrases", () => {
     "neovisni ulaz",
     "objavljivi trošak",
     "gruba javna lokacija",
+    "podataka uživo",
+    "referentni instrument",
+    "Verzioniran",
+    "čvor",
+    "pilot",
+    "Prikazuje se vrijeme zadnjeg valjanog uzorka",
   ]) {
     assert.doesNotMatch(publicCopy, new RegExp(phrase, "i"), phrase);
   }
 });
 
 test("Karepovac copy states the preparation stage in plain Croatian", () => {
+  assert.match(
+    copyByPath["src/app/karepovac/postaje/page.tsx"],
+    /Još nismo postavili nijednu mjernu postaju/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/metodologija/page.tsx"],
+    /Mjerenja još nisu počela/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/podaci/page.tsx"],
+    /Uz svaki podatak objavit ćemo kada je i kako izmjeren/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/financije/page.tsx"],
+    /Novac i troškovi/,
+  );
+});
+
+test("methodology steps use active plain Croatian", () => {
+  const methodology = copyByPath["src/app/karepovac/metodologija/page.tsx"];
+
   for (const phrase of [
-    "Još nismo postavili nijednu mjernu postaju",
-    "Mjerenja još nisu počela",
-    "Što provjeravamo prije objave mjerenja",
-    "Uz svaki podatak objavit ćemo kada je i kako izmjeren",
-    "Novac i troškovi",
+    "Sastavit ćemo uređaj",
+    "Usporedit ćemo uređaje i provjeriti razlike",
+    "Usporedit ćemo uređaje s pouzdanim mjerenjem",
+    "Zabilježit ćemo inačice ispravaka",
+    "Tijekom 30 dana provjeravat ćemo",
   ]) {
-    assert.match(publicCopy, new RegExp(phrase), phrase);
+    assert.match(methodology, new RegExp(phrase), phrase);
   }
+});
+
+test("reviewed wording stays on its intended page", () => {
+  assert.match(
+    copyByPath["src/components/karepovac/project-components.tsx"],
+    /Mjerenja još nisu počela/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/page.tsx"],
+    /mjerna uređaja planirana za prvi pokusni rad/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/page.tsx"],
+    /dana planiranog pokusnog rada/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/podaci/page.tsx"],
+    /Prikazat ćemo vrijeme zadnjeg valjanog mjerenja/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/layout.tsx"],
+    /praćenje sumporovodika, pojave neugodnog mirisa/,
+  );
 });
 
 test("Karepovac paragraphs use at least one rem text", () => {

@@ -17,9 +17,9 @@ export default function MetodologijaPage() {
     <div className="space-y-14">
       <PageIntro title="Što provjeravamo prije objave mjerenja">
         <p>
-          Jeftini senzori ne reagiraju samo na plin koji želimo pratiti. Na njih
-          utječu temperatura, vlaga, drugi plinovi i vrijeme uporabe. Zato
-          mjerenja nećemo objaviti čim uključimo uređaj.
+          Mjerenja još nisu počela. Jeftini senzori ne reagiraju samo na plin
+          koji želimo pratiti. Na njih utječu temperatura, vlaga, drugi plinovi
+          i vrijeme uporabe. Zato mjerenja nećemo objaviti čim uključimo uređaj.
         </p>
       </PageIntro>
 
@@ -49,11 +49,11 @@ export default function MetodologijaPage() {
         </SectionHeading>
         <ol className="mt-8 grid gap-px overflow-hidden rounded-xl border border-kamen-tlo bg-kamen-tlo sm:grid-cols-5">
           {[
-            ["Sastavljanje", "Verzija senzora, elektronike, kućišta i programa."],
-            ["Zajednička provjera", "Razlike, šum, pomak, prekidi i utjecaj kućišta."],
-            ["Usporedba", "Rad uz prikladan referentni instrument kada je moguće."],
-            ["Ispravci", "Verzionirane korekcije, pogreška i poznata ograničenja."],
-            ["Pokusni rad", "30 dana dostupnosti, održavanja i provjere lokacije."],
+            ["Sastavljanje", "Sastavit ćemo uređaj i zabilježiti inačice senzora, elektronike, kućišta i programa."],
+            ["Zajednička provjera", "Usporedit ćemo uređaje i provjeriti razlike, šum, pomak, prekide te utjecaj kućišta."],
+            ["Usporedba", "Usporedit ćemo uređaje s pouzdanim mjerenjem kada ono bude dostupno."],
+            ["Ispravci", "Zabilježit ćemo inačice ispravaka, pogrešku i poznata ograničenja."],
+            ["Pokusni rad", "Tijekom 30 dana provjeravat ćemo rade li uređaji redovito, možemo li ih održavati i jesu li lokacije prikladne."],
           ].map(([title, body]) => (
             <li key={title} className="bg-white p-5">
               <h3 className="font-bold text-kamen-tinta">{title}</h3>

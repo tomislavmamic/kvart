@@ -92,7 +92,7 @@ export function MonitoringField() {
             Prikaz ostaje prazan dok ne dobijemo provjerena mjerenja.
           </p>
           <span className="rounded-full bg-kamen-plitko px-3 py-1.5 text-xs font-bold text-kamen-tekst">
-            Bez podataka uživo
+            Mjerenja još nisu počela
           </span>
         </div>
 

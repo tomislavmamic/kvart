@@ -133,13 +133,13 @@ export default function KarepovacPage() {
           <div className="flex min-h-36 flex-col justify-end bg-kamen-plitko p-5">
             <span className="text-3xl font-extrabold text-kamen-tinta">3+</span>
             <span className="mt-1 text-sm font-semibold text-kamen-tekst">
-              čvora ciljano za prvi pilot
+              mjerna uređaja planirana za prvi pokusni rad
             </span>
           </div>
           <div className="flex min-h-36 flex-col justify-end bg-kamen-plitko p-5">
             <span className="text-3xl font-extrabold text-kamen-tinta">30</span>
             <span className="mt-1 text-sm font-semibold text-kamen-tekst">
-              dana planirane provjere pilota
+              dana planiranog pokusnog rada
             </span>
           </div>
           <div className="col-span-2 flex min-h-28 items-end bg-white p-5">

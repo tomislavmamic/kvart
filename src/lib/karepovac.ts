@@ -51,7 +51,7 @@ export const KAREPOVAC_PHASES = [
       "Uređaji će neko vrijeme raditi jedni uz druge i uspoređivat ćemo ih s pouzdanim mjerenjem. Tek tada ćemo znati koje vrijednosti smijemo objaviti.",
   },
   {
-    status: "Pilot",
+    status: "Pokusni rad",
     title: "Pokusni rad u kvartu",
     description:
       "Postavit ćemo uređaje na odabrana mjesta i 30 dana pratiti rade li redovito, možemo li ih održavati i jesu li podaci stanovnika zaštićeni.",
