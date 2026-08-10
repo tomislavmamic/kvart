@@ -171,4 +171,16 @@ test("all planned-road parcels are a resident question with the road footprint b
   assert.equal(parcels?.url, "/geo/analiza/cestice-planiranih-cesta.geojson");
   const roads = OVERLAY_LAYERS.find((candidate) => candidate.id === "gup-2024-planirane-ceste");
   assert.equal(roads?.url, "/geo/planovi/gup-2024-promet.geojson");
+  const pane = (layer: typeof roads) => ({
+    pane: layer?.pane,
+    paneZIndex: layer?.paneZIndex,
+  });
+  assert.deepEqual(pane(roads), {
+    pane: "planirane-ceste-podloga",
+    paneZIndex: 410,
+  });
+  assert.deepEqual(pane(parcels), {
+    pane: "planirane-ceste-cestice",
+    paneZIndex: 420,
+  });
 });

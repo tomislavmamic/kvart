@@ -533,6 +533,15 @@ export function MapClient() {
         const okno = map.createPane(ime);
         okno.style.zIndex = "400";
       }
+      // Slojevi koji moraju zadržati međusobni red bez obzira na to koji se
+      // GeoJSON prvi učita dobivaju vlastita okna. Red u registru nije
+      // dovoljan: putanje se stvaraju tek nakon neovisnih fetch odgovora.
+      for (const layer of OVERLAY_LAYERS) {
+        if (!layer.pane || layer.paneZIndex === undefined || map.getPane(layer.pane))
+          continue;
+        const pane = map.createPane(layer.pane);
+        pane.style.zIndex = String(layer.paneZIndex);
+      }
       L.control.zoom({ position: "topright" }).addTo(map);
 
       // Klik na praznu kartu otvara dosje.
@@ -826,9 +835,11 @@ export function MapClient() {
     // postojećem sloju ne mijenja, pa se mora stvoriti iznova. Bez toga
     // odabrana godina ostane izvan reza i klizač naizgled ne radi.
     for (const [id, inst] of overlayInstances.current) {
+      const layer = OVERLAY_BY_ID.get(id);
+      const zeljenoOkno = okna[id] ?? layer?.pane;
       if (
         !renderIds.has(id) ||
-        inst.okno !== okna[id] ||
+        inst.okno !== zeljenoOkno ||
         (id === "javne-cestice" && inst.filterKey !== javniFilterKey) ||
         (id === "ciljana-provjera-vlasnistva" &&
           inst.filterKey !== ciljaniFilterKey) ||
@@ -844,7 +855,8 @@ export function MapClient() {
       const layer = OVERLAY_BY_ID.get(id);
       if (!layer || layer.phase !== 1) continue;
       if (layer.type === "api") continue; // handled separately (solar)
-      dodajSloj(L, map, layer, okna[id], overlayInstances.current,
+      const layerOkno = okna[id] ?? layer.pane;
+      dodajSloj(L, map, layer, layerOkno, overlayInstances.current,
         geojsonCache.current, otvoriDosje.current, pogodakSloja,
         (id, stanje) =>
           setSlojStanje((p) => {

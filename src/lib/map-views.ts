@@ -58,6 +58,10 @@ export interface OverlayLayer {
   /** Boja za legendu/stil vektorskih slojeva. */
   color: string;
   defaultOpacity?: number;
+  /** Namjensko Leaflet okno kad red crtanja mora biti neovisan o vremenu dohvata. */
+  pane?: string;
+  /** CSS z-index namjenskog okna; koristi se samo uz `pane`. */
+  paneZIndex?: number;
   /** Naslov sklopive skupine u bočnoj traci. */
   group: string;
   /** 1 = spremno u prvoj verziji; 2 = kasnija faza. */
@@ -817,6 +821,8 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     color: "#3f3f46",
     group: "GUP — namjena",
     phase: 1,
+    pane: "planirane-ceste-podloga",
+    paneZIndex: 410,
   },
   // Prometnice s listova GUP-a. Ceste ondje nisu obojene nego nacrtane kao
   // bijeli koridori omeđeni crnim rubom, pa ih razvrstavanje po paleti baca;
@@ -948,6 +954,8 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     color: "#953d00",
     group: "Katastar i adrese",
     phase: 1,
+    pane: "planirane-ceste-cestice",
+    paneZIndex: 420,
   },
   {
     id: "plan-optika",
