@@ -21,8 +21,10 @@ import {
   UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
   MAP_MAX_BOUNDS,
+  shouldIsolateMapBackground,
   syncDossierMapLayout,
   type Comparison,
+  type DossierPresentation,
   type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
@@ -1030,6 +1032,18 @@ export function MapClient() {
   }
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
+  const prezentacijaDosjea: DossierPresentation = dosjeUcitavanje
+    ? "loading"
+    : dosje
+      ? "resolved"
+      : dosjeGreska !== null
+        ? "error"
+        : "closed";
+  const dosjePrikazan = prezentacijaDosjea !== "closed";
+  const uskiModalOtvoren = shouldIsolateMapBackground(usko, {
+    selected: cestica !== null,
+    presentation: prezentacijaDosjea,
+  });
 
   // Jedan životni ciklus posjeduje i granice i cilj odabrane točke. Tako
   // otvaranje, zatvaranje i promjena 1024px prijeloma ne mogu zadržati
@@ -1041,10 +1055,15 @@ export function MapClient() {
     // the new container dimensions. Wait one frame, then refresh Leaflet's size
     // and position against the actual responsive layout.
     const frame = window.requestAnimationFrame(() => {
-      syncDossierMapLayout(map, usko, cestica, !bezPokreta());
+      syncDossierMapLayout(
+        map,
+        uskiModalOtvoren,
+        dosjePrikazan ? cestica : null,
+        !bezPokreta(),
+      );
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [ready, usko, cestica]);
+  }, [ready, uskiModalOtvoren, dosjePrikazan, cestica]);
 
   // Dira samo refove i postavljače stanja, koji su svi stalni — pa je i sama
   // stalna, i smije stajati u popisu ovisnosti efekta ispod bez da ga budi.
@@ -1082,82 +1101,87 @@ export function MapClient() {
     // bi pomicalo ploče, ni razmimoilaženja s trakom mobilnog preglednika.
     <div className="fixed inset-0 overflow-hidden bg-zinc-100">
       <div
-        ref={mapDiv}
-        inert={usko && cestica !== null}
-        className="h-full w-full bg-zinc-100"
-        style={{ pointerEvents: usko && cestica !== null ? "none" : undefined }}
-      />
+        data-map-background
+        inert={uskiModalOtvoren}
+        className="absolute inset-0"
+        style={{ pointerEvents: uskiModalOtvoren ? "none" : undefined }}
+      >
+        <div ref={mapDiv} className="h-full w-full bg-zinc-100" />
 
-      <StanjePodloge stanje={podlogaStanje} naUlicnu={() => setBaseId("karta")} />
+        <StanjePodloge
+          stanje={podlogaStanje}
+          naUlicnu={() => setBaseId("karta")}
+        />
 
-      {/* Traka pogleda. Na uskom zaslonu stoji IZVAN bočne trake i uvijek je
-          vidljiva: dok je bila u njoj, zatvaranje trake da bi se vidjela
-          karta odnosilo je i cijelu navigaciju. */}
-      {usko && (
-        <TrakaPogleda
+        {/* Traka pogleda. Na uskom zaslonu stoji IZVAN bočne trake i uvijek je
+            vidljiva: dok je bila u njoj, zatvaranje trake da bi se vidjela
+            karta odnosilo je i cijelu navigaciju. */}
+        {usko && (
+          <TrakaPogleda
+            views={MAP_VIEWS}
+            viewId={viewId}
+            onSelectView={selectView}
+          />
+        )}
+
+        <Kontrole
+          baseId={baseId}
+          onBase={setBaseId}
+          dimValue={dimValue}
+          onDimValue={(dimId, layerId) =>
+            setDimValue((p) => ({ ...p, [dimId]: layerId }))
+          }
+          comparisonId={comparisonId}
+          klizac={klizac}
+          open={kontroleOpen}
+          onOpen={otvoriKontrole}
+          usko={usko}
+        />
+
+        <Sidebar
           views={MAP_VIEWS}
           viewId={viewId}
           onSelectView={selectView}
+          currentView={currentView}
+          activeIds={activeIds}
+          onToggle={toggleLayer}
+          slojStanje={slojStanje}
+          usporedbe={COMPARISONS.filter(
+            (c) => c.dimensionId === currentView?.dimensionId,
+          )}
+          comparisonId={comparisonId}
+          onComparison={setComparisonId}
+          nacin={nacin}
+          onNacin={setNacin}
+          javneCestice={javneCestice}
+          javniFiltri={javniFiltri}
+          onJavniFiltri={setJavniFiltri}
+          onPonoviJavne={() => {
+            toggleLayer("javne-cestice");
+            setTimeout(() => toggleLayer("javne-cestice"), 0);
+          }}
+          ciljanaProvjera={ciljanaProvjera}
+          ciljaniFiltri={ciljaniFiltri}
+          onCiljaniFiltri={setCiljaniFiltri}
+          onPonoviCiljanu={() => {
+            toggleLayer("ciljana-provjera-vlasnistva");
+            setTimeout(() => toggleLayer("ciljana-provjera-vlasnistva"), 0);
+          }}
+          cesticePlaniranihCesta={cesticePlaniranihCesta}
+          filtriPlaniranihCesta={filtriPlaniranihCesta}
+          onFiltriPlaniranihCesta={setFiltriPlaniranihCesta}
+          onPonoviCesticePlaniranihCesta={() => {
+            toggleLayer("cestice-planiranih-cesta");
+            setTimeout(() => toggleLayer("cestice-planiranih-cesta"), 0);
+          }}
+          onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
+          open={panelOpen}
+          onOpen={otvoriTraku}
+          usko={usko}
         />
-      )}
+      </div>
 
-      <Kontrole
-        baseId={baseId}
-        onBase={setBaseId}
-        dimValue={dimValue}
-        onDimValue={(dimId, layerId) =>
-          setDimValue((p) => ({ ...p, [dimId]: layerId }))
-        }
-        comparisonId={comparisonId}
-        klizac={klizac}
-        open={kontroleOpen}
-        onOpen={otvoriKontrole}
-        usko={usko}
-      />
-
-      <Sidebar
-        views={MAP_VIEWS}
-        viewId={viewId}
-        onSelectView={selectView}
-        currentView={currentView}
-        activeIds={activeIds}
-        onToggle={toggleLayer}
-        slojStanje={slojStanje}
-        usporedbe={COMPARISONS.filter(
-          (c) => c.dimensionId === currentView?.dimensionId
-        )}
-        comparisonId={comparisonId}
-        onComparison={setComparisonId}
-        nacin={nacin}
-        onNacin={setNacin}
-        javneCestice={javneCestice}
-        javniFiltri={javniFiltri}
-        onJavniFiltri={setJavniFiltri}
-        onPonoviJavne={() => {
-          toggleLayer("javne-cestice");
-          setTimeout(() => toggleLayer("javne-cestice"), 0);
-        }}
-        ciljanaProvjera={ciljanaProvjera}
-        ciljaniFiltri={ciljaniFiltri}
-        onCiljaniFiltri={setCiljaniFiltri}
-        onPonoviCiljanu={() => {
-          toggleLayer("ciljana-provjera-vlasnistva");
-          setTimeout(() => toggleLayer("ciljana-provjera-vlasnistva"), 0);
-        }}
-        cesticePlaniranihCesta={cesticePlaniranihCesta}
-        filtriPlaniranihCesta={filtriPlaniranihCesta}
-        onFiltriPlaniranihCesta={setFiltriPlaniranihCesta}
-        onPonoviCesticePlaniranihCesta={() => {
-          toggleLayer("cestice-planiranih-cesta");
-          setTimeout(() => toggleLayer("cestice-planiranih-cesta"), 0);
-        }}
-        onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
-        open={panelOpen}
-        onOpen={otvoriTraku}
-        usko={usko}
-      />
-
-      {(dosje || dosjeUcitavanje || dosjeGreska) && (
+      {dosjePrikazan && (
         <DosjePlaca
           uzKontrole={kontroleOpen && !usko}
           usko={usko}
@@ -3566,6 +3590,45 @@ function DosjePlaca({
 }) {
   const c = dosje?.cestica;
   const okvir = useRef<HTMLElement>(null);
+
+  // Na telefonu je dosje stvarno modal. Osim unutarnjeg omota karte treba
+  // utišati i krom stranice izvan MapClienta (npr. poveznicu "Naš kvart").
+  // Inertiramo samo braću duž grane koja vodi do dijaloga, nikad pretke koji
+  // sadrže sam dijalog, i vraćamo isključivo elemente koje smo mi promijenili.
+  useEffect(() => {
+    if (!usko || !okvir.current) return;
+    const promijenjeni: HTMLElement[] = [];
+    const izvanDosjea = (meta: EventTarget | null) =>
+      meta instanceof Node && !okvir.current?.contains(meta);
+    const zadrziFokus = (e: PointerEvent) => {
+      if (izvanDosjea(e.target)) e.preventDefault();
+    };
+    const zaustaviKlik = (e: MouseEvent) => {
+      if (!izvanDosjea(e.target)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    document.addEventListener("pointerdown", zadrziFokus, true);
+    document.addEventListener("click", zaustaviKlik, true);
+    let grana: HTMLElement = okvir.current;
+    while (grana.parentElement) {
+      const roditelj = grana.parentElement;
+      for (const dijete of roditelj.children) {
+        if (dijete === grana || !(dijete instanceof HTMLElement) || dijete.inert)
+          continue;
+        dijete.inert = true;
+        promijenjeni.push(dijete);
+      }
+      if (roditelj === document.body) break;
+      grana = roditelj;
+    }
+    return () => {
+      document.removeEventListener("pointerdown", zadrziFokus, true);
+      document.removeEventListener("click", zaustaviKlik, true);
+      for (const element of promijenjeni) element.inert = false;
+    };
+  }, [usko]);
+
   // Fokus ulazi u ploču kad se otvori. Prije je ostajao na kontejneru karte,
   // pa je čitač zaslona javljao da se nešto dogodilo, ali ne i što.
   //

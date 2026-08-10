@@ -20,6 +20,7 @@ import {
   dossierMapBounds,
   MAP_VIEWS,
   OVERLAY_LAYERS,
+  shouldIsolateMapBackground,
   syncDossierMapLayout,
 } from "../src/lib/map-views";
 import { dosjeZaTocku } from "../src/lib/dosje";
@@ -127,6 +128,26 @@ test("dossier map lifecycle reapplies layout across breakpoints and close", () =
     { offset: [200, 464], options: { animate: false, duration: 0.4 } },
     { offset: [420, 200], options: { animate: true, duration: 0.4 } },
   ]);
+});
+
+test("mobile background isolation follows the presented dossier, not hydrated coordinates", () => {
+  assert.equal(
+    shouldIsolateMapBackground(true, {
+      selected: true,
+      presentation: "closed",
+    }),
+    false,
+  );
+  for (const presentation of ["loading", "resolved", "error"] as const) {
+    assert.equal(
+      shouldIsolateMapBackground(true, { selected: true, presentation }),
+      true,
+    );
+    assert.equal(
+      shouldIsolateMapBackground(false, { selected: true, presentation }),
+      false,
+    );
+  }
 });
 
 test("missing planned-road ownership uses a neutral visual tone", () => {

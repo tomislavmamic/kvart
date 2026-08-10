@@ -46,6 +46,19 @@ export function dossierMapBounds(
   return narrow ? undefined : MAP_MAX_BOUNDS;
 }
 
+export type DossierPresentation = "closed" | "loading" | "resolved" | "error";
+
+/**
+ * Coordinates can be hydrated before the asynchronous dossier is presented.
+ * Only a visible narrow dossier makes the rest of the map application modal.
+ */
+export function shouldIsolateMapBackground(
+  narrow: boolean,
+  state: { selected: boolean; presentation: DossierPresentation },
+): boolean {
+  return narrow && state.presentation !== "closed";
+}
+
 interface DossierMapLayoutTarget {
   invalidateSize: (options: { animate: boolean; pan: boolean }) => unknown;
   setMaxBounds: (
