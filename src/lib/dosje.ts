@@ -28,6 +28,10 @@ import {
   type PublicParcelProperties,
 } from "./public-parcels";
 import {
+  validatePlannedRoadParcelProperties,
+  type PlannedRoadParcelProperties,
+} from "./planned-road-parcels";
+import {
   validateTargetedOwnershipProperties,
   type TargetedOwnershipProperties,
 } from "./targeted-ownership";
@@ -621,6 +625,27 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
     }
   }
 
+  let planiranaCestaCestica: PlannedRoadParcelProperties | null = null;
+  const planiraneCesteSloj = await ucitaj(
+    "/geo/analiza/cestice-planiranih-cesta.geojson"
+  );
+  if (planiraneCesteSloj) {
+    for (let i = 0; i < planiraneCesteSloj.fc.features.length; i++) {
+      const okvir = planiraneCesteSloj.okviri[i];
+      if (lng < okvir[0] || lng > okvir[2] || lat < okvir[1] || lat > okvir[3])
+        continue;
+      const feature = planiraneCesteSloj.fc.features[i];
+      try {
+        if (!booleanPointInPolygon(tocka, feature as Feature<never>)) continue;
+        validatePlannedRoadParcelProperties(feature.properties);
+        planiranaCestaCestica = feature.properties;
+        break;
+      } catch {
+        /* neispravan ili nesiguran zapis planirane ceste ne ide u dosje */
+      }
+    }
+  }
+
   const poTemi = new Map<Tema, Stavka[]>();
   let pretrazeno = 0;
 
@@ -686,6 +711,7 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
     cestica: cestica ? ((cestica.properties ?? {}) as Record<string, unknown>) : null,
     javnaCestica,
     ciljanaProvjeraVlasnistva,
+    planiranaCestaCestica,
     namjena: await namjenaNaTocki(
       { type: "Feature", properties: {}, geometry: tocka } as Feature,
       cestica

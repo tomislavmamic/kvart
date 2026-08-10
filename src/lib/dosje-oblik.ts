@@ -7,6 +7,7 @@
  * konstanti.
 */
 import type { PublicParcelProperties } from "./public-parcels";
+import type { PlannedRoadParcelProperties } from "./planned-road-parcels";
 import type { TargetedOwnershipProperties } from "./targeted-ownership";
 
 /** Kako sloj dodiruje česticu. */
@@ -111,6 +112,8 @@ export interface Dosje {
   javnaCestica: PublicParcelProperties | null;
   /** Sanitizirani rezultat ciljane provjere koridora i velikih čestica. */
   ciljanaProvjeraVlasnistva: TargetedOwnershipProperties | null;
+  /** Sanitizirani zahvat planirane ceste i već raspoloživi vlasnički dokaz. */
+  planiranaCestaCestica: PlannedRoadParcelProperties | null;
   /** Namjena po planu na snazi. `null` ako točka nije ni u jednoj plohi. */
   namjena: Namjena | null;
   skupine: Skupina[];

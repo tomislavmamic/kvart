@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-import type { Feature, Polygon } from "geojson";
+import { pointOnFeature } from "@turf/turf";
+import type { Feature, FeatureCollection, Polygon } from "geojson";
 import {
   matchesPlannedRoadParcel,
   plannedRoadParcelDossierFacts,
@@ -13,6 +15,7 @@ import {
 import type { PublicParcelProperties } from "../src/lib/public-parcels";
 import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
 import { MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
+import { dosjeZaTocku } from "../src/lib/dosje";
 
 const polygon: Polygon = {
   type: "Polygon",
@@ -183,4 +186,22 @@ test("all planned-road parcels are a resident question with the road footprint b
     pane: "planirane-ceste-cestice",
     paneZIndex: 420,
   });
+});
+
+test("parcel dossier returns the same planned-road impact and ownership evidence", async () => {
+  const collection = JSON.parse(
+    await readFile("public/geo/analiza/cestice-planiranih-cesta.geojson", "utf8"),
+  ) as FeatureCollection<Polygon, PlannedRoadParcelProperties>;
+  const selected = collection.features.find(
+    (feature) => feature.properties.parcel_id === "SPLIT:273/1",
+  );
+  assert.ok(selected);
+  const [lng, lat] = pointOnFeature(selected).geometry.coordinates;
+  const dossier = await dosjeZaTocku(lng, lat);
+  assert.equal(dossier.planiranaCestaCestica?.parcel_id, "SPLIT:273/1");
+  assert.equal(
+    dossier.planiranaCestaCestica?.road_overlap_m2,
+    selected.properties.road_overlap_m2,
+  );
+  assert.equal("owner" in (dossier.planiranaCestaCestica ?? {}), false);
 });

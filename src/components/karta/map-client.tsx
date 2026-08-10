@@ -54,6 +54,8 @@ import {
 } from "@/lib/targeted-ownership";
 import {
   matchesPlannedRoadParcel,
+  plannedRoadParcelDossierFacts,
+  PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS,
   PLANNED_ROAD_OWNERSHIP_STATUS_LABELS,
   summarizePlannedRoadParcels,
   validatePlannedRoadParcelProperties,
@@ -3689,11 +3691,21 @@ function DosjePlaca({
         {dosje && !ucitavanje && (
           <>
             <NamjenaOdgovor namjena={dosje.namjena} />
-            {dosje.ciljanaProvjeraVlasnistva && (
-              <CiljanaProvjeraOdgovor properties={dosje.ciljanaProvjeraVlasnistva} />
-            )}
-            {dosje.javnaCestica && (
-              <JavnaCesticaOdgovor properties={dosje.javnaCestica} />
+            {dosje.planiranaCestaCestica ? (
+              <PlaniranaCestaCesticaOdgovor
+                properties={dosje.planiranaCestaCestica}
+              />
+            ) : (
+              <>
+                {dosje.ciljanaProvjeraVlasnistva && (
+                  <CiljanaProvjeraOdgovor
+                    properties={dosje.ciljanaProvjeraVlasnistva}
+                  />
+                )}
+                {dosje.javnaCestica && (
+                  <JavnaCesticaOdgovor properties={dosje.javnaCestica} />
+                )}
+              </>
             )}
             {dosje.skupine.length === 0 ? (
               <p className="text-sm text-zinc-500">
@@ -3777,6 +3789,60 @@ function DosjePlaca({
         )}
       </div>
     </aside>
+  );
+}
+
+function PlaniranaCestaCesticaOdgovor({
+  properties,
+}: {
+  properties: PlannedRoadParcelProperties;
+}) {
+  const facts = plannedRoadParcelDossierFacts(properties);
+  return (
+    <section className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-900">
+          Planirana cesta i vlasništvo
+        </h3>
+        <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+          {PLANNED_ROAD_OWNERSHIP_STATUS_LABELS[properties.ownership_status]}
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-800">
+        {facts.map((fact) => (
+          <li key={fact}>{fact}</li>
+        ))}
+        <li>
+          Izvor dokaza:{" "}
+          {PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS[properties.ownership_evidence]}
+        </li>
+      </ul>
+      {properties.has_evidence_conflict && (
+        <p className="mt-2 rounded bg-status-u-tijeku-ground px-2 py-1.5 text-sm font-semibold text-status-u-tijeku">
+          Dostupni izvori nisu međusobno usklađeni.
+        </p>
+      )}
+      {properties.secondary_evidence_labels.length > 0 && (
+        <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-700">
+          {properties.secondary_evidence_labels.map((label) => (
+            <li key={label}>Dodatni izvor: {label}</li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs leading-normal text-zinc-600">
+        Informativni prikaz nacrta GUP-a 2024. Vlasništvo nije ponovno
+        provjeravano; službeni zapis provjeri na{" "}
+        <a
+          href="https://oss.uredjenazemlja.hr/map"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fokus font-semibold text-maslina underline"
+        >
+          Uređenoj zemlji
+        </a>
+        .
+      </p>
+    </section>
   );
 }
 
