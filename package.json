@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "tsx --test src/lib/karepovac.test.ts src/app/karepovac/copy.test.ts src/components/site-header.test.tsx",
+    "test": "tsx --test src/lib/karepovac.test.ts src/app/karepovac/copy.test.ts src/components/site-header.test.tsx src/components/karepovac/project-components.test.tsx",
     "lint": "eslint",
     "db:push": "drizzle-kit push",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",

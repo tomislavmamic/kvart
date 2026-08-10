@@ -68,49 +68,111 @@ export function PreparationNotice({ compact = false }: { compact?: boolean }) {
 
 export function MonitoringField() {
   return (
-    <div className="relative min-h-[360px] overflow-hidden bg-white p-5 sm:min-h-[430px] sm:p-8">
+    <div
+      data-preview="true"
+      className="relative min-h-[440px] overflow-hidden bg-white p-5 sm:min-h-[520px] sm:p-8"
+    >
       <svg
         aria-hidden="true"
-        viewBox="0 0 620 430"
+        viewBox="0 0 620 520"
         className="absolute inset-0 h-full w-full"
         preserveAspectRatio="xMidYMid slice"
       >
-        <rect width="620" height="430" fill="#ffffff" />
+        <rect width="620" height="520" fill="#ffffff" />
         <g stroke="#e4e4e7" strokeWidth="1">
-          <path d="M0 86H620M0 172H620M0 258H620M0 344H620" />
-          <path d="M124 0V430M248 0V430M372 0V430M496 0V430" />
+          <path d="M0 104H620M0 208H620M0 312H620M0 416H620" />
+          <path d="M124 0V520M248 0V520M372 0V520M496 0V520" />
         </g>
-        <circle cx="340" cy="226" r="62" fill="#ecfdf5" />
-        <circle cx="340" cy="226" r="24" fill="#007956" />
-        <path d="M340 282L324 239H356L340 282Z" fill="#007956" />
-        <circle cx="340" cy="226" r="8" fill="#ffffff" />
+        <path
+          d="M164 125C250 98 398 117 492 230"
+          fill="none"
+          stroke="#0284c7"
+          strokeWidth="28"
+          strokeLinecap="round"
+          opacity="0.09"
+        />
+        <path
+          d="M466 202 506 246 452 230Z"
+          fill="#0284c7"
+          opacity="0.24"
+        />
+        <circle cx="314" cy="255" r="66" fill="#ecfdf5" />
+        <circle cx="314" cy="255" r="25" fill="#007956" />
+        <path d="M314 314L297 269H331L314 314Z" fill="#007956" />
+        <circle cx="314" cy="255" r="8" fill="#ffffff" />
       </svg>
 
-      <div className="relative flex min-h-[320px] flex-col justify-between sm:min-h-[366px]">
-        <div className="flex items-start justify-between gap-4">
-          <p className="max-w-[14rem] text-base font-semibold leading-6 text-kamen-drugi">
-            Prikaz ostaje prazan dok ne dobijemo provjerena mjerenja.
-          </p>
-          <span className="rounded-full bg-kamen-plitko px-3 py-1.5 text-xs font-bold text-kamen-tekst">
-            Mjerenja još nisu počela
+      <div className="relative flex min-h-[400px] flex-col sm:min-h-[456px]">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-bold text-kamen-tinta">
+            Ogledni podaci
+          </span>
+          <span className="rounded-lg bg-amber-100 px-3 py-2 text-right text-xs text-amber-900">
+            <span className="block font-bold">Mjerenja još nisu počela</span>
+            <span className="mt-0.5 block">Nisu stvarna mjerenja</span>
           </span>
         </div>
 
-        <div className="self-center rounded-full bg-white px-4 py-2 text-sm font-bold text-kamen-tinta shadow-[0_8px_20px_-8px_rgb(24_24_27/0.25)]">
-          Karepovac
+        <div className="relative min-h-[270px] flex-1" aria-label="Ogledne mjerne postaje">
+          <PreviewStation name="Postaja A" value="1,8 ppb" left="4%" top="42%" />
+          <PreviewStation name="Postaja B" value="4,2 ppb" left="68%" top="20%" />
+          <PreviewStation name="Postaja C" value="2,6 ppb" left="73%" top="63%" />
+
+          <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 text-center">
+            <span className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-kamen-tinta shadow-[0_8px_20px_-8px_rgb(24_24_27/0.25)]">
+              Karepovac
+            </span>
+          </div>
         </div>
 
-        <dl className="grid gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-2">
-          <div className="bg-white p-3">
-            <dt className="font-semibold text-kamen-tinta">Mjerenja mreže</dt>
-            <dd className="mt-1 text-kamen-drugi">Mjerenja još nisu počela</dd>
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
+          <div data-kind="measurement" className="bg-white p-3">
+            <dt className="font-semibold text-kamen-tinta">Postaja B</dt>
+            <dd className="mt-1 font-mono tabular-nums text-kamen-drugi">
+              H₂S 4,2 ppb · 13:10
+            </dd>
           </div>
           <div className="bg-white p-3">
-            <dt className="font-semibold text-kamen-tinta">Procjena prema vjetru</dt>
-            <dd className="mt-1 text-kamen-drugi">Smjer širenja još ne procjenjujemo</dd>
+            <dt className="font-semibold text-kamen-tinta">Vjetar</dt>
+            <dd className="mt-1 font-mono tabular-nums text-kamen-drugi">
+              SZ · 3,2 m/s
+            </dd>
+          </div>
+          <div data-kind="estimated" className="col-span-2 bg-white p-3 sm:col-span-1">
+            <dt className="font-semibold text-kamen-tinta">
+              Procjena prema vjetru
+            </dt>
+            <dd className="mt-1 text-kamen-drugi">Prema jugoistoku</dd>
           </div>
         </dl>
       </div>
+    </div>
+  );
+}
+
+function PreviewStation({
+  name,
+  value,
+  left,
+  top,
+}: {
+  name: string;
+  value: string;
+  left: string;
+  top: string;
+}) {
+  return (
+    <div
+      data-kind="measurement"
+      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-lg border border-kamen-rub bg-white px-2 py-1.5 sm:px-3 sm:py-2"
+      style={{ left, top }}
+    >
+      <span className="block whitespace-nowrap text-xs font-bold text-kamen-tinta sm:text-sm">
+        {name}
+      </span>
+      <span className="block whitespace-nowrap font-mono text-xs tabular-nums text-kamen-drugi sm:text-sm">
+        H₂S · {value}
+      </span>
     </div>
   );
 }
