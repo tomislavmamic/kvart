@@ -30,6 +30,22 @@ export const NEIGHBORHOOD_EXTENT: [number, number, number, number] = [
 
 export const KVART_CENTER: [number, number] = [43.5249, 16.4993];
 
+export const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [43.514, 16.481],
+  [43.536, 16.518],
+];
+
+/**
+ * A narrow dossier is modal and leaves only the top 28% of the map visible.
+ * Releasing the bounds while it is open lets Leaflet place the selected
+ * parcel in that strip even near an edge; closing the dossier restores them.
+ */
+export function dossierMapBounds(
+  narrow: boolean,
+): [[number, number], [number, number]] | undefined {
+  return narrow ? undefined : MAP_MAX_BOUNDS;
+}
+
 export interface BaseLayer {
   id: string;
   label: string;

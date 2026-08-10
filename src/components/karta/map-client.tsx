@@ -20,6 +20,8 @@ import {
   COMPARISONS,
   UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
+  MAP_MAX_BOUNDS,
+  dossierMapBounds,
   type Comparison,
   type MapView,
   type OverlayLayer,
@@ -55,6 +57,7 @@ import {
 import {
   matchesPlannedRoadParcel,
   plannedRoadParcelDossierFacts,
+  plannedRoadOwnershipStatusTone,
   PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS,
   PLANNED_ROAD_OWNERSHIP_STATUS_LABELS,
   summarizePlannedRoadParcels,
@@ -405,11 +408,16 @@ export function MapClient() {
     const v = map.getSize();
     // Na uskom je ploča donjih 72 %, pa cilj ide u gornju trećinu; na
     // širokom zauzima desnu stranu, pa cilj ide ulijevo od sredine.
-    const t = map.latLngToContainerPoint([lat, lng]);
     // Širina se čita ovdje, a ne iz zatvorenja: `otvoriDosje` je stvoren
     // jednom pri prvom iscrtavanju, pa bi `usko` iz njega zauvijek ostalo
     // ono što je bilo na početku.
     const naUskom = window.matchMedia("(max-width: 1023px)").matches;
+    // Na početnom zumu je sjever-jug ograničenog obuhvata niži od mobilnog
+    // prozora, pa Leaflet odbaci okomiti dio pomaka. Dok je donja ploča
+    // modalna karta se ionako ne može pomicati; granice se vraćaju pri
+    // zatvaranju dosjea.
+    map.setMaxBounds(dossierMapBounds(naUskom));
+    const t = map.latLngToContainerPoint([lat, lng]);
     const cilj = naUskom
       ? { x: v.x / 2, y: v.y * 0.17 }
       : { x: v.x * 0.28, y: v.y / 2 };
@@ -525,10 +533,7 @@ export function MapClient() {
       });
       // Ograniči pomicanje na kvart + ~700 m rezerve — karta je o Dračevcu
       // i Bilicama, ne o cijelom Splitu.
-      map.setMaxBounds([
-        [43.514, 16.481],
-        [43.536, 16.518],
-      ]);
+      map.setMaxBounds(MAP_MAX_BOUNDS);
       // Vektorski slojevi svi crtaju u zajedničko overlayPane, pa se ne mogu
       // rezati pojedinačno. Svaka strana klizača dobiva svoje okno.
       for (const ime of ["sbs-lijevo", "sbs-desno"]) {
@@ -1060,6 +1065,7 @@ export function MapClient() {
   // stalna, i smije stajati u popisu ovisnosti efekta ispod bez da ga budi.
   const zatvoriDosje = useCallback(() => {
     dosjeZahtjev.current++;
+    mapRef.current?.setMaxBounds(MAP_MAX_BOUNDS);
     istaknuto.current?.vrati();
     istaknuto.current = null;
     biljeg.current?.remove();
@@ -3798,13 +3804,21 @@ function PlaniranaCestaCesticaOdgovor({
   properties: PlannedRoadParcelProperties;
 }) {
   const facts = plannedRoadParcelDossierFacts(properties);
+  const statusTone = plannedRoadOwnershipStatusTone(properties.ownership_status);
   return (
     <section className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-zinc-900">
           Planirana cesta i vlasništvo
         </h3>
-        <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+        <span
+          className={
+            "rounded-full px-2 py-0.5 text-xs font-bold " +
+            (statusTone === "neutral"
+              ? "bg-zinc-200 text-zinc-700"
+              : "bg-amber-100 text-amber-800")
+          }
+        >
           {PLANNED_ROAD_OWNERSHIP_STATUS_LABELS[properties.ownership_status]}
         </span>
       </div>
@@ -3818,7 +3832,7 @@ function PlaniranaCestaCesticaOdgovor({
         </li>
       </ul>
       {properties.has_evidence_conflict && (
-        <p className="mt-2 rounded bg-status-u-tijeku-ground px-2 py-1.5 text-sm font-semibold text-status-u-tijeku">
+        <p className="mt-2 rounded bg-amber-100 px-2 py-1.5 text-sm font-semibold text-amber-800">
           Dostupni izvori nisu međusobno usklađeni.
         </p>
       )}

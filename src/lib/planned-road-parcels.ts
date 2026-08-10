@@ -77,6 +77,12 @@ export const PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS: Record<PlannedRoadOwnership
   none: "nema razrješivog zapisa",
 };
 
+export function plannedRoadOwnershipStatusTone(
+  status: PlannedRoadOwnershipStatus,
+): "neutral" | "evidence" {
+  return status === "no_data" ? "neutral" : "evidence";
+}
+
 const ALLOWED_KEYS = new Set<keyof PlannedRoadParcelProperties>([
   "parcel_id",
   "parcel_number",

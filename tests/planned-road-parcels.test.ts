@@ -6,6 +6,7 @@ import type { Feature, FeatureCollection, Polygon } from "geojson";
 import {
   matchesPlannedRoadParcel,
   plannedRoadParcelDossierFacts,
+  plannedRoadOwnershipStatusTone,
   resolvePlannedRoadOwnership,
   summarizePlannedRoadParcels,
   validatePlannedRoadParcelProperties,
@@ -14,7 +15,7 @@ import {
 } from "../src/lib/planned-road-parcels";
 import type { PublicParcelProperties } from "../src/lib/public-parcels";
 import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
-import { MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
+import { dossierMapBounds, MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
 import { dosjeZaTocku } from "../src/lib/dosje";
 
 const polygon: Polygon = {
@@ -69,6 +70,19 @@ const cityGis: PublicParcelProperties = {
   source_updated_at: base.source_updated_at,
   generated_at: "2026-08-02",
 };
+
+test("a narrow dossier releases map bounds so its parcel can remain visible", () => {
+  assert.equal(dossierMapBounds(true), undefined);
+  assert.deepEqual(dossierMapBounds(false), [
+    [43.514, 16.481],
+    [43.536, 16.518],
+  ]);
+});
+
+test("missing planned-road ownership uses a neutral visual tone", () => {
+  assert.equal(plannedRoadOwnershipStatusTone("no_data"), "neutral");
+  assert.equal(plannedRoadOwnershipStatusTone("confirmed_public"), "evidence");
+});
 
 test("land-register evidence wins and a conflicting GIS level remains visible", () => {
   assert.deepEqual(resolvePlannedRoadOwnership(targeted, cityGis), {
