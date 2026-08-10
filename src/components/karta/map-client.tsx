@@ -21,7 +21,7 @@ import {
   UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
   MAP_MAX_BOUNDS,
-  dossierMapBounds,
+  syncDossierMapLayout,
   type Comparison,
   type MapView,
   type OverlayLayer,
@@ -58,6 +58,7 @@ import {
   matchesPlannedRoadParcel,
   plannedRoadParcelDossierFacts,
   plannedRoadOwnershipStatusTone,
+  plannedRoadPanelToneClasses,
   PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS,
   PLANNED_ROAD_OWNERSHIP_STATUS_LABELS,
   summarizePlannedRoadParcels,
@@ -402,33 +403,6 @@ export function MapClient() {
     }).addTo(map);
   };
 
-  const pomakniIzpodPloce = (lat: number, lng: number) => {
-    const map = mapRef.current;
-    if (!map) return;
-    const v = map.getSize();
-    // Na uskom je ploča donjih 72 %, pa cilj ide u gornju trećinu; na
-    // širokom zauzima desnu stranu, pa cilj ide ulijevo od sredine.
-    // Širina se čita ovdje, a ne iz zatvorenja: `otvoriDosje` je stvoren
-    // jednom pri prvom iscrtavanju, pa bi `usko` iz njega zauvijek ostalo
-    // ono što je bilo na početku.
-    const naUskom = window.matchMedia("(max-width: 1023px)").matches;
-    // Na početnom zumu je sjever-jug ograničenog obuhvata niži od mobilnog
-    // prozora, pa Leaflet odbaci okomiti dio pomaka. Dok je donja ploča
-    // modalna karta se ionako ne može pomicati; granice se vraćaju pri
-    // zatvaranju dosjea.
-    map.setMaxBounds(dossierMapBounds(naUskom));
-    const t = map.latLngToContainerPoint([lat, lng]);
-    const cilj = naUskom
-      ? { x: v.x / 2, y: v.y * 0.17 }
-      : { x: v.x * 0.28, y: v.y / 2 };
-    // Odabir čestice pomiče kartu. Uz `prefers-reduced-motion` skok je
-    // trenutačan: ishod je isti kadar, samo bez putovanja do njega.
-    map.panBy([t.x - cilj.x, t.y - cilj.y], {
-      animate: !bezPokreta(),
-      duration: 0.4,
-    });
-  };
-
   const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
     const moj = ++dosjeZahtjev.current;
     istaknuto.current?.vrati();
@@ -438,10 +412,6 @@ export function MapClient() {
     // se istakne samo kad je klik pogodio poligon katastra; klik na prazno
     // i duboka poveznica nisu imali ništa. Biljeg stoji uvijek.
     postaviBiljeg(lat, lng);
-    // I pomakni kartu tako da čestica ne završi ispod ploče: ploča zauzima
-    // desnu polovicu na širokom i donjih 72 % na uskom zaslonu, pa se
-    // središte pomiče u preostali dio, a ne na sredinu prozora.
-    pomakniIzpodPloce(lat, lng);
     setCestica([lat, lng]);
     setDosje(null);
     setDosjeGreska(null);
@@ -1061,11 +1031,25 @@ export function MapClient() {
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
 
+  // Jedan životni ciklus posjeduje i granice i cilj odabrane točke. Tako
+  // otvaranje, zatvaranje i promjena 1024px prijeloma ne mogu zadržati
+  // postavke prethodnog rasporeda.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    // MatchMedia may update React before Leaflet and the browser have committed
+    // the new container dimensions. Wait one frame, then refresh Leaflet's size
+    // and position against the actual responsive layout.
+    const frame = window.requestAnimationFrame(() => {
+      syncDossierMapLayout(map, usko, cestica, !bezPokreta());
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [ready, usko, cestica]);
+
   // Dira samo refove i postavljače stanja, koji su svi stalni — pa je i sama
   // stalna, i smije stajati u popisu ovisnosti efekta ispod bez da ga budi.
   const zatvoriDosje = useCallback(() => {
     dosjeZahtjev.current++;
-    mapRef.current?.setMaxBounds(MAP_MAX_BOUNDS);
     istaknuto.current?.vrati();
     istaknuto.current = null;
     biljeg.current?.remove();
@@ -1097,7 +1081,12 @@ export function MapClient() {
     // sebi stranica — nema ničega iznad ni ispod, pa nema ni listanja koje
     // bi pomicalo ploče, ni razmimoilaženja s trakom mobilnog preglednika.
     <div className="fixed inset-0 overflow-hidden bg-zinc-100">
-      <div ref={mapDiv} className="h-full w-full bg-zinc-100" />
+      <div
+        ref={mapDiv}
+        inert={usko && cestica !== null}
+        className="h-full w-full bg-zinc-100"
+        style={{ pointerEvents: usko && cestica !== null ? "none" : undefined }}
+      />
 
       <StanjePodloge stanje={podlogaStanje} naUlicnu={() => setBaseId("karta")} />
 
@@ -2057,7 +2046,9 @@ function PlaniraneCesteFilteri({
         <h3 className="text-base font-bold text-zinc-900">
           Čestice na planiranim cestama
         </h3>
-        <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-bold ${plannedRoadPanelToneClasses("count")}`}
+        >
           338 čestica
         </span>
       </div>
@@ -2068,7 +2059,9 @@ function PlaniraneCesteFilteri({
       </p>
 
       {stanje === "greska" ? (
-        <div className="mt-3 rounded-lg bg-status-odbijeno-ground px-3 py-2 text-sm text-status-odbijeno">
+        <div
+          className={`mt-3 rounded-lg px-3 py-2 text-sm ${plannedRoadPanelToneClasses("error")}`}
+        >
           <p>Sloj čestica na planiranim cestama nije se učitao.</p>
           <button
             type="button"
@@ -2228,7 +2221,7 @@ function JavneCesticeFilteri({
       </div>
 
       {stanje === "greska" ? (
-        <div className="mt-3 rounded-lg bg-status-odbijeno-ground px-3 py-2 text-sm text-status-odbijeno">
+        <div className="mt-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-800">
           <p>Sloj evidentiranih javnih čestica nije se učitao.</p>
           <button
             type="button"
@@ -2512,7 +2505,7 @@ function CiljanaProvjeraFilteri({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-base font-bold text-zinc-900">Ciljana provjera vlasništva</h3>
-        <span className="rounded-full bg-status-objavljeno-ground px-2 py-0.5 text-xs font-bold text-status-objavljeno">
+        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-800">
           30 čestica
         </span>
       </div>
@@ -2522,7 +2515,7 @@ function CiljanaProvjeraFilteri({
       </p>
 
       {stanje === "greska" ? (
-        <div className="mt-3 rounded-lg bg-status-odbijeno-ground px-3 py-2 text-sm text-status-odbijeno">
+        <div className="mt-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-800">
           <p>Sloj ciljane provjere nije se učitao.</p>
           <button
             type="button"
@@ -3607,10 +3600,14 @@ function DosjePlaca({
       if (meta.length === 0) return;
       const prvi = meta[0];
       const zadnji = meta[meta.length - 1];
-      if (e.shiftKey && document.activeElement === prvi) {
+      const aktivan = document.activeElement;
+      if (aktivan === okvir.current || !okvir.current.contains(aktivan)) {
+        e.preventDefault();
+        (e.shiftKey ? zadnji : prvi).focus();
+      } else if (e.shiftKey && aktivan === prvi) {
         e.preventDefault();
         zadnji.focus();
-      } else if (!e.shiftKey && document.activeElement === zadnji) {
+      } else if (!e.shiftKey && aktivan === zadnji) {
         e.preventDefault();
         prvi.focus();
       }

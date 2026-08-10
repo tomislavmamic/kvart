@@ -46,6 +46,54 @@ export function dossierMapBounds(
   return narrow ? undefined : MAP_MAX_BOUNDS;
 }
 
+interface DossierMapLayoutTarget {
+  invalidateSize: (options: { animate: boolean; pan: boolean }) => unknown;
+  setMaxBounds: (
+    bounds?: [[number, number], [number, number]],
+  ) => unknown;
+  getSize: () => { x: number; y: number };
+  latLngToContainerPoint: (
+    point: [number, number],
+  ) => { x: number; y: number };
+  panBy: (
+    offset: [number, number],
+    options: { animate: boolean; duration: number },
+  ) => unknown;
+}
+
+/**
+ * Synchronizes every dossier layout transition: open, responsive breakpoint,
+ * and close. Keeping those branches together prevents a resize from retaining
+ * the bounds and target point chosen for the previous layout.
+ */
+export function syncDossierMapLayout(
+  map: DossierMapLayoutTarget,
+  narrow: boolean,
+  point: [number, number] | null,
+  animate: boolean,
+): void {
+  // Leaflet caches the old viewport until its resize handler runs. Refresh it
+  // synchronously so a breakpoint transition cannot use the previous layout's
+  // dimensions when positioning the selected parcel.
+  map.invalidateSize({ animate: false, pan: false });
+
+  if (!point) {
+    map.setMaxBounds(MAP_MAX_BOUNDS);
+    return;
+  }
+
+  map.setMaxBounds(dossierMapBounds(narrow));
+  const viewport = map.getSize();
+  const current = map.latLngToContainerPoint(point);
+  const target = narrow
+    ? { x: viewport.x / 2, y: viewport.y * 0.17 }
+    : { x: viewport.x * 0.28, y: viewport.y / 2 };
+  map.panBy([current.x - target.x, current.y - target.y], {
+    animate,
+    duration: 0.4,
+  });
+}
+
 export interface BaseLayer {
   id: string;
   label: string;

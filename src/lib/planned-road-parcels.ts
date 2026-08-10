@@ -83,6 +83,14 @@ export function plannedRoadOwnershipStatusTone(
   return status === "no_data" ? "neutral" : "evidence";
 }
 
+export function plannedRoadPanelToneClasses(
+  state: "count" | "error",
+): string {
+  return state === "count"
+    ? "bg-amber-100 text-amber-800"
+    : "bg-rose-100 text-rose-800";
+}
+
 const ALLOWED_KEYS = new Set<keyof PlannedRoadParcelProperties>([
   "parcel_id",
   "parcel_number",

@@ -5,6 +5,7 @@ import { pointOnFeature } from "@turf/turf";
 import type { Feature, FeatureCollection, Polygon } from "geojson";
 import {
   matchesPlannedRoadParcel,
+  plannedRoadPanelToneClasses,
   plannedRoadParcelDossierFacts,
   plannedRoadOwnershipStatusTone,
   resolvePlannedRoadOwnership,
@@ -15,7 +16,12 @@ import {
 } from "../src/lib/planned-road-parcels";
 import type { PublicParcelProperties } from "../src/lib/public-parcels";
 import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
-import { dossierMapBounds, MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
+import {
+  dossierMapBounds,
+  MAP_VIEWS,
+  OVERLAY_LAYERS,
+  syncDossierMapLayout,
+} from "../src/lib/map-views";
 import { dosjeZaTocku } from "../src/lib/dosje";
 
 const polygon: Polygon = {
@@ -79,9 +85,64 @@ test("a narrow dossier releases map bounds so its parcel can remain visible", ()
   ]);
 });
 
+test("dossier map lifecycle reapplies layout across breakpoints and close", () => {
+  type Bounds = [[number, number], [number, number]];
+  const bounds: (Bounds | undefined)[] = [];
+  const invalidations: { animate: boolean; pan: boolean }[] = [];
+  const pans: {
+    offset: [number, number];
+    options: { animate: boolean; duration: number };
+  }[] = [];
+  const map = {
+    invalidateSize: (options: { animate: boolean; pan: boolean }) =>
+      invalidations.push(options),
+    setMaxBounds: (next?: Bounds) => bounds.push(next),
+    getSize: () => ({ x: 1_000, y: 800 }),
+    latLngToContainerPoint: () => ({ x: 700, y: 600 }),
+    panBy: (
+      offset: [number, number],
+      options: { animate: boolean; duration: number },
+    ) => pans.push({ offset, options }),
+  };
+
+  syncDossierMapLayout(map, false, [43.522229, 16.505847], false);
+  syncDossierMapLayout(map, true, [43.522229, 16.505847], false);
+  syncDossierMapLayout(map, false, [43.522229, 16.505847], true);
+  syncDossierMapLayout(map, false, null, false);
+
+  assert.deepEqual(invalidations, [
+    { animate: false, pan: false },
+    { animate: false, pan: false },
+    { animate: false, pan: false },
+    { animate: false, pan: false },
+  ]);
+  assert.deepEqual(bounds, [
+    [[43.514, 16.481], [43.536, 16.518]],
+    undefined,
+    [[43.514, 16.481], [43.536, 16.518]],
+    [[43.514, 16.481], [43.536, 16.518]],
+  ]);
+  assert.deepEqual(pans, [
+    { offset: [420, 200], options: { animate: false, duration: 0.4 } },
+    { offset: [200, 464], options: { animate: false, duration: 0.4 } },
+    { offset: [420, 200], options: { animate: true, duration: 0.4 } },
+  ]);
+});
+
 test("missing planned-road ownership uses a neutral visual tone", () => {
   assert.equal(plannedRoadOwnershipStatusTone("no_data"), "neutral");
   assert.equal(plannedRoadOwnershipStatusTone("confirmed_public"), "evidence");
+});
+
+test("planned-road panel count and error tones use compiled utilities", () => {
+  assert.equal(
+    plannedRoadPanelToneClasses("count"),
+    "bg-amber-100 text-amber-800",
+  );
+  assert.equal(
+    plannedRoadPanelToneClasses("error"),
+    "bg-rose-100 text-rose-800",
+  );
 });
 
 test("land-register evidence wins and a conflicting GIS level remains visible", () => {
