@@ -100,6 +100,19 @@ test("mixed ZK evidence remains mixed", () => {
   assert.equal(result.ownership_status, "mixed_public");
 });
 
+test("inconsistent targeted status and evidence source never invent land-register evidence", () => {
+  for (const inconsistent of [
+    { ...targeted, evidence_source: "cadastre" as const },
+    { ...targeted, verification_status: "mixed_public" as const, evidence_source: "none" as const },
+    { ...targeted, verification_status: "private_or_other" as const, evidence_source: "cadastre" as const, public_entities: [] },
+  ]) {
+    const result = resolvePlannedRoadOwnership(inconsistent, null);
+    assert.equal(result.ownership_status, "unresolved");
+    assert.equal(result.ownership_evidence, "none");
+    assert.deepEqual(result.public_entities, []);
+  }
+});
+
 test("missing evidence is explicit and remains visible under the default filter", () => {
   const filters: PlannedRoadParcelFilters = { statuses: [] };
   assert.equal(matchesPlannedRoadParcel(base, filters), true);

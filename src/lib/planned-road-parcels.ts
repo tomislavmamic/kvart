@@ -217,12 +217,24 @@ function conflictsWithGis(targeted: TargetedOwnershipProperties, cityGis: Public
   return levels.length > 0 && !levels.includes(cityGis.public_level);
 }
 
+function hasLandRegisterEvidence(targeted: TargetedOwnershipProperties): boolean {
+  return targeted.evidence_source === "land_register" && (
+    targeted.verification_status === "confirmed_public" ||
+    targeted.verification_status === "mixed_public" ||
+    targeted.verification_status === "private_or_other"
+  );
+}
+
+function hasCadastreEvidence(targeted: TargetedOwnershipProperties): boolean {
+  return targeted.evidence_source === "cadastre" && targeted.verification_status === "cadastre_public";
+}
+
 /** Resolves targeted evidence first, retaining lower-ranked GIS evidence as a visible secondary fact. */
 export function resolvePlannedRoadOwnership(
   targeted: TargetedOwnershipProperties | null,
   cityGis: PublicParcelProperties | null,
 ): PlannedRoadOwnershipResult {
-  if (targeted?.verification_status === "confirmed_public" || targeted?.verification_status === "mixed_public" || targeted?.verification_status === "private_or_other") {
+  if (targeted && hasLandRegisterEvidence(targeted)) {
     const status: PlannedRoadOwnershipStatus = targeted.verification_status === "private_or_other"
       ? "not_confirmed_public"
       : targeted.verification_status;
@@ -236,7 +248,7 @@ export function resolvePlannedRoadOwnership(
     };
   }
 
-  if (targeted?.verification_status === "cadastre_public") {
+  if (targeted && hasCadastreEvidence(targeted)) {
     return {
       ownership_status: "cadastre_public",
       ownership_evidence: "cadastre",
@@ -253,14 +265,14 @@ export function resolvePlannedRoadOwnership(
       ownership_evidence: "city_gis",
       public_entities: [gisEntity(cityGis)],
       has_evidence_conflict: false,
-      secondary_evidence_labels: targeted?.verification_status === "unresolved"
+      secondary_evidence_labels: targeted && !hasLandRegisterEvidence(targeted) && !hasCadastreEvidence(targeted)
         ? ["Ciljana provjera nije razriješena"]
         : [],
       ownership_checked_at: targeted?.verified_at ?? null,
     };
   }
 
-  if (targeted?.verification_status === "unresolved") {
+  if (targeted) {
     return {
       ownership_status: "unresolved",
       ownership_evidence: "none",
