@@ -75,7 +75,7 @@ export default function FinancijePage() {
 function StatusCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-kamen-tlo bg-white p-5">
-      <p className="text-sm font-medium text-kamen-drugi">{label}</p>
+      <p className="text-base font-medium text-kamen-drugi">{label}</p>
       <p className="mt-2 text-lg font-bold text-kamen-tinta">{value}</p>
     </div>
   );

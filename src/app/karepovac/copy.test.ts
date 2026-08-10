@@ -25,6 +25,7 @@ test("Karepovac copy avoids translated and bureaucratic phrases", () => {
     "Pet vrata do javnog podatka",
     "Podaci će dolaziti s objašnjenjem, ne sami",
     "Put do javne mreže",
+    "građansk",
     "domaćin postaje",
     "domaćina",
     "mirisni događaj",
@@ -48,4 +49,8 @@ test("Karepovac copy states the preparation stage in plain Croatian", () => {
   ]) {
     assert.match(publicCopy, new RegExp(phrase), phrase);
   }
+});
+
+test("Karepovac paragraphs use at least one rem text", () => {
+  assert.doesNotMatch(publicCopy, /<p[^>]*text-(?:xs|sm)\b/);
 });

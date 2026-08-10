@@ -143,7 +143,7 @@ export default function KarepovacPage() {
             </span>
           </div>
           <div className="col-span-2 flex min-h-28 items-end bg-white p-5">
-            <p className="max-w-sm text-sm leading-6 text-kamen-drugi">
+            <p className="max-w-sm text-base leading-6 text-kamen-drugi">
               Ciljevi iz odobrenog plana; nisu broj postojećih postaja ni
               trajanje već obavljenog rada.
             </p>

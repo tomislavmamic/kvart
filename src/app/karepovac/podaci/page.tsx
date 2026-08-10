@@ -80,7 +80,7 @@ export default function PodaciPage() {
             </p>
           </SectionHeading>
           <div className="mt-6 rounded-xl bg-kamen-tinta p-6 text-white">
-            <p className="text-sm font-bold text-zinc-300">Primjer jasne obavijesti</p>
+            <p className="text-base font-bold text-zinc-300">Primjer jasne obavijesti</p>
             <p className="mt-3 text-xl font-bold">Nema valjanog mjerenja</p>
             <p className="mt-2 leading-7 text-zinc-300">
               Prikazuje se vrijeme zadnjeg valjanog uzorka i razlog prekida —

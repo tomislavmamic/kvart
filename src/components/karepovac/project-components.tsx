@@ -88,7 +88,7 @@ export function MonitoringField() {
 
       <div className="relative flex min-h-[320px] flex-col justify-between sm:min-h-[366px]">
         <div className="flex items-start justify-between gap-4">
-          <p className="max-w-[14rem] text-sm font-semibold leading-5 text-kamen-drugi">
+          <p className="max-w-[14rem] text-base font-semibold leading-6 text-kamen-drugi">
             Prikaz ostaje prazan dok ne dobijemo provjerena mjerenja.
           </p>
           <span className="rounded-full bg-kamen-plitko px-3 py-1.5 text-xs font-bold text-kamen-tekst">

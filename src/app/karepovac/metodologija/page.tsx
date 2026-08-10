@@ -66,7 +66,7 @@ export default function MetodologijaPage() {
       <section>
         <SectionHeading title="Izvor ostaje uz podatak">
           <p>
-            Boja i naziv govore je li nešto izmjereno u građanskoj mreži,
+            Boja i naziv govore je li nešto izmjereno na našoj postaji,
             preuzeto iz službenog izvora ili procijenjeno modelom.
           </p>
         </SectionHeading>
@@ -78,7 +78,7 @@ export default function MetodologijaPage() {
       <section className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-950 sm:p-8">
         <h2 className="text-xl font-bold">Ovo nije sigurnosni alarm</h2>
         <p className="mt-3 max-w-3xl leading-7">
-          Buduća očitanja bit će indikativna mjerenja građanske mreže. Ne
+          Buduća očitanja bit će orijentacijska mjerenja naših postaja. Ne
           potvrđuju usklađenost s propisima, ne zamjenjuju službeni nadzor i ne
           smiju se koristiti za zaštitu radnika ili hitne odluke.
         </p>
