@@ -8,7 +8,7 @@ import {
 } from "../scripts/generate-planned-road-parcels";
 import { validatePlannedRoadParcelProperties } from "../src/lib/planned-road-parcels";
 
-const square = (west: number, south: number, east: number, north: number, properties: Record<string, unknown>): Feature<Polygon> => ({
+const square = (west: number, south: number, east: number, north: number, properties: Record<string, unknown>): Feature<Polygon, Record<string, unknown>> => ({
   type: "Feature",
   properties,
   geometry: { type: "Polygon", coordinates: [[[west, south], [east, south], [east, north], [west, north], [west, south]]] },
@@ -16,7 +16,7 @@ const square = (west: number, south: number, east: number, north: number, proper
 
 test("a parcel enters only when planned-road overlap reaches one square metre", () => {
   const parcel = square(16.49, 43.52, 16.491, 43.521, { ko: "SPLIT", cestica: "1/1", povrsina: 8_000 });
-  const noRoads: Feature<Polygon>[] = [];
+  const noRoads: Feature<Polygon, Record<string, unknown>>[] = [];
   assert.equal(derivePlannedRoadParcel(parcel, noRoads, new Map(), new Map(), "2025-10-03"), null);
   const road = square(16.4905, 43.52, 16.491, 43.521, { tema: "promet", godina: 2024 });
   const result = derivePlannedRoadParcel(parcel, [road], new Map(), new Map(), "2025-10-03");
