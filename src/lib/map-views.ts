@@ -808,6 +808,16 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     group: "GUP — namjena",
     phase: 1,
   },
+  {
+    id: "gup-2024-planirane-ceste",
+    label: "Planirane ceste — GUP 2024.",
+    type: "geojson",
+    url: "/geo/planovi/gup-2024-promet.geojson",
+    attribution: "Nacrt GUP-a Splita 2024. — prometni koridori praćeni iz PDF lista",
+    color: "#3f3f46",
+    group: "GUP — namjena",
+    phase: 1,
+  },
   // Prometnice s listova GUP-a. Ceste ondje nisu obojene nego nacrtane kao
   // bijeli koridori omeđeni crnim rubom, pa ih razvrstavanje po paleti baca;
   // vade se zasebnim prolazom (prometnice() u trace-plans.py) i crtaju
@@ -924,6 +934,18 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     attribution:
       "Uređena zemlja — ciljano provjereno 2. 8. 2026.; katastar i nacrt GUP-a 2024.",
     color: "#007956",
+    group: "Katastar i adrese",
+    phase: 1,
+  },
+  {
+    id: "cestice-planiranih-cesta",
+    label: "Čestice na planiranim cestama",
+    type: "geojson",
+    url: "/geo/analiza/cestice-planiranih-cesta.geojson",
+    attribution:
+      "Izvedeno iz katastra i prometnih koridora nacrta GUP-a Splita 2024.; " +
+      "vlasništvo samo iz postojećih sanitiziranih zapisa",
+    color: "#953d00",
     group: "Katastar i adrese",
     phase: 1,
   },
@@ -1209,6 +1231,17 @@ const POGLEDI: MapView[] = [
     layerIds: ["ciljana-provjera-vlasnistva"],
   },
   {
+    id: "cestice-planiranih-cesta",
+    label: "Čestice na planiranim cestama",
+    razina: "pitanje",
+    description:
+      "Svih 338 čestica koje planirani prometni koridori nacrta GUP-a 2024. " +
+      "zahvaćaju za najmanje 1 m². Vlasništvo je označeno samo za 54 čestice " +
+      "s već raspoloživim sanitiziranim zapisom; za ostale se izričito kaže " +
+      "da podataka nema.",
+    layerIds: ["gup-2024-planirane-ceste", "cestice-planiranih-cesta"],
+  },
+  {
     id: "okolis-rizici",
     label: "Okoliš i rizici",
     razina: "nacin",
@@ -1290,6 +1323,7 @@ const POGLEDI: MapView[] = [
 const REDOSLIJED_PITANJA = [
   "gdje-se-moze-graditi",
   "javno-evidentirano",
+  "cestice-planiranih-cesta",
   "nacrt-gupa",
   "planovi-obuhvat",
 ];

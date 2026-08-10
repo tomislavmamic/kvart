@@ -12,6 +12,7 @@ import {
 } from "../src/lib/planned-road-parcels";
 import type { PublicParcelProperties } from "../src/lib/public-parcels";
 import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
+import { MAP_VIEWS, OVERLAY_LAYERS } from "../src/lib/map-views";
 
 const polygon: Polygon = {
   type: "Polygon",
@@ -155,4 +156,19 @@ test("dossier facts state the road impact and absence of ownership data", () => 
     "Planirana cesta zahvaća 315 m² · 25,2 % čestice",
     "Vlasništvo: nema raspoloživog podatka",
   ]);
+});
+
+test("all planned-road parcels are a resident question with the road footprint beneath them", () => {
+  const view = MAP_VIEWS.find((candidate) => candidate.id === "cestice-planiranih-cesta");
+  assert.deepEqual(
+    view && { razina: view.razina, layerIds: view.layerIds },
+    {
+      razina: "pitanje",
+      layerIds: ["gup-2024-planirane-ceste", "cestice-planiranih-cesta"],
+    },
+  );
+  const parcels = OVERLAY_LAYERS.find((candidate) => candidate.id === "cestice-planiranih-cesta");
+  assert.equal(parcels?.url, "/geo/analiza/cestice-planiranih-cesta.geojson");
+  const roads = OVERLAY_LAYERS.find((candidate) => candidate.id === "gup-2024-planirane-ceste");
+  assert.equal(roads?.url, "/geo/planovi/gup-2024-promet.geojson");
 });

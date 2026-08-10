@@ -52,10 +52,20 @@ import {
   type TargetedOwnershipFilters,
   type TargetedOwnershipProperties,
 } from "@/lib/targeted-ownership";
+import {
+  matchesPlannedRoadParcel,
+  PLANNED_ROAD_OWNERSHIP_STATUS_LABELS,
+  summarizePlannedRoadParcels,
+  validatePlannedRoadParcelProperties,
+  type PlannedRoadOwnershipStatus,
+  type PlannedRoadParcelFilters,
+  type PlannedRoadParcelProperties,
+} from "@/lib/planned-road-parcels";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
 const JAVNE_CESTICE_URL = "/geo/analiza/javne-cestice.geojson";
 const CILJANA_PROVJERA_URL = "/geo/analiza/ciljana-provjera-vlasnistva.geojson";
+const PLANIRANE_CESTE_CESTICE_URL = "/geo/analiza/cestice-planiranih-cesta.geojson";
 const POCETNI_JAVNI_FILTRI: PublicParcelFilters = {
   levels: [],
   purposes: [],
@@ -68,6 +78,7 @@ const POCETNI_CILJANI_FILTRI: TargetedOwnershipFilters = {
   purposes: [],
   built: "all",
 };
+const POCETNI_FILTRI_PLANIRANIH_CESTA: PlannedRoadParcelFilters = { statuses: [] };
 
 /**
  * Traži li korisnik da se ne miče?
@@ -289,6 +300,11 @@ export function MapClient() {
   );
   const [ciljanaProvjera, setCiljanaProvjera] = useState<
     Feature<Geometry, TargetedOwnershipProperties>[] | null
+  >(null);
+  const [filtriPlaniranihCesta, setFiltriPlaniranihCesta] =
+    useState<PlannedRoadParcelFilters>(POCETNI_FILTRI_PLANIRANIH_CESTA);
+  const [cesticePlaniranihCesta, setCesticePlaniranihCesta] = useState<
+    Feature<Geometry, PlannedRoadParcelProperties>[] | null
   >(null);
   // Stanje podloge: `null` dok se ne zna, pa poruka ne bljesne bez potrebe.
   const [podlogaStanje, setPodlogaStanje] = useState<
@@ -700,6 +716,10 @@ export function MapClient() {
       }),
     [ciljaniFiltri]
   );
+  const planiraneCesteFilterKey = useMemo(
+    () => JSON.stringify({ statuses: [...filtriPlaniranihCesta.statuses].sort() }),
+    [filtriPlaniranihCesta]
+  );
 
   // Panel treba iste podatke kao Leaflet, ali ne zaseban mrežni zahtjev:
   // ucitajGeoJSON dijeli LRU spremnik s crtežom sloja. Učitava se tek kad
@@ -755,6 +775,34 @@ export function MapClient() {
     };
   }, [ready, renderIds, ciljanaProvjera]);
 
+  useEffect(() => {
+    if (
+      !ready ||
+      !renderIds.has("cestice-planiranih-cesta") ||
+      cesticePlaniranihCesta
+    )
+      return;
+    let cancelled = false;
+    void ucitajGeoJSON(PLANIRANE_CESTE_CESTICE_URL, geojsonCache.current)
+      .then((collection) => {
+        const features = collection.features.map((feature) => {
+          validatePlannedRoadParcelProperties(feature.properties);
+          return feature as Feature<Geometry, PlannedRoadParcelProperties>;
+        });
+        if (!cancelled) setCesticePlaniranihCesta(features);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSlojStanje((current) => ({
+            ...current,
+            "cestice-planiranih-cesta": "greska",
+          }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, renderIds, cesticePlaniranihCesta]);
+
   /** layerId → okno, da klizač može odrezati svaku stranu zasebno. */
   const okna = useMemo<Record<string, string>>(
     () =>
@@ -783,7 +831,9 @@ export function MapClient() {
         inst.okno !== okna[id] ||
         (id === "javne-cestice" && inst.filterKey !== javniFilterKey) ||
         (id === "ciljana-provjera-vlasnistva" &&
-          inst.filterKey !== ciljaniFilterKey)
+          inst.filterKey !== ciljaniFilterKey) ||
+        (id === "cestice-planiranih-cesta" &&
+          inst.filterKey !== planiraneCesteFilterKey)
       ) {
         map.removeLayer(inst.sloj);
         overlayInstances.current.delete(id);
@@ -806,10 +856,13 @@ export function MapClient() {
           }),
         id === "javne-cestice" ? javniFiltri : undefined,
         id === "ciljana-provjera-vlasnistva" ? ciljaniFiltri : undefined,
+        id === "cestice-planiranih-cesta" ? filtriPlaniranihCesta : undefined,
         id === "javne-cestice"
           ? javniFilterKey
           : id === "ciljana-provjera-vlasnistva"
             ? ciljaniFilterKey
+            : id === "cestice-planiranih-cesta"
+              ? planiraneCesteFilterKey
             : undefined,
       );
     }
@@ -834,6 +887,8 @@ export function MapClient() {
     javniFilterKey,
     ciljaniFiltri,
     ciljaniFilterKey,
+    filtriPlaniranihCesta,
+    planiraneCesteFilterKey,
   ]);
 
   // ---- klizač za usporedbu dviju godina ----
@@ -1080,6 +1135,13 @@ export function MapClient() {
           toggleLayer("ciljana-provjera-vlasnistva");
           setTimeout(() => toggleLayer("ciljana-provjera-vlasnistva"), 0);
         }}
+        cesticePlaniranihCesta={cesticePlaniranihCesta}
+        filtriPlaniranihCesta={filtriPlaniranihCesta}
+        onFiltriPlaniranihCesta={setFiltriPlaniranihCesta}
+        onPonoviCesticePlaniranihCesta={() => {
+          toggleLayer("cestice-planiranih-cesta");
+          setTimeout(() => toggleLayer("cestice-planiranih-cesta"), 0);
+        }}
         onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
         open={panelOpen}
         onOpen={otvoriTraku}
@@ -1280,6 +1342,10 @@ function Sidebar(props: {
   ciljaniFiltri: TargetedOwnershipFilters;
   onCiljaniFiltri: (filters: TargetedOwnershipFilters) => void;
   onPonoviCiljanu: () => void;
+  cesticePlaniranihCesta: Feature<Geometry, PlannedRoadParcelProperties>[] | null;
+  filtriPlaniranihCesta: PlannedRoadParcelFilters;
+  onFiltriPlaniranihCesta: (filters: PlannedRoadParcelFilters) => void;
+  onPonoviCesticePlaniranihCesta: () => void;
   onOtvoriCesticu: (lat: number, lng: number) => void;
   open: boolean;
   onOpen: (v: boolean) => void;
@@ -1452,8 +1518,20 @@ function Sidebar(props: {
             </details>
           </>
         )}
-        {currentView && currentView.id !== "javno-evidentirano" && (
+        {currentView &&
+          currentView.id !== "javno-evidentirano" &&
+          currentView.id !== "cestice-planiranih-cesta" && (
           <Opis view={currentView} />
+        )}
+
+        {currentView?.id === "cestice-planiranih-cesta" && (
+          <PlaniraneCesteFilteri
+            features={props.cesticePlaniranihCesta}
+            filters={props.filtriPlaniranihCesta}
+            onFilters={props.onFiltriPlaniranihCesta}
+            stanje={props.slojStanje["cestice-planiranih-cesta"]}
+            onRetry={props.onPonoviCesticePlaniranihCesta}
+          />
         )}
 
         {currentView?.id === "javno-evidentirano" && (
@@ -1910,6 +1988,147 @@ function IzborJavnogDokaza({
         })}
       </div>
     </fieldset>
+  );
+}
+
+function PlaniraneCesteFilteri({
+  features,
+  filters,
+  onFilters,
+  stanje,
+  onRetry,
+}: {
+  features: Feature<Geometry, PlannedRoadParcelProperties>[] | null;
+  filters: PlannedRoadParcelFilters;
+  onFilters: (filters: PlannedRoadParcelFilters) => void;
+  stanje?: "ucitava" | "greska";
+  onRetry: () => void;
+}) {
+  const summary = features
+    ? summarizePlannedRoadParcels(features, filters)
+    : { count: 0, road_overlap_m2: 0 };
+  const statusCounts = features
+    ? features.reduce(
+        (counts, feature) => {
+          counts[feature.properties.ownership_status] += 1;
+          return counts;
+        },
+        {
+          confirmed_public: 0,
+          mixed_public: 0,
+          cadastre_public: 0,
+          city_gis_public: 0,
+          not_confirmed_public: 0,
+          unresolved: 0,
+          no_data: 0,
+        } satisfies Record<PlannedRoadOwnershipStatus, number>
+      )
+    : null;
+  const toggleStatus = (status: PlannedRoadOwnershipStatus) =>
+    onFilters({
+      statuses: filters.statuses.includes(status)
+        ? filters.statuses.filter((candidate) => candidate !== status)
+        : [...filters.statuses, status],
+    });
+
+  return (
+    <section aria-label="Filtri čestica na planiranim cestama" className="mt-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-bold text-zinc-900">
+          Čestice na planiranim cestama
+        </h3>
+        <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+          338 čestica
+        </span>
+      </div>
+      <p className="mt-2 text-base leading-normal text-zinc-700">
+        Planirani prometni koridori nacrta GUP-a 2024. zahvaćaju svaku od ovih
+        čestica za najmanje 1 m². Vlasništvo je označeno samo za 54 čestice s
+        već raspoloživim sanitiziranim zapisom; za ostale podataka nema.
+      </p>
+
+      {stanje === "greska" ? (
+        <div className="mt-3 rounded-lg bg-status-odbijeno-ground px-3 py-2 text-sm text-status-odbijeno">
+          <p>Sloj čestica na planiranim cestama nije se učitao.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="fokus meta mt-1 min-h-11 font-semibold underline"
+          >
+            Pokušaj ponovno
+          </button>
+        </div>
+      ) : !features || stanje === "ucitava" ? (
+        <p role="status" aria-busy="true" className="mt-3 text-sm text-zinc-600">
+          Učitavam 338 čestica na planiranim cestama…
+        </p>
+      ) : (
+        <>
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-3 text-lg font-bold text-zinc-900"
+          >
+            {summary.count.toLocaleString("hr-HR")} {brojnica(summary.count, "čestica", "čestice", "čestica")} ·{" "}
+            {(summary.road_overlap_m2 / 10_000).toLocaleString("hr-HR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            ha zahvata planiranih cesta
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Status vlasništva
+            </legend>
+            <div className="mt-1 space-y-0.5">
+              {(
+                Object.keys(
+                  PLANNED_ROAD_OWNERSHIP_STATUS_LABELS
+                ) as PlannedRoadOwnershipStatus[]
+              ).map((status) => (
+                <label
+                  key={status}
+                  className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.statuses.includes(status)}
+                    onChange={() => toggleStatus(status)}
+                    className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                  />
+                  <span className="flex-1 leading-tight">
+                    {PLANNED_ROAD_OWNERSHIP_STATUS_LABELS[status]}
+                  </span>
+                  <span className="text-xs tabular-nums text-zinc-600">
+                    {statusCounts?.[status] ?? 0}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {summary.count === 0 && (
+            <p className="mt-3 border-t border-zinc-200 pt-3 text-sm text-zinc-700">
+              Nema čestica na planiranim cestama za odabrane filtre.
+            </p>
+          )}
+          {filters.statuses.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onFilters(POCETNI_FILTRI_PLANIRANIH_CESTA)}
+              className="fokus meta mt-2 min-h-11 text-sm font-semibold text-maslina hover:underline"
+            >
+              Poništi filtre
+            </button>
+          )}
+        </>
+      )}
+
+      <p className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-normal text-zinc-600">
+        Vlasništvo je označeno samo iz postojećih sanitiziranih zapisa. Nova
+        provjera nije provedena.
+      </p>
+    </section>
   );
 }
 
@@ -2897,6 +3116,7 @@ function dodajSloj(
   stanje: (id: string, s: "ucitava" | "greska" | null) => void,
   javniFiltri?: PublicParcelFilters,
   ciljaniFiltri?: TargetedOwnershipFilters,
+  filtriPlaniranihCesta?: PlannedRoadParcelFilters,
   filterKey?: string,
 ) {
   if (layer.type === "wms") {
@@ -2956,6 +3176,21 @@ function dodajSloj(
               },
             }
           : {}),
+        ...(layer.id === "cestice-planiranih-cesta" && filtriPlaniranihCesta
+          ? {
+              filter: (feature: GeoJSON.Feature) => {
+                try {
+                  validatePlannedRoadParcelProperties(feature.properties);
+                  return matchesPlannedRoadParcel(
+                    feature.properties,
+                    filtriPlaniranihCesta
+                  );
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
         ...(NEINTERAKTIVNE_PLOHE.has(layer.id) ? { interactive: false } : {}),
         // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
         // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
@@ -2963,7 +3198,8 @@ function dodajSloj(
           const p = f?.properties as
             | ({ boja?: string; promjena?: string; highway?: string } &
                 Partial<PublicParcelProperties> &
-                Partial<TargetedOwnershipProperties>)
+                Partial<TargetedOwnershipProperties> &
+                Partial<PlannedRoadParcelProperties>)
             | undefined;
           if (layer.id === "javne-cestice") {
             const c =
@@ -3013,6 +3249,72 @@ function dodajSloj(
                       ? 0.34
                       : 0.12,
             };
+          }
+          if (layer.id === "gup-2024-planirane-ceste") {
+            return {
+              color: "#3f3f46",
+              weight: 2.5,
+              dashArray: "12 8",
+              fillColor: "#f4f4f5",
+              fillOpacity: 0.38,
+            };
+          }
+          if (layer.id === "cestice-planiranih-cesta") {
+            const status = p?.ownership_status;
+            const conflict = p?.has_evidence_conflict === true;
+            const styleByStatus: Record<
+              PlannedRoadOwnershipStatus,
+              LeafletNS.PathOptions
+            > = {
+              confirmed_public: {
+                color: "#005f46",
+                weight: 3,
+                fillColor: "#005f46",
+                fillOpacity: 0.58,
+              },
+              mixed_public: {
+                color: "#5d0ec0",
+                weight: 2.5,
+                dashArray: "8 5",
+                fillColor: "#5d0ec0",
+                fillOpacity: 0.34,
+              },
+              cadastre_public: {
+                color: "#005986",
+                weight: 2.5,
+                dashArray: "6 4",
+                fillColor: "#005986",
+                fillOpacity: 0.38,
+              },
+              city_gis_public: {
+                color: "#007956",
+                weight: 2.5,
+                dashArray: "10 5",
+                fillColor: "#007956",
+                fillOpacity: 0.3,
+              },
+              not_confirmed_public: {
+                color: "#71717b",
+                weight: 2,
+                fillColor: "#71717b",
+                fillOpacity: 0.18,
+              },
+              unresolved: {
+                color: "#953d00",
+                weight: 2.5,
+                dashArray: "2 5",
+                fillColor: "#fef3c6",
+                fillOpacity: 0.32,
+              },
+              no_data: {
+                color: "#9f9fa9",
+                weight: 1,
+                fillColor: "#f4f4f5",
+                fillOpacity: 0.55,
+              },
+            };
+            const primary = status ? styleByStatus[status] : styleByStatus.no_data;
+            return conflict ? { ...primary, dashArray: "3 3" } : primary;
           }
           // Sve prometno je jedan sloj i crta se samo obrisom — plohe iz
           // plana pune bi radnu zonu pretvorile u mrlju, a rub asfalta je
@@ -3149,6 +3451,7 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar-vlasnistvo",
   "javne-cestice",
   "ciljana-provjera-vlasnistva",
+  "cestice-planiranih-cesta",
   // Izvedeni sloj mora voditi u dosje, ne u skočni prozor s „M/K5”.
   //
   // Bio je običan sloj s natpisom, pa je u pogledu „Gdje se može graditi
@@ -3171,6 +3474,7 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
  * kao jedan redak među ostalima, a ne kao odgovor na svako pitanje.
  */
 const NEINTERAKTIVNE_PLOHE: ReadonlySet<string> = new Set([
+  "gup-2024-planirane-ceste",
   "popisni-krugovi",
   "statisticki-krugovi",
   "ulice-podrucja",
