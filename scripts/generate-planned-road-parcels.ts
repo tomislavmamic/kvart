@@ -4,12 +4,19 @@ import { pathToFileURL } from "node:url";
 import { area, bbox, featureCollection, intersect } from "@turf/turf";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import {
+  canonicalParcelId,
   resolvePlannedRoadOwnership,
   validatePlannedRoadParcelProperties,
   type PlannedRoadParcelProperties,
 } from "../src/lib/planned-road-parcels";
-import type { PublicParcelProperties } from "../src/lib/public-parcels";
-import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
+import {
+  validatePublicParcelProperties,
+  type PublicParcelProperties,
+} from "../src/lib/public-parcels";
+import {
+  validateTargetedOwnershipProperties,
+  type TargetedOwnershipProperties,
+} from "../src/lib/targeted-ownership";
 
 type PolygonGeometry = Polygon | MultiPolygon;
 type PolygonFeature<P = Record<string, unknown>> = Feature<PolygonGeometry, P>;
@@ -28,41 +35,123 @@ const EXPECTED_SELECTED = 338;
 const EXPECTED_WITH_EVIDENCE = 54;
 const SOURCE_UPDATED_AT = "2025-10-03";
 
-function isPolygonFeature(feature: Feature): feature is PolygonFeature {
-  return feature.geometry?.type === "Polygon" || feature.geometry?.type === "MultiPolygon";
+export function validatePolygonFeatureCollection(
+  value: unknown,
+  sourceLabel: string,
+): asserts value is FeatureCollection<PolygonGeometry> {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error(`${sourceLabel}: source must be a FeatureCollection`);
+  const collection = value as Partial<FeatureCollection>;
+  if (collection.type !== "FeatureCollection" || !Array.isArray(collection.features))
+    throw new Error(`${sourceLabel}: source must be a FeatureCollection`);
+  for (const [index, feature] of collection.features.entries()) {
+    if (!feature || feature.type !== "Feature")
+      throw new Error(`${sourceLabel}: feature ${index} must be a Feature`);
+    if (
+      feature.geometry?.type !== "Polygon" &&
+      feature.geometry?.type !== "MultiPolygon"
+    ) {
+      throw new Error(
+        `${sourceLabel}: feature ${index} geometry must be Polygon or MultiPolygon`,
+      );
+    }
+    if (!feature.properties || typeof feature.properties !== "object")
+      throw new Error(`${sourceLabel}: feature ${index} properties must be an object`);
+    try {
+      const measuredArea = area(feature);
+      if (!Number.isFinite(measuredArea) || measuredArea <= 0)
+        throw new Error("geometry area must be positive and finite");
+    } catch (error) {
+      throw new Error(
+        `${sourceLabel}: feature ${index} has invalid polygon geometry`,
+        { cause: error },
+      );
+    }
+  }
 }
 
-async function readPolygons<P = Record<string, unknown>>(file: string): Promise<PolygonFeature<P>[]> {
-  const parsed = JSON.parse(await readFile(file, "utf8")) as FeatureCollection;
-  return parsed.features.filter(isPolygonFeature) as PolygonFeature<P>[];
-}
-
-function normalizeParcelNumber(value: unknown): string {
-  return String(value ?? "").replace(/\s+/g, "").trim();
-}
-
-function parcelId(municipality: unknown, parcelNumber: unknown): string | null {
-  const normalizedMunicipality = String(municipality ?? "").trim().toUpperCase();
-  const normalizedNumber = normalizeParcelNumber(parcelNumber);
-  return normalizedMunicipality && normalizedNumber ? `${normalizedMunicipality}:${normalizedNumber}` : null;
+async function readPolygons<P = Record<string, unknown>>(
+  file: string,
+  sourceLabel: string,
+  validateProperties?: (value: unknown) => void,
+): Promise<PolygonFeature<P>[]> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(file, "utf8"));
+  } catch (error) {
+    throw new Error(`${sourceLabel}: source cannot be read as JSON`, {
+      cause: error,
+    });
+  }
+  validatePolygonFeatureCollection(parsed, sourceLabel);
+  const features = parsed.features as PolygonFeature<P>[];
+  if (validateProperties) {
+    for (const [index, feature] of features.entries()) {
+      try {
+        validateProperties(feature.properties);
+      } catch (error) {
+        throw new Error(`${sourceLabel}: feature ${index} properties are invalid`, {
+          cause: error,
+        });
+      }
+    }
+  }
+  return features;
 }
 
 function boxesOverlap(a: number[], b: number[]): boolean {
   return a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
 }
 
-function overlapArea(parcel: PolygonFeature, road: PolygonFeature): number {
-  if (!boxesOverlap(bbox(parcel), bbox(road))) return 0;
+function overlapArea(
+  parcel: PolygonFeature,
+  road: PolygonFeature,
+  parcelId: string,
+  roadIndex: number,
+): number {
   try {
+    if (!boxesOverlap(bbox(parcel), bbox(road))) return 0;
     const cut = intersect(featureCollection([parcel, road]));
-    return cut ? area(cut) : 0;
-  } catch {
-    return 0;
+    if (!cut) return 0;
+    const measuredArea = area(cut);
+    if (!Number.isFinite(measuredArea) || measuredArea < 0)
+      throw new Error("intersection area must be finite and non-negative");
+    return measuredArea;
+  } catch (error) {
+    throw new Error(
+      `Spatial intersection failed for parcel ${parcelId} and road feature ${roadIndex}`,
+      { cause: error },
+    );
   }
 }
 
-function ownershipIndex<P extends { parcel_id: string }>(features: PolygonFeature<P>[]): Map<string, P> {
-  return new Map(features.map((feature) => [feature.properties.parcel_id, feature.properties]));
+function ownershipIndex<
+  P extends {
+    parcel_id: string;
+    parcel_number: string;
+    cadastral_municipality: string;
+  },
+>(features: PolygonFeature<P>[], sourceLabel: string): Map<string, P> {
+  const index = new Map<string, P>();
+  for (const [featureIndex, feature] of features.entries()) {
+    const properties = feature.properties;
+    const expectedId = canonicalParcelId(
+      properties.cadastral_municipality,
+      properties.parcel_number,
+    );
+    if (expectedId !== properties.parcel_id) {
+      throw new Error(
+        `${sourceLabel}: feature ${featureIndex} parcel_id is not canonical`,
+      );
+    }
+    if (index.has(properties.parcel_id)) {
+      throw new Error(
+        `${sourceLabel}: duplicate parcel_id ${properties.parcel_id}`,
+      );
+    }
+    index.set(properties.parcel_id, properties);
+  }
+  return index;
 }
 
 export function derivePlannedRoadParcel(
@@ -73,13 +162,30 @@ export function derivePlannedRoadParcel(
   sourceUpdatedAt: string,
 ): PolygonFeature<PlannedRoadParcelProperties> | null {
   const source = parcel.properties ?? {};
-  const id = parcelId(source.ko, source.cestica);
-  const parcelArea = Number(source.povrsina);
-  const mappedArea = area(parcel);
-  if (!id || !Number.isFinite(parcelArea) || parcelArea <= 0 || !Number.isFinite(mappedArea) || mappedArea <= 0)
-    return null;
+  const id = canonicalParcelId(source.ko, source.cestica);
+  const parcelArea = source.povrsina;
+  if (!id)
+    throw new Error("Parcel feature is missing a canonical parcel key");
+  if (
+    typeof parcelArea !== "number" ||
+    !Number.isFinite(parcelArea) ||
+    parcelArea <= 0
+  )
+    throw new Error(`Parcel ${id} has invalid povrsina`);
+  let mappedArea: number;
+  try {
+    mappedArea = area(parcel);
+  } catch (error) {
+    throw new Error(`Spatial area failed for parcel ${id}`, { cause: error });
+  }
+  if (!Number.isFinite(mappedArea) || mappedArea <= 0)
+    throw new Error(`Parcel ${id} has invalid mapped geometry area`);
 
-  const roadOverlap = roads.reduce((sum, road) => sum + overlapArea(parcel, road), 0);
+  const roadOverlap = roads.reduce(
+    (sum, road, roadIndex) =>
+      sum + overlapArea(parcel, road, id, roadIndex),
+    0,
+  );
   if (roadOverlap < MIN_ROAD_OVERLAP_M2) return null;
 
   const [cadastralMunicipality, parcelNumber] = id.split(":");
@@ -106,13 +212,21 @@ export async function generatePlannedRoadParcels(
   allowScopeDrift = false,
 ): Promise<FeatureCollection<PolygonGeometry, PlannedRoadParcelProperties>> {
   const [parcels, roads, targeted, cityGis] = await Promise.all([
-    readPolygons(PARCELS),
-    readPolygons(ROADS),
-    readPolygons<TargetedOwnershipProperties>(TARGETED),
-    readPolygons<PublicParcelProperties>(CITY_GIS),
+    readPolygons(PARCELS, "cadastral parcels"),
+    readPolygons(ROADS, "planned roads"),
+    readPolygons<TargetedOwnershipProperties>(
+      TARGETED,
+      "targeted ownership",
+      validateTargetedOwnershipProperties,
+    ),
+    readPolygons<PublicParcelProperties>(
+      CITY_GIS,
+      "city GIS ownership",
+      validatePublicParcelProperties,
+    ),
   ]);
-  const targetedById = ownershipIndex(targeted);
-  const cityGisById = ownershipIndex(cityGis);
+  const targetedById = ownershipIndex(targeted, "targeted ownership");
+  const cityGisById = ownershipIndex(cityGis, "city GIS ownership");
   const features = parcels
     .map((parcel) => derivePlannedRoadParcel(
       parcel,
@@ -144,7 +258,10 @@ export async function generatePlannedRoadParcels(
 async function main(): Promise<void> {
   const allowScopeDrift = process.argv.slice(2).includes("--allow-scope-drift");
   const collection = await generatePlannedRoadParcels(allowScopeDrift);
-  const [parcels, roads] = await Promise.all([readPolygons(PARCELS), readPolygons(ROADS)]);
+  const [parcels, roads] = await Promise.all([
+    readPolygons(PARCELS, "cadastral parcels"),
+    readPolygons(ROADS, "planned roads"),
+  ]);
   await mkdir(path.dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, `${JSON.stringify(collection)}\n`, "utf8");
   const counts = Object.fromEntries(

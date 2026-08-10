@@ -121,6 +121,29 @@ const ENTITY_CATEGORY_SET = new Set<SanitizedPublicEntity["category"]>([
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const OIB_LIKE = /(?:^|\D)\d{11}(?:\D|$)/;
 
+export function canonicalParcelId(
+  municipality: unknown,
+  parcelNumber: unknown,
+): string | null {
+  if (typeof municipality !== "string" || typeof parcelNumber !== "string")
+    return null;
+  const normalizedMunicipality = municipality.trim().toUpperCase();
+  const normalizedNumber = parcelNumber.replace(/\s+/g, "");
+  return normalizedMunicipality && normalizedNumber
+    ? `${normalizedMunicipality}:${normalizedNumber}`
+    : null;
+}
+
+export function normalizeCanonicalParcelId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const separator = value.indexOf(":");
+  if (separator <= 0 || separator !== value.lastIndexOf(":")) return null;
+  return canonicalParcelId(
+    value.slice(0, separator),
+    value.slice(separator + 1),
+  );
+}
+
 function requireSafeString(record: Record<string, unknown>, key: string): string {
   const value = record[key];
   if (typeof value !== "string" || value.trim().length === 0)
@@ -179,8 +202,24 @@ export function validatePlannedRoadParcelProperties(
     if (!(key in record)) throw new Error(`nedostaje polje: ${key}`);
 
   requireSafeString(record, "parcel_id");
-  requireSafeString(record, "parcel_number");
-  requireSafeString(record, "cadastral_municipality");
+  const parcelNumber = requireSafeString(record, "parcel_number");
+  const cadastralMunicipality = requireSafeString(
+    record,
+    "cadastral_municipality",
+  );
+  const expectedParcelId = canonicalParcelId(
+    cadastralMunicipality,
+    parcelNumber,
+  );
+  if (
+    expectedParcelId !== record.parcel_id ||
+    cadastralMunicipality !== cadastralMunicipality.trim().toUpperCase() ||
+    parcelNumber !== parcelNumber.replace(/\s+/g, "")
+  ) {
+    throw new Error(
+      "parcel_id mora biti kanonski spoj cadastral_municipality i parcel_number",
+    );
+  }
   requireNonNegativeNumber(record, "parcel_area_m2");
   requireNonNegativeNumber(record, "mapped_area_m2");
   requireNonNegativeNumber(record, "road_overlap_m2");
@@ -203,6 +242,87 @@ export function validatePlannedRoadParcelProperties(
   }
   requireIsoDate(record, "source_updated_at");
   requireIsoDate(record, "ownership_checked_at", true);
+
+  const status = record.ownership_status as PlannedRoadOwnershipStatus;
+  const evidence = record.ownership_evidence as PlannedRoadOwnershipEvidence;
+  const entities = record.public_entities as SanitizedPublicEntity[];
+  const secondary = record.secondary_evidence_labels as string[];
+  const decision: Record<
+    PlannedRoadOwnershipStatus,
+    { evidence: PlannedRoadOwnershipEvidence; publicEntities: "required" | "empty" }
+  > = {
+    confirmed_public: { evidence: "land_register", publicEntities: "required" },
+    mixed_public: { evidence: "land_register", publicEntities: "required" },
+    cadastre_public: { evidence: "cadastre", publicEntities: "required" },
+    city_gis_public: { evidence: "city_gis", publicEntities: "required" },
+    not_confirmed_public: {
+      evidence: "land_register",
+      publicEntities: "empty",
+    },
+    unresolved: { evidence: "none", publicEntities: "empty" },
+    no_data: { evidence: "none", publicEntities: "empty" },
+  };
+  const expected = decision[status];
+  if (evidence !== expected.evidence) {
+    throw new Error(
+      `ownership_status ${status} zahtijeva ownership_evidence ${expected.evidence}`,
+    );
+  }
+  if (expected.publicEntities === "required" && entities.length === 0) {
+    throw new Error(`ownership_status ${status} zahtijeva public_entities`);
+  }
+  if (expected.publicEntities === "empty" && entities.length !== 0) {
+    throw new Error(`ownership_status ${status} ne dopušta public_entities`);
+  }
+
+  const hasConflict = record.has_evidence_conflict as boolean;
+  if (secondary.length > 1) {
+    throw new Error("secondary_evidence_labels smije sadržavati najviše jedan zapis");
+  }
+  if (hasConflict && secondary.length === 0) {
+    throw new Error(
+      "has_evidence_conflict zahtijeva secondary_evidence_labels",
+    );
+  }
+  if (hasConflict && !secondary.every((label) => label.startsWith("GIS Grada: "))) {
+    throw new Error(
+      "has_evidence_conflict smije upućivati samo na sanitizirani GIS secondary zapis",
+    );
+  }
+  if (
+    (status === "no_data" || status === "unresolved") &&
+    secondary.length !== 0
+  ) {
+    throw new Error(`ownership_status ${status} ne dopušta secondary evidence`);
+  }
+  if (
+    status === "city_gis_public" &&
+    (hasConflict ||
+      !secondary.every(
+        (label) => label === "Ciljana provjera nije razriješena",
+      ))
+  ) {
+    throw new Error(
+      "city_gis_public ne dopušta conflict ni nesanitizirani secondary evidence",
+    );
+  }
+  if (
+    status !== "city_gis_public" &&
+    status !== "no_data" &&
+    status !== "unresolved" &&
+    !secondary.every((label) => label.startsWith("GIS Grada: "))
+  ) {
+    throw new Error("secondary evidence mora biti sanitizirani GIS zaključak");
+  }
+  if (
+    (status === "mixed_public" || status === "not_confirmed_public") &&
+    secondary.length > 0 &&
+    !hasConflict
+  ) {
+    throw new Error(
+      `ownership_status ${status} uz GIS secondary evidence zahtijeva conflict`,
+    );
+  }
 }
 
 function gisEntity(cityGis: PublicParcelProperties): SanitizedPublicEntity {

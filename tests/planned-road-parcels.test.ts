@@ -23,7 +23,8 @@ import {
   shouldIsolateMapBackground,
   syncDossierMapLayout,
 } from "../src/lib/map-views";
-import { dosjeZaTocku } from "../src/lib/dosje";
+import { dosjeZaTocku, nadiCestice } from "../src/lib/dosje";
+import { GET as getParcelDossier } from "../src/app/api/cestica/route";
 
 const polygon: Polygon = {
   type: "Polygon",
@@ -234,6 +235,159 @@ test("validator rejects source-only private fields and OIB-like values", () => {
   );
 });
 
+test("validator accepts every coherent ownership decision", () => {
+  const cases: PlannedRoadParcelProperties[] = [
+    base,
+    {
+      ...base,
+      ownership_status: "unresolved",
+      secondary_evidence_labels: [],
+    },
+    {
+      ...base,
+      ownership_status: "confirmed_public",
+      ownership_evidence: "land_register",
+      public_entities: targeted.public_entities,
+      ownership_checked_at: "2026-08-02",
+    },
+    {
+      ...base,
+      ownership_status: "mixed_public",
+      ownership_evidence: "land_register",
+      public_entities: targeted.public_entities,
+      has_evidence_conflict: true,
+      secondary_evidence_labels: [
+        "GIS Grada: Republika Hrvatska · vlasništvo",
+      ],
+      ownership_checked_at: "2026-08-02",
+    },
+    {
+      ...base,
+      ownership_status: "cadastre_public",
+      ownership_evidence: "cadastre",
+      public_entities: targeted.public_entities,
+      ownership_checked_at: "2026-08-02",
+    },
+    {
+      ...base,
+      ownership_status: "city_gis_public",
+      ownership_evidence: "city_gis",
+      public_entities: [
+        {
+          id: "city-gis-state",
+          label: "Republika Hrvatska",
+          category: "state",
+        },
+      ],
+      secondary_evidence_labels: [
+        "Ciljana provjera nije razriješena",
+      ],
+    },
+    {
+      ...base,
+      ownership_status: "not_confirmed_public",
+      ownership_evidence: "land_register",
+      ownership_checked_at: "2026-08-02",
+    },
+  ];
+  for (const record of cases) {
+    assert.doesNotThrow(() => validatePlannedRoadParcelProperties(record));
+  }
+});
+
+test("validator rejects contradictory status, evidence, and public entities", () => {
+  const contradictory = [
+    {
+      ...base,
+      ownership_status: "confirmed_public" as const,
+    },
+    {
+      ...base,
+      ownership_status: "no_data" as const,
+      ownership_evidence: "city_gis" as const,
+      public_entities: [
+        {
+          id: "city-gis-city",
+          label: "Grad / JLS",
+          category: "city" as const,
+        },
+      ],
+    },
+    {
+      ...base,
+      ownership_status: "not_confirmed_public" as const,
+      ownership_evidence: "land_register" as const,
+      public_entities: targeted.public_entities,
+    },
+  ];
+  for (const record of contradictory) {
+    assert.throws(
+      () => validatePlannedRoadParcelProperties(record),
+      /ownership|public_entities/i,
+    );
+  }
+});
+
+test("validator enforces canonical parcel identity and conflict coherence", () => {
+  assert.throws(
+    () =>
+      validatePlannedRoadParcelProperties({
+        ...base,
+        parcel_id: "SPLIT:273/2",
+      }),
+    /parcel_id.*parcel_number/i,
+  );
+  assert.throws(
+    () =>
+      validatePlannedRoadParcelProperties({
+        ...base,
+        has_evidence_conflict: true,
+      }),
+    /conflict.*secondary/i,
+  );
+  assert.throws(
+    () =>
+      validatePlannedRoadParcelProperties({
+        ...base,
+        ownership_status: "city_gis_public",
+        ownership_evidence: "city_gis",
+        public_entities: [
+          {
+            id: "city-gis-city",
+            label: "Grad / JLS",
+            category: "city",
+          },
+        ],
+        has_evidence_conflict: true,
+        secondary_evidence_labels: ["Neprovjereni slobodni tekst"],
+      }),
+    /conflict|secondary/i,
+  );
+  for (const ownershipStatus of [
+    "mixed_public",
+    "not_confirmed_public",
+  ] as const) {
+    assert.throws(
+      () =>
+        validatePlannedRoadParcelProperties({
+          ...base,
+          ownership_status: ownershipStatus,
+          ownership_evidence: "land_register",
+          public_entities:
+            ownershipStatus === "mixed_public"
+              ? targeted.public_entities
+              : [],
+          has_evidence_conflict: false,
+          secondary_evidence_labels: [
+            "GIS Grada: Republika Hrvatska · vlasništvo",
+          ],
+          ownership_checked_at: "2026-08-02",
+        }),
+      /conflict|secondary/i,
+    );
+  }
+});
+
 test("summary follows the same status filter as the map", () => {
   const feature = (properties: PlannedRoadParcelProperties): Feature<Polygon, PlannedRoadParcelProperties> => ({
     type: "Feature",
@@ -312,11 +466,77 @@ test("parcel dossier returns the same planned-road impact and ownership evidence
   );
   assert.ok(selected);
   const [lng, lat] = pointOnFeature(selected).geometry.coordinates;
-  const dossier = await dosjeZaTocku(lng, lat);
+  const dossier = await dosjeZaTocku(lng, lat, "SPLIT:273/1");
   assert.equal(dossier.planiranaCestaCestica?.parcel_id, "SPLIT:273/1");
   assert.equal(
     dossier.planiranaCestaCestica?.road_overlap_m2,
     selected.properties.road_overlap_m2,
   );
   assert.equal("owner" in (dossier.planiranaCestaCestica ?? {}), false);
+});
+
+test("exact parcel identity keeps dossier header and planned-road record aligned", async () => {
+  const collection = JSON.parse(
+    await readFile(
+      "public/geo/analiza/cestice-planiranih-cesta.geojson",
+      "utf8",
+    ),
+  ) as FeatureCollection<Polygon, PlannedRoadParcelProperties>;
+  for (const parcelId of ["SPLIT:273/1", "SPLIT:276/1"]) {
+    const selected = collection.features.find(
+      (feature) => feature.properties.parcel_id === parcelId,
+    );
+    assert.ok(selected);
+    const [lng, lat] = pointOnFeature(selected).geometry.coordinates;
+    const dossier = await dosjeZaTocku(lng, lat, parcelId);
+    assert.equal(
+      `${String(dossier.cestica?.ko)}:${String(dossier.cestica?.cestica)}`,
+      parcelId,
+    );
+    assert.equal(dossier.planiranaCestaCestica?.parcel_id, parcelId);
+  }
+});
+
+test("coordinate-only dossier lookups remain supported and never mix parcel identities", async () => {
+  const collection = JSON.parse(
+    await readFile(
+      "public/geo/analiza/cestice-planiranih-cesta.geojson",
+      "utf8",
+    ),
+  ) as FeatureCollection<Polygon, PlannedRoadParcelProperties>;
+  const selected = collection.features.find(
+    (feature) => feature.properties.parcel_id === "SPLIT:273/1",
+  );
+  assert.ok(selected);
+  const [lng, lat] = pointOnFeature(selected).geometry.coordinates;
+  const dossier = await dosjeZaTocku(lng, lat);
+  const headerId = dossier.cestica
+    ? `${String(dossier.cestica.ko)}:${String(dossier.cestica.cestica)}`
+    : null;
+  assert.ok(
+    dossier.planiranaCestaCestica === null ||
+      dossier.planiranaCestaCestica.parcel_id === headerId,
+  );
+});
+
+test("parcel search and API carry canonical identity into exact lookup", async () => {
+  const hit = (await nadiCestice("273/1")).find(
+    (candidate) => candidate.parcel_id === "SPLIT:273/1",
+  );
+  assert.ok(hit);
+  assert.ok(hit.parcel_id);
+  const response = await getParcelDossier(
+    new Request(
+      `http://localhost/api/cestica?lat=${hit.lat}&lng=${hit.lng}&parcel_id=${encodeURIComponent(hit.parcel_id)}`,
+    ),
+  );
+  assert.equal(response.status, 200);
+  const dossier = (await response.json()) as Awaited<
+    ReturnType<typeof dosjeZaTocku>
+  >;
+  assert.equal(
+    `${String(dossier.cestica?.ko)}:${String(dossier.cestica?.cestica)}`,
+    "SPLIT:273/1",
+  );
+  assert.equal(dossier.planiranaCestaCestica?.parcel_id, "SPLIT:273/1");
 });

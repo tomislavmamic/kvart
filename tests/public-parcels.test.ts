@@ -126,7 +126,11 @@ test("real parcel dossier returns the same sanitized public evidence", async () 
   const selected = collection.features[0];
   const point = pointOnFeature(selected);
   const [lng, lat] = point.geometry.coordinates;
-  const dossier = await dosjeZaTocku(lng, lat);
+  const dossier = await dosjeZaTocku(
+    lng,
+    lat,
+    selected.properties.parcel_id,
+  );
   assert.equal(dossier.javnaCestica?.parcel_id, selected.properties.parcel_id);
   assert.equal("zk_vlasnik" in (dossier.javnaCestica ?? {}), false);
 });

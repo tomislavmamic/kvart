@@ -57,7 +57,9 @@ import {
   type TargetedOwnershipProperties,
 } from "@/lib/targeted-ownership";
 import {
+  canonicalParcelId,
   matchesPlannedRoadParcel,
+  normalizeCanonicalParcelId,
   plannedRoadParcelDossierFacts,
   plannedRoadOwnershipStatusTone,
   plannedRoadPanelToneClasses,
@@ -147,6 +149,7 @@ const P = {
   usporedba: "usporedba",
   prikaz: "prikaz",
   cestica: "kc",
+  parcelId: "pid",
   sredina: "c",
   zum: "z",
 } as const;
@@ -159,6 +162,7 @@ interface StanjeKarte {
   comparisonId: string | null;
   nacin: "obris" | "klizac";
   cestica: [number, number] | null;
+  parcelId: string | null;
 }
 
 /**
@@ -213,6 +217,7 @@ function izAdrese(): Partial<StanjeKarte> & {
   const prikaz = q.get(P.prikaz);
   if (prikaz === "klizac" || prikaz === "obris") out.nacin = prikaz;
   out.cestica = par(q.get(P.cestica)) ?? null;
+  out.parcelId = normalizeCanonicalParcelId(q.get(P.parcelId));
   out.sredina = par(q.get(P.sredina));
   const z = Number(q.get(P.zum));
   if (Number.isFinite(z) && z >= 12 && z <= 19) out.zum = z;
@@ -228,6 +233,7 @@ function uAdresu(s: StanjeKarte, sredina: [number, number], zum: number) {
   if (s.comparisonId) q.set(P.usporedba, s.comparisonId);
   if (s.nacin !== "obris") q.set(P.prikaz, s.nacin);
   if (s.cestica) q.set(P.cestica, s.cestica.map((n) => n.toFixed(6)).join(","));
+  if (s.parcelId) q.set(P.parcelId, s.parcelId);
   q.set(P.sredina, sredina.map((n) => n.toFixed(5)).join(","));
   q.set(P.zum, String(zum));
   window.history.replaceState(null, "", `?${q}`);
@@ -368,9 +374,11 @@ export function MapClient() {
   const [dosje, setDosje] = useState<Dosje | null>(null);
   const [dosjeUcitavanje, setDosjeUcitavanje] = useState(false);
   const [dosjeGreska, setDosjeGreska] = useState<string | null>(null);
-  // Točka po kojoj je dosje otvoren — jedino što ide u adresu, jer čestica
-  // se iz nje uvijek može ponovno pogoditi.
+  // Točka po kojoj je dosje otvoren ide u adresu za stare koordinatne veze;
+  // kad klik ili pretraga znaju kanonski ID, ide i on kako se preklopljene
+  // geometrije ne bi pri ponovnom otvaranju zamijenile susjednom česticom.
   const [cestica, setCestica] = useState<[number, number] | null>(null);
+  const [parcelId, setParcelId] = useState<string | null>(null);
   // Svaki klik dobiva svoj broj; kad se odgovor vrati, upisuje se samo ako
   // je u međuvremenu nije pretekao noviji klik.
   const dosjeZahtjev = useRef(0);
@@ -405,7 +413,12 @@ export function MapClient() {
     }).addTo(map);
   };
 
-  const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
+  const otvoriDosje = useRef((
+    lat: number,
+    lng: number,
+    oznaci?: Isticanje,
+    selectedParcelId?: string,
+  ) => {
     const moj = ++dosjeZahtjev.current;
     istaknuto.current?.vrati();
     istaknuto.current = oznaci ?? null;
@@ -415,14 +428,18 @@ export function MapClient() {
     // i duboka poveznica nisu imali ništa. Biljeg stoji uvijek.
     postaviBiljeg(lat, lng);
     setCestica([lat, lng]);
+    setParcelId(selectedParcelId ?? null);
     setDosje(null);
     setDosjeGreska(null);
     setDosjeUcitavanje(true);
     void (async () => {
       try {
-        const res = await fetch(
-          `/api/cestica?lat=${lat.toFixed(6)}&lng=${lng.toFixed(6)}`
-        );
+        const query = new URLSearchParams({
+          lat: lat.toFixed(6),
+          lng: lng.toFixed(6),
+        });
+        if (selectedParcelId) query.set("parcel_id", selectedParcelId);
+        const res = await fetch(`/api/cestica?${query}`);
         const d = (await res.json()) as Dosje & { error?: string };
         if (moj !== dosjeZahtjev.current) return;
         if (!res.ok) setDosjeGreska(d.error ?? "Nema podataka.");
@@ -455,6 +472,7 @@ export function MapClient() {
     if (a.comparisonId !== undefined) setComparisonId(a.comparisonId);
     if (a.nacin) setNacin(a.nacin);
     if (a.cestica) setCestica(a.cestica);
+    if (a.parcelId) setParcelId(a.parcelId);
     setHidriran(true);
   }
 
@@ -578,7 +596,13 @@ export function MapClient() {
       }
 
       // Čestica iz adrese: otvori dosje čim je karta spremna.
-      if (adr.cestica) otvoriDosje.current(adr.cestica[0], adr.cestica[1]);
+      if (adr.cestica)
+        otvoriDosje.current(
+          adr.cestica[0],
+          adr.cestica[1],
+          undefined,
+          adr.parcelId ?? undefined,
+        );
     })();
     return () => {
       cancelled = true;
@@ -649,6 +673,7 @@ export function MapClient() {
           comparisonId,
           nacin,
           cestica,
+          parcelId,
         },
         [c.lat, c.lng],
         map.getZoom()
@@ -659,7 +684,7 @@ export function MapClient() {
     return () => {
       map.off("moveend zoomend", zapisi);
     };
-  }, [viewId, activeIds, baseId, dimValue, comparisonId, nacin, cestica, ready, hidriran, upit]);
+  }, [viewId, activeIds, baseId, dimValue, comparisonId, nacin, cestica, parcelId, ready, hidriran, upit]);
 
   // Što se crta = neovisni slojevi + odabrana vrijednost svake dimenzije
   // + sloj usporedbe ako je uključen.
@@ -1077,6 +1102,7 @@ export function MapClient() {
     setDosjeGreska(null);
     setDosjeUcitavanje(false);
     setCestica(null);
+    setParcelId(null);
   }, []);
 
   // Escape zatvara ono što je najgore otvoreno — dosje prije ploča. Prije
@@ -1174,7 +1200,9 @@ export function MapClient() {
             toggleLayer("cestice-planiranih-cesta");
             setTimeout(() => toggleLayer("cestice-planiranih-cesta"), 0);
           }}
-          onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
+          onOtvoriCesticu={(lat, lng, selectedParcelId) =>
+            otvoriDosje.current(lat, lng, undefined, selectedParcelId)
+          }
           open={panelOpen}
           onOpen={otvoriTraku}
           usko={usko}
@@ -1379,7 +1407,7 @@ function Sidebar(props: {
   filtriPlaniranihCesta: PlannedRoadParcelFilters;
   onFiltriPlaniranihCesta: (filters: PlannedRoadParcelFilters) => void;
   onPonoviCesticePlaniranihCesta: () => void;
-  onOtvoriCesticu: (lat: number, lng: number) => void;
+  onOtvoriCesticu: (lat: number, lng: number, parcelId?: string) => void;
   open: boolean;
   onOpen: (v: boolean) => void;
   usko: boolean;
@@ -1873,7 +1901,7 @@ function Sidebar(props: {
 function TraziCesticu({
   onOtvori,
 }: {
-  onOtvori: (lat: number, lng: number) => void;
+  onOtvori: (lat: number, lng: number, parcelId?: string) => void;
 }) {
   const [q, setQ] = useState("");
   // Rezultat nosi upit za koji je dobiven. Time se „učitavam” i „nema ništa”
@@ -1881,7 +1909,13 @@ function TraziCesticu({
   // sinkrono, pa nema kaskadnog iscrtavanja pri svakom slovu.
   const [odgovor, setOdgovor] = useState<{
     q: string;
-    lista: { naziv: string; opis: string; lat: number; lng: number }[];
+    lista: {
+      naziv: string;
+      opis: string;
+      lat: number;
+      lng: number;
+      parcel_id?: string;
+    }[];
   }>({ q: "", lista: [] });
   const zahtjev = useRef(0);
   const upit = q.trim();
@@ -1899,7 +1933,13 @@ function TraziCesticu({
         try {
           const r = await fetch(`/api/cestica/trazi?q=${encodeURIComponent(u)}`);
           const d = (await r.json()) as {
-            pogodci?: { naziv: string; opis: string; lat: number; lng: number }[];
+            pogodci?: {
+              naziv: string;
+              opis: string;
+              lat: number;
+              lng: number;
+              parcel_id?: string;
+            }[];
           };
           if (moj === zahtjev.current) setOdgovor({ q: u, lista: d.pogodci ?? [] });
         } catch {
@@ -1950,7 +1990,7 @@ function TraziCesticu({
             <li key={`${p.naziv}-${p.lat}-${p.lng}`}>
               <button
                 onClick={() => {
-                  onOtvori(p.lat, p.lng);
+                  onOtvori(p.lat, p.lng, p.parcel_id);
                   setQ("");
                 }}
                 className="fokus meta flex w-full items-baseline gap-2 rounded px-1 text-left hover:bg-zinc-100"
@@ -3148,7 +3188,12 @@ function dodajSloj(
   okno: string | undefined,
   registar: Map<string, Postavljeni>,
   spremnik: Map<string, GeoJSON.FeatureCollection>,
-  otvoriDosje: (lat: number, lng: number, oznaci?: Isticanje) => void,
+  otvoriDosje: (
+    lat: number,
+    lng: number,
+    oznaci?: Isticanje,
+    parcelId?: string,
+  ) => void,
   pogodakSloja: { current: number },
   stanje: (id: string, s: "ucitava" | "greska" | null) => void,
   javniFiltri?: PublicParcelFilters,
@@ -3416,16 +3461,27 @@ function dodajSloj(
             lyr.on("click", (e) => {
               const { lat, lng } = (e as LeafletNS.LeafletMouseEvent).latlng;
               const put = lyr as LeafletNS.Path;
-              otvoriDosje(lat, lng, {
-                istakni: () => {
-                  put.setStyle(STIL_ODABRANO);
-                  put.bringToFront();
+              otvoriDosje(
+                lat,
+                lng,
+                {
+                  istakni: () => {
+                    put.setStyle(STIL_ODABRANO);
+                    put.bringToFront();
+                  },
+                  // Vraćanje ide preko sloja koji je česticu i nacrtao —
+                  // izvorni stil dolazi iz `style` funkcije i drugdje ga
+                  // nemamo zapisanog.
+                  vrati: () => gj.resetStyle(put),
                 },
-                // Vraćanje ide preko sloja koji je česticu i nacrtao —
-                // izvorni stil dolazi iz `style` funkcije i drugdje ga
-                // nemamo zapisanog.
-                vrati: () => gj.resetStyle(put),
-              });
+                normalizeCanonicalParcelId(p.parcel_id) ??
+                  canonicalParcelId(p.ko, p.cestica) ??
+                  canonicalParcelId(
+                    p.cadastral_municipality,
+                    p.parcel_number,
+                  ) ??
+                  undefined,
+              );
             });
             return;
           }

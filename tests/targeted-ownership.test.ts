@@ -159,7 +159,11 @@ test("real parcel dossier returns the same sanitized targeted ownership evidence
   );
   assert.ok(selected);
   const [lng, lat] = pointOnFeature(selected).geometry.coordinates;
-  const dossier = await dosjeZaTocku(lng, lat);
+  const dossier = await dosjeZaTocku(
+    lng,
+    lat,
+    selected.properties.parcel_id,
+  );
   assert.equal(dossier.ciljanaProvjeraVlasnistva?.parcel_id, "SPLIT:273/1");
   assert.deepEqual(dossier.ciljanaProvjeraVlasnistva?.public_entities, base.public_entities);
 });
