@@ -314,14 +314,23 @@ export function validatePlannedRoadParcelProperties(
   ) {
     throw new Error("secondary evidence mora biti sanitizirani GIS zaključak");
   }
-  if (
-    (status === "mixed_public" || status === "not_confirmed_public") &&
-    secondary.length > 0 &&
-    !hasConflict
-  ) {
-    throw new Error(
-      `ownership_status ${status} uz GIS secondary evidence zahtijeva conflict`,
+  if (secondary.length > 0 && isResolvedTargetedStatus(status)) {
+    const gisLevel = gisPublicLevelFromLabel(secondary[0]);
+    if (!gisLevel) {
+      throw new Error(
+        "secondary evidence mora sadržavati prepoznatljivu javnu razinu GIS-a",
+      );
+    }
+    const expectedConflict = resolvedEvidenceConflictsWithGis(
+      status,
+      entities,
+      gisLevel,
     );
+    if (hasConflict !== expectedConflict) {
+      throw new Error(
+        `has_evidence_conflict mora biti ${expectedConflict} za navedene javne razine`,
+      );
+    }
   }
 }
 
@@ -338,17 +347,65 @@ function gisLabel(cityGis: PublicParcelProperties): string {
   return `GIS Grada: ${PUBLIC_LEVEL_LABELS[cityGis.public_level]} · ${ownershipForm.charAt(0).toLowerCase()}${ownershipForm.slice(1)}`;
 }
 
-function targetedPublicLevels(targeted: TargetedOwnershipProperties): PublicLevel[] {
-  return targeted.public_entities
+type ResolvedTargetedStatus =
+  | "confirmed_public"
+  | "mixed_public"
+  | "cadastre_public"
+  | "not_confirmed_public";
+
+function isResolvedTargetedStatus(
+  status: PlannedRoadOwnershipStatus,
+): status is ResolvedTargetedStatus {
+  return (
+    status === "confirmed_public" ||
+    status === "mixed_public" ||
+    status === "cadastre_public" ||
+    status === "not_confirmed_public"
+  );
+}
+
+function gisPublicLevelFromLabel(label: string): PublicLevel | null {
+  for (const [level, publicLabel] of Object.entries(PUBLIC_LEVEL_LABELS) as [
+    PublicLevel,
+    string,
+  ][]) {
+    if (label.startsWith(`GIS Grada: ${publicLabel} · `)) return level;
+  }
+  return null;
+}
+
+function publicEntityLevels(
+  entities: ReadonlyArray<SanitizedPublicEntity>,
+): PublicLevel[] {
+  return entities
     .map((entity) => entity.category)
     .filter((category): category is PublicLevel => category === "city" || category === "state" || category === "county");
 }
 
-function conflictsWithGis(targeted: TargetedOwnershipProperties, cityGis: PublicParcelProperties): boolean {
-  if (targeted.verification_status === "private_or_other") return true;
-  if (targeted.verification_status === "mixed_public") return true;
-  const levels = targetedPublicLevels(targeted);
-  return levels.length > 0 && !levels.includes(cityGis.public_level);
+function resolvedEvidenceConflictsWithGis(
+  status: ResolvedTargetedStatus,
+  entities: ReadonlyArray<SanitizedPublicEntity>,
+  gisLevel: PublicLevel,
+): boolean {
+  if (status === "not_confirmed_public" || status === "mixed_public")
+    return true;
+  const levels = publicEntityLevels(entities);
+  return levels.length > 0 && !levels.includes(gisLevel);
+}
+
+function conflictsWithGis(
+  targeted: TargetedOwnershipProperties,
+  cityGis: PublicParcelProperties,
+): boolean {
+  const status: ResolvedTargetedStatus =
+    targeted.verification_status === "private_or_other"
+      ? "not_confirmed_public"
+      : targeted.verification_status as ResolvedTargetedStatus;
+  return resolvedEvidenceConflictsWithGis(
+    status,
+    targeted.public_entities,
+    cityGis.public_level,
+  );
 }
 
 function hasLandRegisterEvidence(targeted: TargetedOwnershipProperties): boolean {

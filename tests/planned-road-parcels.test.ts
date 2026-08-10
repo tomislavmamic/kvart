@@ -388,6 +388,62 @@ test("validator enforces canonical parcel identity and conflict coherence", () =
   }
 });
 
+test("validator derives resolved public-level conflicts from sanitized GIS evidence", () => {
+  const cityEntity = [
+    { id: "grad-split", label: "Grad Split", category: "city" as const },
+  ];
+  for (const ownershipStatus of [
+    "confirmed_public",
+    "cadastre_public",
+  ] as const) {
+    const evidence =
+      ownershipStatus === "confirmed_public" ? "land_register" : "cadastre";
+    const differing = {
+      ...base,
+      ownership_status: ownershipStatus,
+      ownership_evidence: evidence,
+      public_entities: cityEntity,
+      secondary_evidence_labels: [
+        "GIS Grada: Republika Hrvatska · vlasništvo",
+      ],
+      ownership_checked_at: "2026-08-02",
+    };
+    assert.throws(
+      () =>
+        validatePlannedRoadParcelProperties({
+          ...differing,
+          has_evidence_conflict: false,
+        }),
+      /has_evidence_conflict.*true/i,
+    );
+    assert.doesNotThrow(() =>
+      validatePlannedRoadParcelProperties({
+        ...differing,
+        has_evidence_conflict: true,
+      }),
+    );
+
+    const matching = {
+      ...differing,
+      secondary_evidence_labels: ["GIS Grada: Grad / JLS · vlasništvo"],
+    };
+    assert.doesNotThrow(() =>
+      validatePlannedRoadParcelProperties({
+        ...matching,
+        has_evidence_conflict: false,
+      }),
+    );
+    assert.throws(
+      () =>
+        validatePlannedRoadParcelProperties({
+          ...matching,
+          has_evidence_conflict: true,
+        }),
+      /has_evidence_conflict.*false/i,
+    );
+  }
+});
+
 test("summary follows the same status filter as the map", () => {
   const feature = (properties: PlannedRoadParcelProperties): Feature<Polygon, PlannedRoadParcelProperties> => ({
     type: "Feature",

@@ -46,6 +46,93 @@ test("invalid source geometry is rejected instead of being dropped", () => {
   );
 });
 
+test("a non-overlapping unclosed polygon ring fails before bbox rejection", () => {
+  assert.throws(
+    () =>
+      validatePolygonFeatureCollection(
+        {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: { tema: "promet" },
+              geometry: {
+                type: "Polygon",
+                coordinates: [
+                  [
+                    [20, 50],
+                    [21, 50],
+                    [21, 51],
+                    [20, 51],
+                  ],
+                ],
+              },
+            },
+          ],
+        },
+        "planned roads",
+      ),
+    /planned roads.*feature 0.*ring 0.*closed/i,
+  );
+});
+
+test("polygon coordinate validation rejects malformed rings and multipolygons", () => {
+  const invalidGeometries = [
+    { type: "Polygon", coordinates: [] },
+    {
+      type: "Polygon",
+      coordinates: [[[16.49, 43.52], [16.5, 43.52], [16.49, 43.52]]],
+    },
+    {
+      type: "Polygon",
+      coordinates: [
+        [[16.49, 43.52], [16.5], [16.5, 43.53], [16.49, 43.52]],
+      ],
+    },
+    {
+      type: "Polygon",
+      coordinates: [
+        [
+          [16.49, 43.52],
+          [Number.NaN, 43.52],
+          [16.5, 43.53],
+          [16.49, 43.52],
+        ],
+      ],
+    },
+    { type: "MultiPolygon", coordinates: [] },
+    {
+      type: "MultiPolygon",
+      coordinates: [
+        [
+          [
+            [16.49, 43.52],
+            [16.5, 43.52],
+            [16.5, 43.53],
+            [16.49, 43.52],
+          ],
+        ],
+        [],
+      ],
+    },
+  ];
+  for (const [index, geometry] of invalidGeometries.entries()) {
+    assert.throws(
+      () =>
+        validatePolygonFeatureCollection(
+          {
+            type: "FeatureCollection",
+            features: [
+              { type: "Feature", properties: {}, geometry },
+            ],
+          },
+          `source ${index}`,
+        ),
+      new RegExp(`source ${index}.*feature 0`, "i"),
+    );
+  }
+});
+
 test("invalid parcel identity and area fail instead of looking below threshold", () => {
   const roads = [
     square(16.49, 43.52, 16.491, 43.521, {

@@ -35,6 +35,40 @@ const EXPECTED_SELECTED = 338;
 const EXPECTED_WITH_EVIDENCE = 54;
 const SOURCE_UPDATED_AT = "2025-10-03";
 
+function validatePosition(value: unknown, context: string): void {
+  if (
+    !Array.isArray(value) ||
+    value.length !== 2 ||
+    typeof value[0] !== "number" ||
+    typeof value[1] !== "number" ||
+    !Number.isFinite(value[0]) ||
+    !Number.isFinite(value[1])
+  ) {
+    throw new Error(`${context} must be a finite numeric coordinate pair`);
+  }
+}
+
+function validateLinearRing(value: unknown, context: string): void {
+  if (!Array.isArray(value)) throw new Error(`${context} must be an array`);
+  if (value.length < 4)
+    throw new Error(`${context} must contain at least four positions`);
+  for (const [positionIndex, position] of value.entries()) {
+    validatePosition(position, `${context} position ${positionIndex}`);
+  }
+  const first = value[0] as [number, number];
+  const last = value[value.length - 1] as [number, number];
+  if (first[0] !== last[0] || first[1] !== last[1])
+    throw new Error(`${context} must be closed`);
+}
+
+function validatePolygonCoordinates(value: unknown, context: string): void {
+  if (!Array.isArray(value) || value.length === 0)
+    throw new Error(`${context} must contain at least one linear ring`);
+  for (const [ringIndex, ring] of value.entries()) {
+    validateLinearRing(ring, `${context} ring ${ringIndex}`);
+  }
+}
+
 export function validatePolygonFeatureCollection(
   value: unknown,
   sourceLabel: string,
@@ -58,10 +92,37 @@ export function validatePolygonFeatureCollection(
     if (!feature.properties || typeof feature.properties !== "object")
       throw new Error(`${sourceLabel}: feature ${index} properties must be an object`);
     try {
+      if (feature.geometry.type === "Polygon") {
+        validatePolygonCoordinates(
+          feature.geometry.coordinates,
+          `${sourceLabel}: feature ${index} polygon 0`,
+        );
+      } else {
+        if (
+          !Array.isArray(feature.geometry.coordinates) ||
+          feature.geometry.coordinates.length === 0
+        ) {
+          throw new Error(
+            `${sourceLabel}: feature ${index} multipolygon must contain at least one polygon`,
+          );
+        }
+        for (const [polygonIndex, polygon] of feature.geometry.coordinates.entries()) {
+          validatePolygonCoordinates(
+            polygon,
+            `${sourceLabel}: feature ${index} polygon ${polygonIndex}`,
+          );
+        }
+      }
       const measuredArea = area(feature);
       if (!Number.isFinite(measuredArea) || measuredArea <= 0)
         throw new Error("geometry area must be positive and finite");
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.startsWith(`${sourceLabel}: feature ${index}`)
+      ) {
+        throw error;
+      }
       throw new Error(
         `${sourceLabel}: feature ${index} has invalid polygon geometry`,
         { cause: error },
