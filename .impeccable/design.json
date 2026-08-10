@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-31T00:00:00.000Z",
+  "generatedAt": "2026-08-10T09:15:22.000Z",
   "title": "Design System: Naš kvart",
   "extensions": {
     "colorMeta": {
@@ -274,7 +274,7 @@
       "refersTo": "input",
       "description": "Form field. The focus ring shown here is the doctrine — the incumbent form fields are missing it.",
       "html": "<label class='ds-field'><span class='ds-field__label'>Naslov problema</span><input class='ds-input' type='text' placeholder='Npr. rasvjeta ne radi u Dračevačkoj' /></label>",
-      "css": ".ds-field { display: block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-field__label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 600; color: #3f3f46; } .ds-input { width: 100%; background: #fff; color: #18181b; border: 1px solid #d4d4d8; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font: 400 1rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input::placeholder { color: #9f9fa9; } .ds-input:hover { border-color: #9f9fa9; } .ds-input:focus { outline: none; border-color: #007956; box-shadow: 0 0 0 2px rgb(0 121 86 / 0.25); }"
+      "css": ".ds-field { display: block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-field__label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 600; color: #3f3f46; } .ds-input { width: 100%; background: #fff; color: #18181b; border: 1px solid #d4d4d8; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font: 400 1rem/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: border-color 150ms ease; } .ds-input::placeholder { color: #9f9fa9; } .ds-input:hover { border-color: #9f9fa9; } .ds-input:focus-visible { outline: 2px solid #007956; outline-offset: 2px; border-color: #007956; }"
     },
     {
       "name": "View Chip",
@@ -326,6 +326,11 @@
       {
         "name": "The Contrast Floor Rule",
         "body": "No white label on a green lighter than Maslina (#007956). Measured: white on maslina is 5.43 : 1 and passes; white on maslina-zivo is 3.65 : 1 and fails the 4.5 : 1 floor for normal text. The system's own accessibility commitment decides which green is allowed to carry a word, and the brighter one is for shapes, not sentences. Audit test: every filled control ships its ratio, not a vibe.",
+        "section": "colors"
+      },
+      {
+        "name": "The palette is code, not prose",
+        "body": "Authored colours are tokens in src/app/globals.css. New work uses their semantic names; inherited plan and GIS colours remain data and are deliberately not tokenised.",
         "section": "colors"
       },
       {

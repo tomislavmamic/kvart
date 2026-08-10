@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/prijedlozi", label: "Problemi i prijedlozi" },
   { href: "/karta", label: "Karta" },
+  { href: "/karepovac", label: "Karepovac" },
   { href: "/plan", label: "Izmjene GUP-a" },
   { href: "/dokumenti", label: "Dokumenti" },
   { href: "/podaci", label: "Prostorni podaci" },
@@ -34,13 +35,14 @@ export function SiteHeader() {
         </Link>
 
         {/* Desktop navigation */}
-        <nav className="hidden items-center gap-4 text-sm sm:flex">
+        <nav className="hidden items-center gap-3 text-sm lg:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={
-                pathname === link.href
+                pathname === link.href ||
+                (link.href !== "/" && pathname.startsWith(`${link.href}/`))
                   ? "font-medium text-zinc-900"
                   : "text-zinc-600 hover:text-zinc-900"
               }
@@ -63,7 +65,7 @@ export function SiteHeader() {
           aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
           aria-expanded={open}
           aria-controls="mobile-nav"
-          className="fokus meta inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 sm:hidden"
+          className="fokus meta inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 lg:hidden"
         >
           <Hamburger open={open} />
         </button>
@@ -73,7 +75,7 @@ export function SiteHeader() {
       {open && (
         <nav
           id="mobile-nav"
-          className="border-t border-zinc-200 bg-white px-4 pb-4 pt-2 sm:hidden"
+          className="border-t border-zinc-200 bg-white px-4 pb-4 pt-2 lg:hidden"
         >
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
@@ -82,7 +84,8 @@ export function SiteHeader() {
                 href={link.href}
                 onClick={close}
                 className={
-                  pathname === link.href
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(`${link.href}/`))
                     ? "rounded-lg bg-zinc-100 px-3 py-2.5 font-medium text-zinc-900"
                     : "rounded-lg px-3 py-2.5 text-zinc-700 hover:bg-zinc-100"
                 }
