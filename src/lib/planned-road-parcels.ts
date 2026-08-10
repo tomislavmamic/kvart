@@ -318,8 +318,11 @@ export function plannedRoadParcelDossierFacts(
   properties: PlannedRoadParcelProperties,
 ): string[] {
   const percentage = properties.road_overlap_percent.toFixed(1).replace(".", ",");
-  return [
+  const facts = [
     `Planirana cesta zahvaća ${Math.round(properties.road_overlap_m2)} m² · ${percentage} % čestice`,
     `Vlasništvo: ${PLANNED_ROAD_OWNERSHIP_STATUS_LABELS[properties.ownership_status].toLowerCase()}`,
   ];
+  const entities = properties.public_entities.map((entity) => entity.label).join(", ");
+  if (entities) facts.push(`Javni subjekt: ${entities}`);
+  return facts;
 }

@@ -161,6 +161,25 @@ test("dossier facts state the road impact and absence of ownership data", () => 
   ]);
 });
 
+test("dossier facts retain recognized sanitized public entity labels", () => {
+  assert.deepEqual(
+    plannedRoadParcelDossierFacts({
+      ...base,
+      ownership_status: "confirmed_public",
+      ownership_evidence: "land_register",
+      public_entities: [
+        { id: "grad-split", label: "Grad Split", category: "city" },
+      ],
+      ownership_checked_at: "2026-08-02",
+    }),
+    [
+      "Planirana cesta zahvaća 315 m² · 25,2 % čestice",
+      "Vlasništvo: potvrđeno javno — zk",
+      "Javni subjekt: Grad Split",
+    ],
+  );
+});
+
 test("all planned-road parcels are a resident question with the road footprint beneath them", () => {
   const view = MAP_VIEWS.find((candidate) => candidate.id === "cestice-planiranih-cesta");
   assert.deepEqual(
