@@ -21,12 +21,35 @@ export function SiteHeader() {
   const close = () => setOpen(false);
 
   return (
+    <SiteHeaderView
+      pathname={pathname}
+      open={open}
+      onToggle={() => setOpen((value) => !value)}
+      onClose={close}
+    />
+  );
+}
+
+type SiteHeaderViewProps = {
+  pathname: string;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+};
+
+export function SiteHeaderView({
+  pathname,
+  open,
+  onToggle,
+  onClose,
+}: SiteHeaderViewProps) {
+  return (
     <header className="relative z-30 border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
         <Link
           href="/"
-          onClick={close}
-          className="text-lg font-bold tracking-tight"
+          onClick={onClose}
+          className="whitespace-nowrap text-lg font-bold tracking-tight"
         >
           Naš kvart{" "}
           <span className="font-normal text-maslina">
@@ -35,7 +58,7 @@ export function SiteHeader() {
         </Link>
 
         {/* Desktop navigation */}
-        <nav className="hidden items-center gap-3 text-sm lg:flex">
+        <nav className="hidden items-center gap-3 text-sm xl:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -47,12 +70,12 @@ export function SiteHeader() {
                   : "text-zinc-600 hover:text-zinc-900"
               }
             >
-              {link.label}
+              <span className="whitespace-nowrap">{link.label}</span>
             </Link>
           ))}
           <Link
             href="/prijavi"
-            className="rounded-full bg-maslina px-4 py-2 font-semibold text-white hover:bg-maslina-tamna"
+            className="whitespace-nowrap rounded-full bg-maslina px-4 py-2 font-semibold text-white hover:bg-maslina-tamna"
           >
             Prijavi problem
           </Link>
@@ -61,11 +84,11 @@ export function SiteHeader() {
         {/* Mobile burger toggle */}
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={onToggle}
           aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
           aria-expanded={open}
           aria-controls="mobile-nav"
-          className="fokus meta inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 lg:hidden"
+          className="fokus meta inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 xl:hidden"
         >
           <Hamburger open={open} />
         </button>
@@ -75,14 +98,14 @@ export function SiteHeader() {
       {open && (
         <nav
           id="mobile-nav"
-          className="border-t border-zinc-200 bg-white px-4 pb-4 pt-2 lg:hidden"
+          className="border-t border-zinc-200 bg-white px-4 pb-4 pt-2 xl:hidden"
         >
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={close}
+                onClick={onClose}
                 className={
                   pathname === link.href ||
                   (link.href !== "/" && pathname.startsWith(`${link.href}/`))
@@ -95,7 +118,7 @@ export function SiteHeader() {
             ))}
             <Link
               href="/prijavi"
-              onClick={close}
+              onClick={onClose}
               className="mt-1 rounded-full bg-maslina px-4 py-2.5 text-center font-semibold text-white hover:bg-maslina-tamna"
             >
               Prijavi problem
