@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import type * as LeafletNS from "leaflet";
+import type { Feature, Geometry } from "geojson";
 import {
   BASE_LAYERS,
   OVERLAY_LAYERS,
@@ -19,15 +20,75 @@ import {
   COMPARISONS,
   UPRAVLJANI_SLOJEVI,
   KVART_CENTER,
+  MAP_MAX_BOUNDS,
+  shouldIsolateMapBackground,
+  syncDossierMapLayout,
   type Comparison,
+  type DossierPresentation,
   type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
 import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
 import { NA_SNAZI, PRETHODNI, natpisPlana } from "@/lib/plan-status";
+import {
+  formatPublicSourceDate,
+  matchesPublicParcel,
+  PUBLIC_LEVEL_LABELS,
+  publicParcelDossierFacts,
+  summarizePublicParcels,
+  validatePublicParcelProperties,
+  type PublicLevel,
+  type PublicParcelFilters,
+  type PublicParcelProperties,
+} from "@/lib/public-parcels";
+import {
+  matchesTargetedOwnership,
+  OWNERSHIP_COHORT_LABELS,
+  OWNERSHIP_STATUS_LABELS,
+  PUBLIC_ENTITY_CATEGORY_LABELS,
+  summarizeTargetedOwnership,
+  targetedOwnershipDossierFacts,
+  validateTargetedOwnershipProperties,
+  type OwnershipCohort,
+  type OwnershipVerificationStatus,
+  type PublicEntityCategory,
+  type TargetedOwnershipFilters,
+  type TargetedOwnershipProperties,
+} from "@/lib/targeted-ownership";
+import {
+  canonicalParcelId,
+  matchesPlannedRoadParcel,
+  normalizeCanonicalParcelId,
+  plannedRoadParcelDossierFacts,
+  plannedRoadOwnershipStatusTone,
+  plannedRoadPanelToneClasses,
+  PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS,
+  PLANNED_ROAD_OWNERSHIP_STATUS_LABELS,
+  summarizePlannedRoadParcels,
+  validatePlannedRoadParcelProperties,
+  type PlannedRoadOwnershipStatus,
+  type PlannedRoadParcelFilters,
+  type PlannedRoadParcelProperties,
+} from "@/lib/planned-road-parcels";
 
 const OVERLAY_BY_ID = new Map(OVERLAY_LAYERS.map((l) => [l.id, l]));
+const JAVNE_CESTICE_URL = "/geo/analiza/javne-cestice.geojson";
+const CILJANA_PROVJERA_URL = "/geo/analiza/ciljana-provjera-vlasnistva.geojson";
+const PLANIRANE_CESTE_CESTICE_URL = "/geo/analiza/cestice-planiranih-cesta.geojson";
+const POCETNI_JAVNI_FILTRI: PublicParcelFilters = {
+  levels: [],
+  purposes: [],
+  built: "all",
+};
+const POCETNI_CILJANI_FILTRI: TargetedOwnershipFilters = {
+  statuses: [],
+  entityCategories: [],
+  cohorts: [],
+  purposes: [],
+  built: "all",
+};
+const POCETNI_FILTRI_PLANIRANIH_CESTA: PlannedRoadParcelFilters = { statuses: [] };
 
 /**
  * Traži li korisnik da se ne miče?
@@ -88,6 +149,7 @@ const P = {
   usporedba: "usporedba",
   prikaz: "prikaz",
   cestica: "kc",
+  parcelId: "pid",
   sredina: "c",
   zum: "z",
 } as const;
@@ -100,6 +162,7 @@ interface StanjeKarte {
   comparisonId: string | null;
   nacin: "obris" | "klizac";
   cestica: [number, number] | null;
+  parcelId: string | null;
 }
 
 /**
@@ -154,6 +217,7 @@ function izAdrese(): Partial<StanjeKarte> & {
   const prikaz = q.get(P.prikaz);
   if (prikaz === "klizac" || prikaz === "obris") out.nacin = prikaz;
   out.cestica = par(q.get(P.cestica)) ?? null;
+  out.parcelId = normalizeCanonicalParcelId(q.get(P.parcelId));
   out.sredina = par(q.get(P.sredina));
   const z = Number(q.get(P.zum));
   if (Number.isFinite(z) && z >= 12 && z <= 19) out.zum = z;
@@ -169,6 +233,7 @@ function uAdresu(s: StanjeKarte, sredina: [number, number], zum: number) {
   if (s.comparisonId) q.set(P.usporedba, s.comparisonId);
   if (s.nacin !== "obris") q.set(P.prikaz, s.nacin);
   if (s.cestica) q.set(P.cestica, s.cestica.map((n) => n.toFixed(6)).join(","));
+  if (s.parcelId) q.set(P.parcelId, s.parcelId);
   q.set(P.sredina, sredina.map((n) => n.toFixed(5)).join(","));
   q.set(P.zum, String(zum));
   window.history.replaceState(null, "", `?${q}`);
@@ -238,6 +303,23 @@ export function MapClient() {
   const [activeIds, setActiveIds] = useState<Set<string>>(
     () => new Set(phase1(MAP_VIEWS[0].layerIds))
   );
+  const [javniFiltri, setJavniFiltri] = useState<PublicParcelFilters>(
+    POCETNI_JAVNI_FILTRI
+  );
+  const [javneCestice, setJavneCestice] = useState<
+    Feature<Geometry, PublicParcelProperties>[] | null
+  >(null);
+  const [ciljaniFiltri, setCiljaniFiltri] = useState<TargetedOwnershipFilters>(
+    POCETNI_CILJANI_FILTRI
+  );
+  const [ciljanaProvjera, setCiljanaProvjera] = useState<
+    Feature<Geometry, TargetedOwnershipProperties>[] | null
+  >(null);
+  const [filtriPlaniranihCesta, setFiltriPlaniranihCesta] =
+    useState<PlannedRoadParcelFilters>(POCETNI_FILTRI_PLANIRANIH_CESTA);
+  const [cesticePlaniranihCesta, setCesticePlaniranihCesta] = useState<
+    Feature<Geometry, PlannedRoadParcelProperties>[] | null
+  >(null);
   // Stanje podloge: `null` dok se ne zna, pa poruka ne bljesne bez potrebe.
   const [podlogaStanje, setPodlogaStanje] = useState<
     "ucitava" | "gotovo" | "greska" | null
@@ -292,9 +374,11 @@ export function MapClient() {
   const [dosje, setDosje] = useState<Dosje | null>(null);
   const [dosjeUcitavanje, setDosjeUcitavanje] = useState(false);
   const [dosjeGreska, setDosjeGreska] = useState<string | null>(null);
-  // Točka po kojoj je dosje otvoren — jedino što ide u adresu, jer čestica
-  // se iz nje uvijek može ponovno pogoditi.
+  // Točka po kojoj je dosje otvoren ide u adresu za stare koordinatne veze;
+  // kad klik ili pretraga znaju kanonski ID, ide i on kako se preklopljene
+  // geometrije ne bi pri ponovnom otvaranju zamijenile susjednom česticom.
   const [cestica, setCestica] = useState<[number, number] | null>(null);
+  const [parcelId, setParcelId] = useState<string | null>(null);
   // Svaki klik dobiva svoj broj; kad se odgovor vrati, upisuje se samo ako
   // je u međuvremenu nije pretekao noviji klik.
   const dosjeZahtjev = useRef(0);
@@ -329,29 +413,12 @@ export function MapClient() {
     }).addTo(map);
   };
 
-  const pomakniIzpodPloce = (lat: number, lng: number) => {
-    const map = mapRef.current;
-    if (!map) return;
-    const v = map.getSize();
-    // Na uskom je ploča donjih 72 %, pa cilj ide u gornju trećinu; na
-    // širokom zauzima desnu stranu, pa cilj ide ulijevo od sredine.
-    const t = map.latLngToContainerPoint([lat, lng]);
-    // Širina se čita ovdje, a ne iz zatvorenja: `otvoriDosje` je stvoren
-    // jednom pri prvom iscrtavanju, pa bi `usko` iz njega zauvijek ostalo
-    // ono što je bilo na početku.
-    const naUskom = window.matchMedia("(max-width: 1023px)").matches;
-    const cilj = naUskom
-      ? { x: v.x / 2, y: v.y * 0.17 }
-      : { x: v.x * 0.28, y: v.y / 2 };
-    // Odabir čestice pomiče kartu. Uz `prefers-reduced-motion` skok je
-    // trenutačan: ishod je isti kadar, samo bez putovanja do njega.
-    map.panBy([t.x - cilj.x, t.y - cilj.y], {
-      animate: !bezPokreta(),
-      duration: 0.4,
-    });
-  };
-
-  const otvoriDosje = useRef((lat: number, lng: number, oznaci?: Isticanje) => {
+  const otvoriDosje = useRef((
+    lat: number,
+    lng: number,
+    oznaci?: Isticanje,
+    selectedParcelId?: string,
+  ) => {
     const moj = ++dosjeZahtjev.current;
     istaknuto.current?.vrati();
     istaknuto.current = oznaci ?? null;
@@ -360,19 +427,19 @@ export function MapClient() {
     // se istakne samo kad je klik pogodio poligon katastra; klik na prazno
     // i duboka poveznica nisu imali ništa. Biljeg stoji uvijek.
     postaviBiljeg(lat, lng);
-    // I pomakni kartu tako da čestica ne završi ispod ploče: ploča zauzima
-    // desnu polovicu na širokom i donjih 72 % na uskom zaslonu, pa se
-    // središte pomiče u preostali dio, a ne na sredinu prozora.
-    pomakniIzpodPloce(lat, lng);
     setCestica([lat, lng]);
+    setParcelId(selectedParcelId ?? null);
     setDosje(null);
     setDosjeGreska(null);
     setDosjeUcitavanje(true);
     void (async () => {
       try {
-        const res = await fetch(
-          `/api/cestica?lat=${lat.toFixed(6)}&lng=${lng.toFixed(6)}`
-        );
+        const query = new URLSearchParams({
+          lat: lat.toFixed(6),
+          lng: lng.toFixed(6),
+        });
+        if (selectedParcelId) query.set("parcel_id", selectedParcelId);
+        const res = await fetch(`/api/cestica?${query}`);
         const d = (await res.json()) as Dosje & { error?: string };
         if (moj !== dosjeZahtjev.current) return;
         if (!res.ok) setDosjeGreska(d.error ?? "Nema podataka.");
@@ -405,6 +472,7 @@ export function MapClient() {
     if (a.comparisonId !== undefined) setComparisonId(a.comparisonId);
     if (a.nacin) setNacin(a.nacin);
     if (a.cestica) setCestica(a.cestica);
+    if (a.parcelId) setParcelId(a.parcelId);
     setHidriran(true);
   }
 
@@ -455,15 +523,21 @@ export function MapClient() {
       });
       // Ograniči pomicanje na kvart + ~700 m rezerve — karta je o Dračevcu
       // i Bilicama, ne o cijelom Splitu.
-      map.setMaxBounds([
-        [43.514, 16.481],
-        [43.536, 16.518],
-      ]);
+      map.setMaxBounds(MAP_MAX_BOUNDS);
       // Vektorski slojevi svi crtaju u zajedničko overlayPane, pa se ne mogu
       // rezati pojedinačno. Svaka strana klizača dobiva svoje okno.
       for (const ime of ["sbs-lijevo", "sbs-desno"]) {
         const okno = map.createPane(ime);
         okno.style.zIndex = "400";
+      }
+      // Slojevi koji moraju zadržati međusobni red bez obzira na to koji se
+      // GeoJSON prvi učita dobivaju vlastita okna. Red u registru nije
+      // dovoljan: putanje se stvaraju tek nakon neovisnih fetch odgovora.
+      for (const layer of OVERLAY_LAYERS) {
+        if (!layer.pane || layer.paneZIndex === undefined || map.getPane(layer.pane))
+          continue;
+        const pane = map.createPane(layer.pane);
+        pane.style.zIndex = String(layer.paneZIndex);
       }
       L.control.zoom({ position: "topright" }).addTo(map);
 
@@ -522,7 +596,13 @@ export function MapClient() {
       }
 
       // Čestica iz adrese: otvori dosje čim je karta spremna.
-      if (adr.cestica) otvoriDosje.current(adr.cestica[0], adr.cestica[1]);
+      if (adr.cestica)
+        otvoriDosje.current(
+          adr.cestica[0],
+          adr.cestica[1],
+          undefined,
+          adr.parcelId ?? undefined,
+        );
     })();
     return () => {
       cancelled = true;
@@ -593,6 +673,7 @@ export function MapClient() {
           comparisonId,
           nacin,
           cestica,
+          parcelId,
         },
         [c.lat, c.lng],
         map.getZoom()
@@ -603,7 +684,7 @@ export function MapClient() {
     return () => {
       map.off("moveend zoomend", zapisi);
     };
-  }, [viewId, activeIds, baseId, dimValue, comparisonId, nacin, cestica, ready, hidriran, upit]);
+  }, [viewId, activeIds, baseId, dimValue, comparisonId, nacin, cestica, parcelId, ready, hidriran, upit]);
 
   // Što se crta = neovisni slojevi + odabrana vrijednost svake dimenzije
   // + sloj usporedbe ako je uključen.
@@ -628,6 +709,113 @@ export function MapClient() {
     return out;
   }, [activeIds, dimValue, usporedba, klizac]);
 
+  const javniFilterKey = useMemo(
+    () =>
+      JSON.stringify({
+        levels: [...javniFiltri.levels].sort(),
+        purposes: [...javniFiltri.purposes].sort(),
+        built: javniFiltri.built,
+      }),
+    [javniFiltri]
+  );
+  const ciljaniFilterKey = useMemo(
+    () =>
+      JSON.stringify({
+        statuses: [...ciljaniFiltri.statuses].sort(),
+        entityCategories: [...ciljaniFiltri.entityCategories].sort(),
+        cohorts: [...ciljaniFiltri.cohorts].sort(),
+        purposes: [...ciljaniFiltri.purposes].sort(),
+        built: ciljaniFiltri.built,
+      }),
+    [ciljaniFiltri]
+  );
+  const planiraneCesteFilterKey = useMemo(
+    () => JSON.stringify({ statuses: [...filtriPlaniranihCesta.statuses].sort() }),
+    [filtriPlaniranihCesta]
+  );
+
+  // Panel treba iste podatke kao Leaflet, ali ne zaseban mrežni zahtjev:
+  // ucitajGeoJSON dijeli LRU spremnik s crtežom sloja. Učitava se tek kad
+  // je pitanje ili sam sloj doista uključen.
+  useEffect(() => {
+    if (!ready || !renderIds.has("javne-cestice") || javneCestice) return;
+    let cancelled = false;
+    void ucitajGeoJSON(JAVNE_CESTICE_URL, geojsonCache.current)
+      .then((collection) => {
+        const features = collection.features.map((feature) => {
+          validatePublicParcelProperties(feature.properties);
+          return feature as Feature<Geometry, PublicParcelProperties>;
+        });
+        if (!cancelled) setJavneCestice(features);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSlojStanje((current) => ({
+            ...current,
+            "javne-cestice": "greska",
+          }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, renderIds, javneCestice]);
+
+  useEffect(() => {
+    if (
+      !ready ||
+      !renderIds.has("ciljana-provjera-vlasnistva") ||
+      ciljanaProvjera
+    )
+      return;
+    let cancelled = false;
+    void ucitajGeoJSON(CILJANA_PROVJERA_URL, geojsonCache.current)
+      .then((collection) => {
+        const features = collection.features.map((feature) => {
+          validateTargetedOwnershipProperties(feature.properties);
+          return feature as Feature<Geometry, TargetedOwnershipProperties>;
+        });
+        if (!cancelled) setCiljanaProvjera(features);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSlojStanje((current) => ({
+            ...current,
+            "ciljana-provjera-vlasnistva": "greska",
+          }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, renderIds, ciljanaProvjera]);
+
+  useEffect(() => {
+    if (
+      !ready ||
+      !renderIds.has("cestice-planiranih-cesta") ||
+      cesticePlaniranihCesta
+    )
+      return;
+    let cancelled = false;
+    void ucitajGeoJSON(PLANIRANE_CESTE_CESTICE_URL, geojsonCache.current)
+      .then((collection) => {
+        const features = collection.features.map((feature) => {
+          validatePlannedRoadParcelProperties(feature.properties);
+          return feature as Feature<Geometry, PlannedRoadParcelProperties>;
+        });
+        if (!cancelled) setCesticePlaniranihCesta(features);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setSlojStanje((current) => ({
+            ...current,
+            "cestice-planiranih-cesta": "greska",
+          }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, renderIds, cesticePlaniranihCesta]);
+
   /** layerId → okno, da klizač može odrezati svaku stranu zasebno. */
   const okna = useMemo<Record<string, string>>(
     () =>
@@ -651,7 +839,17 @@ export function MapClient() {
     // postojećem sloju ne mijenja, pa se mora stvoriti iznova. Bez toga
     // odabrana godina ostane izvan reza i klizač naizgled ne radi.
     for (const [id, inst] of overlayInstances.current) {
-      if (!renderIds.has(id) || inst.okno !== okna[id]) {
+      const layer = OVERLAY_BY_ID.get(id);
+      const zeljenoOkno = okna[id] ?? layer?.pane;
+      if (
+        !renderIds.has(id) ||
+        inst.okno !== zeljenoOkno ||
+        (id === "javne-cestice" && inst.filterKey !== javniFilterKey) ||
+        (id === "ciljana-provjera-vlasnistva" &&
+          inst.filterKey !== ciljaniFilterKey) ||
+        (id === "cestice-planiranih-cesta" &&
+          inst.filterKey !== planiraneCesteFilterKey)
+      ) {
         map.removeLayer(inst.sloj);
         overlayInstances.current.delete(id);
       }
@@ -661,7 +859,8 @@ export function MapClient() {
       const layer = OVERLAY_BY_ID.get(id);
       if (!layer || layer.phase !== 1) continue;
       if (layer.type === "api") continue; // handled separately (solar)
-      dodajSloj(L, map, layer, okna[id], overlayInstances.current,
+      const layerOkno = okna[id] ?? layer.pane;
+      dodajSloj(L, map, layer, layerOkno, overlayInstances.current,
         geojsonCache.current, otvoriDosje.current, pogodakSloja,
         (id, stanje) =>
           setSlojStanje((p) => {
@@ -670,7 +869,18 @@ export function MapClient() {
             const rest = { ...p };
             delete rest[id];
             return rest;
-          }));
+          }),
+        id === "javne-cestice" ? javniFiltri : undefined,
+        id === "ciljana-provjera-vlasnistva" ? ciljaniFiltri : undefined,
+        id === "cestice-planiranih-cesta" ? filtriPlaniranihCesta : undefined,
+        id === "javne-cestice"
+          ? javniFilterKey
+          : id === "ciljana-provjera-vlasnistva"
+            ? ciljaniFilterKey
+            : id === "cestice-planiranih-cesta"
+              ? planiraneCesteFilterKey
+            : undefined,
+      );
     }
     // solar click handler
     const solarActive = renderIds.has("solar");
@@ -685,7 +895,17 @@ export function MapClient() {
       solarHandler.current = null;
       map.getContainer().style.cursor = "";
     }
-  }, [renderIds, ready, okna]);
+  }, [
+    renderIds,
+    ready,
+    okna,
+    javniFiltri,
+    javniFilterKey,
+    ciljaniFiltri,
+    ciljaniFilterKey,
+    filtriPlaniranihCesta,
+    planiraneCesteFilterKey,
+  ]);
 
   // ---- klizač za usporedbu dviju godina ----
   // Pisano ručno, a ne preko leaflet-side-by-side: taj dodatak iznutra radi
@@ -837,6 +1057,38 @@ export function MapClient() {
   }
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
+  const prezentacijaDosjea: DossierPresentation = dosjeUcitavanje
+    ? "loading"
+    : dosje
+      ? "resolved"
+      : dosjeGreska !== null
+        ? "error"
+        : "closed";
+  const dosjePrikazan = prezentacijaDosjea !== "closed";
+  const uskiModalOtvoren = shouldIsolateMapBackground(usko, {
+    selected: cestica !== null,
+    presentation: prezentacijaDosjea,
+  });
+
+  // Jedan životni ciklus posjeduje i granice i cilj odabrane točke. Tako
+  // otvaranje, zatvaranje i promjena 1024px prijeloma ne mogu zadržati
+  // postavke prethodnog rasporeda.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    // MatchMedia may update React before Leaflet and the browser have committed
+    // the new container dimensions. Wait one frame, then refresh Leaflet's size
+    // and position against the actual responsive layout.
+    const frame = window.requestAnimationFrame(() => {
+      syncDossierMapLayout(
+        map,
+        uskiModalOtvoren,
+        dosjePrikazan ? cestica : null,
+        !bezPokreta(),
+      );
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [ready, uskiModalOtvoren, dosjePrikazan, cestica]);
 
   // Dira samo refove i postavljače stanja, koji su svi stalni — pa je i sama
   // stalna, i smije stajati u popisu ovisnosti efekta ispod bez da ga budi.
@@ -850,6 +1102,7 @@ export function MapClient() {
     setDosjeGreska(null);
     setDosjeUcitavanje(false);
     setCestica(null);
+    setParcelId(null);
   }, []);
 
   // Escape zatvara ono što je najgore otvoreno — dosje prije ploča. Prije
@@ -873,57 +1126,90 @@ export function MapClient() {
     // sebi stranica — nema ničega iznad ni ispod, pa nema ni listanja koje
     // bi pomicalo ploče, ni razmimoilaženja s trakom mobilnog preglednika.
     <div className="fixed inset-0 overflow-hidden bg-zinc-100">
-      <div ref={mapDiv} className="h-full w-full bg-zinc-100" />
+      <div
+        data-map-background
+        inert={uskiModalOtvoren}
+        className="absolute inset-0"
+        style={{ pointerEvents: uskiModalOtvoren ? "none" : undefined }}
+      >
+        <div ref={mapDiv} className="h-full w-full bg-zinc-100" />
 
-      <StanjePodloge stanje={podlogaStanje} naUlicnu={() => setBaseId("karta")} />
+        <StanjePodloge
+          stanje={podlogaStanje}
+          naUlicnu={() => setBaseId("karta")}
+        />
 
-      {/* Traka pogleda. Na uskom zaslonu stoji IZVAN bočne trake i uvijek je
-          vidljiva: dok je bila u njoj, zatvaranje trake da bi se vidjela
-          karta odnosilo je i cijelu navigaciju. */}
-      {usko && (
-        <TrakaPogleda
+        {/* Traka pogleda. Na uskom zaslonu stoji IZVAN bočne trake i uvijek je
+            vidljiva: dok je bila u njoj, zatvaranje trake da bi se vidjela
+            karta odnosilo je i cijelu navigaciju. */}
+        {usko && (
+          <TrakaPogleda
+            views={MAP_VIEWS}
+            viewId={viewId}
+            onSelectView={selectView}
+          />
+        )}
+
+        <Kontrole
+          baseId={baseId}
+          onBase={setBaseId}
+          dimValue={dimValue}
+          onDimValue={(dimId, layerId) =>
+            setDimValue((p) => ({ ...p, [dimId]: layerId }))
+          }
+          comparisonId={comparisonId}
+          klizac={klizac}
+          open={kontroleOpen}
+          onOpen={otvoriKontrole}
+          usko={usko}
+        />
+
+        <Sidebar
           views={MAP_VIEWS}
           viewId={viewId}
           onSelectView={selectView}
+          currentView={currentView}
+          activeIds={activeIds}
+          onToggle={toggleLayer}
+          slojStanje={slojStanje}
+          usporedbe={COMPARISONS.filter(
+            (c) => c.dimensionId === currentView?.dimensionId,
+          )}
+          comparisonId={comparisonId}
+          onComparison={setComparisonId}
+          nacin={nacin}
+          onNacin={setNacin}
+          javneCestice={javneCestice}
+          javniFiltri={javniFiltri}
+          onJavniFiltri={setJavniFiltri}
+          onPonoviJavne={() => {
+            toggleLayer("javne-cestice");
+            setTimeout(() => toggleLayer("javne-cestice"), 0);
+          }}
+          ciljanaProvjera={ciljanaProvjera}
+          ciljaniFiltri={ciljaniFiltri}
+          onCiljaniFiltri={setCiljaniFiltri}
+          onPonoviCiljanu={() => {
+            toggleLayer("ciljana-provjera-vlasnistva");
+            setTimeout(() => toggleLayer("ciljana-provjera-vlasnistva"), 0);
+          }}
+          cesticePlaniranihCesta={cesticePlaniranihCesta}
+          filtriPlaniranihCesta={filtriPlaniranihCesta}
+          onFiltriPlaniranihCesta={setFiltriPlaniranihCesta}
+          onPonoviCesticePlaniranihCesta={() => {
+            toggleLayer("cestice-planiranih-cesta");
+            setTimeout(() => toggleLayer("cestice-planiranih-cesta"), 0);
+          }}
+          onOtvoriCesticu={(lat, lng, selectedParcelId) =>
+            otvoriDosje.current(lat, lng, undefined, selectedParcelId)
+          }
+          open={panelOpen}
+          onOpen={otvoriTraku}
+          usko={usko}
         />
-      )}
+      </div>
 
-      <Kontrole
-        baseId={baseId}
-        onBase={setBaseId}
-        dimValue={dimValue}
-        onDimValue={(dimId, layerId) =>
-          setDimValue((p) => ({ ...p, [dimId]: layerId }))
-        }
-        comparisonId={comparisonId}
-        klizac={klizac}
-        open={kontroleOpen}
-        onOpen={otvoriKontrole}
-        usko={usko}
-      />
-
-      <Sidebar
-        views={MAP_VIEWS}
-        viewId={viewId}
-        onSelectView={selectView}
-        currentView={currentView}
-        activeIds={activeIds}
-        onToggle={toggleLayer}
-        slojStanje={slojStanje}
-        usporedbe={COMPARISONS.filter(
-          (c) => c.dimensionId === currentView?.dimensionId
-        )}
-        comparisonId={comparisonId}
-        onComparison={setComparisonId}
-        nacin={nacin}
-        onNacin={setNacin}
-        onOtvoriCesticu={(lat, lng) => otvoriDosje.current(lat, lng)}
-        open={panelOpen}
-        onOpen={otvoriTraku}
-        usko={usko}
-      />
-
-      {(dosje || dosjeUcitavanje || dosjeGreska) && (
+      {dosjePrikazan && (
         <DosjePlaca
           uzKontrole={kontroleOpen && !usko}
           usko={usko}
@@ -1109,7 +1395,19 @@ function Sidebar(props: {
   onComparison: (id: string | null) => void;
   nacin: "obris" | "klizac";
   onNacin: (n: "obris" | "klizac") => void;
-  onOtvoriCesticu: (lat: number, lng: number) => void;
+  javneCestice: Feature<Geometry, PublicParcelProperties>[] | null;
+  javniFiltri: PublicParcelFilters;
+  onJavniFiltri: (filters: PublicParcelFilters) => void;
+  onPonoviJavne: () => void;
+  ciljanaProvjera: Feature<Geometry, TargetedOwnershipProperties>[] | null;
+  ciljaniFiltri: TargetedOwnershipFilters;
+  onCiljaniFiltri: (filters: TargetedOwnershipFilters) => void;
+  onPonoviCiljanu: () => void;
+  cesticePlaniranihCesta: Feature<Geometry, PlannedRoadParcelProperties>[] | null;
+  filtriPlaniranihCesta: PlannedRoadParcelFilters;
+  onFiltriPlaniranihCesta: (filters: PlannedRoadParcelFilters) => void;
+  onPonoviCesticePlaniranihCesta: () => void;
+  onOtvoriCesticu: (lat: number, lng: number, parcelId?: string) => void;
   open: boolean;
   onOpen: (v: boolean) => void;
   usko: boolean;
@@ -1121,6 +1419,10 @@ function Sidebar(props: {
     .map((id) => OVERLAY_BY_ID.get(id))
     .filter((l): l is OverlayLayer => !!l && !UPRAVLJANI_SLOJEVI.has(l.id));
   const podignuti = new Set(odabrani.map((l) => l.id));
+  if (currentView?.id === "javno-evidentirano") {
+    podignuti.add("javne-cestice");
+    podignuti.add("ciljana-provjera-vlasnistva");
+  }
   const skupine = [...new Set(OVERLAY_LAYERS.map((l) => l.group))];
   const uSkupini = (g: string) =>
     OVERLAY_LAYERS.filter(
@@ -1277,7 +1579,50 @@ function Sidebar(props: {
             </details>
           </>
         )}
-        {currentView && <Opis view={currentView} />}
+        {currentView &&
+          currentView.id !== "javno-evidentirano" &&
+          currentView.id !== "cestice-planiranih-cesta" && (
+          <Opis view={currentView} />
+        )}
+
+        {currentView?.id === "cestice-planiranih-cesta" && (
+          <PlaniraneCesteFilteri
+            features={props.cesticePlaniranihCesta}
+            filters={props.filtriPlaniranihCesta}
+            onFilters={props.onFiltriPlaniranihCesta}
+            stanje={props.slojStanje["cestice-planiranih-cesta"]}
+            onRetry={props.onPonoviCesticePlaniranihCesta}
+          />
+        )}
+
+        {currentView?.id === "javno-evidentirano" && (
+          <IzborJavnogDokaza
+            activeIds={props.activeIds}
+            onToggle={props.onToggle}
+          />
+        )}
+
+        {currentView?.id === "javno-evidentirano" &&
+          props.activeIds.has("ciljana-provjera-vlasnistva") && (
+          <CiljanaProvjeraFilteri
+            features={props.ciljanaProvjera}
+            filters={props.ciljaniFiltri}
+            onFilters={props.onCiljaniFiltri}
+            stanje={props.slojStanje["ciljana-provjera-vlasnistva"]}
+            onRetry={props.onPonoviCiljanu}
+          />
+        )}
+
+        {currentView?.id === "javno-evidentirano" &&
+          props.activeIds.has("javne-cestice") && (
+          <JavneCesticeFilteri
+            features={props.javneCestice}
+            filters={props.javniFiltri}
+            onFilters={props.onJavniFiltri}
+            stanje={props.slojStanje["javne-cestice"]}
+            onRetry={props.onPonoviJavne}
+          />
+        )}
 
         {/* Ključ boja izvedenog sloja stoji odmah uz opis, prije popisa
             slojeva: on je odgovor na „zašto je moja čestica crvena”. */}
@@ -1556,7 +1901,7 @@ function Sidebar(props: {
 function TraziCesticu({
   onOtvori,
 }: {
-  onOtvori: (lat: number, lng: number) => void;
+  onOtvori: (lat: number, lng: number, parcelId?: string) => void;
 }) {
   const [q, setQ] = useState("");
   // Rezultat nosi upit za koji je dobiven. Time se „učitavam” i „nema ništa”
@@ -1564,7 +1909,13 @@ function TraziCesticu({
   // sinkrono, pa nema kaskadnog iscrtavanja pri svakom slovu.
   const [odgovor, setOdgovor] = useState<{
     q: string;
-    lista: { naziv: string; opis: string; lat: number; lng: number }[];
+    lista: {
+      naziv: string;
+      opis: string;
+      lat: number;
+      lng: number;
+      parcel_id?: string;
+    }[];
   }>({ q: "", lista: [] });
   const zahtjev = useRef(0);
   const upit = q.trim();
@@ -1582,7 +1933,13 @@ function TraziCesticu({
         try {
           const r = await fetch(`/api/cestica/trazi?q=${encodeURIComponent(u)}`);
           const d = (await r.json()) as {
-            pogodci?: { naziv: string; opis: string; lat: number; lng: number }[];
+            pogodci?: {
+              naziv: string;
+              opis: string;
+              lat: number;
+              lng: number;
+              parcel_id?: string;
+            }[];
           };
           if (moj === zahtjev.current) setOdgovor({ q: u, lista: d.pogodci ?? [] });
         } catch {
@@ -1633,7 +1990,7 @@ function TraziCesticu({
             <li key={`${p.naziv}-${p.lat}-${p.lng}`}>
               <button
                 onClick={() => {
-                  onOtvori(p.lat, p.lng);
+                  onOtvori(p.lat, p.lng, p.parcel_id);
                   setQ("");
                 }}
                 className="fokus meta flex w-full items-baseline gap-2 rounded px-1 text-left hover:bg-zinc-100"
@@ -1646,6 +2003,779 @@ function TraziCesticu({
         </ul>
       )}
     </div>
+  );
+}
+
+function IzborJavnogDokaza({
+  activeIds,
+  onToggle,
+}: {
+  activeIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const odaberi = (odabrani: string, ugasi: string) => {
+    if (!activeIds.has(odabrani)) onToggle(odabrani);
+    if (activeIds.has(ugasi)) onToggle(ugasi);
+  };
+  const opcije = [
+    {
+      id: "ciljana-provjera-vlasnistva",
+      ugasi: "javne-cestice",
+      naslov: "Provjerene",
+      opis: "30 ciljanih čestica",
+    },
+    {
+      id: "javne-cestice",
+      ugasi: "ciljana-provjera-vlasnistva",
+      naslov: "GIS izvoz",
+      opis: "81 izričito javna",
+    },
+  ];
+  return (
+    <fieldset className="mt-3">
+      <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+        Skup podataka
+      </legend>
+      <p className="mt-1 text-xs leading-normal text-zinc-600">
+        Prikazuje se jedan skup odjednom.
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-1 rounded-lg bg-zinc-100 p-1">
+        {opcije.map((opcija) => {
+          const odabran = activeIds.has(opcija.id);
+          return (
+            <button
+              key={opcija.id}
+              type="button"
+              aria-pressed={odabran}
+              onClick={() => odaberi(opcija.id, opcija.ugasi)}
+              className={`fokus meta min-h-11 rounded-md px-2 py-1.5 text-left ${
+                odabran
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900"
+              }`}
+            >
+              <span className="block text-sm font-bold">{opcija.naslov}</span>
+              <span className="block text-xs">{opcija.opis}</span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+function PlaniraneCesteFilteri({
+  features,
+  filters,
+  onFilters,
+  stanje,
+  onRetry,
+}: {
+  features: Feature<Geometry, PlannedRoadParcelProperties>[] | null;
+  filters: PlannedRoadParcelFilters;
+  onFilters: (filters: PlannedRoadParcelFilters) => void;
+  stanje?: "ucitava" | "greska";
+  onRetry: () => void;
+}) {
+  const summary = features
+    ? summarizePlannedRoadParcels(features, filters)
+    : { count: 0, road_overlap_m2: 0 };
+  const statusCounts = features
+    ? features.reduce(
+        (counts, feature) => {
+          counts[feature.properties.ownership_status] += 1;
+          return counts;
+        },
+        {
+          confirmed_public: 0,
+          mixed_public: 0,
+          cadastre_public: 0,
+          city_gis_public: 0,
+          not_confirmed_public: 0,
+          unresolved: 0,
+          no_data: 0,
+        } satisfies Record<PlannedRoadOwnershipStatus, number>
+      )
+    : null;
+  const toggleStatus = (status: PlannedRoadOwnershipStatus) =>
+    onFilters({
+      statuses: filters.statuses.includes(status)
+        ? filters.statuses.filter((candidate) => candidate !== status)
+        : [...filters.statuses, status],
+    });
+
+  return (
+    <section aria-label="Filtri čestica na planiranim cestama" className="mt-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-bold text-zinc-900">
+          Čestice na planiranim cestama
+        </h3>
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-bold ${plannedRoadPanelToneClasses("count")}`}
+        >
+          338 čestica
+        </span>
+      </div>
+      <p className="mt-2 text-base leading-normal text-zinc-700">
+        Planirani prometni koridori nacrta GUP-a 2024. zahvaćaju svaku od ovih
+        čestica za najmanje 1 m². Vlasništvo je označeno samo za 54 čestice s
+        već raspoloživim sanitiziranim zapisom; za ostale podataka nema.
+      </p>
+
+      {stanje === "greska" ? (
+        <div
+          className={`mt-3 rounded-lg px-3 py-2 text-sm ${plannedRoadPanelToneClasses("error")}`}
+        >
+          <p>Sloj čestica na planiranim cestama nije se učitao.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="fokus meta mt-1 min-h-11 font-semibold underline"
+          >
+            Pokušaj ponovno
+          </button>
+        </div>
+      ) : !features || stanje === "ucitava" ? (
+        <p role="status" aria-busy="true" className="mt-3 text-sm text-zinc-600">
+          Učitavam 338 čestica na planiranim cestama…
+        </p>
+      ) : (
+        <>
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-3 text-lg font-bold text-zinc-900"
+          >
+            {summary.count.toLocaleString("hr-HR")} {brojnica(summary.count, "čestica", "čestice", "čestica")} ·{" "}
+            {(summary.road_overlap_m2 / 10_000).toLocaleString("hr-HR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            ha zahvata planiranih cesta
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Status vlasništva
+            </legend>
+            <div className="mt-1 space-y-0.5">
+              {(
+                Object.keys(
+                  PLANNED_ROAD_OWNERSHIP_STATUS_LABELS
+                ) as PlannedRoadOwnershipStatus[]
+              ).map((status) => (
+                <label
+                  key={status}
+                  className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.statuses.includes(status)}
+                    onChange={() => toggleStatus(status)}
+                    className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                  />
+                  <span className="flex-1 leading-tight">
+                    {PLANNED_ROAD_OWNERSHIP_STATUS_LABELS[status]}
+                  </span>
+                  <span className="text-xs tabular-nums text-zinc-600">
+                    {statusCounts?.[status] ?? 0}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {summary.count === 0 && (
+            <p className="mt-3 border-t border-zinc-200 pt-3 text-sm text-zinc-700">
+              Nema čestica na planiranim cestama za odabrane filtre.
+            </p>
+          )}
+          {filters.statuses.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onFilters(POCETNI_FILTRI_PLANIRANIH_CESTA)}
+              className="fokus meta mt-2 min-h-11 text-sm font-semibold text-maslina hover:underline"
+            >
+              Poništi filtre
+            </button>
+          )}
+        </>
+      )}
+
+      <p className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-normal text-zinc-600">
+        Vlasništvo je označeno samo iz postojećih sanitiziranih zapisa. Nova
+        provjera nije provedena.
+      </p>
+    </section>
+  );
+}
+
+function JavneCesticeFilteri({
+  features,
+  filters,
+  onFilters,
+  stanje,
+  onRetry,
+}: {
+  features: Feature<Geometry, PublicParcelProperties>[] | null;
+  filters: PublicParcelFilters;
+  onFilters: (filters: PublicParcelFilters) => void;
+  stanje?: "ucitava" | "greska";
+  onRetry: () => void;
+}) {
+  const summary = features
+    ? summarizePublicParcels(features, filters)
+    : { count: 0, area_m2: 0 };
+  const purposeOptions = features
+    ? [...
+        features.reduce((options, feature) => {
+          const code = feature.properties.purpose_primary_code ?? "unknown";
+          const current = options.get(code) ?? {
+            code,
+            label:
+              feature.properties.purpose_primary_label ??
+              "Namjena nije određena",
+            count: 0,
+          };
+          current.count += 1;
+          options.set(code, current);
+          return options;
+        }, new Map<string, { code: string; label: string; count: number }>()).values(),
+      ].sort((a, b) =>
+        a.code === "unknown"
+          ? 1
+          : b.code === "unknown"
+            ? -1
+            : a.code.localeCompare(b.code, "hr")
+      )
+    : [];
+  const active =
+    filters.levels.length > 0 ||
+    filters.purposes.length > 0 ||
+    filters.built !== "all";
+  const reset = () => onFilters(POCETNI_JAVNI_FILTRI);
+  const toggleLevel = (level: PublicLevel) =>
+    onFilters({
+      ...filters,
+      levels: filters.levels.includes(level)
+        ? filters.levels.filter((candidate) => candidate !== level)
+        : [...filters.levels, level],
+    });
+  const togglePurpose = (code: string) =>
+    onFilters({
+      ...filters,
+      purposes: filters.purposes.includes(code)
+        ? filters.purposes.filter((candidate) => candidate !== code)
+        : [...filters.purposes, code],
+    });
+
+  return (
+    <section aria-label="Filtri evidentiranih javnih čestica" className="mt-4">
+      <div className="border-y border-zinc-200 py-3 text-zinc-700">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+            Djelomična evidencija
+          </span>
+          <span className="text-xs text-zinc-600">GIS izvoz · 3. 10. 2025.</span>
+        </div>
+        <p className="mt-2 text-sm leading-normal">
+          Prikazane su samo čestice izričito označene kao Grad/JLS, RH ili
+          Županija. <b className="font-semibold">1.060 čestica bez statusa</b>{" "}
+          nije klasificirano.
+        </p>
+      </div>
+
+      {stanje === "greska" ? (
+        <div className="mt-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-800">
+          <p>Sloj evidentiranih javnih čestica nije se učitao.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="fokus meta mt-1 min-h-11 font-semibold underline"
+          >
+            Pokušaj ponovno
+          </button>
+        </div>
+      ) : !features || stanje === "ucitava" ? (
+        <div className="mt-3 text-zinc-600" aria-busy="true">
+          <p role="status" className="text-sm">
+            Učitavam evidentirane javne čestice…
+          </p>
+
+          <fieldset disabled className="mt-3 opacity-60">
+            <legend className="text-xs font-bold uppercase tracking-wide">
+              Javna razina
+            </legend>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {["Sve", ...Object.values(PUBLIC_LEVEL_LABELS)].map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="meta-cip min-h-11 rounded-full border border-zinc-300 px-3 text-sm font-semibold"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset disabled className="mt-4 opacity-60">
+            <legend className="text-xs font-bold uppercase tracking-wide">
+              Namjena prema GUP-u 2024. (nacrt)
+            </legend>
+            <p className="mt-2 min-h-11 text-sm">Učitavam dostupne namjene…</p>
+          </fieldset>
+
+          <fieldset disabled className="mt-4 opacity-60">
+            <legend className="text-xs font-bold uppercase tracking-wide">
+              Evidentirani tlocrt
+            </legend>
+            <div className="mt-1 grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+              {["Sve", "Ima tlocrt", "Nema tlocrt"].map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="meta min-h-11 rounded-md px-2 text-xs font-semibold"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+      ) : (
+        <>
+          <p role="status" aria-live="polite" className="mt-3 text-lg font-bold text-zinc-900">
+            {summary.count.toLocaleString("hr-HR")} {brojnica(summary.count, "čestica", "čestice", "čestica")} ·{" "}
+            {(summary.area_m2 / 10_000).toLocaleString("hr-HR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            ha
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Javna razina
+            </legend>
+            <div className="mt-1 flex flex-wrap gap-1">
+              <button
+                type="button"
+                aria-pressed={filters.levels.length === 0}
+                onClick={() => onFilters({ ...filters, levels: [] })}
+                className={`fokus meta-cip min-h-11 rounded-full border px-3 text-sm font-semibold ${
+                  filters.levels.length === 0
+                    ? "border-maslina bg-maslina text-white"
+                    : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Sve
+              </button>
+              {(Object.keys(PUBLIC_LEVEL_LABELS) as PublicLevel[]).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  aria-pressed={filters.levels.includes(level)}
+                  onClick={() => toggleLevel(level)}
+                  className={`fokus meta-cip min-h-11 rounded-full border px-3 text-sm font-semibold ${
+                    filters.levels.includes(level)
+                      ? "border-maslina bg-maslina text-white"
+                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  {PUBLIC_LEVEL_LABELS[level]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-4">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Namjena prema GUP-u 2024. (nacrt)
+            </legend>
+            <div className="mt-1 space-y-0.5">
+              {purposeOptions.map((option) => (
+                <label
+                  key={option.code}
+                  className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.purposes.includes(option.code)}
+                    onChange={() => togglePurpose(option.code)}
+                    className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                  />
+                  <span className="flex-1 leading-tight">
+                    {option.code === "unknown" ? "" : `${option.code} — `}
+                    {option.label}
+                  </span>
+                  <span className="text-xs tabular-nums text-zinc-600">{option.count}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-4">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Evidentirani tlocrt
+            </legend>
+            <div className="mt-1 grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+              {(
+                [
+                  ["all", "Sve"],
+                  ["with_footprint", "Ima tlocrt"],
+                  ["without_footprint", "Nema tlocrt"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={filters.built === value}
+                  onClick={() => onFilters({ ...filters, built: value })}
+                  className={`fokus meta min-h-11 rounded-md px-2 text-xs font-semibold ${
+                    filters.built === value
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-600 hover:text-zinc-900"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          {summary.count === 0 && (
+            <p className="mt-3 border-t border-zinc-200 pt-3 text-sm text-zinc-700">
+              Nema evidentiranih javnih čestica za odabrane filtre.
+            </p>
+          )}
+
+          {active && (
+            <button
+              type="button"
+              onClick={reset}
+              className="fokus meta mt-2 min-h-11 text-sm font-semibold text-maslina hover:underline"
+            >
+              Poništi filtre
+            </button>
+          )}
+
+          <div className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-normal text-zinc-600">
+            <p className="flex flex-wrap gap-x-3 gap-y-1">
+              {(Object.keys(PUBLIC_LEVEL_LABELS) as PublicLevel[]).map((level) => (
+                <span key={level} className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className={`h-2.5 w-4 rounded-sm ${
+                      level === "state"
+                        ? "bg-status-objavljeno"
+                        : level === "county"
+                          ? "bg-status-u-tijeku"
+                          : "bg-maslina"
+                    }`}
+                  />
+                  {PUBLIC_LEVEL_LABELS[level]}
+                </span>
+              ))}
+            </p>
+            <p className="mt-2">
+              Crtkani obrub znači suvlasništvo. Informativni prikaz; provjeri
+              službeni podatak na Uređenoj zemlji. Nacrt GUP-a 2024. nije plan
+              na snazi.
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function CiljanaProvjeraFilteri({
+  features,
+  filters,
+  onFilters,
+  stanje,
+  onRetry,
+}: {
+  features: Feature<Geometry, TargetedOwnershipProperties>[] | null;
+  filters: TargetedOwnershipFilters;
+  onFilters: (filters: TargetedOwnershipFilters) => void;
+  stanje?: "ucitava" | "greska";
+  onRetry: () => void;
+}) {
+  const summary = features
+    ? summarizeTargetedOwnership(features, filters)
+    : { count: 0, mapped_area_m2: 0 };
+  const statusCounts = features
+    ? features.reduce(
+        (counts, feature) => {
+          counts[feature.properties.verification_status] += 1;
+          return counts;
+        },
+        {
+          confirmed_public: 0,
+          mixed_public: 0,
+          cadastre_public: 0,
+          private_or_other: 0,
+          unresolved: 0,
+        } satisfies Record<OwnershipVerificationStatus, number>
+      )
+    : null;
+  const categoryOptions = features
+    ? [...
+        features.reduce((options, feature) => {
+          for (const entity of feature.properties.public_entities)
+            options.set(entity.category, (options.get(entity.category) ?? 0) + 1);
+          return options;
+        }, new Map<PublicEntityCategory, number>()),
+      ].sort((a, b) => a[0].localeCompare(b[0], "hr"))
+    : [];
+  const purposeOptions = features
+    ? [...
+        features.reduce((options, feature) => {
+          const code = feature.properties.purpose_primary_code ?? "unknown";
+          const current = options.get(code) ?? {
+            code,
+            label: feature.properties.purpose_primary_label ?? "Namjena nije određena",
+            count: 0,
+          };
+          current.count += 1;
+          options.set(code, current);
+          return options;
+        }, new Map<string, { code: string; label: string; count: number }>()),
+      ]
+        .map(([, option]) => option)
+        .sort((a, b) =>
+          a.code === "unknown"
+            ? 1
+            : b.code === "unknown"
+              ? -1
+              : a.code.localeCompare(b.code, "hr")
+        )
+    : [];
+  const active =
+    filters.statuses.length > 0 ||
+    filters.entityCategories.length > 0 ||
+    filters.cohorts.length > 0 ||
+    filters.purposes.length > 0 ||
+    filters.built !== "all";
+  const toggle = <T extends string>(values: T[], value: T): T[] =>
+    values.includes(value)
+      ? values.filter((candidate) => candidate !== value)
+      : [...values, value];
+
+  return (
+    <section
+      aria-label="Filtri ciljane provjere vlasništva"
+      className="mt-5 border-t border-zinc-200 pt-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-bold text-zinc-900">Ciljana provjera vlasništva</h3>
+        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-800">
+          30 čestica
+        </span>
+      </div>
+      <p className="mt-1 text-base leading-normal text-zinc-700">
+        Sve čestice na odabranom koridoru ceste i sve čestice od najmanje
+        10.000 m² provjerene su kroz javni OSS tok.
+      </p>
+
+      {stanje === "greska" ? (
+        <div className="mt-3 rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-800">
+          <p>Sloj ciljane provjere nije se učitao.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="fokus meta mt-1 min-h-11 font-semibold underline"
+          >
+            Pokušaj ponovno
+          </button>
+        </div>
+      ) : !features || stanje === "ucitava" ? (
+        <p role="status" aria-busy="true" className="mt-3 text-sm text-zinc-600">
+          Učitavam 30 ciljanih čestica…
+        </p>
+      ) : (
+        <>
+          <p role="status" aria-live="polite" className="mt-3 text-lg font-bold text-zinc-900">
+            {summary.count.toLocaleString("hr-HR")} {brojnica(summary.count, "čestica", "čestice", "čestica")} ·{" "}
+            {(summary.mapped_area_m2 / 10_000).toLocaleString("hr-HR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            ha u obuhvatu
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+              Status provjere
+            </legend>
+            <div className="mt-1 space-y-0.5">
+              {(Object.keys(OWNERSHIP_STATUS_LABELS) as OwnershipVerificationStatus[]).map(
+                (status) => (
+                  <label
+                    key={status}
+                    className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.statuses.includes(status)}
+                      onChange={() =>
+                        onFilters({ ...filters, statuses: toggle(filters.statuses, status) })
+                      }
+                      className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                    />
+                    <span className="flex-1 leading-tight">{OWNERSHIP_STATUS_LABELS[status]}</span>
+                    <span className="text-xs tabular-nums text-zinc-600">
+                      {statusCounts?.[status] ?? 0}
+                    </span>
+                  </label>
+                )
+              )}
+            </div>
+          </fieldset>
+
+          <details className="mt-3 border-t border-zinc-200 pt-3">
+            <summary className="fokus meta min-h-11 cursor-pointer rounded text-sm font-semibold text-maslina">
+              Vlasnik, skup, namjena i tlocrt
+            </summary>
+
+            <fieldset className="mt-2">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Prepoznati javni subjekt
+              </legend>
+              <div className="mt-1 space-y-0.5">
+                {categoryOptions.map(([category, count]) => (
+                  <label
+                    key={category}
+                    className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.entityCategories.includes(category)}
+                      onChange={() =>
+                        onFilters({
+                          ...filters,
+                          entityCategories: toggle(filters.entityCategories, category),
+                        })
+                      }
+                      className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                    />
+                    <span className="flex-1 leading-tight">
+                      {PUBLIC_ENTITY_CATEGORY_LABELS[category]}
+                    </span>
+                    <span className="text-xs tabular-nums text-zinc-600">{count}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-4">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Zašto je provjerena
+              </legend>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {(Object.keys(OWNERSHIP_COHORT_LABELS) as OwnershipCohort[]).map((cohort) => (
+                  <button
+                    key={cohort}
+                    type="button"
+                    aria-pressed={filters.cohorts.includes(cohort)}
+                    onClick={() =>
+                      onFilters({ ...filters, cohorts: toggle(filters.cohorts, cohort) })
+                    }
+                    className={`fokus meta-cip min-h-11 rounded-full border px-3 text-sm font-semibold ${
+                      filters.cohorts.includes(cohort)
+                        ? "border-maslina bg-maslina text-white"
+                        : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                    }`}
+                  >
+                    {OWNERSHIP_COHORT_LABELS[cohort]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-4">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Namjena prema GUP-u 2024. (nacrt)
+              </legend>
+              <div className="mt-1 space-y-0.5">
+                {purposeOptions.map((option) => (
+                  <label
+                    key={option.code}
+                    className="meta flex min-h-11 cursor-pointer items-center gap-2 rounded px-1 hover:bg-zinc-100 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-maslina"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.purposes.includes(option.code)}
+                      onChange={() =>
+                        onFilters({
+                          ...filters,
+                          purposes: toggle(filters.purposes, option.code),
+                        })
+                      }
+                      className="h-4 w-4 shrink-0 accent-maslina outline-none"
+                    />
+                    <span className="flex-1 leading-tight">
+                      {option.code === "unknown" ? "" : `${option.code} — `}
+                      {option.label}
+                    </span>
+                    <span className="text-xs tabular-nums text-zinc-600">{option.count}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-4">
+              <legend className="text-xs font-bold uppercase tracking-wide text-zinc-600">
+                Evidentirani tlocrt
+              </legend>
+              <div className="mt-1 grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+                {(
+                  [
+                    ["all", "Sve"],
+                    ["with_footprint", "Ima tlocrt"],
+                    ["without_footprint", "Nema tlocrt"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={filters.built === value}
+                    onClick={() => onFilters({ ...filters, built: value })}
+                    className={`fokus meta min-h-11 rounded-md px-2 text-xs font-semibold ${
+                      filters.built === value
+                        ? "bg-white text-zinc-900 shadow-sm"
+                        : "text-zinc-600 hover:text-zinc-900"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </details>
+
+          {summary.count === 0 && (
+            <p className="mt-3 border-t border-zinc-200 pt-3 text-sm text-zinc-700">
+              Nema ciljanih čestica za odabrane filtre.
+            </p>
+          )}
+          {active && (
+            <button
+              type="button"
+              onClick={() => onFilters(POCETNI_CILJANI_FILTRI)}
+              className="fokus meta mt-2 min-h-11 text-sm font-semibold text-maslina hover:underline"
+            >
+              Poništi filtre ciljane provjere
+            </button>
+          )}
+
+          <p className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-normal text-zinc-600">
+            Provjereno 2. 8. 2026. ZK list B ima prednost; katastarski posjednik
+            je označen kao slabiji dokaz. Privatna imena nisu objavljena. Ovo je
+            ciljana provjera 30 čestica, ne cjelovit popis javne imovine.
+          </p>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -2011,6 +3141,8 @@ const IME_RAZREDA: Record<string, string> = {
 interface Postavljeni {
   sloj: LeafletNS.Layer;
   okno: string | undefined;
+  /** Samo izvedeni javni sloj: promjena filtra traži novu Leaflet grupu. */
+  filterKey?: string;
 }
 
 /**
@@ -2056,9 +3188,18 @@ function dodajSloj(
   okno: string | undefined,
   registar: Map<string, Postavljeni>,
   spremnik: Map<string, GeoJSON.FeatureCollection>,
-  otvoriDosje: (lat: number, lng: number, oznaci?: Isticanje) => void,
+  otvoriDosje: (
+    lat: number,
+    lng: number,
+    oznaci?: Isticanje,
+    parcelId?: string,
+  ) => void,
   pogodakSloja: { current: number },
-  stanje: (id: string, s: "ucitava" | "greska" | null) => void
+  stanje: (id: string, s: "ucitava" | "greska" | null) => void,
+  javniFiltri?: PublicParcelFilters,
+  ciljaniFiltri?: TargetedOwnershipFilters,
+  filtriPlaniranihCesta?: PlannedRoadParcelFilters,
+  filterKey?: string,
 ) {
   if (layer.type === "wms") {
     const wms = L.tileLayer.wms(layer.url, {
@@ -2083,7 +3224,7 @@ function dodajSloj(
     (grupa as unknown as { getContainer: () => HTMLElement }).getContainer =
       () => map.getPane(okno) as HTMLElement;
   }
-  registar.set(layer.id, { sloj: grupa, okno });
+  registar.set(layer.id, { sloj: grupa, okno, filterKey });
   stanje(layer.id, "ucitava");
   ucitajGeoJSON(layer.url, spremnik)
     .then((fc) => {
@@ -2093,13 +3234,170 @@ function dodajSloj(
       stanje(layer.id, null);
       const gj = L.geoJSON(fc, {
         ...(okno ? { pane: okno } : {}),
+        ...(layer.id === "javne-cestice" && javniFiltri
+          ? {
+              filter: (feature: GeoJSON.Feature) => {
+                try {
+                  validatePublicParcelProperties(feature.properties);
+                  return matchesPublicParcel(feature.properties, javniFiltri);
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
+        ...(layer.id === "ciljana-provjera-vlasnistva" && ciljaniFiltri
+          ? {
+              filter: (feature: GeoJSON.Feature) => {
+                try {
+                  validateTargetedOwnershipProperties(feature.properties);
+                  return matchesTargetedOwnership(feature.properties, ciljaniFiltri);
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
+        ...(layer.id === "cestice-planiranih-cesta" && filtriPlaniranihCesta
+          ? {
+              filter: (feature: GeoJSON.Feature) => {
+                try {
+                  validatePlannedRoadParcelProperties(feature.properties);
+                  return matchesPlannedRoadParcel(
+                    feature.properties,
+                    filtriPlaniranihCesta
+                  );
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
         ...(NEINTERAKTIVNE_PLOHE.has(layer.id) ? { interactive: false } : {}),
         // Slojevi namjene nose boju po plohi, onu iz tumača znakova plana.
         // Bez toga bi cijela karta namjene bila jednobojna i beskorisna.
         style: (f) => {
           const p = f?.properties as
-            | { boja?: string; promjena?: string; highway?: string }
+            | ({ boja?: string; promjena?: string; highway?: string } &
+                Partial<PublicParcelProperties> &
+                Partial<TargetedOwnershipProperties> &
+                Partial<PlannedRoadParcelProperties>)
             | undefined;
+          if (layer.id === "javne-cestice") {
+            const c =
+              p?.public_level === "state"
+                ? "#005986"
+                : p?.public_level === "county"
+                  ? "#953d00"
+                  : "#007956";
+            return {
+              color: c,
+              weight: 2.5,
+              dashArray: p?.ownership_form === "coownership" ? "7 5" : undefined,
+              fillColor: c,
+              fillOpacity: 0.48,
+            };
+          }
+          if (layer.id === "ciljana-provjera-vlasnistva") {
+            const status = p?.verification_status;
+            const c =
+              status === "confirmed_public"
+                ? "#007956"
+                : status === "cadastre_public"
+                  ? "#005986"
+                  : status === "mixed_public"
+                    ? "#5d0ec0"
+                    : status === "private_or_other"
+                      ? "#71717b"
+                      : "#953d00";
+            return {
+              color: c,
+              weight: status === "confirmed_public" ? 3 : 2.25,
+              dashArray:
+                status === "mixed_public"
+                  ? "8 5"
+                  : status === "cadastre_public"
+                    ? "6 4"
+                    : status === "unresolved"
+                      ? "2 5"
+                      : undefined,
+              fillColor: c,
+              fillOpacity:
+                status === "confirmed_public"
+                  ? 0.58
+                  : status === "cadastre_public"
+                    ? 0.38
+                    : status === "mixed_public"
+                      ? 0.34
+                      : 0.12,
+            };
+          }
+          if (layer.id === "gup-2024-planirane-ceste") {
+            return {
+              color: "#3f3f46",
+              weight: 2.5,
+              dashArray: "12 8",
+              fillColor: "#f4f4f5",
+              fillOpacity: 0.38,
+            };
+          }
+          if (layer.id === "cestice-planiranih-cesta") {
+            const status = p?.ownership_status;
+            const conflict = p?.has_evidence_conflict === true;
+            const styleByStatus: Record<
+              PlannedRoadOwnershipStatus,
+              LeafletNS.PathOptions
+            > = {
+              confirmed_public: {
+                color: "#005f46",
+                weight: 3,
+                fillColor: "#005f46",
+                fillOpacity: 0.58,
+              },
+              mixed_public: {
+                color: "#5d0ec0",
+                weight: 2.5,
+                dashArray: "8 5",
+                fillColor: "#5d0ec0",
+                fillOpacity: 0.34,
+              },
+              cadastre_public: {
+                color: "#005986",
+                weight: 2.5,
+                dashArray: "6 4",
+                fillColor: "#005986",
+                fillOpacity: 0.38,
+              },
+              city_gis_public: {
+                color: "#007956",
+                weight: 2.5,
+                dashArray: "10 5",
+                fillColor: "#007956",
+                fillOpacity: 0.3,
+              },
+              not_confirmed_public: {
+                color: "#71717b",
+                weight: 2,
+                fillColor: "#71717b",
+                fillOpacity: 0.18,
+              },
+              unresolved: {
+                color: "#953d00",
+                weight: 2.5,
+                dashArray: "2 5",
+                fillColor: "#fef3c6",
+                fillOpacity: 0.32,
+              },
+              no_data: {
+                color: "#9f9fa9",
+                weight: 1,
+                fillColor: "#f4f4f5",
+                fillOpacity: 0.55,
+              },
+            };
+            const primary = status ? styleByStatus[status] : styleByStatus.no_data;
+            return conflict ? { ...primary, dashArray: "3 3" } : primary;
+          }
           // Sve prometno je jedan sloj i crta se samo obrisom — plohe iz
           // plana pune bi radnu zonu pretvorile u mrlju, a rub asfalta je
           // ono što se zapravo želi vidjeti. Ulici razred određuje debljinu,
@@ -2163,16 +3461,27 @@ function dodajSloj(
             lyr.on("click", (e) => {
               const { lat, lng } = (e as LeafletNS.LeafletMouseEvent).latlng;
               const put = lyr as LeafletNS.Path;
-              otvoriDosje(lat, lng, {
-                istakni: () => {
-                  put.setStyle(STIL_ODABRANO);
-                  put.bringToFront();
+              otvoriDosje(
+                lat,
+                lng,
+                {
+                  istakni: () => {
+                    put.setStyle(STIL_ODABRANO);
+                    put.bringToFront();
+                  },
+                  // Vraćanje ide preko sloja koji je česticu i nacrtao —
+                  // izvorni stil dolazi iz `style` funkcije i drugdje ga
+                  // nemamo zapisanog.
+                  vrati: () => gj.resetStyle(put),
                 },
-                // Vraćanje ide preko sloja koji je česticu i nacrtao —
-                // izvorni stil dolazi iz `style` funkcije i drugdje ga
-                // nemamo zapisanog.
-                vrati: () => gj.resetStyle(put),
-              });
+                normalizeCanonicalParcelId(p.parcel_id) ??
+                  canonicalParcelId(p.ko, p.cestica) ??
+                  canonicalParcelId(
+                    p.cadastral_municipality,
+                    p.parcel_number,
+                  ) ??
+                  undefined,
+              );
             });
             return;
           }
@@ -2233,6 +3542,9 @@ function dodajSloj(
 const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
   "katastar",
   "katastar-vlasnistvo",
+  "javne-cestice",
+  "ciljana-provjera-vlasnistva",
+  "cestice-planiranih-cesta",
   // Izvedeni sloj mora voditi u dosje, ne u skočni prozor s „M/K5”.
   //
   // Bio je običan sloj s natpisom, pa je u pogledu „Gdje se može graditi
@@ -2255,6 +3567,7 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
  * kao jedan redak među ostalima, a ne kao odgovor na svako pitanje.
  */
 const NEINTERAKTIVNE_PLOHE: ReadonlySet<string> = new Set([
+  "gup-2024-planirane-ceste",
   "popisni-krugovi",
   "statisticki-krugovi",
   "ulice-podrucja",
@@ -2333,6 +3646,45 @@ function DosjePlaca({
 }) {
   const c = dosje?.cestica;
   const okvir = useRef<HTMLElement>(null);
+
+  // Na telefonu je dosje stvarno modal. Osim unutarnjeg omota karte treba
+  // utišati i krom stranice izvan MapClienta (npr. poveznicu "Naš kvart").
+  // Inertiramo samo braću duž grane koja vodi do dijaloga, nikad pretke koji
+  // sadrže sam dijalog, i vraćamo isključivo elemente koje smo mi promijenili.
+  useEffect(() => {
+    if (!usko || !okvir.current) return;
+    const promijenjeni: HTMLElement[] = [];
+    const izvanDosjea = (meta: EventTarget | null) =>
+      meta instanceof Node && !okvir.current?.contains(meta);
+    const zadrziFokus = (e: PointerEvent) => {
+      if (izvanDosjea(e.target)) e.preventDefault();
+    };
+    const zaustaviKlik = (e: MouseEvent) => {
+      if (!izvanDosjea(e.target)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    document.addEventListener("pointerdown", zadrziFokus, true);
+    document.addEventListener("click", zaustaviKlik, true);
+    let grana: HTMLElement = okvir.current;
+    while (grana.parentElement) {
+      const roditelj = grana.parentElement;
+      for (const dijete of roditelj.children) {
+        if (dijete === grana || !(dijete instanceof HTMLElement) || dijete.inert)
+          continue;
+        dijete.inert = true;
+        promijenjeni.push(dijete);
+      }
+      if (roditelj === document.body) break;
+      grana = roditelj;
+    }
+    return () => {
+      document.removeEventListener("pointerdown", zadrziFokus, true);
+      document.removeEventListener("click", zaustaviKlik, true);
+      for (const element of promijenjeni) element.inert = false;
+    };
+  }, [usko]);
+
   // Fokus ulazi u ploču kad se otvori. Prije je ostajao na kontejneru karte,
   // pa je čitač zaslona javljao da se nešto dogodilo, ali ne i što.
   //
@@ -2367,10 +3719,14 @@ function DosjePlaca({
       if (meta.length === 0) return;
       const prvi = meta[0];
       const zadnji = meta[meta.length - 1];
-      if (e.shiftKey && document.activeElement === prvi) {
+      const aktivan = document.activeElement;
+      if (aktivan === okvir.current || !okvir.current.contains(aktivan)) {
+        e.preventDefault();
+        (e.shiftKey ? zadnji : prvi).focus();
+      } else if (e.shiftKey && aktivan === prvi) {
         e.preventDefault();
         zadnji.focus();
-      } else if (!e.shiftKey && document.activeElement === zadnji) {
+      } else if (!e.shiftKey && aktivan === zadnji) {
         e.preventDefault();
         prvi.focus();
       }
@@ -2457,6 +3813,22 @@ function DosjePlaca({
         {dosje && !ucitavanje && (
           <>
             <NamjenaOdgovor namjena={dosje.namjena} />
+            {dosje.planiranaCestaCestica ? (
+              <PlaniranaCestaCesticaOdgovor
+                properties={dosje.planiranaCestaCestica}
+              />
+            ) : (
+              <>
+                {dosje.ciljanaProvjeraVlasnistva && (
+                  <CiljanaProvjeraOdgovor
+                    properties={dosje.ciljanaProvjeraVlasnistva}
+                  />
+                )}
+                {dosje.javnaCestica && (
+                  <JavnaCesticaOdgovor properties={dosje.javnaCestica} />
+                )}
+              </>
+            )}
             {dosje.skupine.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 Nijedan sloj ovdje nema ništa.
@@ -2539,6 +3911,164 @@ function DosjePlaca({
         )}
       </div>
     </aside>
+  );
+}
+
+function PlaniranaCestaCesticaOdgovor({
+  properties,
+}: {
+  properties: PlannedRoadParcelProperties;
+}) {
+  const facts = plannedRoadParcelDossierFacts(properties);
+  const statusTone = plannedRoadOwnershipStatusTone(properties.ownership_status);
+  return (
+    <section className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-900">
+          Planirana cesta i vlasništvo
+        </h3>
+        <span
+          className={
+            "rounded-full px-2 py-0.5 text-xs font-bold " +
+            (statusTone === "neutral"
+              ? "bg-zinc-200 text-zinc-700"
+              : "bg-amber-100 text-amber-800")
+          }
+        >
+          {PLANNED_ROAD_OWNERSHIP_STATUS_LABELS[properties.ownership_status]}
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-800">
+        {facts.map((fact) => (
+          <li key={fact}>{fact}</li>
+        ))}
+        <li>
+          Izvor dokaza:{" "}
+          {PLANNED_ROAD_OWNERSHIP_EVIDENCE_LABELS[properties.ownership_evidence]}
+        </li>
+      </ul>
+      {properties.has_evidence_conflict && (
+        <p className="mt-2 rounded bg-amber-100 px-2 py-1.5 text-sm font-semibold text-amber-800">
+          Dostupni izvori nisu međusobno usklađeni.
+        </p>
+      )}
+      {properties.secondary_evidence_labels.length > 0 && (
+        <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-700">
+          {properties.secondary_evidence_labels.map((label) => (
+            <li key={label}>Dodatni izvor: {label}</li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs leading-normal text-zinc-600">
+        Informativni prikaz nacrta GUP-a 2024. Vlasništvo nije ponovno
+        provjeravano; službeni zapis provjeri na{" "}
+        <a
+          href="https://oss.uredjenazemlja.hr/map"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fokus font-semibold text-maslina underline"
+        >
+          Uređenoj zemlji
+        </a>
+        .
+      </p>
+    </section>
+  );
+}
+
+function CiljanaProvjeraOdgovor({
+  properties,
+}: {
+  properties: TargetedOwnershipProperties;
+}) {
+  const facts = targetedOwnershipDossierFacts(properties);
+  const publicStatus = ["confirmed_public", "cadastre_public", "mixed_public"].includes(
+    properties.verification_status
+  );
+  return (
+    <section
+      className={`mb-3 rounded-lg border px-3 py-2.5 ${
+        publicStatus
+          ? "border-maslina-rub bg-maslina-vez"
+          : properties.verification_status === "unresolved"
+            ? "border-status-u-tijeku-ground bg-status-u-tijeku-ground"
+            : "border-zinc-200 bg-zinc-50"
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-900">Ciljana provjera vlasništva</h3>
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+            publicStatus
+              ? "bg-status-rijeseno-ground text-status-rijeseno"
+              : properties.verification_status === "unresolved"
+                ? "bg-white text-status-u-tijeku"
+                : "bg-zinc-200 text-zinc-700"
+          }`}
+        >
+          {OWNERSHIP_STATUS_LABELS[properties.verification_status]}
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-800">
+        {facts.map((fact) => (
+          <li key={fact}>{fact}</li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs leading-normal text-zinc-600">
+        {properties.verified_at
+          ? `Provjereno ${formatPublicSourceDate(properties.verified_at)}. `
+          : "Nije razriješeno u automatskoj provjeri. "}
+        Privatna imena nisu objavljena. Službeni zapis provjeri na{" "}
+        <a
+          href="https://oss.uredjenazemlja.hr/map"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fokus font-semibold text-maslina underline"
+        >
+          Uređenoj zemlji
+        </a>
+        .
+      </p>
+    </section>
+  );
+}
+
+function JavnaCesticaOdgovor({
+  properties,
+}: {
+  properties: PublicParcelProperties;
+}) {
+  const facts = publicParcelDossierFacts(properties);
+  return (
+    <section className="mb-3 rounded-lg bg-zinc-100 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-900">
+          Evidentirani javni status
+        </h3>
+        <span className="rounded-full bg-status-u-tijeku-ground px-2 py-0.5 text-xs font-bold text-status-u-tijeku">
+          djelomična evidencija
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm leading-normal text-zinc-800">
+        {facts.map((fact) => (
+          <li key={fact}>{fact}</li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs leading-normal text-zinc-600">
+        GIS izvoz Grada Splita, stanje izvornog sloja{" "}
+        {formatPublicSourceDate(properties.source_updated_at)}.
+        Informativni prikaz; vlasništvo provjeri na{" "}
+        <a
+          href="https://oss.uredjenazemlja.hr/map"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fokus font-semibold text-maslina underline"
+        >
+          Uređenoj zemlji
+        </a>
+        . Nacrt GUP-a 2024. nije plan na snazi.
+      </p>
+    </section>
   );
 }
 

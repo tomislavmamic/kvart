@@ -1,0 +1,24 @@
+{
+  "source_updated_at": "2025-10-03",
+  "minimum_road_overlap_m2": 1,
+  "input_counts": {
+    "road_polygons": 532,
+    "parcels": 1314
+  },
+  "selected_count": 338,
+  "ownership_status_counts": {
+    "confirmed_public": 6,
+    "mixed_public": 0,
+    "cadastre_public": 3,
+    "city_gis_public": 32,
+    "not_confirmed_public": 9,
+    "unresolved": 4,
+    "no_data": 284
+  },
+  "sources": {
+    "parcels": "/geo/grad/katastar.geojson",
+    "roads": "/geo/planovi/gup-2024-promet.geojson",
+    "targeted_ownership": "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
+    "city_gis": "/geo/analiza/javne-cestice.geojson"
+  }
+}

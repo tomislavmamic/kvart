@@ -1,0 +1,164 @@
+[
+  {
+    "id": "grad-split",
+    "label": "Grad Split",
+    "category": "city",
+    "aliases": ["GRAD SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "republika-hrvatska",
+    "label": "Republika Hrvatska",
+    "category": "state",
+    "aliases": ["REPUBLIKA HRVATSKA"],
+    "taxNumbers": [],
+    "source": "https://gov.hr/",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "splitsko-dalmatinska-zupanija",
+    "label": "Splitsko-dalmatinska županija",
+    "category": "county",
+    "aliases": ["SPLITSKO-DALMATINSKA ŽUPANIJA", "SPLITSKO DALMATINSKA ŽUPANIJA"],
+    "taxNumbers": [],
+    "source": "https://dalmacija.hr/",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "cistoca-split",
+    "label": "Čistoća d.o.o. Split",
+    "category": "municipal_company",
+    "aliases": ["ČISTOĆA D.O.O. SPLIT", "ČISTOĆA D.O.O."],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "des-split",
+    "label": "DES d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["DES D.O.O.", "DES SPLIT D.O.O."],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "znjan-split",
+    "label": "Žnjan d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["ŽNJAN D.O.O.", "ŽNJAN D.O.O. SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "hajduk-split",
+    "label": "HNK Hajduk Split s.d.d.",
+    "category": "municipal_company",
+    "aliases": ["HNK HAJDUK SPLIT S.D.D.", "HNK HAJDUK SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "sportski-objekti-split",
+    "label": "JU Športski objekti Split",
+    "category": "public_institution",
+    "aliases": ["JAVNA USTANOVA ŠPORTSKI OBJEKTI SPLIT", "JU ŠPORTSKI OBJEKTI SPLIT", "ŠPORTSKI OBJEKTI SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "kk-split",
+    "label": "KK Split s.d.d.",
+    "category": "municipal_company",
+    "aliases": ["KK SPLIT S.D.D.", "KOŠARKAŠKI KLUB SPLIT S.D.D."],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "lovrinac-split",
+    "label": "Lovrinac d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["LOVRINAC D.O.O.", "LOVRINAC D.O.O. SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "park-suma-marjan",
+    "label": "JU Park-šuma Marjan",
+    "category": "public_institution",
+    "aliases": ["JAVNA USTANOVA ZA UPRAVLJANJE PARK-ŠUMOM MARJAN", "JU PARK-ŠUMA MARJAN", "PARK ŠUMA MARJAN"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "parkovi-i-nasadi-split",
+    "label": "Parkovi i nasadi d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["PARKOVI I NASADI D.O.O.", "PARKOVI I NASADI D.O.O. SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "promet-split",
+    "label": "Promet d.o.o. Split",
+    "category": "municipal_company",
+    "aliases": ["PROMET D.O.O. SPLIT", "PROMET SPLIT D.O.O.", "PROMET D.O.O."],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "split-rast",
+    "label": "Razvojna agencija Split — RaST d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["RAZVOJNA AGENCIJA SPLIT - RAST D.O.O.", "SPLIT-RAST D.O.O.", "RAST D.O.O."],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "split-parking",
+    "label": "Split parking d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["SPLIT PARKING D.O.O.", "SPLIT PARKING D.O.O. SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "splitska-obala",
+    "label": "Splitska obala d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["SPLITSKA OBALA D.O.O.", "SPLITSKA OBALA D.O.O. SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/natjecaji/detalj-natjecaja/gradska-poduzeca-i-javne-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "stano-uprava-split",
+    "label": "Stano-uprava d.o.o.",
+    "category": "municipal_company",
+    "aliases": ["STANO-UPRAVA D.O.O.", "STANO UPRAVA D.O.O.", "STANO-UPRAVA D.O.O. SPLIT"],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  },
+  {
+    "id": "vodovod-i-kanalizacija-split",
+    "label": "Vodovod i kanalizacija d.o.o. Split",
+    "category": "municipal_company",
+    "aliases": ["VODOVOD I KANALIZACIJA D.O.O. SPLIT", "VODOVOD I KANALIZACIJA D.O.O."],
+    "taxNumbers": [],
+    "source": "https://split.hr/gradska-uprava/gradske-tvrtke-i-ustanove",
+    "verifiedAt": "2026-08-02"
+  }
+]

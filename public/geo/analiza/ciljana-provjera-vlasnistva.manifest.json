@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-08-02",
+  "verified_at": "2026-08-02",
+  "target_count": 30,
+  "corridor_overlap_m2": 1,
+  "large_parcel_m2": 10000,
+  "counts": {
+    "confirmed_public": 6,
+    "mixed_public": 0,
+    "cadastre_public": 4,
+    "private_or_other": 10,
+    "unresolved": 10
+  },
+  "sources": {
+    "cadastral_geometry": "/geo/grad/katastar.geojson",
+    "corridor": "data/public-ownership-corridor.geojson",
+    "ownership": "https://oss.uredjenazemlja.hr/",
+    "public_registry": "data/public-entities.json"
+  }
+}

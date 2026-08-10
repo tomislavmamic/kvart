@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dosjeZaTocku } from "@/lib/dosje";
+import { normalizeCanonicalParcelId } from "@/lib/planned-road-parcels";
 
 /**
  * Dosje čestice za kliknutu točku: što je na njoj, kroz nju i nad njom.
@@ -14,6 +15,8 @@ export async function GET(request: Request): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const lat = Number(searchParams.get("lat"));
   const lng = Number(searchParams.get("lng"));
+  const requestedParcelId = searchParams.get("parcel_id");
+  const parcelId = normalizeCanonicalParcelId(requestedParcelId);
 
   // Isto ograničenje kao /api/solar — točka mora biti u okolici Splita.
   if (
@@ -26,9 +29,15 @@ export async function GET(request: Request): Promise<Response> {
   ) {
     return NextResponse.json({ error: "Točka je izvan područja." }, { status: 400 });
   }
+  if (requestedParcelId !== null && parcelId === null) {
+    return NextResponse.json(
+      { error: "Neispravan identifikator čestice." },
+      { status: 400 },
+    );
+  }
 
   try {
-    const dosje = await dosjeZaTocku(lng, lat);
+    const dosje = await dosjeZaTocku(lng, lat, parcelId);
     return NextResponse.json(dosje);
   } catch (e) {
     console.error("Dosje čestice nije sastavljen:", e);

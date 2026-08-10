@@ -24,6 +24,20 @@ import { OVERLAY_LAYERS } from "./map-views";
 import { NA_SNAZI, PRETHODNI } from "./plan-status";
 import { opisObjekta, vrijednostPolja } from "./polja";
 import {
+  validatePublicParcelProperties,
+  type PublicParcelProperties,
+} from "./public-parcels";
+import {
+  canonicalParcelId,
+  normalizeCanonicalParcelId,
+  validatePlannedRoadParcelProperties,
+  type PlannedRoadParcelProperties,
+} from "./planned-road-parcels";
+import {
+  validateTargetedOwnershipProperties,
+  type TargetedOwnershipProperties,
+} from "./targeted-ownership";
+import {
   TEME,
   type Dosje,
   type Namjena,
@@ -499,10 +513,16 @@ function okviriSijeku(
  * pasti izvan nje, a onda bi dosje opisao susjedovu zemlju.
  */
 export async function nadiCestice(upit: string): Promise<
-  { naziv: string; opis: string; lat: number; lng: number }[]
+  { naziv: string; opis: string; lat: number; lng: number; parcel_id?: string }[]
 > {
   const q = upit.toLocaleLowerCase("hr-HR").trim();
-  const out: { naziv: string; opis: string; lat: number; lng: number }[] = [];
+  const out: {
+    naziv: string;
+    opis: string;
+    lat: number;
+    lng: number;
+    parcel_id?: string;
+  }[] = [];
 
   const kat = await ucitaj("/geo/grad/katastar.geojson");
   if (kat) {
@@ -514,6 +534,8 @@ export async function nadiCestice(upit: string): Promise<
       if (brl !== q && !brl.startsWith(q + "/") && !brl.startsWith(q)) continue;
       const t = pointOnFeature(f as Feature<never>);
       const [lng, lat] = t.geometry.coordinates as [number, number];
+      const id = canonicalParcelId(f.properties?.ko, f.properties?.cestica);
+      if (!id) continue;
       out.push({
         naziv: `k.č. ${br}`,
         opis: `k.o. ${f.properties?.ko ?? ""} · ${Math.round(
@@ -521,6 +543,7 @@ export async function nadiCestice(upit: string): Promise<
         ).toLocaleString("hr-HR")} m²`,
         lat,
         lng,
+        parcel_id: id,
       });
       if (out.length >= 8) return out;
     }
@@ -551,12 +574,41 @@ export async function nadiCestice(upit: string): Promise<
   return out;
 }
 
-export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
+function featureParcelId(feature: Feature | null): string | null {
+  if (!feature) return null;
+  const properties = (feature.properties ?? {}) as Record<string, unknown>;
+  return (
+    normalizeCanonicalParcelId(properties.parcel_id) ??
+    canonicalParcelId(properties.ko, properties.cestica) ??
+    canonicalParcelId(
+      properties.cadastral_municipality,
+      properties.parcel_number,
+    )
+  );
+}
+
+function featureByParcelId(layer: Ucitano, parcelId: string): Feature | null {
+  return (
+    layer.fc.features.find(
+      (feature) => featureParcelId(feature) === parcelId,
+    ) ?? null
+  );
+}
+
+export async function dosjeZaTocku(
+  lng: number,
+  lat: number,
+  requestedParcelId?: string | null,
+): Promise<Dosje> {
   const tocka = { type: "Point", coordinates: [lng, lat] as Position } as const;
+  const preferredParcelId = normalizeCanonicalParcelId(requestedParcelId);
 
   const katastar = await ucitaj("/geo/grad/katastar.geojson");
-  let cestica: Feature | null = null;
-  if (katastar) {
+  let cestica =
+    katastar && preferredParcelId
+      ? featureByParcelId(katastar, preferredParcelId)
+      : null;
+  if (katastar && !cestica) {
     for (let i = 0; i < katastar.fc.features.length; i++) {
       const f = katastar.fc.features[i];
       const o = katastar.okviri[i];
@@ -571,11 +623,115 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
       }
     }
   }
+  const selectedParcelId = featureParcelId(cestica) ?? preferredParcelId;
 
   // Bez čestice se ispituje sama točka; s česticom njezin puni oblik.
   const meta: Feature = cestica ?? ({ type: "Feature", properties: {}, geometry: tocka } as Feature);
   const metaOkvir = turfBbox(meta) as [number, number, number, number];
   const sredina = cestica ? pointOnFeature(cestica as Feature<never>) : null;
+
+  let javnaCestica: PublicParcelProperties | null = null;
+  const javniSloj = await ucitaj("/geo/analiza/javne-cestice.geojson");
+  if (javniSloj) {
+    const exact = selectedParcelId
+      ? featureByParcelId(javniSloj, selectedParcelId)
+      : null;
+    const candidates = exact
+      ? [exact]
+      : selectedParcelId
+        ? []
+        : javniSloj.fc.features;
+    for (const feature of candidates) {
+      const i = javniSloj.fc.features.indexOf(feature);
+      const okvir = javniSloj.okviri[i];
+      if (
+        !exact &&
+        (lng < okvir[0] || lng > okvir[2] || lat < okvir[1] || lat > okvir[3])
+      )
+        continue;
+      try {
+        if (!exact && !booleanPointInPolygon(tocka, feature as Feature<never>))
+          continue;
+        validatePublicParcelProperties(feature.properties);
+        javnaCestica = feature.properties;
+        break;
+      } catch {
+        /* neispravan ili nesiguran javni zapis ne ide u dosje */
+      }
+    }
+  }
+
+  let ciljanaProvjeraVlasnistva: TargetedOwnershipProperties | null = null;
+  const ciljaniSloj = await ucitaj("/geo/analiza/ciljana-provjera-vlasnistva.geojson");
+  if (ciljaniSloj) {
+    const exact = selectedParcelId
+      ? featureByParcelId(ciljaniSloj, selectedParcelId)
+      : null;
+    const candidates = exact
+      ? [exact]
+      : selectedParcelId
+        ? []
+        : ciljaniSloj.fc.features;
+    for (const feature of candidates) {
+      const i = ciljaniSloj.fc.features.indexOf(feature);
+      const okvir = ciljaniSloj.okviri[i];
+      if (
+        !exact &&
+        (lng < okvir[0] || lng > okvir[2] || lat < okvir[1] || lat > okvir[3])
+      )
+        continue;
+      try {
+        if (!exact && !booleanPointInPolygon(tocka, feature as Feature<never>))
+          continue;
+        validateTargetedOwnershipProperties(feature.properties);
+        ciljanaProvjeraVlasnistva = feature.properties;
+        break;
+      } catch {
+        /* neispravan ili nesiguran ciljani zapis ne ide u dosje */
+      }
+    }
+  }
+
+  let planiranaCestaCestica: PlannedRoadParcelProperties | null = null;
+  const planiraneCesteSloj = await ucitaj(
+    "/geo/analiza/cestice-planiranih-cesta.geojson"
+  );
+  if (planiraneCesteSloj) {
+    const exact = selectedParcelId
+      ? featureByParcelId(planiraneCesteSloj, selectedParcelId)
+      : null;
+    const candidates = exact
+      ? [exact]
+      : selectedParcelId
+        ? []
+        : planiraneCesteSloj.fc.features;
+    for (const feature of candidates) {
+      const i = planiraneCesteSloj.fc.features.indexOf(feature);
+      const okvir = planiraneCesteSloj.okviri[i];
+      if (
+        !exact &&
+        (lng < okvir[0] || lng > okvir[2] || lat < okvir[1] || lat > okvir[3])
+      )
+        continue;
+      try {
+        if (!exact && !booleanPointInPolygon(tocka, feature as Feature<never>))
+          continue;
+        validatePlannedRoadParcelProperties(feature.properties);
+        planiranaCestaCestica = feature.properties;
+        break;
+      } catch {
+        /* neispravan ili nesiguran zapis planirane ceste ne ide u dosje */
+      }
+    }
+  }
+  if (
+    planiranaCestaCestica &&
+    selectedParcelId !== planiranaCestaCestica.parcel_id
+  ) {
+    throw new Error(
+      `Dossier parcel identity mismatch: ${selectedParcelId ?? "none"} / ${planiranaCestaCestica.parcel_id}`,
+    );
+  }
 
   const poTemi = new Map<Tema, Stavka[]>();
   let pretrazeno = 0;
@@ -640,6 +796,9 @@ export async function dosjeZaTocku(lng: number, lat: number): Promise<Dosje> {
 
   return {
     cestica: cestica ? ((cestica.properties ?? {}) as Record<string, unknown>) : null,
+    javnaCestica,
+    ciljanaProvjeraVlasnistva,
+    planiranaCestaCestica,
     namjena: await namjenaNaTocki(
       { type: "Feature", properties: {}, geometry: tocka } as Feature,
       cestica
