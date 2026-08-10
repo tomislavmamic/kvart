@@ -73,10 +73,11 @@ jednim raspoloživim vlasničkim zapisom; preostalih 284 dobiva `no_data`.
 Najjači raspoloživi dokaz određuje primarni status ovim redom:
 
 1. zemljišna knjiga — potvrđeno javno ili nije potvrđeno javno;
-2. katastar — javno prema katastarskom posjedniku;
-3. gradski GIS — javno prema GIS izvozu;
-4. neriješena ciljana provjera;
-5. nema podataka o vlasništvu.
+2. zemljišna knjiga — mješovito javno i drugo vlasništvo;
+3. katastar — javno prema katastarskom posjedniku;
+4. gradski GIS — javno prema GIS izvozu;
+5. neriješena ciljana provjera;
+6. nema podataka o vlasništvu.
 
 Izvor slabije snage ne nestaje. Ako se gradski GIS i jači ciljani rezultat ne
 slažu, značajka dobiva oznaku neslaganja i klik prikazuje oba sanitizirana
@@ -110,6 +111,7 @@ sadrži samo:
 `ownership_status` ima vrijednosti:
 
 - `confirmed_public` — javno potvrđeno u ZK;
+- `mixed_public` — ZK sadrži javnog i drugog ili neprepoznatog nositelja;
 - `cadastre_public` — javno prema katastarskom posjedniku;
 - `city_gis_public` — javno samo prema gradskom GIS izvozu;
 - `not_confirmed_public` — ciljanim ZK rezultatom nije potvrđen javni subjekt;
