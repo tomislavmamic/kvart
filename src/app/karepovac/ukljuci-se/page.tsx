@@ -10,17 +10,18 @@ import {
 export const metadata: Metadata = {
   title: "Uključi se",
   description:
-    "Kako ponuditi lokaciju, pomoći opremom ili pratiti pripremu mreže za praćenje zraka oko Karepovca.",
+    "Saznajte kako možete ponuditi mjesto za mjernu postaju, pomoći znanjem ili pratiti pripremu donacija za opremu.",
 };
 
 export default function UkljuciSePage() {
   return (
     <div className="space-y-14">
-      <PageIntro title="Pomozite izgraditi mrežu kojoj se može vjerovati">
+      <PageIntro title="Pomozite nam postaviti prve mjerne postaje">
         <p>
-          Tražit ćemo domaćine postaja, tehničke volontere i donacije za opremu
-          i održavanje. Prijave i uplate još nisu otvorene jer prvo moramo
-          objaviti tko je odgovoran, kako čuvamo podatke i kamo ide svaki euro.
+          Tražit ćemo stanovnike koji mogu ustupiti mjesto za postaju, ljude koji
+          se razumiju u opremu i one koji žele pomoći donacijom. Prijave i uplate
+          još nisu otvorene. Prvo moramo objaviti tko vodi projekt, kako čuvamo
+          osobne podatke i kako ćemo prikazivati troškove.
         </p>
       </PageIntro>
 
@@ -30,42 +31,52 @@ export default function UkljuciSePage() {
         <article className="rounded-xl border border-kamen-tlo bg-white p-6 sm:p-8">
           <HostMark />
           <h2 className="mt-8 text-2xl font-bold text-kamen-tinta">
-            Ponudite vrt ili balkon
+            Ponudite mjesto u vrtu ili na balkonu
           </h2>
           <p className="mt-4 leading-7 text-kamen-tekst">
-            Dobra lokacija ima sigurno napajanje, vezu, strujanje zraka i
-            pristup za održavanje. Točna kućna adresa i kontakt neće biti javni.
+            Mjesto treba imati sigurno napajanje, podatkovnu vezu, slobodno
+            strujanje zraka i pristup radi održavanja. Kućnu adresu i kontakt
+            nećemo javno objaviti.
           </p>
-          <h3 className="mt-7 font-bold text-kamen-tinta">Prije prijave objavljujemo</h3>
+          <h3 className="mt-7 font-bold text-kamen-tinta">
+            Prije otvaranja prijava objavit ćemo
+          </h3>
           <ul className="mt-3 space-y-3 text-kamen-tekst">
-            <Check>obavijest o privatnosti i privolu;</Check>
-            <Check>dogovor o pristupu, opremi i povlačenju postaje;</Check>
-            <Check>pravila izbora lokacija i grubo javno pozicioniranje.</Check>
+            <Check>obavijest o tome koje podatke prikupljamo i zašto;</Check>
+            <Check>
+              dogovor o pristupu postaji, vlasništvu opreme i uklanjanju postaje;
+            </Check>
+            <Check>
+              pravila prema kojima ćemo birati mjesta i prikazivati približne
+              lokacije.
+            </Check>
           </ul>
           <button
             type="button"
             disabled
             className="mt-8 min-h-11 w-full cursor-not-allowed rounded-full bg-kamen-rub px-5 py-3 font-semibold text-kamen-drugi"
           >
-            Prijave domaćina uskoro
+            Prijave još nisu otvorene
           </button>
         </article>
 
         <article className="rounded-xl border border-kamen-tlo bg-white p-6 sm:p-8">
           <DonationMark />
           <h2 className="mt-8 text-2xl font-bold text-kamen-tinta">
-            Pomozite kupiti i održavati opremu
+            Pomozite nam kupiti i održavati opremu
           </h2>
           <p className="mt-4 leading-7 text-kamen-tekst">
-            Donacijska poveznica bit će aktivna tek kad navedemo zakonitog
-            primatelja, cilj, proračun, uvjete i način javnog izvještavanja o
-            troškovima.
+            Poveznicu za donacije objavit ćemo tek kada bude jasno tko smije
+            primati uplate, koliko želimo prikupiti i kako ćemo prikazati svaki
+            trošak.
           </p>
-          <h3 className="mt-7 font-bold text-kamen-tinta">Na stranici će biti vidljivo</h3>
+          <h3 className="mt-7 font-bold text-kamen-tinta">
+            Prije otvaranja donacija objavit ćemo
+          </h3>
           <ul className="mt-3 space-y-3 text-kamen-tekst">
-            <Check>koliko se prikuplja i za koje stavke;</Check>
-            <Check>što je naručeno, plaćeno i preostalo;</Check>
-            <Check>računi i potvrde prikladni za javnu objavu.</Check>
+            <Check>koliko želimo prikupiti i što ćemo tim novcem platiti;</Check>
+            <Check>što je naručeno, što je plaćeno i koliko je novca ostalo;</Check>
+            <Check>račune i potvrde koje smijemo javno objaviti.</Check>
           </ul>
           <button
             type="button"
@@ -78,11 +89,11 @@ export default function UkljuciSePage() {
       </section>
 
       <section className="rounded-xl bg-maslina-vez p-6 sm:p-8">
-        <SectionHeading title="Možete pomoći i prije nabave">
+        <SectionHeading title="Kako možete pomoći već sada">
           <p>
-            Korisni su iskustvo s elektrokemijskim senzorima, elektronikom,
-            LoRa/Wi-Fi vezom, kućištima na otvorenom, meteorologijom, obradom
-            podataka, privatnošću i terenskim održavanjem.
+            Već sada možete pomoći znanjem o senzorima, elektronici, LoRa ili
+            Wi-Fi vezi, kućištima za vanjsku uporabu, vremenskim podacima,
+            obradi mjerenja i održavanju opreme.
           </p>
         </SectionHeading>
         <div className="mt-6 flex flex-wrap gap-3">

@@ -18,9 +18,9 @@ export default function KarepovacPage() {
               Što zrak nosi iz smjera Karepovca?
             </h1>
             <p className="mt-4 max-w-lg text-base leading-7 text-zinc-200 sm:mt-6 sm:text-lg sm:leading-8">
-              Gradimo malu građansku mrežu koja će povezati indikativna H₂S
-              mjerenja, mirisne događaje i vjetar — bez miješanja mjerenog i
-              procijenjenog.
+              Postavit ćemo nekoliko mjernih postaja oko Karepovca. Njihova ćemo
+              mjerenja uspoređivati s pojavama neugodnog mirisa te sa smjerom i
+              brzinom vjetra.
             </p>
           </div>
 
@@ -30,7 +30,7 @@ export default function KarepovacPage() {
               Projekt je u pripremi
             </div>
             <PrimaryLink href="/karepovac/ukljuci-se">
-              Pogledajte kako se uključiti
+              Kako se mogu uključiti
             </PrimaryLink>
           </div>
         </div>
@@ -38,11 +38,11 @@ export default function KarepovacPage() {
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[0.68fr_1.32fr] lg:gap-12">
-        <SectionHeading title="Danas nema podataka za prikaz">
+        <SectionHeading title="Danas još nemamo vlastita mjerenja">
           <p>
-            To nije kvar. Mjerenja ćemo objaviti tek nakon usporednog rada,
-            umjeravanja i provjere kvalitete. Procjena smjera širenja neće se
-            uključiti dok nema pouzdanog vjetra i valjanih mjerenja.
+            Mjerenja ćemo objaviti tek nakon što uređaje usporedimo, umjerimo i
+            provjerimo. Smjer širenja počet ćemo procjenjivati tek kada budemo
+            imali pouzdan podatak o vjetru i valjana mjerenja.
           </p>
           <Link
             href="/karepovac/metodologija"
@@ -52,29 +52,29 @@ export default function KarepovacPage() {
           </Link>
         </SectionHeading>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
-          <h2 className="text-xl font-bold">Što već možemo reći</h2>
+          <h2 className="text-xl font-bold">Što je već dogovoreno</h2>
           <ul className="mt-5 space-y-4 leading-7">
             <Fact>
-              Mreža će krenuti s najmanje tri jednaka H₂S čvora i pouzdanim
-              lokalnim podatkom o vjetru.
+              Za početak planiramo najmanje tri jednaka mjerna uređaja i
+              pouzdan lokalni podatak o vjetru.
             </Fact>
             <Fact>
-              NH₃ se dodaje samo ako odabrani modul tijekom usporednog rada
-              pokaže korisnu osjetljivost pri niskim koncentracijama.
+              Amonijak (NH₃) dodat ćemo samo ako se tijekom usporedbe pokaže da
+              ga odabrani senzor može pouzdano pratiti pri niskim koncentracijama.
             </Fact>
             <Fact>
-              Ovo će biti indikativno građansko mjerenje, a ne službeno ni
-              sigurnosno mjerenje.
+              Naša će mjerenja biti orijentacijska. Neće zamijeniti službena ni
+              sigurnosna mjerenja.
             </Fact>
           </ul>
         </div>
       </section>
 
       <section>
-        <SectionHeading title="Tri zapisa koja se ne smiju zamijeniti">
+        <SectionHeading title="Kako ćemo razlikovati podatke">
           <p>
-            Karta i grafikoni uvijek će pokazati odakle podatak dolazi. Model
-            vjetra neće se prikazivati kao da je plin izmjeren na tom mjestu.
+            Na karti i grafikonima jasno ćemo označiti odakle svaki podatak dolazi.
+            Procjenu na temelju vjetra nećemo prikazivati kao da je riječ o mjerenju.
           </p>
         </SectionHeading>
         <div className="mt-7">
@@ -83,10 +83,10 @@ export default function KarepovacPage() {
       </section>
 
       <section>
-        <SectionHeading title="Put do javne mreže">
+        <SectionHeading title="Što moramo napraviti prije početka mjerenja">
           <p>
-            Svaka etapa ostavlja javni trag. Sljedeća se ne proglašava
-            završenom dok prethodna nema dokumentiran rezultat.
+            Na svakoj ćemo etapi ostaviti javni trag. Sljedeću nećemo proglasiti
+            završenom dok prethodna ne bude imala dokumentiran rezultat.
           </p>
         </SectionHeading>
         <ol className="mt-8 overflow-hidden rounded-xl border border-kamen-tlo bg-white">
@@ -116,15 +116,17 @@ export default function KarepovacPage() {
       <section className="grid overflow-hidden rounded-2xl bg-white lg:grid-cols-[1.15fr_0.85fr]">
         <div className="p-6 sm:p-9">
           <h2 className="text-3xl font-bold tracking-[-0.025em] text-kamen-tinta">
-            Mrežu neće izgraditi jedna kutija na krovu.
+            Za pouzdanu sliku treba nam više postaja.
           </h2>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-kamen-tekst">
-            Trebaju nam dobro raspoređene lokacije, provjerena oprema,
-            umjeravanje i javan račun svakog troška. Možete pomoći mjestom,
-            znanjem ili budućom donacijom.
+            Za pouzdaniju sliku trebaju nam dobro raspoređene postaje,
+            provjerena oprema i redovito održavanje. Javno ćemo objaviti i koliko
+            je novca prikupljeno te na što je potrošen.
           </p>
           <div className="mt-7">
-            <PrimaryLink href="/karepovac/ukljuci-se">Kako mogu pomoći?</PrimaryLink>
+            <PrimaryLink href="/karepovac/ukljuci-se">
+              Pogledajte kako možete pomoći
+            </PrimaryLink>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-px bg-kamen-tlo">
