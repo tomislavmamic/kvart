@@ -9,28 +9,22 @@ import {
 export const metadata: Metadata = {
   title: "Postaje",
   description:
-    "Stanje buduće građanske mreže, pravila smještaja i privatnost domaćina postaja oko Karepovca.",
+    "Pratite koje su mjerne postaje postavljene, kako biramo njihova mjesta i kako štitimo adresu i kontakt stanovnika.",
 };
 
 export default function PostajePage() {
   return (
     <div className="space-y-14">
-      <PageIntro title="Mreža još nema javnih postaja">
-        <p>
-          Ne prikazujemo izmišljene oznake ni točke samo da karta izgleda
-          dovršeno. Postaja će se pojaviti ovdje tek nakon sastavljanja,
-          usporednog rada, odabira lokacije i dogovora s domaćinom.
-        </p>
+      <PageIntro title="Još nismo postavili nijednu mjernu postaju">
+        <p>Nećemo prikazivati izmišljene oznake ni točke samo da bi karta izgledala popunjeno. Postaju ćemo dodati tek nakon što sastavimo i provjerimo uređaj, odaberemo mjesto i dogovorimo se sa stanovnikom koji ga ustupa.</p>
       </PageIntro>
 
       <section className="overflow-hidden rounded-2xl border border-kamen-rub bg-white lg:grid lg:grid-cols-[1.1fr_0.9fr]">
         <StationField />
         <div className="flex flex-col justify-center bg-kamen-tinta p-6 text-white sm:p-9">
-          <p className="text-3xl font-bold tracking-[-0.025em]">0 javnih postaja</p>
+          <p className="text-3xl font-bold tracking-[-0.025em]">0 postavljenih postaja</p>
           <p className="mt-4 text-lg leading-8 text-zinc-300">
-            Ovo je stvarno stanje projekta, ne mjera napretka. Cilj prvog pilota
-            je najmanje tri provjerena čvora na lokacijama koje daju koristan
-            raspored uz česte smjerove vjetra.
+            Trenutačno nemamo nijednu postavljenu postaju. Za prvi pokusni rad trebaju nam najmanje tri provjerena uređaja, raspoređena tako da mjere s različitih strana Karepovca.
           </p>
           <Link
             href="/karepovac/ukljuci-se"
@@ -42,18 +36,15 @@ export default function PostajePage() {
       </section>
 
       <section>
-        <SectionHeading title="Kako biramo lokacije">
-          <p>
-            Ne pobjeđuje prva prijava. Skup lokacija mora zajedno pomoći
-            razlikovati događaj iz smjera Karepovca od vrlo lokalnog izvora.
-          </p>
+        <SectionHeading title="Kako biramo mjesta za postaje">
+          <p>Mjesta nećemo birati samo po redoslijedu prijava. Postaje zajedno moraju pomoći razlikovati pojavu iz smjera Karepovca od izvora u neposrednoj blizini.</p>
         </SectionHeading>
         <dl className="mt-7 grid gap-px overflow-hidden rounded-xl border border-kamen-tlo bg-kamen-tlo sm:grid-cols-2">
           {[
-            ["Položaj", "Korisna upwind/downwind pokrivenost pod čestim režimima vjetra."],
-            ["Strujanje zraka", "Otvoreno mjesto, odmaknuto od zidova i neposrednih lokalnih izvora."],
-            ["Radni uvjeti", "Sigurno napajanje, podatkovna veza i moguć pristup za održavanje."],
-            ["Pouzdanost", "Domaćin može javiti promjenu uvjeta, prekid ili potrebu za uklanjanjem."],
+            ["Položaj", "Raspored s obje strane najčešćih smjerova vjetra."],
+            ["Strujanje zraka", "Otvoreno mjesto, odmaknuto od zidova i neposrednih izvora dima ili mirisa."],
+            ["Uvjeti za rad", "Sigurno napajanje, podatkovna veza i pristup radi održavanja."],
+            ["Dogovor", "Stanovnik nam može javiti promjenu uvjeta, prekid rada ili da želi ukloniti postaju."],
           ].map(([term, detail]) => (
             <div key={term} className="bg-white p-6">
               <dt className="font-bold text-kamen-tinta">{term}</dt>
@@ -64,12 +55,8 @@ export default function PostajePage() {
       </section>
 
       <section className="rounded-xl border border-kamen-tlo bg-white p-6 sm:p-8">
-        <SectionHeading title="Točna kućna lokacija ostaje privatna">
-          <p>
-            Javni prikaz koristi grubu ili pomaknutu lokaciju. Kontakt, adresa,
-            pristupne upute i precizne koordinate domaćina dostupni su samo
-            ovlaštenim osobama koje održavaju mrežu.
-          </p>
+        <SectionHeading title="Adresa i kontakt ostaju privatni">
+          <p>Na karti ćemo prikazati samo približnu lokaciju. Ime, kontakt, kućna adresa, upute za pristup i točne koordinate bit će dostupni samo ljudima koji održavaju postaju.</p>
         </SectionHeading>
       </section>
     </div>
