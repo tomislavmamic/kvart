@@ -30,6 +30,83 @@ export const NEIGHBORHOOD_EXTENT: [number, number, number, number] = [
 
 export const KVART_CENTER: [number, number] = [43.5249, 16.4993];
 
+export const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [43.514, 16.481],
+  [43.536, 16.518],
+];
+
+/**
+ * A narrow dossier is modal and leaves only the top 28% of the map visible.
+ * Releasing the bounds while it is open lets Leaflet place the selected
+ * parcel in that strip even near an edge; closing the dossier restores them.
+ */
+export function dossierMapBounds(
+  narrow: boolean,
+): [[number, number], [number, number]] | undefined {
+  return narrow ? undefined : MAP_MAX_BOUNDS;
+}
+
+export type DossierPresentation = "closed" | "loading" | "resolved" | "error";
+
+/**
+ * Coordinates can be hydrated before the asynchronous dossier is presented.
+ * Only a visible narrow dossier makes the rest of the map application modal.
+ */
+export function shouldIsolateMapBackground(
+  narrow: boolean,
+  state: { selected: boolean; presentation: DossierPresentation },
+): boolean {
+  return narrow && state.presentation !== "closed";
+}
+
+interface DossierMapLayoutTarget {
+  invalidateSize: (options: { animate: boolean; pan: boolean }) => unknown;
+  setMaxBounds: (
+    bounds?: [[number, number], [number, number]],
+  ) => unknown;
+  getSize: () => { x: number; y: number };
+  latLngToContainerPoint: (
+    point: [number, number],
+  ) => { x: number; y: number };
+  panBy: (
+    offset: [number, number],
+    options: { animate: boolean; duration: number },
+  ) => unknown;
+}
+
+/**
+ * Synchronizes every dossier layout transition: open, responsive breakpoint,
+ * and close. Keeping those branches together prevents a resize from retaining
+ * the bounds and target point chosen for the previous layout.
+ */
+export function syncDossierMapLayout(
+  map: DossierMapLayoutTarget,
+  narrow: boolean,
+  point: [number, number] | null,
+  animate: boolean,
+): void {
+  // Leaflet caches the old viewport until its resize handler runs. Refresh it
+  // synchronously so a breakpoint transition cannot use the previous layout's
+  // dimensions when positioning the selected parcel.
+  map.invalidateSize({ animate: false, pan: false });
+
+  if (!point) {
+    map.setMaxBounds(MAP_MAX_BOUNDS);
+    return;
+  }
+
+  map.setMaxBounds(dossierMapBounds(narrow));
+  const viewport = map.getSize();
+  const current = map.latLngToContainerPoint(point);
+  const target = narrow
+    ? { x: viewport.x / 2, y: viewport.y * 0.17 }
+    : { x: viewport.x * 0.28, y: viewport.y / 2 };
+  map.panBy([current.x - target.x, current.y - target.y], {
+    animate,
+    duration: 0.4,
+  });
+}
+
 export interface BaseLayer {
   id: string;
   label: string;
@@ -58,6 +135,10 @@ export interface OverlayLayer {
   /** Boja za legendu/stil vektorskih slojeva. */
   color: string;
   defaultOpacity?: number;
+  /** Namjensko Leaflet okno kad red crtanja mora biti neovisan o vremenu dohvata. */
+  pane?: string;
+  /** CSS z-index namjenskog okna; koristi se samo uz `pane`. */
+  paneZIndex?: number;
   /** Naslov sklopive skupine u bočnoj traci. */
   group: string;
   /** 1 = spremno u prvoj verziji; 2 = kasnija faza. */
@@ -808,6 +889,18 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     group: "GUP — namjena",
     phase: 1,
   },
+  {
+    id: "gup-2024-planirane-ceste",
+    label: "Planirane ceste — GUP 2024.",
+    type: "geojson",
+    url: "/geo/planovi/gup-2024-promet.geojson",
+    attribution: "Nacrt GUP-a Splita 2024. — prometni koridori praćeni iz PDF lista",
+    color: "#3f3f46",
+    group: "GUP — namjena",
+    phase: 1,
+    pane: "planirane-ceste-podloga",
+    paneZIndex: 410,
+  },
   // Prometnice s listova GUP-a. Ceste ondje nisu obojene nego nacrtane kao
   // bijeli koridori omeđeni crnim rubom, pa ih razvrstavanje po paleti baca;
   // vade se zasebnim prolazom (prometnice() u trace-plans.py) i crtaju
@@ -904,6 +997,42 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     color: "#16a34a",
     group: "GUP — namjena",
     phase: 1,
+  },
+  {
+    id: "javne-cestice",
+    label: "Evidentirane javne čestice",
+    type: "geojson",
+    url: "/geo/analiza/javne-cestice.geojson",
+    attribution:
+      "GIS izvoz Grada Splita, 3. 10. 2025. — djelomična evidencija javnog statusa",
+    color: "#007956",
+    group: "Katastar i adrese",
+    phase: 1,
+  },
+  {
+    id: "ciljana-provjera-vlasnistva",
+    label: "Ciljana provjera vlasništva",
+    type: "geojson",
+    url: "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
+    attribution:
+      "Uređena zemlja — ciljano provjereno 2. 8. 2026.; katastar i nacrt GUP-a 2024.",
+    color: "#007956",
+    group: "Katastar i adrese",
+    phase: 1,
+  },
+  {
+    id: "cestice-planiranih-cesta",
+    label: "Čestice na planiranim cestama",
+    type: "geojson",
+    url: "/geo/analiza/cestice-planiranih-cesta.geojson",
+    attribution:
+      "Izvedeno iz katastra i prometnih koridora nacrta GUP-a Splita 2024.; " +
+      "vlasništvo samo iz postojećih sanitiziranih zapisa",
+    color: "#953d00",
+    group: "Katastar i adrese",
+    phase: 1,
+    pane: "planirane-ceste-cestice",
+    paneZIndex: 420,
   },
   {
     id: "plan-optika",
@@ -1176,6 +1305,28 @@ const POGLEDI: MapView[] = [
     layerIds: ["planovi-obuhvat", "planovi-obuhvat-pp", "kotar", "naselja"],
   },
   {
+    id: "javno-evidentirano",
+    label: "Što je javno evidentirano?",
+    razina: "pitanje",
+    description:
+      "Djelomičan prikaz čestica koje dostupni GIS izvoz izričito označava " +
+      "kao Grad/JLS, Republiku Hrvatsku ili Županiju, dopunjen ciljanom " +
+      "provjerom 30 čestica uz prometni koridor i velikih čestica. Čestice " +
+      "bez statusa nisu proglašene privatnima.",
+    layerIds: ["ciljana-provjera-vlasnistva"],
+  },
+  {
+    id: "cestice-planiranih-cesta",
+    label: "Čestice na planiranim cestama",
+    razina: "pitanje",
+    description:
+      "Svih 338 čestica koje planirani prometni koridori nacrta GUP-a 2024. " +
+      "zahvaćaju za najmanje 1 m². Vlasništvo je označeno samo za 54 čestice " +
+      "s već raspoloživim sanitiziranim zapisom; za ostale se izričito kaže " +
+      "da podataka nema.",
+    layerIds: ["gup-2024-planirane-ceste", "cestice-planiranih-cesta"],
+  },
+  {
     id: "okolis-rizici",
     label: "Okoliš i rizici",
     razina: "nacin",
@@ -1256,6 +1407,8 @@ const POGLEDI: MapView[] = [
  */
 const REDOSLIJED_PITANJA = [
   "gdje-se-moze-graditi",
+  "javno-evidentirano",
+  "cestice-planiranih-cesta",
   "nacrt-gupa",
   "planovi-obuhvat",
 ];

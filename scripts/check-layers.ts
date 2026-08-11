@@ -155,7 +155,6 @@ async function main(): Promise<number> {
     ["/geo/pjesacke.geojson", "ulaz u ceste-sve.geojson"],
     ["/geo/ceste.geojson", "ulaz u ceste-sve.geojson"],
     ["/geo/planovi/promet.geojson", "ulaz u ceste-sve.geojson"],
-    ["/geo/planovi/gup-2024-promet.geojson", "ulaz u ceste-sve.geojson"],
     ["/geo/planovi/gup-2015-promet.geojson", "ulaz u ceste-sve.geojson"],
     ["/geo/planovi/gup-2008-promet.geojson", "list 2008. nije na karti"],
     ["/geo/planovi/gup-2008-namjena.geojson", "list 2008. nije na karti"],

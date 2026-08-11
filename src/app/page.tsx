@@ -3,12 +3,13 @@ import { getStats, getRecentUpdates } from "@/lib/queries";
 import { StatusBadge } from "@/components/status-badge";
 import { formatDate } from "@/lib/format";
 import { WHATSAPP_URL } from "@/components/whatsapp-button";
+import { loadHomepageData } from "@/lib/homepage-data";
 
 export const dynamic = "force-dynamic";
 
 
 export default async function HomePage() {
-  const [stats, updates] = await Promise.all([getStats(), getRecentUpdates(5)]);
+  const data = await loadHomepageData(getStats, () => getRecentUpdates(5));
 
   // Random start point for the hero pan so it doesn't always begin at the
   // west (Bilice) edge. Negative delay starts the animation mid-cycle; the
@@ -85,10 +86,20 @@ export default async function HomePage() {
         </a>
       </section>
 
+      {!data.available && (
+        <section
+          role="status"
+          className="rounded-xl border border-kamen-rub bg-status-u-tijeku-ground px-4 py-3 text-sm text-status-u-tijeku"
+        >
+          Evidencija prijedloga trenutačno nije dostupna. Karta i ostali javni
+          sadržaji i dalje rade.
+        </section>
+      )}
+
       <section className="grid grid-cols-3 gap-4">
-        <Stat value={stats.rijeseno} label="riješeno" />
-        <Stat value={stats.uTijeku} label="u tijeku ili kod Grada" />
-        <Stat value={stats.ukupno} label="ukupno prijedloga" />
+        <Stat value={data.stats?.rijeseno ?? null} label="riješeno" />
+        <Stat value={data.stats?.uTijeku ?? null} label="u tijeku ili kod Grada" />
+        <Stat value={data.stats?.ukupno ?? null} label="ukupno prijedloga" />
       </section>
 
       <section>
@@ -102,7 +113,12 @@ export default async function HomePage() {
           </Link>
         </div>
         <ul className="mt-4 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
-          {updates.length === 0 && (
+          {!data.available && (
+            <li className="p-5 text-sm text-zinc-500">
+              Aktivnosti će se prikazati kad evidencija ponovno bude dostupna.
+            </li>
+          )}
+          {data.available && data.updates.length === 0 && (
             <li className="p-5 text-sm text-zinc-500">
               Još nema objavljenih prijedloga. Budite prvi —{" "}
               <Link href="/prijavi" className="text-emerald-700 underline">
@@ -111,7 +127,7 @@ export default async function HomePage() {
               .
             </li>
           )}
-          {updates.map((u) => (
+          {data.updates?.map((u) => (
             <li key={u.id} className="flex items-start justify-between gap-4 p-4">
               <div>
                 <Link
@@ -163,10 +179,10 @@ export default async function HomePage() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label }: { value: number | null; label: string }) {
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5 text-center">
-      <div className="text-3xl font-bold text-emerald-700">{value}</div>
+      <div className="text-3xl font-bold text-emerald-700">{value ?? "—"}</div>
       <div className="mt-1 text-xs text-zinc-500 sm:text-sm">{label}</div>
     </div>
   );
