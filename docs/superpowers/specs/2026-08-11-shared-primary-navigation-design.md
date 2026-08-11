@@ -27,8 +27,10 @@ appear where the component has room:
 
 ## Homepage
 
-Keep the aerial photograph, location label, headline, supporting sentence,
-motion behaviour, reduced-motion behaviour, and DGU attribution.
+Keep the aerial photograph, location label, headline, motion behaviour,
+reduced-motion behaviour, and DGU attribution. Replace the problem-focused
+supporting sentence with the broader invitation: **“Razgovaraj sa susjedima,
+istraži kvart i uključi se.”**
 
 Replace the hero's two standalone buttons with a single four-destination
 navigation dock at the bottom of the hero. This dock is the homepage's primary
