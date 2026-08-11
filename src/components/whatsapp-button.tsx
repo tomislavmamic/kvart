@@ -1,3 +1,7 @@
+import { WHATSAPP_URL } from "@/lib/site-navigation";
+
+export { WHATSAPP_URL } from "@/lib/site-navigation";
+
 /**
  * Poziv na WhatsApp grupu, ali samo ako grupa doista postoji.
  *
@@ -10,17 +14,6 @@
  * Pozivnica je oblika https://chat.whatsapp.com/<kod>; prazna putanja ili
  * ostatak predloška (REPLACE_…) znače da nije konfigurirana.
  */
-export const WHATSAPP_URL: string | null = (() => {
-  const v = process.env.NEXT_PUBLIC_WHATSAPP_URL?.trim();
-  if (!v || v.includes("REPLACE")) return null;
-  try {
-    const u = new URL(v);
-    return u.pathname.replace(/\/+$/, "").length > 1 ? v : null;
-  } catch {
-    return null;
-  }
-})();
-
 export function WhatsAppButton({ large = false }: { large?: boolean }) {
   if (!WHATSAPP_URL) return null;
   return (

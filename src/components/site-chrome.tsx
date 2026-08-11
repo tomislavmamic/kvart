@@ -34,11 +34,20 @@ export function SiteChrome({
       </>
     );
   }
+  const homepage = pathname === "/";
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
-      {podnozje}
+      <main
+        className={
+          homepage
+            ? "mx-auto max-w-5xl px-4 pb-0 pt-8"
+            : "mx-auto max-w-5xl px-4 py-8"
+        }
+      >
+        {children}
+      </main>
+      {homepage ? <div className="[&>footer]:mt-0">{podnozje}</div> : podnozje}
     </>
   );
 }

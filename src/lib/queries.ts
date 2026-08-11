@@ -1,4 +1,4 @@
-import { desc, eq, and, count } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   proposals,
@@ -35,35 +35,6 @@ export async function getProposalBySlug(slug: string) {
       documents: true,
     },
   });
-}
-
-export async function getStats() {
-  const rows = await db
-    .select({ status: proposals.status, n: count() })
-    .from(proposals)
-    .groupBy(proposals.status);
-  const byStatus = Object.fromEntries(rows.map((r) => [r.status, Number(r.n)]));
-  return {
-    rijeseno: byStatus["rijeseno"] ?? 0,
-    uTijeku: (byStatus["u_tijeku"] ?? 0) + (byStatus["poslano_gradu"] ?? 0),
-    ukupno: rows.reduce((acc, r) => acc + Number(r.n), 0),
-  };
-}
-
-export async function getRecentUpdates(limit = 5) {
-  return db
-    .select({
-      id: statusUpdates.id,
-      status: statusUpdates.status,
-      note: statusUpdates.note,
-      createdAt: statusUpdates.createdAt,
-      proposalTitle: proposals.title,
-      proposalSlug: proposals.slug,
-    })
-    .from(statusUpdates)
-    .innerJoin(proposals, eq(statusUpdates.proposalId, proposals.id))
-    .orderBy(desc(statusUpdates.createdAt))
-    .limit(limit);
 }
 
 export async function getDocuments() {

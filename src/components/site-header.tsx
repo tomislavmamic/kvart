@@ -3,20 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const NAV_LINKS = [
-  { href: "/prijedlozi", label: "Problemi i prijedlozi" },
-  { href: "/karta", label: "Karta" },
-  { href: "/karepovac", label: "Karepovac" },
-  { href: "/plan", label: "Izmjene GUP-a" },
-  { href: "/dokumenti", label: "Dokumenti" },
-  { href: "/podaci", label: "Prostorni podaci" },
-  { href: "/o-inicijativi", label: "O inicijativi" },
-];
+import { PrimaryNavigation } from "./primary-navigation";
+import { SECONDARY_NAV_ITEMS } from "@/lib/site-navigation";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  // Close the mobile menu whenever the route changes.
   const pathname = usePathname();
   const close = () => setOpen(false);
 
@@ -43,91 +34,148 @@ export function SiteHeaderView({
   onToggle,
   onClose,
 }: SiteHeaderViewProps) {
+  const homepage = pathname === "/";
+
   return (
-    <header className="relative z-30 border-b border-zinc-200 bg-white">
+    <header className="relative z-30 border-b border-kamen-tlo bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-        <Link
-          href="/"
-          onClick={onClose}
-          className="whitespace-nowrap text-lg font-bold tracking-tight"
-        >
-          Naš kvart{" "}
-          <span className="font-normal text-maslina">
-            Dračevac · Bilice
-          </span>
-        </Link>
+        <Brand onClick={onClose} />
 
-        {/* Desktop navigation */}
-        <nav className="hidden items-center gap-3 text-sm xl:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={
-                pathname === link.href ||
-                (link.href !== "/" && pathname.startsWith(`${link.href}/`))
-                  ? "font-medium text-zinc-900"
-                  : "text-zinc-600 hover:text-zinc-900"
-              }
+        {homepage ? (
+          <SecondaryMenu pathname={pathname} />
+        ) : (
+          <>
+            <div className="hidden items-center gap-4 lg:flex">
+              <PrimaryNavigation variant="header" pathname={pathname} />
+              <SecondaryMenu pathname={pathname} />
+            </div>
+
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+              className="fokus meta inline-flex h-11 w-11 items-center justify-center rounded-lg text-kamen-tekst hover:bg-kamen-plitko lg:hidden"
             >
-              <span className="whitespace-nowrap">{link.label}</span>
-            </Link>
-          ))}
-          <Link
-            href="/prijavi"
-            className="whitespace-nowrap rounded-full bg-maslina px-4 py-2 font-semibold text-white hover:bg-maslina-tamna"
-          >
-            Prijavi problem
-          </Link>
-        </nav>
-
-        {/* Mobile burger toggle */}
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          className="fokus meta inline-flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100 xl:hidden"
-        >
-          <Hamburger open={open} />
-        </button>
+              <Hamburger open={open} />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Mobile dropdown panel */}
-      {open && (
-        <nav
+      {!homepage && open && (
+        <div
           id="mobile-nav"
-          className="border-t border-zinc-200 bg-white px-4 pb-4 pt-2 xl:hidden"
+          className="border-t border-kamen-tlo bg-white px-4 pb-4 pt-2 lg:hidden"
         >
-          <div className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={onClose}
-                className={
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(`${link.href}/`))
-                    ? "rounded-lg bg-zinc-100 px-3 py-2.5 font-medium text-zinc-900"
-                    : "rounded-lg px-3 py-2.5 text-zinc-700 hover:bg-zinc-100"
-                }
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              href="/prijavi"
-              onClick={onClose}
-              className="mt-1 rounded-full bg-maslina px-4 py-2.5 text-center font-semibold text-white hover:bg-maslina-tamna"
-            >
-              Prijavi problem
-            </Link>
+          <PrimaryNavigation
+            variant="menu"
+            pathname={pathname}
+            onNavigate={onClose}
+          />
+          <div className="mt-2 border-t border-kamen-tlo pt-2">
+            <SecondaryLinks pathname={pathname} onNavigate={onClose} />
           </div>
-        </nav>
+        </div>
       )}
     </header>
   );
+}
+
+function Brand({ onClick }: { onClick?: () => void }) {
+  return (
+    <Link
+      href="/"
+      onClick={onClick}
+      className="fokus meta flex items-center whitespace-nowrap text-lg font-bold tracking-tight"
+    >
+      Naš kvart{" "}
+      <span className="font-normal text-maslina">
+        &nbsp;Dračevac · Bilice
+      </span>
+    </Link>
+  );
+}
+
+function SecondaryMenu({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeOutside = (event: MouseEvent) => {
+      if (!container.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOutside);
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOutside);
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, [open]);
+
+  return (
+    <div ref={container} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label="Otvori dodatne stranice"
+        aria-expanded={open}
+        aria-controls="secondary-nav"
+        className="fokus meta inline-flex items-center gap-1 rounded-full border border-kamen-rub bg-white px-3 py-2 text-sm font-medium text-kamen-tekst hover:bg-kamen-plitko"
+      >
+        Više
+        <Chevron open={open} />
+      </button>
+
+      {open && (
+        <nav
+          id="secondary-nav"
+          aria-label="Dodatne stranice"
+          className="absolute right-0 top-full z-40 mt-2 flex w-56 flex-col gap-1 rounded-xl border border-kamen-tlo bg-white p-2 text-sm shadow-lg"
+        >
+          <SecondaryLinks
+            pathname={pathname}
+            onNavigate={() => setOpen(false)}
+          />
+        </nav>
+      )}
+    </div>
+  );
+}
+
+function SecondaryLinks({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  return SECONDARY_NAV_ITEMS.map((item) => {
+    const active =
+      pathname === item.href || pathname.startsWith(`${item.href}/`);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className={`fokus meta flex items-center rounded-lg px-3 py-2.5 ${
+          active
+            ? "bg-kamen-plitko font-medium text-kamen-tinta"
+            : "text-kamen-tekst hover:bg-kamen-plitko hover:text-kamen-tinta"
+        }`}
+      >
+        {item.label}
+      </Link>
+    );
+  });
 }
 
 function Hamburger({ open }: { open: boolean }) {
@@ -158,6 +206,25 @@ function Hamburger({ open }: { open: boolean }) {
   );
 }
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`transition-transform ${open ? "rotate-180" : ""}`}
+    >
+      <path d="m4 6 4 4 4-4" />
+    </svg>
+  );
+}
+
 /**
  * Izbornik za stranice na kojima sadržaj uzima cijeli prozor.
  *
@@ -174,11 +241,11 @@ export function PlutajuciIzbornik() {
 
   useEffect(() => {
     if (!open) return;
-    const klik = (e: MouseEvent) => {
-      if (!okvir.current?.contains(e.target as Node)) setOpen(false);
+    const klik = (event: MouseEvent) => {
+      if (!okvir.current?.contains(event.target as Node)) setOpen(false);
     };
-    const tipka = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+    const tipka = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
     };
     document.addEventListener("mousedown", klik);
     document.addEventListener("keydown", tipka);
@@ -189,12 +256,8 @@ export function PlutajuciIzbornik() {
   }, [open]);
 
   return (
-    // Iznad ploča karte (z-1100), inače bi ga bočna traka prekrila.
     <div ref={okvir} className="fixed left-3 top-3 z-[1200]">
-      <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white py-1 pl-4 pr-1 shadow-lg">
-        {/* `meta` jer je ovo na karti jedini put natrag na ostatak stranice, a
-            mjereno je bilo 63×20 px — ispod dodirne mjere na uređaju na kojem
-            se karta i otvara. */}
+      <div className="flex items-center gap-1 rounded-full border border-kamen-tlo bg-white py-1 pl-4 pr-1 shadow-lg">
         <Link
           href="/"
           className="fokus meta flex items-center text-sm font-bold tracking-tight"
@@ -206,43 +269,36 @@ export function PlutajuciIzbornik() {
         </Link>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((value) => !value)}
           aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
           aria-expanded={open}
           aria-controls="plutajuci-izbornik"
-          className="fokus meta inline-flex h-8 w-8 min-w-11 items-center justify-center rounded-full text-zinc-700 hover:bg-zinc-100"
+          className="fokus meta inline-flex h-8 w-8 min-w-11 items-center justify-center rounded-full text-kamen-tekst hover:bg-kamen-plitko"
         >
           <Hamburger open={open} />
         </button>
       </div>
 
       {open && (
-        <nav
+        <div
           id="plutajuci-izbornik"
-          className="mt-2 flex w-64 flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-2 text-sm shadow-lg"
+          className="mt-2 w-64 rounded-xl border border-kamen-tlo bg-white p-2 shadow-lg"
         >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className={
-                pathname === link.href
-                  ? "rounded-lg bg-zinc-100 px-3 py-2 font-medium text-zinc-900"
-                  : "rounded-lg px-3 py-2 text-zinc-700 hover:bg-zinc-100"
-              }
-            >
-              {link.label}
-            </Link>
-          ))}
-          <Link
-            href="/prijavi"
-            onClick={() => setOpen(false)}
-            className="mt-1 rounded-full bg-maslina px-4 py-2 text-center font-semibold text-white hover:bg-maslina-tamna"
+          <PrimaryNavigation
+            variant="menu"
+            pathname={pathname}
+            onNavigate={() => setOpen(false)}
+          />
+          <nav
+            aria-label="Dodatne stranice"
+            className="mt-2 flex flex-col gap-1 border-t border-kamen-tlo pt-2 text-sm"
           >
-            Prijavi problem
-          </Link>
-        </nav>
+            <SecondaryLinks
+              pathname={pathname}
+              onNavigate={() => setOpen(false)}
+            />
+          </nav>
+        </div>
       )}
     </div>
   );
