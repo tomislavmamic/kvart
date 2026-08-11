@@ -1,6 +1,6 @@
 # Karta trenutačnog širenja zraka oko Karepovca — specifikacija dizajna
 
-- **Status:** dizajn potvrđen u razgovoru; čeka pregled zapisane specifikacije
+- **Status:** simulirana prva verzija potvrđena za izvedbu
 - **Datum:** 2026-08-10
 - **Projekt:** Praćenje zraka oko Karepovca
 - **Primarna površina:** `/karepovac`
@@ -23,8 +23,48 @@ Karepovcem u donjem desnom dijelu. Karta nema zumiranje. Na mobitelu zadržava
 isto mjerilo i fiksnu visinu, ali je šira od zaslona i može se pomicati samo
 vodoravno.
 
-Prva verzija koristi 3D meteorološke i reljefne podatke u izračunu, ali javnosti
-prikazuje čitljivu 2D kartu. Puni nagnuti 3D zemljovid nije dio prve verzije.
+Buduća operativna verzija koristi 3D meteorološke i reljefne podatke u izračunu,
+ali javnosti prikazuje čitljivu 2D kartu. Puni nagnuti 3D zemljovid nije dio
+operativne verzije.
+
+## Potvrđeni opseg simulirane prve verzije
+
+Prva izvedba zamjenjuje postojeći statični `MonitoringField` na desnoj strani
+uvodnog prikaza na `/karepovac`. Zadržava sadašnju kompoziciju uvoda, tamni
+tekstualni blok, ozbiljan vizualni jezik i jasnu poruku da je riječ o
+simulaciji. Ostatak stranice i postojeće Karepovac podstranice ne mijenjaju se.
+
+Ova verzija nema veze sa stvarnim postajama, vremenom ni servisom disperzije.
+Koristi tri lokalno definirana simulirana kadra — `Sada`, `Za 1 sat` i
+`Za 3 sata` — kako bi pokazala buduće korisničko iskustvo. Promjena kadra
+mijenja konture, smjer vjetra, ogledna očitanja postaja, vrijeme procjene i
+tekstualni status doma.
+
+Korisnik može klikom ili dodirom postaviti približan položaj doma. Položaj se
+sprema samo u lokalnu pohranu preglednika; ako pohrana nije dostupna, karta i
+dalje radi tijekom otvorene stranice. Položaj se ne šalje poslužitelju.
+
+Na svim stanjima vidljivo piše `Simulirani prikaz` i `Nisu stvarna mjerenja`.
+Generičke oznake `Postaja A`, `Postaja B` i `Postaja C` ne predstavljaju
+stvarne lokacije. Simulirani status doma koristi isti oprezan rječnik kao
+buduća operativna karta i nikada ne koristi riječi „sigurno” ili „opasno”.
+
+Na širokim zaslonima karta ostaje u desnoj polovici postojećeg uvoda i cijeli
+se obuhvat vidi bez zumiranja. Na mobitelu karta ima fiksnu vidljivu visinu i
+šire unutarnje platno koje se može pomicati samo vodoravno. Kontrole vremena
+imaju najmanje 44 px, rade tipkovnicom, a promjena statusa doma objavljuje se
+pomoćnoj tehnologiji. Animacija strujanja poštuje `prefers-reduced-motion`.
+
+Implementacija ostaje odvojena na:
+
+1. tipizirane lokalne simulirane kadrove;
+2. čistu funkciju koja položaj doma klasificira prema odabranom kadru;
+3. klijentsku komponentu koja upravlja vremenom, položajem doma i lokalnom
+   pohranom; i
+4. prezentacijsku SVG kartu bez ovisnosti o Leafletu ili vanjskom API-ju.
+
+Time se simulacija kasnije može zamijeniti stvarnim verzioniranim kadrovima bez
+promjene glavnog korisničkog iskustva.
 
 ## Ciljevi
 
@@ -47,7 +87,7 @@ prikazuje čitljivu 2D kartu. Puni nagnuti 3D zemljovid nije dio prve verzije.
 - Tvrdnja da obojena ploha dokazuje prisutnost H₂S-a ili drugog plina.
 - Prikaz precizne granice između zahvaćenih i nezahvaćenih kuća.
 - Zumiranje do razine zgrade ili balkona.
-- Puni 3D prikaz terena u prvoj verziji.
+- Puni 3D prikaz terena u operativnoj verziji.
 - Korištenje WeatherNexta kao glavnog lokalnog prognostičkog izvora.
 - Objavljivanje točne kućne adrese ili privatnih koordinata korisnika.
 
@@ -319,7 +359,8 @@ Model ne dobiva oznaku više pouzdanosti samo zato što vizualno izgleda uvjerlj
 
 ## Faze isporuke
 
-1. **Statični ogledni prikaz** s jasno označenim simuliranim podacima.
+1. **Interaktivni simulirani prikaz** s jasno označenim oglednim podacima,
+   trima vremenskim koracima i lokalno postavljenim domom.
 2. **Stvarna karta i reljef** u fiksnom prostornom obuhvatu.
 3. **Operativni vjetar** i neutralni prikaz procijenjenog strujanja.
 4. **Lokalni anemometar** i javna razina pouzdanosti.
