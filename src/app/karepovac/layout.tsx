@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { KarepovacProjectNav } from "@/components/karepovac/project-nav";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Praćenje zraka oko Karepovca",
   description:
-    "Pripremamo mrežu mjernih postaja za praćenje sumporovodika, pojave neugodnog mirisa te smjera i brzine vjetra oko Karepovca.",
-};
+    "Pratite pripremu mjernih postaja, metodologiju, podatke i načine uključivanja.",
+});
 
 /**
  * THESIS: javna mjerna ploča počinje poštenim praznim stanjem, ne lažnim nadzornim centrom.

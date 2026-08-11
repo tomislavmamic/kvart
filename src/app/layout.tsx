@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
-import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
+import { SITE_NAME } from "@/lib/constants";
 import { SiteChrome } from "@/components/site-chrome";
 import { NEIGHBORHOOD_EXTENT } from "@/lib/map-views";
+import { DEFAULT_SHARE_DESCRIPTION, SITE_URL } from "@/lib/metadata";
 import { SECONDARY_NAV_ITEMS } from "@/lib/site-navigation";
 
 // [zapad, jug, istok, sjever] → čitljiv raspon (decimalni zarez, hrvatski).
@@ -12,11 +13,24 @@ const deg = (v: number) => v.toFixed(3).replace(".", ",");
 const KVART_COORDS = `${deg(bboxS)}°–${deg(bboxN)}° S · ${deg(bboxW)}°–${deg(bboxE)}° I`;
 
 export const metadata: Metadata = {
+  metadataBase: SITE_URL,
   title: {
     default: SITE_NAME,
     template: "%s — Naš kvart",
   },
-  description: SITE_DESCRIPTION,
+  description: DEFAULT_SHARE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "hr_HR",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: DEFAULT_SHARE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: DEFAULT_SHARE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

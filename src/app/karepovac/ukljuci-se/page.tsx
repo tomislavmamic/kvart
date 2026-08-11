@@ -1,17 +1,16 @@
-import type { Metadata } from "next";
-
 import {
   PageIntro,
   PreparationNotice,
   SecondaryLink,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Uključi se",
   description:
     "Saznajte kako možete ponuditi mjesto za mjernu postaju, pomoći znanjem ili pratiti pripremu donacija za opremu.",
-};
+});
 
 export default function UkljuciSePage() {
   return (

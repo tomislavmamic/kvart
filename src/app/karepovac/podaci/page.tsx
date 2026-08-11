@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-
 import {
   PageIntro,
   PreparationNotice,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Podaci i izvori",
   description:
     "Saznajte koje ćemo podatke objavljivati uz svako mjerenje, kako ćemo označavati njihovu pouzdanost i u kojim će se datotekama moći preuzeti.",
-};
+});
 
 export default function PodaciPage() {
   return (

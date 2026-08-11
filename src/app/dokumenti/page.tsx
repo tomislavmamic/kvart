@@ -1,11 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { getDocuments } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
+import { createPageMetadata } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Dokumenti" };
+export const metadata = createPageMetadata({
+  title: "Dokumenti",
+  description:
+    "Prostorni planovi, dopisi Gradu Splitu, odgovori i zapisnici važni za Dračevac i Bilice.",
+});
 
 export default async function DocumentsPage() {
   const docs = await getDocuments();

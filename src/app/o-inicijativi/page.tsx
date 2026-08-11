@@ -1,9 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { WhatsAppButton, WHATSAPP_URL } from "@/components/whatsapp-button";
 import { STATUSES } from "@/lib/constants";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = { title: "O inicijativi" };
+export const metadata = createPageMetadata({
+  title: "O inicijativi",
+  description:
+    "Saznaj kako stanovnici Dračevca i Bilica javno prate probleme, odgovore Grada i načine uključivanja.",
+});
 
 /**
  * Reddit je odložen: razgovor kvarta vodi se u WhatsApp grupi.

@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { skupine, ucitajPromjene } from "@/lib/plan-promjene";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Što nacrt GUP-a mijenja u kvartu",
   description:
     "Usporedba namjene prostora iz GUP-a Splita na snazi i nacrta izmjena iz " +
     "2024. za Dračevac i Bilice — koliko se hektara mijenja, u što, i kojom " +
     "stavkom to nacrt sam obrazlaže.",
-};
+});
 
 /** Hrvatski decimalni zarez — stranica je na hrvatskom, ne na engleskom. */
 function ha(n: number): string {

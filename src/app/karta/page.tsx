@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { MapClient } from "@/components/karta/map-client";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Karta kvarta",
   description:
-    "Interaktivna karta Dračevca i Bilica: planovi, zelenilo, mobilnost, infrastruktura, javni prostori i rizici na jednoj karti.",
-};
+    "Istraži prostorne planove, katastarske čestice, javne površine i infrastrukturu Dračevca i Bilica.",
+});
 
 export default function MapPage() {
   return (

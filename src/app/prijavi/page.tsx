@@ -1,7 +1,11 @@
-import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 import { SubmitForm } from "./submit-form";
 
-export const metadata: Metadata = { title: "Prijavi problem" };
+export const metadata = createPageMetadata({
+  title: "Prijavi problem",
+  description:
+    "Prijavi problem u Dračevcu ili Bilicama bez registracije. Prijavu pregledavamo prije javne objave.",
+});
 
 /**
  * Lokacija dolazi s karte, kao upit.

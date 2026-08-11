@@ -1,17 +1,16 @@
-import type { Metadata } from "next";
-
 import {
   PageIntro,
   PreparationNotice,
   SectionHeading,
 } from "@/components/karepovac/project-components";
 import { KAREPOVAC_BUDGET_CATEGORIES } from "@/lib/karepovac";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Novac i troškovi",
   description:
     "Ovdje ćemo objaviti koliko je novca prikupljeno, što je kupljeno i koliko je novca preostalo.",
-};
+});
 
 export default function FinancijePage() {
   return (

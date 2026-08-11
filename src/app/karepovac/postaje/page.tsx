@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
   PageIntro,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Postaje",
   description:
     "Pratite koje su mjerne postaje postavljene, kako biramo njihova mjesta i kako štitimo adresu i kontakt stanovnika.",
-};
+});
 
 export default function PostajePage() {
   return (

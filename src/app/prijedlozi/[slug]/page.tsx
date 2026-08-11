@@ -5,6 +5,7 @@ import { getRedditCommentCount } from "@/lib/reddit";
 import { StatusBadge } from "@/components/status-badge";
 import { NEIGHBORHOODS, CATEGORIES, STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { createProposalMetadata } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const proposal = await getProposalBySlug(slug);
-  return { title: proposal?.title ?? "Prijedlog" };
+  return createProposalMetadata(
+    proposal
+      ? { title: proposal.title, description: proposal.description }
+      : null,
+  );
 }
 
 export default async function ProposalPage({

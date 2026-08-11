@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   DATASET_SECTIONS,
   DEAD_ENDS,
@@ -6,12 +5,13 @@ import {
   CATALOG_BBOX,
 } from "@/lib/datasets";
 import type { Dataset, DatasetStatus } from "@/lib/datasets";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Katalog prostornih podataka",
   description:
     "Otvoreni prostorni podaci dostupni za područje Dračevca i Bilica — izvori, formati, licence i stanje pristupa.",
-};
+});
 
 const STATUS_STYLES: Record<DatasetStatus, string> = {
   ok: "bg-emerald-100 text-emerald-800",

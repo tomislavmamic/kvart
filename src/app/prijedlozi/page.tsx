@@ -1,13 +1,19 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { getProposals } from "@/lib/queries";
 import { ProposalCard } from "@/components/proposal-card";
 import { NEIGHBORHOODS, CATEGORIES, STATUSES } from "@/lib/constants";
 import type { Neighborhood, Category, Status } from "@/lib/constants";
+import {
+  PROBLEMS_SHARE_DESCRIPTION,
+  createPageMetadata,
+} from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Problemi i prijedlozi" };
+export const metadata = createPageMetadata({
+  title: "Problemi i prijedlozi",
+  description: PROBLEMS_SHARE_DESCRIPTION,
+});
 
 interface SearchParams {
   kvart?: string;

@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-
 import {
   EvidenceRegister,
   PageIntro,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Kako mjerimo",
   description:
     "Objašnjavamo kako ćemo provjeravati senzore, ocjenjivati pouzdanost mjerenja i prikazivati njihova ograničenja.",
-};
+});
 
 export default function MetodologijaPage() {
   return (

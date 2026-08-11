@@ -102,7 +102,7 @@ test("reviewed wording stays on its intended page", () => {
   );
   assert.match(
     copyByPath["src/app/karepovac/layout.tsx"],
-    /praćenje sumporovodika, pojave neugodnog mirisa/,
+    /Pratite pripremu mjernih postaja, metodologiju, podatke i načine uključivanja/,
   );
 });
 
