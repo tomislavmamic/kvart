@@ -45,7 +45,7 @@ export function SiteHeaderView({
           <SecondaryMenu pathname={pathname} />
         ) : (
           <>
-            <div className="hidden items-center gap-4 lg:flex">
+            <div className="hidden items-center gap-4 xl:flex">
               <PrimaryNavigation variant="header" pathname={pathname} />
               <SecondaryMenu pathname={pathname} />
             </div>
@@ -56,7 +56,7 @@ export function SiteHeaderView({
               aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
               aria-expanded={open}
               aria-controls="mobile-nav"
-              className="fokus meta inline-flex h-11 w-11 items-center justify-center rounded-lg text-kamen-tekst hover:bg-kamen-plitko lg:hidden"
+              className="fokus meta inline-flex h-11 w-11 items-center justify-center rounded-lg text-kamen-tekst hover:bg-kamen-plitko xl:hidden"
             >
               <Hamburger open={open} />
             </button>
@@ -67,7 +67,7 @@ export function SiteHeaderView({
       {!homepage && open && (
         <div
           id="mobile-nav"
-          className="border-t border-kamen-tlo bg-white px-4 pb-4 pt-2 lg:hidden"
+          className="border-t border-kamen-tlo bg-white px-4 pb-4 pt-2 xl:hidden"
         >
           <PrimaryNavigation
             variant="menu"

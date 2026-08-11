@@ -27,21 +27,21 @@ test("site navigation stays compact until the full row fits", () => {
   );
   assert.match(
     closedMarkup,
-    /<div class="[^"]*lg:flex[^"]*">/,
-    "the shorter primary navigation should fit from the lg breakpoint",
+    /<div class="[^"]*xl:flex[^"]*">/,
+    "the full navigation should wait until the planned xl breakpoint",
   );
   assert.match(
     closedMarkup,
-    /<button[^>]*class="[^"]*lg:hidden[^"]*"/,
-    "hamburger should remain visible below lg",
+    /<button[^>]*class="[^"]*xl:hidden[^"]*"/,
+    "hamburger should remain visible below xl",
   );
   assert.match(
     openMarkup,
-    /<div id="mobile-nav" class="[^"]*lg:hidden[^"]*">/,
-    "dropdown should remain available below lg",
+    /<div id="mobile-nav" class="[^"]*xl:hidden[^"]*">/,
+    "dropdown should remain available below xl",
   );
-  assert.doesNotMatch(closedMarkup, /(?:^|\s)xl:flex(?:\s|$)/);
-  assert.doesNotMatch(closedMarkup, /(?:^|\s)xl:hidden(?:\s|$)/);
+  assert.doesNotMatch(closedMarkup, /(?:^|\s)lg:flex(?:\s|$)/);
+  assert.doesNotMatch(closedMarkup, /(?:^|\s)lg:hidden(?:\s|$)/);
 });
 
 test("homepage header leaves the four journeys to the hero dock", () => {
