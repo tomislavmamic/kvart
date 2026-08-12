@@ -149,11 +149,15 @@ match a brand.
 
 The material world is paper and stone. A quiet off-white ground, white surfaces
 laid on it, olive used sparingly for anything you can act on. There are no
-webfonts and no illustration; the only image in the product is a real aerial
-photograph of the two neighbourhoods, and the only saturated colour outside the
-accent is either a status or something the plan itself coloured. Corners are
-generously rounded because the thing is read by neighbours on a phone, not by
-analysts at a desk — the shape is warm even where the palette is sober.
+webfonts. Most authored screens use no illustration; the bounded `/svg` and
+`/igra` experiences are the exception: low-poly SVG and Three.js makete
+generated from the kvart's real GIS geometry, plainly labelled as simplified
+models. Their scene colours
+describe terrain and built form and never become product-chrome tokens. The
+only photographic image remains the real aerial photograph of the two
+neighbourhoods. Corners are generously rounded because the thing is read by
+neighbours on a phone, not by analysts at a desk — the shape is warm even where
+the palette is sober.
 
 What it is not: this is not a campaign. There are no slogans, no party colours,
 no candidate faces. It is also not a SaaS product borrowing institutional
@@ -337,6 +341,13 @@ layer sidebar under it, a base/plan panel top-right. This is the one surface
 where the content *is* the viewport, and the layout reflects that rather than
 fighting it.
 
+**The diorama is also not in the container.** `/svg` and `/igra` keep the shared
+site navigation, then let one isometric scene fill the remaining viewport.
+The title floats at the top-left, the single motion control at the top-right
+(bottom-right on phones), and source attribution stays visible at the bottom.
+The scene may crop responsively, but its labels and main road network must
+remain legible at the initial fit before a visitor uses the bounded inspection controls.
+
 **Rhythm.** Vertical spacing runs on a small set of steps: `0.5rem` inside a
 control, `0.75rem` between related lines, `1rem` between elements, `1.5rem`
 inside a card, `2rem` between sections, `3rem` between chapters of a page.
@@ -519,6 +530,34 @@ plan, parcel dossier) and they are the reason the map reads as an instrument
 rather than a page. They collapse to a single labelled button rather than
 disappearing.
 
+### Living GIS Diorama (bounded experience)
+
+`/svg` is a fixed-camera, low-poly SVG maketa assembled at build time from the
+OpenStreetMap road network and the city's building, cultural-heritage and
+neighbourhood-boundary datasets. It
+uses extruded homes and large buildings, the Diocletian aqueduct, place labels
+and a few ambient loops (vehicles, walkers, trees, smoke and birds). Motion is
+observational rather than game-like: there are no camera or simulation
+controls, only a 44px pause button. Reduced-motion preference starts the scene
+paused. The source line and the statement that the model is simplified are
+part of the component, not optional footer copy.
+
+`/igra` is the WebGL expression of the same sourced model. It inverts the
+generated isometric coordinates into a true ground plane before a Three.js
+orthographic camera is applied. Its angle remains fixed; wheel/pinch zoom works
+toward the pointer from 1× to 5×, drag pans only within bounded scene limits,
+and visible plus, minus and reset controls provide keyboard equivalents. Roads are merged ribbon meshes, buildings are
+conservative extrusions, trees are instanced, and the aqueduct is repeated
+limestone massing on its generated alignment. Scene-only colours — muted water
+`#9bc9ce`, terrain greens, limestone and clay building tones — are deliberately
+outside the product palette and must never become interface tokens. Three.js is
+loaded only on this route, device pixel ratio is capped, and pausing stops the
+animation frame loop. If WebGL fails, the visible recovery path is `/svg`.
+The largest 10% of building footprints retain every source vertex. Their
+vertical scale uses a measured City-GIS height only after an 85% geometric
+overlap match, then OSM height or floor count, then a visibly conservative
+estimate. Footprint area must never be reused as a proxy for height.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -540,6 +579,8 @@ disappearing.
   record.
 - **Do** cite the source next to any figure or layer, and keep licence
   attribution visible; it is a condition of use, not a courtesy.
+- **Do** keep `/svg` and `/igra` visibly sourced simulations: fixed camera angle, place labels,
+  pause control, and the simplified-model disclaimer in the first viewport.
 - **Do** design the phone first: single column, thumb-reachable, tap targets no
   smaller than 44px.
 - **Do** write every number in Croatian conventions — decimal comma, correct
@@ -550,6 +591,8 @@ disappearing.
 - **Don't** add a webfont. Not for headings, not for icons, not "just one
   weight".
 - **Don't** restyle, recolour or "clean up" a plan's palette to match the brand.
+- **Don't** reuse the `/svg` or `/igra` terrain, water or building palette as general
+  interface colours; they belong to that bounded scene, not the product chrome.
 - **Don't** use Maslina decoratively — no green mood backgrounds, no green
   section rules, no green headings. It marks action and affiliation only.
 - **Don't** give surfaces a resting shadow to make them pop; use a tonal step or

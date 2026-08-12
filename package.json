@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run generate:igra && next build",
     "start": "next start",
     "test": "tsx --test",
     "lint": "eslint",
@@ -16,6 +16,7 @@
     "import-grad-geo": "tsx scripts/import-split-gis.ts",
     "generate-public-parcels": "tsx scripts/generate-public-parcels.ts",
     "generate-planned-road-parcels": "tsx scripts/generate-planned-road-parcels.ts",
+    "generate:igra": "node --import tsx scripts/generate-igra-scene.ts",
     "verify-targeted-ownership": "tsx scripts/verify-targeted-ownership.ts",
     "slobodne-parcele": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py",
     "izvadi-sire": "/opt/homebrew/bin/python3 scripts/izvadi-sire.py",
@@ -32,7 +33,8 @@
     "postgres": "^3.4.9",
     "proj4": "^2.20.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -41,6 +43,7 @@
     "@types/proj4": "^2.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.185.4",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",

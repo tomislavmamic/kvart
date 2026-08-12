@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-10T09:15:22.000Z",
+  "generatedAt": "2026-08-11T13:58:00.000Z",
   "title": "Design System: Naš kvart",
   "extensions": {
     "colorMeta": {
@@ -222,6 +222,11 @@
         "name": "reduced-motion",
         "value": "prefers-reduced-motion: reduce → animation: none",
         "purpose": "The hero rests at the Dračevac end instead of panning. Every animation must have this branch."
+      },
+      {
+        "name": "diorama-ambient",
+        "value": "18s–28s linear travel; 3.8s–6.6s ambient loops",
+        "purpose": "Slow, observational life in the fixed /svg and /igra scenes. A single control pauses every loop; reduced motion disables them."
       }
     ],
     "breakpoints": [
@@ -303,14 +308,15 @@
   ],
   "narrative": {
     "northStar": "Zemljovid i zapisnik",
-    "overview": "This system runs on two registers with different authority, and knowing which one you are in is the first design decision on any screen. The minutes are everything the initiative writes: proposals, statuses, documents, the record of what was sent to the City and what came back. That register is ours to design, and it is deliberately plain — a municipal register that earns trust by being legible, dated and sourced rather than by being persuasive. The map is everything the initiative did not author: land-use colours printed in the GUP's own tumač znakova, seventy city-GIS layers, cadastral boundaries. That register is inherited. Its colours are evidence, and evidence does not get restyled to match a brand.\n\nThe material world is paper and stone. A quiet off-white ground, white surfaces laid on it, olive used sparingly for anything you can act on. There are no webfonts and no illustration; the only image in the product is a real aerial photograph of the two neighbourhoods, and the only saturated colour outside the accent is either a status or something the plan itself coloured. Corners are generously rounded because the thing is read by neighbours on a phone, not by analysts at a desk — the shape is warm even where the palette is sober.\n\nWhat it is not: this is not a campaign. There are no slogans, no party colours, no candidate faces. It is also not a SaaS product borrowing institutional weight it hasn't got — no gradient hero, no abstract 3D, no logo wall. And it is emphatically not the 2009 municipal portal that residents already expect when they hear \"prostorni plan\": no grey nested tables, no clip-art, nothing that breaks on a phone.",
+    "overview": "This system runs on two registers with different authority, and knowing which one you are in is the first design decision on any screen. The minutes are everything the initiative writes: proposals, statuses, documents, the record of what was sent to the City and what came back. That register is ours to design, and it is deliberately plain — a municipal register that earns trust by being legible, dated and sourced rather than by being persuasive. The map is everything the initiative did not author: land-use colours printed in the GUP's own tumač znakova, seventy city-GIS layers, cadastral boundaries. That register is inherited. Its colours are evidence, and evidence does not get restyled to match a brand.\n\nThe material world is paper and stone. A quiet off-white ground, white surfaces laid on it, olive used sparingly for anything you can act on. There are no webfonts. Most authored screens use no illustration; the bounded /svg experience is the exception: a low-poly SVG maketa generated from real GIS geometry and plainly labelled as a simplified model. Its scene colours describe terrain and built form and never become product-chrome tokens. The only photographic image remains the real aerial photograph of the two neighbourhoods. Corners are generously rounded because the thing is read by neighbours on a phone, not by analysts at a desk — the shape is warm even where the palette is sober.\n\nWhat it is not: this is not a campaign. There are no slogans, no party colours, no candidate faces. It is also not a SaaS product borrowing institutional weight it hasn't got — no gradient hero, no abstract 3D, no logo wall. And it is emphatically not the 2009 municipal portal that residents already expect when they hear \"prostorni plan\": no grey nested tables, no clip-art, nothing that breaks on a phone.",
     "keyCharacteristics": [
       "Two registers: authored minutes (designed) and inherited map (never restyled).",
       "Paper on stone: the ground is deep enough to separate surfaces on its own, so neither shadow nor outline has to.",
       "Olive marks action and affiliation only — never decoration.",
       "Zero font bytes: the system stack, on purpose.",
       "Warm geometry, sober colour: pills and generous radii, restrained palette.",
-      "Phone in the street is the design scene, not the desktop."
+      "Phone in the street is the design scene, not the desktop.",
+      "The /svg and /igra scenes are bounded, sourced simulations; their low-poly palettes are not reusable product chrome."
     ],
     "rules": [
       {
@@ -388,12 +394,14 @@
       "Do put exactly one filled Maslina action in a view, and make it the most useful next step.",
       "Do state absence plainly in empty states — \"Još nema objavljenih dokumenata\" — rather than hiding the section. An honest gap is part of the record.",
       "Do cite the source next to any figure or layer, and keep licence attribution visible; it is a condition of use, not a courtesy.",
+      "Do keep /svg and /igra visibly sourced simulations: fixed camera angle, place labels, pause control, and the simplified-model disclaimer in the first viewport.",
       "Do design the phone first: single column, thumb-reachable, tap targets no smaller than 44px.",
       "Do write every number in Croatian conventions — decimal comma, correct plural form, Croatian dates."
     ],
     "donts": [
       "Don't add a webfont. Not for headings, not for icons, not \"just one weight\".",
       "Don't restyle, recolour or \"clean up\" a plan's palette to match the brand.",
+      "Don't reuse the /svg or /igra terrain, water or building palette as general interface colours; they belong to those bounded scenes.",
       "Don't use Maslina decoratively — no green mood backgrounds, no green section rules, no green headings. It marks action and affiliation only.",
       "Don't give surfaces a resting shadow to make them pop; use a tonal step or more space.",
       "Don't outline a card that already stands on kamen-tlo. The ground and the border are the same value doing the same job, and doing it twice reads as a boxed-in layout.",

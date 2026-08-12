@@ -2,7 +2,7 @@
 
 - **Status:** approved prototype design
 - **Date:** 2026-08-11
-- **Route:** `/igra`
+- **Route:** `/svg`
 - **Primary device:** mobile and desktop web browsers
 
 ## Purpose
@@ -17,7 +17,7 @@ pan, or zoom the scene.
 
 ## Scene composition
 
-`/igra` uses the existing site header followed by a full-width diorama. The
+`/svg` uses the existing site header followed by a full-width diorama. The
 scene is framed by one fixed isometric camera and fits within the viewport
 without horizontal page overflow.
 
@@ -74,9 +74,12 @@ mapping library, or another runtime dependency for the prototype.
 
 The geometry generator reads these checked-in sources:
 
-- `public/geo/grad/ulice-osi.geojson` for the principal street skeleton;
-- `public/geo/grad/zgrade-visine.geojson` for building footprints and relative
-  massing; and
+- `public/geo/ulice.geojson` for the complete OpenStreetMap street network;
+- `public/geo/grad/zgrade-2025.geojson` for complete building footprints, with
+  the largest decile retained without vertex reduction;
+- `public/geo/grad/zgrade-visine.geojson` for measured height only where a
+  footprint has at least 85% geometric overlap;
+- `public/geo/zgrade.geojson` for an OSM height or floor-count fallback; and
 - `public/geo/grad/kulturno-dobro.geojson` for the protected
   `Dioklecijanov vodovod` geometry used to place the aqueduct.
 
@@ -88,7 +91,7 @@ The implementation has four boundaries:
 1. a deterministic build-time script reads and simplifies the selected local
    GeoJSON road and building sources;
 2. a generated, typed scene-data module contains only the geometry needed by
-   `/igra`;
+   `/svg`;
 3. a server component renders the complete accessible SVG scene; and
 4. a small client controller owns pause state and the reduced-motion default.
 
@@ -142,4 +145,4 @@ movement.
 - Photorealistic buildings or precise terrain elevation.
 - Displaying every road, structure, address, parcel, or GIS attribute.
 - A day/night cycle, weather system, soundscape, or live traffic data.
-- Adding `/igra` to the primary navigation before the prototype is reviewed.
+- Adding `/svg` to the primary navigation before the prototype is reviewed.
