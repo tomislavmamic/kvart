@@ -1,0 +1,311 @@
+<h2>Kako bi poveznica trebala izgledati kad se podijeli?</h2>
+<p class="subtitle">Sva tri prijedloga koriste isti naslov i opis stranice. Razlikuje se samo slika koju WhatsApp, Facebook i druge mreže prikazuju iznad teksta.</p>
+
+<div class="share-options">
+  <div class="share-choice recommended" data-choice="a-shared-aerial" onclick="toggleSelect(this)">
+    <div class="choice-head">
+      <span class="letter">A</span>
+      <div>
+        <h3>Jedna prepoznatljiva slika kvarta</h3>
+        <p>Preporuka · ista fotografija svugdje, tekst ispod govori koja je stranica</p>
+      </div>
+    </div>
+    <div class="phone-card">
+      <div class="og-image aerial shared">
+        <img src="https://kvart-sage.vercel.app/photos/dracevac-dof.jpg" alt="Zračna snimka Dračevca">
+        <div class="shade"></div>
+        <div class="image-copy brand-copy">
+          <strong>Naš kvart</strong>
+          <span>Dračevac · Bilice</span>
+        </div>
+      </div>
+      <div class="preview-copy">
+        <small>KVART-SAGE.VERCEL.APP</small>
+        <strong>Karta kvarta — Naš kvart</strong>
+        <p>Istraži prostorne planove, katastarske čestice, javne površine i infrastrukturu Dračevca i Bilica.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-choice" data-choice="b-dynamic-title" onclick="toggleSelect(this)">
+    <div class="choice-head">
+      <span class="letter">B</span>
+      <div>
+        <h3>Naslov stranice i na slici</h3>
+        <p>Svaka ruta dobiva vlastiti naslov preko iste zračne fotografije</p>
+      </div>
+    </div>
+    <div class="phone-card">
+      <div class="og-image aerial dynamic">
+        <img src="https://kvart-sage.vercel.app/photos/dracevac-dof.jpg" alt="Zračna snimka Dračevca">
+        <div class="shade"></div>
+        <div class="image-copy title-copy">
+          <span>NAŠ KVART · DRAČEVAC I BILICE</span>
+          <strong>Karta kvarta</strong>
+        </div>
+      </div>
+      <div class="preview-copy">
+        <small>KVART-SAGE.VERCEL.APP</small>
+        <strong>Karta kvarta — Naš kvart</strong>
+        <p>Istraži prostorne planove, katastarske čestice, javne površine i infrastrukturu Dračevca i Bilica.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-choice" data-choice="c-paper-card" onclick="toggleSelect(this)">
+    <div class="choice-head">
+      <span class="letter">C</span>
+      <div>
+        <h3>Čista tipografska kartica</h3>
+        <p>Bez fotografije · mirnija i dosljedna, ali manje vezana uz stvarni kvart</p>
+      </div>
+    </div>
+    <div class="phone-card">
+      <div class="og-image paper">
+        <div class="parcel-lines" aria-hidden="true"></div>
+        <div class="paper-brand">Naš kvart <span>Dračevac · Bilice</span></div>
+        <div class="paper-title">Karta kvarta</div>
+        <div class="paper-foot">Zemljovid i zapisnik kvarta</div>
+      </div>
+      <div class="preview-copy">
+        <small>KVART-SAGE.VERCEL.APP</small>
+        <strong>Karta kvarta — Naš kvart</strong>
+        <p>Istraži prostorne planove, katastarske čestice, javne površine i infrastrukturu Dračevca i Bilica.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .share-options {
+    display: grid;
+    gap: 22px;
+    margin-top: 28px;
+  }
+
+  .share-choice {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .share-choice:hover {
+    border-color: var(--accent);
+  }
+
+  .share-choice.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+
+  .choice-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .choice-head h3,
+  .choice-head p {
+    margin: 0;
+  }
+
+  .choice-head p {
+    margin-top: 3px;
+    color: var(--muted);
+  }
+
+  .letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .phone-card {
+    max-width: 620px;
+    overflow: hidden;
+    border: 1px solid #d4d4d8;
+    border-radius: 12px;
+    background: #fff;
+    color: #18181b;
+  }
+
+  .og-image {
+    position: relative;
+    aspect-ratio: 1200 / 630;
+    overflow: hidden;
+  }
+
+  .aerial img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .aerial .shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,44,34,.92), rgba(0,44,34,.3) 60%, rgba(0,44,34,.08));
+  }
+
+  .image-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8%;
+    color: white;
+  }
+
+  .brand-copy strong {
+    font-size: clamp(28px, 7vw, 54px);
+    line-height: 1;
+  }
+
+  .brand-copy span {
+    margin-top: 8px;
+    font-size: clamp(16px, 3vw, 24px);
+  }
+
+  .title-copy > span {
+    margin-bottom: 10px;
+    color: #a4f4cf;
+    font-size: clamp(11px, 2vw, 16px);
+    font-weight: 700;
+    letter-spacing: .08em;
+  }
+
+  .title-copy strong {
+    max-width: 80%;
+    font-size: clamp(30px, 7vw, 58px);
+    line-height: 1.02;
+  }
+
+  .preview-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 13px 15px 15px;
+  }
+
+  .preview-copy small {
+    color: #71717b;
+    font-size: 11px;
+  }
+
+  .preview-copy > strong {
+    font-size: 17px;
+  }
+
+  .preview-copy p {
+    margin: 0;
+    color: #52525b;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .paper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8%;
+    background: #f4f4f5;
+    color: #18181b;
+  }
+
+  .paper::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 10px;
+    background: #007956;
+  }
+
+  .paper-brand {
+    position: relative;
+    z-index: 2;
+    font-weight: 700;
+  }
+
+  .paper-brand span {
+    color: #007956;
+    font-weight: 400;
+  }
+
+  .paper-title {
+    position: relative;
+    z-index: 2;
+    max-width: 75%;
+    font-size: clamp(32px, 7vw, 62px);
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .paper-foot {
+    position: relative;
+    z-index: 2;
+    color: #71717b;
+  }
+
+  .parcel-lines {
+    position: absolute;
+    right: -6%;
+    top: -14%;
+    width: 55%;
+    height: 130%;
+    border: 1px solid #a1a1aa;
+    transform: rotate(14deg);
+    opacity: .45;
+  }
+
+  .parcel-lines::before,
+  .parcel-lines::after {
+    content: "";
+    position: absolute;
+    inset: 20% -15%;
+    border: 1px solid #a1a1aa;
+    transform: rotate(-28deg);
+  }
+
+  .parcel-lines::after {
+    inset: 55% -25%;
+    transform: rotate(34deg);
+  }
+
+  @media (min-width: 880px) {
+    .share-options {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .share-choice {
+      padding: 14px;
+    }
+
+    .choice-head {
+      min-height: 88px;
+    }
+
+    .preview-copy > strong {
+      font-size: 15px;
+    }
+
+    .preview-copy p {
+      font-size: 12px;
+    }
+  }
+</style>

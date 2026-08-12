@@ -1,0 +1,353 @@
+<div id="kvart-navigation-mockup">
+  <div class="viz-controls" role="group" aria-label="Prikaz širine zaslona">
+    <button type="button" class="btn is-selected" data-view="desktop" aria-pressed="true">Široki zaslon</button>
+    <button type="button" class="btn" data-view="mobile" aria-pressed="false">Telefon</button>
+  </div>
+
+  <div class="stage" aria-live="polite">
+    <section class="mock desktop" aria-label="Skica početne stranice Našeg kvarta">
+      <header class="site-head">
+        <div class="brand">Naš kvart <span>Dračevac · Bilice</span></div>
+        <button type="button" class="btn btn-ghost more">Više</button>
+      </header>
+
+      <div class="hero">
+        <div class="aerial" aria-hidden="true">
+          <span class="road road-one"></span>
+          <span class="road road-two"></span>
+          <span class="parcel parcel-one"></span>
+          <span class="parcel parcel-two"></span>
+          <span class="parcel parcel-three"></span>
+        </div>
+
+        <div class="hero-copy">
+          <div class="eyebrow">DRAČEVAC · BILICE · SPLIT</div>
+          <h2>Ovo je naš kvart.<br>Učinimo ga boljim.</h2>
+          <p>Razgovaraj sa susjedima, istraži kvart i uključi se.</p>
+        </div>
+
+        <nav class="journeys" aria-label="Glavni načini sudjelovanja">
+          <a href="#razgovor" class="journey">
+            <strong>Razgovor</strong>
+            <span>WhatsApp grupa</span>
+          </a>
+          <a href="#karta" class="journey">
+            <strong>Karta</strong>
+            <span>Istraži kvart</span>
+          </a>
+          <a href="#karepovac" class="journey">
+            <strong>Karepovac</strong>
+            <span>Praćenje projekta</span>
+          </a>
+          <a href="#problemi" class="journey">
+            <strong>Problemi</strong>
+            <span>Prijavi ili pregledaj</span>
+          </a>
+        </nav>
+
+        <div class="source">DOF 2023 · Državna geodetska uprava</div>
+      </div>
+
+      <footer class="site-foot">Građanska inicijativa stanovnika Dračevca i Bilica, Split.</footer>
+    </section>
+  </div>
+</div>
+
+<style>
+  #kvart-navigation-mockup {
+    color: var(--foreground);
+  }
+
+  #kvart-navigation-mockup .viz-controls {
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  #kvart-navigation-mockup .stage {
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  #kvart-navigation-mockup .mock {
+    width: 100%;
+    max-width: 720px;
+    overflow: hidden;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: width 180ms ease;
+  }
+
+  #kvart-navigation-mockup .mock.mobile {
+    width: min(100%, 340px);
+  }
+
+  #kvart-navigation-mockup .site-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--card);
+    color: var(--card-foreground);
+    border-bottom: 1px solid var(--border);
+  }
+
+  #kvart-navigation-mockup .brand {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  #kvart-navigation-mockup .brand span {
+    color: var(--primary);
+    font-weight: 400;
+  }
+
+  #kvart-navigation-mockup .hero {
+    position: relative;
+    min-height: 390px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding: 2rem 1rem 1rem;
+    background: var(--foreground);
+    color: var(--background);
+  }
+
+  #kvart-navigation-mockup .mobile .hero {
+    min-height: 520px;
+  }
+
+  #kvart-navigation-mockup .aerial {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    color: var(--background);
+    opacity: 0.24;
+  }
+
+  #kvart-navigation-mockup .road,
+  #kvart-navigation-mockup .parcel {
+    position: absolute;
+    display: block;
+    border: 1px solid currentColor;
+  }
+
+  #kvart-navigation-mockup .road {
+    width: 120%;
+    height: 2.5rem;
+    border-left: 0;
+    border-right: 0;
+    transform-origin: center;
+  }
+
+  #kvart-navigation-mockup .road-one {
+    left: -10%;
+    top: 35%;
+    transform: rotate(-11deg);
+  }
+
+  #kvart-navigation-mockup .road-two {
+    left: -12%;
+    top: 16%;
+    transform: rotate(25deg);
+  }
+
+  #kvart-navigation-mockup .parcel-one {
+    width: 28%;
+    height: 34%;
+    right: 8%;
+    top: 8%;
+    transform: rotate(8deg);
+  }
+
+  #kvart-navigation-mockup .parcel-two {
+    width: 22%;
+    height: 28%;
+    right: 28%;
+    top: 24%;
+    transform: rotate(-5deg);
+  }
+
+  #kvart-navigation-mockup .parcel-three {
+    width: 24%;
+    height: 23%;
+    right: 3%;
+    top: 47%;
+    transform: rotate(4deg);
+  }
+
+  #kvart-navigation-mockup .hero-copy,
+  #kvart-navigation-mockup .journeys,
+  #kvart-navigation-mockup .source {
+    position: relative;
+    z-index: 1;
+  }
+
+  #kvart-navigation-mockup .hero-copy {
+    max-width: 32rem;
+    margin-bottom: 2rem;
+  }
+
+  #kvart-navigation-mockup .hero-copy h2 {
+    margin: 0.5rem 0;
+    color: inherit;
+    font-weight: 500;
+  }
+
+  #kvart-navigation-mockup .hero-copy p {
+    margin: 0;
+    max-width: 32rem;
+  }
+
+  #kvart-navigation-mockup .eyebrow,
+  #kvart-navigation-mockup .source {
+    opacity: 0.72;
+  }
+
+  #kvart-navigation-mockup .eyebrow,
+  #kvart-navigation-mockup .journey span,
+  #kvart-navigation-mockup .source,
+  #kvart-navigation-mockup .site-foot {
+    font-size: var(--font-size-small, 0.875rem);
+  }
+
+  #kvart-navigation-mockup .journeys {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    background: color-mix(in srgb, var(--card) 94%, transparent);
+    color: var(--card-foreground);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  #kvart-navigation-mockup .journey {
+    display: flex;
+    min-width: 0;
+    min-height: 4.5rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.75rem;
+    color: inherit;
+    text-decoration: none;
+    border-right: 1px solid var(--border);
+  }
+
+  #kvart-navigation-mockup .journey:last-child {
+    border-right: 0;
+  }
+
+  #kvart-navigation-mockup .journey:hover,
+  #kvart-navigation-mockup .journey:focus-visible {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  #kvart-navigation-mockup .journey strong {
+    font-weight: 500;
+  }
+
+  #kvart-navigation-mockup .journey span {
+    color: var(--muted-foreground);
+  }
+
+  #kvart-navigation-mockup .journey:hover span,
+  #kvart-navigation-mockup .journey:focus-visible span {
+    color: inherit;
+  }
+
+  #kvart-navigation-mockup .source {
+    align-self: flex-end;
+    margin-top: 0.75rem;
+  }
+
+  #kvart-navigation-mockup .site-foot {
+    padding: 0.75rem 1rem;
+    color: var(--muted-foreground);
+    background: var(--card);
+  }
+
+  #kvart-navigation-mockup .mobile .site-head {
+    padding-inline: 0.75rem;
+  }
+
+  #kvart-navigation-mockup .mobile .brand span {
+    display: none;
+  }
+
+  #kvart-navigation-mockup .mobile .hero {
+    padding-inline: 0.75rem;
+  }
+
+  #kvart-navigation-mockup .mobile .hero-copy {
+    margin-bottom: 1.5rem;
+  }
+
+  #kvart-navigation-mockup .mobile .journeys {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #kvart-navigation-mockup .mobile .journey:nth-child(2) {
+    border-right: 0;
+  }
+
+  #kvart-navigation-mockup .mobile .journey:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 460px) {
+    #kvart-navigation-mockup .mock.desktop {
+      width: 100%;
+    }
+
+    #kvart-navigation-mockup .mock.desktop .brand span {
+      display: none;
+    }
+
+    #kvart-navigation-mockup .mock.desktop .journeys {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #kvart-navigation-mockup .mock.desktop .journey:nth-child(2) {
+      border-right: 0;
+    }
+
+    #kvart-navigation-mockup .mock.desktop .journey:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--border);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #kvart-navigation-mockup .mock {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.getElementById("kvart-navigation-mockup");
+    const mock = root.querySelector(".mock");
+    const controls = root.querySelectorAll("[data-view]");
+
+    controls.forEach((control) => {
+      control.addEventListener("click", () => {
+        const view = control.dataset.view;
+        mock.classList.toggle("mobile", view === "mobile");
+        mock.classList.toggle("desktop", view === "desktop");
+        controls.forEach((item) => {
+          const selected = item === control;
+          item.classList.toggle("is-selected", selected);
+          item.setAttribute("aria-pressed", String(selected));
+        });
+      });
+    });
+
+    root.querySelectorAll(".journey").forEach((link) => {
+      link.addEventListener("click", (event) => event.preventDefault());
+    });
+  })();
+</script>

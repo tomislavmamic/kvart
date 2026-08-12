@@ -1,0 +1,105 @@
+<style>
+  .direction-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:22px}
+  .direction{border:2px solid var(--border,#d8d5cc);border-radius:16px;overflow:hidden;background:#fff;cursor:pointer;transition:.18s ease;box-shadow:0 8px 26px rgba(28,34,24,.08)}
+  .direction:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(28,34,24,.13)}
+  .direction.selected{border-color:#007956;box-shadow:0 0 0 3px rgba(0,121,86,.14)}
+  .scene{height:260px;background:#a8dce3;position:relative;overflow:hidden}
+  .scene svg{display:block;width:100%;height:100%}
+  .direction-body{padding:17px 18px 20px}
+  .direction-body h3{display:flex;align-items:center;gap:8px;margin:0 0 7px;font-size:18px}
+  .direction-body p{margin:0;color:#5f625b;font-size:14px;line-height:1.5}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:999px;background:#18181b;color:white;font-size:12px}
+  .rec{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#007956;font-weight:800;margin-left:auto}
+  .key{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+  .key span{font-size:11px;background:#f1f2ec;border:1px solid #dadcd2;border-radius:999px;padding:5px 8px;color:#4d514a}
+  @media(max-width:900px){.direction-grid{grid-template-columns:1fr}.scene{height:230px}}
+</style>
+
+<h2>How should the fixed Kvart diorama feel?</h2>
+<p class="subtitle">All three preserve the real road pattern, large buildings, aqueduct and clusters of homes. The difference is how we render and animate the same recognizable place.</p>
+
+<div class="direction-grid">
+  <div class="direction" data-choice="a" onclick="toggleSelect(this)">
+    <div class="scene">
+      <svg viewBox="0 0 420 280" role="img" aria-label="Clean isometric low-poly neighborhood">
+        <rect width="420" height="280" fill="#acdce2"/>
+        <path d="M-20 172 188 57l250 103-210 124Z" fill="#77a95d"/>
+        <path d="M-20 193 188 78l250 103-210 124Z" fill="#528247" opacity=".55"/>
+        <path d="M-10 168 181 66l237 99-190 111Z" fill="#8dbb6d"/>
+        <path d="M-8 209 103 145l41 16-112 66Z" fill="#d2c9a9"/>
+        <path d="M93 141 235 219l16-9-141-78Z" fill="none" stroke="#eff1e7" stroke-width="13" stroke-linecap="round"/>
+        <path d="M202 71 165 200" fill="none" stroke="#ddd9c9" stroke-width="12" stroke-linecap="round"/>
+        <path d="M202 71 165 200" fill="none" stroke="#f7f4e9" stroke-width="7" stroke-linecap="round"/>
+        <g stroke="#835b3e" stroke-width="5" fill="none">
+          <path d="M24 154 72 132 122 145 171 121 222 132 273 108 331 121 389 93"/>
+          <path d="M39 157v20m34-46v19m49-6v20m49-44v19m51-8v19m51-43v20m58-7v18m58-46v21"/>
+        </g>
+        <g>
+          <path d="M265 155l42-23 44 18-43 24Z" fill="#e7dfc6"/><path d="M265 155v32l43 19v-32Z" fill="#c4b898"/><path d="M308 174l43-24v32l-43 24Z" fill="#9d9277"/>
+          <path d="M279 111l27-15 27 11-27 16Z" fill="#efb365"/><path d="M279 111v23l27 12v-23Z" fill="#d98545"/><path d="M306 123l27-16v23l-27 16Z" fill="#ae6238"/>
+          <path d="M58 185l21-12 22 9-22 13Z" fill="#f6e8d0"/><path d="M58 185v20l21 9v-19Z" fill="#d8bda0"/><path d="M79 195l22-13v20l-22 12Z" fill="#b38d76"/>
+          <path d="M119 207l20-12 21 9-21 12Z" fill="#f1dfc6"/><path d="M119 207v18l20 9v-18Z" fill="#cfad91"/><path d="M139 216l21-12v18l-21 12Z" fill="#aa7e69"/>
+        </g>
+        <g fill="#246d45"><path d="m45 118 10-24 10 24Z"/><path d="m244 88 12-28 12 28Z"/><path d="m369 153 11-25 11 25Z"/></g>
+        <g><rect x="142" y="164" width="18" height="8" rx="2" transform="rotate(28 142 164)" fill="#d65d48"/><rect x="204" y="194" width="18" height="8" rx="2" transform="rotate(28 204 194)" fill="#f0c746"/></g>
+      </svg>
+    </div>
+    <div class="direction-body">
+      <h3><span class="badge">A</span> Living civic model <span class="rec">Recommended</span></h3>
+      <p>Clean low-poly SVG terrain with readable real roads and landmarks. Tiny cars, swaying trees, chimney wisps and moving shadows give it life without turning it into a game.</p>
+      <div class="key"><span>Fast</span><span>Crisp on mobile</span><span>Accessible labels</span></div>
+    </div>
+  </div>
+
+  <div class="direction" data-choice="b" onclick="toggleSelect(this)">
+    <div class="scene">
+      <svg viewBox="0 0 420 280" role="img" aria-label="Colorful game-like isometric neighborhood">
+        <defs><pattern id="tiles" width="32" height="16" patternUnits="userSpaceOnUse"><path d="M0 8 16 0l16 8-16 8Z" fill="none" stroke="#79a955" stroke-width=".8"/></pattern></defs>
+        <rect width="420" height="280" fill="#8ed0dc"/>
+        <path d="M-30 163 185 46l275 112-220 128Z" fill="#65a84c"/>
+        <path d="M-30 163 185 46l275 112-220 128Z" fill="url(#tiles)"/>
+        <path d="M18 196 116 142 154 158 56 214Z" fill="#cdb77c"/>
+        <path d="M89 120 255 214" stroke="#f6e67c" stroke-width="18"/><path d="M89 120 255 214" stroke="#716a5d" stroke-width="13"/><path d="M89 120 255 214" stroke="#f8cf45" stroke-width="1.5" stroke-dasharray="8 9"/>
+        <path d="M226 63 188 197" stroke="#746d61" stroke-width="14"/><path d="M226 63 188 197" stroke="#f8cf45" stroke-width="1.5" stroke-dasharray="8 9"/>
+        <g stroke="#a96a45" stroke-width="6" fill="none"><path d="M10 139 67 117 125 132 178 107 239 121 300 93 365 104 419 79"/><path d="M32 131v31m55-39v29m59-30v28m56-42v30m65-30v29m64-26v28m61-48v31"/></g>
+        <g>
+          <path d="M279 141l45-25 47 19-46 27Z" fill="#ffe26f"/><path d="M279 141v40l46 20v-39Z" fill="#e79445"/><path d="M325 162l46-27v40l-46 26Z" fill="#c26537"/>
+          <path d="M47 180l23-13 25 10-25 15Z" fill="#f7a1a7"/><path d="M47 180v23l23 10v-21Z" fill="#da6f75"/><path d="M70 192l25-15v23l-25 13Z" fill="#ad545c"/>
+          <path d="M122 204l24-14 25 10-25 15Z" fill="#8fd9ee"/><path d="M122 204v21l24 11v-21Z" fill="#54a9c2"/><path d="M146 215l25-15v22l-25 14Z" fill="#3e829b"/>
+        </g>
+        <g fill="#1e7d41"><path d="m30 103 13-31 13 31Z"/><path d="m261 78 14-34 14 34Z"/><path d="m385 145 14-32 14 32Z"/></g>
+        <rect x="142" y="159" width="22" height="10" rx="2" transform="rotate(29 142 159)" fill="#ff473d"/><rect x="207" y="196" width="22" height="10" rx="2" transform="rotate(29 207 196)" fill="#54d2e8"/>
+      </svg>
+    </div>
+    <div class="direction-body">
+      <h3><span class="badge">B</span> Playful tile world</h3>
+      <p>Closer to classic management-game colour and bustle: tiled ground, brighter buildings, faster traffic and more exaggerated movement. Charming, but less faithful to Kvart’s civic tone.</p>
+      <div class="key"><span>Most game-like</span><span>High character</span><span>More visual noise</span></div>
+    </div>
+  </div>
+
+  <div class="direction" data-choice="c" onclick="toggleSelect(this)">
+    <div class="scene">
+      <svg viewBox="0 0 420 280" role="img" aria-label="Atmospheric 3D miniature neighborhood">
+        <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#9dcbd5"/><stop offset="1" stop-color="#e7ddc4"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="5"/></filter></defs>
+        <rect width="420" height="280" fill="url(#sky)"/>
+        <ellipse cx="225" cy="245" rx="210" ry="26" fill="#456647" opacity=".25" filter="url(#soft)"/>
+        <path d="M-17 163 187 52l253 105-205 119Z" fill="#708f5d"/>
+        <path d="M-17 185 187 74l253 105-205 119Z" fill="#3f6348" opacity=".65"/>
+        <path d="M-17 163 187 52l253 105-205 119Z" fill="#829d67"/>
+        <path d="M86 123 239 211" stroke="#ebe4d4" stroke-width="15"/><path d="M215 65 178 196" stroke="#d9d0be" stroke-width="13"/>
+        <g stroke="#765845" stroke-width="5" fill="none" opacity=".9"><path d="M2 142 62 119 118 133 178 105 237 119 301 89 363 101 422 73"/><path d="M28 133v28m57-36v24m58-27v27m63-43v28m65-29v29m64-31v29m59-48v30"/></g>
+        <g opacity=".96"><path d="M274 140l45-25 48 19-46 27Z" fill="#d7d2c5"/><path d="M274 140v39l47 20v-38Z" fill="#a69d8c"/><path d="M321 161l46-27v39l-46 26Z" fill="#787268"/><path d="M47 179l24-14 25 10-25 15Z" fill="#e4ddd0"/><path d="M47 179v23l24 10v-22Z" fill="#b9a99d"/><path d="M71 190l25-15v23l-25 14Z" fill="#8f8078"/><path d="M125 203l24-14 25 10-25 15Z" fill="#ddd6ca"/><path d="M125 203v22l24 10v-21Z" fill="#aa9d91"/><path d="M149 214l25-15v22l-25 14Z" fill="#81776f"/></g>
+        <g fill="#31583c"><path d="m36 105 12-28 12 28Z"/><path d="m255 77 13-31 13 31Z"/><path d="m383 144 13-30 13 30Z"/></g>
+        <ellipse cx="259" cy="233" rx="70" ry="8" fill="#324b3c" opacity=".3" filter="url(#soft)"/>
+      </svg>
+    </div>
+    <div class="direction-body">
+      <h3><span class="badge">C</span> Atmospheric miniature</h3>
+      <p>WebGL depth, soft haze, dynamic lighting and richer terrain. The most cinematic option, but heavier and less legible at small sizes; it also brings the largest implementation cost.</p>
+      <div class="key"><span>Most dimensional</span><span>Cinematic</span><span>Heaviest</span></div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px">Click the direction that feels most like the Kvart you want people to watch.</p>
