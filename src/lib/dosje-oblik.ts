@@ -9,6 +9,7 @@
 import type { PublicParcelProperties } from "./public-parcels";
 import type { PlannedRoadParcelProperties } from "./planned-road-parcels";
 import type { TargetedOwnershipProperties } from "./targeted-ownership";
+import type { Teren } from "./reljef-oblik";
 
 /** Kako sloj dodiruje česticu. */
 export type Odnos = "nad" | "na" | "kroz";
@@ -116,6 +117,17 @@ export interface Dosje {
   planiranaCestaCestica: PlannedRoadParcelProperties | null;
   /** Namjena po planu na snazi. `null` ako točka nije ni u jednoj plohi. */
   namjena: Namjena | null;
+  /**
+   * Što reljef kaže o ovom mjestu — visina, nagib, strana svijeta.
+   *
+   * Stoji uz namjenu, a ne među temama, iz istog razloga kao `zapreke`: teme
+   * su popis onoga što se na čestici ZATEKLO (okno telekoma, koš za otpad),
+   * a ovo je svojstvo samog zemljišta. Među pedeset šest redaka bi se čitalo
+   * kao još jedan nalaz, a nije nalaz nego opis.
+   *
+   * `null` kad točka padne izvan mreže visina — odsutnost se izriče.
+   */
+  teren: Teren | null;
   skupine: Skupina[];
   /** Slojevi koji su pretraženi — da se vidi da prazno znači „nema”. */
   pretrazeno: number;

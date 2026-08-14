@@ -14,6 +14,7 @@ import type * as LeafletNS from "leaflet";
 import type { Feature, Geometry } from "geojson";
 import {
   BASE_LAYERS,
+  BASE_SKUPINE,
   OVERLAY_LAYERS,
   MAP_VIEWS,
   DIMENSIONS,
@@ -23,13 +24,26 @@ import {
   MAP_MAX_BOUNDS,
   shouldIsolateMapBackground,
   syncDossierMapLayout,
+  type BaseLayer,
   type Comparison,
   type DossierPresentation,
   type MapView,
   type OverlayLayer,
 } from "@/lib/map-views";
+import { postaviKlizac } from "@/lib/karta-klizac";
+import {
+  izAdrese as vremeplovIzAdrese,
+  natpisPodloge,
+  postaviStranu,
+  snimke,
+  uAdresu as vremeplovUAdresu,
+  vremeplovMoguc,
+  zadaniVremeplov,
+  type Vremeplov,
+} from "@/lib/vremeplov";
 import { IME_POLJA, vrijednostPolja } from "@/lib/polja";
 import { ODNOS_NATPIS, type Dosje } from "@/lib/dosje-oblik";
+import { STRANA_NATPIS } from "@/lib/reljef-oblik";
 import { NA_SNAZI, PRETHODNI, natpisPlana } from "@/lib/plan-status";
 import {
   formatPublicSourceDate,
@@ -145,6 +159,7 @@ const P = {
   pogled: "pogled",
   sloj: "sloj",
   podloga: "podloga",
+  vremeplov: "vremeplov",
   namjena: "namjena",
   usporedba: "usporedba",
   prikaz: "prikaz",
@@ -158,6 +173,8 @@ interface StanjeKarte {
   viewId: string;
   activeIds: string[];
   baseId: string;
+  /** Par podloga koje vremeplov reže; `null` kad je ugašen. */
+  vremeplov: Vremeplov | null;
   dimValue: Record<string, string>;
   comparisonId: string | null;
   nacin: "obris" | "klizac";
@@ -207,6 +224,7 @@ function izAdrese(): Partial<StanjeKarte> & {
   if (q.has(P.sloj)) out.activeIds = slojevi;
   const podloga = q.get(P.podloga);
   if (podloga && BASE_LAYERS.some((b) => b.id === podloga)) out.baseId = podloga;
+  out.vremeplov = vremeplovIzAdrese(BASE_LAYERS, q.get(P.vremeplov));
   // Prazan `namjena=` je valjano stanje („bez podloge”), pa se razlikuje
   // od izostanka parametra — has() umjesto istinitosti vrijednosti.
   if (q.has(P.namjena) && DIMENSIONS.length)
@@ -229,6 +247,9 @@ function uAdresu(s: StanjeKarte, sredina: [number, number], zum: number) {
   q.set(P.pogled, s.viewId);
   for (const id of s.activeIds) q.append(P.sloj, id);
   q.set(P.podloga, s.baseId);
+  // Vremeplov se u adresu upisuje samo kad je upaljen: prazan parametar bi
+  // svakoj podijeljenoj poveznici dodao rep koji ništa ne znači.
+  if (s.vremeplov) q.set(P.vremeplov, vremeplovUAdresu(s.vremeplov));
   for (const d of DIMENSIONS) q.set(P.namjena, s.dimValue[d.id] ?? "");
   if (s.comparisonId) q.set(P.usporedba, s.comparisonId);
   if (s.nacin !== "obris") q.set(P.prikaz, s.nacin);
@@ -263,7 +284,10 @@ export function MapClient() {
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
-  const baseRef = useRef<LeafletNS.TileLayer | null>(null);
+  // Podloga ih je jedna, a s vremeplovom dvije, pa ih drži niz umjesto jedne
+  // reference: inače pri gašenju vremeplova ostane jedna nepočišćena i visi
+  // pod kartom do sljedeće promjene podloge.
+  const podlogeRef = useRef<LeafletNS.TileLayer[]>([]);
   // Uz sam sloj pamti se i okno u kojem je stvoren: klizač sloj seli u
   // rezano okno, a sloj se u Leafletu ne može premjestiti nakon stvaranja.
   const overlayInstances = useRef<Map<string, Postavljeni>>(new Map());
@@ -299,6 +323,9 @@ export function MapClient() {
 
   const [ready, setReady] = useState(false);
   const [baseId, setBaseId] = useState("dof");
+  // Vremeplov je ugašen dok se ne zatraži. Karta se otvara na jednoj podlozi,
+  // ne na razdjelniku koji nitko nije povukao.
+  const [vremeplov, setVremeplov] = useState<Vremeplov | null>(null);
   const [viewId, setViewId] = useState(MAP_VIEWS[0].id);
   const [activeIds, setActiveIds] = useState<Set<string>>(
     () => new Set(phase1(MAP_VIEWS[0].layerIds))
@@ -468,6 +495,7 @@ export function MapClient() {
     }
     if (a.activeIds) setActiveIds(new Set(a.activeIds));
     if (a.baseId) setBaseId(a.baseId);
+    if (a.vremeplov) setVremeplov(a.vremeplov);
     if (a.dimValue) setDimValue((p) => ({ ...p, ...a.dimValue }));
     if (a.comparisonId !== undefined) setComparisonId(a.comparisonId);
     if (a.nacin) setNacin(a.nacin);
@@ -529,6 +557,13 @@ export function MapClient() {
       for (const ime of ["sbs-lijevo", "sbs-desno"]) {
         const okno = map.createPane(ime);
         okno.style.zIndex = "400";
+      }
+      // Podloge vremeplova idu u okna na visini Leafletova `tilePane` (200),
+      // dakle ispod svih preklopnika: rez dijeli ono što je NAJDONJE, a slojevi
+      // iznad ostaju cijeli s obje strane razdjelnika.
+      for (const ime of ["podloga-lijevo", "podloga-desno"]) {
+        const okno = map.createPane(ime);
+        okno.style.zIndex = "200";
       }
       // Slojevi koji moraju zadržati međusobni red bez obzira na to koji se
       // GeoJSON prvi učita dobivaju vlastita okna. Red u registru nije
@@ -616,47 +651,52 @@ export function MapClient() {
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map || !ready) return;
-    if (baseRef.current) map.removeLayer(baseRef.current);
-    const base = BASE_LAYERS.find((b) => b.id === baseId) ?? BASE_LAYERS[0];
-    let layer: LeafletNS.TileLayer;
-    if (base.type === "wms") {
-      layer = L.tileLayer.wms(base.url, {
-        layers: base.wmsLayers,
-        format: "image/jpeg",
-        crs: L.CRS.EPSG4326,
-        attribution: base.attribution,
-        maxZoom: 19,
-      });
-    } else {
-      layer = L.tileLayer(base.url, {
-        attribution: base.attribution,
-        subdomains: "abcd",
-        maxZoom: 19,
-      });
+    for (const stara of podlogeRef.current) {
+      stara.off();
+      map.removeLayer(stara);
     }
+    podlogeRef.current = [];
+
     // Podloga je najteža stvar na stranici i jedina koja stiže izvana. Dok
     // je nema, karta je siva ploha bez ijedne riječi — a „sporija veza je
     // normalna” je zapisana obveza, pa je to redovito stanje, ne rub.
     //
     // Broje se pločice koje su pale: jedna promašena pločica nije kvar
-    // (poslužitelj ih zna odbiti pod opterećenjem), ali tri jesu.
+    // (poslužitelj ih zna odbiti pod opterećenjem), ali tri jesu. S upaljenim
+    // vremeplovom se broji preko obiju podloga zajedno — stanje opisuje ono
+    // što se vidi, a vidi se jedna slika s rezom, ne dvije karte.
     let pale = 0;
     setPodlogaStanje("ucitava");
-    layer.on("loading", () => setPodlogaStanje("ucitava"));
-    layer.on("load", () => {
-      pale = 0;
-      setPodlogaStanje("gotovo");
-    });
-    layer.on("tileerror", () => {
-      if (++pale >= 3) setPodlogaStanje("greska");
-    });
-    layer.addTo(map);
-    layer.bringToBack();
-    baseRef.current = layer;
-    return () => {
-      layer.off();
+
+    const postavi = (base: BaseLayer, okno?: string) => {
+      const layer = podlogaSloj(L, base, okno);
+      layer.on("loading", () => setPodlogaStanje("ucitava"));
+      layer.on("load", () => {
+        pale = 0;
+        setPodlogaStanje("gotovo");
+      });
+      layer.on("tileerror", () => {
+        if (++pale >= 3) setPodlogaStanje("greska");
+      });
+      layer.addTo(map);
+      if (!okno) layer.bringToBack();
+      podlogeRef.current.push(layer);
     };
-  }, [baseId, ready]);
+
+    if (vremeplov) {
+      // Svaka strana u svoje okno, da ih klizač može rezati zasebno — isto
+      // kao kod usporedbe godina namjene.
+      postavi(podlogaPoId(vremeplov.lijevo), "podloga-lijevo");
+      postavi(podlogaPoId(vremeplov.desno), "podloga-desno");
+    } else {
+      postavi(podlogaPoId(baseId));
+    }
+
+    const postavljene = podlogeRef.current;
+    return () => {
+      for (const layer of postavljene) layer.off();
+    };
+  }, [baseId, vremeplov, ready]);
 
   // ---- adresa: zapiši stanje kad se promijeni ----
   useEffect(() => {
@@ -669,6 +709,7 @@ export function MapClient() {
           viewId,
           activeIds: [...activeIds],
           baseId,
+          vremeplov,
           dimValue,
           comparisonId,
           nacin,
@@ -684,7 +725,7 @@ export function MapClient() {
     return () => {
       map.off("moveend zoomend", zapisi);
     };
-  }, [viewId, activeIds, baseId, dimValue, comparisonId, nacin, cestica, parcelId, ready, hidriran, upit]);
+  }, [viewId, activeIds, baseId, vremeplov, dimValue, comparisonId, nacin, cestica, parcelId, ready, hidriran, upit]);
 
   // Što se crta = neovisni slojevi + odabrana vrijednost svake dimenzije
   // + sloj usporedbe ako je uključen.
@@ -907,11 +948,10 @@ export function MapClient() {
     planiraneCesteFilterKey,
   ]);
 
-  // ---- klizač za usporedbu dviju godina ----
-  // Pisano ručno, a ne preko leaflet-side-by-side: taj dodatak iznutra radi
-  // require('./layout.css'), a Turbopack tu tvornicu ne isporuči modulu
-  // povučenom dinamičkim import()-om, pa uvoz padne. Sama je logika kratka:
-  // razdjelnik + `clip` na oba okna, preračunat pri svakom pomaku karte.
+  // ---- klizač za usporedbu dviju godina namjene ----
+  //
+  // Sama mehanika (razdjelnik, `clip`, tipkovnica) živi u lib/karta-klizac.ts
+  // jer je traže dvije stvari: ova usporedba i vremeplov među podlogama.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -923,120 +963,36 @@ export function MapClient() {
       desno.style.clip = "";
       return;
     }
+    return postaviKlizac(map, lijevo, desno, {
+      lijevo:
+        OVERLAY_BY_ID.get(usporedba?.fromLayerId ?? "")?.label ?? "lijeva strana",
+      desno:
+        OVERLAY_BY_ID.get(usporedba?.toLayerId ?? "")?.label ?? "desna strana",
+    });
+  }, [klizac, usporedba, ready, renderIds]);
 
-    // Natpisi strana usporedbe — koriste se u `aria-valuetext`, pa moraju
-    // reći ŠTO se uspoređuje, a ne samo da se nešto uspoređuje.
-    const lijeviNatpis =
-      OVERLAY_BY_ID.get(usporedba?.fromLayerId ?? "")?.label ?? "lijeva strana";
-    const desniNatpis =
-      OVERLAY_BY_ID.get(usporedba?.toLayerId ?? "")?.label ?? "desna strana";
-
-    let omjer = 0.5;
-    const drska = document.createElement("div");
-    // Razdjelnik koji se DA pomaknuti tipkovnicom.
-    //
-    // Prije je bio `role="separator"` bez `tabindex`, bez `aria-valuenow` i
-    // samo s rukovateljima pokazivača — dakle usporedba dviju godina GUP-a,
-    // jedno od tri pitanja s kojima se dolazi na kartu, mišem je radila, a
-    // tipkovnicom nije postojala. To je WCAG 2.1.1, razina A, ne AA.
-    //
-    // ARIA za pomični razdjelnik traži `tabindex`, orijentaciju i trenutačnu
-    // vrijednost; bez `aria-valuenow` čitač zaslona javlja da nešto ima, ali
-    // ne i gdje stoji.
-    drska.setAttribute("role", "separator");
-    drska.setAttribute("aria-label", "Razdjelnik usporedbe");
-    drska.setAttribute("aria-orientation", "vertical");
-    drska.setAttribute("tabindex", "0");
-    drska.setAttribute("aria-valuemin", "0");
-    drska.setAttribute("aria-valuemax", "100");
-    drska.style.cssText =
-      "position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;" +
-      "background:#fff;box-shadow:0 0 4px rgba(0,0,0,.5);cursor:ew-resize;" +
-      "z-index:400;touch-action:none";
-    map.getContainer().appendChild(drska);
-
-    const osvjezi = () => {
-      const velicina = map.getSize();
-      const nw = map.containerPointToLayerPoint([0, 0]);
-      const se = map.containerPointToLayerPoint([velicina.x, velicina.y]);
-      const rez = nw.x + velicina.x * omjer;
-      lijevo.style.clip = `rect(${nw.y}px,${rez}px,${se.y}px,${nw.x}px)`;
-      desno.style.clip = `rect(${nw.y}px,${se.x}px,${se.y}px,${rez}px)`;
-      drska.style.left = `${velicina.x * omjer}px`;
-      // Vrijednost se objavljuje pri svakom pomaku, i pokazivačem i tipkovnicom.
-      // `aria-valuetext` postoji jer „62” nikome ništa ne znači, a „62 %, lijevo
-      // 2015., desno nacrt 2024.” je ono što se zapravo gleda.
-      const posto = Math.round(omjer * 100);
-      drska.setAttribute("aria-valuenow", String(posto));
-      drska.setAttribute(
-        "aria-valuetext",
-        `${posto} % — lijevo ${lijeviNatpis}, desno ${desniNatpis}`
-      );
-    };
-
-    const pomak = (e: PointerEvent) => {
-      const okvir = map.getContainer().getBoundingClientRect();
-      omjer = Math.min(1, Math.max(0, (e.clientX - okvir.left) / okvir.width));
-      osvjezi();
-    };
-
-    /**
-     * Strelice pomiču rez, Home/End ga bacaju na rub.
-     *
-     * Korak je 2 % po pritisku i 10 % uz PageUp/PageDown — dovoljno sitno da se
-     * može namjestiti na granicu jedne čestice, dovoljno krupno da se prijeđe
-     * cijela karta bez pedeset pritisaka.
-     */
-    const naTipku = (e: KeyboardEvent) => {
-      const korak =
-        e.key === "PageUp" || e.key === "PageDown" ? 0.1 : 0.02;
-      let n = omjer;
-      if (e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown")
-        n = omjer - korak;
-      else if (
-        e.key === "ArrowRight" ||
-        e.key === "ArrowUp" ||
-        e.key === "PageUp"
-      )
-        n = omjer + korak;
-      else if (e.key === "Home") n = 0;
-      else if (e.key === "End") n = 1;
-      else return;
-      e.preventDefault();
-      // Strelice inače pomiču samu kartu (Leaflet ih sluša na spremniku), pa bi
-      // se bez zaustavljanja rez i prikaz micali istodobno.
-      e.stopPropagation();
-      omjer = Math.min(1, Math.max(0, n));
-      osvjezi();
-    };
-    const kraj = (e: PointerEvent) => {
-      drska.releasePointerCapture(e.pointerId);
-      drska.removeEventListener("pointermove", pomak);
-      map.dragging.enable();
-    };
-    const pocetak = (e: PointerEvent) => {
-      e.preventDefault();
-      drska.setPointerCapture(e.pointerId);
-      drska.addEventListener("pointermove", pomak);
-      map.dragging.disable();
-    };
-    drska.classList.add("klizac-rucka", "fokus");
-    drska.addEventListener("pointerdown", pocetak);
-    drska.addEventListener("pointerup", kraj);
-    drska.addEventListener("keydown", naTipku);
-    map.on("move zoom resize", osvjezi);
-    osvjezi();
-
-    return () => {
-      map.off("move zoom resize", osvjezi);
-      drska.removeEventListener("pointerdown", pocetak);
-      drska.removeEventListener("pointerup", kraj);
-      drska.removeEventListener("keydown", naTipku);
-      drska.remove();
+  // ---- klizač vremeplova ----
+  //
+  // Isti razdjelnik, druga dva okna. Vremeplov i usporedba namjene se
+  // MEĐUSOBNO ISKLJUČUJU (vidi `postaviVremeplov` i `postaviNacin`), pa na
+  // karti nikad nisu dvije drške: dvije bi bile zbrka, a `aria-valuetext` bi
+  // uz to opisivao rez koji se ne gleda.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const lijevo = map.getPane("podloga-lijevo");
+    const desno = map.getPane("podloga-desno");
+    if (!lijevo || !desno) return;
+    if (!vremeplov) {
       lijevo.style.clip = "";
       desno.style.clip = "";
-    };
-  }, [klizac, usporedba, ready, renderIds]);
+      return;
+    }
+    return postaviKlizac(map, lijevo, desno, {
+      lijevo: natpisPodloge(BASE_LAYERS, vremeplov.lijevo),
+      desno: natpisPodloge(BASE_LAYERS, vremeplov.desno),
+    });
+  }, [vremeplov, ready]);
 
   // ---- UI actions ----
   function selectView(id: string) {
@@ -1054,6 +1010,24 @@ export function MapClient() {
       else next.add(id);
       return next;
     });
+  }
+
+  /**
+   * Pali i gasi vremeplov. Paljenje gasi klizač usporedbe namjene.
+   *
+   * Dvije drške na istoj karti nisu dvije usporedbe nego nijedna: povlačenjem
+   * jedne pomiče se rez koji se ne gleda, a onaj koji se gleda stoji. Zato se
+   * ovdje bira — zadnje traženo je ono koje ostaje.
+   */
+  function postaviVremeplov(par: Vremeplov | null) {
+    setVremeplov(par);
+    if (par) setNacin("obris");
+  }
+
+  /** Klizač usporedbe namjene; paljenje gasi vremeplov, iz istog razloga. */
+  function postaviNacin(n: "obris" | "klizac") {
+    setNacin(n);
+    if (n === "klizac") setVremeplov(null);
   }
 
   const currentView = MAP_VIEWS.find((v) => v.id === viewId);
@@ -1153,6 +1127,8 @@ export function MapClient() {
         <Kontrole
           baseId={baseId}
           onBase={setBaseId}
+          vremeplov={vremeplov}
+          onVremeplov={postaviVremeplov}
           dimValue={dimValue}
           onDimValue={(dimId, layerId) =>
             setDimValue((p) => ({ ...p, [dimId]: layerId }))
@@ -1178,7 +1154,7 @@ export function MapClient() {
           comparisonId={comparisonId}
           onComparison={setComparisonId}
           nacin={nacin}
-          onNacin={setNacin}
+          onNacin={postaviNacin}
           javneCestice={javneCestice}
           javniFiltri={javniFiltri}
           onJavniFiltri={setJavniFiltri}
@@ -2909,6 +2885,8 @@ function Kvacica({
 function Kontrole(props: {
   baseId: string;
   onBase: (id: string) => void;
+  vremeplov: Vremeplov | null;
+  onVremeplov: (par: Vremeplov | null) => void;
   dimValue: Record<string, string>;
   onDimValue: (dimId: string, layerId: string) => void;
   comparisonId: string | null;
@@ -2953,17 +2931,48 @@ function Kontrole(props: {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-2 text-xs">
-        <div className="flex flex-wrap gap-1">
-          {BASE_LAYERS.map((b) => (
-            <Cip
-              key={b.id}
-              odabran={b.id === props.baseId}
-              onClick={() => props.onBase(b.id)}
-            >
-              {b.label}
-            </Cip>
-          ))}
-        </div>
+        {/* Podloge po skupinama: „Danas”, „Nekad”, „Reljef”. Šest čipova u
+            jednom nizu je popis u kojem snimka iz 2011. stoji uz sjenčani
+            reljef kao da su ista vrsta izbora — a jedno je „kad”, drugo
+            „što”. Vidi BASE_SKUPINE. */}
+        {BASE_SKUPINE.map((skupina) => {
+          const uSkupini = BASE_LAYERS.filter((b) => b.skupina === skupina.id);
+          if (!uSkupini.length) return null;
+          return (
+            <div key={skupina.id} className="mb-2">
+              <p className="mb-1 font-semibold text-zinc-600">{skupina.naslov}</p>
+              <div className="flex flex-wrap gap-1">
+                {uSkupini.map((b) => (
+                  <Cip
+                    key={b.id}
+                    odabran={!props.vremeplov && b.id === props.baseId}
+                    onClick={() => {
+                      // Odabir podloge gasi vremeplov: tražena je JEDNA
+                      // podloga, a rez bi je pokazao samo na pola karte.
+                      props.onVremeplov(null);
+                      props.onBase(b.id);
+                    }}
+                  >
+                    {b.label}
+                  </Cip>
+                ))}
+              </div>
+              {/* Opis samo za odabranu: šest rečenica odjednom je zid teksta
+                  u ploči širokoj 14 rem, a tražena je jedna. */}
+              {uSkupini.find((b) => b.id === props.baseId && !props.vremeplov)
+                ?.opis && (
+                <p className="mt-1 leading-snug text-zinc-500">
+                  {uSkupini.find((b) => b.id === props.baseId)?.opis}
+                </p>
+              )}
+            </div>
+          );
+        })}
+
+        <VremeplovBiralo
+          vremeplov={props.vremeplov}
+          onVremeplov={props.onVremeplov}
+        />
 
         {DIMENSIONS.map((d) => {
           const usporedbe = COMPARISONS.filter((c) => c.dimensionId === d.id);
@@ -3033,11 +3042,91 @@ function Kontrole(props: {
 
         {/* Izvor podloge stoji uz izbor podloge. Na uskom zaslonu ova ploha
             zna pokriti Leafletovu atribuciju, a navođenje je uvjet dozvole,
-            pa mora postojati i ovdje. */}
+            pa mora postojati i ovdje.
+
+            S upaljenim vremeplovom se vide DVIJE podloge, pa se navode obje:
+            navesti samo jednu značilo bi koristiti tuđi podatak bez navođenja,
+            a to je uvjet dozvole, ne kozmetika. */}
         <p className="mt-3 border-t border-zinc-200 pt-2 text-[11px] leading-snug text-zinc-500">
-          {BASE_LAYERS.find((b) => b.id === props.baseId)?.attribution}
+          {props.vremeplov
+            ? [props.vremeplov.lijevo, props.vremeplov.desno]
+                .map((id) => podlogaPoId(id).attribution)
+                .join(" · ")
+            : podlogaPoId(props.baseId).attribution}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Vremeplov: rez između dviju snimaka, s biralom za svaku stranu.
+ *
+ * Stoji u ploči „Podloga i plan”, a ne u bočnoj traci uz usporedbu namjene,
+ * i to nije nedosljednost. Usporedba namjene uspoređuje dva SLOJA i korisna
+ * je u jednom pogledu, pa stoji u njemu. Vremeplov uspoređuje dvije PODLOGE —
+ * dakle upravo ono što ova ploča i drži, ono što je ispod svega — i vrijedi u
+ * svakom pogledu.
+ *
+ * Ne prikazuje se ako u registru nema barem dvije snimke s godinom: biralo
+ * koje se ne može upotrijebiti gore je od izostanka.
+ */
+function VremeplovBiralo(props: {
+  vremeplov: Vremeplov | null;
+  onVremeplov: (par: Vremeplov | null) => void;
+}) {
+  const dostupne = snimke(BASE_LAYERS);
+  if (!vremeplovMoguc(BASE_LAYERS)) return null;
+  const par = props.vremeplov;
+
+  return (
+    <div className="mt-3 border-t border-zinc-200 pt-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-semibold text-zinc-600">Vremeplov</p>
+        <Cip
+          odabran={par !== null}
+          onClick={() =>
+            props.onVremeplov(par ? null : zadaniVremeplov(BASE_LAYERS))
+          }
+        >
+          {par ? "ugasi" : "usporedi"}
+        </Cip>
+      </div>
+
+      {!par ? (
+        <p className="mt-1 leading-snug text-zinc-500">
+          Povuci razdjelnik i vidi isto mjesto u dvije godine.
+        </p>
+      ) : (
+        <>
+          {(["lijevo", "desno"] as const).map((strana) => (
+            <div key={strana} className="mt-2">
+              <p className="mb-1 text-zinc-500">
+                {strana === "lijevo" ? "Lijevo od reza" : "Desno od reza"}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {dostupne.map((b) => (
+                  <Cip
+                    key={b.id}
+                    odabran={par[strana] === b.id}
+                    onClick={() =>
+                      props.onVremeplov(postaviStranu(par, strana, b.id))
+                    }
+                  >
+                    {b.godina ?? b.label}
+                  </Cip>
+                ))}
+              </div>
+            </div>
+          ))}
+          {/* Rečenica postoji jer je razdjelnik jedina stvar na karti koju
+              treba POVUĆI, a nigdje drugdje to ne piše. Tipkovnica se spominje
+              jer drška prima fokus i strelice, pa to nije skriveni put. */}
+          <p className="mt-2 leading-snug text-zinc-500">
+            Razdjelnik se povlači mišem, prstom ili strelicama.
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -3078,6 +3167,41 @@ function Cip({
 
 function phase1(ids: string[]): string[] {
   return ids.filter((id) => OVERLAY_BY_ID.get(id)?.phase === 1);
+}
+
+/** Podloga po id-u; nepoznat id pada na prvu, kao i dosad. */
+function podlogaPoId(id: string): BaseLayer {
+  return BASE_LAYERS.find((b) => b.id === id) ?? BASE_LAYERS[0];
+}
+
+/**
+ * Leafletov sloj za jednu podlogu.
+ *
+ * `maxNativeZoom` je razlika između „nema pločice” i „pločica je razvučena”:
+ * sjenčani reljef ima vlastite pločice do z17, jer je ondje 0,87 m po pikselu
+ * ≈ izvorna gustoća DMR-a. Bez ove postavke Leaflet na z18 traži pločice koje
+ * nikad nisu izrađene i podloga na najkrupnijem mjerilu nestane.
+ */
+function podlogaSloj(
+  L: typeof LeafletNS,
+  base: BaseLayer,
+  okno?: string,
+): LeafletNS.TileLayer {
+  const zajednicko = {
+    attribution: base.attribution,
+    maxZoom: 19,
+    ...(base.maxNativeZoom ? { maxNativeZoom: base.maxNativeZoom } : {}),
+    ...(okno ? { pane: okno } : {}),
+  };
+  if (base.type === "wms") {
+    return L.tileLayer.wms(base.url, {
+      ...zajednicko,
+      layers: base.wmsLayers,
+      format: "image/jpeg",
+      crs: L.CRS.EPSG4326,
+    });
+  }
+  return L.tileLayer(base.url, { ...zajednicko, subdomains: "abcd" });
 }
 
 /**
@@ -3227,6 +3351,22 @@ function dodajSloj(
     registar.set(layer.id, { sloj: wms, okno });
     return;
   }
+  if (layer.type === "xyz") {
+    // Rasterske pločice iz public/geo/ — zasad samo sjenčani reljef.
+    // `maxNativeZoom` mora ovamo iz istog razloga kao kod podloge: bez njega
+    // Leaflet na z18 traži pločice koje nikad nisu izrađene i sloj nestane
+    // baš na mjerilu na kojem se gleda pojedina čestica.
+    const plocice = L.tileLayer(layer.url, {
+      opacity: layer.defaultOpacity ?? 0.7,
+      attribution: layer.attribution,
+      maxZoom: 19,
+      ...(layer.maxNativeZoom ? { maxNativeZoom: layer.maxNativeZoom } : {}),
+      ...(okno ? { pane: okno } : {}),
+    });
+    plocice.addTo(map);
+    registar.set(layer.id, { sloj: plocice, okno });
+    return;
+  }
   // geojson — dohvat na zahtjev. Atribucija ide na samu grupu: registar je
   // nosi za svaki sloj, a bez ovoga Leaflet ju je ispisivao samo za WMS,
   // pa su OSM, Hrvatske ceste i gradski planovi ostajali nenavedeni.
@@ -3357,6 +3497,25 @@ function dodajSloj(
               color: stil.boja,
               weight: stil.debljina,
               opacity: stil.prozirnost,
+              lineCap: "round" as const,
+              lineJoin: "round" as const,
+              fill: false,
+            };
+          }
+          if (layer.id === "izohipse") {
+            // Izohipsa se crta TANKO i prigušeno: ona je mjerilo, ne nalaz.
+            // Nacrtana kao ostali slojevi, tisuću sedamsto crta preglasa sve
+            // preko čega leže — a leže preko svega, jer teren je posvuda.
+            //
+            // Svaka deseta je deblja i tamnija, i to je jedini način da se u
+            // nizu jednakih crta zna koja je koja: visina se broji od najbliže
+            // označene. Na ortofotu je smeđe-oker, jer bijelo nestane u
+            // izgorjelom kršu, a crno u sjeni krošanja.
+            const glavna = (p as { glavna?: boolean } | undefined)?.glavna === true;
+            return {
+              color: "#a16207",
+              weight: glavna ? 1.4 : 0.7,
+              opacity: glavna ? 0.85 : 0.5,
               lineCap: "round" as const,
               lineJoin: "round" as const,
               fill: false,
@@ -3608,6 +3767,10 @@ const SLOJEVI_DOSJEA: ReadonlySet<string> = new Set([
  * kao jedan redak među ostalima, a ne kao odgovor na svako pitanje.
  */
 const NEINTERAKTIVNE_PLOHE: ReadonlySet<string> = new Set([
+  // Izohipse nisu ploha nego mreža od tisuću sedamsto crta razapeta preko
+  // cijelog kvarta. Interaktivne bi presrele svaki klik na česticu ispod —
+  // isti kvar kao kod popisnog kruga, samo tisuću puta.
+  "izohipse",
   "gup-2024-planirane-ceste",
   "popisni-krugovi",
   "statisticki-krugovi",
@@ -3854,6 +4017,7 @@ function DosjePlaca({
         {dosje && !ucitavanje && (
           <>
             <NamjenaOdgovor namjena={dosje.namjena} />
+            <TerenOdgovor teren={dosje.teren} />
             {dosje.planiranaCestaCestica ? (
               <PlaniranaCestaCesticaOdgovor
                 properties={dosje.planiranaCestaCestica}
@@ -4108,6 +4272,79 @@ function JavnaCesticaOdgovor({
           Uređenoj zemlji
         </a>
         . Nacrt GUP-a 2024. nije plan na snazi.
+      </p>
+    </section>
+  );
+}
+
+/**
+ * Teren: visina, nagib i strana svijeta za kliknutu točku.
+ *
+ * Stoji odmah ispod namjene, a ne među temama. Teme su popis onoga što se na
+ * čestici ZATEKLO — okno telekoma, koš za otpad, trasa DTK-a — a ovo je
+ * svojstvo samog zemljišta, kao i zapreke. Među pedeset šest redaka bi se
+ * čitalo kao još jedan nalaz, a nije nalaz nego opis.
+ *
+ * Nagib se izriče i riječju, ne samo brojem: „14 %” je za većinu ljudi prazan
+ * podatak, a „blaga kosina” nije. Razredi su grubi namjerno — mreža ima korak
+ * od 3 m i finija podjela bi tvrdila više nego što izmjera nosi.
+ */
+function TerenOdgovor({ teren }: { teren: Dosje["teren"] }) {
+  // Nema reljefa — nema retka. Za razliku od namjene, gdje šutnja može značiti
+  // „nije dopušteno”, ovdje odsutnost ne mijenja ničije planove, pa ne treba
+  // trošiti redak da bi se objasnila. Točka izvan mreže je uz to izvan
+  // obuhvata karte, dakle mjesto na koje se ne može ni doći.
+  if (!teren) return null;
+  const { visina, nagib, ekspozicija, cestica } = teren;
+  const razred =
+    nagib < 3
+      ? "ravno"
+      : nagib < 12
+        ? "blaga kosina"
+        : nagib < 25
+          ? "kosina"
+          : "strmo";
+  return (
+    <section className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
+        Teren
+      </h3>
+      <p className="mt-0.5 text-base font-semibold leading-snug text-zinc-900">
+        {visina.toLocaleString("hr-HR", { maximumFractionDigits: 1 })} m
+        nadmorske visine
+      </p>
+      <p className="mt-1 text-base leading-snug text-zinc-800">
+        {razred}
+        {nagib >= 3 && (
+          <>
+            {" "}
+            — {nagib.toLocaleString("hr-HR", { maximumFractionDigits: 1 })} %
+            {ekspozicija && `, pada prema ${STRANA_NATPIS[ekspozicija]}u`}
+          </>
+        )}
+      </p>
+      {cestica && cestica.najvisa > cestica.najniza && (
+        <p className="mt-1 text-sm leading-snug text-zinc-700">
+          Preko cijele čestice:{" "}
+          {cestica.najniza.toLocaleString("hr-HR", {
+            maximumFractionDigits: 1,
+          })}
+          –
+          {cestica.najvisa.toLocaleString("hr-HR", {
+            maximumFractionDigits: 1,
+          })}{" "}
+          m, dakle{" "}
+          {(cestica.najvisa - cestica.najniza).toLocaleString("hr-HR", {
+            maximumFractionDigits: 1,
+          })}{" "}
+          m visinske razlike.
+        </p>
+      )}
+      {/* Izvor uz tvrdnju, kao svugdje. Zaglađivanje se ne spominje jer se
+          ovdje NE očitava iz zaglađene mreže nego iz one na 3 m — zaglađuju
+          se samo izohipse, i to je zapisano uz njih. */}
+      <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
+        Izmjereno iz DMR-a (LiDAR) Državne geodetske uprave, mreža 3 m.
       </p>
     </section>
   );

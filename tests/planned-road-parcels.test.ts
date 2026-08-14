@@ -18,6 +18,7 @@ import type { PublicParcelProperties } from "../src/lib/public-parcels";
 import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
 import {
   dossierMapBounds,
+  MAP_MAX_BOUNDS,
   MAP_VIEWS,
   OVERLAY_LAYERS,
   shouldIsolateMapBackground,
@@ -81,10 +82,10 @@ const cityGis: PublicParcelProperties = {
 
 test("a narrow dossier releases map bounds so its parcel can remain visible", () => {
   assert.equal(dossierMapBounds(true), undefined);
-  assert.deepEqual(dossierMapBounds(false), [
-    [43.514, 16.481],
-    [43.536, 16.518],
-  ]);
+  // Okvir se čita iz MAP_MAX_BOUNDS, ne prepisuje: prepisan je jednom već
+  // zaostao za izvorom (sloj cijelih tokova proširio je okvir na zapad i
+  // sjever), pa je test padao na promjeni koja s dosjeom nema veze.
+  assert.deepEqual(dossierMapBounds(false), MAP_MAX_BOUNDS);
 });
 
 test("dossier map lifecycle reapplies layout across breakpoints and close", () => {
@@ -119,10 +120,10 @@ test("dossier map lifecycle reapplies layout across breakpoints and close", () =
     { animate: false, pan: false },
   ]);
   assert.deepEqual(bounds, [
-    [[43.514, 16.481], [43.536, 16.518]],
+    MAP_MAX_BOUNDS,
     undefined,
-    [[43.514, 16.481], [43.536, 16.518]],
-    [[43.514, 16.481], [43.536, 16.518]],
+    MAP_MAX_BOUNDS,
+    MAP_MAX_BOUNDS,
   ]);
   assert.deepEqual(pans, [
     { offset: [420, 200], options: { animate: false, duration: 0.4 } },

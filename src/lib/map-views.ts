@@ -118,6 +118,22 @@ export function syncDossierMapLayout(
   });
 }
 
+/**
+ * Podloge se dijele na tri pitanja, ne na šest ravnopravnih čipova.
+ *
+ * S tri podloge popis je bio popis. Sa šest je to traka u kojoj snimka iz
+ * 2011. stoji uz sjenčani reljef kao da su ista vrsta izbora — a nisu: jedno
+ * je „kad”, drugo je „što”. Ista greška je već jednom riješena u traci
+ * pogleda (vidi `razina` u MapView), pa se rješava i ovdje, istim potezom.
+ */
+export type BaseSkupina = "danas" | "nekad" | "reljef";
+
+export const BASE_SKUPINE: { id: BaseSkupina; naslov: string }[] = [
+  { id: "danas", naslov: "Danas" },
+  { id: "nekad", naslov: "Nekad" },
+  { id: "reljef", naslov: "Reljef" },
+];
+
 export interface BaseLayer {
   id: string;
   label: string;
@@ -126,10 +142,25 @@ export interface BaseLayer {
   type: "wms" | "xyz";
   wmsLayers?: string;
   attribution: string;
+  skupina: BaseSkupina;
+  /**
+   * Godina snimke. Nose je samo podloge koje su snimak jednog trenutka, i
+   * upravo njih vremeplov nudi; ulična karta i sjenčani reljef nemaju godinu
+   * jer nisu snimka nego prikaz, pa se ni s čim ne uspoređuju po vremenu.
+   */
+  godina?: number;
+  /**
+   * Najveći zum na kojem podloga ima vlastite pločice. Iznad njega Leaflet
+   * rasteže zadnje umjesto da traži pločice kojih nema.
+   */
+  maxNativeZoom?: number;
+  /** Rečenica u ploči: što se na toj podlozi vidi, a na drugima ne. */
+  opis?: string;
 }
 
 export type OverlayType =
   | "wms" // izravni WMS overlay
+  | "xyz" // rasterske pločice iz public/geo/ (izrađuje ih skripta)
   | "geojson" // statični GeoJSON u public/geo/ (izrađuje build skripta)
   | "api"; // živi upit kroz naš proxy route
 
@@ -146,6 +177,8 @@ export interface OverlayLayer {
   /** Boja za legendu/stil vektorskih slojeva. */
   color: string;
   defaultOpacity?: number;
+  /** Kao istoimeno polje na BaseLayer — vrijedi samo za `xyz` slojeve. */
+  maxNativeZoom?: number;
   /** Namjensko Leaflet okno kad red crtanja mora biti neovisan o vremenu dohvata. */
   pane?: string;
   /** CSS z-index namjenskog okna; koristi se samo uz `pane`. */
@@ -266,6 +299,8 @@ export const BASE_LAYERS: BaseLayer[] = [
     url: "https://geoportal.dgu.hr/services/inspire/orthophoto_2023/wms",
     wmsLayers: "OI.OrthoimageCoverage",
     attribution: "DOF 2023 © Državna geodetska uprava (Otvorena dozvola)",
+    skupina: "danas",
+    godina: 2023,
   },
   {
     id: "karta",
@@ -273,6 +308,40 @@ export const BASE_LAYERS: BaseLayer[] = [
     type: "xyz",
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
     attribution: "© OpenStreetMap contributors © CARTO",
+    skupina: "danas",
+  },
+  {
+    // Ista snimka, dvanaest godina ranije — i to su upravo godine u kojima je
+    // radna zona dobila današnji oblik. Nije nova vrsta podatka nego drugi
+    // trenutak istog, pa uz vremeplov (rez između dvije godine) odgovara na
+    // „što je ovdje bilo prije” bez ijedne riječi tumačenja.
+    //
+    // Anonimni DOF servis preko sredine pločice otiskuje žig „GEOPORTAL”.
+    // Isti žig nosi i DOF 2023 koji karta već koristi, dakle nije nazadovanje;
+    // zabilježen je jer se na snimci vidi i jer izbora nema.
+    id: "dof-2011",
+    label: "Ortofoto 2011.",
+    type: "wms",
+    url: "https://geoportal.dgu.hr/services/dof/wms",
+    wmsLayers: "DOF5_2011",
+    attribution: "DOF5 2011. © Državna geodetska uprava (Otvorena dozvola)",
+    skupina: "nekad",
+    godina: 2011,
+    opis: "Kvart prije nego je radna zona izgrađena do kraja.",
+  },
+  {
+    // Jedina podloga u registru koja nosi TOPONIME: Turnjevac, Karepovac,
+    // Sv. Spas, Meterize. To su imena kojima susjedi zovu mjesta, a nema ih
+    // ni na ortofotu ni u katastru ni u GUP-u — ondje mjesto ima broj
+    // čestice, ne ime.
+    id: "tk25",
+    label: "Topografska karta (TK25)",
+    type: "wms",
+    url: "https://geoportal.dgu.hr/services/tk/wms",
+    wmsLayers: "TK25",
+    attribution: "TK25 © Državna geodetska uprava (Otvorena dozvola)",
+    skupina: "nekad",
+    opis: "Nosi imena mjesta kojih drugdje na karti nema.",
   },
   {
     // Hrvatska osnovna karta 1:5000 — snimljena prije nego je radna zona
@@ -291,6 +360,33 @@ export const BASE_LAYERS: BaseLayer[] = [
     url: "https://geoportal.dgu.hr/services/hok/wms",
     wmsLayers: "hok:HOK5",
     attribution: "HOK 1:5000 © Državna geodetska uprava",
+    skupina: "nekad",
+    opis: "Jedina podloga koja crta povremene vodotoke.",
+  },
+  {
+    // Sjenčani reljef iz DGU-ova LiDAR DMR-a, izrađen skriptom
+    // scripts/izvedi-reljef.py — NE dovučen s DGU-ova WMS-a, iako ga i on
+    // nudi. Anonimni pristup ondje otiskuje žig „GEOPORTAL” preko sredine
+    // svake pločice, a reljef je jedina podloga na kojoj se gleda sitan oblik
+    // terena: potporni zid, usjek ceste, rub kamenoloma. Žig preko sredine
+    // pojede upravo ono zbog čega se sloj pali.
+    //
+    // DMR je bare-earth — zgrade su uistinu uklonjene (medijan unutrašnjosti
+    // minus okolni prsten = 0,07 m) — pa se pod radnom zonom vidi stari
+    // krajobraz: terase, suhozidi, nasipi. To je jedini sloj na karti koji
+    // pokazuje kvart bez ijedne građevine.
+    //
+    // Pločice postoje do z17, gdje je 0,87 m po pikselu ≈ izvorna gustoća
+    // DMR-a. Dalje bi bio isti podatak napuhan, pa se rasteže umjesto da se
+    // izrađuje — vidi maxNativeZoom.
+    id: "sjencanje",
+    label: "Sjenčani reljef (LiDAR)",
+    type: "xyz",
+    url: "/geo/reljef/{z}/{x}/{y}.png",
+    attribution: "DMR iz LiDAR-a © Državna geodetska uprava (Otvorena dozvola)",
+    skupina: "reljef",
+    maxNativeZoom: 17,
+    opis: "Teren bez zgrada — terase, usjeci i nasipi ispod radne zone.",
   },
 ];
 
@@ -566,14 +662,22 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   {
+    // Isto sjenčanje kao istoimena podloga, samo poluprozirno preko snimke:
+    // ondje se teren gleda sam, ovdje se gleda ŠTO na njemu stoji. Oboje ima
+    // smisla, pa oboje ostaje.
+    //
+    // Prije je stizalo s DGU-ova WMS-a, koji anonimnom korisniku otiskuje žig
+    // „GEOPORTAL” preko sredine svake pločice. Sada su to naše pločice iz
+    // istog DMR-a (scripts/izvedi-reljef.py): bez žiga, bez vanjskog zahtjeva
+    // i bez čekanja na tuđi poslužitelj.
     id: "reljef",
     label: "Reljef (sjenčanje)",
-    type: "wms",
-    url: "https://geoportal.dgu.hr/services/dmr/wms",
-    wmsLayers: "Hillshade",
-    attribution: "© Državna geodetska uprava",
+    type: "xyz",
+    url: "/geo/reljef/{z}/{x}/{y}.png",
+    attribution: "Izvedeno iz DMR-a (LiDAR) © Državna geodetska uprava",
     color: "#a8a29e",
     defaultOpacity: 0.5,
+    maxNativeZoom: 17,
     group: "Krajobraz",
     phase: 1,
   },
@@ -1092,6 +1196,27 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
 
   // ---------- Okoliš i rizici ----------
   {
+    // Izohipse iz istog LiDAR DMR-a (scripts/izvedi-reljef.py). Stoje uz
+    // tokove namjerno: crta toka bez oblika terena kaže KUDA voda ide, a ne
+    // koliko strmo — a strmina je razlika između žlijeba i bujice.
+    //
+    // Ekvidistancija je 2 m, ali reljef je prije crtanja zaglađen na ~9 m.
+    // Bez toga sirovi LiDAR daje 21.437 crta i 6,4 MB: svaki potporni zid
+    // postane zatvorena krivulja i karta se ne da čitati. Izohipsa je ovdje
+    // crta za čitanje karte, ne geodetski podatak, i tako je i opisana.
+    //
+    // `glavna` je svakih 10 m i crta se deblje: u nizu jednakih izohipsi se
+    // inače ne vidi koja je koja, pa se visina broji od najbliže označene.
+    id: "izohipse",
+    label: "Izohipse (2 m)",
+    type: "geojson",
+    url: "/geo/izohipse.geojson",
+    attribution: "Izvedeno iz DMR-a (LiDAR) © Državna geodetska uprava",
+    color: "#a16207",
+    group: "Okoliš i rizici",
+    phase: 1,
+  },
+  {
     // Kuda voda teče po površini. Nije prepisano ni iz jedne evidencije —
     // takve za kvart nema — nego izračunato iz DGU-ova LiDAR reljefa
     // (scripts/izvedi-tokove.py). `sliv_ha` je površina koja se u tu točku
@@ -1420,7 +1545,17 @@ const POGLEDI: MapView[] = [
       "Kuda voda teče niz teren, gdje plavi, gdje ljeti gori i kakav zrak " +
       "dišemo. Tokovi su izračunati iz LiDAR reljefa — prirodne vode u " +
       "kvartu nitko ne vodi u evidenciji, pa je reljef jedini izvor.",
-    layerIds: ["tokovi", "vodotoci-hok", "poplave", "vrucina", "zrak", "nepropusnost"],
+    // Izohipse odmah iza obaju vodnih slojeva: crta toka kaže KUDA voda ide,
+    // ali ne i koliko strmo — a to je razlika između žlijeba i bujice.
+    layerIds: [
+      "tokovi",
+      "vodotoci-hok",
+      "izohipse",
+      "poplave",
+      "vrucina",
+      "zrak",
+      "nepropusnost",
+    ],
   },
   {
     id: "gdje-se-moze-graditi",

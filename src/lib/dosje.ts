@@ -37,6 +37,7 @@ import {
   validateTargetedOwnershipProperties,
   type TargetedOwnershipProperties,
 } from "./targeted-ownership";
+import { terenUTocki, ucitajMrezu } from "./reljef";
 import {
   TEME,
   type Dosje,
@@ -803,6 +804,13 @@ export async function dosjeZaTocku(
       { type: "Feature", properties: {}, geometry: tocka } as Feature,
       cestica
     ),
+    // Mreža visina se čita s diska i drži u memoriji, kao i slojevi iznad.
+    // Ako je nema — skripta koja je izrađuje ne vrti se pri gradnji — dosje
+    // o reljefu jednostavno šuti umjesto da padne.
+    teren: await (async () => {
+      const mreza = await ucitajMrezu();
+      return mreza ? terenUTocki(mreza, lng, lat, cestica) : null;
+    })(),
     // Redoslijed tema je zadan, ne po broju pogodaka: dosje se čita više
     // puta i mora svaki put izgledati isto, inače se ne pamti gdje što stoji.
     skupine: TEME.filter((t) => (poTemi.get(t.id)?.length ?? 0) > 0).map((t) => ({

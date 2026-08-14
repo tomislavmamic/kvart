@@ -1,0 +1,13 @@
+{
+  "zapad": 16.457,
+  "jug": 43.514,
+  "istok": 16.518,
+  "sjever": 43.547,
+  "stupaca": 1641,
+  "redaka": 1225,
+  "prviRedakJe": "sjever",
+  "jedinica": "dm",
+  "prazno": -32768,
+  "korakM": 3.0,
+  "izvor": "DGU DMR (LiDAR), geoportal.dgu.hr WCS"
+}
