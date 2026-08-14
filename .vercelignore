@@ -33,6 +33,17 @@
 # mape u kojoj je nastao, a objava iz radnog direktorija ih inače pošalje sve.
 .DS_Store
 
+# Radna stabla za paralelne grane (`git worktree`). Svako je puna kopija
+# projekta, a u njima znaju stajati i simbolične veze na `node_modules` i na
+# predmemoriju — mjereno 2,8 GB. Objava iz radnog direktorija bi ih poslala
+# sve, jer git ovdje nije u igri.
+/.worktrees/
+
+# Predmemorija ulaznih rastera: DMR s DGU WCS-a i HOK s WMS-a, 169 MB. To je
+# GRAĐA iz koje skripte računaju, a ne ono što stranica poslužuje — rezultati
+# su u /public/geo/ (pločice reljefa, izohipse, mreža visina, tokovi).
+/.cache/
+
 # Rezultati gradnje i alati — Vercel gradi iznova.
 /.next/
 /node_modules/
