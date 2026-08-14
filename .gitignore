@@ -79,10 +79,14 @@ __pycache__/
 # GeoJSON u /public/geo/analiza/ i gotova stranica) jest.
 /public/geo/sire/
 
-# Skinuti DMR s DGU WCS-a (50 MB Float32) — samo ulaz za `npm run
-# izvedi-tokove`, koji ga po potrebi skine ponovno. U gitu je rezultat
-# (public/geo/tokovi.geojson, 30 kB), ne podloga.
+# Podloge i međurezultati vodnih slojeva: DMR s DGU WCS-a (126 MB Float32),
+# HOK raster s WMS-a (51 MB) i obuhvat slivnog područja kojim se hidrografija
+# reže na isto. Sve troje `npm run izvedi-tokove` i `izvedi-hok-vodotoke`
+# ponovno naprave; u gitu su rezultati (tokovi.geojson 92 kB,
+# vodotoci-hok.geojson 2 kB), ne podloge.
 /.cache/dmr.tif
+/.cache/hok.tif
+/.cache/podrucje-kvarta.geojson
 
 # Privremeni OSS odgovori ciljane provjere vlasništva mogu sadržavati imena,
 # adrese i OIB-e fizičkih osoba. Generator ih koristi samo lokalno za nastavak

@@ -145,6 +145,13 @@ TEME: dict[str, tuple[str, str]] = {
     "D06203-ODVODNJA_PLAN":                 ("odvodnja", "Planirana odvodnja otpadnih voda"),
     "D06201-ODVODNJA":                      ("odvodnja", "Odvodnja otpadnih voda"),
     "D06203-OBORINSKA_PLAN":                ("oborinska", "Planirana oborinska odvodnja"),
+    # Postojeća oborinska stajala je u listu 2c, ali ne i ovdje, pa je ispadala
+    # bez traga. Sad se vadi, ali bez velikih očekivanja: u listu su svega 14
+    # pravokutnika (dva ~30 × 9 m, dvanaest ~2 × 2 m), dakle oznake građevina,
+    # a ne trasa cijevi — ukupno 260 m opsega. Zato zasebna tema i naziv koji
+    # kaže „oznake“: spojena s planiranom u „oborinska“ izgledala bi kao da
+    # izvedena mreža postoji. Pripadni „_opis“ sloj i dalje otpada, on je tekst.
+    "D06201-OBORINSKA":                     ("oborinska-postojeca", "Oznaka postojeće oborinske odvodnje"),
     "RUBEN-BUJICA_NOVO":                    ("bujica", "Bujični kanal"),
     "7-INFRA-EL-1KV":                       ("struja", "Elektroopskrba 1 kV"),
     "7-INFRA-EL-20KV":                      ("struja", "Elektroopskrba 20 kV"),

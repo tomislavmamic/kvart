@@ -3087,6 +3087,19 @@ function phase1(ids: string[]): string[] {
  * Hijerarhija je namjerno gruba: magistrala, ulica, servisni put, makadam.
  * Boje su svijetle jer je podloga ortofoto.
  */
+/**
+ * Razredi veličine grane za sloj izvedenih tokova (`rang` iz
+ * scripts/izvedi-tokove.py: 1 = <5 ha uzvodnog sliva, 2 = 5–20, 3 = 20–100,
+ * 4 = ≥100). Debljina i boja nose isti podatak namjerno — udvojeno
+ * kodiranje čita se i na maloj karti i pri slabijem razlikovanju boja.
+ */
+const TOK_PO_RANGU: Record<number, { boja: string; debljina: number; prozirnost: number }> = {
+  1: { boja: "#7dd3fc", debljina: 1, prozirnost: 0.7 },
+  2: { boja: "#38bdf8", debljina: 2, prozirnost: 0.85 },
+  3: { boja: "#0284c7", debljina: 3.25, prozirnost: 0.95 },
+  4: { boja: "#075985", debljina: 5, prozirnost: 1 },
+};
+
 const STIL_ULICE: Record<string, { boja: string; debljina: number; crtkano?: string }> = {
   motorway: { boja: "#38bdf8", debljina: 4 },
   trunk: { boja: "#38bdf8", debljina: 4 },
@@ -3332,30 +3345,29 @@ function dodajSloj(
                       : 0.12,
             };
           }
-          if (layer.id === "tokovi-cijeli") {
-            // Dionica izvan kvarta ide crtkano i tanje: nosi isti tok, ali
-            // nije ono što se ovdje inače prikazuje, pa se ne smije čitati
-            // kao da je jednako izmjereno unutar granice.
-            const vani =
-              (p as { dionica?: string } | undefined)?.dionica === "izvan kvarta";
+          if (layer.id === "tokovi") {
+            // Jedina razlika među crtama je veličina grane — i debljina i
+            // boja nose isti podatak (uzvodni sliv), pa se čitaju zajedno:
+            // žilica od hektara je tanka i blijeda, deblo od dvjesto hektara
+            // debelo i tamno. Granica kvarta se u stilu NE vidi: ista bujica
+            // teče dalje i kad je prijeđe.
+            const rang = (p as { rang?: number } | undefined)?.rang ?? 1;
+            const stil = TOK_PO_RANGU[rang] ?? TOK_PO_RANGU[1];
             return {
-              color: "#0369a1",
-              weight: vani ? 2.5 : 4.5,
-              opacity: vani ? 0.75 : 0.95,
-              ...(vani ? { dashArray: "7 5" } : {}),
+              color: stil.boja,
+              weight: stil.debljina,
+              opacity: stil.prozirnost,
               lineCap: "round" as const,
               lineJoin: "round" as const,
               fill: false,
             };
           }
-          if (layer.id === "tokovi") {
-            // Debljina nosi veličinu sliva: žilica koja skuplja hektar i
-            // glavni tok koji skuplja dvjesto ne mogu biti ista crta.
-            const rang = (p as { rang?: number } | undefined)?.rang ?? 1;
+          if (layer.id === "vodotoci-hok") {
             return {
-              color: "#0ea5e9",
-              weight: rang === 3 ? 3.5 : rang === 2 ? 2.25 : 1.25,
-              opacity: rang === 1 ? 0.65 : 0.9,
+              color: "#0f766e",
+              weight: 2,
+              opacity: 0.9,
+              dashArray: "6 4",
               lineCap: "round" as const,
               lineJoin: "round" as const,
               fill: false,

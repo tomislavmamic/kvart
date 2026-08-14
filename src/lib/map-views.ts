@@ -840,6 +840,16 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     // ponovljeni CAD natpis „BUJIČNI KANAL” i šrafura uz kanal, pokupljeni
     // vektorizacijom. Označava gdje kanal prolazi (~380 m uz sjeverni rub),
     // ne kuda točno teče, pa je i naziv sloja takav.
+    id: "dpu-oborinska-postojeca",
+    label: "Oznaka postojeće oborinske odvodnje (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/oborinska-postojeca.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
+    color: "#8b5cf6",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
     id: "dpu-bujica",
     label: "Oznaka bujičnog kanala (DPU Dračevac)",
     type: "geojson",
@@ -1097,24 +1107,26 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     type: "geojson",
     url: "/geo/tokovi.geojson",
     attribution: "Izvedeno iz DMR-a (LiDAR) © Državna geodetska uprava",
-    color: "#0ea5e9",
+    color: "#0284c7",
     group: "Okoliš i rizici",
     phase: 1,
   },
   {
-    // Ista analiza, ali nerezana: dvije bujice koje prolaze kvartom, svaka
-    // od izvora pod Kozjakom do ušća u moru kod Vranjica. Kvart je usred
-    // njih, pa mu se voda ne rađa ni ne završava na granici kotara —
-    // dionice su zato označene time jesu li unutar kvarta ili izvan njega.
+    // Hidrografija sa stare HOK 1:5000, izvučena iz rastera
+    // (scripts/izvedi-hok-vodotoke.py) jer se crtkano plavo na podlozi
+    // 1:5000 među izohipsama praktički ne razabire.
     //
-    // Sliv koji prolazi kvartom je 326 ha i ne dodiruje rub prozora računa,
-    // dakle oba izvora su obuhvaćena, a ne odsječena.
-    id: "tokovi-cijeli",
-    label: "Cijeli tok bujica — od izvora do mora",
+    // Rimski vodovod je izbačen na izvoru: HOK ga crta istom plavom, ali on
+    // je akvadukt i drži izohipsu, pa ga odaje pad manji od 4 ‰. Ostaje 7
+    // vodotoka / 1,2 km unutar slivnog područja kvarta — malo, ali toliko
+    // ih stara karta ovdje i ima. Uspoređeno s izvedenim tokovima:
+    // medijan 9,0 m, 76 % unutar 25 m.
+    id: "vodotoci-hok",
+    label: "Vodotoci sa stare karte (HOK 1:5000)",
     type: "geojson",
-    url: "/geo/tokovi-cijeli.geojson",
-    attribution: "Izvedeno iz DMR-a (LiDAR) © Državna geodetska uprava",
-    color: "#0369a1",
+    url: "/geo/vodotoci-hok.geojson",
+    attribution: "HOK 1:5000 © Državna geodetska uprava — vektorizirano",
+    color: "#0f766e",
     group: "Okoliš i rizici",
     phase: 1,
   },
@@ -1327,6 +1339,7 @@ const POGLEDI: MapView[] = [
       "dpu-telekom",
       "dpu-plin",
       "dpu-bujica",
+      "dpu-oborinska-postojeca",
     ],
   },
   {
@@ -1407,7 +1420,7 @@ const POGLEDI: MapView[] = [
       "Kuda voda teče niz teren, gdje plavi, gdje ljeti gori i kakav zrak " +
       "dišemo. Tokovi su izračunati iz LiDAR reljefa — prirodne vode u " +
       "kvartu nitko ne vodi u evidenciji, pa je reljef jedini izvor.",
-    layerIds: ["tokovi", "tokovi-cijeli", "poplave", "vrucina", "zrak", "nepropusnost"],
+    layerIds: ["tokovi", "vodotoci-hok", "poplave", "vrucina", "zrak", "nepropusnost"],
   },
   {
     id: "gdje-se-moze-graditi",

@@ -21,6 +21,7 @@
     "slobodne-parcele": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py",
     "izvadi-sire": "/opt/homebrew/bin/python3 scripts/izvadi-sire.py",
     "izvedi-tokove": "/opt/homebrew/bin/python3 scripts/izvedi-tokove.py",
+    "izvedi-hok-vodotoke": "/opt/homebrew/bin/python3 scripts/izvedi-hok-vodotoke.py",
     "slobodne-sire": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py --obuhvat sire",
     "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py"
   },

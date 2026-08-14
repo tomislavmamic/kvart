@@ -60,6 +60,7 @@
    "gradivi-dio": 2784,
    "parcelacija": 3988,
    "odvodnja": 4946,
+   "oborinska-postojeca": 14,
    "bujica": 193,
    "zgrade-postojece": 997,
    "granica": 1351,
@@ -123,15 +124,6 @@
    "gradivi-dio": 1137,
    "zgrade-postojece": 997,
    "granica": 1351
-  }
- },
- {
-  "list": "4.3_Prikaz Izmjena i dopuna grafickog dijela",
-  "plan": "GUP Split — nacrt izmjena i dopuna 2024.",
-  "status": "ok",
-  "mjerilo": 10000,
-  "teme": {
-   "gup-nacrt-namjena": 36806
   }
  },
  {

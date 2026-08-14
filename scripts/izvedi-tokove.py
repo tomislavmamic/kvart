@@ -17,20 +17,22 @@ usmjeravanje po najstrmijem padu, pa akumulacija po topološkom redoslijedu.
 Crta se ono što skuplja barem PRAG_M2 uzvodne površine.
 
 Prozor je 6 × 5 km, znatno veći od kvarta, jer tok ne počinje ni ne završava
-na granici kotara. Prema sjeveru seže do razvodnice pod Kozjakom (provjera na
-sjevernom rubu to potvrđuje), a prema zapadu do mora kod Vranjica, gdje glavni
-tok s 449 ha sliva i završava. Kvart je usred toga, ne na kraju.
+na granici kotara. Prema sjeveru seže do razvodnice pod Kozjakom, a prema
+zapadu do mora kod Vranjica. Kvart je usred toga, ne na kraju.
+
+Obuhvat rezultata nije ni kvart ni prozor nego vodni sustav kojem kvart
+pripada: sliv koji se kroz njega slijeva (326 ha, ne dodiruje rub prozora,
+dakle izvori su unutra) plus deblo kojim ta voda odlazi do mora. Granica
+kotara u sloju se NE vidi — ista bujica ne postaje drugi objekt kad je
+prijeđe. Veličinu grane nosi `sliv_ha`, a `rang` je njegov razred; jedino
+to na karti mijenja debljinu i boju.
 
 Depresije se NE objavljuju. Unutar kvarta ih je 15, sve do zadnje dodiruju
 cestu, a devet se preklapa sa zgradama do 95 % — to su rupe u interpolaciji
 ispod uklonjenih zgrada i nasipi cesta pod kojima DMR ne vidi propust, a ne
 ponikve. Vani, prema Kozjaku, ima ih stvarnih (do 27 m dubine, kamenolomi).
 
-Rezultat, oba u EPSG:4326:
-  public/geo/tokovi.geojson         mreža unutar kvarta, rezana na granicu
-  public/geo/tokovi-cijeli.geojson  cijeli tokovi koji prolaze kvartom, od
-                                    izvora do ušća, s dionicama označenim
-                                    prema tome jesu li u kvartu ili izvan
+Rezultat: public/geo/tokovi.geojson (EPSG:4326)
 
 Pokretanje:  /opt/homebrew/bin/python3 scripts/izvedi-tokove.py
 Traži:       GDAL s Python vezama i numpy, te mrežu do geoportal.dgu.hr
@@ -55,8 +57,8 @@ logger = logging.getLogger(__name__)
 KORIJEN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GRANICA = os.path.join(KORIJEN, "public", "geo", "granica.geojson")
 IZLAZ = os.path.join(KORIJEN, "public", "geo", "tokovi.geojson")
-IZLAZ_CIJELI = os.path.join(KORIJEN, "public", "geo", "tokovi-cijeli.geojson")
 PREDMEMORIJA = os.path.join(KORIJEN, ".cache", "dmr.tif")
+PODRUCJE = os.path.join(KORIJEN, ".cache", "podrucje-kvarta.geojson")
 
 WCS = "https://geoportal.dgu.hr/services/dmr/wcs"
 POKRIVENOST = "dmr__DMR_BW"  # jedini sloj s pravim visinama, ne slikom
@@ -70,7 +72,6 @@ KORAK = 2  # m — na koliko se spušta izvorni 1 m raster
 EPS = 1e-4  # nagib nametnut preko ravnina da usmjeravanje ne stane
 PRAG_M2 = 10_000  # uzvodne površine prije nego se povuče crta
 PRAG_IZLAZA_M2 = 50_000  # sliv koji tok mora nositi da mu se prati cijeli put
-MORE_M = 0.5  # ispod ove visine tok se smatra doteklim do mora
 POJEDNOSTAVI = 2.0  # m — Douglas-Peucker, u metrima (EPSG:3765)
 
 _SUSJEDI = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
@@ -242,9 +243,11 @@ def provjeri_sliv(sliv_maska: np.ndarray) -> None:
         logger.info("sliv kvarta %.0f ha, ne dodiruje rub prozora — izvori su unutra", povrsina)
 
 
-def u_crte(sliv: np.ndarray, nizvodno: np.ndarray, v: int, s: int) -> list[tuple[list[int], float]]:
-    """Reže D8 mrežu na poteze na račvama."""
-    tok = (sliv >= PRAG_M2).ravel() if sliv.ndim > 1 else (sliv >= PRAG_M2)
+def u_crte(
+    sliv: np.ndarray, nizvodno: np.ndarray, v: int, s: int, podrucje: np.ndarray
+) -> list[tuple[list[int], float]]:
+    """Reže D8 mrežu na poteze na račvama, unutar zadanog područja."""
+    tok = (sliv >= PRAG_M2) & podrucje
     ulazni = np.zeros(v * s, dtype=np.int32)
     izvori = np.nonzero(tok)[0]
     ciljevi = nizvodno[izvori]
@@ -274,33 +277,43 @@ def u_crte(sliv: np.ndarray, nizvodno: np.ndarray, v: int, s: int) -> list[tuple
     return crte
 
 
-def zapisi(crte: list[tuple[list[int], float]], gt: tuple[float, ...], s: int) -> None:
-    """Pojednostavljuje, reže na granicu kvarta i piše GeoJSON u 4326."""
-    u_4326 = _pretvorba(3765, 4326)
-    # Izvor se drži u varijabli: ako ga se pusti, GDAL pod njim počisti sloj.
-    izvor = ogr.Open(GRANICA)
-    granica = ogr.Geometry(ogr.wkbMultiPolygon)
-    for obiljezje in izvor.GetLayer(0):
-        granica.AddGeometry(obiljezje.GetGeometryRef())
-    granica = granica.UnionCascaded()
-    granica.Transform(_pretvorba(4326, 3765))
+def rang_po_slivu(ha: float) -> int:
+    """Razred veličine grane prema uzvodnom slivu.
 
+    Jedina stvar koju debljina i boja crte na karti kazuju. Granica kvarta
+    se namjerno NE vidi u stilu: ista bujica ne postaje drugi objekt kad
+    prijeđe granicu kotara, a crtkanje izvan kvarta je sugeriralo da je
+    ondje slabije izmjerena — nije, isti je račun na istom reljefu.
+    """
+    if ha >= 100:
+        return 4
+    if ha >= 20:
+        return 3
+    if ha >= 5:
+        return 2
+    return 1
+
+
+def zapisi(crte: list[tuple[list[int], float]], gt: tuple[float, ...], s: int) -> None:
+    """Pojednostavljuje i piše mrežu kao jedan GeoJSON u 4326."""
+    u_4326 = _pretvorba(3765, 4326)
     obiljezja = []
     duljina = 0.0
+    po_rangu: dict[int, float] = {}
+
     for put, slivna in crte:
         g = ogr.Geometry(ogr.wkbLineString)
         for i in put:
             r, c = divmod(i, s)
             g.AddPoint_2D(gt[0] + (c + 0.5) * gt[1], gt[3] + (r + 0.5) * gt[5])
         g = g.SimplifyPreserveTopology(POJEDNOSTAVI)
-        if not g.Intersects(granica):
-            continue
-        g = g.Intersection(granica)
-        if g.IsEmpty() or g.Length() < KORAK:
+        if g.GetPointCount() < 2 or g.Length() < KORAK:
             continue
         duljina += g.Length()
 
         ha = slivna / 10_000
+        rang = rang_po_slivu(ha)
+        po_rangu[rang] = po_rangu.get(rang, 0.0) + g.Length()
         g.Transform(u_4326)
         geom = json.loads(g.ExportToJson())
         geom["coordinates"] = _zaokruzi(geom["coordinates"])
@@ -310,7 +323,7 @@ def zapisi(crte: list[tuple[list[int], float]], gt: tuple[float, ...], s: int) -
                 "geometry": geom,
                 "properties": {
                     "sliv_ha": round(ha, 2),
-                    "rang": 3 if ha >= 20 else 2 if ha >= 5 else 1,
+                    "rang": rang,
                     "izvor": "izvedeno iz DGU DMR 1 m (LiDAR), D8 analiza",
                 },
             }
@@ -320,11 +333,13 @@ def zapisi(crte: list[tuple[list[int], float]], gt: tuple[float, ...], s: int) -
     with open(IZLAZ, "w") as f:
         json.dump({"type": "FeatureCollection", "features": obiljezja}, f)
     logger.info(
-        "zapisano %d poteza, %.1f km unutar kvarta -> %s",
+        "zapisano %d poteza, %.1f km -> %s",
         len(obiljezja),
         duljina / 1000,
         os.path.relpath(IZLAZ, KORIJEN),
     )
+    for rang in sorted(po_rangu):
+        logger.info("  rang %d: %.1f km", rang, po_rangu[rang] / 1000)
 
 
 def _zaokruzi(c: list) -> list:
@@ -438,77 +453,55 @@ def trag_uzvodno(
     return put
 
 
-def zapisi_cijele(
-    putovi: list[tuple[list[int], float]],
-    gt: tuple[float, ...],
-    s: int,
+def podrucje_kvarta(
     maska: np.ndarray,
-    puni: np.ndarray,
-    more_maska: np.ndarray,
-) -> None:
-    """Piše cijele tokove, razlomljene na dionice u kvartu i izvan njega."""
-    u_4326 = _pretvorba(3765, 4326)
-    m = maska.ravel()
-    obiljezja = []
+    nizvodno: np.ndarray,
+    sliv: np.ndarray,
+    more: np.ndarray,
+    v: int,
+    s: int,
+) -> np.ndarray:
+    """Vodni sustav kojem kvart pripada: njegov sliv plus put do mora.
 
-    for redni, (put, slivna) in enumerate(putovi, start=1):
-        # Potez se lomi tamo gdje prelazi granicu kvarta, da se dionice mogu
-        # obojati različito, a da crta ostane neprekinuta.
-        dionice: list[tuple[bool, list[int]]] = []
-        for i in put:
-            u = bool(m[i])
-            if dionice and dionice[-1][0] == u:
-                dionice[-1][1].append(i)
-            else:
-                if dionice:
-                    dionice[-1][1].append(i)  # preklop od jedne ćelije
-                dionice.append((u, [i]))
+    Nije rez po granici kotara ni pravokutnik oko njega, nego ono što s
+    kvartom hidrološki ima veze — sve što se kroz njega slijeva, i deblo
+    kojim ta voda dalje odlazi. Pritoke koje se deblu priključe nizvodno
+    nisu unutra: one nose tuđu vodu, a ovo je karta ove.
+    """
+    poredak, pocetci = _uzvodni_indeks(nizvodno)
+    izlazi = izlazne_tocke(maska, nizvodno, sliv)
+    gornji = sliv_uzvodno(izlazi, poredak, pocetci, v * s)
+    provjeri_sliv(gornji.reshape(v, s))
 
-        for u_kvartu, cells in dionice:
-            if len(cells) < 2:
-                continue
-            g = ogr.Geometry(ogr.wkbLineString)
-            for i in cells:
-                r, c = divmod(i, s)
-                g.AddPoint_2D(gt[0] + (c + 0.5) * gt[1], gt[3] + (r + 0.5) * gt[5])
-            g = g.SimplifyPreserveTopology(POJEDNOSTAVI)
-            if g.GetPointCount() < 2:
-                continue
-            duljina = g.Length()
-            g.Transform(u_4326)
-            geom = json.loads(g.ExportToJson())
-            geom["coordinates"] = _zaokruzi(geom["coordinates"])
-            obiljezja.append(
-                {
-                    "type": "Feature",
-                    "geometry": geom,
-                    "properties": {
-                        "tok": redni,
-                        "dionica": "u kvartu" if u_kvartu else "izvan kvarta",
-                        "duljina_m": round(duljina),
-                        "sliv_ha": round(slivna / 10_000, 1),
-                        "izvor": "izvedeno iz DGU DMR 1 m (LiDAR), D8 analiza",
-                    },
-                }
-            )
+    podrucje = gornji.copy()
+    for izlaz in izlazi:
+        for i in trag_nizvodno(izlaz, nizvodno, more.ravel()):
+            podrucje[i] = True
+    return podrucje
 
-        logger.info(
-            "  tok %d: %.2f km, sliv %.0f ha, izvor %.0f m n.v. -> %s",
-            redni,
-            len(put) * KORAK / 1000,
-            slivna / 10_000,
-            float(puni[put[0]]),
-            "more" if more_maska[put[-1]] else "rub prozora",
-        )
 
-    with open(IZLAZ_CIJELI, "w") as f:
-        json.dump({"type": "FeatureCollection", "features": obiljezja}, f)
-    logger.info(
-        "zapisano %d dionica za %d tokova -> %s",
-        len(obiljezja),
-        len(putovi),
-        os.path.relpath(IZLAZ_CIJELI, KORIJEN),
-    )
+def zapisi_podrucje(podrucje: np.ndarray, gt: tuple[float, ...], v: int, s: int) -> None:
+    """Sprema obuhvat u .cache/ da se drugi slojevi mogu rezati na isto.
+
+    Bez toga je usporedba besmislena: vektorizirana hidrografija s HOK-a
+    pokrivala je cijeli prozor od 6 × 5 km, a ovaj sloj samo vodni sustav
+    kvarta, pa je „odstupanje” mjerilo udaljenost do Solina umjesto do
+    najbližeg toka.
+    """
+    os.makedirs(os.path.dirname(PODRUCJE), exist_ok=True)
+    ds = gdal.GetDriverByName("MEM").Create("", s, v, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform(gt)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3765)
+    ds.SetProjection(srs.ExportToWkt())
+    ds.GetRasterBand(1).WriteArray(podrucje.reshape(v, s).astype(np.uint8))
+
+    izlaz = ogr.GetDriverByName("GeoJSON").CreateDataSource(PODRUCJE)
+    lyr = izlaz.CreateLayer("podrucje", srs=srs, geom_type=ogr.wkbPolygon)
+    lyr.CreateField(ogr.FieldDefn("v", ogr.OFTInteger))
+    gdal.Polygonize(ds.GetRasterBand(1), ds.GetRasterBand(1), lyr, 0)
+    izlaz = None
+    logger.info("obuhvat -> %s", os.path.relpath(PODRUCJE, KORIJEN))
 
 
 def main() -> None:
@@ -518,30 +511,9 @@ def main() -> None:
     puni = napuni_depresije(reljef, more)
     logger.info("usmjeravam tok...")
     nizvodno, sliv = usmjeri(puni)
-    zapisi(u_crte(sliv, nizvodno, v, s), gt, s)
-
-    logger.info("pratim cijele tokove kroz kvart...")
-    maska = maska_kvarta(gt, v, s)
-    poredak, pocetci = _uzvodni_indeks(nizvodno)
-    more_ravno = more.ravel()
-    izlazi = izlazne_tocke(maska, nizvodno, sliv)
-    provjeri_sliv(sliv_uzvodno(izlazi, poredak, pocetci, v * s).reshape(v, s))
-
-    # Granica kvarta je nepravilna, pa isti tok zna je presjeći na više
-    # mjesta i svaki prijelaz daje svoj izlaz. Put se zato zadržava samo ako
-    # se većim dijelom ne poklapa s već zadržanima — inače bi se jedna
-    # bujica ispisala kao tri „različita” toka.
-    putovi: list[tuple[list[int], float]] = []
-    zauzeto: set[int] = set()
-    for izlaz in izlazi:
-        gore = trag_uzvodno(izlaz, poredak, pocetci, sliv)
-        dolje = trag_nizvodno(izlaz, nizvodno, more_ravno)
-        put = gore + dolje[1:]
-        if len(set(put) & zauzeto) > 0.5 * len(put):
-            continue
-        zauzeto.update(put)
-        putovi.append((put, float(sliv[izlaz])))
-    zapisi_cijele(putovi, gt, s, maska, puni.ravel(), more_ravno)
+    podrucje = podrucje_kvarta(maska_kvarta(gt, v, s), nizvodno, sliv, more, v, s)
+    zapisi_podrucje(podrucje, gt, v, s)
+    zapisi(u_crte(sliv, nizvodno, v, s, podrucje), gt, s)
 
 
 if __name__ == "__main__":
