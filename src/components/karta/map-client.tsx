@@ -3175,24 +3175,22 @@ function podlogaPoId(id: string): BaseLayer {
 }
 
 /**
- * Koliko je velika jedna WMS pločica podloge.
+ * Koliko je velika jedna pločica podloge koju poslužujemo sami.
  *
- * Ovo je najskuplja postavka na stranici, i dugo je bila kriva.
- *
- * Mjereno 14. 8. 2026. na jednom oknu pri z16: podloga je tražila 28 pločica
- * od 256 px, a medijan dohvata bio je 4,2 s (p90 6,2 s). Sam poslužitelj
- * pritom NIJE spor — pojedinačna pločica stigne za 0,4 s. Sporo je bilo
- * čekanje u redu: preglednik prema jednom poslužitelju drži otprilike šest
- * usporednih veza, pa 28 zahtjeva čeka jedan drugoga, a geoportal se pod
- * usporednim opterećenjem još i uspori.
+ * Mjereno 14. 8. 2026. na jednom oknu pri z16: podloga je izravno s
+ * geoportala tražila 28 pločica od 256 px, uz medijan dohvata 4,2 s
+ * (p90 6,2 s). Sam poslužitelj pritom NIJE spor — pojedinačna pločica stigne
+ * za 0,4 s. Sporo je bilo čekanje u redu: preglednik prema jednom
+ * poslužitelju drži otprilike šest usporednih veza, pa 28 zahtjeva čeka
+ * jedan drugoga, a geoportal se pod usporednim opterećenjem još i uspori.
  *
  * Pločica od 512 px pokriva istu površinu kao četiri od 256 i traži jednako
- * mnogo metara po pikselu — dakle ista razlučivost, četvrtina zahtjeva.
- * Mjereno na istoj plohi: jedna od 512 px = 0,86–1,3 s, četiri od 256 px =
- * 3,85 s. Isti piksel, četiri puta manje čekanja.
+ * mnogo metara po pikselu — ista razlučivost, četvrtina zahtjeva. Mjereno:
+ * jedna od 512 px = 0,86–1,3 s, četiri od 256 px = 3,85 s.
  *
- * Vrijedi samo za WMS: naše pločice sjenčanog reljefa i CARTO-va ulična
- * karta izrađene su kao 256 px i njihova veličina nije stvar dogovora.
+ * Vrijedi samo za podloge koje idu kroz našu rutu: sjenčani reljef i
+ * CARTO-va ulična karta izrađeni su kao 256 px i to nije stvar dogovora.
+ * Mora se poklapati s PLOCICA_PX u src/lib/plocice.ts.
  */
 const WMS_PLOCICA = 512;
 
@@ -3222,15 +3220,19 @@ function podlogaSloj(
     ...(okno ? { pane: okno } : {}),
   };
   if (base.type === "wms") {
-    return L.tileLayer.wms(base.url, {
+    // WMS podloge NE idu izravno na geoportal nego kroz našu rutu, koja ih
+    // pamti na rubu mreže (vidi src/app/api/podloga i src/lib/plocice.ts).
+    // Registar i dalje opisuje izvorni servis — njega čita ruta; klijent zna
+    // samo za nas.
+    //
+    // `zoomOffset: -1` uz pločicu od 512 px: Leaflet tada traži pločicu
+    // standardne mreže za zum manji za jedan, a crta je na dvostrukoj
+    // stranici. Ista razlučivost, četvrtina zahtjeva — i u adresi ostaje
+    // obična (z, x, y), pa je pločica jedan zapis u predmemoriji.
+    return L.tileLayer(`/api/podloga/${base.id}/{z}/{x}/{y}`, {
       ...zajednicko,
-      layers: base.wmsLayers,
-      format: "image/jpeg",
       tileSize: WMS_PLOCICA,
-      // Bez `crs` Leaflet traži u vlastitom EPSG:3857, što servis poslužuje
-      // iz predmemorije. 4326 se postavlja samo ondje gdje Web Mercatora
-      // nema — vidi wmsCrs u map-views.ts.
-      ...(base.wmsCrs === "EPSG:4326" ? { crs: L.CRS.EPSG4326 } : {}),
+      zoomOffset: -1,
     });
   }
   return L.tileLayer(base.url, { ...zajednicko, subdomains: "abcd" });
