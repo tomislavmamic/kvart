@@ -3175,12 +3175,39 @@ function podlogaPoId(id: string): BaseLayer {
 }
 
 /**
+ * Koliko je velika jedna WMS pločica podloge.
+ *
+ * Ovo je najskuplja postavka na stranici, i dugo je bila kriva.
+ *
+ * Mjereno 14. 8. 2026. na jednom oknu pri z16: podloga je tražila 28 pločica
+ * od 256 px, a medijan dohvata bio je 4,2 s (p90 6,2 s). Sam poslužitelj
+ * pritom NIJE spor — pojedinačna pločica stigne za 0,4 s. Sporo je bilo
+ * čekanje u redu: preglednik prema jednom poslužitelju drži otprilike šest
+ * usporednih veza, pa 28 zahtjeva čeka jedan drugoga, a geoportal se pod
+ * usporednim opterećenjem još i uspori.
+ *
+ * Pločica od 512 px pokriva istu površinu kao četiri od 256 i traži jednako
+ * mnogo metara po pikselu — dakle ista razlučivost, četvrtina zahtjeva.
+ * Mjereno na istoj plohi: jedna od 512 px = 0,86–1,3 s, četiri od 256 px =
+ * 3,85 s. Isti piksel, četiri puta manje čekanja.
+ *
+ * Vrijedi samo za WMS: naše pločice sjenčanog reljefa i CARTO-va ulična
+ * karta izrađene su kao 256 px i njihova veličina nije stvar dogovora.
+ */
+const WMS_PLOCICA = 512;
+
+/**
  * Leafletov sloj za jednu podlogu.
  *
  * `maxNativeZoom` je razlika između „nema pločice” i „pločica je razvučena”:
  * sjenčani reljef ima vlastite pločice do z17, jer je ondje 0,87 m po pikselu
  * ≈ izvorna gustoća DMR-a. Bez ove postavke Leaflet na z18 traži pločice koje
  * nikad nisu izrađene i podloga na najkrupnijem mjerilu nestane.
+ *
+ * `bounds` je okvir do kojeg karta uopće pušta pomicanje. Bez njega Leaflet
+ * na sitnom mjerilu traži i pločice izvan kvarta — nikad cijelu Hrvatsku,
+ * jer se traži samo ono što je u oknu, ali na z12 okno seže znatno dalje
+ * od onoga o čemu je ova karta.
  */
 function podlogaSloj(
   L: typeof LeafletNS,
@@ -3190,6 +3217,7 @@ function podlogaSloj(
   const zajednicko = {
     attribution: base.attribution,
     maxZoom: 19,
+    bounds: MAP_MAX_BOUNDS,
     ...(base.maxNativeZoom ? { maxNativeZoom: base.maxNativeZoom } : {}),
     ...(okno ? { pane: okno } : {}),
   };
@@ -3198,7 +3226,11 @@ function podlogaSloj(
       ...zajednicko,
       layers: base.wmsLayers,
       format: "image/jpeg",
-      crs: L.CRS.EPSG4326,
+      tileSize: WMS_PLOCICA,
+      // Bez `crs` Leaflet traži u vlastitom EPSG:3857, što servis poslužuje
+      // iz predmemorije. 4326 se postavlja samo ondje gdje Web Mercatora
+      // nema — vidi wmsCrs u map-views.ts.
+      ...(base.wmsCrs === "EPSG:4326" ? { crs: L.CRS.EPSG4326 } : {}),
     });
   }
   return L.tileLayer(base.url, { ...zajednicko, subdomains: "abcd" });

@@ -154,6 +154,20 @@ export interface BaseLayer {
    * rasteže zadnje umjesto da traži pločice kojih nema.
    */
   maxNativeZoom?: number;
+  /**
+   * Traži li servis EPSG:4326 umjesto Leafletova zadanog EPSG:3857.
+   *
+   * Postavlja se SAMO ondje gdje servis Web Mercator ne nudi, jer košta:
+   * u 4326 poslužitelj svaku pločicu mora preprojicirati umjesto da je
+   * posluži iz predmemorije. Mjereno 14. 8. 2026. na istoj plohi:
+   * DOF 2011 u 3857 = 0,70 s, u 4326 osjetno sporije, a DOF 2023 na INSPIRE
+   * servisu (koji 3857 nema) 0,39–0,52 s po pločici od 256 px.
+   *
+   * Provjereno GetCapabilities-om: `dof`, `tk` i `hok` nude EPSG:3857
+   * (uz 900913 i 3785), a `inspire/orthophoto_2023` nudi samo 4326, 4258,
+   * 3035 i 3765 — pa je jedini koji ovo polje treba.
+   */
+  wmsCrs?: "EPSG:4326";
   /** Rečenica u ploči: što se na toj podlozi vidi, a na drugima ne. */
   opis?: string;
 }
@@ -301,6 +315,9 @@ export const BASE_LAYERS: BaseLayer[] = [
     attribution: "DOF 2023 © Državna geodetska uprava (Otvorena dozvola)",
     skupina: "danas",
     godina: 2023,
+    // Jedina podloga koja Web Mercator nema — INSPIRE servis nudi samo 4326,
+    // 4258, 3035 i 3765. Ostale idu u Leafletovu zadanom 3857.
+    wmsCrs: "EPSG:4326",
   },
   {
     id: "karta",

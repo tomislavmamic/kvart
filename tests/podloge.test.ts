@@ -78,6 +78,26 @@ test("podloga s vlastitim pločicama ograničava maxNativeZoom", () => {
   }
 });
 
+test("EPSG:4326 se traži samo ondje gdje Web Mercatora nema", () => {
+  // Provjereno GetCapabilities-om 14. 8. 2026.: `dof`, `tk` i `hok` nude
+  // EPSG:3857, a `inspire/orthophoto_2023` ne. Traženje u 4326 tjera
+  // poslužitelj da svaku pločicu preprojicira umjesto da je posluži iz
+  // predmemorije, pa je ovo postavka koja se plaća — i jedna se podloga
+  // ovdje lako previdi pri sljedećem dodavanju.
+  for (const b of BASE_LAYERS) {
+    if (b.wmsCrs !== "EPSG:4326") continue;
+    assert.ok(
+      b.url.includes("/inspire/"),
+      `podloga ${b.id} traži 4326, a njezin servis nudi Web Mercator`,
+    );
+  }
+});
+
+test("nijedna podloga ne traži 4326 bez potrebe", () => {
+  const u4326 = BASE_LAYERS.filter((b) => b.wmsCrs === "EPSG:4326").map((b) => b.id);
+  assert.deepEqual(u4326, ["dof"]);
+});
+
 test("id podloge i id preklopnika se ne sudaraju", () => {
   // Adresa ih drži u odvojenim parametrima, ali isto ime za dvije različite
   // stvari je zamka za sljedeću izmjenu — sjenčanje je zato `sjencanje` kao
