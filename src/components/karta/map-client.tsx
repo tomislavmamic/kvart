@@ -3332,6 +3332,35 @@ function dodajSloj(
                       : 0.12,
             };
           }
+          if (layer.id === "tokovi-cijeli") {
+            // Dionica izvan kvarta ide crtkano i tanje: nosi isti tok, ali
+            // nije ono što se ovdje inače prikazuje, pa se ne smije čitati
+            // kao da je jednako izmjereno unutar granice.
+            const vani =
+              (p as { dionica?: string } | undefined)?.dionica === "izvan kvarta";
+            return {
+              color: "#0369a1",
+              weight: vani ? 2.5 : 4.5,
+              opacity: vani ? 0.75 : 0.95,
+              ...(vani ? { dashArray: "7 5" } : {}),
+              lineCap: "round" as const,
+              lineJoin: "round" as const,
+              fill: false,
+            };
+          }
+          if (layer.id === "tokovi") {
+            // Debljina nosi veličinu sliva: žilica koja skuplja hektar i
+            // glavni tok koji skuplja dvjesto ne mogu biti ista crta.
+            const rang = (p as { rang?: number } | undefined)?.rang ?? 1;
+            return {
+              color: "#0ea5e9",
+              weight: rang === 3 ? 3.5 : rang === 2 ? 2.25 : 1.25,
+              opacity: rang === 1 ? 0.65 : 0.9,
+              lineCap: "round" as const,
+              lineJoin: "round" as const,
+              fill: false,
+            };
+          }
           if (layer.id === "gup-2024-planirane-ceste") {
             return {
               color: "#3f3f46",

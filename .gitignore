@@ -79,6 +79,11 @@ __pycache__/
 # GeoJSON u /public/geo/analiza/ i gotova stranica) jest.
 /public/geo/sire/
 
+# Skinuti DMR s DGU WCS-a (50 MB Float32) — samo ulaz za `npm run
+# izvedi-tokove`, koji ga po potrebi skine ponovno. U gitu je rezultat
+# (public/geo/tokovi.geojson, 30 kB), ne podloga.
+/.cache/dmr.tif
+
 # Privremeni OSS odgovori ciljane provjere vlasništva mogu sadržavati imena,
 # adrese i OIB-e fizičkih osoba. Generator ih koristi samo lokalno za nastavak
 # prekinutog rada; u Git i javni build ulazi isključivo sanitizirani GeoJSON.

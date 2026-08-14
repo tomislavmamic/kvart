@@ -30,9 +30,20 @@ export const NEIGHBORHOOD_EXTENT: [number, number, number, number] = [
 
 export const KVART_CENTER: [number, number] = [43.5249, 16.4993];
 
+/**
+ * Okvir je širi na zapad i sjever nego što kvart traži, zbog sloja cijelih
+ * tokova: bujice se prate do izvora pod Kozjakom (43,5357) i do ušća u moru
+ * kod Vranjica (16,4733), a oboje je izvan starog ruba.
+ *
+ * Rezerva nije kozmetička. Leaflet uz `maxBounds` pomiče središte da okno
+ * ostane unutar okvira, pa okvir stegnut točno na podatak znači da se na
+ * krupnom mjerilu do njegova ruba ne može doći — pri z=16 pola okna je oko
+ * 1,4 km. Zato ~1,5 km preko krajnjih točaka sloja: da se izvor i ušće mogu
+ * i približiti, ne samo vidjeti izdaleka.
+ */
 export const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [43.514, 16.481],
-  [43.536, 16.518],
+  [43.514, 16.457],
+  [43.547, 16.518],
 ];
 
 /**
@@ -262,6 +273,24 @@ export const BASE_LAYERS: BaseLayer[] = [
     type: "xyz",
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
     attribution: "© OpenStreetMap contributors © CARTO",
+  },
+  {
+    // Hrvatska osnovna karta 1:5000 — snimljena prije nego je radna zona
+    // dobila današnji oblik. Jedina podloga koja crta povremene vodotoke
+    // (crtkano plavo), pa se uz sloj „Kuda voda teče niz teren” vidi što
+    // je od starih tokova ostalo, a što je preslagano nasipima i cestama.
+    //
+    // Oprez pri čitanju: istom plavom bojom ucrtan je i Rimski vodovod,
+    // koji nije vodotok nego akvadukt i namjerno ide po izohipsi, poprijeko
+    // na prirodne tokove. Mjereno protiv izvedenih tokova, HOK-ova
+    // hidrografija bez akvadukta ima medijan odstupanja 7,8 m (77 % unutar
+    // 25 m); s akvaduktom 12,0 m.
+    id: "hok",
+    label: "Stara topografska karta (HOK 1:5000)",
+    type: "wms",
+    url: "https://geoportal.dgu.hr/services/hok/wms",
+    wmsLayers: "hok:HOK5",
+    attribution: "HOK 1:5000 © Državna geodetska uprava",
   },
 ];
 
@@ -805,8 +834,14 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     // Bujični kanali iz DPU-a. Jedini vektorski podatak o bujicama koji
     // postoji — u OSM-u ih za ovo područje nema, a kvart je pod Kozjakom pa
     // ih se tiče gdje voda ide.
+    //
+    // Geometrija je oznaka, a ne trasa: od 193 objekta 184 su poligoni od
+    // 0,2–15 m² u nakupinama razmaknutim ~50 m, plus 9 križića — to je
+    // ponovljeni CAD natpis „BUJIČNI KANAL” i šrafura uz kanal, pokupljeni
+    // vektorizacijom. Označava gdje kanal prolazi (~380 m uz sjeverni rub),
+    // ne kuda točno teče, pa je i naziv sloja takav.
     id: "dpu-bujica",
-    label: "Bujični kanali (DPU Dračevac)",
+    label: "Oznaka bujičnog kanala (DPU Dračevac)",
     type: "geojson",
     url: "/geo/planovi/bujica.geojson",
     attribution: "DPU radne zone Dračevac, Grad Split — vektorizirano iz PDF-a",
@@ -1047,6 +1082,43 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
 
   // ---------- Okoliš i rizici ----------
   {
+    // Kuda voda teče po površini. Nije prepisano ni iz jedne evidencije —
+    // takve za kvart nema — nego izračunato iz DGU-ova LiDAR reljefa
+    // (scripts/izvedi-tokove.py). `sliv_ha` je površina koja se u tu točku
+    // slijeva, pa `rang` razlikuje žilicu od glavnog toka.
+    //
+    // Dvije provjere da broj nije sam sebi svjedok: slivnici Grada leže
+    // 13,6 m od izvedenih tokova (nasumične točke u kvartu 37,0 m), a
+    // natpis bujičnog kanala iz DPU-a poklapa se s izvedenim tokom unutar
+    // dvadesetak metara. Ondje gdje cesta ima propust DMR vidi nasip, pa
+    // tok prelazi preko ceste na najnižem mjestu umjesto kroz cijev.
+    id: "tokovi",
+    label: "Kuda voda teče niz teren",
+    type: "geojson",
+    url: "/geo/tokovi.geojson",
+    attribution: "Izvedeno iz DMR-a (LiDAR) © Državna geodetska uprava",
+    color: "#0ea5e9",
+    group: "Okoliš i rizici",
+    phase: 1,
+  },
+  {
+    // Ista analiza, ali nerezana: dvije bujice koje prolaze kvartom, svaka
+    // od izvora pod Kozjakom do ušća u moru kod Vranjica. Kvart je usred
+    // njih, pa mu se voda ne rađa ni ne završava na granici kotara —
+    // dionice su zato označene time jesu li unutar kvarta ili izvan njega.
+    //
+    // Sliv koji prolazi kvartom je 326 ha i ne dodiruje rub prozora računa,
+    // dakle oba izvora su obuhvaćena, a ne odsječena.
+    id: "tokovi-cijeli",
+    label: "Cijeli tok bujica — od izvora do mora",
+    type: "geojson",
+    url: "/geo/tokovi-cijeli.geojson",
+    attribution: "Izvedeno iz DMR-a (LiDAR) © Državna geodetska uprava",
+    color: "#0369a1",
+    group: "Okoliš i rizici",
+    phase: 1,
+  },
+  {
     id: "poplave",
     label: "Opasnost od poplava",
     type: "wms",
@@ -1254,6 +1326,7 @@ const POGLEDI: MapView[] = [
       "dpu-struja",
       "dpu-telekom",
       "dpu-plin",
+      "dpu-bujica",
     ],
   },
   {
@@ -1331,8 +1404,10 @@ const POGLEDI: MapView[] = [
     label: "Okoliš i rizici",
     razina: "nacin",
     description:
-      "Gdje plavi, gdje ljeti gori i kakav zrak dišemo.",
-    layerIds: ["poplave", "vrucina", "zrak", "nepropusnost"],
+      "Kuda voda teče niz teren, gdje plavi, gdje ljeti gori i kakav zrak " +
+      "dišemo. Tokovi su izračunati iz LiDAR reljefa — prirodne vode u " +
+      "kvartu nitko ne vodi u evidenciji, pa je reljef jedini izvor.",
+    layerIds: ["tokovi", "tokovi-cijeli", "poplave", "vrucina", "zrak", "nepropusnost"],
   },
   {
     id: "gdje-se-moze-graditi",
