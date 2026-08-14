@@ -73,7 +73,7 @@ podloga (DOF 2023) ionako već nosi; to nije nazadovanje nego zatečeno stanje.
 ## Podloge
 
 `BaseLayer` dobiva `skupina`, i time ploča „Podloga i plan” dobiva naslove.
-Sedam ravnopravnih čipova bez podjele je isti kvar koji je već jednom riješen
+Šest ravnopravnih čipova bez podjele je isti kvar koji je već jednom riješen
 u traci pogleda (vidi `razina` u `MapView`).
 
 | Skupina | Podloga | Izvor |
@@ -118,32 +118,27 @@ Jedna skripta, `scripts/izvedi-reljef.py`, iz istog DMR-a koji već koristi
 
 Zumovi 12–17. Na z17 je 0,87 m po pikselu, dakle točno izvorna gustoća DMR-a;
 z18 i z19 bi bili napuhani isti podatak, pa se dobivaju `maxNativeZoom: 17` i
-Leafletovim rastezanjem. To nije ušteda nego istina o razlučivosti. 602 pločice.
+Leafletovim rastezanjem. To nije ušteda nego istina o razlučivosti.
+Izrađeno: **585 pločica, 12,9 MB** (sive s alfom, ne RGBA — sjenčanje je sivo,
+pa bi tri jednaka kanala isti bajt nosila tri puta).
 
 ### 2. Izohipse — `public/geo/izohipse.geojson`
 
 2 m ekvidistancija. Sirovi LiDAR na 1 m daje 21.437 crta i 6,4 MB nečitljive
 kaše — svaki potporni zid postane zatvorena krivulja. DMR se zato prije
-crtanja **zagladi filtrom 9 × 9 m**, čime padne na 1.196 crta i 0,75 MB, a
-oblik terena ostaje. Zaglađivanje se navodi na sloju: izohipsa je ovdje
+crtanja **zagladi na ~9 m**, čime padne na **1.705 crta (298 glavnih) i
+1,24 MB**, a oblik terena ostaje. Zaglađivanje se navodi na sloju: izohipsa je ovdje
 crta za čitanje karte, ne geodetski podatak.
 
 ### 3. Mreža visina — `public/geo/reljef/visine.bin.gz` + `visine.json`
 
 `int16` decimetri, korak ~3 m, po `MAP_MAX_BOUNDS`, u pravilnoj lon/lat mreži.
-1640 × 1224 ćelija = 4,0 MB sirovo, ~1,5 MB gzipano u gitu; poslužitelj ga
+1641 × 1225 ćelija = 4,0 MB sirovo, 1,6 MB gzipano u gitu; poslužitelj ga
 raspakira jednom i drži u memoriji, isto kao GeoJSON slojeve dosjea.
 
 Korak 3 m nije popuštanje nego izbor: nagib računat na 1 m LiDAR-u mjeri šum
 snimke, a ne teren. Lon/lat mreža umjesto EPSG:3765 zato što je onda očitanje
 aritmetika, bez reprojekcije po kliku.
-
-### 4. Karepovac — `public/geo/karepovac-teren.geojson`
-
-Tijelo odlagališta izvedeno iz DMR-a (visina iznad okolne ovojnice) i putanje
-niz teren s njega. Objavljuju se **oblik i visina**, mjereni; ne objavljuje se
-nikakva tvrdnja o mirisu, širenju ni dosegu. To je granica koju `PRODUCT.md`
-postavlja i koju ovaj sloj ne prelazi.
 
 ## Reljef u dosjeu
 
