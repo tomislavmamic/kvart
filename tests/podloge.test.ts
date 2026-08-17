@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   BASE_LAYERS,
@@ -124,6 +125,58 @@ test("svaki sloj koji pogled spominje postoji u registru", () => {
       assert.ok(poznati.has(id), `pogled ${v.id} traži nepostojeći sloj ${id}`);
     }
   }
+});
+
+test("izohipse su odrezane na kvart, ne na obuhvat karte", async () => {
+  // Reljef se računa na cijelom obuhvatu karte jer sjenčanje i mreža visina
+  // to trebaju. Izohipse ne: one su JEDNA datoteka koju preglednik povuče
+  // cijelu, pa svaki nepotrebni kilometar plaća svaki posjetitelj. Prvi put
+  // su bile neodrezane — 18,0 km² za kvart od 1,7 km², 1,24 MB umjesto 0,11.
+  const [izohipse, granica] = await Promise.all(
+    ["izohipse", "granica"].map(async (ime) =>
+      JSON.parse(
+        await readFile(
+          new URL(`../public/geo/${ime}.geojson`, import.meta.url),
+          "utf8",
+        ),
+      ),
+    ),
+  );
+  const okvir = (fc: { features: { geometry: unknown }[] }) => {
+    const xs: number[] = [];
+    const ys: number[] = [];
+    const hodaj = (c: unknown): void => {
+      if (!Array.isArray(c) || c.length === 0) return;
+      if (typeof c[0] === "number") {
+        xs.push(c[0] as number);
+        ys.push(c[1] as number);
+        return;
+      }
+      for (const k of c) hodaj(k);
+    };
+    for (const f of fc.features) {
+      const g = f.geometry as { coordinates?: unknown } | null;
+      if (g?.coordinates) hodaj(g.coordinates);
+    }
+    return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  };
+
+  const i = okvir(izohipse);
+  const g = okvir(granica);
+  // Dopuštena rezerva je 120 m (REZERVA_M u izvedi-reljef.py, isto kao
+  // BUFFER_KM u clip-lib.ts); prag je 200 m da mjerenje po kutu ne pukne.
+  const mLon = 111_320 * Math.cos((43.52 * Math.PI) / 180);
+  const preko = [
+    (g[0] - i[0]) * mLon,
+    (g[1] - i[1]) * 110_540,
+    (i[2] - g[2]) * mLon,
+    (i[3] - g[3]) * 110_540,
+  ];
+  for (const m of preko) {
+    assert.ok(m < 200, `izohipse sežu ${Math.round(m)} m preko granice kvarta`);
+  }
+  // I doista pokrivaju kvart, a ne samo njegov djelić.
+  assert.ok(i[0] <= g[0] && i[1] <= g[1] && i[2] >= g[2] && i[3] >= g[3]);
 });
 
 test("izohipse su registrirane i idu iz naše datoteke", () => {

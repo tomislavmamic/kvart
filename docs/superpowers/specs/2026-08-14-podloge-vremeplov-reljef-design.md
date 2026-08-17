@@ -126,8 +126,20 @@ pa bi tri jednaka kanala isti bajt nosila tri puta).
 
 2 m ekvidistancija. Sirovi LiDAR na 1 m daje 21.437 crta i 6,4 MB nečitljive
 kaše — svaki potporni zid postane zatvorena krivulja. DMR se zato prije
-crtanja **zagladi na ~9 m**, čime padne na **1.705 crta (298 glavnih) i
-1,24 MB**, a oblik terena ostaje. Zaglađivanje se navodi na sloju: izohipsa je ovdje
+crtanja **zagladi na ~9 m**, a crte se **režu na kvart + 120 m**, isto kao svi
+ostali vektorski slojevi (BUFFER_KM u `clip-lib.ts`). Rezultat: **161 crta
+(26 glavnih), 0,11 MB**, raspon 12–108 m n.v.
+
+Rezanje nije sitnica nego glavnina veličine. Reljef se računa na cijelom
+obuhvatu karte, jer sjenčanje i mreža visina to trebaju, i prva izvedba je
+izohipse ostavila jednake — 18,0 km² crta za kvart od 1,7 km², dakle deset
+puta više nego što itko gleda. Kod pločica to ne bi smetalo, jer se dohvaća
+samo ono u oknu, ali izohipse su JEDNA datoteka koju preglednik povuče
+cijelu, pri svakom učitavanju: 1,24 MB → 0,11 MB.
+
+Tokovi su svjesna iznimka od rezanja (ista bujica ne postaje drugi objekt kad
+prijeđe granicu). Izohipsa nema takav razlog — teren izvan kvarta ne
+objašnjava ništa o kvartu. Zaglađivanje se navodi na sloju: izohipsa je ovdje
 crta za čitanje karte, ne geodetski podatak.
 
 ### 3. Mreža visina — `public/geo/reljef/visine.bin.gz` + `visine.json`
@@ -180,6 +192,7 @@ Oboje je popravljeno u `karta-klizac.ts` i vrijedi za oba klizača.
   atribuciju (uvjet dozvole), lokalne pločice imaju `maxNativeZoom`.
 
 Mjereno pri izradi (`npm run izvedi-reljef`): mreža 1641 × 1225, 4,0 MB sirovo
-i 1,6 MB na disku; izohipse 1.705 crta (298 glavnih), 1,24 MB; sjenčanje 585
+i 1,6 MB na disku; izohipse 161 crta (26 glavnih), 0,11 MB, rezano na kvart
++ 120 m; sjenčanje 585
 pločica, 12,9 MB. Očitanje iz mreže protiv izvornog DMR-a na 1.889 nasumičnih
 točaka: medijan 0,07 m, 95. percentil 0,60 m, najgore 3,70 m.

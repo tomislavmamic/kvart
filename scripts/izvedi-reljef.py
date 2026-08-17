@@ -48,7 +48,7 @@ import subprocess
 import tempfile
 
 import numpy as np
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 from dmr import KORIJEN, pretvorba, skini_dmr
 
@@ -59,6 +59,12 @@ logger = logging.getLogger(__name__)
 
 IZLAZ_RELJEF = os.path.join(KORIJEN, "public", "geo", "reljef")
 IZLAZ_IZOHIPSE = os.path.join(KORIJEN, "public", "geo", "izohipse.geojson")
+GRANICA = os.path.join(KORIJEN, "public", "geo", "granica.geojson")
+
+# Rezerva oko granice kvarta pri rezanju izohipsi. Isto kao BUFFER_KM u
+# scripts/clip-lib.ts — svi vektorski slojevi osim tokova režu se na kvart
+# plus 120 m, pa nema razloga da izohipse budu iznimka.
+REZERVA_M = 120.0
 
 # Isti okvir kao MAP_MAX_BOUNDS u src/lib/map-views.ts: [zapad, jug, istok,
 # sjever]. Dalje od toga karta ne pušta pomicanje, pa mreža visina ondje ne
@@ -320,8 +326,13 @@ def mreza_visina(reljef3: str, radni: str) -> dict[str, object]:
 
     os.makedirs(IZLAZ_RELJEF, exist_ok=True)
     binarno = os.path.join(IZLAZ_RELJEF, "visine.bin.gz")
-    with gzip.open(binarno, "wb", compresslevel=9) as f:
-        f.write(dm.tobytes(order="C"))
+    # `mtime=0` da izlaz bude ponovljiv: gzip inače u zaglavlje upiše trenutak
+    # pakiranja, pa svako ponovno pokretanje skripte proizvede drugačiju
+    # datoteku od 1,6 MB iako su visine do bajta iste — i git je uredno zabilježi
+    # kao promjenu.
+    with open(binarno, "wb") as sirovo:
+        with gzip.GzipFile(fileobj=sirovo, mode="wb", compresslevel=9, mtime=0) as f:
+            f.write(dm.tobytes(order="C"))
 
     zaglavlje = {
         "zapad": z,
@@ -350,6 +361,40 @@ def mreza_visina(reljef3: str, radni: str) -> dict[str, object]:
         100 * (1 - valjano.mean()),
     )
     return zaglavlje
+
+
+def granica_s_rezervom(radni: str) -> str:
+    """Granica kvarta proširena za REZERVA_M, zapisana kao maska za rezanje.
+
+    Args:
+        radni: Direktorij za međurezultate.
+
+    Returns:
+        Putanja do GeoJSON-a s jednim poligonom (EPSG:4326).
+    """
+    izvor = ogr.Open(GRANICA)  # drži se: bez reference GDAL počisti sloj
+    spoj = ogr.Geometry(ogr.wkbMultiPolygon)
+    for obiljezje in izvor.GetLayer(0):
+        spoj.AddGeometry(obiljezje.GetGeometryRef())
+    spoj = spoj.UnionCascaded()
+    # Širenje ide u metrima, dakle u projiciranom sustavu; u stupnjevima bi
+    # „120” značilo 120 stupnjeva, a i rezerva bi po sjeveru i istoku ispala
+    # različita.
+    spoj.Transform(pretvorba(4326, 3765))
+    spoj = spoj.Buffer(REZERVA_M)
+    spoj.Transform(pretvorba(3765, 4326))
+
+    put = os.path.join(radni, "granica-rezerva.geojson")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(put)
+    sloj = ds.CreateLayer("granica", srs=srs, geom_type=ogr.wkbPolygon)
+    f = ogr.Feature(sloj.GetLayerDefn())
+    f.SetGeometry(spoj)
+    sloj.CreateFeature(f)
+    ds = None
+    return put
 
 
 def izohipse(reljef3: str, radni: str) -> int:
@@ -382,11 +427,23 @@ def izohipse(reljef3: str, radni: str) -> int:
         ["gdal_contour", "-q", "-a", "visina", "-i", str(EKVIDISTANCIJA), put, gpkg, "-f", "GPKG"],
         check=True,
     )
+    # Rezanje na kvart, i to je bitno za veličinu datoteke.
+    #
+    # Reljef se računa na cijelom obuhvatu karte (4,9 × 3,7 km), jer sjenčanje
+    # i mreža visina to trebaju. Izohipse ne: one su JEDNA datoteka koju
+    # preglednik povuče cijelu, za razliku od pločica, kojih se dohvate samo
+    # one u oknu. Neodrezane su pokrivale 18,0 km² za kvart od 1,7 km² —
+    # deset puta više crta nego što itko gleda, u svakom učitavanju.
+    #
+    # Tokovi su svjesna iznimka od ovog pravila (ista bujica ne postaje drugi
+    # objekt kad prijeđe granicu); izohipsa nema takav razlog — teren izvan
+    # kvarta ne objašnjava ništa o kvartu.
     subprocess.run(
         [
             "ogr2ogr",
             "-f", "GeoJSON",
             "-t_srs", "EPSG:4326",
+            "-clipsrc", granica_s_rezervom(radni),
             "-lco", "COORDINATE_PRECISION=6",
             "-simplify", str(POJEDNOSTAVI),
             "-nln", "izohipse",
