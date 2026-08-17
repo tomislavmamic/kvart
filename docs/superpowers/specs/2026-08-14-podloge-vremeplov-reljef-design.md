@@ -120,16 +120,29 @@ Zumovi 12–17. Na z17 je 0,87 m po pikselu, dakle točno izvorna gustoća DMR-a
 z18 i z19 bi bili napuhani isti podatak, pa se dobivaju `maxNativeZoom: 17` i
 Leafletovim rastezanjem. To nije ušteda nego istina o razlučivosti.
 
-Pločice se **režu na kvart + 1 km** (REZERVA_SJENCANJE_M). Rezerva je znatno
-šira nego kod izohipsi jer je sjenčanje PODLOGA: pod njim nema ničega, pa
-ondje gdje ga nema ostaje prazna ploha. Pri z16 je pola okna oko 700 m, pa
-kilometar znači da se do ruba dolazi tek namjernim pomicanjem izvan kvarta —
-provjereno: pri z16 se rub ne vidi, pri z14 se sjenčanje vidi kao otok.
+Rezanje ide **u dva prolaza**, jer se isplati samo na krupnom mjerilu:
+
+| Zumovi | Obuhvat | Pločica |
+|---|---|---|
+| z12–14 | cijeli obuhvat karte | 18 |
+| z15–17 | kvart + 1 km (REZERVA_SJENCANJE_M) | 270 |
+
+Na sitnim zumovima cijeli obuhvat stane u osamnaest pločica, pa rezanje ondje
+ne štedi gotovo ništa — a KOŠTA, i to vidljivo: odrezano sjenčanje pri z14
+izgleda kao otok koji pluta na bijelom. Podloga koje nema nije nenacrtan sloj
+nego rupa. Na z15–17 je obratno: ondje je 94 % svih pločica.
+
+Rezerva od 1 km je znatno šira nego kod izohipsi (120 m) iz istog razloga.
+Izmjereno, uz okno 1491 × 812 px: rub se ne vidi na z16 (2,58 km okna prema
+3,74 km rezanog obuhvata) ni na z17. Na z15 se vidi vodoravno, ali ga bočne
+ploče uglavnom prekrivaju, a na telefonu je okno uže od rezanog obuhvata pa
+ga nema. To je poznata i prihvaćena granica.
 
 Ostatak obuhvata karte (koji seže do Kozjaka i mora, zbog sloja tokova)
-svjesno ostaje bez sjenčanja: ondje se gleda tok vode, a ne oblik terena.
+svjesno ostaje bez sjenčanja na krupnom mjerilu: ondje se gleda tok vode, a
+ne oblik terena.
 
-Izrađeno: **283 pločice, 5,9 MB** (sive s alfom, ne RGBA — sjenčanje je sivo,
+Izrađeno: **288 pločica, 6,1 MB** (sive s alfom, ne RGBA — sjenčanje je sivo,
 pa bi tri jednaka kanala isti bajt nosila tri puta). Prije rezanja: 585
 pločica i 12,9 MB, od čega je 74 % otpadalo na z17.
 
@@ -204,5 +217,5 @@ Oboje je popravljeno u `karta-klizac.ts` i vrijedi za oba klizača.
 
 Mjereno pri izradi (`npm run izvedi-reljef`): mreža 1641 × 1225, 4,0 MB sirovo
 i 1,6 MB na disku; izohipse 161 crta (26 glavnih), 0,11 MB, rezano na kvart
-+ 120 m; sjenčanje 283 pločice, 5,9 MB, rezano na kvart + 1 km. Očitanje iz mreže protiv izvornog DMR-a na 1.889 nasumičnih
++ 120 m; sjenčanje 288 pločica, 6,1 MB, rezano na kvart + 1 km od z15. Očitanje iz mreže protiv izvornog DMR-a na 1.889 nasumičnih
 točaka: medijan 0,07 m, 95. percentil 0,60 m, najgore 3,70 m.

@@ -88,6 +88,9 @@ ZAGLADI = 3  # ćelija (× KORAK_M ≈ 9 m) — box filtar prije izohipsi
 EKVIDISTANCIJA = 2.0  # m — razmak izohipsi
 POJEDNOSTAVI = 2.5  # m — Douglas-Peucker nad izohipsama
 ZUM_OD, ZUM_DO = 12, 17  # z17 = 0,87 m/px ≈ izvorna gustoća DMR-a
+# Od ovog zuma naviše pločice se režu na kvart; ispod njega se objavljuje
+# cijeli obuhvat. Vidi dvostruki prolaz u `sjencani_reljef`.
+ZUM_REZ_OD = 15
 PRAZNO = -9999
 
 
@@ -206,49 +209,61 @@ def sjencani_reljef(reljef3: str, radni: str) -> int:
 
     # Pločica bez alfe pokrila bi more i rubove punom sivom plohom. Alfa se
     # uzima iz DMR-a, ne iz sjenčanja: sjenčanje i na praznini vrati broj.
-    #
-    # Uz to se reže na kvart + REZERVA_SJENCANJE_M. Reljef se računa na cijelom
-    # obuhvatu karte jer ga mreža visina treba, ali pločice se i objavljuju i
-    # drže u gitu, a izvan kvarta ih nitko ne gleda: prije rezanja je 74 %
-    # svih pločica bilo na z17, uglavnom nad područjem kroz koje se samo
-    # prolazi prema tokovima.
     izvor = gdal.Open(reljef3)
     visine = izvor.GetRasterBand(1).ReadAsArray()
     sjena_ds = gdal.Open(sjena)
     siva = sjena_ds.GetRasterBand(1).ReadAsArray()
-    maska = maska_na_mrezi(reljef3, REZERVA_SJENCANJE_M)
-    alfa = np.where((visine != PRAZNO) & maska, 255, 0).astype(np.uint8)
+    ima_visinu = visine != PRAZNO
 
-    rgba_put = os.path.join(radni, "sjena-rgba.tif")
-    rgba = gdal.GetDriverByName("GTiff").Create(
-        rgba_put, izvor.RasterXSize, izvor.RasterYSize, 4, gdal.GDT_Byte
-    )
-    rgba.SetGeoTransform(izvor.GetGeoTransform())
-    rgba.SetProjection(izvor.GetProjection())
-    for i in (1, 2, 3):
-        rgba.GetRasterBand(i).WriteArray(siva)
-    rgba.GetRasterBand(4).WriteArray(alfa)
-    rgba = None
+    def rgba(alfa: np.ndarray, ime: str) -> str:
+        put = os.path.join(radni, f"{ime}.tif")
+        ds = gdal.GetDriverByName("GTiff").Create(
+            put, izvor.RasterXSize, izvor.RasterYSize, 4, gdal.GDT_Byte
+        )
+        ds.SetGeoTransform(izvor.GetGeoTransform())
+        ds.SetProjection(izvor.GetProjection())
+        for i in (1, 2, 3):
+            ds.GetRasterBand(i).WriteArray(siva)
+        ds.GetRasterBand(4).WriteArray(alfa)
+        ds = None
+        return put
+
+    puni = rgba(np.where(ima_visinu, 255, 0).astype(np.uint8), "sjena-puna")
+    maska = maska_na_mrezi(reljef3, REZERVA_SJENCANJE_M)
+    rezani = rgba(np.where(ima_visinu & maska, 255, 0).astype(np.uint8), "sjena-rezana")
 
     if os.path.isdir(IZLAZ_RELJEF):
         for z in range(0, 25):
             shutil.rmtree(os.path.join(IZLAZ_RELJEF, str(z)), ignore_errors=True)
     os.makedirs(IZLAZ_RELJEF, exist_ok=True)
 
-    subprocess.run(
-        [
-            "gdal2tiles.py",
-            "--xyz",
-            f"--zoom={ZUM_OD}-{ZUM_DO}",
-            "--resampling=bilinear",
-            "--webviewer=none",
-            "--processes=4",
-            "-q",
-            rgba_put,
-            IZLAZ_RELJEF,
-        ],
-        check=True,
-    )
+    # Dva prolaza, jer se rezanje isplati samo na krupnom mjerilu.
+    #
+    # Na sitnim zumovima cijeli obuhvat stane u dvadesetak pločica, pa rezanje
+    # ondje ne štedi gotovo ništa — a KOŠTA, i to vidljivo: sjenčanje odrezano
+    # na kvart pri z14 izgleda kao otok koji pluta na bijelom. Podloga koje
+    # nema nije nenacrtan sloj nego rupa.
+    #
+    # Na z15–17 je obratno: ondje je 95 % svih pločica, rub se ne vidi jer je
+    # pola okna manje od rezerve, i rezanje prepolovi cijeli skup.
+    for od, do, izvorna in (
+        (ZUM_OD, ZUM_REZ_OD - 1, puni),
+        (ZUM_REZ_OD, ZUM_DO, rezani),
+    ):
+        subprocess.run(
+            [
+                "gdal2tiles.py",
+                "--xyz",
+                f"--zoom={od}-{do}",
+                "--resampling=bilinear",
+                "--webviewer=none",
+                "--processes=4",
+                "-q",
+                izvorna,
+                IZLAZ_RELJEF,
+            ],
+            check=True,
+        )
 
     # gdal2tiles uz pločice ostavlja i svoj opis skupa; karta ga ne čita.
     for smece in ("tilemapresource.xml", "googlemaps.html", "openlayers.html", "leaflet.html"):
@@ -281,15 +296,17 @@ def sjencani_reljef(reljef3: str, radni: str) -> int:
             os.rmdir(koren)
 
     logger.info(
-        "sjenčani reljef: %d pločica, %.1f MB (RGBA bi bilo %.1f MB), zumovi %d–%d; "
-        "izbačeno %d praznih izvan kvarta + %.0f m",
+        "sjenčani reljef: %d pločica, %.1f MB (RGBA bi bilo %.1f MB); "
+        "z%d–%d cijeli obuhvat, z%d–%d rezano na kvart + %.0f m (izbačeno %d praznih)",
         broj,
         poslije / 1e6,
         prije / 1e6,
         ZUM_OD,
+        ZUM_REZ_OD - 1,
+        ZUM_REZ_OD,
         ZUM_DO,
-        prazne,
         REZERVA_SJENCANJE_M,
+        prazne,
     )
     return broj
 
