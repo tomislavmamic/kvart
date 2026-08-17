@@ -119,8 +119,19 @@ Jedna skripta, `scripts/izvedi-reljef.py`, iz istog DMR-a koji već koristi
 Zumovi 12–17. Na z17 je 0,87 m po pikselu, dakle točno izvorna gustoća DMR-a;
 z18 i z19 bi bili napuhani isti podatak, pa se dobivaju `maxNativeZoom: 17` i
 Leafletovim rastezanjem. To nije ušteda nego istina o razlučivosti.
-Izrađeno: **585 pločica, 12,9 MB** (sive s alfom, ne RGBA — sjenčanje je sivo,
-pa bi tri jednaka kanala isti bajt nosila tri puta).
+
+Pločice se **režu na kvart + 1 km** (REZERVA_SJENCANJE_M). Rezerva je znatno
+šira nego kod izohipsi jer je sjenčanje PODLOGA: pod njim nema ničega, pa
+ondje gdje ga nema ostaje prazna ploha. Pri z16 je pola okna oko 700 m, pa
+kilometar znači da se do ruba dolazi tek namjernim pomicanjem izvan kvarta —
+provjereno: pri z16 se rub ne vidi, pri z14 se sjenčanje vidi kao otok.
+
+Ostatak obuhvata karte (koji seže do Kozjaka i mora, zbog sloja tokova)
+svjesno ostaje bez sjenčanja: ondje se gleda tok vode, a ne oblik terena.
+
+Izrađeno: **283 pločice, 5,9 MB** (sive s alfom, ne RGBA — sjenčanje je sivo,
+pa bi tri jednaka kanala isti bajt nosila tri puta). Prije rezanja: 585
+pločica i 12,9 MB, od čega je 74 % otpadalo na z17.
 
 ### 2. Izohipse — `public/geo/izohipse.geojson`
 
@@ -193,6 +204,5 @@ Oboje je popravljeno u `karta-klizac.ts` i vrijedi za oba klizača.
 
 Mjereno pri izradi (`npm run izvedi-reljef`): mreža 1641 × 1225, 4,0 MB sirovo
 i 1,6 MB na disku; izohipse 161 crta (26 glavnih), 0,11 MB, rezano na kvart
-+ 120 m; sjenčanje 585
-pločica, 12,9 MB. Očitanje iz mreže protiv izvornog DMR-a na 1.889 nasumičnih
++ 120 m; sjenčanje 283 pločice, 5,9 MB, rezano na kvart + 1 km. Očitanje iz mreže protiv izvornog DMR-a na 1.889 nasumičnih
 točaka: medijan 0,07 m, 95. percentil 0,60 m, najgore 3,70 m.

@@ -66,6 +66,18 @@ GRANICA = os.path.join(KORIJEN, "public", "geo", "granica.geojson")
 # plus 120 m, pa nema razloga da izohipse budu iznimka.
 REZERVA_M = 120.0
 
+# Rezerva za sjenčani reljef, znatno šira od vektorske.
+#
+# Sjenčanje je PODLOGA, ne sloj: pod njim nema ničega, pa ondje gdje ga nema
+# ostaje prazna ploha. Zato mu rub mora biti dovoljno daleko da se ne vidi
+# dok se gleda kvart — pri z16 je pola okna oko 700 m, pa kilometar znači da
+# se do ruba dolazi tek namjernim pomicanjem izvan kvarta.
+#
+# Ostatak obuhvata karte (koji seže do Kozjaka i mora, zbog sloja tokova)
+# svjesno ostaje bez sjenčanja: ondje se gleda tok vode, a ne oblik terena,
+# i ne vrijedi četverostruko više pločica.
+REZERVA_SJENCANJE_M = 1000.0
+
 # Isti okvir kao MAP_MAX_BOUNDS u src/lib/map-views.ts: [zapad, jug, istok,
 # sjever]. Dalje od toga karta ne pušta pomicanje, pa mreža visina ondje ne
 # bi imala tko čitati.
@@ -194,11 +206,18 @@ def sjencani_reljef(reljef3: str, radni: str) -> int:
 
     # Pločica bez alfe pokrila bi more i rubove punom sivom plohom. Alfa se
     # uzima iz DMR-a, ne iz sjenčanja: sjenčanje i na praznini vrati broj.
+    #
+    # Uz to se reže na kvart + REZERVA_SJENCANJE_M. Reljef se računa na cijelom
+    # obuhvatu karte jer ga mreža visina treba, ali pločice se i objavljuju i
+    # drže u gitu, a izvan kvarta ih nitko ne gleda: prije rezanja je 74 %
+    # svih pločica bilo na z17, uglavnom nad područjem kroz koje se samo
+    # prolazi prema tokovima.
     izvor = gdal.Open(reljef3)
     visine = izvor.GetRasterBand(1).ReadAsArray()
     sjena_ds = gdal.Open(sjena)
     siva = sjena_ds.GetRasterBand(1).ReadAsArray()
-    alfa = np.where(visine != PRAZNO, 255, 0).astype(np.uint8)
+    maska = maska_na_mrezi(reljef3, REZERVA_SJENCANJE_M)
+    alfa = np.where((visine != PRAZNO) & maska, 255, 0).astype(np.uint8)
 
     rgba_put = os.path.join(radni, "sjena-rgba.tif")
     rgba = gdal.GetDriverByName("GTiff").Create(
@@ -237,43 +256,68 @@ def sjencani_reljef(reljef3: str, radni: str) -> int:
         if os.path.exists(put):
             os.remove(put)
 
-    broj, prije, poslije = 0, 0, 0
+    broj, prazne, prije, poslije = 0, 0, 0, 0
     for koren, _, datoteke in os.walk(IZLAZ_RELJEF):
         for d in datoteke:
             if not d.endswith(".png"):
                 continue
             put = os.path.join(koren, d)
+            velicina = os.path.getsize(put)
+            stisnuta = _stisni_plocicu(put)
+            if stisnuta is None:
+                # Potpuno prozirna pločica ne crta ništa, a i dalje bi bila
+                # zahtjev, bajtovi i zapis u gitu. gdal2tiles ih uglavnom sam
+                # preskoči jer pokriva puni pravokutnik rastera, a granica
+                # kvarta pravokutnik nije — ovo je ograda ako se to promijeni.
+                prazne += 1
+                continue
             broj += 1
-            prije += os.path.getsize(put)
-            poslije += _stisni_plocicu(put)
+            prije += velicina
+            poslije += stisnuta
+
+    # Prazni direktoriji ostaju iza brisanja i samo zbunjuju pri pregledu.
+    for koren, mape, datoteke in os.walk(IZLAZ_RELJEF, topdown=False):
+        if not datoteke and not mape and koren != IZLAZ_RELJEF:
+            os.rmdir(koren)
+
     logger.info(
-        "sjenčani reljef: %d pločica, %.1f MB (RGBA bi bilo %.1f MB), zumovi %d–%d",
+        "sjenčani reljef: %d pločica, %.1f MB (RGBA bi bilo %.1f MB), zumovi %d–%d; "
+        "izbačeno %d praznih izvan kvarta + %.0f m",
         broj,
         poslije / 1e6,
         prije / 1e6,
         ZUM_OD,
         ZUM_DO,
+        prazne,
+        REZERVA_SJENCANJE_M,
     )
     return broj
 
 
-def _stisni_plocicu(put: str) -> int:
-    """Prepisuje pločicu kao sivu s alfom umjesto RGBA.
+def _stisni_plocicu(put: str) -> int | None:
+    """Prepisuje pločicu kao sivu s alfom umjesto RGBA; praznu briše.
 
     Sjenčanje je sivo — tri jednaka kanala nose isti bajt tri puta. Repozitorij
     je javan i pločice u njemu ostaju zauvijek, a i „sporija veza je normalna”
     je zapisana obveza, pa se plaća jednom ovdje umjesto pri svakom učitavanju.
 
+    Provjera praznine ide ovdje, a ne u zasebnom prolazu, da se svaka pločica
+    otvori jednom umjesto dvaput.
+
     Args:
-        put: Putanja do PNG pločice; prepisuje se na mjestu.
+        put: Putanja do PNG pločice; prepisuje se ili briše na mjestu.
 
     Returns:
-        Veličina zapisane datoteke u bajtovima.
+        Veličina zapisane datoteke u bajtovima, ili `None` ako je pločica bila
+        potpuno prozirna pa je obrisana.
     """
     from PIL import Image
 
     with Image.open(put) as slika:
         siva_alfa = slika.convert("LA")
+    if siva_alfa.getchannel("A").getextrema()[1] == 0:
+        os.remove(put)
+        return None
     siva_alfa.save(put, format="PNG", optimize=True)
     return os.path.getsize(put)
 
@@ -363,14 +407,14 @@ def mreza_visina(reljef3: str, radni: str) -> dict[str, object]:
     return zaglavlje
 
 
-def granica_s_rezervom(radni: str) -> str:
-    """Granica kvarta proširena za REZERVA_M, zapisana kao maska za rezanje.
+def granica_3765(rezerva_m: float) -> ogr.Geometry:
+    """Granica kvarta, spojena i proširena za `rezerva_m`, u EPSG:3765.
 
     Args:
-        radni: Direktorij za međurezultate.
+        rezerva_m: Koliko metara oko granice ostaje unutar maske.
 
     Returns:
-        Putanja do GeoJSON-a s jednim poligonom (EPSG:4326).
+        Jedna geometrija u metrima.
     """
     izvor = ogr.Open(GRANICA)  # drži se: bez reference GDAL počisti sloj
     spoj = ogr.Geometry(ogr.wkbMultiPolygon)
@@ -381,10 +425,23 @@ def granica_s_rezervom(radni: str) -> str:
     # „120” značilo 120 stupnjeva, a i rezerva bi po sjeveru i istoku ispala
     # različita.
     spoj.Transform(pretvorba(4326, 3765))
-    spoj = spoj.Buffer(REZERVA_M)
-    spoj.Transform(pretvorba(3765, 4326))
+    return spoj.Buffer(rezerva_m)
 
-    put = os.path.join(radni, "granica-rezerva.geojson")
+
+def granica_datoteka(radni: str, rezerva_m: float, ime: str) -> str:
+    """Ista granica zapisana kao GeoJSON u 4326, za `ogr2ogr -clipsrc`.
+
+    Args:
+        radni: Direktorij za međurezultate.
+        rezerva_m: Rezerva oko granice, u metrima.
+        ime: Ime datoteke bez nastavka.
+
+    Returns:
+        Putanja do GeoJSON-a s jednim poligonom (EPSG:4326).
+    """
+    spoj = granica_3765(rezerva_m)
+    spoj.Transform(pretvorba(3765, 4326))
+    put = os.path.join(radni, f"{ime}.geojson")
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -395,6 +452,34 @@ def granica_s_rezervom(radni: str) -> str:
     sloj.CreateFeature(f)
     ds = None
     return put
+
+
+def maska_na_mrezi(reljef3: str, rezerva_m: float) -> np.ndarray:
+    """Rasterizira granicu s rezervom na mrežu reljefa.
+
+    Args:
+        reljef3: Raster čiju mrežu maska mora slijediti.
+        rezerva_m: Rezerva oko granice, u metrima.
+
+    Returns:
+        Logička maska: `True` unutar granice s rezervom.
+    """
+    izvor = gdal.Open(reljef3)
+    ds = gdal.GetDriverByName("MEM").Create(
+        "", izvor.RasterXSize, izvor.RasterYSize, 1, gdal.GDT_Byte
+    )
+    ds.SetGeoTransform(izvor.GetGeoTransform())
+    ds.SetProjection(izvor.GetProjection())
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3765)
+    vds = ogr.GetDriverByName("MEM").CreateDataSource("maska")
+    sloj = vds.CreateLayer("g", srs=srs, geom_type=ogr.wkbPolygon)
+    f = ogr.Feature(sloj.GetLayerDefn())
+    f.SetGeometry(granica_3765(rezerva_m))
+    sloj.CreateFeature(f)
+    gdal.RasterizeLayer(ds, [1], sloj, burn_values=[1])
+    return ds.GetRasterBand(1).ReadAsArray().astype(bool)
 
 
 def izohipse(reljef3: str, radni: str) -> int:
@@ -443,7 +528,7 @@ def izohipse(reljef3: str, radni: str) -> int:
             "ogr2ogr",
             "-f", "GeoJSON",
             "-t_srs", "EPSG:4326",
-            "-clipsrc", granica_s_rezervom(radni),
+            "-clipsrc", granica_datoteka(radni, REZERVA_M, "granica-rezerva"),
             "-lco", "COORDINATE_PRECISION=6",
             "-simplify", str(POJEDNOSTAVI),
             "-nln", "izohipse",
