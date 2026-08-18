@@ -19,6 +19,7 @@ import logging
 import math
 import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -35,11 +36,49 @@ logger = logging.getLogger(__name__)
 
 KORIJEN = Path(__file__).resolve().parent.parent
 
-# Obuhvat računa (HTRS96/TM): ploha, kvart i rub, da perjanica ima kamo otići.
-X0, Y0, X1, Y1 = 498400, 4819100, 501800, 4821400
-DX = 20.0
-NX = int((X1 - X0) / DX)
-NY = int((Y1 - Y0) / DX)
+@dataclass(frozen=True)
+class Obuhvat:
+    """Pravokutni obuhvat računa u HTRS96/TM i korak rešetke.
+
+    Attributes:
+        x0: Zapadni rub u metrima.
+        y0: Južni rub u metrima.
+        x1: Istočni rub u metrima.
+        y1: Sjeverni rub u metrima.
+        dx: Korak rešetke u metrima.
+    """
+
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    dx: float
+
+    @property
+    def nx(self) -> int:
+        """Broj stupaca rešetke."""
+        return int((self.x1 - self.x0) / self.dx)
+
+    @property
+    def ny(self) -> int:
+        """Broj redaka rešetke."""
+        return int((self.y1 - self.y0) / self.dx)
+
+
+# Obuhvat prikaza: ploha, kvart i rub, da perjanica ima kamo otići. Ovo je
+# obuhvat iz kojega izlazi polje dima na stranici i ne dira se bez potrebe —
+# svaka promjena mijenja i generirani modul.
+PRIKAZ = Obuhvat(498400, 4819100, 501800, 4821400, 20.0)
+
+# Obuhvat računa raspršenja. Veći je jer perjanica koja izađe iz obuhvata ne
+# može se vratiti, a upravo je vraćanje ono što model s pamćenjem treba moći
+# pokazati. Rub je unutar prozora DMR-a (vidi `dmr.PROZOR`).
+RASPRSENJE = Obuhvat(497600, 4818600, 502400, 4822200, 25.0)
+
+X0, Y0, X1, Y1 = PRIKAZ.x0, PRIKAZ.y0, PRIKAZ.x1, PRIKAZ.y1
+DX = PRIKAZ.dx
+NX = PRIKAZ.nx
+NY = PRIKAZ.ny
 
 # Rešetka koja ide u preglednik; finije od ovoga ništa se ne dobiva jer se
 # čestice ionako crtaju na vlastitoj, gušćoj mreži.
@@ -61,19 +100,22 @@ def _pretvorba() -> osr.CoordinateTransformation:
     return osr.CoordinateTransformation(izvor, cilj)
 
 
-def ucitaj_reljef() -> np.ndarray:
+def ucitaj_reljef(obuhvat: Obuhvat = PRIKAZ) -> np.ndarray:
     """Učitava DMR i uzorkuje ga na računsku rešetku.
 
+    Args:
+        obuhvat: Obuhvat i korak rešetke.
+
     Returns:
-        Polje visina u metrima, oblika (NY, NX); bez rupa.
+        Polje visina u metrima, oblika (ny, nx); bez rupa.
     """
     izvor = gdal.Open(dmr.skini_dmr())
     gt = izvor.GetGeoTransform()
     sirovo = izvor.GetRasterBand(1).ReadAsArray().astype(np.float64)
     sirovo[sirovo < -100] = np.nan
 
-    xs = X0 + (np.arange(NX) + 0.5) * DX
-    ys = Y1 - (np.arange(NY) + 0.5) * DX
+    xs = obuhvat.x0 + (np.arange(obuhvat.nx) + 0.5) * obuhvat.dx
+    ys = obuhvat.y1 - (np.arange(obuhvat.ny) + 0.5) * obuhvat.dx
     cx = np.clip(((xs - gt[0]) / gt[1]).astype(int), 0, sirovo.shape[1] - 1)
     cy = np.clip(((ys - gt[3]) / gt[5]).astype(int), 0, sirovo.shape[0] - 1)
     z = sirovo[np.ix_(cy, cx)]
@@ -104,11 +146,14 @@ def gladi(polje: np.ndarray, prolaza: int) -> np.ndarray:
     return polje
 
 
-def maska_plohe() -> np.ndarray:
+def maska_plohe(obuhvat: Obuhvat = PRIKAZ) -> np.ndarray:
     """Rasterizira obris odlagališta na računsku rešetku.
 
+    Args:
+        obuhvat: Obuhvat i korak rešetke.
+
     Returns:
-        Logičko polje oblika (NY, NX); istina unutar plohe.
+        Logičko polje oblika (ny, nx); istina unutar plohe.
 
     Raises:
         SystemExit: Ako sloj s obrisom nedostaje.
@@ -122,11 +167,13 @@ def maska_plohe() -> np.ndarray:
     tocke = np.array(
         [_pretvorba().TransformPoint(x, y)[:2] for x, y in prsten]
     )
-    px = (tocke[:, 0] - X0) / DX
-    py = (Y1 - tocke[:, 1]) / DX
+    px = (tocke[:, 0] - obuhvat.x0) / obuhvat.dx
+    py = (obuhvat.y1 - tocke[:, 1]) / obuhvat.dx
 
-    gx, gy = np.meshgrid(np.arange(NX) + 0.5, np.arange(NY) + 0.5)
-    unutra = np.zeros((NY, NX), bool)
+    gx, gy = np.meshgrid(
+        np.arange(obuhvat.nx) + 0.5, np.arange(obuhvat.ny) + 0.5
+    )
+    unutra = np.zeros((obuhvat.ny, obuhvat.nx), bool)
     n = len(px)
     for i in range(n):
         j = (i + 1) % n
@@ -140,7 +187,11 @@ def maska_plohe() -> np.ndarray:
 
 
 def polje_vjetra(
-    z: np.ndarray, smjer_od: float, brzina: float, dubina: float
+    z: np.ndarray,
+    smjer_od: float,
+    brzina: float,
+    dubina: float,
+    obuhvat: Obuhvat = PRIKAZ,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Traži polje kojemu je protok masa dosljedan: ∇·(d∇λ) = −∇·(d·u₀).
 
@@ -149,19 +200,21 @@ def polje_vjetra(
         smjer_od: Meteorološki smjer iz kojega puše, u stupnjevima.
         brzina: Brzina na otvorenom, u m/s.
         dubina: Debljina miješanog sloja iznad najniže točke, u metrima.
+        obuhvat: Obuhvat i korak rešetke; mora odgovarati obliku `z`.
 
     Returns:
         Par (u, v): brzina prema istoku i prema sjeveru, u m/s.
     """
+    ny, nx, korak = obuhvat.ny, obuhvat.nx, obuhvat.dx
     kut = math.radians(270.0 - smjer_od)
     # v je brzina prema sjeveru u stvarnom prostoru, ne prema dolje po retku.
-    u0 = np.full((NY, NX), brzina * math.cos(kut))
-    v0 = np.full((NY, NX), brzina * math.sin(kut))
+    u0 = np.full((ny, nx), brzina * math.cos(kut))
+    v0 = np.full((ny, nx), brzina * math.sin(kut))
 
     d = np.clip(dubina - (z - z.min()), 25.0, None)
     divergencija = np.zeros_like(d)
-    divergencija[:, 1:-1] += ((d * u0)[:, 2:] - (d * u0)[:, :-2]) / (2 * DX)
-    divergencija[1:-1, :] += ((d * v0)[:-2, :] - (d * v0)[2:, :]) / (2 * DX)
+    divergencija[:, 1:-1] += ((d * u0)[:, 2:] - (d * u0)[:, :-2]) / (2 * korak)
+    divergencija[1:-1, :] += ((d * v0)[:-2, :] - (d * v0)[2:, :]) / (2 * korak)
 
     lam = np.zeros_like(d)
     de = 0.5 * (d + np.roll(d, -1, 1))
@@ -175,7 +228,7 @@ def polje_vjetra(
             + dz * np.roll(lam, 1, 1)
             + ds * np.roll(lam, 1, 0)
             + dj * np.roll(lam, -1, 0)
-            + divergencija * DX * DX
+            + divergencija * korak * korak
         ) / zbroj
         lam[0, :] = lam[1, :]
         lam[-1, :] = lam[-2, :]
@@ -184,8 +237,8 @@ def polje_vjetra(
 
     gx = np.zeros_like(lam)
     gy = np.zeros_like(lam)
-    gx[:, 1:-1] = (lam[:, 2:] - lam[:, :-2]) / (2 * DX)
-    gy[1:-1, :] = (lam[:-2, :] - lam[2:, :]) / (2 * DX)
+    gx[:, 1:-1] = (lam[:, 2:] - lam[:, :-2]) / (2 * korak)
+    gy[1:-1, :] = (lam[:-2, :] - lam[2:, :]) / (2 * korak)
     return u0 + gx, v0 + gy
 
 

@@ -89,6 +89,10 @@ __pycache__/
 /.cache/podrucje-kvarta.geojson
 /.cache/era5-karepovac.json
 /.cache/raspesenje.npz
+/.cache/bazdarenje.json
+/.cache/polja-vjetra-*.npy
+/.cache/postaje/
+/.cache/vjetar/
 
 # Privremeni OSS odgovori ciljane provjere vlasništva mogu sadržavati imena,
 # adrese i OIB-e fizičkih osoba. Generator ih koristi samo lokalno za nastavak
