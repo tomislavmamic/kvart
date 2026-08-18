@@ -792,6 +792,11 @@ export function KarepovacKarte() {
           siroka
         />
       </div>
+
+      <p className="mt-4 text-base leading-7 text-kamen-tih">
+        Podloga: izohipse iz LiDAR-a Državne geodetske uprave; zgrade, ulice i obris
+        odlagališta iz OpenStreetMapa (ODbL); tokovi izvedeni iz reljefa.
+      </p>
     </section>
   );
 }

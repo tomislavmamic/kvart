@@ -133,3 +133,9 @@ test("gibanje ima mirnu inačicu", () => {
     assert.match(mirno, new RegExp(`\\.${r}\\b`), `.${r} nema mirnu inačicu`);
   }
 });
+
+test("podloga je potpisana jer je izvedena iz tuđih slojeva", () => {
+  // OSM je pod ODbL — potpis mora biti vidljiv na stranici, ne samo u datoteci
+  assert.match(izvor, /OpenStreetMapa \(ODbL\)/);
+  assert.match(izvor, /Državne geodetske uprave/);
+});
