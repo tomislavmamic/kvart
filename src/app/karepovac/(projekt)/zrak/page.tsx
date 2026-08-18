@@ -6,7 +6,14 @@ import {
   PrimaryLink,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { DnevniHod, RuzaMirisa } from "@/components/karepovac/sluzbena-mjerenja";
+import { BAZDARENJE } from "@/generated/karepovac-bazdarenje";
+import { MJERENJA } from "@/generated/karepovac-mjerenja";
 import { KAREPOVAC_PHASES } from "@/lib/karepovac";
+
+const H2S_SATI = MJERENJA.postaje[0].tvari[0].sati;
+const MERKAPTANI_SATI =
+  MJERENJA.postaje[1].tvari[MJERENJA.postaje[1].tvari.length - 1].sati;
 
 export default function KarepovacPage() {
   return (
@@ -37,12 +44,26 @@ export default function KarepovacPage() {
         <PoljeDimaVeliko />
       </section>
 
-      <section className="grid gap-8 lg:grid-cols-[0.68fr_1.32fr] lg:gap-12">
-        <SectionHeading title="Danas još nemamo vlastita mjerenja">
+      <section className="space-y-8">
+        <SectionHeading title="Što već znamo iz službenih mjerenja">
           <p>
-            Mjerenja ćemo objaviti tek nakon što uređaje usporedimo, umjerimo i
-            provjerimo. Smjer širenja počet ćemo procjenjivati tek kada budemo
-            imali pouzdan podatak o vjetru i valjana mjerenja.
+            Naših uređaja još nema, ali na rubu odlagališta dvije službene
+            postaje mjere svakoga sata. Skinuli smo sve što su objavile —
+            {" "}{H2S_SATI.toLocaleString("hr-HR")} sati sumporovodika i{" "}
+            {MERKAPTANI_SATI.toLocaleString("hr-HR")} sati merkaptana — i evo
+            što u tome piše.
+          </p>
+        </SectionHeading>
+        <DnevniHod />
+        <RuzaMirisa />
+      </section>
+
+      <section className="grid gap-8 lg:grid-cols-[0.68fr_1.32fr] lg:gap-12">
+        <SectionHeading title="Što model smije reći, a što ne">
+          <p>
+            Model raspršenja pustili smo kroz {BAZDARENJE.sati.toLocaleString("hr-HR")}{" "}
+            sati mjerenja da vidimo pogađa li. Rezultat je pola dobar, i bolje
+            je da to piše ovdje nego da se otkrije poslije.
           </p>
           <Link
             href="/karepovac/metodologija"
@@ -52,19 +73,21 @@ export default function KarepovacPage() {
           </Link>
         </SectionHeading>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
-          <h2 className="text-xl font-bold">Što je već dogovoreno</h2>
+          <h2 className="text-xl font-bold">Provjera na tuđim tvarima</h2>
           <ul className="mt-5 space-y-4 leading-7">
             <Fact>
-              Za početak planiramo najmanje tri jednaka mjerna uređaja i
-              pouzdan lokalni podatak o vjetru.
+              Ozon i ugljikov monoksid ne dolaze s Karepovca — ovise samo o tome
+              koliko se zrak miješa. Njih model pogađa dobro, pa mu račun
+              razrjeđenja valja.
             </Fact>
             <Fact>
-              Amonijak (NH₃) dodat ćemo samo ako se tijekom usporedbe pokaže da
-              ga odabrani senzor može pouzdano pratiti pri niskim koncentracijama.
+              Merkaptane, koji dolaze s Karepovca, model ne pogađa. Ne valja mu,
+              dakle, pretpostavka da odlagalište ispušta jednako cijeli dan — a
+              mjerenja pokazuju da ne ispušta.
             </Fact>
             <Fact>
-              Naša će mjerenja biti orijentacijska. Neće zamijeniti službena ni
-              sigurnosna mjerenja.
+              Zato ovdje nema karte mirisa. Model smije reći kamo zrak s plohe
+              odlazi; koliko tada smrdi, ne smije.
             </Fact>
           </ul>
         </div>

@@ -19,6 +19,7 @@
     "skini-postaje": "/opt/homebrew/bin/python3 scripts/skini-postaje.py",
     "provjeri-vjetar": "/opt/homebrew/bin/python3 scripts/provjeri-vjetar.py",
     "bazdari-izvor": "/opt/homebrew/bin/python3 scripts/bazdari-izvor.py",
+    "izvedi-mjerenja": "/opt/homebrew/bin/python3 scripts/izvedi-mjerenja-karticu.py",
     "import-grad-geo": "tsx scripts/import-split-gis.ts",
     "generate-public-parcels": "tsx scripts/generate-public-parcels.ts",
     "generate-planned-road-parcels": "tsx scripts/generate-planned-road-parcels.ts",

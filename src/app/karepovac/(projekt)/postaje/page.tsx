@@ -4,27 +4,35 @@ import {
   PageIntro,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { SluzbenePostaje } from "@/components/karepovac/sluzbena-mjerenja";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Postaje",
   description:
-    "Pratite koje su mjerne postaje postavljene, kako biramo njihova mjesta i kako štitimo adresu i kontakt stanovnika.",
+    "Dvije službene postaje već stoje na Karepovcu i objavljuju satna mjerenja. Naših postaja još nema; ovdje piše kako biramo njihova mjesta i kako štitimo adresu stanovnika.",
 });
 
 export default function PostajePage() {
   return (
     <div className="space-y-14">
-      <PageIntro title="Još nismo postavili nijednu mjernu postaju">
-        <p>Nećemo prikazivati izmišljene oznake ni točke samo da bi karta izgledala popunjeno. Postaju ćemo dodati tek nakon što sastavimo i provjerimo uređaj, odaberemo mjesto i dogovorimo se sa stanovnikom koji ga ustupa.</p>
+      <PageIntro title="Dvije službene postaje već stoje na Karepovcu">
+        <p>Na jugoistočnom rubu odlagališta rade dvije mjerne postaje i objavljuju satne tablice, mjesec po mjesecu. Jednu vodi Čistoća, drugu Grad Split; obje mjeri Nastavni zavod za javno zdravstvo. Nismo to znali dok nismo potražili — pa to ovdje pišemo prije nego što išta kažemo o vlastitim uređajima.</p>
       </PageIntro>
+
+      <section>
+        <SluzbenePostaje />
+        <p className="mt-4 max-w-3xl text-base leading-7 text-kamen-drugi">
+          Podaci su javni i strojno čitljivi, ali stoje na stranici bez pretraživanja i bez ijednog grafikona. Skidamo ih i objavljujemo ovdje uz oznaku da su službeni, a ne naši.
+        </p>
+      </section>
 
       <section className="overflow-hidden rounded-2xl border border-kamen-rub bg-white lg:grid lg:grid-cols-[1.1fr_0.9fr]">
         <StationField />
         <div className="flex flex-col justify-center bg-kamen-tinta p-6 text-white sm:p-9">
-          <p className="text-3xl font-bold tracking-[-0.025em]">0 postavljenih postaja</p>
+          <p className="text-3xl font-bold tracking-[-0.025em]">Naših postaja: nijedna</p>
           <p className="mt-4 text-lg leading-8 text-zinc-300">
-            Trenutačno nemamo nijednu postavljenu postaju. Za prvi pokusni rad trebaju nam najmanje tri provjerena uređaja, raspoređena tako da mjere s različitih strana Karepovca.
+            Službene postaje stoje uz samo odlagalište, a ne u kvartu. Zato i dalje trebamo vlastite uređaje — najmanje tri, raspoređena tako da mjere ondje gdje ljudi žive. Nećemo prikazivati izmišljene oznake samo da bi karta izgledala popunjeno.
           </p>
           <Link
             href="/karepovac/ukljuci-se"

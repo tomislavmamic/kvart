@@ -15,6 +15,7 @@ const COPY_FILES = [
   "src/app/karepovac/(projekt)/podaci/page.tsx",
   "src/app/karepovac/(projekt)/financije/page.tsx",
   "src/app/karepovac/(projekt)/postaje/page.tsx",
+  "src/components/karepovac/sluzbena-mjerenja.tsx",
 ] as const;
 
 const copyByPath = Object.fromEntries(
@@ -53,9 +54,15 @@ test("Karepovac copy avoids translated and bureaucratic phrases", () => {
 });
 
 test("Karepovac copy states the preparation stage in plain Croatian", () => {
+  // Službene postaje na Karepovcu postoje i to se kaže prvo; da naših nema,
+  // kaže se odmah zatim, jednako izravno.
   assert.match(
     copyByPath["src/app/karepovac/(projekt)/postaje/page.tsx"],
-    /Još nismo postavili nijednu mjernu postaju/,
+    /Dvije službene postaje već stoje na Karepovcu/,
+  );
+  assert.match(
+    copyByPath["src/app/karepovac/(projekt)/postaje/page.tsx"],
+    /Naših postaja: nijedna/,
   );
   assert.match(
     copyByPath["src/app/karepovac/(projekt)/metodologija/page.tsx"],
@@ -106,6 +113,12 @@ test("reviewed wording stays on its intended page", () => {
     copyByPath["src/app/karepovac/(projekt)/layout.tsx"],
     /Pratite pripremu mjernih postaja, metodologiju, podatke i načine uključivanja/,
   );
+});
+
+test("model ne obećava kartu mirisa koju ne može potkrijepiti", () => {
+  const zrak = copyByPath["src/app/karepovac/(projekt)/zrak/page.tsx"];
+  assert.match(zrak, /Zato ovdje nema karte mirisa/);
+  assert.match(zrak, /Merkaptane, koji dolaze s Karepovca, model ne pogađa/);
 });
 
 test("Karepovac paragraphs use at least one rem text", () => {
