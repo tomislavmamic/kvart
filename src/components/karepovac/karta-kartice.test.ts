@@ -118,10 +118,20 @@ test("stranica nosi svih jedanaest kartica, svaku s oznakom izvora", () => {
 });
 
 test("svaka karta ima tekstualni opis za čitač zaslona", () => {
-  const karte = izvor.match(/<Karta\b/g) ?? [];
-  // deset kartica ima kartu; obveze i rokovi nemaju jer nisu prostorni podatak
-  assert.equal(karte.length, 10);
-  assert.doesNotMatch(izvor, /<Karta\s+opis={?""/);
+  // Kartica mirisa nosi KartaDima jer joj se perjanica računa u pregledniku;
+  // za čitač zaslona je to ista obveza kao i kod nepomičnih karata.
+  const karte = izvor.match(/<Karta(?:Dima)?\b/g) ?? [];
+  // Deset kartica ima kartu — obveze i rokovi nemaju jer nisu prostorni
+  // podatak — a jedanaesta je velika perjanica za /karepovac/zrak.
+  assert.equal(karte.length, 11);
+  assert.doesNotMatch(izvor, /<Karta(?:Dima)?\s+opis={?""/);
+});
+
+test("perjanica se crta na platnu, ispod natpisa i uz obris plohe", () => {
+  assert.match(izvor, /<DimPerjanica \/>/);
+  const platno = izvor.indexOf("<DimPerjanica />");
+  const natpisi = izvor.indexOf("<Mjesta />", platno);
+  assert.ok(platno > 0 && natpisi > platno, "natpisi moraju doći nakon platna");
 });
 
 test("gibanje ima mirnu inačicu", () => {

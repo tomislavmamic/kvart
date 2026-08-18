@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
+
 import {
   BLIZI_OKVIR,
   CESTE_UZ_PLOHU,
@@ -26,10 +28,6 @@ const IZVOR_STIL: Record<Izvor, string> = {
   procjena: "bg-kamen-plitko text-kamen-tekst",
   istraziti: "bg-amber-100 text-amber-900",
 };
-
-/** Ogledne jačine dojava; nisu mjerenje, služe da se vidi kako kartica radi. */
-const OGLEDNE_DOJAVE = [3, 2, 3, 1, 2, 1, 2, 1] as const;
-const DOJAVA_BOJA = ["#fcd34d", "#d97706", "#a30037"] as const;
 
 function Mjesto({
   x,
@@ -143,7 +141,7 @@ function Ploha({ ispuna = true }: { ispuna?: boolean }) {
 
 /** Podloga se crta jednom pa je svaka kartica samo poziva — tako sve stoje
  *  nad istim ulicama i datoteka ostaje razumne veličine. */
-function PodlogaDefinicija() {
+export function PodlogaDefinicija() {
   return (
     <svg width={0} height={0} aria-hidden="true" focusable="false" className="absolute">
       <defs>
@@ -227,6 +225,88 @@ function Karta({
       {children}
       <Mjerilo blizu={blizu} />
     </svg>
+  );
+}
+
+/**
+ * Karta s perjanicom koja se računa u pregledniku.
+ *
+ * Tri sloja jer platno mora leći preko podloge, a natpisi preko platna —
+ * inače dim proguta imena mjesta.
+ */
+export function KartaDima({ opis, children }: { opis: string; children?: ReactNode }) {
+  return (
+    <div className="relative">
+      <svg
+        viewBox={OKVIR.viewBox}
+        aria-hidden="true"
+        className="block h-auto w-full"
+      >
+        <use href="#karepovac-podloga" />
+      </svg>
+      <DimPerjanica />
+      <svg
+        viewBox={OKVIR.viewBox}
+        role="img"
+        aria-label={opis}
+        className="pointer-events-none absolute inset-0 block h-full w-full"
+      >
+        <Ploha ispuna={false} />
+        {children}
+        <Mjesta />
+        <Mjerilo />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Perjanica preko cijele širine, za uvodni dio `/karepovac/zrak`.
+ *
+ * Sama nosi definiciju podloge jer je na toj stranici nema tko drugi postaviti.
+ */
+export function PoljeDimaVeliko() {
+  return (
+    <div className="relative flex flex-col justify-between bg-[#fcfbf9] p-4 sm:p-6">
+      <PodlogaDefinicija />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <span className="text-sm font-bold text-kamen-tinta">
+          Kako se miris nosi niz padinu
+        </span>
+        <span className="rounded-lg bg-amber-100 px-3 py-2 text-right text-xs text-amber-900">
+          <span className="block font-bold">Model, ne mjerenje</span>
+          <span className="mt-0.5 block">Mjerenja još nisu počela</span>
+        </span>
+      </div>
+
+      <div className="my-4 overflow-hidden rounded-lg border border-kamen-tlo">
+        <KartaDima opis="Karta kvarta: dim s Karepovca putuje u naletima niz padinu preko Dračevca prema Bilicama.">
+          <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
+            {`jugoistočnjak — os ${OKVIR.azimut}°`}
+          </Mjesto>
+        </KartaDima>
+      </div>
+
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
+        <div data-kind="estimated" className="bg-white p-3">
+          <dt className="font-semibold text-kamen-tinta">Polje vjetra</dt>
+          <dd className="mt-0.5 text-kamen-tekst">iz LiDAR reljefa</dd>
+        </div>
+        <div data-kind="estimated" className="bg-white p-3">
+          <dt className="font-semibold text-kamen-tinta">Prikazano vrijeme</dt>
+          <dd className="mt-0.5 text-kamen-tekst">slab jugoistočnjak</dd>
+        </div>
+        <div data-kind="missing" className="bg-white p-3">
+          <dt className="font-semibold text-kamen-tinta">Jačina izvora</dt>
+          <dd className="mt-0.5 text-kamen-tekst">još ne znamo</dd>
+        </div>
+      </dl>
+
+      <p className="mt-3 max-w-prose text-base leading-7 text-kamen-drugi">
+        Oblik perjanice govori kamo miris ide, ali ne i koliko ga ima — jačinu
+        izvora još nismo izmjerili.
+      </p>
+    </div>
   );
 }
 
@@ -355,36 +435,18 @@ export function KarepovacKarte() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Kartica
           naslov="Miris iz smjera Karepovca"
-          opis="Svaka dojava nosi mjesto, sat i jačinu. Krug je veći i tamniji što je miris bio jači. Ovo je jedino što možemo skupljati bez ijednog uređaja."
-          izvor="mi"
-          izvorOznaka="Bilježimo sami"
-          napomena="Obrazac za dojavu radi od prvog dana. Senzore postavljamo tek kad ih usporedimo i umjerimo."
+          opis="Ploha leži iznad kvarta i istočno od njega. Prikaz računa kako se miris nosi niz padinu pri slabom jugoistočnjaku i niskom poklopcu zraka — pri vremenu na koje se ljudi i žale. Naleti izlaze sami jer izvor ne ispušta jednolično."
+          izvor="procjena"
+          izvorOznaka="Model, ne mjerenje"
+          napomena="Polje vjetra izvedeno je iz LiDAR reljefa; jačina izvora još je pretpostavka. Dojave stanovnika su ono čime ćemo ovaj prikaz provjeriti — obrazac radi od prvog dana."
           poveznica="/karepovac/zrak"
           poveznicaOznaka="Uđite u projekt praćenja zraka"
         >
-          <Karta opis="Karta kvarta s oglednim dojavama mirisa, obojenima po jačini, i sa smjerom vjetra koji ih nosi s Karepovca.">
-            <Ploha />
-            {TOCKE.map((t, i) => {
-              const jacina = OGLEDNE_DOJAVE[i % OGLEDNE_DOJAVE.length];
-              return (
-                <circle
-                  key={t.d}
-                  cx={t.x}
-                  cy={t.y}
-                  r={5 + jacina * 3}
-                  fill={DOJAVA_BOJA[jacina - 1]}
-                  fillOpacity={0.75}
-                  stroke="#ffffff"
-                  strokeWidth={1.6}
-                  {...NESKALIRANO}
-                />
-              );
-            })}
-            <Mjesta />
+          <KartaDima opis="Karta kvarta: dim s Karepovca putuje u naletima niz padinu preko Dračevca prema Bilicama.">
             <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
-              {`vjetar s levanta — os ${OKVIR.azimut}°`}
+              {`jugoistočnjak — os ${OKVIR.azimut}°`}
             </Mjesto>
-          </Karta>
+          </KartaDima>
         </Kartica>
 
         <Kartica

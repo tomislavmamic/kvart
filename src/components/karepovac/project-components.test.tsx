@@ -3,36 +3,48 @@ import test from "node:test";
 
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { MonitoringField } from "./project-components";
+import { PoljeDimaVeliko } from "./karta-kartice";
 
-test("monitoring field previews future measurements without presenting them as real", () => {
-  const markup = renderToStaticMarkup(<MonitoringField />);
+test("perjanica se ne predstavlja kao mjerenje", () => {
+  const markup = renderToStaticMarkup(<PoljeDimaVeliko />);
 
-  for (const phrase of [
-    "Ogledni podaci",
-    "Nisu stvarna mjerenja",
-    "Postaja A",
-    "Postaja B",
-    "Postaja C",
-    "1,8 ppb",
-    "4,2 ppb",
-    "2,6 ppb",
-    "Vjetar",
-    "SZ · 3,2 m/s",
-    "Procjena prema vjetru",
-    "Prema jugoistoku",
+  for (const izraz of [
+    "Model, ne mjerenje",
+    "Mjerenja još nisu počela",
+    "Polje vjetra",
+    "iz LiDAR reljefa",
+    "Jačina izvora",
+    "još ne znamo",
   ]) {
-    assert.match(markup, new RegExp(phrase), phrase);
+    assert.match(markup, new RegExp(izraz), izraz);
   }
 
-  assert.match(markup, /data-preview="true"/);
-  assert.ok(
-    (markup.match(/data-kind="measurement"/g) ?? []).length >= 3,
-    "each station preview should be marked as a measurement",
-  );
+  // Ništa na prikazu ne smije nositi oznaku izmjerenog.
+  assert.doesNotMatch(markup, /data-kind="measurement"/);
   assert.equal(
     (markup.match(/data-kind="estimated"/g) ?? []).length,
-    1,
-    "wind estimate should be marked exactly once",
+    2,
+    "izvedene stavke moraju biti označene kao procjena",
   );
+  assert.match(markup, /data-kind="missing"/);
+});
+
+test("prizor nosi podlogu, obris plohe i mjerilo", () => {
+  const markup = renderToStaticMarkup(<PoljeDimaVeliko />);
+
+  assert.match(markup, /id="karepovac-podloga"/, "definicija podloge");
+  assert.match(markup, /href="#karepovac-podloga"/, "uporaba podloge");
+  assert.match(markup, /<canvas/, "platno za perjanicu");
+  assert.match(markup, /500 m/, "mjerilo");
+  assert.match(markup, /Dračevac/, "natpisi mjesta");
+  assert.match(markup, /jugoistočnjak/, "prikazano vrijeme");
+});
+
+test("platno leži ispod natpisa, da dim ne proguta imena mjesta", () => {
+  const markup = renderToStaticMarkup(<PoljeDimaVeliko />);
+
+  const platno = markup.indexOf("<canvas");
+  const natpis = markup.indexOf("Dračevac");
+  assert.ok(platno > 0 && natpis > 0, "oba sloja moraju postojati");
+  assert.ok(platno < natpis, "natpisi se crtaju nakon platna");
 });

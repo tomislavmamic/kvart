@@ -87,7 +87,7 @@ test("methodology steps use active plain Croatian", () => {
 
 test("reviewed wording stays on its intended page", () => {
   assert.match(
-    copyByPath["src/components/karepovac/project-components.tsx"],
+    copyByPath["src/components/karepovac/karta-kartice.tsx"],
     /Mjerenja još nisu počela/,
   );
   assert.match(

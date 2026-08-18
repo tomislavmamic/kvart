@@ -1,8 +1,8 @@
 import Link from "next/link";
 
+import { PoljeDimaVeliko } from "@/components/karepovac/karta-kartice";
 import {
   EvidenceRegister,
-  MonitoringField,
   PrimaryLink,
   SectionHeading,
 } from "@/components/karepovac/project-components";
@@ -34,7 +34,7 @@ export default function KarepovacPage() {
             </PrimaryLink>
           </div>
         </div>
-        <MonitoringField />
+        <PoljeDimaVeliko />
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[0.68fr_1.32fr] lg:gap-12">
