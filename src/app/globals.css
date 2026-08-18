@@ -532,3 +532,124 @@ body {
     margin-bottom: calc(3.25rem + env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* Kartice na /karepovac. Sve stoje nad istom podlogom, pa su i stilovi
+ * zajednički — natpis mora ostati čitljiv nad izohipsama i nad tamnim poljem
+ * vjetra, a gibanje mora imati mirnu inačicu. */
+.karepovac-mjesto {
+  fill: var(--color-kamen-tinta);
+  paint-order: stroke fill;
+  stroke: #ffffff;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  letter-spacing: 0.06em;
+}
+
+.karepovac-mjesto-ploha {
+  fill: var(--color-kamen-tekst);
+  letter-spacing: 0.1em;
+}
+
+.karepovac-mjerilo text {
+  fill: var(--color-kamen-tekst);
+  paint-order: stroke fill;
+  stroke: #ffffff;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+/* Nad poljem vjetra podloga je tamna, pa mjerilo i natpisi idu u bijelo. */
+.karepovac-karta-vjetar .karepovac-mjerilo path {
+  stroke: #ffffff;
+  opacity: 0.85;
+}
+
+.karepovac-karta-vjetar .karepovac-mjerilo g path {
+  fill: #ffffff;
+  stroke: none;
+}
+
+.karepovac-karta-vjetar .karepovac-mjerilo text,
+.karepovac-karta-vjetar .karepovac-mjesto {
+  fill: #ffffff;
+  stroke: #0b2440;
+  stroke-opacity: 0.55;
+}
+
+@keyframes karepovac-protok {
+  to {
+    stroke-dashoffset: -60;
+  }
+}
+
+@keyframes karepovac-struji {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+
+@keyframes karepovac-puls {
+  0% {
+    transform: scale(0.45);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes karepovac-titraj {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.karepovac-tece {
+  stroke-dasharray: 7 11;
+  animation: karepovac-protok 3.2s linear infinite;
+}
+
+.karepovac-struja {
+  stroke-dasharray: 2 20;
+  opacity: 0.9;
+  animation: karepovac-struji linear infinite;
+}
+
+.karepovac-puls {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: karepovac-puls 4.2s ease-out infinite;
+}
+
+.karepovac-plamen {
+  animation: karepovac-titraj 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .karepovac-tece,
+  .karepovac-struja,
+  .karepovac-puls,
+  .karepovac-plamen {
+    animation: none;
+  }
+
+  .karepovac-struja {
+    stroke-dasharray: none;
+    opacity: 0.55;
+  }
+
+  .karepovac-puls {
+    opacity: 0.5;
+  }
+}

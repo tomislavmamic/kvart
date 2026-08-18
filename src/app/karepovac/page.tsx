@@ -6,6 +6,7 @@ import {
   PrimaryLink,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { KarepovacKarte } from "@/components/karepovac/karta-kartice";
 import { KAREPOVAC_PHASES } from "@/lib/karepovac";
 
 export default function KarepovacPage() {
@@ -36,6 +37,8 @@ export default function KarepovacPage() {
         </div>
         <MonitoringField />
       </section>
+
+      <KarepovacKarte />
 
       <section className="grid gap-8 lg:grid-cols-[0.68fr_1.32fr] lg:gap-12">
         <SectionHeading title="Danas još nemamo vlastita mjerenja">

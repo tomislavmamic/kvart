@@ -6,6 +6,7 @@ import test from "node:test";
 const COPY_FILES = [
   "src/lib/karepovac.ts",
   "src/components/karepovac/project-components.tsx",
+  "src/components/karepovac/karta-kartice.tsx",
   "src/app/karepovac/layout.tsx",
   "src/app/karepovac/page.tsx",
   "src/app/karepovac/ukljuci-se/page.tsx",
