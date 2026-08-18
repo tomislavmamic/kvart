@@ -10,12 +10,13 @@ import {
 
 const publicMetadataFiles = [
   "karta/page.tsx",
-  "karepovac/layout.tsx",
-  "karepovac/financije/page.tsx",
-  "karepovac/metodologija/page.tsx",
-  "karepovac/podaci/page.tsx",
-  "karepovac/postaje/page.tsx",
-  "karepovac/ukljuci-se/page.tsx",
+  "karepovac/page.tsx",
+  "karepovac/(projekt)/layout.tsx",
+  "karepovac/(projekt)/financije/page.tsx",
+  "karepovac/(projekt)/metodologija/page.tsx",
+  "karepovac/(projekt)/podaci/page.tsx",
+  "karepovac/(projekt)/postaje/page.tsx",
+  "karepovac/(projekt)/ukljuci-se/page.tsx",
   "prijedlozi/page.tsx",
   "prijavi/page.tsx",
   "plan/page.tsx",
@@ -38,7 +39,7 @@ test("the main public journeys use the approved share copy", async () => {
       "Istraži prostorne planove, katastarske čestice, javne površine i infrastrukturu Dračevca i Bilica.",
     ],
     [
-      "karepovac/layout.tsx",
+      "karepovac/(projekt)/layout.tsx",
       "Pratite pripremu mjernih postaja, metodologiju, podatke i načine uključivanja.",
     ],
     [

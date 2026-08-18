@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import {
@@ -235,6 +236,8 @@ function Kartica({
   izvor,
   izvorOznaka,
   napomena,
+  poveznica,
+  poveznicaOznaka,
   blizu = false,
   siroka = false,
   children,
@@ -244,6 +247,8 @@ function Kartica({
   izvor: Izvor;
   izvorOznaka: string;
   napomena: string;
+  poveznica?: string;
+  poveznicaOznaka?: string;
   blizu?: boolean;
   siroka?: boolean;
   children?: ReactNode;
@@ -267,6 +272,14 @@ function Kartica({
           {naslov}
         </h3>
         <p className="max-w-[62ch] text-base leading-7 text-kamen-tekst">{opis}</p>
+        {poveznica && poveznicaOznaka && (
+          <Link
+            href={poveznica}
+            className="fokus mt-1 inline-flex w-fit rounded-md text-base font-semibold text-maslina underline decoration-maslina-rub decoration-2 underline-offset-4 hover:text-maslina-tamna"
+          >
+            {poveznicaOznaka} →
+          </Link>
+        )}
         <div className="mt-auto flex flex-wrap items-baseline gap-x-3 gap-y-2 pt-2">
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${IZVOR_STIL[izvor]}`}
@@ -292,9 +305,9 @@ export function KarepovacKarte() {
 
       <div className="grid gap-4 rounded-2xl bg-kamen-tinta p-5 text-white sm:p-8 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
-          <h2 className="max-w-[22ch] text-3xl font-extrabold leading-[1.08] tracking-[-0.035em] text-white sm:text-4xl">
+          <h1 className="max-w-[22ch] text-3xl font-extrabold leading-[1.08] tracking-[-0.035em] text-white sm:text-4xl">
             Karepovac je gore, mi smo pod njim
-          </h2>
+          </h1>
           <p className="mt-4 max-w-[62ch] text-base leading-7 text-zinc-300 sm:text-lg sm:leading-8">
             Kad puše levant, zrak nam nosi miris s plohe. Kad padne kiša, procjedna
             voda ide kroz krš prema našim bunarima i vrtovima. Na svakoj je kartici
@@ -346,6 +359,8 @@ export function KarepovacKarte() {
           izvor="mi"
           izvorOznaka="Bilježimo sami"
           napomena="Obrazac za dojavu radi od prvog dana. Senzore postavljamo tek kad ih usporedimo i umjerimo."
+          poveznica="/karepovac/zrak"
+          poveznicaOznaka="Uđite u projekt praćenja zraka"
         >
           <Karta opis="Karta kvarta s oglednim dojavama mirisa, obojenima po jačini, i sa smjerom vjetra koji ih nosi s Karepovca.">
             <Ploha />

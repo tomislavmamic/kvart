@@ -15,6 +15,7 @@ export const metadata = createPageMetadata({
  * STORY: susjed razumije što postoji, što još ne postoji i kako može pomoći da mreža nastane.
  * FIRST VIEWPORT: status i objašnjenje lijevo, mirno polje s pinom Karepovca i dvije prazne evidencije desno.
  * FORM: javni zapisnik unutar postojećeg svijeta „Zemljovid i zapisnik”.
+ * MJESTO: projekt praćenja zraka; u njega se ulazi s pregleda na /karepovac.
  */
 export default function KarepovacLayout({
   children,
@@ -24,7 +25,7 @@ export default function KarepovacLayout({
       <header className="border-b border-kamen-rub bg-white pt-7">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 pb-5">
           <Link
-            href="/karepovac"
+            href="/karepovac/zrak"
             className="fokus flex items-center gap-3 rounded-lg"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-maslina-vez text-maslina">
@@ -42,9 +43,17 @@ export default function KarepovacLayout({
               <span className="block text-sm text-kamen-drugi">oko Karepovca</span>
             </span>
           </Link>
-          <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">
-            U pripremi
-          </span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/karepovac"
+              className="fokus hidden rounded-md text-sm font-semibold text-kamen-drugi underline decoration-kamen-rub decoration-2 underline-offset-4 hover:text-kamen-tinta sm:inline-flex"
+            >
+              ← Sve što pratimo
+            </Link>
+            <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">
+              U pripremi
+            </span>
+          </div>
         </div>
         <KarepovacProjectNav />
       </header>

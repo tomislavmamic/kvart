@@ -17,7 +17,7 @@ test("Karepovac navigation keeps its grid until all six links fit", async () => 
   );
 
   const markup = renderToStaticMarkup(
-    createElement(KarepovacProjectNavView, { pathname: "/karepovac" }),
+    createElement(KarepovacProjectNavView, { pathname: "/karepovac/zrak" }),
   );
 
   assert.match(

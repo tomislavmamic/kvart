@@ -7,13 +7,14 @@ const COPY_FILES = [
   "src/lib/karepovac.ts",
   "src/components/karepovac/project-components.tsx",
   "src/components/karepovac/karta-kartice.tsx",
-  "src/app/karepovac/layout.tsx",
   "src/app/karepovac/page.tsx",
-  "src/app/karepovac/ukljuci-se/page.tsx",
-  "src/app/karepovac/metodologija/page.tsx",
-  "src/app/karepovac/podaci/page.tsx",
-  "src/app/karepovac/financije/page.tsx",
-  "src/app/karepovac/postaje/page.tsx",
+  "src/app/karepovac/(projekt)/layout.tsx",
+  "src/app/karepovac/(projekt)/zrak/page.tsx",
+  "src/app/karepovac/(projekt)/ukljuci-se/page.tsx",
+  "src/app/karepovac/(projekt)/metodologija/page.tsx",
+  "src/app/karepovac/(projekt)/podaci/page.tsx",
+  "src/app/karepovac/(projekt)/financije/page.tsx",
+  "src/app/karepovac/(projekt)/postaje/page.tsx",
 ] as const;
 
 const copyByPath = Object.fromEntries(
@@ -53,25 +54,25 @@ test("Karepovac copy avoids translated and bureaucratic phrases", () => {
 
 test("Karepovac copy states the preparation stage in plain Croatian", () => {
   assert.match(
-    copyByPath["src/app/karepovac/postaje/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/postaje/page.tsx"],
     /Još nismo postavili nijednu mjernu postaju/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/metodologija/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/metodologija/page.tsx"],
     /Mjerenja još nisu počela/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/podaci/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/podaci/page.tsx"],
     /Uz svaki podatak objavit ćemo kada je i kako izmjeren/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/financije/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/financije/page.tsx"],
     /Novac i troškovi/,
   );
 });
 
 test("methodology steps use active plain Croatian", () => {
-  const methodology = copyByPath["src/app/karepovac/metodologija/page.tsx"];
+  const methodology = copyByPath["src/app/karepovac/(projekt)/metodologija/page.tsx"];
 
   for (const phrase of [
     "Sastavit ćemo uređaj",
@@ -90,19 +91,19 @@ test("reviewed wording stays on its intended page", () => {
     /Mjerenja još nisu počela/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/zrak/page.tsx"],
     /mjerna uređaja planirana za prvi pokusni rad/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/zrak/page.tsx"],
     /dana planiranog pokusnog rada/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/podaci/page.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/podaci/page.tsx"],
     /Prikazat ćemo vrijeme zadnjeg valjanog mjerenja/,
   );
   assert.match(
-    copyByPath["src/app/karepovac/layout.tsx"],
+    copyByPath["src/app/karepovac/(projekt)/layout.tsx"],
     /Pratite pripremu mjernih postaja, metodologiju, podatke i načine uključivanja/,
   );
 });

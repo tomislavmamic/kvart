@@ -22,7 +22,7 @@ test("all public Karepovac pages are declared once", () => {
   assert.deepEqual(
     KAREPOVAC_NAV.map(({ href }) => href),
     [
-      "/karepovac",
+      "/karepovac/zrak",
       "/karepovac/ukljuci-se",
       "/karepovac/metodologija",
       "/karepovac/podaci",

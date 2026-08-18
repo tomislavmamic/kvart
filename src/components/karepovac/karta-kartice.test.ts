@@ -139,3 +139,29 @@ test("podloga je potpisana jer je izvedena iz tuđih slojeva", () => {
   assert.match(izvor, /OpenStreetMapa \(ODbL\)/);
   assert.match(izvor, /Državne geodetske uprave/);
 });
+
+test("pregled i projekt su razdvojeni", () => {
+  const pregled = readFileSync(join(process.cwd(), "src/app/karepovac/page.tsx"), "utf8");
+  const projekt = readFileSync(
+    join(process.cwd(), "src/app/karepovac/(projekt)/zrak/page.tsx"),
+    "utf8",
+  );
+
+  // /karepovac je samo pregled — kartice i ništa drugo
+  assert.match(pregled, /<KarepovacKarte \/>/);
+  assert.doesNotMatch(pregled, /KAREPOVAC_PHASES|EvidenceRegister|MonitoringField/);
+
+  // projekt praćenja zraka ne smije ponovno vući kartice
+  assert.doesNotMatch(projekt, /KarepovacKarte/);
+  assert.match(projekt, /KAREPOVAC_PHASES/);
+});
+
+test("u projekt se ulazi kroz karticu mirisa", () => {
+  assert.match(izvor, /poveznica="\/karepovac\/zrak"/);
+  const poveznice = izvor.match(/poveznica="/g) ?? [];
+  assert.equal(poveznice.length, 1, "samo kartica mirisa vodi u projekt");
+
+  const nav = readFileSync(join(process.cwd(), "src/lib/karepovac.ts"), "utf8");
+  assert.match(nav, /\{ href: "\/karepovac\/zrak", label: "Pregled" \}/);
+  assert.doesNotMatch(nav, /\{ href: "\/karepovac", label/);
+});

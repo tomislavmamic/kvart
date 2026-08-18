@@ -16,10 +16,7 @@ export function KarepovacProjectNavView({ pathname }: { pathname: string }) {
     <nav aria-label="Praćenje zraka oko Karepovca">
       <div className="mx-auto grid max-w-5xl grid-cols-3 gap-1 px-4 pb-3 md:flex">
         {KAREPOVAC_NAV.map((link) => {
-          const active =
-            link.href === "/karepovac"
-              ? pathname === link.href
-              : pathname.startsWith(link.href);
+          const active = pathname.startsWith(link.href);
 
           return (
             <Link
