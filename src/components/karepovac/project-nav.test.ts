@@ -4,7 +4,9 @@ import test from "node:test";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-test("Karepovac navigation keeps its grid until all six links fit", async () => {
+import { KAREPOVAC_NAV } from "@/lib/karepovac";
+
+test("Karepovac navigation keeps its grid until every link fits", async () => {
   const projectNav = await import("./project-nav");
   const KarepovacProjectNavView = Reflect.get(
     projectNav,
@@ -30,7 +32,15 @@ test("Karepovac navigation keeps its grid until all six links fit", async () => 
     /(?:^|\s)sm:flex(?:\s|$)/,
     "the project navigation should not compress into one row at 640px",
   );
-  assert.equal((markup.match(/md:whitespace-nowrap/g) ?? []).length, 6);
-  assert.equal((markup.match(/href="\/karepovac/g) ?? []).length, 6);
+  // Broj se čita iz popisa, a ne prepisuje: kad se doda stranica, provjera
+  // i dalje mjeri ono što treba — da svaka poveznica stane u jedan redak.
+  assert.equal(
+    (markup.match(/md:whitespace-nowrap/g) ?? []).length,
+    KAREPOVAC_NAV.length,
+  );
+  assert.equal(
+    (markup.match(/href="\/karepovac/g) ?? []).length,
+    KAREPOVAC_NAV.length,
+  );
   assert.match(markup, /aria-current="page"[^>]*>Pregled</);
 });

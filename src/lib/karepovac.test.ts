@@ -23,6 +23,7 @@ test("all public Karepovac pages are declared once", () => {
     KAREPOVAC_NAV.map(({ href }) => href),
     [
       "/karepovac/zrak",
+      "/karepovac/dojava",
       "/karepovac/ukljuci-se",
       "/karepovac/metodologija",
       "/karepovac/podaci",
@@ -30,7 +31,7 @@ test("all public Karepovac pages are declared once", () => {
       "/karepovac/postaje",
     ],
   );
-  assert.equal(KAREPOVAC_NAV[4]?.label, "Novac i troškovi");
+  assert.equal(KAREPOVAC_NAV[5]?.label, "Novac i troškovi");
 });
 
 test("measurement, official source, and wind estimate stay distinct", () => {

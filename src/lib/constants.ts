@@ -18,6 +18,27 @@ export const CATEGORIES = {
 
 export type Category = keyof typeof CATEGORIES;
 
+/**
+ * Jačina mirisa u dojavi, od najslabije prema najjačoj. Poredak je nosiv —
+ * ruža dojava i usporedba s modelom računaju s njim, pa se ne smije presložiti.
+ */
+export const ODOUR_STRENGTHS = {
+  slabo: "Slabo — primijetim ako obratim pozornost",
+  osjetno: "Osjetno — jasno se prepoznaje",
+  jako: "Jako — smeta i unutra",
+  nepodnosivo: "Nepodnošljivo — zatvaram prozore",
+} as const;
+
+export type OdourStrength = keyof typeof ODOUR_STRENGTHS;
+
+/** Kratka imena za grafikone, gdje cijela rečenica ne stane. */
+export const ODOUR_STRENGTH_SHORT: Record<OdourStrength, string> = {
+  slabo: "slabo",
+  osjetno: "osjetno",
+  jako: "jako",
+  nepodnosivo: "nepodnošljivo",
+};
+
 export const STATUSES = {
   objavljeno: "Objavljeno",
   poslano_gradu: "Poslano gradu",

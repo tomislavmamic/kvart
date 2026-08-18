@@ -1,14 +1,11 @@
+import { Ruza } from "@/components/karepovac/ruza";
 import { MJERENJA } from "@/generated/karepovac-mjerenja";
+import { SEKTOR_IMENA as RUZA_IMENA } from "@/lib/dojave";
 
 const [K1, K2] = MJERENJA.postaje;
 
 /** Sjeverozapad; smjer u kojem s postaje leži tijelo odlagališta. */
 const SMJER_PLOHE = 14;
-
-const RUZA_IMENA = [
-  "S", "SSI", "SI", "ISI", "I", "IJI", "JI", "JJI",
-  "J", "JJZ", "JZ", "ZJZ", "Z", "ZSZ", "SZ", "SSZ",
-] as const;
 
 const BOJE = { h2s: "#007956", merkaptani: "#6d28d9" } as const;
 
@@ -32,22 +29,6 @@ function imeTvari(naziv: string) {
 
 function mjesecGodina(t: string) {
   return `${MJESECI[Number(t.slice(5, 7)) - 1]} ${t.slice(0, 4)}.`;
-}
-
-const STRANE = [
-  { oznaka: "S", sektor: 0 },
-  { oznaka: "I", sektor: 4 },
-  { oznaka: "J", sektor: 8 },
-  { oznaka: "Z", sektor: 12 },
-] as const;
-
-/** Točka na krugu za zadani sektor ruže; sjever je gore, kut raste na istok. */
-function uKrugu(sredina: number, polumjer: number, sektor: number) {
-  const kut = ((sektor * 360) / 16 - 90) * (Math.PI / 180);
-  return [
-    sredina + polumjer * Math.cos(kut),
-    sredina + polumjer * Math.sin(kut),
-  ] as const;
 }
 
 function brojka(x: number, decimala = 2) {
@@ -217,10 +198,6 @@ function Krivulja({
 
 /** Ruža: odakle puše kad se H₂S osjeti, i leži li ondje ploha. */
 export function RuzaMirisa() {
-  const S = 340;
-  const sredina = S / 2;
-  const unutra = 32;
-  const izvana = 118;
   const srednje: number[] = [...K1.ruza.srednje];
   const vrh = Math.max(...srednje);
   const dno = Math.min(...srednje);
@@ -240,78 +217,15 @@ export function RuzaMirisa() {
         četrdesetak stupnjeva ustranu.
       </p>
       <div className="mt-6 grid items-center gap-8 sm:grid-cols-[minmax(0,320px)_1fr]">
-        <svg
-          viewBox={`0 0 ${S} ${S}`}
-          className="w-full max-w-[320px]"
-          role="img"
-          aria-label={`Ruža sumporovodika: najviši prosjek pri vjetru iz smjera ${RUZA_IMENA[najjaci]}.`}
-        >
-          <circle cx={sredina} cy={sredina} r={izvana} fill="#fafafa" />
-          {[0.5, 1].map((u) => (
-            <circle
-              key={u}
-              cx={sredina}
-              cy={sredina}
-              r={unutra + (izvana - unutra) * u}
-              fill="none"
-              stroke="#e4e4e7"
-              strokeWidth="1"
-            />
-          ))}
-          {srednje.map((v, i) => {
-            const udio = (v - dno * 0.9) / (vrh - dno * 0.9);
-            const duljina = unutra + (izvana - unutra) * udio;
-            const kut = (i * 360) / 16;
-            const sirina = 9;
-            return (
-              <g key={i} transform={`rotate(${kut} ${sredina} ${sredina})`}>
-                <path
-                  d={`M${sredina - sirina} ${sredina - unutra} L${sredina + sirina} ${sredina - unutra} L${sredina + sirina} ${sredina - duljina} Q${sredina} ${sredina - duljina - 4} ${sredina - sirina} ${sredina - duljina} Z`}
-                  fill={BOJE.h2s}
-                  fillOpacity={0.25 + 0.75 * udio}
-                  stroke="white"
-                  strokeWidth="2"
-                >
-                  <title>{`${RUZA_IMENA[i]}: ${brojka(v)} µg/m³ u ${K1.ruza.sati[i]} sati`}</title>
-                </path>
-              </g>
-            );
-          })}
-          {STRANE.map(({ oznaka, sektor }) => {
-            const [tx, ty] = uKrugu(sredina, izvana + 13, sektor);
-            return (
-              <text
-                key={oznaka}
-                x={tx}
-                y={ty + 4}
-                textAnchor="middle"
-                fontSize="12"
-                fontWeight="600"
-                fill="#71717b"
-              >
-                {oznaka}
-              </text>
-            );
-          })}
-          <line
-            x1={uKrugu(sredina, izvana + 2, SMJER_PLOHE)[0]}
-            y1={uKrugu(sredina, izvana + 2, SMJER_PLOHE)[1]}
-            x2={uKrugu(sredina, izvana + 22, SMJER_PLOHE)[0]}
-            y2={uKrugu(sredina, izvana + 22, SMJER_PLOHE)[1]}
-            stroke="#18181b"
-            strokeWidth="2"
-          />
-          <text
-            x={uKrugu(sredina, izvana + 34, SMJER_PLOHE)[0]}
-            y={uKrugu(sredina, izvana + 34, SMJER_PLOHE)[1] + 4}
-            textAnchor="middle"
-            fontSize="12"
-            fontWeight="700"
-            fill="#18181b"
-          >
-            ploha
-          </text>
-        </svg>
+        <Ruza
+          vrijednosti={srednje}
+          boja={BOJE.h2s}
+          opisZaCitac={`Ruža sumporovodika: najviši prosjek pri vjetru iz smjera ${RUZA_IMENA[najjaci]}.`}
+          opisi={srednje.map(
+            (v, i) => `${RUZA_IMENA[i]}: ${brojka(v)} µg/m³ u ${K1.ruza.sati[i]} sati`,
+          )}
+          biljeg={{ sektor: SMJER_PLOHE, naziv: "ploha" }}
+        />
         <div>
           <dl className="space-y-4">
             <div>

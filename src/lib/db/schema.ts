@@ -6,6 +6,8 @@ import {
   timestamp,
   integer,
   doublePrecision,
+  boolean,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -80,6 +82,50 @@ export const submissions = pgTable("submissions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Jačina mirisa. Skraćena inačica ljestvice iz VDI 3882, koja ima sedam
+ * stupnjeva — ovdje četiri, jer se dojava ispunjava s prozora, a ne za stolom.
+ * Broj je zapisan uz naziv da se poredak ne izgubi u prijevodu.
+ */
+export const odourStrengthEnum = pgEnum("odour_strength", [
+  "slabo",
+  "osjetno",
+  "jako",
+  "nepodnosivo",
+]);
+
+/**
+ * Dojava mirisa. Pučka inačica mrežne metode iz EN 16841-1: umjesto obučenih
+ * ocjenjivača na zadanim točkama, ljudi javljaju odakle su i kada osjetili.
+ *
+ * Sat se pamti odvojeno od vremena unosa jer se javlja i naknadno — a bez
+ * točnog sata dojava se ne može spojiti s vjetrom, i tada ne vrijedi ništa.
+ *
+ * Ne traži se ni ime ni kontakt. Za ružu dojava ne trebaju, a svaki podatak
+ * koji se ne prikupi ne može ni procuriti.
+ */
+export const odourReports = pgTable(
+  "odour_reports",
+  {
+    id: serial("id").primaryKey(),
+    /** Sat u kojem se miris osjetio, zaokružen na puni sat, u UTC-u. */
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    strength: odourStrengthEnum("strength").notNull(),
+    neighborhood: neighborhoodEnum("neighborhood").notNull(),
+    /** Ulica ili orijentir; slobodan tekst, nije obavezan. */
+    place: text("place"),
+    note: text("note"),
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    /** Sakriva pojedinu dojavu iz zbroja, bez brisanja traga. */
+    hidden: boolean("hidden").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("odour_reports_occurred_at_idx").on(table.occurredAt)],
+);
+
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -113,3 +159,4 @@ export type Proposal = typeof proposals.$inferSelect;
 export type StatusUpdate = typeof statusUpdates.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type DocumentRow = typeof documents.$inferSelect;
+export type OdourReport = typeof odourReports.$inferSelect;

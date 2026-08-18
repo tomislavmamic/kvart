@@ -2,11 +2,11 @@
 
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { submissions } from "@/lib/db/schema";
+import { odourReports, submissions } from "@/lib/db/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { storeFile } from "@/lib/upload";
-import { NEIGHBORHOODS, CATEGORIES } from "@/lib/constants";
-import type { Neighborhood, Category } from "@/lib/constants";
+import { NEIGHBORHOODS, CATEGORIES, ODOUR_STRENGTHS } from "@/lib/constants";
+import type { Neighborhood, Category, OdourStrength } from "@/lib/constants";
 
 export type SubmitResult = { ok: true } | { ok: false; error: string };
 
@@ -88,5 +88,75 @@ export async function submitProblem(formData: FormData): Promise<SubmitResult> {
     photoUrls,
   });
 
+  return { ok: true };
+}
+
+/** Koliko unatrag dojava smije ići; dalje od toga sat se više ne pamti točno. */
+const NAJSTARIJA_DOJAVA_DANA = 30;
+
+export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
+  // Honeypot: real users never fill this hidden field.
+  if (formData.get("website")) return { ok: true };
+
+  const headerStore = await headers();
+  const ip =
+    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(ip)) {
+    return {
+      ok: false,
+      error: "Previše dojava u kratkom vremenu. Pokušajte ponovno za sat vremena.",
+    };
+  }
+
+  const strength = String(formData.get("strength") ?? "");
+  const neighborhood = String(formData.get("neighborhood") ?? "");
+  const place = String(formData.get("place") ?? "").trim() || null;
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  if (!(strength in ODOUR_STRENGTHS)) {
+    return { ok: false, error: "Odaberite koliko se jako osjetilo." };
+  }
+  if (!(neighborhood in NEIGHBORHOODS)) {
+    return { ok: false, error: "Odaberite kvart." };
+  }
+  if (place && place.length > 120) {
+    return { ok: false, error: "Ulica ili orijentir smije imati najviše 120 znakova." };
+  }
+  if (note && note.length > 500) {
+    return { ok: false, error: "Napomena smije imati najviše 500 znakova." };
+  }
+
+  // Sat dolazi iz preglednika, pa se ovdje provjerava ponovno. Bez ispravnog
+  // sata dojava se ne može spojiti s vjetrom i ne vrijedi ništa, a sat u
+  // budućnosti ili od prije godinu dana pokvario bi ružu.
+  const kada = new Date(String(formData.get("kada") ?? ""));
+  const sada = Date.now();
+  if (Number.isNaN(kada.getTime())) {
+    return { ok: false, error: "Odaberite kada se miris osjetio." };
+  }
+  if (kada.getTime() > sada + 3_600_000) {
+    return { ok: false, error: "Vrijeme dojave ne može biti u budućnosti." };
+  }
+  if (kada.getTime() < sada - NAJSTARIJA_DOJAVA_DANA * 86_400_000) {
+    return {
+      ok: false,
+      error: `Javiti se može za zadnjih ${NAJSTARIJA_DOJAVA_DANA} dana.`,
+    };
+  }
+  // Sat se zaokružuje jer se vjetar ionako vodi po punom satu; točnija minuta
+  // ne bi dodala ništa, a rekla bi o dojavitelju više nego što treba.
+  const occurredAt = new Date(Math.floor(kada.getTime() / 3_600_000) * 3_600_000);
+
+  try {
+    await db.insert(odourReports).values({
+      occurredAt,
+      strength: strength as OdourStrength,
+      neighborhood: neighborhood as Neighborhood,
+      place,
+      note,
+    });
+  } catch {
+    return { ok: false, error: "Dojava nije spremljena. Pokušajte ponovno." };
+  }
   return { ok: true };
 }

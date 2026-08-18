@@ -1,5 +1,6 @@
 export const KAREPOVAC_NAV = [
   { href: "/karepovac/zrak", label: "Pregled" },
+  { href: "/karepovac/dojava", label: "Javi miris" },
   { href: "/karepovac/ukljuci-se", label: "Uključi se" },
   { href: "/karepovac/metodologija", label: "Kako mjerimo" },
   { href: "/karepovac/podaci", label: "Podaci" },

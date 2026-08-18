@@ -56,6 +56,19 @@ export default function KarepovacPage() {
         </SectionHeading>
         <DnevniHod />
         <RuzaMirisa />
+        <div className="rounded-xl border border-kamen-tlo bg-kamen-plitko p-6 sm:flex sm:items-center sm:justify-between sm:gap-8">
+          <p className="max-w-2xl text-base leading-7 text-kamen-tekst">
+            Obje ruže gore stoje na rubu odlagališta. Ono što se osjeti u
+            kvartu, kilometar dalje, ne mjeri nitko — osim ljudi koji ondje
+            žive.
+          </p>
+          <Link
+            href="/karepovac/dojava"
+            className="fokus mt-4 inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-maslina px-6 py-3 font-semibold text-white hover:bg-maslina-tamna sm:mt-0"
+          >
+            Javite kada je smrdjelo
+          </Link>
+        </div>
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[0.68fr_1.32fr] lg:gap-12">

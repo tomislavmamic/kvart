@@ -16,6 +16,8 @@ const COPY_FILES = [
   "src/app/karepovac/(projekt)/financije/page.tsx",
   "src/app/karepovac/(projekt)/postaje/page.tsx",
   "src/components/karepovac/sluzbena-mjerenja.tsx",
+  "src/app/karepovac/(projekt)/dojava/page.tsx",
+  "src/app/karepovac/(projekt)/dojava/obrazac.tsx",
 ] as const;
 
 const copyByPath = Object.fromEntries(
@@ -113,6 +115,17 @@ test("reviewed wording stays on its intended page", () => {
     copyByPath["src/app/karepovac/(projekt)/layout.tsx"],
     /Pratite pripremu mjernih postaja, metodologiju, podatke i načine uključivanja/,
   );
+});
+
+test("dojava traži sat i ne traži ime", () => {
+  const stranica = copyByPath["src/app/karepovac/(projekt)/dojava/page.tsx"];
+  const obrazac = copyByPath["src/app/karepovac/(projekt)/dojava/obrazac.tsx"];
+  // Bez sata se dojava ne može spojiti s vjetrom, pa se to i traži naglas.
+  assert.match(obrazac, /Sat je ono što dojavu čini upotrebljivom/);
+  assert.match(obrazac, /Ne tražimo ni ime ni kontakt/);
+  // Ruža od pet dojava izgledala bi kao nalaz, a bila bi slučaj.
+  assert.match(stranica, /Za ružu treba barem dvadeset dojava/);
+  assert.match(stranica, /to nije neuspjeh nego nalaz/);
 });
 
 test("model ne obećava kartu mirisa koju ne može potkrijepiti", () => {
