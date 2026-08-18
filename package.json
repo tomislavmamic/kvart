@@ -15,6 +15,7 @@
     "check-layers": "tsx scripts/check-layers.ts",
     "izvedi-karepovac": "python3 scripts/izvedi-karepovac-karticu.py",
     "izvedi-polje-dima": "/opt/homebrew/bin/python3 scripts/izvedi-polje-dima.py",
+    "izvedi-raspesenje": "/opt/homebrew/bin/python3 scripts/izvedi-raspesenje.py",
     "import-grad-geo": "tsx scripts/import-split-gis.ts",
     "generate-public-parcels": "tsx scripts/generate-public-parcels.ts",
     "generate-planned-road-parcels": "tsx scripts/generate-planned-road-parcels.ts",

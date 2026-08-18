@@ -37,7 +37,7 @@ test("prizor nosi podlogu, obris plohe i mjerilo", () => {
   assert.match(markup, /<canvas/, "platno za perjanicu");
   assert.match(markup, /500 m/, "mjerilo");
   assert.match(markup, /Dračevac/, "natpisi mjesta");
-  assert.match(markup, /jugoistočnjak/, "prikazano vrijeme");
+  assert.match(markup, /istok-jugoistok/, "prikazano vrijeme");
 });
 
 test("platno leži ispod natpisa, da dim ne proguta imena mjesta", () => {

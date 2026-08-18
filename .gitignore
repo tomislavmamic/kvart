@@ -87,6 +87,8 @@ __pycache__/
 /.cache/dmr.tif
 /.cache/hok.tif
 /.cache/podrucje-kvarta.geojson
+/.cache/era5-karepovac.json
+/.cache/raspesenje.npz
 
 # Privremeni OSS odgovori ciljane provjere vlasništva mogu sadržavati imena,
 # adrese i OIB-e fizičkih osoba. Generator ih koristi samo lokalno za nastavak

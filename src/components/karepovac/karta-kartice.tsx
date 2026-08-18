@@ -282,7 +282,7 @@ export function PoljeDimaVeliko() {
       <div className="my-4 overflow-hidden rounded-lg border border-kamen-tlo">
         <KartaDima opis="Karta kvarta: dim s Karepovca putuje u naletima niz padinu preko Dračevca prema Bilicama.">
           <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
-            {`jugoistočnjak — os ${OKVIR.azimut}°`}
+            {`istok-jugoistok — os ${OKVIR.azimut}°`}
           </Mjesto>
         </KartaDima>
       </div>
@@ -294,7 +294,7 @@ export function PoljeDimaVeliko() {
         </div>
         <div data-kind="estimated" className="bg-white p-3">
           <dt className="font-semibold text-kamen-tinta">Prikazano vrijeme</dt>
-          <dd className="mt-0.5 text-kamen-tekst">slab jugoistočnjak</dd>
+          <dd className="mt-0.5 text-kamen-tekst">slab istok-jugoistok</dd>
         </div>
         <div data-kind="missing" className="bg-white p-3">
           <dt className="font-semibold text-kamen-tinta">Jačina izvora</dt>
@@ -435,7 +435,7 @@ export function KarepovacKarte() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Kartica
           naslov="Miris iz smjera Karepovca"
-          opis="Ploha leži iznad kvarta i istočno od njega. Prikaz računa kako se miris nosi niz padinu pri slabom jugoistočnjaku i niskom poklopcu zraka — pri vremenu na koje se ljudi i žale. Naleti izlaze sami jer izvor ne ispušta jednolično."
+          opis="Ploha leži iznad kvarta i istočno od njega. Prikaz računa kako se miris nosi niz padinu pri slabom istočnojugoistočnom vjetru i plitkom sloju zraka — pri vremenu na koje se ljudi i žale. Naleti izlaze sami jer izvor ne ispušta jednolično."
           izvor="procjena"
           izvorOznaka="Model, ne mjerenje"
           napomena="Polje vjetra izvedeno je iz LiDAR reljefa; jačina izvora još je pretpostavka. Dojave stanovnika su ono čime ćemo ovaj prikaz provjeriti — obrazac radi od prvog dana."
@@ -444,7 +444,7 @@ export function KarepovacKarte() {
         >
           <KartaDima opis="Karta kvarta: dim s Karepovca putuje u naletima niz padinu preko Dračevca prema Bilicama.">
             <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
-              {`jugoistočnjak — os ${OKVIR.azimut}°`}
+              {`istok-jugoistok — os ${OKVIR.azimut}°`}
             </Mjesto>
           </KartaDima>
         </Kartica>
