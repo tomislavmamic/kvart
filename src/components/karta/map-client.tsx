@@ -3385,6 +3385,20 @@ function dodajSloj(
     registar.set(layer.id, { sloj: wms, okno });
     return;
   }
+  if (layer.type === "slika") {
+    // Jedna slika pribijena na svoje rubove. Za razliku od pločica ne raste s
+    // mjerilom, pa joj je razlučivost gornja granica korisnog zumiranja —
+    // dalje se karta pod njom izoštrava, a ona ne.
+    if (!layer.granice) return;
+    const slika = L.imageOverlay(layer.url, layer.granice, {
+      opacity: layer.defaultOpacity ?? 0.6,
+      attribution: layer.attribution,
+      ...(okno ? { pane: okno } : {}),
+    });
+    slika.addTo(map);
+    registar.set(layer.id, { sloj: slika, okno });
+    return;
+  }
   if (layer.type === "xyz") {
     // Rasterske pločice iz public/geo/ — zasad samo sjenčani reljef.
     // `maxNativeZoom` mora ovamo iz istog razloga kao kod podloge: bez njega

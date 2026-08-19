@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
 
 import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
+import { SIRA_KARTA } from "@/generated/karepovac-siri";
 
 import {
   BLIZI_OKVIR,
@@ -18,6 +19,45 @@ import {
   VIIRS,
   VISINE,
 } from "@/generated/karepovac-karta";
+
+/**
+ * Pogledi u prebacivaču, redom kojim stoje.
+ *
+ * Prva dva su vrijeme koje se računa u pregledniku, druga dva godišnji račun
+ * kao nepomična slika. Razlika je stvarna — jedno je jedan slučaj, drugo je
+ * zbroj godine — i zato svaki nosi svoj opis ispod karte.
+ */
+const POGLEDI_ZRAKA = [
+  ...SLUCAJEVI_DIMA.slucajevi.map((slucaj, i) => ({
+    kljuc: slucaj.kljuc,
+    naziv: slucaj.naziv,
+    opis: `${slucaj.opis} Vjetar iz tog smjera puše ${Math.round(
+      slucaj.udioSati * 100,
+    )} % sati, mjereno na splitskoj zračnoj luci.`,
+    natpis: `${slucaj.naziv.toLowerCase()} — os ${slucaj.azimut}°`,
+    slucaj: i,
+    slika: undefined as string | undefined,
+  })),
+  ...SIRA_KARTA.slojevi.map((sloj) => ({
+    kljuc: sloj.kljuc,
+    naziv: sloj.naziv,
+    opis: sloj.opis,
+    natpis: `godina 2025. — najviše ${sloj.vrh.toLocaleString("hr-HR")} ${sloj.jedinica}`,
+    slucaj: 0,
+    slika: sloj.slikaKvart as string | undefined,
+  })),
+];
+
+/**
+ * Poveznica na isti sloj u karti, sa zapaljenim pogledom, podlogom i mjestom.
+ *
+ * Mjerilo je 16, a ne manje. Karta drži `MAP_MAX_BOUNDS`, a Leaflet uz njih
+ * pomiče središte da okno ostane unutar okvira — pri 14 i 15 je okno šire od
+ * onoga što do plohe preostaje, pa je odgurne prema sjeverozapadu i ploha
+ * ispadne iz sredine. Pri 16 stane.
+ */
+const U_KARTI =
+  "/karta?pogled=zrak-karepovac&sloj=karepovac-sati&podloga=dof&c=43.52150,16.51050&z=16";
 
 /** Stroke ostaje jednake debljine i kad kartica priđe bliže plohi. */
 const NESKALIRANO = { vectorEffect: "non-scaling-stroke" } as const;
@@ -239,10 +279,13 @@ function Karta({
 export function KartaDima({
   opis,
   slucaj = 0,
+  slika,
   children,
 }: {
   opis: string;
   slucaj?: number;
+  /** Nepomična slika umjesto perjanice koja se računa u pregledniku. */
+  slika?: string;
   children?: ReactNode;
 }) {
   return (
@@ -254,7 +297,16 @@ export function KartaDima({
       >
         <use href="#karepovac-podloga" />
       </svg>
-      <DimPerjanica slucaj={slucaj} />
+      {slika ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={slika}
+          alt=""
+          className="absolute inset-0 block h-full w-full"
+        />
+      ) : (
+        <DimPerjanica slucaj={slucaj} />
+      )}
       <svg
         viewBox={OKVIR.viewBox}
         role="img"
@@ -271,28 +323,26 @@ export function KartaDima({
 }
 
 /**
- * Perjanica preko cijele širine, za uvodni dio `/karepovac/zrak`.
+ * Pogledi na zrak s Karepovca — jedan okvir, više toga za vidjeti.
  *
- * Prikazuju se dva slučaja vremena, a ne jedan. S jednim se ne vidi ono što
- * je zapravo važno: da isti kvart pod jednim vjetrom dobiva sve, a pod drugim
- * ništa. Prebacivanje ide preko dva radio gumba i CSS-a — obje karte stoje
- * poslužene, pa radi i bez ijednog retka JavaScripta u prebacivanju, a
- * skrivena karta ne troši struju jer se njezino platno pokreće tek kad uđe u
- * vidno polje.
+ * Prije su ovdje stajale dvije karte u dva različita okvira, na razmaku od
+ * pola stranice. Sad je jedan prebacivač, kao pogledi na `/karta`, i okvir se
+ * među pogledima ne mijenja — kad bi se mijenjao, čitatelj bi pri svakom
+ * prebacivanju iznova tražio gdje je.
  *
- * Sama nosi definiciju podloge jer je na toj stranici nema tko drugi postaviti.
+ * Karta je namjerno nepomična. Podatak nije toliko točan da bi zasluživao
+ * razgledavanje izbliza, a i sve što ovdje stoji vrijedi za kvart. Tko želi
+ * dalje — preko granice kvarta, uz katastar i ortofoto — ide na `/karta`,
+ * gdje isti sloj stoji kao pogled. Zato ovdje nema ni povećala ni povlačenja,
+ * nego jedna poveznica.
  */
-export function PoljeDimaVeliko() {
-  const slucajevi = SLUCAJEVI_DIMA.slucajevi;
-
+export function PogledZraka() {
   return (
-    <div className="relative flex flex-col justify-between bg-[#fcfbf9] p-4 sm:p-6">
+    <div className="relative flex flex-col bg-[#fcfbf9] p-4 sm:p-6">
       <PodlogaDefinicija />
-      {/* Desni prostor je ostavljen gumbu za povećanje, koji lebdi nad karticom
-          i inače bi sjeo na oznaku „Model, ne mjerenje”. */}
-      <div className="flex flex-wrap items-start justify-between gap-2 pr-32">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <span className="text-sm font-bold text-kamen-tinta">
-          Kako se miris nosi niz padinu
+          Zrak s Karepovca nad kvartom
         </span>
         <span className="rounded-lg bg-amber-100 px-3 py-2 text-right text-xs text-amber-900">
           <span className="block font-bold">Model, ne mjerenje</span>
@@ -300,54 +350,59 @@ export function PoljeDimaVeliko() {
         </span>
       </div>
 
-      <fieldset className="my-4 flex flex-wrap gap-2">
-        <legend className="sr-only">Slučaj vremena</legend>
-        {slucajevi.map((slucaj, i) => (
+      <fieldset className="mt-4 flex flex-wrap gap-2">
+        <legend className="sr-only">Što karta pokazuje</legend>
+        {POGLEDI_ZRAKA.map((pogled, i) => (
           // `contents` skida omotač iz rasporeda, pa gumb, oznaka i karta
           // ostaju braća u DOM-u — bez toga `peer-checked` nema što gledati.
-          <div key={slucaj.kljuc} className="contents">
+          <div key={pogled.kljuc} className="contents">
             <input
               type="radio"
-              name="slucaj-vremena"
-              id={`slucaj-${slucaj.kljuc}`}
+              name="pogled-zraka"
+              id={`pogled-${pogled.kljuc}`}
               defaultChecked={i === 0}
               className="peer sr-only"
             />
             <label
-              htmlFor={`slucaj-${slucaj.kljuc}`}
+              htmlFor={`pogled-${pogled.kljuc}`}
               className="order-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-kamen-rub px-4 py-2 text-sm font-semibold text-kamen-tekst hover:bg-white peer-checked:border-kamen-tinta peer-checked:bg-kamen-tinta peer-checked:text-white peer-checked:hover:bg-kamen-tinta peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-maslina"
             >
-              {slucaj.naziv}
+              {pogled.naziv}
             </label>
             <div className="order-2 hidden w-full peer-checked:block">
-              <div className="overflow-hidden rounded-lg border border-kamen-tlo">
-                <KartaDima slucaj={i} opis={`Karta kvarta: ${slucaj.opis}`}>
+              <div className="mt-4 overflow-hidden rounded-lg border border-kamen-tlo">
+                <KartaDima
+                  slucaj={pogled.slucaj}
+                  slika={pogled.slika}
+                  opis={`Karta kvarta: ${pogled.opis}`}
+                >
                   <Mjesto
                     x={OKVIR.sirina - 18}
                     y={OKVIR.visina - 30}
                     sidro="end"
                     velicina={9.5}
                   >
-                    {`${slucaj.naziv.toLowerCase()} — os ${slucaj.azimut}°`}
+                    {pogled.natpis}
                   </Mjesto>
                 </KartaDima>
               </div>
               <p className="mt-3 max-w-prose text-base leading-7 text-kamen-tekst">
-                {slucaj.opis} Vjetar iz tog smjera puše{" "}
-                {Math.round(slucaj.udioSati * 100)} % sati, mjereno na splitskoj
-                zračnoj luci.
+                {pogled.opis}
               </p>
             </div>
           </div>
         ))}
       </fieldset>
 
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
+      {/* Podrijetlo stoji uz kartu, a ne u fusnoti: bez njega se izvedena
+          veličina čita kao izmjerena, a to je jedina greška koju si ova
+          stranica ne smije dopustiti. */}
+      <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
         <div data-kind="estimated" className="bg-white p-3">
           <dt className="font-semibold text-kamen-tinta">Polje vjetra</dt>
           <dd className="mt-0.5 text-kamen-tekst">iz LiDAR reljefa</dd>
         </div>
-        <div data-kind="official" className="bg-white p-3">
+        <div data-kind="estimated" className="bg-white p-3">
           <dt className="font-semibold text-kamen-tinta">Udio sati</dt>
           <dd className="mt-0.5 text-kamen-tekst">izmjeren vjetar, LDSP</dd>
         </div>
@@ -357,10 +412,19 @@ export function PoljeDimaVeliko() {
         </div>
       </dl>
 
-      <p className="mt-3 max-w-prose text-base leading-7 text-kamen-drugi">
-        Oblik perjanice govori kamo zrak s plohe ide. Koliko mirisa nosi, model
-        ne zna pouzdano — provjera na mjerenjima to pokazuje otvoreno.
-      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-kamen-tlo pt-4">
+        <p className="max-w-md text-base leading-7 text-kamen-drugi">
+          Karta je nepomična jer je za pogled. Za veće mjerilo, izvan granica
+          kvarta i uz katastar — otvori je u karti.
+        </p>
+        <Link
+          href={U_KARTI}
+          className="fokus inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-kamen-tinta px-5 py-2.5 text-sm font-semibold text-kamen-tinta hover:bg-kamen-tinta hover:text-white"
+        >
+          Otvori u karti
+          <span aria-hidden="true">→</span>
+        </Link>
+      </div>
     </div>
   );
 }

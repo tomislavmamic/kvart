@@ -1,3 +1,5 @@
+import { SIRA_KARTA } from "@/generated/karepovac-siri";
+
 /**
  * Registar slojeva i kuriranih pogleda za kartu kvarta (/karta).
  *
@@ -29,6 +31,23 @@ export const NEIGHBORHOOD_EXTENT: [number, number, number, number] = [
 ];
 
 export const KVART_CENTER: [number, number] = [43.5249, 16.4993];
+
+/**
+ * Rubovi i putanje slika godišnjeg računa raspršenja.
+ *
+ * Čitaju se iz generiranog modula, a ne prepisuju: obuhvat računa mijenja se
+ * u `scripts/reljef_polje.py`, i kad bi ovdje stajala druga kopija, sloj bi
+ * se tiho pomaknuo za nekoliko stotina metara — što se na karti ne vidi kao
+ * greška nego kao loše poklapanje.
+ */
+const KAREPOVAC_GRANICE: [[number, number], [number, number]] = [
+  [SIRA_KARTA.granice.jug, SIRA_KARTA.granice.zapad],
+  [SIRA_KARTA.granice.sjever, SIRA_KARTA.granice.istok],
+];
+
+const KAREPOVAC_SLOJEVI = Object.fromEntries(
+  SIRA_KARTA.slojevi.map((s) => [s.kljuc, s.slika]),
+) as Record<(typeof SIRA_KARTA.slojevi)[number]["kljuc"], string>;
 
 /**
  * Okvir je širi na zapad i sjever nego što kvart traži, zbog sloja cijelih
@@ -176,6 +195,7 @@ export type OverlayType =
   | "wms" // izravni WMS overlay
   | "xyz" // rasterske pločice iz public/geo/ (izrađuje ih skripta)
   | "geojson" // statični GeoJSON u public/geo/ (izrađuje build skripta)
+  | "slika" // jedna slika pribijena na svoje koordinate
   | "api"; // živi upit kroz naš proxy route
 
 export interface OverlayLayer {
@@ -193,6 +213,14 @@ export interface OverlayLayer {
   defaultOpacity?: number;
   /** Kao istoimeno polje na BaseLayer — vrijedi samo za `xyz` slojeve. */
   maxNativeZoom?: number;
+  /**
+   * Rubovi slike, `[[jug, zapad], [sjever, istok]]`. Obavezno za `slika`.
+   *
+   * Slika nije pločica: ne raste s mjerilom, nego se rasteže. Zato ovakav
+   * sloj mora reći dokle seže — i zato mu je razlučivost gornja granica
+   * korisnog zumiranja, koliko god karta pod njim još imala.
+   */
+  granice?: [[number, number], [number, number]];
   /** Namjensko Leaflet okno kad red crtanja mora biti neovisan o vremenu dohvata. */
   pane?: string;
   /** CSS z-index namjenskog okna; koristi se samo uz `pane`. */
@@ -563,6 +591,40 @@ function gradniSloj(
 }
 
 export const OVERLAY_LAYERS: OverlayLayer[] = [
+  // ---------- Zrak s Karepovca ----------
+  //
+  // Godišnji račun raspršenja iz `scripts/izvedi-raspesenje.py`, pribijen na
+  // svoje koordinate. Ovdje su, a ne samo na `/karepovac`, jer se tek uz
+  // katastar, ortofoto i namjenu vidi *čije* su to kuće — a to je pitanje s
+  // kojim susjed dolazi. Prozirnost je namjerno ispod polovice: ovo je
+  // izvedena veličina i ne smije pojesti podlogu koja je mjerena.
+  {
+    id: "karepovac-sati",
+    label: "Zrak s Karepovca — sati godišnje",
+    type: "slika",
+    url: KAREPOVAC_SLOJEVI.sati,
+    granice: KAREPOVAC_GRANICE,
+    attribution:
+      "Model raspršenja: kvart.hr, iz LiDAR reljefa (DGU) i METAR-a (LDSP)",
+    color: "#b7542a",
+    defaultOpacity: 0.55,
+    group: "Zrak",
+    phase: 1,
+  },
+  {
+    id: "karepovac-prosjek",
+    label: "Zrak s Karepovca — prosječni H₂S",
+    type: "slika",
+    url: KAREPOVAC_SLOJEVI.prosjek,
+    granice: KAREPOVAC_GRANICE,
+    attribution:
+      "Model raspršenja: kvart.hr, bazdaren na mjerenjima postaje Karepovac 1",
+    color: "#e99c42",
+    defaultOpacity: 0.55,
+    group: "Zrak",
+    phase: 1,
+  },
+
   // ---------- Urbanizam ----------
   {
     id: "gup-namjena",
@@ -1322,6 +1384,23 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
  */
 const POGLEDI: MapView[] = [
   {
+    id: "zrak-karepovac",
+    label: "Zrak s Karepovca",
+    razina: "pitanje",
+    description:
+      "Kamo vjetar nosi zrak s odlagališta, računato sat po sat kroz godinu " +
+      "dana i bazdareno na mjerenjima postaje uz samu plohu. Ovo je izvod, " +
+      "ne mjerenje: govori gdje je zrak s plohe češće prolazio, a ne koliko " +
+      "je tada smrdjelo — merkaptane, koje nos zapravo prepoznaje, model ne " +
+      "pogađa. Cijelo objašnjenje stoji na stranici o zraku.",
+    layerIds: ["karepovac-sati", "karepovac-prosjek", "reljef"],
+    legend: [
+      { boja: "#fdedc7", kod: "malo", opis: "rijetko u perjanici" },
+      { boja: "#e99c42", kod: "srednje", opis: "povremeno" },
+      { boja: "#5e1b16", kod: "puno", opis: "najveći dio godine" },
+    ],
+  },
+  {
     id: "svi-slojevi",
     label: "Svi slojevi",
     razina: "nacin",
@@ -1646,6 +1725,7 @@ const POGLEDI: MapView[] = [
  * odgovor kakav za ovaj kvart ne postoji nigdje drugdje.
  */
 const REDOSLIJED_PITANJA = [
+  "zrak-karepovac",
   "gdje-se-moze-graditi",
   "javno-evidentirano",
   "cestice-planiranih-cesta",

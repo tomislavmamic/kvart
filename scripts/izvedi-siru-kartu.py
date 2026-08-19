@@ -12,6 +12,13 @@ sadržajan: reljef je ono što perjanicu skreće, pa je na karti raspršenja
 najkorisnija podloga upravo on. Ceste se crtaju preko njega dokle sloj seže
 (`ceste-sve.geojson` ne pokriva istočni rub obuhvata, iza plohe).
 
+Iz istog se računa izvode dvije veličine slika. **Široka** pokriva cijeli
+obuhvat i ide na `/karta`, gdje se po njoj može hodati. **Kvartovska** stoji u
+okviru svih ostalih kartica na `/karepovac` i služi samo za pogled — jer kad bi
+se u istom prebacivaču okvir mijenjao između pogleda, čitatelj bi izgubio gdje
+je. Nepomična je namjerno: podatak nije toliko točan da bi zasluživao
+razgledavanje, a tko ga želi razgledati, ide na kartu.
+
 Slike se pišu u `public/`, ne u generirani modul: sjenčanje i polja su rasteri
 od nekoliko stotina kilobajta i nemaju što tražiti u snopu koji preglednik
 mora pročitati prije prvog crtanja. Iz istog razloga se i ceste crtaju u
@@ -34,6 +41,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import okvir  # noqa: E402
 from reljef_polje import RASPRSENJE, Obuhvat, _pretvorba, gladi, ucitaj_reljef  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -207,6 +215,40 @@ def sloj_polja(
     return Image.fromarray(tablica[(u * 255).astype(np.uint8)], "RGBA")
 
 
+def u_okvir_kvarta(polje: np.ndarray, povecanje: int = 2) -> np.ndarray:
+    """Uzorkuje polje računa u okvir kartica na `/karepovac`.
+
+    Args:
+        polje: Polje na rešetci računa.
+        povecanje: Koliko puta gušće od okvira u pikselima.
+
+    Returns:
+        Polje oblika (visina, širina) u pikselima okvira.
+    """
+    tr = _pretvorba()
+    sirina = int(okvir.SIRINA) * povecanje
+    visina = int(round(okvir.VISINA)) * povecanje
+    lon = okvir.ZAPAD + (np.arange(sirina) + 0.5) / sirina * (
+        okvir.ISTOK - okvir.ZAPAD
+    )
+    lat = okvir.SJEVER - (np.arange(visina) + 0.5) / visina * (
+        okvir.SJEVER - okvir.JUG
+    )
+    lo, la = np.meshgrid(lon, lat)
+    tocke = np.array(
+        tr.TransformPoints(np.stack([lo.ravel(), la.ravel()], 1).tolist())
+    )[:, :2]
+    j = np.clip(
+        ((tocke[:, 0] - RASPRSENJE.x0) / RASPRSENJE.dx).astype(int),
+        0, polje.shape[1] - 1,
+    )
+    i = np.clip(
+        ((RASPRSENJE.y1 - tocke[:, 1]) / RASPRSENJE.dx).astype(int),
+        0, polje.shape[0] - 1,
+    )
+    return polje[i, j].reshape(visina, sirina)
+
+
 def putanje(ime: str, obuhvat: Obuhvat) -> list[str]:
     """Vraća SVG putanje sloja u pikselima slike.
 
@@ -283,6 +325,22 @@ def glavno() -> None:
         slika = sloj_polja(polje, vrh, obuhvat, tablica)
         ime = f"siri-{sloj['kljuc']}.png"
         slika.save(SLIKE / ime, optimize=True)
+        # Ista veličina u okviru kartica, za pogled na `/karepovac`.
+        u_kvartu = Image.fromarray(
+            tablica[
+                (
+                    np.clip(
+                        np.sqrt(np.clip(u_okvir_kvarta(polje), 0, None) / max(vrh, 1e-12)),
+                        0, 1,
+                    )
+                    * 255
+                ).astype(np.uint8)
+            ],
+            "RGBA",
+        )
+        ime_kvart = f"kvart-{sloj['kljuc']}.png"
+        u_kvartu.save(SLIKE / ime_kvart, optimize=True)
+
         izvan = polje[~racun["maska"].astype(bool)]
         opisi.append(
             {
@@ -290,6 +348,7 @@ def glavno() -> None:
                 "naziv": sloj["naziv"],
                 "opis": sloj["opis"],
                 "slika": f"/karepovac/{ime}",
+                "slikaKvart": f"/karepovac/{ime_kvart}",
                 "jedinica": sloj["jedinica"],
                 "vrh": round(vrh, 4),
                 "najviseIzvanPlohe": round(float(izvan.max()), 4),
