@@ -11,6 +11,50 @@ export const metadata = createPageMetadata({
     "Saznajte koje ćemo podatke objavljivati uz svako mjerenje, kako ćemo označavati njihovu pouzdanost i u kojim će se datotekama moći preuzeti.",
 });
 
+/**
+ * Izvori koje stranica o zraku već koristi, svaki sa svojim ograničenjem.
+ *
+ * Granica se piše uz izvor, a ne u zasebnu bilješku pri dnu, jer se bilješka
+ * pri dnu ne čita — a upravo granica odlučuje smije li se podatak upotrijebiti
+ * za tvrdnju koju netko želi izvesti.
+ */
+const IZVORI = [
+  {
+    naziv: "Postaje Karepovac 1 i 2",
+    adresa: "http://zrak-zavod-split.info/k1/",
+    sto: "Satne koncentracije H₂S-a, amonijaka, merkaptana, benzena i drugoga, od 2024. Mjeri Nastavni zavod za javno zdravstvo SDŽ, za Čistoću i Grad Split.",
+    granica:
+      "Objavljeno bez naknadne provjere; Zavod ih potvrđuje tek u godišnjem izvješću. Postaje stoje uz samo odlagalište, ne u kvartu.",
+  },
+  {
+    naziv: "Očevidnik kvalitete zraka",
+    adresa: "https://iszz.azo.hr/iskzl/",
+    sto: "Podaci o postajama: tko ih vodi, što mjere i gdje stoje.",
+    granica:
+      "Koordinate su zaokružene na tri decimale, dakle na stotinjak metara.",
+  },
+  {
+    naziv: "METAR sa splitske zračne luke",
+    adresa: "https://mesonet.agron.iastate.edu/request/download.phtml?network=HR__ASOS",
+    sto: "Izmjereni smjer i brzina vjetra svakoga sata. Od svih dostupnih izvora vjetra ovaj se najbolje slaže s onim što postaja namiriše.",
+    granica:
+      "Luka je 17 km zapadno, iza Kozjaka. Opisuje kaštelansko polje, ne našu padinu. Najbliža službena postaja s vjetrom, Split-Marjan, arhivu ne objavljuje javno.",
+  },
+  {
+    naziv: "ERA5 preko Open-Mete",
+    adresa: "https://open-meteo.com/en/docs/historical-weather-api",
+    sto: "Dubina graničnog sloja, zračenje i naoblaka — iz njih izlazi razred stabilnosti.",
+    granica:
+      "Ćelija je 25 km. Opisuje vrijeme nad Splitom, ne nad Karepovcem; za smjer vjetra pokazao se lošijim od mjerenja.",
+  },
+  {
+    naziv: "DGU: LiDAR reljef",
+    adresa: "https://geoportal.dgu.hr/",
+    sto: "Model visina iz kojega izlazi polje vjetra koje obilazi padinu umjesto da ide kroz nju.",
+    granica: "Reljef bez zgrada i raslinja; zavjetrinu zgrada model ne vidi.",
+  },
+] as const;
+
 export default function PodaciPage() {
   return (
     <div className="space-y-14">
@@ -40,6 +84,37 @@ export default function PodaciPage() {
               <div key={term} className="grid gap-2 p-5 sm:grid-cols-[10rem_1fr] sm:gap-8 sm:p-6">
                 <dt className="font-bold text-kamen-tinta">{term}</dt>
                 <dd className="leading-7 text-kamen-tekst">{detail}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading title="Odakle dolazi ono što već objavljujemo">
+          <p>
+            Naših mjerenja još nema, ali stranica o zraku već nosi tuđa. Ovo je
+            svaki izvor koji smo upotrijebili, s onim što s njim ne valja —
+            jer izvor bez svojih granica nije izvor nego tvrdnja.
+          </p>
+        </SectionHeading>
+        <div className="mt-7 overflow-hidden rounded-xl border border-kamen-tlo bg-white">
+          <dl className="divide-y divide-kamen-tlo">
+            {IZVORI.map(({ naziv, adresa, sto, granica }) => (
+              <div key={naziv} className="grid gap-2 p-5 sm:grid-cols-[14rem_1fr] sm:gap-8 sm:p-6">
+                <dt className="font-bold text-kamen-tinta">
+                  <a
+                    href={adresa}
+                    rel="noreferrer"
+                    className="fokus rounded-sm underline decoration-kamen-rub decoration-2 underline-offset-4 hover:text-maslina"
+                  >
+                    {naziv}
+                  </a>
+                </dt>
+                <dd className="leading-7 text-kamen-tekst">
+                  {sto}{" "}
+                  <span className="text-kamen-drugi">{granica}</span>
+                </dd>
               </div>
             ))}
           </dl>

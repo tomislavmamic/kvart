@@ -16,9 +16,11 @@ export default function MetodologijaPage() {
     <div className="space-y-14">
       <PageIntro title="Što provjeravamo prije objave mjerenja">
         <p>
-          Mjerenja još nisu počela. Jeftini senzori ne reagiraju samo na plin
-          koji želimo pratiti. Na njih utječu temperatura, vlaga, drugi plinovi
-          i vrijeme uporabe. Zato mjerenja nećemo objaviti čim uključimo uređaj.
+          Naša mjerenja još nisu počela — službena, koja objavljujemo na
+          stranici o zraku, dolaze s tuđih uređaja i nisu naša odgovornost.
+          Jeftini senzori ne reagiraju samo na plin koji želimo pratiti. Na njih
+          utječu temperatura, vlaga, drugi plinovi i vrijeme uporabe. Zato
+          mjerenja nećemo objaviti čim uključimo uređaj.
         </p>
       </PageIntro>
 

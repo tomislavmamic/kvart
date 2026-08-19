@@ -66,9 +66,11 @@ test("Karepovac copy states the preparation stage in plain Croatian", () => {
     copyByPath["src/app/karepovac/(projekt)/postaje/page.tsx"],
     /Naših postaja: nijedna/,
   );
+  // „Naša” je nosivo: službena mjerenja jesu počela i stoje na stranici o
+  // zraku, pa ova rečenica mora reći čija mjerenja nisu počela.
   assert.match(
     copyByPath["src/app/karepovac/(projekt)/metodologija/page.tsx"],
-    /Mjerenja još nisu počela/,
+    /Naša mjerenja još nisu počela/,
   );
   assert.match(
     copyByPath["src/app/karepovac/(projekt)/podaci/page.tsx"],
