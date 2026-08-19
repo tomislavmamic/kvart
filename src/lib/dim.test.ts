@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { OKVIR } from "@/generated/karepovac-karta";
@@ -136,24 +135,6 @@ test("polje dima stoji u istom okviru kao ostale karte", () => {
     Math.abs(okvirOmjer - poljeOmjer) < 0.03,
     `okvir ${okvirOmjer.toFixed(3)} ≠ polje ${poljeOmjer.toFixed(3)} — `
       + "perjanica bi bila razvučena preko karte",
-  );
-});
-
-test("granice okvira se nisu razišle između skripti", () => {
-  const procitaj = (put: string) => readFileSync(put, "utf8");
-  const dijeljeno = procitaj("scripts/okvir.py");
-  const kartica = procitaj("scripts/izvedi-karepovac-karticu.py");
-
-  const brojke = (tekst: string, uzorak: RegExp) => {
-    const pogodak = tekst.match(uzorak);
-    assert.ok(pogodak, `ne nalazim granice u ${uzorak}`);
-    return pogodak.slice(1, 5).map(Number);
-  };
-
-  assert.deepEqual(
-    brojke(dijeljeno, /ZAPAD, JUG, ISTOK, SJEVER = ([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)/),
-    brojke(kartica, /^Z, J, I, S = ([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)/m),
-    "scripts/okvir.py i izvedi-karepovac-karticu.py moraju gledati isti kvart",
   );
 });
 

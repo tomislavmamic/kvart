@@ -17,23 +17,30 @@ Pokretanje: `npm run izvedi-karepovac`
 
 import json
 import math
+import os
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import okvir  # noqa: E402
 
 KORIJEN = Path(__file__).resolve().parent.parent
 GEO = KORIJEN / "public" / "geo"
 IZLAZ = KORIJEN / "src" / "generated" / "karepovac-karta.ts"
 
-# Okvir obuhvaća oba dijela kvarta i cijelo tijelo odlagališta, s rubom.
-Z, J, I, S = 16.4867, 43.5184, 16.5192, 43.5301
-SIRINA = 660.0
-LAT0 = (J + S) / 2
-M_PO_LON = 111320 * math.cos(math.radians(LAT0))
-M_PO_LAT = 110574
-SIRINA_M = (I - Z) * M_PO_LON
-VISINA_M = (S - J) * M_PO_LAT
-VISINA = round(SIRINA * VISINA_M / SIRINA_M, 1)
-PX_PO_M = SIRINA / SIRINA_M
+# Okvir stoji u `scripts/okvir.py`, da ga dijele i ova skripta i polje dima.
+# Dok je stajao ovdje u vlastitoj kopiji, prva promjena granica razišla bi
+# kartice i perjanicu za nekoliko stotina metara — a to se na karti ne vidi kao
+# greška nego kao loše poklapanje slojeva.
+Z, J, I, S = okvir.ZAPAD, okvir.JUG, okvir.ISTOK, okvir.SJEVER
+SIRINA = okvir.SIRINA
+M_PO_LON = okvir.M_PO_LON
+M_PO_LAT = okvir.M_PO_LAT
+SIRINA_M = okvir.SIRINA_M
+VISINA_M = okvir.VISINA_M
+VISINA = okvir.VISINA
+PX_PO_M = okvir.PX_PO_M
 
 
 def ucitaj(ime: str) -> dict:
@@ -44,7 +51,8 @@ def ucitaj(ime: str) -> dict:
 
 
 def projiciraj(t) -> tuple[float, float]:
-    return ((t[0] - Z) / (I - Z) * SIRINA, (S - t[1]) / (S - J) * VISINA)
+    """Pretvara par (lon, lat) u piksele okvira."""
+    return okvir.projiciraj(t[0], t[1])
 
 
 def dijelovi(geom: dict) -> list:
