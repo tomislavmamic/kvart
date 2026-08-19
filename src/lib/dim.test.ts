@@ -156,3 +156,22 @@ test("granice okvira se nisu razišle između skripti", () => {
     "scripts/okvir.py i izvedi-karepovac-karticu.py moraju gledati isti kvart",
   );
 });
+
+test("čestica koja izađe iz polja nestane, a ne ostane zauvijek u kutu", () => {
+  // Prije je čestica malo izvan ruba uzimala brzinu izvan niza, dobivala NaN
+  // i time preskakala provjeru ruba — pa se skupljala u ćeliji (0, 0) i ondje
+  // svijetlila kao da je ondje izvor. Vidjelo se tek kad perjanica ode drugamo.
+  const sim = stvoriDim(POLJE_DIMA, { cestica: 8_000 });
+  for (let i = 0; i < 400; i += 1) sim.korak(0.05);
+  const g = sim.crtaj();
+
+  let najvise = 0;
+  for (let i = 0; i < g.length; i += 1) if (g[i] > najvise) najvise = g[i];
+  const kut = Math.max(g[0], g[1], g[sim.sirina], g[sim.sirina + 1]);
+
+  assert.ok(najvise > 0, "polje mora imati nešto u sebi");
+  assert.ok(
+    kut < najvise * 0.05,
+    `kut (0, 0) drži ${kut.toFixed(4)}, a najviše u polju je ${najvise.toFixed(4)}`,
+  );
+});

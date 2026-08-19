@@ -95,7 +95,14 @@ test("methodology steps use active plain Croatian", () => {
 });
 
 test("reviewed wording stays on its intended page", () => {
+  // Prije je na perjanici pisalo „Mjerenja još nisu počela”. Otkad su na
+  // stranici službena satna mjerenja s Karepovca, to više nije istina; ostaje
+  // ono što jest — model daje oblik, ne količinu.
   assert.match(
+    copyByPath["src/components/karepovac/karta-kartice.tsx"],
+    /Oblik, ne količina/,
+  );
+  assert.doesNotMatch(
     copyByPath["src/components/karepovac/karta-kartice.tsx"],
     /Mjerenja još nisu počela/,
   );

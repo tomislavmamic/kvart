@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { POLJE_DIMA } from "@/generated/karepovac-polje";
+import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
 import { ljestvicaBoja, stvoriDim } from "@/lib/dim";
 
 /**
@@ -27,8 +27,19 @@ const ZAGRIJAVANJE = { komada: 20, poKomadu: 12, korak: 0.05 };
  *
  * Platno se pokreće tek kad uđe u vidno polje, da kartice koje nitko ne gleda
  * ne troše struju.
+ *
+ * Promjena slučaja vremena ruši i ponovno gradi cijelu simulaciju. Zadržati
+ * čestice pri promjeni polja izgledalo bi kao da vjetar okrene u trenutku, a
+ * on to ne radi — i prizor bi nekoliko sekundi bio ni jedno ni drugo.
  */
-export function DimPerjanica({ klasa = "" }: { klasa?: string }) {
+export function DimPerjanica({
+  slucaj = 0,
+  klasa = "",
+}: {
+  /** Redni broj slučaja vremena u `SLUCAJEVI_DIMA`. */
+  slucaj?: number;
+  klasa?: string;
+}) {
   const platno = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -38,7 +49,18 @@ export function DimPerjanica({ klasa = "" }: { klasa?: string }) {
     if (!ctx) return;
 
     const mirno = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const sim = stvoriDim(POLJE_DIMA, {});
+    const odabran = SLUCAJEVI_DIMA.slucajevi[slucaj] ?? SLUCAJEVI_DIMA.slucajevi[0];
+    const sim = stvoriDim(
+      {
+        gw: SLUCAJEVI_DIMA.gw,
+        gh: SLUCAJEVI_DIMA.gh,
+        maska: SLUCAJEVI_DIMA.maska,
+        skala: odabran.skala,
+        vx: odabran.vx,
+        vy: odabran.vy,
+      },
+      {},
+    );
     const lut = ljestvicaBoja();
 
     element.width = sim.sirina;
@@ -120,7 +142,7 @@ export function DimPerjanica({ klasa = "" }: { klasa?: string }) {
       if (tajmer !== undefined) clearTimeout(tajmer);
       promatrac.disconnect();
     };
-  }, []);
+  }, [slucaj]);
 
   return (
     <canvas

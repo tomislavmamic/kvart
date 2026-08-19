@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
 
+import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
+
 import {
   BLIZI_OKVIR,
   CESTE_UZ_PLOHU,
@@ -234,7 +236,15 @@ function Karta({
  * Tri sloja jer platno mora leći preko podloge, a natpisi preko platna —
  * inače dim proguta imena mjesta.
  */
-export function KartaDima({ opis, children }: { opis: string; children?: ReactNode }) {
+export function KartaDima({
+  opis,
+  slucaj = 0,
+  children,
+}: {
+  opis: string;
+  slucaj?: number;
+  children?: ReactNode;
+}) {
   return (
     <div className="relative">
       <svg
@@ -244,7 +254,7 @@ export function KartaDima({ opis, children }: { opis: string; children?: ReactNo
       >
         <use href="#karepovac-podloga" />
       </svg>
-      <DimPerjanica />
+      <DimPerjanica slucaj={slucaj} />
       <svg
         viewBox={OKVIR.viewBox}
         role="img"
@@ -263,9 +273,18 @@ export function KartaDima({ opis, children }: { opis: string; children?: ReactNo
 /**
  * Perjanica preko cijele širine, za uvodni dio `/karepovac/zrak`.
  *
+ * Prikazuju se dva slučaja vremena, a ne jedan. S jednim se ne vidi ono što
+ * je zapravo važno: da isti kvart pod jednim vjetrom dobiva sve, a pod drugim
+ * ništa. Prebacivanje ide preko dva radio gumba i CSS-a — obje karte stoje
+ * poslužene, pa radi i bez ijednog retka JavaScripta u prebacivanju, a
+ * skrivena karta ne troši struju jer se njezino platno pokreće tek kad uđe u
+ * vidno polje.
+ *
  * Sama nosi definiciju podloge jer je na toj stranici nema tko drugi postaviti.
  */
 export function PoljeDimaVeliko() {
+  const slucajevi = SLUCAJEVI_DIMA.slucajevi;
+
   return (
     <div className="relative flex flex-col justify-between bg-[#fcfbf9] p-4 sm:p-6">
       <PodlogaDefinicija />
@@ -275,36 +294,70 @@ export function PoljeDimaVeliko() {
         </span>
         <span className="rounded-lg bg-amber-100 px-3 py-2 text-right text-xs text-amber-900">
           <span className="block font-bold">Model, ne mjerenje</span>
-          <span className="mt-0.5 block">Mjerenja još nisu počela</span>
+          <span className="mt-0.5 block">Oblik, ne količina</span>
         </span>
       </div>
 
-      <div className="my-4 overflow-hidden rounded-lg border border-kamen-tlo">
-        <KartaDima opis="Karta kvarta: dim s Karepovca putuje u naletima niz padinu preko Dračevca prema Bilicama.">
-          <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
-            {`istok-jugoistok — os ${OKVIR.azimut}°`}
-          </Mjesto>
-        </KartaDima>
-      </div>
+      <fieldset className="my-4 flex flex-wrap gap-2">
+        <legend className="sr-only">Slučaj vremena</legend>
+        {slucajevi.map((slucaj, i) => (
+          // `contents` skida omotač iz rasporeda, pa gumb, oznaka i karta
+          // ostaju braća u DOM-u — bez toga `peer-checked` nema što gledati.
+          <div key={slucaj.kljuc} className="contents">
+            <input
+              type="radio"
+              name="slucaj-vremena"
+              id={`slucaj-${slucaj.kljuc}`}
+              defaultChecked={i === 0}
+              className="peer sr-only"
+            />
+            <label
+              htmlFor={`slucaj-${slucaj.kljuc}`}
+              className="order-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-kamen-rub px-4 py-2 text-sm font-semibold text-kamen-tekst hover:bg-white peer-checked:border-kamen-tinta peer-checked:bg-kamen-tinta peer-checked:text-white peer-checked:hover:bg-kamen-tinta peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-maslina"
+            >
+              {slucaj.naziv}
+            </label>
+            <div className="order-2 hidden w-full peer-checked:block">
+              <div className="overflow-hidden rounded-lg border border-kamen-tlo">
+                <KartaDima slucaj={i} opis={`Karta kvarta: ${slucaj.opis}`}>
+                  <Mjesto
+                    x={OKVIR.sirina - 18}
+                    y={OKVIR.visina - 30}
+                    sidro="end"
+                    velicina={9.5}
+                  >
+                    {`${slucaj.naziv.toLowerCase()} — os ${slucaj.azimut}°`}
+                  </Mjesto>
+                </KartaDima>
+              </div>
+              <p className="mt-3 max-w-prose text-base leading-7 text-kamen-tekst">
+                {slucaj.opis} Vjetar iz tog smjera puše{" "}
+                {Math.round(slucaj.udioSati * 100)} % sati, mjereno na splitskoj
+                zračnoj luci.
+              </p>
+            </div>
+          </div>
+        ))}
+      </fieldset>
 
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
         <div data-kind="estimated" className="bg-white p-3">
           <dt className="font-semibold text-kamen-tinta">Polje vjetra</dt>
           <dd className="mt-0.5 text-kamen-tekst">iz LiDAR reljefa</dd>
         </div>
-        <div data-kind="estimated" className="bg-white p-3">
-          <dt className="font-semibold text-kamen-tinta">Prikazano vrijeme</dt>
-          <dd className="mt-0.5 text-kamen-tekst">slab istok-jugoistok</dd>
+        <div data-kind="official" className="bg-white p-3">
+          <dt className="font-semibold text-kamen-tinta">Udio sati</dt>
+          <dd className="mt-0.5 text-kamen-tekst">izmjeren vjetar, LDSP</dd>
         </div>
         <div data-kind="missing" className="bg-white p-3">
           <dt className="font-semibold text-kamen-tinta">Jačina izvora</dt>
-          <dd className="mt-0.5 text-kamen-tekst">još ne znamo</dd>
+          <dd className="mt-0.5 text-kamen-tekst">bazdarena, ali široko</dd>
         </div>
       </dl>
 
       <p className="mt-3 max-w-prose text-base leading-7 text-kamen-drugi">
-        Oblik perjanice govori kamo miris ide, ali ne i koliko ga ima — jačinu
-        izvora još nismo izmjerili.
+        Oblik perjanice govori kamo zrak s plohe ide. Koliko mirisa nosi, model
+        ne zna pouzdano — provjera na mjerenjima to pokazuje otvoreno.
       </p>
     </div>
   );

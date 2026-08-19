@@ -128,8 +128,8 @@ test("svaka karta ima tekstualni opis za čitač zaslona", () => {
 });
 
 test("perjanica se crta na platnu, ispod natpisa i uz obris plohe", () => {
-  assert.match(izvor, /<DimPerjanica \/>/);
-  const platno = izvor.indexOf("<DimPerjanica />");
+  assert.match(izvor, /<DimPerjanica[^>]*\/>/);
+  const platno = izvor.indexOf("<DimPerjanica");
   const natpisi = izvor.indexOf("<Mjesta />", platno);
   assert.ok(platno > 0 && natpisi > platno, "natpisi moraju doći nakon platna");
 });

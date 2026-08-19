@@ -189,8 +189,12 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
   let ostatak = 0;
 
   function uzmi(A: Uint8Array, fx: number, fy: number): number {
-    const x = fx * (gw - 1);
-    const y = fy * (gh - 1);
+    // Rub se pridržava: čestica koja je maločas izašla iz polja i dalje mora
+    // dobiti brzinu. Bez pridržavanja indeks izlazi iz niza, `A[…]` vrati
+    // `undefined`, brzina postane NaN — a NaN prolazi kroz svaku usporedbu s
+    // rubom, pa se čestica nikad ne ugasi nego zauvijek stoji u kutu.
+    const x = Math.min(Math.max(fx, 0), 1) * (gw - 1);
+    const y = Math.min(Math.max(fy, 0), 1) * (gh - 1);
     const i0 = x | 0;
     const j0 = y | 0;
     const i1 = i0 + 1 < gw ? i0 + 1 : i0;
@@ -272,7 +276,11 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
 
       px[n] = x + vx * par.brzina * dt;
       py[n] = y + vy * par.brzina * dt;
-      if (px[n] < -0.02 || px[n] > 1.02 || py[n] < -0.02 || py[n] > 1.02) {
+      // Napisano obrnuto namjerno: ovako se gasi i čestica čiji je položaj
+      // ispao NaN, jer NaN ne zadovoljava nijednu usporedbu.
+      if (
+        !(px[n] >= -0.02 && px[n] <= 1.02 && py[n] >= -0.02 && py[n] <= 1.02)
+      ) {
         ugasi(n);
       }
     }
