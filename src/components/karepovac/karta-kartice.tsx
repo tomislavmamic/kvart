@@ -42,11 +42,29 @@ const POGLEDI_ZRAKA = [
     kljuc: sloj.kljuc,
     naziv: sloj.naziv,
     opis: sloj.opis,
-    natpis: `godina 2025. — najviše ${sloj.vrh.toLocaleString("hr-HR")} ${sloj.jedinica}`,
+    natpis: `godina ${SIRA_KARTA.godina}.`,
     slucaj: 0,
     slika: sloj.slikaKvart as string | undefined,
+    ljestvica: {
+      od: sloj.kvartOd as number,
+      do: sloj.kvartDo as number,
+      jedinica: sloj.jedinica as string,
+    },
   })),
 ];
+
+/**
+ * Sati idu na cijele, koncentracije na značajne znamenke.
+ *
+ * Fiksne decimale ovdje ne rade: donji rub koncentracije je 0,0004 µg/m³, što
+ * na tri decimale ispadne „0,000” — a ljestvica koja tvrdi da počinje od nule
+ * govori upravo ono što ova ne smije.
+ */
+function poVelicini(x: number) {
+  return x >= 10
+    ? x.toLocaleString("hr-HR", { maximumFractionDigits: 0 })
+    : x.toLocaleString("hr-HR", { maximumSignificantDigits: 2 });
+}
 
 /**
  * Poveznica na isti sloj u karti, sa zapaljenim pogledom, podlogom i mjestom.
@@ -386,8 +404,31 @@ export function PogledZraka() {
                   </Mjesto>
                 </KartaDima>
               </div>
+              {"ljestvica" in pogled && (
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
+                    {poVelicini(pogled.ljestvica.od)}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="h-2.5 flex-1 rounded-full bg-[linear-gradient(90deg,#fdedc7,#fad689,#e99c42,#b7542a,#5e1b16)]"
+                  />
+                  <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
+                    {poVelicini(pogled.ljestvica.do)} {pogled.ljestvica.jedinica}
+                  </span>
+                </div>
+              )}
               <p className="mt-3 max-w-prose text-base leading-7 text-kamen-tekst">
                 {pogled.opis}
+                {"ljestvica" in pogled && (
+                  <>
+                    {" "}
+                    Ljestvica ide od najmanje do najveće vrijednosti u ovom
+                    okviru, a ne od nule — inače bi cijeli kvart bio obojen i
+                    perjanica se ne bi vidjela kao perjanica. Brojke uz nju
+                    kažu koliko su ti rubovi.
+                  </>
+                )}
               </p>
             </div>
           </div>

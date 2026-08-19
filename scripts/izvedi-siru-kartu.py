@@ -19,6 +19,16 @@ se u istom prebacivaču okvir mijenjao između pogleda, čitatelj bi izgubio gdj
 je. Nepomična je namjerno: podatak nije toliko točan da bi zasluživao
 razgledavanje, a tko ga želi razgledati, ide na kartu.
 
+Ljestvice im nisu iste, i to namjerno. Široka ide od nule, jer njezin obuhvat
+doista dopire do mjesta kamo zrak s plohe gotovo nikad ne stigne. Kvartovska
+se rasteže između najmanje i najveće vrijednosti *u okviru*: unutar kvarta
+ništa nije blizu nule — najmanje je oko 360 sati godišnje — pa bi ljestvica od
+nule cijeli okvir obojila i perjanica se ne bi vidjela kao perjanica.
+
+Zato kvartovska slika mora uza se nositi svoje rubove, i stranica ih ispisuje:
+blijedi kraj ljestvice ovdje ne znači „ništa”, nego „i dalje 360 sati”. Bez
+toga bi rastezanje ljepše izgledalo, a govorilo neistinu.
+
 Slike se pišu u `public/`, ne u generirani modul: sjenčanje i polja su rasteri
 od nekoliko stotina kilobajta i nemaju što tražiti u snopu koji preglednik
 mora pročitati prije prvog crtanja. Iz istog razloga se i ceste crtaju u
@@ -73,7 +83,7 @@ SLOJEVI = (
     {
         "kljuc": "sati",
         "naziv": "Koliko sati godišnje",
-        "opis": "Koliko je sati godišnje točka bila u perjanici s plohe. Ne ovisi o jačini izvora, nego samo o vjetru i širenju — i zato je najpouzdanije što model daje.",
+        "opis": "Koliko je sati godišnje točka bila u perjanici s plohe. Ne ovisi o jačini izvora, nego samo o vjetru i širenju — i zato je najpouzdanije što model daje. U kvartu nijedno mjesto nije blizu nule: i ondje gdje je najbljeđe, zrak s plohe prijeđe nekoliko stotina sati godišnje.",
         "polje": "prelasci",
         "godisnje": True,
         "vrh": 8760.0,
@@ -325,18 +335,13 @@ def glavno() -> None:
         slika = sloj_polja(polje, vrh, obuhvat, tablica)
         ime = f"siri-{sloj['kljuc']}.png"
         slika.save(SLIKE / ime, optimize=True)
-        # Ista veličina u okviru kartica, za pogled na `/karepovac`.
+        # Ista veličina u okviru kartica, za pogled na `/karepovac`, ali
+        # rastegnuta između rubova koje okvir doista sadrži.
+        u_okviru = u_okvir_kvarta(polje)
+        od, do = float(u_okviru.min()), float(u_okviru.max())
+        udio = np.sqrt(np.clip((u_okviru - od) / max(do - od, 1e-12), 0, 1))
         u_kvartu = Image.fromarray(
-            tablica[
-                (
-                    np.clip(
-                        np.sqrt(np.clip(u_okvir_kvarta(polje), 0, None) / max(vrh, 1e-12)),
-                        0, 1,
-                    )
-                    * 255
-                ).astype(np.uint8)
-            ],
-            "RGBA",
+            tablica[(udio * 255).astype(np.uint8)], "RGBA"
         )
         ime_kvart = f"kvart-{sloj['kljuc']}.png"
         u_kvartu.save(SLIKE / ime_kvart, optimize=True)
@@ -349,6 +354,8 @@ def glavno() -> None:
                 "opis": sloj["opis"],
                 "slika": f"/karepovac/{ime}",
                 "slikaKvart": f"/karepovac/{ime_kvart}",
+                "kvartOd": round(od, 4),
+                "kvartDo": round(do, 4),
                 "jedinica": sloj["jedinica"],
                 "vrh": round(vrh, 4),
                 "najviseIzvanPlohe": round(float(izvan.max()), 4),
@@ -356,8 +363,8 @@ def glavno() -> None:
             }
         )
         logger.info(
-            "%s: vrh %.4g %s, izvan plohe najviše %.4g (%.0f kB)",
-            sloj["kljuc"], vrh, sloj["jedinica"], izvan.max(),
+            "%s: široko 0–%.4g %s; u kvartu %.4g–%.4g (%.0f kB)",
+            sloj["kljuc"], vrh, sloj["jedinica"], od, do,
             (SLIKE / ime).stat().st_size / 1024,
         )
 
