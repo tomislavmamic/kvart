@@ -9,8 +9,6 @@ import {
   OKVIR,
   PODLOGA,
   PRSTENI,
-  SKRETANJE,
-  STRUJNICE,
   TOCKE,
   TOKOVI,
   VIIRS,
@@ -100,12 +98,10 @@ test("prstenovi i satelitska mreža nose stvarne mjere", () => {
   assert.ok(VIIRS.some((c) => !c.pogodak), "sve ćelije padaju na plohu");
 });
 
-test("polje vjetra skreće, ali ne divlje", () => {
-  assert.ok(OKVIR.azimut > 270 && OKVIR.azimut < 320, "kvart je sjeverozapadno od plohe");
-  assert.ok(SKRETANJE.medijan > 2 && SKRETANJE.medijan < 25);
-  assert.ok(SKRETANJE.najvece > SKRETANJE.medijan);
-  assert.ok(SKRETANJE.najvece < 90, "skretanje preko 90° znači da polje ide natrag");
-  assert.ok(STRUJNICE.length > 10);
+test("kvart leži sjeverozapadno od plohe", () => {
+  // O ovoj osi visi i to nosi li vjetar prema kvartu; strujnice se provjeravaju
+  // u strujnice.test.ts, na polju koje se slaže u izvođenju.
+  assert.ok(OKVIR.azimut > 270 && OKVIR.azimut < 320);
 });
 
 test("stranica nosi svih jedanaest kartica, svaku s oznakom izvora", () => {
@@ -128,8 +124,8 @@ test("svaka karta ima tekstualni opis za čitač zaslona", () => {
 });
 
 test("perjanica se crta na platnu, ispod natpisa i uz obris plohe", () => {
-  assert.match(izvor, /<DimPerjanica \/>/);
-  const platno = izvor.indexOf("<DimPerjanica />");
+  assert.match(izvor, /<DimPerjanica polje={polje} \/>/);
+  const platno = izvor.indexOf("<DimPerjanica polje={polje} />");
   const natpisi = izvor.indexOf("<Mjesta />", platno);
   assert.ok(platno > 0 && natpisi > platno, "natpisi moraju doći nakon platna");
 });

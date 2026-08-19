@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { POLJE_DIMA } from "@/generated/karepovac-polje";
-import { ljestvicaBoja, stvoriDim } from "@/lib/dim";
+import { ljestvicaBoja, stvoriDim, type PoljeDima } from "@/lib/dim";
 
 /**
  * Zagrijavanje: dvanaest sekundi simulacije, u komadima.
@@ -27,8 +26,17 @@ const ZAGRIJAVANJE = { komada: 20, poKomadu: 12, korak: 0.05 };
  *
  * Platno se pokreće tek kad uđe u vidno polje, da kartice koje nitko ne gleda
  * ne troše struju.
+ *
+ * Polje dolazi izvana, iz poslužitelja: složeno je za vjetar koji trenutačno
+ * puše (`src/lib/vjetar.ts`), pa se pri tišini čestice jedva miču.
  */
-export function DimPerjanica({ klasa = "" }: { klasa?: string }) {
+export function DimPerjanica({
+  polje,
+  klasa = "",
+}: {
+  polje: PoljeDima;
+  klasa?: string;
+}) {
   const platno = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -38,7 +46,7 @@ export function DimPerjanica({ klasa = "" }: { klasa?: string }) {
     if (!ctx) return;
 
     const mirno = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const sim = stvoriDim(POLJE_DIMA, {});
+    const sim = stvoriDim(polje, {});
     const lut = ljestvicaBoja();
 
     element.width = sim.sirina;
@@ -120,7 +128,7 @@ export function DimPerjanica({ klasa = "" }: { klasa?: string }) {
       if (tajmer !== undefined) clearTimeout(tajmer);
       promatrac.disconnect();
     };
-  }, []);
+  }, [polje]);
 
   return (
     <canvas

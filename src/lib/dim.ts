@@ -44,8 +44,8 @@ export type Postavke = {
   sirenje?: number;
   /** Sekundi života čestice. */
   vijek?: number;
-  /** Koliko brzo polje nosi česticu, u dijelovima okvira po sekundi. */
-  brzina?: number;
+  /** Koliko puta prikaz teče brže od stvarnosti. */
+  ubrzanje?: number;
   /** Broj prolaza zamućenja; bez toga se vide zrnca, a ne dim. */
   zamucenje?: number;
   /** Broj žarišta na plohi. */
@@ -62,6 +62,14 @@ export type Simulacija = {
   postavi(ime: keyof Postavke, vrijednost: number): void;
 };
 
+/**
+ * Širina okvira karte u metrima (`OKVIR.sirina / OKVIR.pxPoMetru`).
+ *
+ * Stoji ovdje kao broj, a ne kroz uvoz generirane karte, da se simulacija može
+ * pokrenuti i bez nje; `dim.test.ts` pazi da se dvije brojke ne raziđu.
+ */
+export const SIRINA_OKVIRA_M = 2623;
+
 const ZADANO = {
   sirina: 200,
   cestica: 90_000,
@@ -73,7 +81,10 @@ const ZADANO = {
   mjerilo: 3.2,
   sirenje: 0.55,
   vijek: 14,
-  brzina: 0.085,
+  // Polje nosi stvarne m/s, pa je jedina slobodna brojka koliko je prikaz brži
+  // od stvarnosti. Pri 186× čestica živi 14 s prikaza, dakle 43 minute zraka —
+  // otprilike toliko treba slabom vjetru da s plohe prijeđe kvart.
+  ubrzanje: 186,
   zamucenje: 2,
   zarista: 12,
 } as const;
@@ -270,8 +281,11 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
       vx += dy * a * par.snaga;
       vy += -dx * a * par.snaga;
 
-      px[n] = x + vx * par.brzina * dt;
-      py[n] = y + vy * par.brzina * dt;
+      // Polje je u m/s, okvir u dijelovima širine: metar po sekundi prijeđe
+      // `ubrzanje` metara po sekundi prikaza.
+      const tempo = (par.ubrzanje / SIRINA_OKVIRA_M) * dt;
+      px[n] = x + vx * tempo;
+      py[n] = y + vy * tempo;
       if (px[n] < -0.02 || px[n] > 1.02 || py[n] < -0.02 || py[n] > 1.02) {
         ugasi(n);
       }

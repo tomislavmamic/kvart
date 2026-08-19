@@ -92,3 +92,4 @@ __pycache__/
 # adrese i OIB-e fizičkih osoba. Generator ih koristi samo lokalno za nastavak
 # prekinutog rada; u Git i javni build ulazi isključivo sanitizirani GeoJSON.
 /.cache/targeted-ownership/
+/.cache/vjetar/

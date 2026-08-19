@@ -8,6 +8,9 @@ import {
 } from "@/components/karepovac/project-components";
 import { KAREPOVAC_PHASES } from "@/lib/karepovac";
 
+/** Isti rok kao na pregledu, da dvije karte istoga kvarta ne pokazuju dva vjetra. */
+export const revalidate = 900;
+
 export default function KarepovacPage() {
   return (
     <div className="space-y-16">
@@ -41,8 +44,12 @@ export default function KarepovacPage() {
         <SectionHeading title="Danas još nemamo vlastita mjerenja">
           <p>
             Mjerenja ćemo objaviti tek nakon što uređaje usporedimo, umjerimo i
-            provjerimo. Smjer širenja počet ćemo procjenjivati tek kada budemo
-            imali pouzdan podatak o vjetru i valjana mjerenja.
+            provjerimo. Karta gore računa se prema vjetru s najbliže gradske
+            postaje koja ga u tom satu objavljuje i prema modelskoj visini
+            sloja u kojem se zrak miješa, pa pokazuje samo kamo zrak s plohe
+            odlazi. Koliko mirisa nosi, ne znamo dok ne izmjerimo izvor. Na
+            samom Karepovcu anemometra nema — ni jedna od dviju postaja uz
+            plohu ne mjeri vjetar.
           </p>
           <Link
             href="/karepovac/metodologija"

@@ -3,8 +3,12 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { OKVIR } from "@/generated/karepovac-karta";
-import { POLJE_DIMA } from "@/generated/karepovac-polje";
-import { ljestvicaBoja, stvoriDim } from "@/lib/dim";
+import { ljestvicaBoja, stvoriDim, SIRINA_OKVIRA_M } from "@/lib/dim";
+import { sastaviPolje } from "@/lib/polje-dima";
+import { PRETPOSTAVLJENO } from "@/lib/vjetar";
+
+/** Slučaj na kojem su provjere pisane: slab jugoistočnjak, plitak sloj. */
+const POLJE_DIMA = sastaviPolje(PRETPOSTAVLJENO);
 
 /** Zagrijava simulaciju do ustaljenog stanja. */
 function pusti(sim: ReturnType<typeof stvoriDim>, sekundi: number): void {
@@ -128,6 +132,15 @@ function tezisteX(g: Float32Array, W: number, H: number): number {
   }
   return tezina > 0 ? zbroj / tezina / W : 0.5;
 }
+
+test("širina okvira u simulaciji prati onu na karti", () => {
+  const izKarte = OKVIR.sirina / OKVIR.pxPoMetru;
+  assert.ok(
+    Math.abs(izKarte - SIRINA_OKVIRA_M) < 10,
+    `okvir je ${izKarte.toFixed(0)} m, a simulacija računa sa ${SIRINA_OKVIRA_M} m — `
+      + "perjanica bi tekla brže ili sporije nego što piše",
+  );
+});
 
 test("polje dima stoji u istom okviru kao ostale karte", () => {
   const okvirOmjer = OKVIR.sirina / OKVIR.visina;
