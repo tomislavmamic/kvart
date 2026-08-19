@@ -91,6 +91,14 @@ SLIKANJA = 6
 
 #: Najmanja brzina nošenja; ispod ovoga vrtloženje ionako preuzima.
 NAJMANJA_BRZINA = 0.25
+
+#: METAR javlja smjer zaokružen na 10°. Stvarni vjetar nije stepenast, ali
+#: godišnja slika sastavljena od zaokruženih smjerova jest: perjanice se slože
+#: u trideset šest oštrih zraka koje izgledaju kao nalaz, a samo su korak
+#: zapisa. Zato se svakom satu doda slučajan zaokret unutar razreda, čime se
+#: vraća raspodjela kakva je bila prije zaokruživanja. Pojedini sat time
+#: postaje neznatno netočniji, a godišnja slika točnija.
+ROTACIJA_ZAPISA = 5.0
 #: Granice dubine miješanja koje ERA5 zna prijeći.
 NAJPLICE, NAJDUBLJE = 30.0, 2500.0
 
@@ -127,6 +135,11 @@ def knjiznica_polja(obuhvat: Obuhvat = RASPRSENJE) -> np.ndarray:
     Polje je linearno u brzini, pa se za svaki sat uzima polje za jedinicu
     brzine i pomnoži brzinom toga sata. Dubina ulazi nelinearno, pa se za nju
     računaju posebna polja.
+
+    Smjer se ne zaokružuje na najbliži nego se miješaju dva susjedna polja
+    (vidi `prodji`). Bez miješanja svi sati unutar istog razreda nose perjanicu
+    u potpuno istom smjeru, pa se u godišnjoj slici pojave zrake — trideset
+    šest oštrih krakova koji izgledaju kao nalaz, a samo su korak razreda.
 
     Args:
         obuhvat: Obuhvat računa.
@@ -276,7 +289,10 @@ class Sat:
 
 
 def slozi_sate(
-    vjetrovi: dict[str, tuple[float, float]], okolnosti: dict[str, dict]
+    vjetrovi: dict[str, tuple[float, float]],
+    okolnosti: dict[str, dict],
+    rotacija: float = ROTACIJA_ZAPISA,
+    sjeme: int = 11,
 ) -> list[Sat]:
     """Spaja vjetar i okolnosti u niz sati koji model može odraditi.
 
@@ -286,16 +302,22 @@ def slozi_sate(
     Args:
         vjetrovi: Satni vjetar iz `vjetar.ucitaj`.
         okolnosti: Satne okolnosti iz `vjetar.uvjeti`.
+        rotacija: Polovica razreda u kojem je smjer zapisan, u stupnjevima;
+            unutar njega se smjer nasumično zaokrene. Nula isključuje zaokret.
+        sjeme: Sjeme slučajnih brojeva, da je račun ponovljiv.
 
     Returns:
         Sate poredane po vremenu.
     """
+    rng = np.random.default_rng(sjeme)
     sati = []
     for t in sorted(vjetrovi):
         o = okolnosti.get(t)
         if o is None or o.get("granicni") is None:
             continue
         smjer, brzina = vjetrovi[t]
+        if rotacija:
+            smjer = (smjer + rng.uniform(-rotacija, rotacija)) % 360.0
         sati.append(
             Sat(
                 t=t,
@@ -451,12 +473,23 @@ def prodji(
     xs = prijemnici[:, 0] if prijemnici is not None else None
     ys = prijemnici[:, 1] if prijemnici is not None else None
 
+    korak_smjera = 360.0 / SMJEROVA
     for sat in sati:
-        i_smjer = int(round(sat.smjer / (360.0 / SMJEROVA))) % SMJEROVA
+        # Dva susjedna polja se miješaju po udjelu, umjesto da se smjer
+        # zaokruži na najbliže. Polje je linearno u sve dvije komponente, pa je
+        # mješavina i dalje polje kojemu je protok masa dosljedan.
+        mjesto = sat.smjer / korak_smjera
+        donji = int(np.floor(mjesto)) % SMJEROVA
+        gornji = (donji + 1) % SMJEROVA
+        udio = mjesto - np.floor(mjesto)
         i_dubina = int(np.argmin(np.abs(dubine - sat.dubina)))
         brzina = max(sat.brzina, NAJMANJA_BRZINA)
-        u = polja[i_smjer, i_dubina, 0] * brzina
-        v = polja[i_smjer, i_dubina, 1] * brzina
+        u = (
+            polja[donji, i_dubina, 0] * (1 - udio) + polja[gornji, i_dubina, 0] * udio
+        ) * brzina
+        v = (
+            polja[donji, i_dubina, 1] * (1 - udio) + polja[gornji, i_dubina, 1] * udio
+        ) * brzina
 
         koraka = int(np.clip(
             math.ceil(brzina * 3600.0 / PUT_PO_KORAKU),

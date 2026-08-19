@@ -21,6 +21,7 @@
     "bazdari-izvor": "/opt/homebrew/bin/python3 scripts/bazdari-izvor.py",
     "izvedi-mjerenja": "/opt/homebrew/bin/python3 scripts/izvedi-mjerenja-karticu.py",
     "izvedi-vjetar": "/opt/homebrew/bin/python3 scripts/izvedi-vjetar-karticu.py",
+    "pogledaj-raspesenje": "/opt/homebrew/bin/python3 scripts/pogledaj-raspesenje.py",
     "import-grad-geo": "tsx scripts/import-split-gis.ts",
     "generate-public-parcels": "tsx scripts/generate-public-parcels.ts",
     "generate-planned-road-parcels": "tsx scripts/generate-planned-road-parcels.ts",
