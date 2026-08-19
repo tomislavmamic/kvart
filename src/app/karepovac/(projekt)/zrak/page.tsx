@@ -6,6 +6,8 @@ import {
   PrimaryLink,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { Prosirivo } from "@/components/karepovac/prosirivo";
+import { SiraKarta } from "@/components/karepovac/sira-karta";
 import { DnevniHod, RuzaMirisa } from "@/components/karepovac/sluzbena-mjerenja";
 import { BAZDARENJE } from "@/generated/karepovac-bazdarenje";
 import { MJERENJA } from "@/generated/karepovac-mjerenja";
@@ -41,7 +43,9 @@ export default function KarepovacPage() {
             </PrimaryLink>
           </div>
         </div>
-        <PoljeDimaVeliko />
+        <Prosirivo naslov="Kako se miris nosi niz padinu">
+          <PoljeDimaVeliko />
+        </Prosirivo>
       </section>
 
       <section className="space-y-8">
@@ -99,11 +103,18 @@ export default function KarepovacPage() {
               mjerenja pokazuju da ne ispušta.
             </Fact>
             <Fact>
-              Zato ovdje nema karte mirisa. Model smije reći kamo zrak s plohe
-              odlazi; koliko tada smrdi, ne smije.
+              Zato karta ispod pokazuje kamo zrak s plohe odlazi i koliko je
+              često ondje — a ne koliko tada smrdi. To je razlika koju model
+              može potkrijepiti.
             </Fact>
           </ul>
         </div>
+      </section>
+
+      <section>
+        <Prosirivo naslov="Cijelo područje koje model računa">
+          <SiraKarta />
+        </Prosirivo>
       </section>
 
       <section>

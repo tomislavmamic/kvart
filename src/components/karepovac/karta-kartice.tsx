@@ -288,7 +288,9 @@ export function PoljeDimaVeliko() {
   return (
     <div className="relative flex flex-col justify-between bg-[#fcfbf9] p-4 sm:p-6">
       <PodlogaDefinicija />
-      <div className="flex flex-wrap items-start justify-between gap-2">
+      {/* Desni prostor je ostavljen gumbu za povećanje, koji lebdi nad karticom
+          i inače bi sjeo na oznaku „Model, ne mjerenje”. */}
+      <div className="flex flex-wrap items-start justify-between gap-2 pr-32">
         <span className="text-sm font-bold text-kamen-tinta">
           Kako se miris nosi niz padinu
         </span>

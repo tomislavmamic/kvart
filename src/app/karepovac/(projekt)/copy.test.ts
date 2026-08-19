@@ -139,8 +139,18 @@ test("dojava traži sat i ne traži ime", () => {
 
 test("model ne obećava kartu mirisa koju ne može potkrijepiti", () => {
   const zrak = copyByPath["src/app/karepovac/(projekt)/zrak/page.tsx"];
-  assert.match(zrak, /Zato ovdje nema karte mirisa/);
+  // Opisi slojeva nastaju u `scripts/izvedi-siru-kartu.py` i putuju kroz
+  // generirani modul; provjerava se ono što doista ode pred ljude.
+  const karta = readFileSync(
+    join(process.cwd(), "src/generated/karepovac-siri.ts"),
+    "utf8",
+  );
   assert.match(zrak, /Merkaptane, koji dolaze s Karepovca, model ne pogađa/);
+  // Karta pokazuje gdje i koliko često, ne koliko smrdi — i to mora pisati
+  // uz nju, jer je upravo ta razlika ono što model može potkrijepiti.
+  assert.match(zrak, /a ne koliko tada smrdi/);
+  assert.match(karta, /najpouzdanije što model daje/);
+  assert.match(karta, /model ne pogađa/);
 });
 
 test("Karepovac paragraphs use at least one rem text", () => {
