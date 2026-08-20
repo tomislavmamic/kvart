@@ -8,14 +8,14 @@ export const BAZDARENJE = {
   "postaja": "k1",
   "vjetar": "ldsp",
   "pamcenje": true,
-  "sati": 13791,
-  "spearman": 0.0755,
-  "auc": 0.5504,
-  "pozadina": 1.066,
+  "sati": 11247,
+  "spearman": 0.1345,
+  "auc": 0.5771,
+  "pozadina": 1.234,
   "emisijaUgS": [
-    303.6,
-    1850.6,
-    3263.1
+    1190.2,
+    2466.3,
+    3707.6
   ],
   "plohaM2": 313750,
   "pragNjuha": [
@@ -23,41 +23,41 @@ export const BAZDARENJE = {
     7.0
   ],
   "kontrola": {
-    "k2 Ozon (O3)": -0.3944,
-    "k2 Ugljikov monoksid (CO)": 0.0953,
-    "k2 metil+etilmerkaptan": -0.0317,
-    "k1 NH3": -0.0079
+    "k2 Ozon (O3)": -0.3915,
+    "k2 Ugljikov monoksid (CO)": 0.1025,
+    "k2 metil+etilmerkaptan": -0.0529,
+    "k1 NH3": -0.0058
   },
   "izvedbe": {
     "era5-pamti": {
-      "spearman": 0.011,
-      "auc": 0.5523,
-      "sati": 15862
+      "spearman": 0.0007,
+      "auc": 0.5572,
+      "sati": 12858
     },
     "era5-bez": {
-      "spearman": 0.0031,
-      "auc": 0.5438,
-      "sati": 15862
-    },
-    "visoka-pamti": {
-      "spearman": -0.0239,
-      "auc": 0.5163,
-      "sati": 15862
-    },
-    "visoka-bez": {
-      "spearman": -0.0472,
-      "auc": 0.487,
-      "sati": 15862
+      "spearman": -0.0122,
+      "auc": 0.5455,
+      "sati": 12858
     },
     "ldsp-pamti": {
-      "spearman": 0.0755,
-      "auc": 0.5504,
-      "sati": 13791
+      "spearman": 0.1345,
+      "auc": 0.5771,
+      "sati": 11247
     },
     "ldsp-bez": {
-      "spearman": 0.0539,
-      "auc": 0.5316,
-      "sati": 13791
+      "spearman": 0.1006,
+      "auc": 0.5562,
+      "sati": 11247
+    },
+    "spoj-pamti": {
+      "spearman": -0.076,
+      "auc": 0.4806,
+      "sati": 12850
+    },
+    "spoj-bez": {
+      "spearman": -0.1117,
+      "auc": 0.4419,
+      "sati": 12850
     }
   }
 } as const;

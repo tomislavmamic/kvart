@@ -6,7 +6,8 @@ kvarta i koliko tada donese. Prikaz dima na stranici (`izvedi-polje-dima.py`)
 nosi samo geometriju jednog slučaja vremena; ovdje je cijela godina.
 
 Račun ide kroz `oblacici.py` — nestacionarni Lagrangeov model s pamćenjem, sat
-po sat, s izmjerenim vjetrom sa splitske zračne luke. Jačina izvora nije
+po sat, s izmjerenim vjetrom s gradske postaje Split-3, uz Marjan i zračnu luku za
+rupe. Jačina izvora nije
 pretpostavljena nego izračunata unatrag iz 13 791 sata H₂S-a na postaji uz
 plohu (`bazdari-izvor.py`), zajedno s rasponom pouzdanosti.
 
@@ -48,6 +49,10 @@ BAZDARENJE = KORIJEN / "src" / "generated" / "karepovac-bazdarenje.ts"
 IZLAZ = KORIJEN / ".cache" / "raspesenje.npz"
 
 GODINA = 2025
+
+#: Izvor vjetra; spoj gradske postaje Split-3, Marjana i zračne luke. Vidi
+#: `vjetar.LANAC` i `provjeri-vjetar.py` za razlog redoslijeda.
+IZVOR_VJETRA = "spoj"
 
 #: Kad je koncentracija u točki iznad ovog udjela prosjeka na samoj plohi,
 #: broji se da je točka toga sata bila u perjanici. Mjerilo je omjer, pa ne
@@ -91,7 +96,7 @@ def glavno() -> None:
     )
 
     okolnosti = vjetar.uvjeti(f"{GODINA}-01-01", f"{GODINA}-12-31")
-    vjetrovi = vjetar.ucitaj("ldsp", f"{GODINA}-01-01", f"{GODINA}-12-31")
+    vjetrovi = vjetar.ucitaj(IZVOR_VJETRA, f"{GODINA}-01-01", f"{GODINA}-12-31")
     sati = oblacici.slozi_sate(vjetrovi, okolnosti)
     logger.info("godina %d: %d sati s vjetrom i graničnim slojem", GODINA, len(sati))
 

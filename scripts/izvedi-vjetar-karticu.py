@@ -5,10 +5,10 @@ Ruži dojava treba, za svaku dojavu, vjetar u satu u kojem je miris osjetio.
 Taj se vjetar ne smije dohvaćati pri svakom prikazu — stranica bi ovisila o
 tuđem poslužitelju, a niz bi se mijenjao pod nogama.
 
-Izvor je izmjereni vjetar sa splitske zračne luke, isti koji je u
-`provjeri-vjetar.py` ispao najbliži onome što postaja stvarno namiriše.
-Postaja je 17 km zapadno, iza Kozjaka, pa opisuje kaštelansko polje, a ne našu
-padinu — ali je jedini javno dostupan izmjeren vjetar u blizini.
+Izvor je spoj izmjerenih postaja, redom Split-3 (4,3 km), Split-Marjan (6 km)
+i zračna luka (16 km). Redoslijed nije proizvoljan nego izmjeren: `provjeri-
+vjetar.py` ocjenjuje svaki izvor prema tome koliko dobro objašnjava izmjereni
+H₂S uz plohu, i zračna luka ispada zadnja jer noću ne razlučuje ništa.
 
 Zapis je gust namjerno: smjer u koracima od 5° i brzina u koracima od 0,5 m/s,
 po jedan bajt, oboje kao base64. Godina dana tako stane u dvadesetak kilobajta.
@@ -53,7 +53,7 @@ def glavno() -> None:
     )
     od = (danas - timedelta(days=DANA)).strftime("%Y-%m-%d")
     do = danas.strftime("%Y-%m-%d")
-    izmjeren = vjetar.ucitaj("ldsp", od, do)
+    izmjeren = vjetar.ucitaj("spoj", od, do)
 
     prvi = datetime.strptime(od, "%Y-%m-%d").replace(tzinfo=timezone.utc)
     sati = DANA * 24

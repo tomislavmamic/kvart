@@ -66,6 +66,11 @@ KONTROLNE = (("k2", "Ozon (O3)"), ("k2", "Ugljikov monoksid (CO)"),
 #: Koliko puta se ponavlja uzorkovanje po danima.
 PONAVLJANJA = 400
 
+#: Izvori vjetra koji prolaze kroz cijeli model. Ruža u `provjeri-vjetar.py`
+#: već ih rangira bez modela i mnogo jeftinije; kroz model idu samo tri koja
+#: nose zaključak — preračun, najbolje pojedinačno mjerenje, i spoj.
+KROZ_MODEL = ("era5", "ldsp", "spoj")
+
 #: Prag ljudskog njuha za H₂S u µg/m³. Literatura daje raspon i on se nosi
 #: dalje u svaki prijevod iz mase u mirisne jedinice.
 PRAG_NJUHA = (0.7, 7.0)
@@ -197,9 +202,14 @@ def _niz_modela(
 
 
 def _mjerenja(oznaka: str, tvar: str) -> dict[str, float]:
-    """Satna mjerenja jedne tvari na jednoj postaji."""
-    _, zapisi = postaje.niz(oznaka)
-    return {str(z["t"]): float(z[tvar]) for z in zapisi if z.get(tvar) is not None}
+    """Satna mjerenja jedne tvari, bez mjeseci u kojima uređaj nije mjerio.
+
+    Probir nije kozmetika. Bez njega u regresiju uđe šest mjeseci u kojima
+    analizator stoji na granici određivanja — stotine sati u kojima mjerenje
+    ne ovisi ni o vjetru ni o čemu drugom. To ne doda šum oko pravog nagiba
+    nego ga povuče prema nuli i raširi raspon pouzdanosti.
+    """
+    return postaje.satno(oznaka, tvar)
 
 
 def glavno() -> None:
@@ -208,14 +218,17 @@ def glavno() -> None:
     mjesto = _mjesto_postaje(POSTAJA)
     okolnosti = vjetar.uvjeti(OD, DO)
     mjereno = _mjerenja(POSTAJA, TVAR)
+    sirovo = postaje.satno(POSTAJA, TVAR, probrano=False)
     logger.info(
-        "ploha izvora %.1f ha; postaja na %.0f, %.0f; %d sati %s",
-        ploha / 1e4, *mjesto, len(mjereno), TVAR,
+        "ploha izvora %.1f ha; postaja na %.0f, %.0f; %s: %d sati od %d "
+        "(izbačeno %d mjeseci u kojima uređaj nije mjerio)",
+        ploha / 1e4, *mjesto, TVAR, len(mjereno), len(sirovo),
+        len({t[:7] for t in sirovo}) - len({t[:7] for t in mjereno}),
     )
 
     logger.info("\n%-8s %-9s %9s %9s %8s", "vjetar", "pamćenje", "Spearman", "AUC vrha", "sati")
     izvedbe, najbolja, najbolja_ocjena = {}, None, -2.0
-    for izvor_vjetra in vjetar.IZVORI:
+    for izvor_vjetra in KROZ_MODEL:
         for pamcenje in (True, False):
             niz = _niz_modela(izvor_vjetra, pamcenje, okolnosti, tocke, mjesto)
             zajedno = sorted(set(niz) & set(mjereno))

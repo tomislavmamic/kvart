@@ -50,6 +50,20 @@ ZAGREB = ZoneInfo("Europe/Zagreb")
 #: Udio granice određivanja koji se pripisuje nalazu „< granica”.
 UDIO_ISPOD_GRANICE = 0.5
 
+#: Mjesec se odbacuje ako je više od ovoliko nalaza ispod granice određivanja.
+#:
+#: Tablice se objavljuju bez naknadne provjere, a uređaji odlaze na umjeravanje
+#: i vraćaju se s drugom granicom. To se u nizu ne vidi kao prekid nego kao
+#: mirno razdoblje: studeni 2025. ima 100 % nalaza ispod granice, a prosinac
+#: 90 % — analizator je stajao, a niz izgleda kao da zraka nije bilo. Takvi
+#: mjeseci u računu ne šute nego lažu, jer regresiji dodaju stotine sati u
+#: kojima mjerenje ne ovisi ni o čemu.
+NAJVISE_ISPOD_GRANICE = 0.5
+
+#: Mjesec s manje od ovoliko sati ne ulazi u ocjenu; prekratak je da bi se na
+#: njemu vidjelo je li uređaj radio.
+NAJMANJE_SATI_U_MJESECU = 200
+
 
 @dataclass(frozen=True)
 class Postaja:
@@ -208,6 +222,53 @@ def niz(oznaka: str) -> tuple[list[str], list[dict]]:
         for zapis in zapisi:
             sve.setdefault(str(zapis["t"]), {}).update(zapis)
     return tvari, [sve[k] for k in sorted(sve)]
+
+
+def valjani_mjeseci(oznaka: str, tvar: str) -> set[str]:
+    """Vraća mjesece u kojima je uređaj za tu tvar doista mjerio.
+
+    Args:
+        oznaka: `k1` ili `k2`.
+        tvar: Ime tvari kako stoji u tablici.
+
+    Returns:
+        Skup mjeseci u obliku `GGGG-MM`.
+    """
+    po_mjesecu: dict[str, list[float]] = {}
+    _, zapisi = niz(oznaka)
+    for zapis in zapisi:
+        vrijednost = zapis.get(tvar)
+        if vrijednost is None:
+            continue
+        po_mjesecu.setdefault(str(zapis["t"])[:7], []).append(float(vrijednost))
+    return {
+        mjesec
+        for mjesec, vrijednosti in po_mjesecu.items()
+        if len(vrijednosti) >= NAJMANJE_SATI_U_MJESECU
+        and sum(1 for x in vrijednosti if x <= 0.051) / len(vrijednosti)
+        <= NAJVISE_ISPOD_GRANICE
+    }
+
+
+def satno(oznaka: str, tvar: str, probrano: bool = True) -> dict[str, float]:
+    """Vraća satni niz jedne tvari, po volji bez mjeseci u kojima uređaj šuti.
+
+    Args:
+        oznaka: `k1` ili `k2`.
+        tvar: Ime tvari kako stoji u tablici.
+        probrano: Izostavlja li mjesece koje `valjani_mjeseci` odbacuje.
+
+    Returns:
+        Rječnik: UTC sat → vrijednost.
+    """
+    _, zapisi = niz(oznaka)
+    dobri = valjani_mjeseci(oznaka, tvar) if probrano else None
+    return {
+        str(z["t"]): float(z[tvar])
+        for z in zapisi
+        if z.get(tvar) is not None
+        and (dobri is None or str(z["t"])[:7] in dobri)
+    }
 
 
 def spremi(izlaz: Path | None = None) -> Path:
