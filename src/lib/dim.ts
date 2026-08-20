@@ -56,6 +56,8 @@ export type Simulacija = {
   readonly sirina: number;
   readonly visina: number;
   readonly cestica: number;
+  /** Sekundi simulacije koliko treba da se prizor razvije preko okvira. */
+  readonly zagrijavanje: number;
   korak(dt: number): void;
   crtaj(): Float32Array;
   zivih(): number;
@@ -369,6 +371,17 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
     sirina: W,
     visina: H,
     cestica: N,
+    // Prizor je gotov kad ga prijeđe koji nalet: jedan prijelaz okvira samo
+    // provuče prvu nit, a gustoća se ustali tek nakon njega. Pri slabom vjetru
+    // to traje dvanaestak sekundi, pri jakom nekoliko — nema smisla čekati
+    // jednako.
+    zagrijavanje: Math.min(
+      14,
+      Math.max(
+        3,
+        (1.8 * SIRINA_OKVIRA_M) / (par.ubrzanje * Math.max(srednjaBrzina, 0.05)),
+      ),
+    ),
     korak,
     crtaj,
     zivih: () => ziv.reduce((a: number, b) => a + b, 0),
