@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "npm run generate:igra && next build",
     "start": "next start",
-    "test": "tsx --test",
+    "test": "tsx --test \"{src,tests,scripts}/**/*.test.ts\" \"src/**/*.test.tsx\"",
     "lint": "eslint",
     "db:push": "drizzle-kit push",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
@@ -33,6 +33,7 @@
     "izvedi-tokove": "/opt/homebrew/bin/python3 scripts/izvedi-tokove.py",
     "izvedi-hok-vodotoke": "/opt/homebrew/bin/python3 scripts/izvedi-hok-vodotoke.py",
     "izvedi-reljef": "/opt/homebrew/bin/python3 scripts/izvedi-reljef.py",
+    "provjeri-vjetar": "/opt/homebrew/bin/python3 scripts/provjeri-izvore-vjetra.py",
     "slobodne-sire": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py --obuhvat sire",
     "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py"
   },

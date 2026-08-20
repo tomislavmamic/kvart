@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { OKVIR } from "@/generated/karepovac-karta";
-import { POLJE_DIMA, SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
+import { OSNOVE_DIMA } from "@/generated/karepovac-polje";
+import { sastaviPolje } from "@/lib/polje-dima";
 import {
   GUSTOCA_NA_PLOHI,
   LJESTVICA,
@@ -24,29 +25,38 @@ import {
  * dotoka i odlaska, a ne o tome koliko se sitno otipkava put. Isti krupni
  * korak koristi i zagrijavanje u pregledniku.
  */
-function pusti(sim: ReturnType<typeof stvoriDim>, sekundi: number): void {
-  const dt = 0.25;
-  for (let s = 0; s < sekundi / dt; s += 1) sim.korak(dt);
+function pusti(sim: ReturnType<typeof stvoriDim>, sekundi?: number): void {
+  // Krupnije od preglednika: ustaljeno stanje ovisi o omjeru dotoka i
+  // odlaska, ne o finoći otipkavanja puta, a provjere ovako stanu u minutu
+  // umjesto u pet. Kinematika se mjeri zasebno, sitnim korakom.
+  const dt = 0.5;
+  const koliko = sekundi ?? sim.zagrijavanje;
+  for (let s = 0; s < koliko / dt; s += 1) sim.korak(dt);
 }
 
-/** Ustaljeno stanje traži oko minute prikaza pri slabom vjetru. */
-const USTALJENO = 75;
+/**
+ * Zagrijavanje kad provjera traži nešto određeno, a ne samo ustaljeno stanje.
+ *
+ * Inače `pusti` uzima `sim.zagrijavanje` — istu brojku koju koristi i
+ * preglednik — pa se provjere i stranica ne mogu raziću u tome što smatraju
+ * razvijenim prizorom.
+ */
+const USTALJENO = 120;
 
-function poljeSlucaja(i: number) {
-  const s = SLUCAJEVI_DIMA.slucajevi[i];
-  return {
-    gw: SLUCAJEVI_DIMA.gw,
-    gh: SLUCAJEVI_DIMA.gh,
-    maska: SLUCAJEVI_DIMA.maska,
-    skala: s.skala,
-    vx: s.vx,
-    vy: s.vy,
-  };
-}
+/**
+ * Dva vremena kojima se provjerava, složena kao na stranici.
+ *
+ * Slab istok-jugoistok pod plitkim slojem je ono na što se ljudi žale; jači
+ * sjeveroistočnjak pod dubljim nosi zrak s plohe mimo kuća. Polja više nisu
+ * zapečena u generiranom modulu nego se slažu iz osnova, isto kao za vjetar
+ * koji trenutačno puše.
+ */
+const SLAB = sastaviPolje({ smjerOd: 112.5, brzina: 1.2, dubina: 80 });
+const JAK = sastaviPolje({ smjerOd: 45, brzina: 3.6, dubina: 400 });
 
 test("polje vjetra nosi prema kvartu, ne od njega", () => {
   // Ploha je na istoku okvira, kvart na zapadu; perjanica mora ići ulijevo.
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 12_000 });
+  const sim = stvoriDim(SLAB, { cestica: 8_000 });
   pusti(sim, USTALJENO);
   const lijevo = tezisteX(sim.crtaj(), sim.sirina, sim.visina);
   assert.ok(
@@ -56,7 +66,7 @@ test("polje vjetra nosi prema kvartu, ne od njega", () => {
 });
 
 test("perjanica prijeđe kvart do zapadnog ruba", () => {
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 12_000 });
+  const sim = stvoriDim(SLAB, { cestica: 8_000 });
   pusti(sim, USTALJENO);
   const g = sim.crtaj();
 
@@ -76,7 +86,7 @@ test("izvor je neprekidan — ploha ne diše u naletima", () => {
   // Prije je izvor pulsirao i između pulseva potpuno stajao, pa su niz padinu
   // išli odvojeni oblaci. Plin kroz pokrov curi cijelo vrijeme, pa svaka
   // sekunda mora ispustiti jednako.
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 90_000, punjenje: 45 });
+  const sim = stvoriDim(SLAB, { cestica: 24_000, punjenje: 45 });
   pusti(sim, 10);
 
   const posekundi: number[] = [];
@@ -94,16 +104,19 @@ test("izvor je neprekidan — ploha ne diše u naletima", () => {
       + `${Math.max(...posekundi)} — izvor opet pulsira`,
   );
   assert.ok(
-    Math.abs(posekundi[0] - 90_000 / 45) < 30,
-    `ispušta ${posekundi[0]}/s, a treba ${Math.round(90_000 / 45)}/s`,
+    Math.abs(posekundi[0] - 24_000 / 45) < 10,
+    `ispušta ${posekundi[0]}/s, a treba ${Math.round(24_000 / 45)}/s`,
   );
 });
 
 test("perjanica nema zajednički takt — vrtlog ne diše uglas", () => {
-  // Vrtložni šum je jedno polje sinusa. Kad su sve čestice u istoj fazi,
-  // masa u okviru njiše se ravnomjerno svakih pedesetak sekundi i prizor
-  // izgleda kao da izvor ipak pulsira, samo sporije.
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 12_000 });
+  // Vrtložni šum je jedno polje sinusa. Kad su sve čestice u istoj fazi, masa
+  // u okviru njiše se ravnomjerno svakih pedesetak sekundi i prizor izgleda
+  // kao da izvor ipak pulsira, samo sporije.
+  //
+  // Mjeri se odstupanje od pravca, a ne raspon: spor silazak dok se prizor
+  // dokraja slegne je uredu, a val gore-dolje nije.
+  const sim = stvoriDim(SLAB, { cestica: 8_000 });
   pusti(sim, USTALJENO);
 
   const uzorci: number[] = [];
@@ -111,10 +124,21 @@ test("perjanica nema zajednički takt — vrtlog ne diše uglas", () => {
     sim.korak(1 / 30);
     if (s % 30 === 0) uzorci.push(zbroj(sim.crtaj()));
   }
-  const omjer = Math.max(...uzorci) / Math.max(Math.min(...uzorci), 1e-6);
+  const n = uzorci.length;
+  const sx = (n - 1) / 2;
+  const sy = uzorci.reduce((a, b) => a + b, 0) / n;
+  let gore = 0;
+  let dolje = 0;
+  uzorci.forEach((y, i) => {
+    gore += (i - sx) * (y - sy);
+    dolje += (i - sx) ** 2;
+  });
+  const nagib = gore / dolje;
+  const ostatci = uzorci.map((y, i) => y - (sy + nagib * (i - sx)));
+  const val = (Math.max(...ostatci) - Math.min(...ostatci)) / sy;
   assert.ok(
-    omjer < 1.1,
-    `masa u okviru se njiše ${omjer.toFixed(2)}× — vrtlog ima zajednički takt`,
+    val < 0.05,
+    `masa vijuga ${(val * 100).toFixed(1)} % oko pravca — vrtlog ima takt`,
   );
 });
 
@@ -122,8 +146,8 @@ test("slab vjetar nakuplja zrak, jak ga raznese", () => {
   // Ovo je jedino zbog čega prikaz uopće odgovara na pitanje koje ljudi imaju.
   // Čestica ne umire od starosti nego kad je vjetar iznese iz okvira, pa se
   // pri slabom vjetru u okviru zadrži višestruko više zraka s plohe.
-  const slab = stvoriDim(poljeSlucaja(0), { cestica: 40_000 });
-  const jak = stvoriDim(poljeSlucaja(1), { cestica: 40_000 });
+  const slab = stvoriDim(SLAB, { cestica: 24_000 });
+  const jak = stvoriDim(JAK, { cestica: 24_000 });
   pusti(slab, USTALJENO);
   pusti(jak, USTALJENO);
 
@@ -175,8 +199,8 @@ test("sjeverni i istočni vjetar iste brzine prijeđu jednako metara", () => {
 });
 
 test("žarišta stežu perjanicu — jednolik izvor daje mrlju", () => {
-  const usko = stvoriDim(POLJE_DIMA, { cestica: 12_000, zarista: 1 });
-  const siroko = stvoriDim(POLJE_DIMA, { cestica: 12_000, zarista: 40 });
+  const usko = stvoriDim(SLAB, { cestica: 8_000, zarista: 1 });
+  const siroko = stvoriDim(SLAB, { cestica: 8_000, zarista: 40 });
   pusti(usko, USTALJENO);
   pusti(siroko, USTALJENO);
 
@@ -187,8 +211,8 @@ test("žarišta stežu perjanicu — jednolik izvor daje mrlju", () => {
 });
 
 test("gustoća ostaje ograničena — perjanica ne poplavi okvir", () => {
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 12_000 });
-  pusti(sim, USTALJENO * 2);
+  const sim = stvoriDim(SLAB, { cestica: 8_000 });
+  pusti(sim, USTALJENO * 1.5);
   const dio = pokrivenost(sim.crtaj());
   assert.ok(dio > 0.03, `perjanica je prazna (${(dio * 100).toFixed(1)} %)`);
   assert.ok(dio < 0.75, `perjanica je poplavila okvir (${(dio * 100).toFixed(1)} %)`);
@@ -197,8 +221,8 @@ test("gustoća ostaje ograničena — perjanica ne poplavi okvir", () => {
 test("gustoća ne ovisi o broju čestica, nego o vjetru", () => {
   // Broj čestica je samo zrnatost. Kad bi o njemu ovisila i svjetlina,
   // nepomična ljestvica boja ne bi značila ništa.
-  const malo = stvoriDim(POLJE_DIMA, { cestica: 20_000 });
-  const puno = stvoriDim(POLJE_DIMA, { cestica: 80_000 });
+  const malo = stvoriDim(SLAB, { cestica: 10_000 });
+  const puno = stvoriDim(SLAB, { cestica: 40_000 });
   pusti(malo, USTALJENO);
   pusti(puno, USTALJENO);
 
@@ -210,15 +234,15 @@ test("gustoća ne ovisi o broju čestica, nego o vjetru", () => {
 });
 
 test("simulacija je determinističa", () => {
-  const a = stvoriDim(POLJE_DIMA, { cestica: 4_000 });
-  const b = stvoriDim(POLJE_DIMA, { cestica: 4_000 });
+  const a = stvoriDim(SLAB, { cestica: 4_000 });
+  const b = stvoriDim(SLAB, { cestica: 4_000 });
   pusti(a, 8);
   pusti(b, 8);
   assert.deepEqual(Array.from(a.crtaj()), Array.from(b.crtaj()));
 });
 
 test("čestice se vraćaju u optjecaj, bez curenja", () => {
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 4_000 });
+  const sim = stvoriDim(SLAB, { cestica: 4_000 });
   pusti(sim, USTALJENO);
   const zivih = sim.zivih();
   assert.ok(zivih > 0, "nijedna čestica nije živa");
@@ -270,7 +294,7 @@ test("boja se pojavi otprilike ondje gdje se tvar počne osjećati", () => {
 test("merkaptani se osjete daleko šire nego sumporovodik", () => {
   // Ista perjanica, ista fizika — razlika je samo u tome koliko je koje tvari
   // iznad praga mirisa. Ako se to ne vidi, prebacivanje tvari nema smisla.
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 40_000 });
+  const sim = stvoriDim(SLAB, { cestica: 24_000 });
   pusti(sim, USTALJENO);
   const g = sim.crtaj();
 
@@ -309,8 +333,9 @@ test("sidro ljestvice odgovara gustoći koju perjanica drži nad plohom", () => 
   // zadanog broja čestica, pa je smanjenje tog broja radi brzine podijelilo
   // sve gustoće s tri — perjanica je gotovo nestala, a nijedna provjera to
   // nije uhvatila jer su sve zadavale svoj broj čestica.
-  const sim = stvoriDim(poljeSlucaja(0));
-  pusti(sim, USTALJENO + 15);
+  const sim = stvoriDim(SLAB);
+  pusti(sim);
+  pusti(sim, 20);
   const sortirano = Array.from(sim.crtaj()).sort((a, b) => a - b);
   const p99 = sortirano[Math.floor(sortirano.length * 0.99)];
   assert.ok(
@@ -322,7 +347,7 @@ test("sidro ljestvice odgovara gustoći koju perjanica drži nad plohom", () => 
 
 test("polje dima stoji u istom okviru kao ostale karte", () => {
   const okvirOmjer = OKVIR.sirina / OKVIR.visina;
-  const poljeOmjer = POLJE_DIMA.gw / POLJE_DIMA.gh;
+  const poljeOmjer = OSNOVE_DIMA.gw / OSNOVE_DIMA.gh;
   assert.ok(
     Math.abs(okvirOmjer - poljeOmjer) < 0.03,
     `okvir ${okvirOmjer.toFixed(3)} ≠ polje ${poljeOmjer.toFixed(3)} — `
@@ -362,7 +387,7 @@ test("čestica koja izađe iz polja nestane, a ne ostane zauvijek u kutu", () =>
 });
 
 test("kut okvira ne skuplja gustoću preko onoga što vjetar donese", () => {
-  const sim = stvoriDim(POLJE_DIMA, { cestica: 8_000 });
+  const sim = stvoriDim(SLAB, { cestica: 8_000 });
   pusti(sim, USTALJENO);
   const g = sim.crtaj();
 

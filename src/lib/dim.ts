@@ -23,6 +23,10 @@
  *   brzine vjetra i stvarne veličine okvira (vidi `UBRZANJE`), a ne iz broja
  *   koji je izgledao dobro.
  *
+ * Polje vjetra dolazi izvana, složeno za vjetar koji trenutačno puše
+ * (`src/lib/polje-dima.ts`). Ovdje se iz njega čita samo brzina — koliko će
+ * se zraka nad kvartom zadržati posljedica je toga, a ne postavka.
+ *
  * Modul ne dira DOM, da se može provjeriti i izvan preglednika.
  */
 
@@ -79,7 +83,14 @@ export type Postavke = {
   metaraY?: number;
   /** Sekundi do pune težine čestice; samo da izvor ne pukne. */
   pojava?: number;
-  /** Sekundi prikaza u kojima težina padne na `1/e` — prorjeđivanje. */
+  /**
+   * Sekundi prikaza u kojima težina padne na `1/e` — prorjeđivanje.
+   *
+   * Nije kemija nego ono što se ne vidi: miješanje uvis i raspršenje ispod
+   * praga. Uz zadano ubrzanje ovo je oko četrdeset minuta stvarnog zraka, što
+   * odgovara zadržavanju u prizemnom sloju pod noćnom inverzijom. Duljim
+   * vremenom se prizor pri tišini puni još minutama nakon učitavanja.
+   */
   raspad?: number;
   /** Sekundi prikaza nakon kojih se čestica briše, ma gdje bila. */
   vijek?: number;
@@ -110,6 +121,8 @@ export type Simulacija = {
   zivih(): number;
   /** Ukupno ispuštenih čestica od početka; za provjeru da izvor ne staje. */
   ispusteno(): number;
+  /** Sekundi prikaza koliko treba da se gustoća ustali; ovisi o vjetru. */
+  readonly zagrijavanje: number;
   postavi(ime: keyof Postavke, vrijednost: number): void;
 };
 
@@ -121,8 +134,8 @@ const ZADANO = {
   metaraX: OKVIR_M.sirina,
   metaraY: OKVIR_M.visina,
   pojava: 0.6,
-  raspad: 90,
-  vijek: 240,
+  raspad: 40,
+  vijek: 160,
   vrtlog: 1.9,
   snaga: 0.17,
   mjerilo: 4.2,
@@ -146,6 +159,14 @@ const ZADANO = {
  * prestala odgovarati. Mijenjati samo zajedno sa sidrom ljestvice.
  */
 const EMISIJA_PO_SEKUNDI = 2000;
+
+/**
+ * Koliko prijelaza okvira treba da se gustoća ustali.
+ *
+ * Jedan prijelaz samo provuče prvu nit; ravnoteža dotoka i odlaska nastupi
+ * nakon drugoga. Izmjereno pri slabom istočnjaku, gdje je najsporije.
+ */
+const PRIJELAZA_DO_USTALJENJA = 2.2;
 
 /**
  * Koliko se čestice razilaze u fazi vrtložnog šuma.
@@ -249,6 +270,17 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
       if (MK[j * gw + i] > 128) celije.push(i, j);
     }
   }
+  // Srednja brzina u okviru odlučuje koliko prikaz treba da se ustali: pri
+  // tišini se zrak dugo nakuplja, pri buri je okvir pun za nekoliko sekundi.
+  let zbrojBrzina = 0;
+  for (let i = 0; i < VX.length; i += 1) {
+    zbrojBrzina += Math.hypot(
+      (VX[i] / 255) * 2 * skala - skala,
+      (VY[i] / 255) * 2 * skala - skala,
+    );
+  }
+  const srednjaBrzina = Math.max(zbrojBrzina / Math.max(1, VX.length), 0.05);
+
   const izvor = zarista(celije, par.zarista, gw, gh, slucaj);
   const nIzvor = izvor.length / 2;
 
@@ -432,6 +464,20 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
     sirina: W,
     visina: H,
     cestica: N,
+    // Gustoća se ustali kad dotok i odlazak dođu u ravnotežu, a to traje
+    // nekoliko prijelaza okvira. Gornja granica postoji jer se pri tišini
+    // nikad ne bi ustalilo do kraja, a donja jer i pri buri treba vidjeti
+    // kako se nit razvija.
+    zagrijavanje: Math.min(
+      120,
+      Math.max(
+        4,
+        (PRIJELAZA_DO_USTALJENJA * par.metaraX) / (par.ubrzanje * srednjaBrzina),
+        // Pri tišini vjetar ne odnosi ništa, pa ravnotežu postavlja
+        // prorjeđivanje; dotad se prizor još puni pred očima.
+        2.5 * par.raspad,
+      ),
+    ),
     korak,
     crtaj,
     zivih: () => ziv.reduce((a: number, b) => a + b, 0),
@@ -536,10 +582,11 @@ export function mirisneJedinice(tvar: Tvar): number {
  * perjanica pri slabom istočnjaku drži nad samom plohom uzima se kao razina
  * koju postaja ondje i mjeri kao medijan. Sve ostalo slijedi iz omjera.
  *
- * Broj je izmjeren iz ustaljenog stanja (99. postotak gustoće, da jedan
- * piksel ne odlučuje) i provjerava se u `dim.test.ts`.
+ * Broj je izmjeren iz ustaljenog stanja pri slabom istok-jugoistočnjaku od
+ * 1,2 m/s pod slojem od 80 m — vremenu na koje se ljudi i žale — kao 99.
+ * postotak gustoće, da jedan piksel ne odlučuje. Provjerava se u `dim.test.ts`.
  */
-export const GUSTOCA_NA_PLOHI = 9.1;
+export const GUSTOCA_NA_PLOHI = 10.9;
 
 /**
  * Raspon ljestvice u mirisnim jedinicama — koliko puta iznad praga mirisa.

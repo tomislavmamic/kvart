@@ -8,6 +8,13 @@ export const metadata = createPageMetadata({
 });
 
 /**
+ * Stranica se pregotovi i osvježava svakih 15 minuta: METAR se ionako
+ * objavljuje na pola sata, a posjetitelj nikad ne čeka dohvat niti ga svojim
+ * dolaskom pokreće.
+ */
+export const revalidate = 900;
+
+/**
  * THESIS: kvart prvo mora vidjeti sve što s plohe silazi na njega, pa tek onda
  *   birati čime će se baviti.
  * OWN-WORLD: jedna karta, jedno mjerilo, jedan sjever — mijenja se samo sloj.

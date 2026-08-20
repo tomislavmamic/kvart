@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
 import { PerjanicaSIzborom } from "@/components/karepovac/perjanica-s-izborom";
-
-import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
 import { SIRA_KARTA } from "@/generated/karepovac-siri";
+import { POSTAJE } from "@/lib/vjetar";
+import { pripremiZrak, type ZrakZaKartu } from "@/lib/zrak";
 
 import {
   BLIZI_OKVIR,
@@ -13,46 +13,23 @@ import {
   OKVIR,
   PODLOGA,
   PRSTENI,
-  SKRETANJE,
-  STRUJNICE,
   TOCKE,
   TOKOVI,
   VIIRS,
   VISINE,
 } from "@/generated/karepovac-karta";
 
-/**
- * Pogledi u prebacivaču, redom kojim stoje.
- *
- * Prva dva su vrijeme koje se računa u pregledniku, druga dva godišnji račun
- * kao nepomična slika. Razlika je stvarna — jedno je jedan slučaj, drugo je
- * zbroj godine — i zato svaki nosi svoj opis ispod karte.
- */
-const POGLEDI_ZRAKA = [
-  ...SLUCAJEVI_DIMA.slucajevi.map((slucaj, i) => ({
-    kljuc: slucaj.kljuc,
-    naziv: slucaj.naziv,
-    opis: `${slucaj.opis} Vjetar iz tog smjera puše ${Math.round(
-      slucaj.udioSati * 100,
-    )} % sati, mjereno na splitskoj zračnoj luci.`,
-    natpis: `${slucaj.naziv.toLowerCase()} — os ${slucaj.azimut}°`,
-    slucaj: i,
-    slika: undefined as string | undefined,
-  })),
-  ...SIRA_KARTA.slojevi.map((sloj) => ({
-    kljuc: sloj.kljuc,
-    naziv: sloj.naziv,
-    opis: sloj.opis,
-    natpis: `godina ${SIRA_KARTA.godina}.`,
-    slucaj: 0,
-    slika: sloj.slikaKvart as string | undefined,
-    ljestvica: {
-      od: sloj.kvartOd as number,
-      do: sloj.kvartDo as number,
-      jedinica: sloj.jedinica as string,
-    },
-  })),
-];
+/** Stroke ostaje jednake debljine i kad kartica priđe bliže plohi. */
+const NESKALIRANO = { vectorEffect: "non-scaling-stroke" } as const;
+
+type Izvor = "mi" | "sluzbeno" | "procjena" | "istraziti";
+
+const IZVOR_STIL: Record<Izvor, string> = {
+  mi: "bg-maslina-vez text-maslina-tamna",
+  sluzbeno: "bg-sky-50 text-sky-800",
+  procjena: "bg-kamen-plitko text-kamen-tekst",
+  istraziti: "bg-amber-100 text-amber-900",
+};
 
 /**
  * Sati idu na cijele, koncentracije na značajne znamenke.
@@ -77,18 +54,6 @@ function poVelicini(x: number) {
  */
 const U_KARTI =
   "/karta?pogled=zrak-karepovac&sloj=karepovac-sati&podloga=dof&c=43.52150,16.51050&z=16";
-
-/** Stroke ostaje jednake debljine i kad kartica priđe bliže plohi. */
-const NESKALIRANO = { vectorEffect: "non-scaling-stroke" } as const;
-
-type Izvor = "mi" | "sluzbeno" | "procjena" | "istraziti";
-
-const IZVOR_STIL: Record<Izvor, string> = {
-  mi: "bg-maslina-vez text-maslina-tamna",
-  sluzbeno: "bg-sky-50 text-sky-800",
-  procjena: "bg-kamen-plitko text-kamen-tekst",
-  istraziti: "bg-amber-100 text-amber-900",
-};
 
 function Mjesto({
   x,
@@ -289,7 +254,7 @@ function Karta({
   );
 }
 
-/** Natpis u donjem desnom kutu okvira: koji je ovo slučaj vremena. */
+/** Natpis u donjem desnom kutu okvira: što ovaj pogled pokazuje. */
 function NatpisOkvira({ children }: { children: string }) {
   return (
     <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
@@ -331,16 +296,17 @@ function NatpisiKarte({ opis, children }: { opis: string; children?: ReactNode }
  * inače dim proguta imena mjesta.
  *
  * Ovdje stoji sama perjanica, bez izbora tvari i ljestvice; to je za mjesta
- * gdje je karta samo najava. Puni prikaz je `PerjanicaSIzborom`.
+ * gdje je karta najava. Puni prikaz je `PerjanicaSIzborom`. Umjesto polja
+ * može doći i nepomična slika — tako se u isti okvir slažu godišnji pogledi.
  */
 export function KartaDima({
   opis,
-  slucaj = 0,
+  polje,
   slika,
   children,
 }: {
   opis: string;
-  slucaj?: number;
+  polje?: ZrakZaKartu["polje"];
   /** Nepomična slika umjesto perjanice koja se računa u pregledniku. */
   slika?: string;
   children?: ReactNode;
@@ -350,138 +316,245 @@ export function KartaDima({
       <PodlogaKarte />
       {slika ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={slika}
-          alt=""
-          className="absolute inset-0 block h-full w-full"
-        />
-      ) : (
-        <DimPerjanica slucaj={slucaj} />
-      )}
+        <img src={slika} alt="" className="absolute inset-0 block h-full w-full" />
+      ) : polje ? (
+        <DimPerjanica polje={polje} />
+      ) : null}
       <NatpisiKarte opis={opis}>{children}</NatpisiKarte>
     </div>
   );
 }
 
 /**
+ * Natpis u kutu karte.
+ *
+ * Os nošenja stoji samo kad je ima: pri tišini i pri promjenjivom vjetru
+ * jedan broj u stupnjevima izgledao bi kao tvrdnja koju podatak ne nosi.
+ */
+function natpisPolja(opis: ZrakZaKartu["opis"], azimut: number): string {
+  return opis.stanje === "prema" || opis.stanje === "mimo"
+    ? `${opis.natpis} — os ${azimut}°`
+    : opis.natpis;
+}
+
+/** Udaljenost postaje s decimalnim zarezom, kako se ovdje i piše. */
+function km(postaja: keyof typeof POSTAJE): string {
+  return String(POSTAJE[postaja].udaljenostKm).replace(".", ",");
+}
+
+/** Gumb prebacivača pogleda; `peer-checked` ga puni kad je pogled odabran. */
+const STIL_GUMBA =
+  "order-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border "
+  + "border-kamen-rub px-4 py-2 text-sm font-semibold text-kamen-tekst "
+  + "hover:bg-white peer-checked:border-kamen-tinta peer-checked:bg-kamen-tinta "
+  + "peer-checked:text-white peer-checked:hover:bg-kamen-tinta "
+  + "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 "
+  + "peer-focus-visible:outline-maslina";
+
+/** Boja natpisa prema tome kamo zrak ide. */
+const BOJA_STANJA: Record<ZrakZaKartu["opis"]["stanje"], string> = {
+  prema: "bg-amber-100 text-amber-900",
+  mimo: "bg-maslina-vez text-maslina-tamna",
+  stoji: "bg-sky-50 text-sky-900",
+  nepoznato: "bg-kamen-plitko text-kamen-tekst",
+};
+
+/**
+ * Perjanica preko cijele širine, za uvodni dio `/karepovac/zrak`.
+ *
+ * Dohvat stoji odvojeno od prikaza: `PrikazPoljaDima` je čista funkcija stanja
+ * zraka, pa se svako stanje — tišina, promjenjiv vjetar, izvor koji šuti —
+ * dade nacrtati u provjeri bez mreže.
+ */
+export async function PoljeDimaVeliko() {
+  return <PrikazPoljaDima {...await pripremiZrak()} />;
+}
+
+/**
  * Pogledi na zrak s Karepovca — jedan okvir, više toga za vidjeti.
  *
- * Prije su ovdje stajale dvije karte u dva različita okvira, na razmaku od
- * pola stranice. Sad je jedan prebacivač, kao pogledi na `/karta`, i okvir se
- * među pogledima ne mijenja — kad bi se mijenjao, čitatelj bi pri svakom
- * prebacivanju iznova tražio gdje je.
+ * Prvi pogled je vjetar koji sada puše; ostali su zbroj godine. Razlika je
+ * stvarna i zato svaki nosi svoj opis i svoje podrijetlo ispod karte: jedno
+ * je jedan sat, drugo je godina dana računa.
  *
  * Karta je namjerno nepomična. Podatak nije toliko točan da bi zasluživao
  * razgledavanje izbliza, a i sve što ovdje stoji vrijedi za kvart. Tko želi
  * dalje — preko granice kvarta, uz katastar i ortofoto — ide na `/karta`,
  * gdje isti sloj stoji kao pogled. Zato ovdje nema ni povećala ni povlačenja,
  * nego jedna poveznica.
+ *
+ * Sama nosi definiciju podloge jer je na toj stranici nema tko drugi postaviti.
  */
-export function PogledZraka() {
+export function PrikazPoljaDima({ zrak, polje, opis }: ZrakZaKartu) {
+  const godisnji = SIRA_KARTA.slojevi.map((sloj) => ({
+    kljuc: sloj.kljuc,
+    naziv: sloj.naziv,
+    opis: sloj.opis,
+    slika: sloj.slikaKvart as string,
+    od: sloj.kvartOd as number,
+    do: sloj.kvartDo as number,
+    jedinica: sloj.jedinica as string,
+  }));
+
   return (
     <div className="relative flex flex-col bg-[#fcfbf9] p-4 sm:p-6">
       <PodlogaDefinicija />
       <div className="flex flex-wrap items-start justify-between gap-2">
         <span className="text-sm font-bold text-kamen-tinta">
-          Zrak s Karepovca nad kvartom
+          Kamo zrak s plohe ide
         </span>
         <span className="rounded-lg bg-amber-100 px-3 py-2 text-right text-xs text-amber-900">
           <span className="block font-bold">Model, ne mjerenje</span>
           <span className="mt-0.5 block">Oblik, ne količina</span>
+          {opis.kada ? (
+            <span className="mt-0.5 block">vjetar izmjeren u {opis.kada}</span>
+          ) : null}
         </span>
       </div>
 
       <fieldset className="mt-4 flex flex-wrap gap-2">
         <legend className="sr-only">Što karta pokazuje</legend>
-        {POGLEDI_ZRAKA.map((pogled, i) => (
-          // `contents` skida omotač iz rasporeda, pa gumb, oznaka i karta
-          // ostaju braća u DOM-u — bez toga `peer-checked` nema što gledati.
+
+        {/* `contents` skida omotač iz rasporeda, pa gumb, oznaka i karta
+            ostaju braća u DOM-u — bez toga `peer-checked` nema što gledati. */}
+        <div className="contents">
+          <input
+            type="radio"
+            name="pogled-zraka"
+            id="pogled-sada"
+            defaultChecked
+            className="peer sr-only"
+          />
+          <label htmlFor="pogled-sada" className={STIL_GUMBA}>
+            Sada
+          </label>
+          <div className="order-2 hidden w-full peer-checked:block">
+            <div className="mt-4">
+              <PerjanicaSIzborom
+                polje={polje}
+                podloga={<PodlogaKarte />}
+                natpisi={
+                  <NatpisiKarte opis={`Karta kvarta: ${opis.recenica}`}>
+                    <NatpisOkvira>{natpisPolja(opis, polje.azimut)}</NatpisOkvira>
+                  </NatpisiKarte>
+                }
+              />
+            </div>
+
+            <p
+              className={`mt-3 rounded-lg px-3 py-2 text-base leading-7 font-semibold ${BOJA_STANJA[opis.stanje]}`}
+            >
+              {opis.recenica}
+            </p>
+
+            <dl className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
+              <div data-kind="official" className="bg-white p-3">
+                <dt className="font-semibold text-kamen-tinta">Vjetar</dt>
+                <dd className="mt-0.5 text-kamen-tekst">
+                  {zrak.vjetar
+                    ? `izmjeren, ${POSTAJE[zrak.vjetar.postaja].oznaka} `
+                      + `(${km(zrak.vjetar.postaja)} km)`
+                    : "sada nedostupan"}
+                </dd>
+              </div>
+              <div data-kind="estimated" className="bg-white p-3">
+                <dt className="font-semibold text-kamen-tinta">Miješanje zraka</dt>
+                <dd className="mt-0.5 text-kamen-tekst">
+                  {zrak.mijesanje
+                    ? `model, sloj ${zrak.mijesanje.dubina} m`
+                    : "sada nedostupno"}
+                </dd>
+              </div>
+              <div data-kind="missing" className="bg-white p-3">
+                <dt className="font-semibold text-kamen-tinta">Jačina izvora</dt>
+                <dd className="mt-0.5 text-kamen-tekst">bazdarena, ali široko</dd>
+              </div>
+            </dl>
+
+            {opis.zadrska ? (
+              <p className="mt-3 max-w-prose rounded-lg bg-amber-50 px-3 py-2 text-base leading-7 text-amber-950">
+                {opis.zadrska}
+              </p>
+            ) : null}
+
+            {opis.raspon ? (
+              <p className="mt-3 max-w-prose text-base leading-7 text-kamen-drugi">
+                {opis.raspon}
+              </p>
+            ) : null}
+
+            <p className="mt-3 max-w-prose text-base leading-7 text-kamen-drugi">
+              {"Vjetar je izmjeren na "
+                + (zrak.vjetar
+                  ? `postaji ${POSTAJE[zrak.vjetar.postaja].ime}, `
+                    + `${km(zrak.vjetar.postaja)} km od kvarta`
+                  : "najbližoj postaji koja ga objavljuje")
+                + ", a ne u kvartu."}
+            </p>
+          </div>
+        </div>
+
+        {godisnji.map((pogled) => (
           <div key={pogled.kljuc} className="contents">
             <input
               type="radio"
               name="pogled-zraka"
               id={`pogled-${pogled.kljuc}`}
-              defaultChecked={i === 0}
               className="peer sr-only"
             />
-            <label
-              htmlFor={`pogled-${pogled.kljuc}`}
-              className="order-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-kamen-rub px-4 py-2 text-sm font-semibold text-kamen-tekst hover:bg-white peer-checked:border-kamen-tinta peer-checked:bg-kamen-tinta peer-checked:text-white peer-checked:hover:bg-kamen-tinta peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-maslina"
-            >
+            <label htmlFor={`pogled-${pogled.kljuc}`} className={STIL_GUMBA}>
               {pogled.naziv}
             </label>
             <div className="order-2 hidden w-full peer-checked:block">
-              {pogled.slika ? (
-                <div className="mt-4 overflow-hidden rounded-lg border border-kamen-tlo">
-                  <KartaDima
-                    slucaj={pogled.slucaj}
-                    slika={pogled.slika}
-                    opis={`Karta kvarta: ${pogled.opis}`}
-                  >
-                    <NatpisOkvira>{pogled.natpis}</NatpisOkvira>
-                  </KartaDima>
-                </div>
-              ) : (
-                // Živa perjanica dobiva izbor tvari i ljestvicu ispod okvira,
-                // pa okvir ovdje ne smije obuhvatiti i njih.
-                <PerjanicaSIzborom
-                  slucaj={pogled.slucaj}
-                  podloga={<PodlogaKarte />}
-                  natpisi={
-                    <NatpisiKarte opis={`Karta kvarta: ${pogled.opis}`}>
-                      <NatpisOkvira>{pogled.natpis}</NatpisOkvira>
-                    </NatpisiKarte>
-                  }
+              <div className="mt-4 overflow-hidden rounded-lg border border-kamen-tlo">
+                <KartaDima
+                  slika={pogled.slika}
+                  opis={`Karta kvarta: ${pogled.opis}`}
+                >
+                  <NatpisOkvira>{`godina ${SIRA_KARTA.godina}.`}</NatpisOkvira>
+                </KartaDima>
+              </div>
+
+              <div className="mt-3 flex items-center gap-3">
+                <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
+                  {poVelicini(pogled.od)}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="h-2.5 flex-1 rounded-full bg-[linear-gradient(90deg,#fdedc7,#fad689,#e99c42,#b7542a,#5e1b16)]"
                 />
-              )}
-              {"ljestvica" in pogled && (
-                <div className="mt-3 flex items-center gap-3">
-                  <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
-                    {poVelicini(pogled.ljestvica.od)}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="h-2.5 flex-1 rounded-full bg-[linear-gradient(90deg,#fdedc7,#fad689,#e99c42,#b7542a,#5e1b16)]"
-                  />
-                  <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
-                    {poVelicini(pogled.ljestvica.do)} {pogled.ljestvica.jedinica}
-                  </span>
+                <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
+                  {poVelicini(pogled.do)} {pogled.jedinica}
+                </span>
+              </div>
+
+              <dl className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
+                <div data-kind="estimated" className="bg-white p-3">
+                  <dt className="font-semibold text-kamen-tinta">Polje vjetra</dt>
+                  <dd className="mt-0.5 text-kamen-tekst">iz LiDAR reljefa</dd>
                 </div>
-              )}
+                <div data-kind="official" className="bg-white p-3">
+                  <dt className="font-semibold text-kamen-tinta">Vjetar</dt>
+                  <dd className="mt-0.5 text-kamen-tekst">
+                    izmjeren, {SIRA_KARTA.godina}.
+                  </dd>
+                </div>
+                <div data-kind="missing" className="bg-white p-3">
+                  <dt className="font-semibold text-kamen-tinta">Jačina izvora</dt>
+                  <dd className="mt-0.5 text-kamen-tekst">bazdarena, ali široko</dd>
+                </div>
+              </dl>
+
               <p className="mt-3 max-w-prose text-base leading-7 text-kamen-tekst">
-                {pogled.opis}
-                {"ljestvica" in pogled && (
-                  <>
-                    {" "}
-                    Ljestvica ide od najmanje do najveće vrijednosti u ovom
-                    okviru, a ne od nule — inače bi cijeli kvart bio obojen i
-                    perjanica se ne bi vidjela kao perjanica. Brojke uz nju
-                    kažu koliko su ti rubovi.
-                  </>
-                )}
+                {pogled.opis} Ljestvica ide od najmanje do najveće vrijednosti u
+                ovom okviru, a ne od nule — inače bi cijeli kvart bio obojen i
+                perjanica se ne bi vidjela kao perjanica. Brojke uz nju kažu
+                koliko su ti rubovi.
               </p>
             </div>
           </div>
         ))}
       </fieldset>
-
-      {/* Podrijetlo stoji uz kartu, a ne u fusnoti: bez njega se izvedena
-          veličina čita kao izmjerena, a to je jedina greška koju si ova
-          stranica ne smije dopustiti. */}
-      <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-sm sm:grid-cols-3">
-        <div data-kind="estimated" className="bg-white p-3">
-          <dt className="font-semibold text-kamen-tinta">Polje vjetra</dt>
-          <dd className="mt-0.5 text-kamen-tekst">iz LiDAR reljefa</dd>
-        </div>
-        <div data-kind="estimated" className="bg-white p-3">
-          <dt className="font-semibold text-kamen-tinta">Udio sati</dt>
-          <dd className="mt-0.5 text-kamen-tekst">izmjeren vjetar, LDSP</dd>
-        </div>
-        <div data-kind="missing" className="bg-white p-3">
-          <dt className="font-semibold text-kamen-tinta">Jačina izvora</dt>
-          <dd className="mt-0.5 text-kamen-tekst">bazdarena, ali široko</dd>
-        </div>
-      </dl>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-kamen-tlo pt-4">
         <p className="max-w-md text-base leading-7 text-kamen-drugi">
@@ -568,7 +641,11 @@ function Kartica({
 
 const NAS_BUNAR = TOCKE.find((t) => t.d === 799) ?? TOCKE[4];
 
-export function KarepovacKarte() {
+export async function KarepovacKarte() {
+  return <PrikazKarepovacKarte zrak={await pripremiZrak()} />;
+}
+
+export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
   return (
     <section aria-labelledby="sto-pratimo">
       <PodlogaDefinicija />
@@ -624,17 +701,20 @@ export function KarepovacKarte() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Kartica
-          naslov="Miris iz smjera Karepovca"
-          opis="Ploha leži iznad kvarta i istočno od njega. Prikaz računa kako se miris nosi niz padinu pri slabom istočnojugoistočnom vjetru i plitkom sloju zraka — pri vremenu na koje se ljudi i žale. Izvor curi neprekidno, a vrijeme teče šezdeset puta brže od stvarnoga."
+          naslov="Kamo zrak s plohe ide sada"
+          opis={`Ploha leži iznad kvarta i istočno od njega. ${zrak.opis.recenica} Naleti izlaze sami jer izvor ne ispušta jednolično.`}
           izvor="procjena"
           izvorOznaka="Model, ne mjerenje"
-          napomena="Polje vjetra izvedeno je iz LiDAR reljefa; jačina izvora još je pretpostavka. Dojave stanovnika su ono čime ćemo ovaj prikaz provjeriti — obrazac radi od prvog dana."
+          napomena={`Polje vjetra izvedeno je iz LiDAR reljefa, a smjer i brzina s postaje ${zrak.zrak.vjetar ? `${POSTAJE[zrak.zrak.vjetar.postaja].oznaka} (${km(zrak.zrak.vjetar.postaja)} km)` : "koja ga trenutačno objavljuje"}${zrak.opis.kada ? `, izmjereni u ${zrak.opis.kada}` : ""}. Jačina izvora još je pretpostavka, pa prikaz govori kamo zrak ide, a ne koliko mirisa nosi.`}
           poveznica="/karepovac/zrak"
           poveznicaOznaka="Uđite u projekt praćenja zraka"
         >
-          <KartaDima opis="Karta kvarta: zrak s Karepovca teče niz padinu preko Dračevca prema Bilicama i ondje se zadržava dok ga vjetar ne odnese.">
+          <KartaDima
+            polje={zrak.polje}
+            opis={`Karta kvarta: ${zrak.opis.recenica}`}
+          >
             <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
-              {`istok-jugoistok — os ${OKVIR.azimut}°`}
+              {natpisPolja(zrak.opis, zrak.polje.azimut)}
             </Mjesto>
           </KartaDima>
         </Kartica>
@@ -940,10 +1020,14 @@ export function KarepovacKarte() {
 
         <Kartica
           naslov="Kuda vjetar nosi zrak s plohe"
-          opis={`Strujnice smo izveli iz reljefa snimljenog LiDAR-om: vjetar se ne penje uz padinu nego je obilazi. Zato skreće ${SKRETANJE.medijan}° u prosjeku, a nad padinama i do ${SKRETANJE.najvece}°.`}
+          opis={`Strujnice su izvedene iz reljefa snimljenog LiDAR-om, za vjetar koji sada puše: struja se ne penje uz padinu nego je obilazi, pa skreće ${zrak.strujnice.skretanje.medijan}° u prosjeku, a nad padinama i do ${zrak.strujnice.skretanje.najvece}°.`}
           izvor="sluzbeno"
           izvorOznaka="Javni podatak"
-          napomena="Skretanje je izračun iz reljefa, brzine su ogledne. Državna postaja daje širu sliku, a vlastiti anemometar ono što se događa među kućama."
+          napomena={
+            zrak.opis.stanje === "prema" || zrak.opis.stanje === "mimo"
+              ? `Struja je nacrtana za ${zrak.opis.natpis}; skretanje je izračun iz reljefa. Državna postaja daje širu sliku, a vlastiti anemometar ono što se događa među kućama.`
+              : "Smjer sada nije određen, pa je nacrtan slučaj o kojem se javlja — slab jugoistočnjak. Skretanje je izračun iz reljefa. Vlastiti anemometar tek će pokazati što se događa među kućama."
+          }
         >
           <Karta
             klasa="karepovac-karta-vjetar"
@@ -962,12 +1046,12 @@ export function KarepovacKarte() {
                 {...NESKALIRANO}
               />
               <g stroke="#ffffff" fill="none" strokeWidth={0.9} opacity={0.16}>
-                {STRUJNICE.map((d, i) => (
+                {zrak.strujnice.putanje.map((d, i) => (
                   <path key={i} d={d} />
                 ))}
               </g>
               <g stroke="#ffffff" fill="none" strokeLinecap="round">
-                {STRUJNICE.map((d, i) => (
+                {zrak.strujnice.putanje.map((d, i) => (
                   <path
                     key={i}
                     d={d}

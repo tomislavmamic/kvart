@@ -9,8 +9,6 @@ import {
   OKVIR,
   PODLOGA,
   PRSTENI,
-  SKRETANJE,
-  STRUJNICE,
   TOCKE,
   TOKOVI,
   VIIRS,
@@ -100,12 +98,10 @@ test("prstenovi i satelitska mreža nose stvarne mjere", () => {
   assert.ok(VIIRS.some((c) => !c.pogodak), "sve ćelije padaju na plohu");
 });
 
-test("polje vjetra skreće, ali ne divlje", () => {
-  assert.ok(OKVIR.azimut > 270 && OKVIR.azimut < 320, "kvart je sjeverozapadno od plohe");
-  assert.ok(SKRETANJE.medijan > 2 && SKRETANJE.medijan < 25);
-  assert.ok(SKRETANJE.najvece > SKRETANJE.medijan);
-  assert.ok(SKRETANJE.najvece < 90, "skretanje preko 90° znači da polje ide natrag");
-  assert.ok(STRUJNICE.length > 10);
+test("kvart leži sjeverozapadno od plohe", () => {
+  // O ovoj osi visi i to nosi li vjetar prema kvartu; strujnice se provjeravaju
+  // u strujnice.test.ts, na polju koje se slaže u izvođenju.
+  assert.ok(OKVIR.azimut > 270 && OKVIR.azimut < 320);
 });
 
 test("stranica nosi svih jedanaest kartica, svaku s oznakom izvora", () => {
@@ -162,8 +158,8 @@ test("izbor tvari ne ruši simulaciju, nego samo ljestvicu", () => {
     "utf8",
   );
   const ovisnosti = perjanica.match(/\}, \[([^\]]*)\]\);/g) ?? [];
-  const glavni = ovisnosti.find((o) => o.includes("slucaj"));
-  assert.ok(glavni, "učinak simulacije nema ovisnost o slučaju vremena");
+  const glavni = ovisnosti.find((o) => o.includes("polje"));
+  assert.ok(glavni, "učinak simulacije nema ovisnost o polju vjetra");
   assert.doesNotMatch(glavni, /tvar/, "tvar ne smije rušiti simulaciju");
 });
 

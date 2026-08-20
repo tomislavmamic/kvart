@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
 import {
+  type PoljeDima,
   type Ljestvica,
   MIRISNI_RASPON,
   PRAG_NA_LJESTVICI,
@@ -47,12 +48,12 @@ function broj(x: number): string {
  * je klijentski samo ono što se doista mijenja klikom.
  */
 export function PerjanicaSIzborom({
-  slucaj,
+  polje,
   podloga,
   natpisi,
 }: {
-  /** Redni broj slučaja vremena u `SLUCAJEVI_DIMA`. */
-  slucaj: number;
+  /** Polje vjetra složeno za vjetar koji trenutačno puše. */
+  polje: PoljeDima;
   /** Nepomični SVG ispod platna. */
   podloga: ReactNode;
   /** Nepomični SVG iznad platna. */
@@ -63,10 +64,12 @@ export function PerjanicaSIzborom({
 
   return (
     <div>
-      <div className="relative">
-        {podloga}
-        <DimPerjanica slucaj={slucaj} tvar={tvar} />
-        {natpisi}
+      <div className="overflow-hidden rounded-lg border border-kamen-tlo">
+        <div className="relative">
+          {podloga}
+          <DimPerjanica polje={polje} tvar={tvar} />
+          {natpisi}
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -118,9 +121,10 @@ export function PerjanicaSIzborom({
 
       <p className="mt-3 max-w-prose text-base leading-7 text-kamen-tekst">
         Vrijeme teče {UBRZANJE}× brže od stvarnoga: sekunda prikaza je minuta
-        vjetra. Perjanica se ne ispušta u naletima nego neprekidno, kao što plin
-        i curi kroz pokrov — a koliko je se u kvartu nakupi ovisi o tome odnosi
-        li je vjetar brže nego što dotječe.{" "}
+        vjetra. Izvor ne ispušta u naletima nego neprekidno, kao što plin i curi
+        kroz pokrov — a koliko ga se nad kvartom nakupi ovisi o tome odnosi li ga
+        vjetar brže nego što dotječe. Kad je tišina, prizor potamni sam od sebe;
+        kad zapuše, splasne.{" "}
         {odabrana.naziv.toLowerCase()} se na postaji uz plohu mjeri oko{" "}
         {broj(mirisneJedinice(tvar))} puta iznad praga na kojem se osjeti
         {tvar === "merkaptani"

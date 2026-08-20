@@ -2,55 +2,74 @@
 
 import { useEffect, useRef } from "react";
 
-import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
-import { type Tvar, TVARI, ljestvicaBoja, razina, stvoriDim } from "@/lib/dim";
+import {
+  ljestvicaBoja,
+  razina,
+  stvoriDim,
+  type PoljeDima,
+  type Tvar,
+  TVARI,
+} from "@/lib/dim";
 
 /**
- * Zagrijavanje: sedamdesetak sekundi prikaza, u komadima.
+ * Zagrijavanje: simulacija u komadima, dok se gustoća ne ustali.
  *
- * Toliko treba da se perjanica ustali — pri slabom vjetru čestica prijeđe
- * okvir za nekih pola minute, a gustoća se puni dok se dotok i odlazak ne
- * izjednače. Korak smije biti krupan jer izvor više ne pulsira; prije je
- * krupan korak preskakao pulseve pa su naleti izlazili u grudama.
+ * Korak smije biti krupniji nego u živoj petlji jer izvor ne pulsira — nema
+ * naleta koje bi krupno otipkavanje preskočilo. Ustaljeno stanje ovisi samo o
+ * omjeru dotoka i odlaska, a ne o tome koliko se sitno računa put.
+ *
+ * Komad se mjeri vremenom, a ne brojem koraka: jedan korak s devedeset tisuća
+ * čestica traje od 7 do 20 ms, pa je komad od dvanaest koraka znao zaustaviti
+ * stranicu na četvrt sekunde odjednom. Ovako se stane čim istekne proračun za
+ * jednu sličicu.
+ *
+ * Međukoraci se ne crtaju. Dvanaest sekundi simulacije prođe za manje od
+ * sekunde stvarnog vremena, pa bi crtanje svakog komada izgledalo kao
+ * premotavanje na početku svakog učitavanja. Platno zato stoji prazno dok se
+ * prizor ne razvije, pa se pojavi odjednom.
+ *
+ * Ako zagrijavanje potraje — na sporom uređaju ili u pozadinskoj kartici, gdje
+ * preglednik usporava `setTimeout` na sekundu po pozivu — počinje se crtati i
+ * usput, jer je tada bolje vidjeti kako se razvija nego dugo gledati prazno.
  */
-const ZAGRIJAVANJE = { komada: 25, poKomadu: 12, korak: 0.25 };
+const ZAGRIJAVANJE = { korak: 0.25, komadMs: 12, strpljenje: 1500 };
 
 /**
  * Perjanica mirisa nad kvartom, računata u pregledniku.
  *
- * Stvari koje nisu očite:
+ * Dvije stvari koje nisu očite:
  *
- * Zagrijavanje ide preko `setTimeout`, a ne u petlji animacije, jer bi karta
- * inače dobru minutu stajala gotovo prazna; odraditi to u jednom potezu
- * blokira prikaz. Usput znači da se perjanica pojavi i ondje gdje preglednik
- * uspori `requestAnimationFrame` — u pozadinskoj kartici ili pri štednji.
+ * Zagrijavanje ide preko `setTimeout`, a ne u petlji animacije. Prvi nalet
+ * treba dvanaestak sekundi da prijeđe kvart, pa bi karta dotad stajala prazna;
+ * odraditi to u jednom potezu blokira prikaz oko 700 ms. Ovako se razlomi na
+ * komade, a usput znači da se perjanica pojavi i ondje gdje preglednik uspori
+ * `requestAnimationFrame` — u pozadinskoj kartici ili pri štednji baterije.
  *
  * Platno se pokreće tek kad uđe u vidno polje, da kartice koje nitko ne gleda
  * ne troše struju.
  *
- * Promjena tvari ne ruši simulaciju. Sumporovodik i merkaptani putuju istim
- * zrakom i na ovoj udaljenosti jednako — razlikuju se po tome koliko ih ima i
- * pri kojoj se količini osjete, a to je razlika u ljestvici, ne u gibanju.
- * Zato se pri prebacivanju mijenja samo tablica boja, i prizor ne trepne.
+ * Polje dolazi izvana, iz poslužitelja: složeno je za vjetar koji trenutačno
+ * puše (`src/lib/vjetar.ts`), pa se pri tišini čestice jedva miču — i upravo
+ * se tada nad kvartom nakuplja najviše zraka s plohe.
  *
- * Promjena slučaja vremena, naprotiv, gradi sve iznova. Zadržati čestice pri
- * promjeni polja izgledalo bi kao da vjetar okrene u trenutku, a on to ne radi.
+ * Promjena tvari ne ruši simulaciju. Sumporovodik i merkaptani putuju istim
+ * zrakom i na ovoj udaljenosti jednako; razlikuju se po tome koliko ih ima i
+ * pri kojoj se količini osjete, a to je razlika u ljestvici, ne u gibanju.
+ * Zato se pri prebacivanju mijenja samo tablica boja i prizor ne trepne.
  */
 export function DimPerjanica({
-  slucaj = 0,
+  polje,
   tvar = "sumporovodik",
   klasa = "",
 }: {
-  /** Redni broj slučaja vremena u `SLUCAJEVI_DIMA`. */
-  slucaj?: number;
+  polje: PoljeDima;
   /** Koja se tvar boji; gibanje je isto za obje. */
   tvar?: Tvar;
   klasa?: string;
 }) {
   const platno = useRef<HTMLCanvasElement>(null);
-  // Odabrana tvar ide kroz `ref`, a ne kroz ovisnost učinka: mijenja se samo
-  // tablica boja, pa bi ponovno građenje simulacije značilo da perjanica pri
-  // svakom prebacivanju krene ispočetka.
+  // Odabrana tvar ide kroz `ref`, a ne kroz ovisnost učinka: da ulazi u
+  // ovisnosti, perjanica bi se pri svakom kliku gradila ispočetka.
   const odabrana = useRef<Tvar>(tvar);
   useEffect(() => {
     odabrana.current = tvar;
@@ -63,18 +82,7 @@ export function DimPerjanica({
     if (!ctx) return;
 
     const mirno = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const odabran = SLUCAJEVI_DIMA.slucajevi[slucaj] ?? SLUCAJEVI_DIMA.slucajevi[0];
-    const sim = stvoriDim(
-      {
-        gw: SLUCAJEVI_DIMA.gw,
-        gh: SLUCAJEVI_DIMA.gh,
-        maska: SLUCAJEVI_DIMA.maska,
-        skala: odabran.skala,
-        vx: odabran.vx,
-        vy: odabran.vy,
-      },
-      {},
-    );
+    const sim = stvoriDim(polje, {});
     const lut: Record<Tvar, Uint8ClampedArray> = {
       sumporovodik: ljestvicaBoja(TVARI.sumporovodik.ljestvica),
       merkaptani: ljestvicaBoja(TVARI.merkaptani.ljestvica),
@@ -84,11 +92,16 @@ export function DimPerjanica({
     element.height = sim.visina;
     const slika = ctx.createImageData(sim.sirina, sim.visina);
 
+    // Platno čeka prazno dok se prizor ne razvije; da ne bane, prva se slika
+    // kratko utopi. Tko je isključio gibanje, dobiva je odmah.
+    element.style.opacity = "0";
+    if (!mirno) element.style.transition = "opacity 220ms ease-out";
+
     const nacrtaj = () => {
       const g = sim.crtaj();
-      // Ljestvica je nepomična. Kad se povlačila za vrhom u kadru, bezvjetrica
-      // i vjetar izgledali su jednako tamno — a upravo je ta razlika ono što
-      // prikaz ima reći.
+      // Ljestvica je nepomična. Kad se povlačila za vrhom u kadru, tišina i
+      // bura izgledale su jednako tamno — a upravo je ta razlika ono što
+      // prikaz ima reći. Sad pri tišini prizor potamni sam, a pri buri splasne.
       const t = odabrana.current;
       const boje = lut[t];
       const d = slika.data;
@@ -100,6 +113,7 @@ export function DimPerjanica({
         d[i * 4 + 3] = boje[q + 3];
       }
       ctx.putImageData(slika, 0, 0);
+      element.style.opacity = "1";
     };
 
     let zahtjev = 0;
@@ -109,17 +123,24 @@ export function DimPerjanica({
     let vidljivo = false;
     let ugaseno = false;
 
-    const zagrij = (preostalo: number) => {
+    const pocetakZagrijavanja = performance.now();
+    const zagrij = (preostaloSekundi: number) => {
       if (ugaseno) return;
-      if (preostalo <= 0) {
+      if (preostaloSekundi <= 0) {
         zagrijano = true;
+        nacrtaj();
         return;
       }
-      for (let s = 0; s < ZAGRIJAVANJE.poKomadu; s += 1) {
+      const kraj = performance.now() + ZAGRIJAVANJE.komadMs;
+      let ostalo = preostaloSekundi;
+      do {
         sim.korak(ZAGRIJAVANJE.korak);
+        ostalo -= ZAGRIJAVANJE.korak;
+      } while (ostalo > 0 && performance.now() < kraj);
+      if (performance.now() - pocetakZagrijavanja > ZAGRIJAVANJE.strpljenje) {
+        nacrtaj();
       }
-      nacrtaj();
-      tajmer = setTimeout(() => zagrij(preostalo - 1), 0);
+      tajmer = setTimeout(() => zagrij(ostalo), 0);
     };
 
     const petlja = (t: number) => {
@@ -142,7 +163,7 @@ export function DimPerjanica({
           return;
         }
         if (!zagrijano && tajmer === undefined) {
-          zagrij(ZAGRIJAVANJE.komada);
+          zagrij(sim.zagrijavanje);
         }
       },
       { rootMargin: "120px" },
@@ -156,7 +177,7 @@ export function DimPerjanica({
       if (tajmer !== undefined) clearTimeout(tajmer);
       promatrac.disconnect();
     };
-  }, [slucaj]);
+  }, [polje]);
 
   return (
     <canvas

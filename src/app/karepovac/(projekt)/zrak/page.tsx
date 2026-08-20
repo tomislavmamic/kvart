@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PogledZraka } from "@/components/karepovac/karta-kartice";
+import { PoljeDimaVeliko } from "@/components/karepovac/karta-kartice";
 import {
   EvidenceRegister,
   PrimaryLink,
@@ -10,6 +10,9 @@ import { DnevniHod, RuzaMirisa } from "@/components/karepovac/sluzbena-mjerenja"
 import { BAZDARENJE } from "@/generated/karepovac-bazdarenje";
 import { MJERENJA } from "@/generated/karepovac-mjerenja";
 import { KAREPOVAC_PHASES } from "@/lib/karepovac";
+
+/** Isti rok kao na pregledu, da dvije karte istoga kvarta ne pokazuju dva vjetra. */
+export const revalidate = 900;
 
 const H2S_SATI = MJERENJA.postaje[0].tvari[0].sati;
 const MERKAPTANI_SATI =
@@ -41,7 +44,7 @@ export default function KarepovacPage() {
             </PrimaryLink>
           </div>
         </div>
-        <PogledZraka />
+        <PoljeDimaVeliko />
       </section>
 
       <section className="space-y-8">
