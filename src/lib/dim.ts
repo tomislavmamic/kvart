@@ -70,6 +70,9 @@ export type Simulacija = {
  */
 export const SIRINA_OKVIRA_M = 2623;
 
+/** Brzina vjetra na kojoj je izgled perjanice podešen, u m/s. */
+const REFERENTNA_BRZINA = 1.2;
+
 const ZADANO = {
   sirina: 200,
   cestica: 90_000,
@@ -173,6 +176,24 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
   const H = Math.max(2, Math.round((W * gh) / gw));
   const N = par.cestica;
 
+  // Izgled je podešen na slab jugoistočnjak; pri jačem vjetru čestica prijeđe
+  // okvir prije nego što stigne sljedeći nalet, pa okvir ostane prazan između
+  // njih. Zato se s brzinom skraćuju i razmak naleta i vijek čestice: nošenje
+  // ostaje točno razmjerno izmjerenom vjetru, a gustoća prizora ostaje ista.
+  // U stvarnom vremenu to znači češće nalete kad jače puše, što i odgovara
+  // tome kako vjetar zapravo dolazi.
+  let zbrojBrzina = 0;
+  for (let i = 0; i < VX.length; i += 1) {
+    zbrojBrzina += Math.hypot(
+      (VX[i] / 255) * 2 * skala - skala,
+      (VY[i] / 255) * 2 * skala - skala,
+    );
+  }
+  const srednjaBrzina = zbrojBrzina / Math.max(1, VX.length);
+  const omjer = Math.min(1, Math.max(0.12, REFERENTNA_BRZINA / Math.max(srednjaBrzina, 0.05)));
+  par.vijek *= omjer;
+  par.ritam *= omjer;
+
   const slucaj = generator(1);
   const celije: number[] = [];
   for (let j = 0; j < gh; j += 1) {
@@ -200,8 +221,14 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
   let ostatak = 0;
 
   function uzmi(A: Uint8Array, fx: number, fy: number): number {
-    const x = fx * (gw - 1);
-    const y = fy * (gh - 1);
+    // Čestica smije nakratko izaći iz okvira prije nego što se ugasi. Bez
+    // stezanja se ovdje čita izvan polja, ispadne NaN, a NaN položaj potom
+    // prođe kroz provjeru izlaska (svaka usporedba s NaN je laž) — čestica
+    // ostane zauvijek živa i pri crtanju padne u ćeliju (0, 0). Takva se hrpa
+    // pri jakom vjetru napuni toliko da povuče ljestvicu na sebe i perjanica
+    // se više ne vidi.
+    const x = (fx < 0 ? 0 : fx > 1 ? 1 : fx) * (gw - 1);
+    const y = (fy < 0 ? 0 : fy > 1 ? 1 : fy) * (gh - 1);
     const i0 = x | 0;
     const j0 = y | 0;
     const i1 = i0 + 1 < gw ? i0 + 1 : i0;
@@ -286,7 +313,8 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
       const tempo = (par.ubrzanje / SIRINA_OKVIRA_M) * dt;
       px[n] = x + vx * tempo;
       py[n] = y + vy * tempo;
-      if (px[n] < -0.02 || px[n] > 1.02 || py[n] < -0.02 || py[n] > 1.02) {
+      // Zanijekan uvjet, da i NaN položaj ugasi česticu umjesto da je propusti.
+      if (!(px[n] >= -0.02 && px[n] <= 1.02 && py[n] >= -0.02 && py[n] <= 1.02)) {
         ugasi(n);
       }
     }

@@ -133,6 +133,80 @@ function tezisteX(g: Float32Array, W: number, H: number): number {
   return tezina > 0 ? zbroj / tezina / W : 0.5;
 }
 
+/**
+ * Udio okvira koji se doista vidi.
+ *
+ * Prikaz normira gustoću vrhom, a ljestvica ispod 12 % vrha je prozirna. Zato
+ * jedna vruća ćelija može ugasiti cijelu perjanicu, a da gustoća i dalje bude
+ * uredna — točno to se dogodilo kad su se čestice s NaN položajem gomilale u
+ * ćeliji (0, 0) i pri jakom vjetru povukle ljestvicu na sebe.
+ */
+function vidljivost(g: Float32Array): number {
+  let vrh = 0;
+  for (let i = 0; i < g.length; i += 1) if (g[i] > vrh) vrh = g[i];
+  if (vrh <= 0) return 0;
+  let n = 0;
+  for (let i = 0; i < g.length; i += 1) if (g[i] > vrh * 0.12) n += 1;
+  return n / g.length;
+}
+
+test("čestica koja izađe iz okvira nestane, a ne parkira se u kutu", () => {
+  // Bez stezanja očitanja polja čestica izvan okvira dobije NaN položaj. NaN
+  // potom prođe kroz provjeru izlaska (svaka usporedba s NaN je laž) i pri
+  // crtanju padne u ćeliju (0, 0). Ta hrpa pri jakom vjetru postane vrh
+  // gustoće, ljestvica se namjesti po njoj i perjanica postane prozirna —
+  // karta izgleda prazno iako model radi.
+  // Dugim vijekom se hrpa razotkrije: čestica s NaN položajem inače ispadne iz
+  // optjecaja tek kad ostari, pa je pri kratkom vijeku i nema mnogo odjednom.
+  const sim = stvoriDim(sastaviPolje({ smjerOd: 135, brzina: 7.2, dubina: 1175 }), {
+    cestica: 30_000,
+    vijek: 90,
+  });
+  pusti(sim, 50);
+  const g = sim.crtaj();
+
+  const puni = Array.from(g).filter((v) => v > 0.001).sort((a, b) => a - b);
+  const sredina = puni[Math.floor(puni.length / 2)];
+  assert.ok(
+    g[0] < sredina * 15,
+    `u kutu (0, 0) stoji ${(g[0] / sredina).toFixed(0)}× više od sredine okvira`,
+  );
+});
+
+test("perjanica se vidi i pri slabom i pri jakom vjetru", () => {
+  for (const brzina of [0.3, 1.2, 3, 7.2]) {
+    const sim = stvoriDim(sastaviPolje({ smjerOd: 135, brzina, dubina: 1175 }), {
+      cestica: 12_000,
+    });
+    pusti(sim, 40);
+    // Uzorkuje se kroz nekoliko naleta: pri jakom vjetru nalet prijeđe okvir
+    // brzo, pa okvir ne smije ostati prazan između dva naleta.
+    let najmanja = 1;
+    for (let k = 0; k < 12; k += 1) {
+      pusti(sim, 1);
+      najmanja = Math.min(najmanja, vidljivost(sim.crtaj()));
+    }
+    assert.ok(
+      najmanja > 0.1,
+      `pri ${brzina} m/s od perjanice se vidi samo ${(najmanja * 100).toFixed(1)} % okvira`,
+    );
+  }
+});
+
+test("pri tišini perjanica ostaje nad plohom, pri vjetru odlazi", () => {
+  const teziste = (brzina: number) => {
+    const sim = stvoriDim(sastaviPolje({ smjerOd: 135, brzina, dubina: 1175 }), {
+      cestica: 12_000,
+    });
+    pusti(sim, 40);
+    return tezisteX(sim.crtaj(), sim.sirina, sim.visina);
+  };
+
+  // Ploha je na istoku okvira; jugoistočnjak nosi prema zapadu, dakle ulijevo.
+  assert.ok(teziste(0.2) > 0.6, "pri tišini se zrak zadržava nad plohom");
+  assert.ok(teziste(7.2) < teziste(0.2), "jači vjetar mora odnijeti perjanicu dalje");
+});
+
 test("širina okvira u simulaciji prati onu na karti", () => {
   const izKarte = OKVIR.sirina / OKVIR.pxPoMetru;
   assert.ok(
