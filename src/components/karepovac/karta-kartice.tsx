@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
+import { PerjanicaSIzborom } from "@/components/karepovac/perjanica-s-izborom";
 
 import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
 import { SIRA_KARTA } from "@/generated/karepovac-siri";
@@ -288,11 +289,49 @@ function Karta({
   );
 }
 
+/** Natpis u donjem desnom kutu okvira: koji je ovo slučaj vremena. */
+function NatpisOkvira({ children }: { children: string }) {
+  return (
+    <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
+      {children}
+    </Mjesto>
+  );
+}
+
+/** Nepomična podloga ispod perjanice. */
+function PodlogaKarte() {
+  return (
+    <svg viewBox={OKVIR.viewBox} aria-hidden="true" className="block h-auto w-full">
+      <use href="#karepovac-podloga" />
+    </svg>
+  );
+}
+
+/** Obris plohe, imena mjesta i mjerilo — sve što dim ne smije progutati. */
+function NatpisiKarte({ opis, children }: { opis: string; children?: ReactNode }) {
+  return (
+    <svg
+      viewBox={OKVIR.viewBox}
+      role="img"
+      aria-label={opis}
+      className="pointer-events-none absolute inset-0 block h-full w-full"
+    >
+      <Ploha ispuna={false} />
+      {children}
+      <Mjesta />
+      <Mjerilo />
+    </svg>
+  );
+}
+
 /**
  * Karta s perjanicom koja se računa u pregledniku.
  *
  * Tri sloja jer platno mora leći preko podloge, a natpisi preko platna —
  * inače dim proguta imena mjesta.
+ *
+ * Ovdje stoji sama perjanica, bez izbora tvari i ljestvice; to je za mjesta
+ * gdje je karta samo najava. Puni prikaz je `PerjanicaSIzborom`.
  */
 export function KartaDima({
   opis,
@@ -308,13 +347,7 @@ export function KartaDima({
 }) {
   return (
     <div className="relative">
-      <svg
-        viewBox={OKVIR.viewBox}
-        aria-hidden="true"
-        className="block h-auto w-full"
-      >
-        <use href="#karepovac-podloga" />
-      </svg>
+      <PodlogaKarte />
       {slika ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -325,17 +358,7 @@ export function KartaDima({
       ) : (
         <DimPerjanica slucaj={slucaj} />
       )}
-      <svg
-        viewBox={OKVIR.viewBox}
-        role="img"
-        aria-label={opis}
-        className="pointer-events-none absolute inset-0 block h-full w-full"
-      >
-        <Ploha ispuna={false} />
-        {children}
-        <Mjesta />
-        <Mjerilo />
-      </svg>
+      <NatpisiKarte opis={opis}>{children}</NatpisiKarte>
     </div>
   );
 }
@@ -388,22 +411,29 @@ export function PogledZraka() {
               {pogled.naziv}
             </label>
             <div className="order-2 hidden w-full peer-checked:block">
-              <div className="mt-4 overflow-hidden rounded-lg border border-kamen-tlo">
-                <KartaDima
-                  slucaj={pogled.slucaj}
-                  slika={pogled.slika}
-                  opis={`Karta kvarta: ${pogled.opis}`}
-                >
-                  <Mjesto
-                    x={OKVIR.sirina - 18}
-                    y={OKVIR.visina - 30}
-                    sidro="end"
-                    velicina={9.5}
+              {pogled.slika ? (
+                <div className="mt-4 overflow-hidden rounded-lg border border-kamen-tlo">
+                  <KartaDima
+                    slucaj={pogled.slucaj}
+                    slika={pogled.slika}
+                    opis={`Karta kvarta: ${pogled.opis}`}
                   >
-                    {pogled.natpis}
-                  </Mjesto>
-                </KartaDima>
-              </div>
+                    <NatpisOkvira>{pogled.natpis}</NatpisOkvira>
+                  </KartaDima>
+                </div>
+              ) : (
+                // Živa perjanica dobiva izbor tvari i ljestvicu ispod okvira,
+                // pa okvir ovdje ne smije obuhvatiti i njih.
+                <PerjanicaSIzborom
+                  slucaj={pogled.slucaj}
+                  podloga={<PodlogaKarte />}
+                  natpisi={
+                    <NatpisiKarte opis={`Karta kvarta: ${pogled.opis}`}>
+                      <NatpisOkvira>{pogled.natpis}</NatpisOkvira>
+                    </NatpisiKarte>
+                  }
+                />
+              )}
               {"ljestvica" in pogled && (
                 <div className="mt-3 flex items-center gap-3">
                   <span className="shrink-0 text-sm tabular-nums text-kamen-drugi">
@@ -595,14 +625,14 @@ export function KarepovacKarte() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Kartica
           naslov="Miris iz smjera Karepovca"
-          opis="Ploha leži iznad kvarta i istočno od njega. Prikaz računa kako se miris nosi niz padinu pri slabom istočnojugoistočnom vjetru i plitkom sloju zraka — pri vremenu na koje se ljudi i žale. Naleti izlaze sami jer izvor ne ispušta jednolično."
+          opis="Ploha leži iznad kvarta i istočno od njega. Prikaz računa kako se miris nosi niz padinu pri slabom istočnojugoistočnom vjetru i plitkom sloju zraka — pri vremenu na koje se ljudi i žale. Izvor curi neprekidno, a vrijeme teče šezdeset puta brže od stvarnoga."
           izvor="procjena"
           izvorOznaka="Model, ne mjerenje"
           napomena="Polje vjetra izvedeno je iz LiDAR reljefa; jačina izvora još je pretpostavka. Dojave stanovnika su ono čime ćemo ovaj prikaz provjeriti — obrazac radi od prvog dana."
           poveznica="/karepovac/zrak"
           poveznicaOznaka="Uđite u projekt praćenja zraka"
         >
-          <KartaDima opis="Karta kvarta: dim s Karepovca putuje u naletima niz padinu preko Dračevca prema Bilicama.">
+          <KartaDima opis="Karta kvarta: zrak s Karepovca teče niz padinu preko Dračevca prema Bilicama i ondje se zadržava dok ga vjetar ne odnese.">
             <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>
               {`istok-jugoistok — os ${OKVIR.azimut}°`}
             </Mjesto>

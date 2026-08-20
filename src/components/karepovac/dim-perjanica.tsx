@@ -3,44 +3,58 @@
 import { useEffect, useRef } from "react";
 
 import { SLUCAJEVI_DIMA } from "@/generated/karepovac-polje";
-import { ljestvicaBoja, stvoriDim } from "@/lib/dim";
+import { type Tvar, TVARI, ljestvicaBoja, razina, stvoriDim } from "@/lib/dim";
 
 /**
- * Zagrijavanje: dvanaest sekundi simulacije, u komadima.
+ * Zagrijavanje: sedamdesetak sekundi prikaza, u komadima.
  *
- * Korak mora ostati jednak onome u živoj petlji. Pri krupnijem koraku puls
- * izvora se preskače između dva otipkavanja, pa naleti izađu u grudama i
- * perjanica se odvoji od plohe.
+ * Toliko treba da se perjanica ustali — pri slabom vjetru čestica prijeđe
+ * okvir za nekih pola minute, a gustoća se puni dok se dotok i odlazak ne
+ * izjednače. Korak smije biti krupan jer izvor više ne pulsira; prije je
+ * krupan korak preskakao pulseve pa su naleti izlazili u grudama.
  */
-const ZAGRIJAVANJE = { komada: 20, poKomadu: 12, korak: 0.05 };
+const ZAGRIJAVANJE = { komada: 25, poKomadu: 12, korak: 0.25 };
 
 /**
  * Perjanica mirisa nad kvartom, računata u pregledniku.
  *
- * Dvije stvari koje nisu očite:
+ * Stvari koje nisu očite:
  *
- * Zagrijavanje ide preko `setTimeout`, a ne u petlji animacije. Prvi nalet
- * treba dvanaestak sekundi da prijeđe kvart, pa bi karta dotad stajala prazna;
- * odraditi to u jednom potezu blokira prikaz oko 700 ms. Ovako se razlomi na
- * komade, a usput znači da se perjanica pojavi i ondje gdje preglednik uspori
- * `requestAnimationFrame` — u pozadinskoj kartici ili pri štednji baterije.
+ * Zagrijavanje ide preko `setTimeout`, a ne u petlji animacije, jer bi karta
+ * inače dobru minutu stajala gotovo prazna; odraditi to u jednom potezu
+ * blokira prikaz. Usput znači da se perjanica pojavi i ondje gdje preglednik
+ * uspori `requestAnimationFrame` — u pozadinskoj kartici ili pri štednji.
  *
  * Platno se pokreće tek kad uđe u vidno polje, da kartice koje nitko ne gleda
  * ne troše struju.
  *
- * Promjena slučaja vremena ruši i ponovno gradi cijelu simulaciju. Zadržati
- * čestice pri promjeni polja izgledalo bi kao da vjetar okrene u trenutku, a
- * on to ne radi — i prizor bi nekoliko sekundi bio ni jedno ni drugo.
+ * Promjena tvari ne ruši simulaciju. Sumporovodik i merkaptani putuju istim
+ * zrakom i na ovoj udaljenosti jednako — razlikuju se po tome koliko ih ima i
+ * pri kojoj se količini osjete, a to je razlika u ljestvici, ne u gibanju.
+ * Zato se pri prebacivanju mijenja samo tablica boja, i prizor ne trepne.
+ *
+ * Promjena slučaja vremena, naprotiv, gradi sve iznova. Zadržati čestice pri
+ * promjeni polja izgledalo bi kao da vjetar okrene u trenutku, a on to ne radi.
  */
 export function DimPerjanica({
   slucaj = 0,
+  tvar = "sumporovodik",
   klasa = "",
 }: {
   /** Redni broj slučaja vremena u `SLUCAJEVI_DIMA`. */
   slucaj?: number;
+  /** Koja se tvar boji; gibanje je isto za obje. */
+  tvar?: Tvar;
   klasa?: string;
 }) {
   const platno = useRef<HTMLCanvasElement>(null);
+  // Odabrana tvar ide kroz `ref`, a ne kroz ovisnost učinka: mijenja se samo
+  // tablica boja, pa bi ponovno građenje simulacije značilo da perjanica pri
+  // svakom prebacivanju krene ispočetka.
+  const odabrana = useRef<Tvar>(tvar);
+  useEffect(() => {
+    odabrana.current = tvar;
+  }, [tvar]);
 
   useEffect(() => {
     const element = platno.current;
@@ -61,29 +75,29 @@ export function DimPerjanica({
       },
       {},
     );
-    const lut = ljestvicaBoja();
+    const lut: Record<Tvar, Uint8ClampedArray> = {
+      sumporovodik: ljestvicaBoja(TVARI.sumporovodik.ljestvica),
+      merkaptani: ljestvicaBoja(TVARI.merkaptani.ljestvica),
+    };
 
     element.width = sim.sirina;
     element.height = sim.visina;
     const slika = ctx.createImageData(sim.sirina, sim.visina);
-    let norma = 8;
 
-    const nacrtaj = (brzoNamjesti: boolean) => {
+    const nacrtaj = () => {
       const g = sim.crtaj();
-      let najvise = 0;
-      for (let i = 0; i < g.length; i += 1) if (g[i] > najvise) najvise = g[i];
-      // Ljestvica se povlači za vrhom, da prizor ne titra; dok se perjanica
-      // tek razvija smije se namjestiti brže.
-      norma += (Math.max(najvise * 0.8, 0.2) - norma) * (brzoNamjesti ? 0.3 : 0.04);
-
+      // Ljestvica je nepomična. Kad se povlačila za vrhom u kadru, bezvjetrica
+      // i vjetar izgledali su jednako tamno — a upravo je ta razlika ono što
+      // prikaz ima reći.
+      const t = odabrana.current;
+      const boje = lut[t];
       const d = slika.data;
       for (let i = 0; i < g.length; i += 1) {
-        const v = g[i] / norma;
-        const q = (v > 1 ? 255 : v < 0 ? 0 : (v * 255) | 0) * 4;
-        d[i * 4] = lut[q];
-        d[i * 4 + 1] = lut[q + 1];
-        d[i * 4 + 2] = lut[q + 2];
-        d[i * 4 + 3] = lut[q + 3];
+        const q = ((razina(g[i], t) * 255) | 0) * 4;
+        d[i * 4] = boje[q];
+        d[i * 4 + 1] = boje[q + 1];
+        d[i * 4 + 2] = boje[q + 2];
+        d[i * 4 + 3] = boje[q + 3];
       }
       ctx.putImageData(slika, 0, 0);
     };
@@ -104,7 +118,7 @@ export function DimPerjanica({
       for (let s = 0; s < ZAGRIJAVANJE.poKomadu; s += 1) {
         sim.korak(ZAGRIJAVANJE.korak);
       }
-      nacrtaj(true);
+      nacrtaj();
       tajmer = setTimeout(() => zagrij(preostalo - 1), 0);
     };
 
@@ -117,7 +131,7 @@ export function DimPerjanica({
       const dt = zadnji ? Math.min(0.05, (t - zadnji) / 1000) : 1 / 60;
       zadnji = t;
       sim.korak(dt);
-      nacrtaj(false);
+      nacrtaj();
     };
 
     const promatrac = new IntersectionObserver(

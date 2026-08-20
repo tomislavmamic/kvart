@@ -128,10 +128,43 @@ test("svaka karta ima tekstualni opis za čitač zaslona", () => {
 });
 
 test("perjanica se crta na platnu, ispod natpisa i uz obris plohe", () => {
-  assert.match(izvor, /<DimPerjanica[^>]*\/>/);
-  const platno = izvor.indexOf("<DimPerjanica");
-  const natpisi = izvor.indexOf("<Mjesta />", platno);
-  assert.ok(platno > 0 && natpisi > platno, "natpisi moraju doći nakon platna");
+  // Redoslijed je jedina stvar koja ovdje može tiho puknuti: platno mora leći
+  // preko podloge, a natpisi preko platna, inače dim proguta imena mjesta.
+  // Provjerava se u obje složbe — u kartici (`KartaDima`) i u velikom prikazu
+  // s izborom tvari, jer su to dva odvojena mjesta koja slažu iste tri sloja.
+  const odKarte = izvor.slice(izvor.indexOf("export function KartaDima"));
+  for (const [ime, tijelo] of [
+    ["KartaDima", odKarte.slice(0, odKarte.indexOf("\n/**"))],
+    [
+      "PerjanicaSIzborom",
+      readFileSync(
+        join(process.cwd(), "src/components/karepovac/perjanica-s-izborom.tsx"),
+        "utf8",
+      ),
+    ],
+  ] as const) {
+    const podloga = tijelo.search(/\{podloga\}|<PodlogaKarte\b/);
+    const platno = tijelo.search(/<(DimPerjanica|img)\b/);
+    const natpisi = tijelo.search(/\{natpisi\}|<NatpisiKarte\b/);
+    assert.ok(podloga >= 0, `${ime}: nema podloge`);
+    assert.ok(platno > podloga, `${ime}: platno ne dolazi nakon podloge`);
+    assert.ok(natpisi > platno, `${ime}: natpisi ne dolaze nakon platna`);
+  }
+  // Natpisi ne smiju hvatati klikove — ispod njih je karta.
+  assert.match(izvor, /aria-label={opis}[\s\S]{0,120}pointer-events-none/);
+});
+
+test("izbor tvari ne ruši simulaciju, nego samo ljestvicu", () => {
+  // Sumporovodik i merkaptani putuju istim zrakom; da promjena tvari ulazi u
+  // ovisnosti učinka, perjanica bi pri svakom kliku krenula od prazne karte.
+  const perjanica = readFileSync(
+    join(process.cwd(), "src/components/karepovac/dim-perjanica.tsx"),
+    "utf8",
+  );
+  const ovisnosti = perjanica.match(/\}, \[([^\]]*)\]\);/g) ?? [];
+  const glavni = ovisnosti.find((o) => o.includes("slucaj"));
+  assert.ok(glavni, "učinak simulacije nema ovisnost o slučaju vremena");
+  assert.doesNotMatch(glavni, /tvar/, "tvar ne smije rušiti simulaciju");
 });
 
 test("gibanje ima mirnu inačicu", () => {
