@@ -263,11 +263,30 @@ function NatpisOkvira({ children }: { children: string }) {
   );
 }
 
-/** Nepomična podloga ispod perjanice. */
+/**
+ * Nepomična podloga ispod perjanice, sa sjenčanim reljefom.
+ *
+ * Reljef je ovdje, a ne na svakoj kartici, jer ga treba samo perjanica: otkad
+ * polje vjetra doista skreće oko padine (medijan 9°, nad padinama i preko 50°),
+ * zrak na karti zavija — a bez sjene zavija oko brda kojih se na slici ne vidi.
+ *
+ * Način miješanja je `multiply`, a ne neprozirna slika: podloga ispod nosi
+ * ceste, zgrade i izohipse, pa ih sjena smije potamniti ali ne i pojesti.
+ */
 function PodlogaKarte() {
   return (
     <svg viewBox={OKVIR.viewBox} aria-hidden="true" className="block h-auto w-full">
       <use href="#karepovac-podloga" />
+      <image
+        href="/karepovac/kvart-reljef.png"
+        x={0}
+        y={0}
+        width={OKVIR.sirina}
+        height={OKVIR.visina}
+        opacity={0.65}
+        style={{ mixBlendMode: "multiply" }}
+        preserveAspectRatio="none"
+      />
     </svg>
   );
 }

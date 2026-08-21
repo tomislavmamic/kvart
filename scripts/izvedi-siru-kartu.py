@@ -139,14 +139,23 @@ def _granice_wgs84(obuhvat: Obuhvat) -> dict[str, float]:
     }
 
 
-def sjencanje(obuhvat: Obuhvat) -> Image.Image:
-    """Računa sjenčani reljef nad obuhvatom, s cestama urisanima u njega.
+def sjencanje(
+    obuhvat: Obuhvat, ceste: bool = True, donji: float = 0.62
+) -> Image.Image:
+    """Računa sjenčani reljef nad obuhvatom.
 
     Args:
         obuhvat: Obuhvat i korak slike.
+        ceste: Urisati ceste u raster. Za široku kartu da, jer ondje drugih
+            cesta nema; za okvir kvarta ne, jer ih ondje već crta SVG podloga,
+            pa bi se iscrtale dvaput i jedne preko drugih.
+        donji: Najtamniji ton, 0–1. Široka karta nosi neprozirno polje preko
+            sebe, pa sjena ondje smije biti tek naznaka; u okviru kvarta preko
+            nje ide prozirna perjanica i sjena mora nositi oblik doline, inače
+            zrak zavija oko brda kojih se ne vidi.
 
     Returns:
-        Sliku podloge u boji, oblika (ny, nx).
+        Sliku podloge, oblika (ny, nx).
     """
     z = gladi(ucitaj_reljef(obuhvat), 1) * PRETJERANOST
     dy, dx = np.gradient(z, obuhvat.dx)
@@ -160,15 +169,16 @@ def sjencanje(obuhvat: Obuhvat) -> Image.Image:
     )
     # Stisnuto u svijetli raspon: podloga, ne prizor. Preko nje ide polje, pa
     # tamno sjenčanje pojede boju kojom se čita rezultat.
-    sivo = np.clip(0.62 + 0.38 * sjena, 0, 1)
+    sivo = np.clip(donji + (1.0 - donji) * sjena, 0, 1)
     # Ostaje u sivim tonovima: podloga nema boju, pa je RGB troši trostruko.
     slika = Image.fromarray((sivo * 255).astype(np.uint8), "L")
 
-    crtac = ImageDraw.Draw(slika)
-    for d in putanje("ceste-sve", obuhvat):
-        tocke = _tocke(d)
-        crtac.line(tocke, fill=255, width=2)
-        crtac.line(tocke, fill=120, width=1)
+    if ceste:
+        crtac = ImageDraw.Draw(slika)
+        for d in putanje("ceste-sve", obuhvat):
+            tocke = _tocke(d)
+            crtac.line(tocke, fill=255, width=2)
+            crtac.line(tocke, fill=120, width=1)
     return slika
 
 
@@ -225,12 +235,15 @@ def sloj_polja(
     return Image.fromarray(tablica[(u * 255).astype(np.uint8)], "RGBA")
 
 
-def u_okvir_kvarta(polje: np.ndarray, povecanje: int = 2) -> np.ndarray:
-    """Uzorkuje polje računa u okvir kartica na `/karepovac`.
+def u_okvir_kvarta(
+    polje: np.ndarray, povecanje: int = 2, obuhvat: Obuhvat = RASPRSENJE
+) -> np.ndarray:
+    """Uzorkuje polje u okvir kartica na `/karepovac`.
 
     Args:
-        polje: Polje na rešetci računa.
+        polje: Polje na rešetci `obuhvat`.
         povecanje: Koliko puta gušće od okvira u pikselima.
+        obuhvat: Rešetka na kojoj polje stoji.
 
     Returns:
         Polje oblika (visina, širina) u pikselima okvira.
@@ -249,11 +262,11 @@ def u_okvir_kvarta(polje: np.ndarray, povecanje: int = 2) -> np.ndarray:
         tr.TransformPoints(np.stack([lo.ravel(), la.ravel()], 1).tolist())
     )[:, :2]
     j = np.clip(
-        ((tocke[:, 0] - RASPRSENJE.x0) / RASPRSENJE.dx).astype(int),
+        ((tocke[:, 0] - obuhvat.x0) / obuhvat.dx).astype(int),
         0, polje.shape[1] - 1,
     )
     i = np.clip(
-        ((RASPRSENJE.y1 - tocke[:, 1]) / RASPRSENJE.dx).astype(int),
+        ((obuhvat.y1 - tocke[:, 1]) / obuhvat.dx).astype(int),
         0, polje.shape[0] - 1,
     )
     return polje[i, j].reshape(visina, sirina)
@@ -325,6 +338,20 @@ def glavno() -> None:
     logger.info(
         "podloga %d×%d (%.0f kB)",
         obuhvat.nx, obuhvat.ny, (SLIKE / "siri-reljef.png").stat().st_size / 1024,
+    )
+
+    # Isti reljef u okviru kvarta, da se ispod perjanice vidi po čemu ona
+    # skreće. Bez njega zrak zavija oko brda kojih na slici nema.
+    u_kvartu = u_okvir_kvarta(
+        np.asarray(sjencanje(obuhvat, ceste=False, donji=0.40)), obuhvat=obuhvat
+    )
+    Image.fromarray(u_kvartu.astype(np.uint8), "L").save(
+        SLIKE / "kvart-reljef.png", optimize=True
+    )
+    logger.info(
+        "reljef kvarta %d×%d (%.0f kB)",
+        u_kvartu.shape[1], u_kvartu.shape[0],
+        (SLIKE / "kvart-reljef.png").stat().st_size / 1024,
     )
 
     tablica = _ljestvica()

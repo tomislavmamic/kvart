@@ -218,6 +218,26 @@ test("gustoća ostaje ograničena — perjanica ne poplavi okvir", () => {
   assert.ok(dio < 0.75, `perjanica je poplavila okvir (${(dio * 100).toFixed(1)} %)`);
 });
 
+test("gustoća ne ovisi o gustoći rešetke, nego o vjetru", () => {
+  // Rešetka je razlučivost prikaza, ne količina zraka. Prije je ista perjanica
+  // na dvostruko gušćoj rešetci ispadala četiri puta blijeđa, pa bi promjena
+  // razlučivosti radi oštrine tiho pomaknula cijelu ljestvicu boja.
+  const rijetko = stvoriDim(SLAB, { cestica: 8_000, sirina: 140 });
+  const gusto = stvoriDim(SLAB, { cestica: 8_000, sirina: 320 });
+  pusti(rijetko);
+  pusti(gusto);
+
+  const vrh = (sim: ReturnType<typeof stvoriDim>) => {
+    const g = Array.from(sim.crtaj()).sort((a, b) => a - b);
+    return g[Math.floor(g.length * 0.99)];
+  };
+  const omjer = vrh(rijetko) / vrh(gusto);
+  assert.ok(
+    Math.abs(omjer - 1) < 0.2,
+    `dvostruko gušća rešetka dala je ${omjer.toFixed(2)}× drukčiju gustoću`,
+  );
+});
+
 test("gustoća ne ovisi o broju čestica, nego o vjetru", () => {
   // Broj čestica je samo zrnatost. Kad bi o njemu ovisila i svjetlina,
   // nepomična ljestvica boja ne bi značila ništa.

@@ -262,6 +262,13 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
   const W = par.sirina;
   const H = Math.max(2, Math.round((W * gh) / gw));
   const N = par.cestica;
+  // Gustoća je masa po ćeliji, pa bi na gušćoj rešetci ista perjanica ispala
+  // blijeđa — ista masa razmazana po četiri puta više ćelija. Ljestvica boja
+  // je usidrena na jednoj gustoći, pa bi promjena razlučivosti radi ljepše
+  // slike tiho isprala boju. Zato se masa čestice mjeri prema zadanoj rešetci.
+  const REF_W = ZADANO.sirina;
+  const REF_H = Math.max(2, Math.round((REF_W * gh) / gw));
+  const povrsina = (W * H) / (REF_W * REF_H);
 
   const slucaj = generator(1);
   const celije: number[] = [];
@@ -439,7 +446,7 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
 
   function crtaj(): Float32Array {
     gust.fill(0);
-    const masa = (EMISIJA_PO_SEKUNDI * par.punjenje) / par.cestica;
+    const masa = ((EMISIJA_PO_SEKUNDI * par.punjenje) / par.cestica) * povrsina;
     for (let n = 0; n < N; n += 1) {
       if (!ziv[n]) continue;
       const w = tezina(dob[n]) * masa;
