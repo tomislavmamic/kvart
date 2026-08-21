@@ -96,6 +96,8 @@ export type Postavke = {
   vijek?: number;
   /** Jačina vrtložnog šuma. */
   vrtlog?: number;
+  /** Koliko cijela perjanica polako vijuga poprečno na vjetar. */
+  vijuganje?: number;
   /** Koliko vrtlog nadjača nošenje vjetrom. */
   snaga?: number;
   /** Krupnoća vitica; veće znači sitnije. */
@@ -137,7 +139,8 @@ const ZADANO = {
   raspad: 40,
   vijek: 160,
   vrtlog: 1.9,
-  snaga: 0.17,
+  snaga: 0.12,
+  vijuganje: 0.31,
   mjerilo: 4.2,
   sirenje: 0.55,
   rastVrtloga: 25,
@@ -401,6 +404,22 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
       const y = py[n];
       let vx = uzmi(VX, x, y);
       let vy = uzmi(VY, x, y);
+
+      // Atmosferska perjanica ne drži ravnu os: sporiji, veliki vrtlozi nose
+      // cijeli njezin presjek čas na jednu, čas na drugu stranu. Ovaj pomak
+      // namjerno nema fazu po čestici, pa se ne poništi kad se gustoća zbroji.
+      // Val putuje niz smjer vjetra; sitni vrtlog ispod njega i dalje raspliće
+      // rubove, ali više ne mora sam glumiti i meandar i turbulenciju.
+      const brzina = Math.hypot(vx, vy);
+      if (brzina > 0.03) {
+        const fazaVijuganja = t * 0.13 + (x * vx + y * vy) * 7.5 / brzina;
+        const poprecno =
+          Math.sin(fazaVijuganja) * brzina * par.vijuganje * par.vrtlog;
+        const nx = -vy / brzina;
+        const ny = vx / brzina;
+        vx += nx * poprecno;
+        vy += ny * poprecno;
+      }
 
       // Blizu plohe je mlaz, dalje se raspliće.
       const a =

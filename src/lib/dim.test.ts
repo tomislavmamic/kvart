@@ -142,6 +142,28 @@ test("perjanica nema zajednički takt — vrtlog ne diše uglas", () => {
   );
 });
 
+test("perjanica polako vijuga poprečno preko smjera vjetra", () => {
+  // Sitni vrtlozi mogu nazubiti rub, ali kad svaka čestica ima svoju fazu,
+  // njihov se pomak u presjeku poništi i os perjanice ostane gotovo ravna.
+  // Atmosferska perjanica treba zajednički, spor pomak cijelog presjeka.
+  const sim = stvoriDim(jednolikoPolje(-1.2, 0), {
+    cestica: 12_000,
+    zarista: 1,
+  });
+  pusti(sim, 45);
+
+  const polozaji: number[] = [];
+  for (let s = 0; s < 45; s += 1) {
+    for (let k = 0; k < 30; k += 1) sim.korak(1 / 30);
+    polozaji.push(tezistePresjekaY(sim.crtaj(), sim.sirina, sim.visina, 0.55));
+  }
+  const raspon = Math.max(...polozaji) - Math.min(...polozaji);
+  assert.ok(
+    raspon > 0.2,
+    `os perjanice pomakne se samo ${(raspon * 100).toFixed(1)} % visine okvira`,
+  );
+});
+
 test("slab vjetar nakuplja zrak, jak ga raznese", () => {
   // Ovo je jedino zbog čega prikaz uopće odgovara na pitanje koje ljudi imaju.
   // Čestica ne umire od starosti nego kad je vjetar iznese iz okvira, pa se
@@ -522,4 +544,19 @@ function tezisteX(g: Float32Array, W: number, H: number): number {
     }
   }
   return tezina > 0 ? zbrojT / tezina / W : 0.5;
+}
+
+/** Težište uskog okomitog presjeka na zadanom dijelu širine okvira. */
+function tezistePresjekaY(g: Float32Array, W: number, H: number, x: number): number {
+  const sredina = Math.round(x * (W - 1));
+  let zbrojT = 0;
+  let tezina = 0;
+  for (let j = 0; j < H; j += 1) {
+    for (let i = Math.max(0, sredina - 2); i <= Math.min(W - 1, sredina + 2); i += 1) {
+      const v = g[j * W + i];
+      zbrojT += v * (j / H);
+      tezina += v;
+    }
+  }
+  return tezina > 0 ? zbrojT / tezina : 0.5;
 }
