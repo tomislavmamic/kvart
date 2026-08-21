@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
+
+import { OSNOVE_DIMA } from "../src/generated/karepovac-polje";
 
 const RASPRSENJE = readFileSync("scripts/izvedi-raspesenje.py", "utf8");
 const OBLACICI = readFileSync("scripts/oblacici.py", "utf8");
@@ -50,4 +53,54 @@ test("brojke iz modela ne izlaze pred ljude kao mjerenje", () => {
     "utf8",
   );
   assert.doesNotMatch(izvor, /raspesenje/);
+});
+
+test("granica debljine sloja stoji na jednom mjestu", () => {
+  // Dvije kopije istog računa dugo su nosile dvije različite granice — 10 m u
+  // generatoru polja za preglednik, 25 m u računu raspršenja. Ništa nije
+  // pucalo; polja su samo bila različita.
+  const skripte = readdirSync("scripts").filter((f) => f.endsWith(".py"));
+  const drze = skripte.filter((f) =>
+    /^NAJTANJI_SLOJ\s*=/m.test(readFileSync(join("scripts", f), "utf8")),
+  );
+  assert.deepEqual(drze, ["reljef_polje.py"], "granica se definira drugdje");
+});
+
+test("generator polja ne drži vlastitu kopiju računa", () => {
+  const generator = readFileSync("scripts/izvedi-polje-dima.py", "utf8");
+  assert.match(generator, /from reljef_polje import \(/);
+  for (const ime of ["polje_vjetra", "ucitaj_reljef", "gladi", "maska_plohe"]) {
+    assert.doesNotMatch(
+      generator,
+      new RegExp(`^def ${ime}\\b`, "m"),
+      `${ime} se ponovno definira umjesto da se uveze`,
+    );
+  }
+});
+
+test("predmemorija polja vjetra pamti i granicu", () => {
+  // Bez granice u imenu promjena granice tiho posegne za starim poljima, pa
+  // se u proizvodu ništa ne pomakne i izgleda kao da promjena nije važna.
+  assert.match(OBLACICI, /polja-vjetra-.*NAJTANJI_SLOJ/s);
+});
+
+test("najplića razina nosi reljef, a ne jednolik vjetar", () => {
+  // Uz pregrubu granicu debljine svaka ćelija osim najniže udari u nju,
+  // debljina ispadne jednolika i polje se svede na jednolik vjetar. Razina od
+  // 25 m predstavlja noćnu inverziju — dakle sate na koje se ljudi i žale —
+  // pa je to najgore mjesto na kojem se to može dogoditi, a najteže vidljivo:
+  // karta izgleda uredno, samo nema brda u sebi.
+  const najplica = OSNOVE_DIMA.osnove[0];
+  const bajtovi = Buffer.from(najplica.istokVy, "base64");
+  let lo = 255;
+  let hi = 0;
+  for (const v of bajtovi) {
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  assert.ok(
+    hi - lo > 12,
+    `okomita brzina najplićeg polja ide samo ${lo}–${hi} od 255 — `
+      + "reljef ne skreće struju, granica debljine sloja je pregruba",
+  );
 });

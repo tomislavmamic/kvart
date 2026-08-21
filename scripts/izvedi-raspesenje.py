@@ -6,8 +6,8 @@ kvarta i koliko tada donese. Prikaz dima na stranici (`izvedi-polje-dima.py`)
 nosi samo geometriju jednog slučaja vremena; ovdje je cijela godina.
 
 Račun ide kroz `oblacici.py` — nestacionarni Lagrangeov model s pamćenjem, sat
-po sat, s izmjerenim vjetrom s gradske postaje Split-3, uz Marjan i zračnu luku za
-rupe. Jačina izvora nije
+po sat, s izmjerenim vjetrom iz onog izvora koji je bazdarenje odabralo kao
+najbolji. Jačina izvora nije
 pretpostavljena nego izračunata unatrag iz 13 791 sata H₂S-a na postaji uz
 plohu (`bazdari-izvor.py`), zajedno s rasponom pouzdanosti.
 
@@ -50,9 +50,6 @@ IZLAZ = KORIJEN / ".cache" / "raspesenje.npz"
 
 GODINA = 2025
 
-#: Izvor vjetra; spoj gradske postaje Split-3, Marjana i zračne luke. Vidi
-#: `vjetar.LANAC` i `provjeri-vjetar.py` za razlog redoslijeda.
-IZVOR_VJETRA = "spoj"
 
 #: Kad je koncentracija u točki iznad ovog udjela prosjeka na samoj plohi,
 #: broji se da je točka toga sata bila u perjanici. Mjerilo je omjer, pa ne
@@ -64,11 +61,11 @@ UDIO_PRELASKA = 0.1
 RAZINE = (0.2, 0.7, 2.0)
 
 
-def _emisija() -> tuple[float, float, float]:
-    """Čita bazdarenu emisiju iz generiranog modula.
+def _bazdarenje() -> dict:
+    """Čita bazdarenje iz generiranog modula.
 
     Returns:
-        Trojku (donja, srednja, gornja) u µg/s.
+        Rječnik s emisijom i odabranim izvorom vjetra.
 
     Raises:
         SystemExit: Ako bazdarenje nije izvedeno.
@@ -76,14 +73,19 @@ def _emisija() -> tuple[float, float, float]:
     if not BAZDARENJE.exists():
         sys.exit("Prvo pokreni `npm run bazdari-izvor`.")
     tekst = BAZDARENJE.read_text(encoding="utf8")
-    podatci = json.loads(tekst[tekst.index("{") : tekst.rindex("}") + 1])
-    donja, srednja, gornja = podatci["emisijaUgS"]
-    return float(donja), float(srednja), float(gornja)
+    return json.loads(tekst[tekst.index("{") : tekst.rindex("}") + 1])
 
 
 def glavno() -> None:
     """Prolazi godinu sat po sat i sprema godišnja polja."""
-    donja, srednja, gornja = _emisija()
+    bazdareno = _bazdarenje()
+    donja, srednja, gornja = (float(x) for x in bazdareno["emisijaUgS"])
+    # Izvor vjetra se ne bira ovdje nego se preuzima iz bazdarenja, koje ga je
+    # odabralo mjerenjem — po tome koliko dobro kroz model objašnjava izmjereni
+    # H₂S uz plohu. Prije je ovdje stajalo ime napisano rukom, i razišlo se:
+    # godišnja slika građena je na izvoru koji kroz model postiže negativnu
+    # korelaciju, dok je bazdarenje odabralo drugi.
+    izvor_vjetra = str(bazdareno["vjetar"])
     maska = maska_plohe(RASPRSENJE)
     yi, xi = np.nonzero(maska)
     tocke = np.stack(
@@ -91,12 +93,13 @@ def glavno() -> None:
          RASPRSENJE.y1 - (yi + 0.5) * RASPRSENJE.dx], 1
     )
     logger.info(
-        "ploha %.1f ha; emisija %.2f mg/s (%.2f–%.2f)",
+        "ploha %.1f ha; emisija %.2f mg/s (%.2f–%.2f); vjetar %s",
         maska.sum() * RASPRSENJE.dx**2 / 1e4, srednja / 1e3, donja / 1e3, gornja / 1e3,
+        izvor_vjetra,
     )
 
     okolnosti = vjetar.uvjeti(f"{GODINA}-01-01", f"{GODINA}-12-31")
-    vjetrovi = vjetar.ucitaj(IZVOR_VJETRA, f"{GODINA}-01-01", f"{GODINA}-12-31")
+    vjetrovi = vjetar.ucitaj(izvor_vjetra, f"{GODINA}-01-01", f"{GODINA}-12-31")
     sati = oblacici.slozi_sate(vjetrovi, okolnosti)
     logger.info("godina %d: %d sati s vjetrom i graničnim slojem", GODINA, len(sati))
 

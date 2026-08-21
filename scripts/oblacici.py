@@ -43,7 +43,14 @@ from pathlib import Path
 
 import numpy as np
 
-from reljef_polje import RASPRSENJE, Obuhvat, gladi, polje_vjetra, ucitaj_reljef
+from reljef_polje import (
+    NAJTANJI_SLOJ,
+    RASPRSENJE,
+    Obuhvat,
+    gladi,
+    polje_vjetra,
+    ucitaj_reljef,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +155,13 @@ def knjiznica_polja(obuhvat: Obuhvat = RASPRSENJE) -> np.ndarray:
         Polje oblika (SMJEROVA, len(DUBINE), 2, ny, nx), u m/s po jedinici
         brzine na otvorenom.
     """
+    # Granica debljine sloja ulazi u ime datoteke jer ulazi i u rješenje.
+    # Bez nje bi promjena granice tiho posegnula za starim poljima — a upravo
+    # se tako i dogodilo da su dvije kopije istog računa dugo imale dvije
+    # različite granice, a da se u proizvodu ništa nije pomaknulo.
     put = PREDMEMORIJA / (
-        f"polja-vjetra-{obuhvat.nx}x{obuhvat.ny}-{SMJEROVA}-{len(DUBINE)}.npy"
+        f"polja-vjetra-{obuhvat.nx}x{obuhvat.ny}-{SMJEROVA}-{len(DUBINE)}"
+        f"-s{NAJTANJI_SLOJ:.0f}.npy"
     )
     if put.exists():
         return np.load(put)

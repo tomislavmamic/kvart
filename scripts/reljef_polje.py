@@ -75,9 +75,24 @@ PRIKAZ = Obuhvat(498400, 4819100, 501800, 4821400, 20.0)
 # pokazati. Rub je unutar prozora DMR-a (vidi `dmr.PROZOR`).
 RASPRSENJE = Obuhvat(497600, 4818600, 502400, 4822200, 25.0)
 
-#: Najtanji sloj zraka nad uzvisinom; ispod ovoga rješenje postaje osjetljivo
-#: na jedan piksel reljefa umjesto na oblik padine.
-NAJTANJI_SLOJ = 25.0
+#: Najtanji sloj zraka nad uzvisinom, u metrima.
+#:
+#: Debljina sloja je `dubina - (z - z.min())`, pa nad uzvisinom teži nuli, a
+#: brzina u jednadžbi kontinuiteta onda teži beskonačnom. Granica to zaustavlja.
+#:
+#: Vrijednost nije slobodna koliko izgleda. Reljef u obuhvatu ima 146 m raspona
+#: (1–147 m), a najplića razina miješanog sloja koju prikaz sprema je 25 m. Uz
+#: granicu od 25 m ta je razina **potpuno zagušena**: svaka ćelija osim najniže
+#: udari u granicu, debljina ispadne jednolika, i polje se svede na jednolik
+#: vjetar — brzine 1,00–1,00, skretanje 0,0°. Baš razina koja predstavlja noćnu
+#: inverziju, dakle ono na što se ljudi žale, prestane nositi ikakav reljef.
+#: Uz 10 m ista razina daje 0,69–1,23 i skretanje do 20°. Na razinama od 260 m
+#: naviše granica ionako nikad ne veže, pa se ondje ništa ne mijenja.
+#:
+#: Zagušenost se ispisuje pri izvođenju (`izvedi-polje-dima.py`) i provjerava u
+#: `tests/reljef.test.py` — jer je greška bila tiha: polje je izgledalo uredno,
+#: samo nije imalo brda u sebi.
+NAJTANJI_SLOJ = 10.0
 
 X0, Y0, X1, Y1 = PRIKAZ.x0, PRIKAZ.y0, PRIKAZ.x1, PRIKAZ.y1
 DX = PRIKAZ.dx
