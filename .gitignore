@@ -85,6 +85,10 @@ __pycache__/
 # ponovno naprave; u gitu su rezultati (tokovi.geojson 92 kB,
 # vodotoci-hok.geojson 2 kB), ne podloge.
 /.cache/dmr.tif
+# Širi isječak DMR-a za simulator (205 MB): `npm run izvedi-sim-polje` ga
+# skine s DGU-ova WCS-a. U gitu je rezultat (public/karepovac/sim-polje.bin,
+# 1,4 MB), ne podloga.
+/.cache/dmr-sim.tif
 /.cache/hok.tif
 /.cache/podrucje-kvarta.geojson
 /.cache/era5-karepovac.json
