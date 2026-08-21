@@ -542,21 +542,50 @@ controls, only a 44px pause button. Reduced-motion preference starts the scene
 paused. The source line and the statement that the model is simplified are
 part of the component, not optional footer copy.
 
-`/igra` is the WebGL expression of the same sourced model. It inverts the
-generated isometric coordinates into a true ground plane before a Three.js
-orthographic camera is applied. Its angle remains fixed; wheel/pinch zoom works
-toward the pointer from 1× to 5×, drag pans only within bounded scene limits,
-and visible plus, minus and reset controls provide keyboard equivalents. Roads are merged ribbon meshes, buildings are
-conservative extrusions, trees are instanced, and the aqueduct is repeated
-limestone massing on its generated alignment. Scene-only colours — muted water
-`#9bc9ce`, terrain greens, limestone and clay building tones — are deliberately
-outside the product palette and must never become interface tokens. Three.js is
-loaded only on this route, device pixel ratio is capped, and pausing stops the
-animation frame loop. If WebGL fails, the visible recovery path is `/svg`.
-The largest 10% of building footprints retain every source vertex. Their
-vertical scale uses a measured City-GIS height only after an 85% geometric
-overlap match, then OSM height or floor count, then a visibly conservative
-estimate. Footprint area must never be reused as a proxy for height.
+`/igra` is the WebGL expression of the same sourced model, standing on real
+ground. Its terrain is the DGU LiDAR bare-earth model (DMR) at its native 3 m
+step, cropped to the scene and shipped as a 0,5 MB `int16` binary beside the
+generated module — half a million heights would otherwise arrive as JavaScript
+number literals. Roads, the neighbourhood boundary, buildings, trees, the
+aqueduct and the traffic all read their height from that grid rather than
+lying on a plane: roads are resampled every 4 m before they are draped,
+buildings take their floor from the lowest point of their own footprint and
+their roof from the mean, and aqueduct piers grow to reach one level deck.
+
+Everything with a height lives in one group whose `scale.y` **is** the
+exaggeration, so ×1, ×2 and ×3,5 restretch hill, house and pier together
+without rebuilding a triangle. ×1 is the true proportion — 105 m of relief
+across 2 km reads nearly flat, and that is the honest picture; ×2 is the
+default because it is the scale the building massing was already drawn at.
+The control shows the current factor as its label, because there is no icon
+for "twice as tall".
+
+Terrain colour and contours are computed per fragment from the vertex's own
+elevation and the unexaggerated geometry normal — green in the valley, dry
+ochre mid-slope, bare limestone on every steep face — with 5 m contours and a
+heavier line every 25 m. The block sits on a plinth cut at −40 m whose face
+carries a band every 10 m, so the height of the kvart can be counted off the
+side the way the contours count off the top. None of these colours may become
+interface tokens.
+
+The camera is orthographic and now orbits: drag rotates, right-drag or two
+fingers pan, wheel or pinch zooms 1× to 5× toward the pointer, and plus, minus,
+reset and the exaggeration factor are visible keyboard-reachable controls.
+Rotation is bounded above the horizon, panning is bounded to the grid, and
+reset returns the angle, the zoom and the exaggeration at once. Relief is the
+reason the fixed angle went: a slope you cannot look across is a slope you
+cannot read.
+
+Three.js is loaded only on this route, device pixel ratio is capped, the grid
+is thinned to 6 m on small or low-core devices, and pausing stops the
+animation frame loop. If WebGL fails or the grid does not arrive, the visible
+recovery path is `/svg`. The largest 10% of building footprints retain every
+source vertex. Their vertical scale uses a measured City-GIS height only after
+an 85% geometric overlap match, then OSM height or floor count, then a visibly
+conservative estimate. Footprint area must never be reused as a proxy for
+height. Trees are no longer a hand-written list of 24 positions: the generator
+scatters them from a fixed seed across OpenStreetMap wood, scrub and grassland
+polygons, at a density and a real height per cover type.
 
 ## Do's and Don'ts
 
@@ -579,8 +608,10 @@ estimate. Footprint area must never be reused as a proxy for height.
   record.
 - **Do** cite the source next to any figure or layer, and keep licence
   attribution visible; it is a condition of use, not a courtesy.
-- **Do** keep `/svg` and `/igra` visibly sourced simulations: fixed camera angle, place labels,
+- **Do** keep `/svg` and `/igra` visibly sourced simulations: place labels,
   pause control, and the simplified-model disclaimer in the first viewport.
+  `/svg` keeps its fixed camera; `/igra` may be turned, because its subject is
+  a slope.
 - **Do** design the phone first: single column, thumb-reachable, tap targets no
   smaller than 44px.
 - **Do** write every number in Croatian conventions — decimal comma, correct
@@ -591,8 +622,13 @@ estimate. Footprint area must never be reused as a proxy for height.
 - **Don't** add a webfont. Not for headings, not for icons, not "just one
   weight".
 - **Don't** restyle, recolour or "clean up" a plan's palette to match the brand.
-- **Don't** reuse the `/svg` or `/igra` terrain, water or building palette as general
-  interface colours; they belong to that bounded scene, not the product chrome.
+- **Don't** reuse the `/svg` or `/igra` terrain, water, plinth or building
+  palette as general interface colours; they belong to that bounded scene, not
+  the product chrome.
+- **Don't** resample the LiDAR grid to make `/igra` lighter. The 3 m step is
+  what makes road cuts, terraces and the landfill's benches visible at all; a
+  smoothed terrain is a picture of a hill, not of this hill. Thin it per
+  device instead, and say so.
 - **Don't** use Maslina decoratively — no green mood backgrounds, no green
   section rules, no green headings. It marks action and affiliation only.
 - **Don't** give surfaces a resting shadow to make them pop; use a tonal step or

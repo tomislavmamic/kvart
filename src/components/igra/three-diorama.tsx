@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { DEFAULT_EXAGGERATION } from "./three-scene-model";
+
 type Runtime = Awaited<ReturnType<typeof import("./three-scene")["createKvartScene"]>>;
 
 const LABELS = ["Dračevac", "Bilice", "Akvadukt"] as const;
@@ -13,7 +15,11 @@ export function ThreeDiorama() {
   const runtimeRef = useRef<Runtime | null>(null);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
-  const [cameraView, setCameraView] = useState({ zoom: 1, isDefault: true });
+  const [cameraView, setCameraView] = useState({
+    zoom: 1,
+    isDefault: true,
+    exaggeration: DEFAULT_EXAGGERATION,
+  });
   const [status, setStatus] = useState<"loading" | "ready" | "unsupported">("loading");
 
   useEffect(() => {
@@ -36,12 +42,19 @@ export function ThreeDiorama() {
 
     void import("./three-scene")
       .then(({ createKvartScene }) => {
-        if (cancelled) return;
-        const runtime = createKvartScene(
+        if (cancelled) return null;
+        return createKvartScene(
           canvas,
           labelRefs.current.filter((element): element is HTMLSpanElement => element !== null),
           setCameraView,
         );
+      })
+      .then((runtime) => {
+        if (!runtime) return;
+        if (cancelled) {
+          runtime.dispose();
+          return;
+        }
         runtimeRef.current = runtime;
         runtime.setPaused(pausedRef.current);
         observer = new ResizeObserver(([entry]) => {
@@ -76,7 +89,7 @@ export function ThreeDiorama() {
       <canvas
         ref={canvasRef}
         className="igra-3d-canvas"
-        aria-label="3D maketa Dračevca i Bilica"
+        aria-label="3D maketa reljefa Dračevca i Bilica"
         role="img"
         aria-describedby="igra-camera-help"
       />
@@ -96,12 +109,17 @@ export function ThreeDiorama() {
       </div>
 
       <div className="igra-3d-status" role="status" aria-live="polite">
-        <p>{status === "unsupported" ? "3D prikaz nije dostupan u ovom pregledniku." : "Slažem 3D maketu…"}</p>
+        <p>
+          {status === "unsupported"
+            ? "3D prikaz nije dostupan u ovom pregledniku."
+            : "Slažem reljef kvarta…"}
+        </p>
         <Link href="/svg">Otvori SVG verziju</Link>
       </div>
 
       <p id="igra-camera-help" className="igra-camera-help">
-        Kotačićem ili prstima približi · povuci za pomicanje
+        Povuci za zaokretanje · desnom tipkom ili s dva prsta pomakni ·
+        kotačićem ili prstima približi
       </p>
 
       <div className="igra-camera-controls" aria-label="Upravljanje prikazom">
@@ -135,9 +153,20 @@ export function ThreeDiorama() {
         >
           <ResetViewIcon />
         </button>
+        <button
+          type="button"
+          onClick={() => runtimeRef.current?.cycleExaggeration()}
+          disabled={status !== "ready"}
+          className="fokus igra-exaggeration"
+          aria-label={`Preuveličanje visina, sada ${formatExaggeration(cameraView.exaggeration)} puta`}
+          title="Preuveličaj visine"
+        >
+          <span aria-hidden="true">×{formatExaggeration(cameraView.exaggeration)}</span>
+        </button>
       </div>
       <output className="sr-only" aria-live="polite">
-        Prikaz {cameraView.zoom.toLocaleString("hr-HR", { maximumFractionDigits: 1 })} puta
+        Prikaz {cameraView.zoom.toLocaleString("hr-HR", { maximumFractionDigits: 1 })} puta,
+        visine preuveličane {formatExaggeration(cameraView.exaggeration)} puta
       </output>
 
       <button
@@ -151,6 +180,11 @@ export function ThreeDiorama() {
       </button>
     </div>
   );
+}
+
+/** Preuveličanje se ispisuje hrvatski: decimalni zarez, bez suvišne nule. */
+function formatExaggeration(value: number) {
+  return value.toLocaleString("hr-HR", { maximumFractionDigits: 1 });
 }
 
 function ZoomInIcon() {

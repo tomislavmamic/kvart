@@ -25,6 +25,18 @@ type GeneratedScene = {
   }>;
   aqueduct: { arches: Array<[number, number]> };
   vehiclePaths: Array<{ points: Array<[number, number]> }>;
+  trees: Array<{ point: [number, number]; kind: string; size: number }>;
+  relief: {
+    file: string;
+    cols: number;
+    rows: number;
+    stepMetres: number;
+    lowestMetres: number;
+    highestMetres: number;
+    world: { west: number; north: number; east: number; south: number };
+    unitsPerMetre: number;
+    source: string;
+  };
   labels: Array<{ text: string }>;
 };
 
@@ -92,9 +104,70 @@ test("local GIS sources generate a deterministic recognizable Kvart scene", () =
     assert.ok(largestBuilding.footprintArea > 6700);
     assert.ok(scene.aqueduct.arches.length >= 12, "the aqueduct should read as a landmark");
     assert.ok(scene.vehiclePaths.length >= 2, "ambient traffic needs real road paths");
+    assert.ok(scene.trees.length >= 200, "trees should come from real green surfaces");
+    assert.ok(
+      scene.trees.some((tree) => tree.kind === "wood") &&
+        scene.trees.some((tree) => tree.kind === "scrub"),
+      "wood and scrub should be told apart, they do not look the same from above",
+    );
     assert.deepEqual(
       scene.labels.map((label) => label.text).toSorted(),
       ["Akvadukt", "Bilice", "Dračevac"],
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("the LiDAR relief is cropped to the model and aligned with its geometry", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "kvart-igra-relief-"));
+  const outputPath = path.join(directory, "scene.ts");
+
+  try {
+    const generated = generate(outputPath);
+    assert.equal(generated.status, 0, generated.stderr || generated.stdout);
+    const scene = parseGeneratedModule(readFileSync(outputPath, "utf8"));
+    const { relief } = scene;
+
+    assert.equal(relief.stepMetres, 3, "the grid must stay at its LiDAR step, not be resampled");
+    assert.match(relief.source, /DGU/, "the relief source must travel with the data");
+    assert.ok(relief.lowestMetres < 15 && relief.highestMetres > 100, "the kvart climbs ~105 m");
+
+    const grid = readFileSync(path.join(directory, path.basename(relief.file)));
+    assert.equal(
+      grid.byteLength,
+      relief.cols * relief.rows * 2,
+      "the binary must hold exactly one int16 per declared cell",
+    );
+
+    // Mreža mora prekriti svaku točku koja se crta, inače cesta na rubu
+    // makete visi nad ničim.
+    const drawn = [
+      ...scene.land,
+      ...scene.roads.flatMap((road) => road.points),
+      ...scene.buildings.flatMap((building) => building.base),
+    ];
+    const worldX = ([x, y]: [number, number]) => (x - 800 + 2 * (y - 410)) / 2 / 8;
+    const worldZ = ([x, y]: [number, number]) => (2 * (y - 410) - (x - 800)) / 2 / 8;
+    assert.ok(
+      drawn.every(
+        (point) =>
+          worldX(point) >= relief.world.west &&
+          worldX(point) <= relief.world.east &&
+          worldZ(point) >= relief.world.north &&
+          worldZ(point) <= relief.world.south,
+      ),
+      "every drawn point must stand on the cropped grid",
+    );
+
+    // Okomita mjera se izvodi iz iste projekcije: 1 m mora biti onoliko
+    // jedinica koliko je i vodoravni metar, inače zgrada i brdo nisu na istoj
+    // skali i preuveličanje laže.
+    const spanUnits = relief.world.east - relief.world.west;
+    const spanMetres = (relief.cols - 1) * relief.stepMetres;
+    assert.ok(
+      Math.abs(spanUnits / spanMetres - relief.unitsPerMetre) / relief.unitsPerMetre < 0.02,
+      "the declared vertical scale must match the grid's own horizontal scale",
     );
   } finally {
     rmSync(directory, { recursive: true, force: true });

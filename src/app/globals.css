@@ -356,6 +356,15 @@ body {
   stroke-linejoin: round;
 }
 
+/* Preuveličanje reljefa se ispisuje brojkom: ikona za „×2 visine” ne postoji,
+   a broj je ujedno i očitanje trenutnog stanja. */
+.igra-exaggeration {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .igra-3d-labels {
   position: absolute;
   inset: 0;
