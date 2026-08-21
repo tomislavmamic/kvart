@@ -50,6 +50,7 @@ from reljef_polje import (  # noqa: E402
     GH,
     GW,
     NAJTANJI_SLOJ,
+    _sidro,
     NX,
     NY,
     gladi,
@@ -99,10 +100,13 @@ def glavno() -> None:
 
     # Prvo se izvedu sva polja, pa tek onda pakiraju: ljestvica mora biti
     # zajednička svima, inače se dvije dubine ne mogu miješati bajt po bajt.
-    rel = z - z.min()
+    # Ista visina koju uzima i rješavač. Prije je ovdje stajalo `z.min()`, pa
+    # je ispis o zagušenju govorio o drugom poklopcu nego račun ispod njega.
+    sidro = _sidro(z)
+    rel = z - sidro
     logger.info(
-        "raspon reljefa %.0f m; granica debljine sloja %.0f m",
-        float(rel.max()), NAJTANJI_SLOJ,
+        "raspon reljefa %.0f m; dno sloja na %.0f m n. v.; granica debljine %.0f m",
+        float(z.max() - z.min()), sidro, NAJTANJI_SLOJ,
     )
 
     razine = []

@@ -17,7 +17,7 @@
     "izvedi-polje-dima": "/opt/homebrew/bin/python3 scripts/izvedi-polje-dima.py",
     "izvedi-raspesenje": "/opt/homebrew/bin/python3 scripts/izvedi-raspesenje.py",
     "skini-postaje": "/opt/homebrew/bin/python3 scripts/skini-postaje.py",
-    "provjeri-vjetar": "/opt/homebrew/bin/python3 scripts/provjeri-vjetar.py",
+    "provjeri-vjetar": "/opt/homebrew/bin/python3 scripts/provjeri-izvore-vjetra.py",
     "bazdari-izvor": "/opt/homebrew/bin/python3 scripts/bazdari-izvor.py",
     "izvedi-mjerenja": "/opt/homebrew/bin/python3 scripts/izvedi-mjerenja-karticu.py",
     "izvedi-vjetar": "/opt/homebrew/bin/python3 scripts/izvedi-vjetar-karticu.py",
@@ -33,9 +33,10 @@
     "izvedi-tokove": "/opt/homebrew/bin/python3 scripts/izvedi-tokove.py",
     "izvedi-hok-vodotoke": "/opt/homebrew/bin/python3 scripts/izvedi-hok-vodotoke.py",
     "izvedi-reljef": "/opt/homebrew/bin/python3 scripts/izvedi-reljef.py",
-    "provjeri-vjetar": "/opt/homebrew/bin/python3 scripts/provjeri-izvore-vjetra.py",
     "slobodne-sire": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py --obuhvat sire",
-    "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py"
+    "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py",
+    "provjeri-vedre-noci": "/opt/homebrew/bin/python3 scripts/provjeri-vedre-noci.py",
+    "izvedi-presjek": "/opt/homebrew/bin/python3 scripts/izvedi-presjek.py"
   },
   "dependencies": {
     "@turf/turf": "^7.3.5",

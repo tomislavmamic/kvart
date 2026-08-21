@@ -81,7 +81,7 @@ test("generator polja ne drži vlastitu kopiju računa", () => {
 test("predmemorija polja vjetra pamti i granicu", () => {
   // Bez granice u imenu promjena granice tiho posegne za starim poljima, pa
   // se u proizvodu ništa ne pomakne i izgleda kao da promjena nije važna.
-  assert.match(OBLACICI, /polja-vjetra-.*NAJTANJI_SLOJ/s);
+  assert.match(OBLACICI, /polja-vjetra-[\s\S]*NAJTANJI_SLOJ/);
 });
 
 test("najplića razina nosi reljef, a ne jednolik vjetar", () => {

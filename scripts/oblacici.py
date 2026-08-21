@@ -45,6 +45,7 @@ import numpy as np
 
 from reljef_polje import (
     NAJTANJI_SLOJ,
+    _sidro,
     RASPRSENJE,
     Obuhvat,
     gladi,
@@ -159,14 +160,17 @@ def knjiznica_polja(obuhvat: Obuhvat = RASPRSENJE) -> np.ndarray:
     # Bez nje bi promjena granice tiho posegnula za starim poljima — a upravo
     # se tako i dogodilo da su dvije kopije istog računa dugo imale dvije
     # različite granice, a da se u proizvodu ništa nije pomaknulo.
+    z = gladi(ucitaj_reljef(obuhvat), 3)
+    # I granica debljine i visina na kojoj stoji dno sloja ulaze u rješenje, pa
+    # ulaze i u ime datoteke. Bez toga promjena bilo čega od toga tiho posegne
+    # za starim poljima i izgleda kao da nije ništa promijenila.
     put = PREDMEMORIJA / (
         f"polja-vjetra-{obuhvat.nx}x{obuhvat.ny}-{SMJEROVA}-{len(DUBINE)}"
-        f"-s{NAJTANJI_SLOJ:.0f}.npy"
+        f"-s{NAJTANJI_SLOJ:.0f}-t{_sidro(z):.0f}.npy"
     )
     if put.exists():
         return np.load(put)
 
-    z = gladi(ucitaj_reljef(obuhvat), 3)
     polja = np.zeros(
         (SMJEROVA, len(DUBINE), 2, obuhvat.ny, obuhvat.nx), dtype=np.float32
     )

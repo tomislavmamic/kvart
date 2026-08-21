@@ -6,6 +6,7 @@ import {
   PrimaryLink,
   SectionHeading,
 } from "@/components/karepovac/project-components";
+import { PresjekPadine } from "@/components/karepovac/presjek-padine";
 import { DnevniHod, RuzaMirisa } from "@/components/karepovac/sluzbena-mjerenja";
 import { BAZDARENJE } from "@/generated/karepovac-bazdarenje";
 import { MJERENJA } from "@/generated/karepovac-mjerenja";
@@ -45,6 +46,17 @@ export default function KarepovacPage() {
           </div>
         </div>
         <PoljeDimaVeliko />
+      </section>
+
+      <section className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-12">
+        <SectionHeading title="Zašto baš na nas">
+          <p>
+            Karta odozgo pokazuje kamo zrak ide, ali ne i ono što svatko tko
+            ovdje živi zna nogama: odlagalište stoji iznad kuća. Presjek uz ovo
+            pokazuje padinu sa strane — od plohe, preko Dračevca, do Bilica.
+          </p>
+        </SectionHeading>
+        <PresjekPadine />
       </section>
 
       <section className="space-y-8">

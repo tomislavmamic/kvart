@@ -276,6 +276,30 @@ def _rijesi(d: np.ndarray, desna: np.ndarray, korak: float) -> np.ndarray:
     raise RuntimeError("polje vjetra nije konvergiralo")
 
 
+def _sidro(z: np.ndarray) -> float:
+    """Visina na kojoj stoji dno miješanog sloja, u metrima.
+
+    Dubina miješanog sloja koju daje model (ERA5) mjeri se **od tla**, ne od
+    mora. Da bi se iz nje dobio poklopac kao visina, treba znati na kojem je
+    tlu izmjerena — a to je tlo cijelog kraja, ne jedna njegova točka.
+
+    Prije je ovdje stajalo `z.min()`, dakle najniža ćelija okvira. Oba okvira
+    dosežu do mora, pa je sidro bilo na 0–1 m nadmorske visine. Ploha
+    odlagališta leži na 42–113 m (medijan 82), pa je pri dubini od 60 m
+    poklopac ispadao **21 m ispod same plohe**: model je izvor smještao izvan
+    sloja u kojem računa, i to upravo u tihim noćnim satima, kad se najviše i
+    namiriše. Uz medijan reljefa kao sidro poklopac je nad plohom na +33 m,
+    što je plitak noćni sloj — ono što ondje i jest.
+
+    Args:
+        z: Visine terena u metrima.
+
+    Returns:
+        Nadmorsku visinu dna sloja.
+    """
+    return float(np.median(z))
+
+
 def polje_vjetra(
     z: np.ndarray,
     smjer_od: float,
@@ -301,7 +325,7 @@ def polje_vjetra(
     u0 = np.full((ny, nx), brzina * math.cos(kut))
     v0 = np.full((ny, nx), brzina * math.sin(kut))
 
-    d = np.clip(dubina - (z - z.min()), NAJTANJI_SLOJ, None)
+    d = np.clip(dubina - (z - _sidro(z)), NAJTANJI_SLOJ, None)
     divergencija = np.zeros_like(d)
     divergencija[:, 1:-1] += ((d * u0)[:, 2:] - (d * u0)[:, :-2]) / (2 * korak)
     divergencija[1:-1, :] += ((d * v0)[:-2, :] - (d * v0)[2:, :]) / (2 * korak)
