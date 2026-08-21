@@ -5,6 +5,7 @@ import { PRETPOSTAVLJENO, type ZrakSada } from "@/lib/vjetar";
 import {
   imeVjetra,
   nosiPremaKvartu,
+  opisiSkretanje,
   opisiSlabuPostaju,
   opisiZrak,
 } from "@/lib/zrak-rijeci";
@@ -102,5 +103,29 @@ test("kad kartu vodi zračna luka, uz nju ide ograda", () => {
   }
   for (const postaja of ["split3", "split2", "marjan"] as const) {
     assert.equal(opisiSlabuPostaju({ ...osnova, postaja }), null, postaja);
+  }
+});
+
+test("rečenica o skretanju ne proturječi vlastitoj brojci", () => {
+  // Ovo je bila greška uživo: kartica je tvrdila da struja „obilazi padinu”
+  // i uz to ispisivala skretanje od 1°. Rečenica je bila pisana za plitak
+  // sloj, a brojka je u međuvremenu postala živa.
+  const jedva = opisiSkretanje({ medijan: 1, najvece: 2 });
+  assert.doesNotMatch(jedva, /obilazi|ne penje/, `pri 1° piše: ${jedva}`);
+  assert.match(jedva, /jedva/);
+
+  const jako = opisiSkretanje({ medijan: 9, najvece: 51 });
+  assert.match(jako, /obilazi/, `pri 9° piše: ${jako}`);
+
+  const srednje = opisiSkretanje({ medijan: 4, najvece: 30 });
+  assert.doesNotMatch(srednje, /obilazi/);
+  assert.match(srednje, /zavija/);
+});
+
+test("rečenica o skretanju uvijek nosi obje brojke", () => {
+  for (const [medijan, najvece] of [[0, 1], [1, 2], [3, 12], [9, 51], [20, 70]]) {
+    const r = opisiSkretanje({ medijan, najvece });
+    assert.match(r, new RegExp(`${medijan}°`), `nedostaje medijan u: ${r}`);
+    assert.match(r, new RegExp(`${najvece}°`), `nedostaje najveće u: ${r}`);
   }
 });

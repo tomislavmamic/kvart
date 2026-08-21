@@ -28,6 +28,17 @@ const IMENA = [
 const RASPON = 45;
 
 /**
+ * Granice skretanja struje oko reljefa, u stupnjevima.
+ *
+ * Nisu odabrane po osjećaju nego po tome što model daje: pri dubokom sloju
+ * (600 m) medijan skretanja je 0,6°, pri 260 m je 1,3°, pri 120 m 2,9°, pri
+ * 55 m 6,7°, a pri 25 m 9,2°. Prag od 3° tako dijeli duboke od srednjih, a
+ * 7° srednje od plitkih.
+ */
+const SKRETANJE_OSJETNO = 3;
+const SKRETANJE_JAKO = 7;
+
+/**
  * Domaće ime vjetra koji puše iz zadanog smjera.
  *
  * Args:
@@ -170,6 +181,37 @@ function metriUSloju(dubina: number): string {
  * Returns:
  *   Riječi za prikaz; nikad ne tvrde koliko mirisa ima.
  */
+/**
+ * Opisuje koliko reljef skreće struju, riječima primjerenima brojci.
+ *
+ * Ovo je popravak tvrdnje koja je sama sebi proturječila. Kartica je pisala
+ * „struja se ne penje uz padinu nego je obilazi” i uz to ispisivala izmjereno
+ * skretanje — pa je pri dubokom sloju stajalo da struja obilazi padinu, a
+ * odmah zatim da skreće 1°. Rečenica je bila napisana za jedan slučaj vremena
+ * i nije se mijenjala kad je brojka postala živa.
+ *
+ * Args:
+ *   skretanje: Medijan i najveće skretanje polja, u stupnjevima.
+ *
+ * Returns:
+ *   Rečenicu koja stoji uz kartu strujnica.
+ */
+export function opisiSkretanje(skretanje: {
+  readonly medijan: number;
+  readonly najvece: number;
+}): string {
+  const brojke =
+    `skreće ${skretanje.medijan}° u prosjeku, a nad padinama i do `
+    + `${skretanje.najvece}°`;
+  if (skretanje.medijan >= SKRETANJE_JAKO) {
+    return `struja se ne penje uz padinu nego je obilazi, pa ${brojke}`;
+  }
+  if (skretanje.medijan >= SKRETANJE_OSJETNO) {
+    return `reljef struju osjetno zavija, pa ${brojke}`;
+  }
+  return `reljef struju sada jedva zavija — ${brojke}`;
+}
+
 export function opisiZrak(zrak: ZrakSada): OpisZraka {
   const kada = napisiSat(zrak.vjetar?.opazeno);
   const sloj = metriUSloju(zrak.stanje.dubina);

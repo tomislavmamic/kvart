@@ -5,6 +5,7 @@ import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
 import { PerjanicaSIzborom } from "@/components/karepovac/perjanica-s-izborom";
 import { SIRA_KARTA } from "@/generated/karepovac-siri";
 import { POSTAJE } from "@/lib/vjetar";
+import { opisiSkretanje } from "@/lib/zrak-rijeci";
 import { pripremiZrak, type ZrakZaKartu } from "@/lib/zrak";
 
 import {
@@ -1039,7 +1040,12 @@ export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
 
         <Kartica
           naslov="Kuda vjetar nosi zrak s plohe"
-          opis={`Strujnice su izvedene iz reljefa snimljenog LiDAR-om, za vjetar koji sada puše: struja se ne penje uz padinu nego je obilazi, pa skreće ${zrak.strujnice.skretanje.medijan}° u prosjeku, a nad padinama i do ${zrak.strujnice.skretanje.najvece}°.`}
+          opis={
+            "Strujnice su izvedene iz reljefa snimljenog LiDAR-om, za vjetar "
+            + `koji sada puše: ${opisiSkretanje(zrak.strujnice.skretanje)}. `
+            + "Koliko će reljef odlučivati ovisi o tome koliko je plitak sloj "
+            + "u kojem se zrak miješa — što je plići, to više."
+          }
           izvor="sluzbeno"
           izvorOznaka="Javni podatak"
           napomena={

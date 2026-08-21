@@ -8,9 +8,12 @@ jednom, u zajednički okvir, i sprema kao gotove SVG putanje.
 Ulazi su slojevi iz `public/geo`: izohipse iz DGU-ova LiDAR-a, zgrade i ulice iz
 OSM-a, granice kvarta, tokovi izvedeni D8 analizom reljefa i obris odlagališta.
 
-Polje vjetra nije podatak nego izvod: iz izohipsi se interpolira model visina, iz
-njega nagib, a iz nagiba polje koje ne ide uz padinu nego je obilazi. Odatle
-strujnice na kartici vjetra i podatak koliko polje skreće od smjera na otvorenom.
+Polja vjetra ovdje više nema. Skripta ga je nekoć imala — vlastiti izvod iz
+nagiba, s ugođenim koeficijentima — i iz njega su izlazile strujnice i mjera
+skretanja. Otkad se polje slaže za vjetar koji trenutačno puše
+(`src/lib/polje-dima.ts`, `src/lib/strujnice.ts`), taj je izvod bio četvrto
+mjesto na kojem je pisala fizika reljefa, nije ga nitko više čitao, a nosio je
+osam kilobajta u svakom posjetu. Uklonjen je; ovdje ostaje sama geometrija.
 
 Pokretanje: `npm run izvedi-karepovac`
 """
@@ -291,103 +294,6 @@ for _ in range(2):
             ) / 8
     dmv = novo
 
-ravno = [v for red in dmv for v in red]
-HMIN, HMAX = min(ravno), max(ravno)
-HRASPON = max(HMAX - HMIN, 1.0)
-
-nagib = [[(0.0, 0.0)] * NX for _ in range(NY)]
-for j in range(NY):
-    for i in range(NX):
-        i0, i1 = max(i - 1, 0), min(i + 1, NX - 1)
-        j0, j1 = max(j - 1, 0), min(j + 1, NY - 1)
-        nagib[j][i] = (
-            (dmv[j][i1] - dmv[j][i0]) / ((i1 - i0) * CELIJA),
-            (dmv[j1][i] - dmv[j0][i]) / ((j1 - j0) * CELIJA),
-        )
-
-NAGIB0, BETA_MAX, UBRZANJE = 0.13, 0.72, 0.55
-
-
-def dvolinearno(polje, x, y, zadano):
-    fx, fy = (x - GX0) / CELIJA, (y - GY0) / CELIJA
-    i, j = int(fx), int(fy)
-    if i < 0 or j < 0 or i >= NX - 1 or j >= NY - 1:
-        return zadano
-    tx, ty = fx - i, fy - j
-    a, b, c, d = polje[j][i], polje[j][i + 1], polje[j + 1][i], polje[j + 1][i + 1]
-    if isinstance(a, tuple):
-        return tuple(
-            (u * (1 - tx) + v * tx) * (1 - ty) + (p * (1 - tx) + q * tx) * ty
-            for u, v, p, q in zip(a, b, c, d)
-        )
-    return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty
-
-
-def vjetar(x: float, y: float):
-    gx, gy = dvolinearno(nagib, x, y, (0.0, 0.0))
-    g2 = gx * gx + gy * gy
-    vx, vy = UX, UY
-    if g2 > 1e-9:
-        g = math.sqrt(g2)
-        nx_, ny_ = gx / g, gy / g
-        beta = BETA_MAX * g / (g + NAGIB0)
-        skalar = vx * nx_ + vy * ny_
-        vx -= beta * skalar * nx_
-        vy -= beta * skalar * ny_
-    m = math.hypot(vx, vy)
-    if m < 1e-6:
-        return UX, UY, 0.35
-    h = dvolinearno(dmv, x, y, HMIN)
-    return vx / m, vy / m, (0.55 + 0.45 * m) * (1 + UBRZANJE * (h - HMIN) / HRASPON)
-
-
-def prati(x, y, koraka, dt, granica=90.0):
-    izlaz = [(x, y)]
-    for _ in range(koraka):
-        dx1, dy1, s1 = vjetar(x, y)
-        mx, my = x + dx1 * s1 * dt * 0.5, y + dy1 * s1 * dt * 0.5
-        dx2, dy2, s2 = vjetar(mx, my)
-        x += dx2 * s2 * dt
-        y += dy2 * s2 * dt
-        if not (-granica <= x <= SIRINA + granica and -granica <= y <= VISINA + granica):
-            break
-        izlaz.append((x, y))
-    return izlaz
-
-
-odstupanja = []
-for j in range(4, NY - 4, 3):
-    for i in range(4, NX - 4, 3):
-        dx, dy, _ = vjetar(GX0 + i * CELIJA, GY0 + j * CELIJA)
-        odstupanja.append(math.degrees(math.acos(max(-1, min(1, dx * UX + dy * UY)))))
-odstupanja.sort()
-SKRETANJE = {
-    "medijan": round(odstupanja[len(odstupanja) // 2]),
-    "najvece": round(odstupanja[-1]),
-}
-
-PX, PY = -UY, UX
-CX, CY = SIRINA / 2, VISINA / 2
-STRUJNICE = []
-for k in range(40):
-    poprijeko = ((k + 0.5) / 40 - 0.5) * 2.6 * VISINA
-    t = prati(
-        CX + PX * poprijeko - UX * 0.85 * SIRINA,
-        CY + PY * poprijeko - UY * 0.85 * SIRINA,
-        460,
-        3.0,
-        granica=1200.0,
-    )
-    unutra = [
-        i for i, (x, y) in enumerate(t)
-        if -20 <= x <= SIRINA + 20 and -20 <= y <= VISINA + 20
-    ]
-    if len(unutra) < 14:
-        continue
-    dio = t[unutra[0] : unutra[-1] + 1][::2]
-    if len(dio) >= 8:
-        STRUJNICE.append(putanja(pojednostavi(dio, 0.4)))
-
 # ------------------------------------------------------------------ tokovi ---
 
 tokovi = []
@@ -538,9 +444,7 @@ redovi = [
     "",
     f"export const VIIRS = {ts(VIIRS)} as const;",
     "",
-    f"export const STRUJNICE = {ts(STRUJNICE)} as const;",
     "",
-    f"export const SKRETANJE = {ts(SKRETANJE)} as const;",
     "",
 ]
 
@@ -548,8 +452,8 @@ IZLAZ.parent.mkdir(parents=True, exist_ok=True)
 IZLAZ.write_text("\n".join(redovi), encoding="utf8")
 
 print(f"okvir {SIRINA:.0f}x{VISINA} px, {SIRINA_M:.0f}x{VISINA_M:.0f} m")
-print(f"azimut prema kvartu {AZIMUT}°, skretanje polja {SKRETANJE}")
+print(f"azimut prema kvartu {AZIMUT}°")
 print(f"visine {VISINE}")
 print(f"točaka {len(TOCKE)}, tokova s plohe {len(odabrani)} (sjeme {len(sjeme)})")
-print(f"strujnica {len(STRUJNICE)}, VIIRS ćelija {len(VIIRS)}")
+print(f"VIIRS ćelija {len(VIIRS)}")
 print(f"zapisano {IZLAZ.relative_to(KORIJEN)} ({IZLAZ.stat().st_size // 1024} kB)")
