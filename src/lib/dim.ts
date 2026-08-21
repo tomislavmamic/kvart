@@ -41,6 +41,23 @@ export type PoljeDima = {
 };
 
 /**
+ * Isto polje, ali raspakirano — kakvo ga simulator slaže sat po sat.
+ *
+ * Prikaz na `/karepovac` dobiva jedno polje za jedan slučaj vremena i base64
+ * je ondje prirodan: zapis dolazi iz generiranog modula i raspakira se jednom.
+ * Simulator mijenja polje svakoga sata i računa ga u radniku, gdje `Buffer`
+ * ne postoji, pa bi put kroz base64 bio i suvišan i neprenosiv.
+ */
+export type SirovoPolje = {
+  readonly gw: number;
+  readonly gh: number;
+  readonly skala: number;
+  readonly vx: Uint8Array;
+  readonly vy: Uint8Array;
+  readonly maska: Uint8Array;
+};
+
+/**
  * Koliko stvarnih sekundi prođe u jednoj sekundi prikaza.
  *
  * Vjetar od 1,2 m/s prijeđe okvir širok 2,6 km za oko 36 minuta. U stvarnom
@@ -124,6 +141,17 @@ export type Simulacija = {
   /** Sekundi prikaza koliko treba da se gustoća ustali; ovisi o vjetru. */
   readonly zagrijavanje: number;
   postavi(ime: keyof Postavke, vrijednost: number): void;
+  /**
+   * Mijenja polje vjetra, a čestice ostavlja gdje jesu.
+   *
+   * Simulator na `/karepovac/sim` ide sat po sat i svakom satu pripada drugi
+   * vjetar. Kad bi se za svaki sat gradila nova simulacija, zrak koji je
+   * prethodni sat digao s plohe nestao bi na prijelazu — a upravo to
+   * zadržavanje je ono što crta treba pokazati.
+   *
+   * Maska se ne dira: ploha je ista bez obzira na vrijeme.
+   */
+  postaviPolje(polje: SirovoPolje): void;
 };
 
 const ZADANO = {
@@ -252,12 +280,33 @@ function jezgra(): Float32Array {
   return j;
 }
 
+/** Raspakira base64 polje u sirovo, bez ovisnosti o `Buffer`. */
+export function raspakirajPolje(polje: PoljeDima): SirovoPolje {
+  return {
+    gw: polje.gw,
+    gh: polje.gh,
+    skala: polje.skala,
+    vx: raspakiraj(polje.vx),
+    vy: raspakiraj(polje.vy),
+    maska: raspakiraj(polje.maska),
+  };
+}
+
 export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija {
+  return stvoriDimSirovo(raspakirajPolje(polje), postavke);
+}
+
+export function stvoriDimSirovo(
+  polje: SirovoPolje,
+  postavke: Postavke = {},
+): Simulacija {
   const par: Parametri = { ...ZADANO, ...postavke };
-  const { gw, gh, skala } = polje;
-  const VX = raspakiraj(polje.vx);
-  const VY = raspakiraj(polje.vy);
-  const MK = raspakiraj(polje.maska);
+  const { gw, gh } = polje;
+  // Polje se smije zamijeniti u hodu, pa ovo nisu konstante nego stanje.
+  let skala = polje.skala;
+  let VX = polje.vx;
+  let VY = polje.vy;
+  const MK = polje.maska;
 
   const W = par.sirina;
   const H = Math.max(2, Math.round((W * gh) / gw));
@@ -492,6 +541,17 @@ export function stvoriDim(polje: PoljeDima, postavke: Postavke = {}): Simulacija
     postavi: (ime, vrijednost) => {
       par[ime as keyof Parametri] = vrijednost;
     },
+    postaviPolje: (novo) => {
+      if (novo.gw !== gw || novo.gh !== gh) {
+        // Položaji čestica su udjeli okvira, pa bi rešetka drugog oblika
+        // značila da je i okvir drugi — a onda čestice više nisu ondje gdje
+        // misle da jesu. Bolje glasno nego tiho krivo.
+        throw new Error("Polje druge rešetke ne pripada istoj simulaciji");
+      }
+      VX = novo.vx;
+      VY = novo.vy;
+      skala = novo.skala;
+    },
   };
 }
 
@@ -619,12 +679,19 @@ const _RASPON_SIRINA = Math.log10(MIRISNI_RASPON.do) - _RASPON_OD;
  * Args:
  *   g: Gustoća iz `Simulacija.crtaj`.
  *   tvar: Koja se tvar prikazuje.
+ *   sidro: Gustoća koja odgovara medijanu izmjerenom uz plohu. Ovisi o okviru:
+ *     ista perjanica na okviru s krupnijim ćelijama daje veći broj, jer u
+ *     ćeliju stane više zraka. Simulator zato nosi svoje (`SIDRO_SIMULATORA`).
  *
  * Returns:
  *   Broj između 0 i 1 za `ljestvicaBoja`.
  */
-export function razina(g: number, tvar: Tvar): number {
-  const jedinica = (mirisneJedinice(tvar) * g) / GUSTOCA_NA_PLOHI;
+export function razina(
+  g: number,
+  tvar: Tvar,
+  sidro: number = GUSTOCA_NA_PLOHI,
+): number {
+  const jedinica = (mirisneJedinice(tvar) * g) / sidro;
   if (!(jedinica > 0)) return 0;
   const v = (Math.log10(jedinica) - _RASPON_OD) / _RASPON_SIRINA;
   return v < 0 ? 0 : v > 1 ? 1 : v;
