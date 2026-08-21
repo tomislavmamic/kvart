@@ -166,7 +166,7 @@ export function UpravljackaPloca({
           ukljucen={stanje.prikaz.strelice}
           naPromjenu={(v) => naPrikaz({ ...stanje.prikaz, strelice: v })}
         >
-          Strelice vjetra
+          Strujnice vjetra
         </Prekidac>
         <Prekidac
           ukljucen={stanje.prikaz.cestice}

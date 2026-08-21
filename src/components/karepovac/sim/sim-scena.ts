@@ -1,5 +1,5 @@
 /**
- * Sloj koji na kartu crta perjanicu, strelice i čestice vjetra.
+ * Sloj koji na kartu crta perjanicu, strujnice i čestice vjetra.
  *
  * Ide kao MapLibreov „custom layer”: karta ostaje gospodar zemljopisa —
  * projekcije, pomicanja, uvećanja, poretka slojeva — a ovdje se samo crta u
@@ -26,12 +26,21 @@ import { MIRISNI_RASPON, TVARI, type Tvar, ljestvicaBoja } from "@/lib/dim";
 import { bojaZa, SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
 import { PROZOR } from "@/lib/sim/zapis-gustoce";
 import type { Osnove } from "@/lib/sim/polje";
+import { izvediStrujnice } from "@/lib/sim/strujnice-sim";
 
 /** Koliko puta se pravokutnik perjanice dijeli po svakoj osi. */
 const PODJELA = 24;
 
-/** Rešetka strelica vjetra; gušće od ovoga postane šara, a ne mjerenje. */
-const STRELICA = { po_osi: 16, duljinaM: 260 } as const;
+/**
+ * Koliko se sekundi stvarnog vjetra prijeđe u sekundi prikaza, na strujnicama.
+ *
+ * Isto ubrzanje kojim teče i perjanica (`UBRZANJE` u `dim.ts`), da dvije stvari
+ * na istoj karti ne mjere vrijeme različito.
+ */
+const UBRZANJE_STRUJNICA = 60;
+
+/** Razmak između svjetlećih poteza, u sekundama putovanja zraka. */
+const RAZMAK_POTEZA = 110;
 
 /** Koliko čestica nosi animirani vjetar. */
 const CESTICA = 1400;
@@ -51,6 +60,7 @@ export type PrikazTvari = {
 
 export type PostavkePrikaza = {
   readonly tvari: Readonly<Record<Tvar, PrikazTvari>>;
+  /** Strujnice vjetra — duge putanje s potezom koji po njima teče. */
   readonly strelice: boolean;
   readonly cestice: boolean;
   readonly mirovanje: boolean;
@@ -192,19 +202,34 @@ function geometrijaPerjanice(granice: Osnove["granice"]): THREE.BufferGeometry {
   return geo;
 }
 
-/** Jedna strelica: tanak trup i vrh, u ravnini, duljine 1 i sredine u ishodištu. */
-function geometrijaStrelice(): THREE.BufferGeometry {
-  const oblik = new THREE.Shape();
-  oblik.moveTo(-0.5, -0.06);
-  oblik.lineTo(0.16, -0.06);
-  oblik.lineTo(0.16, -0.2);
-  oblik.lineTo(0.5, 0);
-  oblik.lineTo(0.16, 0.2);
-  oblik.lineTo(0.16, 0.06);
-  oblik.lineTo(-0.5, 0.06);
-  oblik.closePath();
-  return new THREE.ShapeGeometry(oblik);
-}
+const STRUJA_VRHOVI = /* glsl */ `
+  attribute float vrijeme;
+  varying float vVrijeme;
+  void main() {
+    vVrijeme = vrijeme;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const STRUJA_PIKSELI = /* glsl */ `
+  precision highp float;
+  varying float vVrijeme;
+  uniform float uVrijeme;
+  uniform float uRazmak;
+  uniform vec3 uBoja;
+
+  void main() {
+    // Potez teče po **vremenu putovanja**, ne po duljini. Zato sam od sebe
+    // juri ondje gdje je vjetar jak i jedva se miče ondje gdje je tišina —
+    // bez ijedne postavke koja bi tu razliku glumila.
+    float faza = fract((vVrijeme - uVrijeme) / uRazmak);
+    float glava = 1.0 - smoothstep(0.0, 0.12, faza);
+    // Tanak stalni trag ispod poteza: bez njega se pri tišini ne vidi kuda
+    // bi zrak išao kad bi ga bilo, a upravo se tada nad kvartom nakuplja.
+    float alfa = 0.10 + 0.80 * glava;
+    gl_FragColor = vec4(uBoja * alfa, alfa);
+  }
+`;
 
 /**
  * Stvara sloj i vraća upravljač njime.
@@ -271,26 +296,25 @@ export function stvoriSlojPerjanice(
   // Strelice i čestice dijele polje vjetra; drži se ovdje da ga oboje čita.
   let polje: { vx: Float32Array; vy: Float32Array; gw: number; gh: number } | null = null;
 
-  const strelice = new THREE.InstancedMesh(
-    geometrijaStrelice(),
-    new THREE.MeshBasicMaterial({
-      color: 0x1c2733,
-      transparent: true,
-      opacity: 0.55,
-      depthTest: false,
-      depthWrite: false,
-      // Obavezno obostrano. U Mercatorovim koordinatama karte y raste prema
-      // jugu, pa matrica koju MapLibre zada preokreće orijentaciju: ploha
-      // okrenuta „prema gledatelju” u Three.js ovdje ispadne okrenuta od
-      // njega i odbaci se prije crtanja. Strelice su bile ondje, s ispravnim
-      // položajem i kutom, i nijedna se nije vidjela.
-      side: THREE.DoubleSide,
-    }),
-    STRELICA.po_osi * STRELICA.po_osi,
-  );
-  strelice.frustumCulled = false;
-  strelice.visible = false;
-  scena.add(strelice);
+  const strujaUniforme = {
+    uVrijeme: { value: 0 },
+    uRazmak: { value: RAZMAK_POTEZA },
+    uBoja: { value: new THREE.Color(0x14202c) },
+  };
+
+  const strujeGeo = new THREE.BufferGeometry();
+  const strujeMat = new THREE.ShaderMaterial({
+    uniforms: strujaUniforme,
+    vertexShader: STRUJA_VRHOVI,
+    fragmentShader: STRUJA_PIKSELI,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const strujnice = new THREE.LineSegments(strujeGeo, strujeMat);
+  strujnice.frustumCulled = false;
+  strujnice.visible = false;
+  scena.add(strujnice);
 
   const cesticeGeo = new THREE.BufferGeometry();
   const cesticePol = new Float32Array(CESTICA * 3);
@@ -380,38 +404,54 @@ export function stvoriSlojPerjanice(
     (cesticeGeo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
   }
 
-  function osvjeziStrelice(): void {
+  /**
+   * Gradi strujnice za trenutačno polje.
+   *
+   * Točke putanja dolaze kao udjeli okvira, pa se ovdje pretvaraju u
+   * Mercatorove koordinate karte — svaka posebno, jer projekcija po širini
+   * nije linearna.
+   */
+  function osvjeziStrujnice(): void {
     if (!polje) return;
-    const privremena = new THREE.Object3D();
-    const duljina = STRELICA.duljinaM * metarU;
-    let n = 0;
-    for (let j = 0; j < STRELICA.po_osi; j += 1) {
-      for (let i = 0; i < STRELICA.po_osi; i += 1) {
-        const u = (i + 0.5) / STRELICA.po_osi;
-        const v = (j + 0.5) / STRELICA.po_osi;
-        const m = MercatorCoordinate.fromLngLat(
-          {
-            lng: osnove.granice.zapad + u * (osnove.granice.istok - osnove.granice.zapad),
-            lat: osnove.granice.sjever - v * (osnove.granice.sjever - osnove.granice.jug),
-          },
-          0,
-        );
-        const [vx, vy] = uzmiVjetar(u, v);
-        const brzina = Math.hypot(vx, vy);
-        privremena.position.set(m.x, m.y, 0);
-        // U Mercatorovim koordinatama y raste prema jugu, kao i u polju, pa
-        // kut ide izravno; bez okretanja bi strelice pokazivale zrcalno.
-        privremena.rotation.set(0, 0, Math.atan2(vy, vx));
-        // Kratka strelica pri slabom vjetru, ali nikad nevidljiva: i tišina
-        // ima smjer, a upravo se pri njoj nad kvartom najviše nakupi.
-        const mjera = duljina * (0.45 + 0.55 * Math.min(1, brzina / 6));
-        privremena.scale.set(mjera, mjera, 1);
-        privremena.updateMatrix();
-        strelice.setMatrixAt(n, privremena.matrix);
-        n += 1;
+    const putanje = izvediStrujnice(
+      polje.vx,
+      polje.vy,
+      polje.gw,
+      polje.gh,
+      osnove.sirinaM,
+      osnove.visinaM,
+    );
+
+    const polozaji: number[] = [];
+    const vremena: number[] = [];
+    const zapad = osnove.granice.zapad;
+    const sirinaLon = osnove.granice.istok - zapad;
+    const sjever = osnove.granice.sjever;
+    const visinaLat = sjever - osnove.granice.jug;
+
+    for (const p of putanje) {
+      for (let i = 1; i < p.tocke.length; i += 1) {
+        for (const k of [i - 1, i]) {
+          const [u, v] = p.tocke[k];
+          const m = MercatorCoordinate.fromLngLat(
+            { lng: zapad + u * sirinaLon, lat: sjever - v * visinaLat },
+            0,
+          );
+          polozaji.push(m.x, m.y, 0);
+          vremena.push(p.vremena[k]);
+        }
       }
     }
-    strelice.instanceMatrix.needsUpdate = true;
+
+    strujeGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(polozaji), 3),
+    );
+    strujeGeo.setAttribute(
+      "vrijeme",
+      new THREE.BufferAttribute(new Float32Array(vremena), 1),
+    );
+    strujeGeo.computeBoundingSphere();
   }
 
   const upravljac: Scena = {
@@ -428,7 +468,7 @@ export function stvoriSlojPerjanice(
     },
     postaviVjetar(vx, vy, gw, gh) {
       polje = { vx, vy, gw, gh };
-      osvjeziStrelice();
+      osvjeziStrujnice();
       karta?.triggerRepaint();
     },
     postaviPrikaz(postavke) {
@@ -451,7 +491,7 @@ export function stvoriSlojPerjanice(
           uniforme.uPomakB.value = pomakLjestvice(tvar, t.jacina);
         }
       }
-      strelice.visible = postavke.strelice;
+      strujnice.visible = postavke.strelice;
       cestice.visible = postavke.cestice;
       mirovanje = postavke.mirovanje;
       karta?.triggerRepaint();
@@ -459,9 +499,8 @@ export function stvoriSlojPerjanice(
     dispose() {
       perjanica.geometry.dispose();
       (perjanica.material as THREE.Material).dispose();
-      strelice.geometry.dispose();
-      (strelice.material as THREE.Material).dispose();
-      strelice.dispose();
+      strujeGeo.dispose();
+      strujeMat.dispose();
       cesticeGeo.dispose();
       (cestice.material as THREE.Material).dispose();
       lutovi.A.dispose();
@@ -496,9 +535,12 @@ export function stvoriSlojPerjanice(
       const dt = zadnjiTrenutak ? Math.min(0.1, sada - zadnjiTrenutak) : 0;
       zadnjiTrenutak = sada;
 
-      if (cestice.visible && !mirovanje && dt > 0) {
-        pomakniCestice(dt);
-        karta?.triggerRepaint();
+      if (!mirovanje && dt > 0) {
+        if (cestice.visible) pomakniCestice(dt);
+        if (strujnice.visible) {
+          strujaUniforme.uVrijeme.value += dt * UBRZANJE_STRUJNICA;
+        }
+        if (cestice.visible || strujnice.visible) karta?.triggerRepaint();
       }
 
       kamera.projectionMatrix = new THREE.Matrix4().fromArray(
