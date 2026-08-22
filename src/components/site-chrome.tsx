@@ -18,6 +18,15 @@ import { SiteHeader, PlutajuciIzbornik } from "./site-header";
  */
 const PUNI_PROZOR: ReadonlySet<string> = new Set(["/karta"]);
 
+/**
+ * Rute na kojima okvir otpada do kraja — ni plutajuće pločice.
+ *
+ * Maketa se gleda, a ne čita: svaka traka preko nje je nešto što stoji između
+ * oka i terena. Izlaz zato nudi sama stranica, jednim križićem u kutu, a sve
+ * ostalo — naslov, upute, izvori — stane iza gumba s upitnikom.
+ */
+const BEZ_OKVIRA: ReadonlySet<string> = new Set(["/igra"]);
+
 export function SiteChrome({
   children,
   podnozje,
@@ -26,6 +35,7 @@ export function SiteChrome({
   podnozje: ReactNode;
 }) {
   const pathname = usePathname();
+  if (BEZ_OKVIRA.has(pathname)) return <>{children}</>;
   if (PUNI_PROZOR.has(pathname)) {
     return (
       <>

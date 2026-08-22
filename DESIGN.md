@@ -609,6 +609,18 @@ fills that rectangle to at least 78% — an L-shaped plan would otherwise get a
 table on posts — and the 18 that fail keep plain massing up to their measured
 ridge. Every footprint now keeps every source vertex.
 
+**`/igra` has no chrome at all.** It is the one route where `SiteChrome`
+renders nothing — not even the floating pill `/karta` gets — because the model
+is the page. The way out is a single cross in the top corner; every control is
+one 44px column on the right: zoom in, zoom out, reset, the exaggeration
+factor, pause, and ⓘ. Nothing else is drawn over the terrain.
+
+The title, the camera help and the full source line live inside the ⓘ panel,
+which stays in the document while closed rather than being mounted on click:
+the OpenStreetMap and DGU attribution is a licence condition, and it has to
+survive a reader that never runs the script. The panel is what the canvas's
+`aria-describedby` points at, so the camera instructions are still announced.
+
 **The ground is land cover, not only elevation.** A `uint8` per height cell,
 in the same grid and shipped beside it, records what is actually there:
 grassland, scrub, wood, built-up (footprints dilated three cells, so the yard
@@ -640,10 +652,14 @@ quietly becoming bare karst.
   record.
 - **Do** cite the source next to any figure or layer, and keep licence
   attribution visible; it is a condition of use, not a courtesy.
-- **Do** keep `/svg` and `/igra` visibly sourced simulations: place labels,
-  pause control, and the simplified-model disclaimer in the first viewport.
-  `/svg` keeps its fixed camera; `/igra` may be turned, because its subject is
-  a slope.
+- **Do** keep `/svg` and `/igra` visibly sourced simulations: place labels, a
+  pause control, and the sources and simplified-model disclaimer reachable
+  without leaving the view. `/svg` keeps them in the first viewport; `/igra`
+  keeps them one tap away behind ⓘ, because on a model that fills the window
+  every panel is something standing between the eye and the ground. Reachable
+  is the floor — attribution may be folded away, never dropped.
+- **Do** keep `/svg`'s fixed camera; `/igra` may be turned, because its
+  subject is a slope.
 - **Do** design the phone first: single column, thumb-reachable, tap targets no
   smaller than 44px.
 - **Do** write every number in Croatian conventions — decimal comma, correct
