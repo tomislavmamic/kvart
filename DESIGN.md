@@ -601,13 +601,34 @@ moves three metres across a twentyfold range of footprint while the spread
 inside one band is twice that — which is why the fallback is a median and not
 a formula, and why footprint area must never be reused as a proxy for height.
 
-Roof shape is measured too: `krov` distinguishes flat from pitched, and 141 of
-the matched buildings are pitched. A hip roof is raised over the footprint's
-minimum-area rectangle at a 22° pitch, capped at 45% of the building's height
-so a wide low shed does not grow a tent. It is only raised where the footprint
-fills that rectangle to at least 78% — an L-shaped plan would otherwise get a
-table on posts — and the 18 that fail keep plain massing up to their measured
-ridge. Every footprint now keeps every source vertex.
+Roof shape is measured too, from two sources that are allowed to say different
+amounts. The City-GIS `krov` field distinguishes flat from pitched — that is
+all it knows — and OpenStreetMap's `roof:shape` is the only source that names
+a shape at all. **The city always wins on whether a roof is pitched.** Where
+both speak (97 buildings) they agree 77% of the time, and every one of the 22
+disagreements runs the same way: the city measured a flat roof and OSM claims
+gabled, never the reverse. That is the signature of a default value smeared
+across a layer — 405 of 528 OSM buildings carry `gabled` — not of 405
+observations.
+
+OSM is therefore allowed exactly two things: to name the shape of a pitch the
+city has already confirmed, and to speak where the city is silent. The second
+is a correction rather than a relaxed standard. Those 134 buildings previously
+rendered as flat boxes, and a flat box in a village roofed in tile is itself a
+claim — one wrong more often (77%) than OSM's. Roof knowledge now covers 315
+of 415 buildings, up from 181, and `roofSource` records which layer spoke.
+
+The roof itself is raised over the footprint's minimum-area rectangle at a 22°
+pitch, capped at 45% of the building's height so a wide low shed does not grow
+a tent. Gabled and hipped are the same geometry: a gable runs its ridge to
+both end walls so the end triangles stand up as gables, a hip pulls the ridge
+in by half the width so the same triangles lie down as slopes, and a nearly
+square plan collapses the hip to a pyramid. Pitched roofs with no OSM shape
+stay hipped, because that is the form no footprint makes absurd. A roof is
+only raised where the footprint fills its rectangle to at least 78% — an
+L-shaped plan would otherwise get a table on posts — and those that fail keep
+plain massing up to their measured ridge. Every footprint now keeps every
+source vertex.
 
 **`/igra` has no chrome at all.** It is the one route where `SiteChrome`
 renders nothing — not even the floating pill `/karta` gets — because the model

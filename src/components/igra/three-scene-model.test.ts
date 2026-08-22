@@ -128,7 +128,7 @@ test("draped ribbons carry a height per vertex instead of one flat elevation", a
   assert.deepEqual(ribbon.indices, [0, 2, 1, 2, 3, 1]);
 });
 
-test("hip roofs face outward and shrink to a pyramid on a square footprint", async () => {
+test("pitched roofs face outward, gable at the ends or hip inward", async () => {
   const model = await import("./three-scene-model");
 
   // Front-facing is clockwise in (x, z), the same winding the terrain mesh
@@ -145,7 +145,7 @@ test("hip roofs face outward and shrink to a pyramid on a square footprint", asy
     return true;
   }
 
-  const long = model.buildHipRoof(
+  const long = model.buildPitchedRoof(
     { x: 0, z: 0, angle: 0, length: 10, width: 4 },
     1,
     3,
@@ -155,7 +155,20 @@ test("hip roofs face outward and shrink to a pyramid on a square footprint", asy
   const ridgeY = long.positions.filter((_, i) => i % 3 === 1).filter((y) => y === 3);
   assert.equal(ridgeY.length, 2, "a long footprint keeps a ridge, not an apex");
 
-  const square = model.buildHipRoof(
+  // Dvostrešni: sljeme ide od ruba do ruba, pa se čeoni trokuti usprave.
+  const gabled = model.buildPitchedRoof(
+    { x: 0, z: 0, angle: 0, length: 10, width: 4 },
+    1,
+    3,
+    "gabled",
+  );
+  // Zabatni trokuti su okomiti, pa odozgo imaju nultu površinu — provjera
+  // namotaja ih propušta, a kosine i dalje moraju gledati gore.
+  assert.ok(facesUp(gabled), "the two slopes must still be wound outward");
+  assert.equal(gabled.positions[4 * 3], -5, "the gable ridge reaches the end wall");
+  assert.equal(gabled.positions[5 * 3], 5);
+
+  const square = model.buildPitchedRoof(
     { x: 0, z: 0, angle: 0, length: 6, width: 6 },
     1,
     3,
@@ -167,7 +180,7 @@ test("hip roofs face outward and shrink to a pyramid on a square footprint", asy
   assert.deepEqual(apex[0], apex[1], "a square footprint collapses the ridge to one apex");
 
   // Kut zaokreće cijeli krov, a ne samo sljeme.
-  const turned = model.buildHipRoof(
+  const turned = model.buildPitchedRoof(
     { x: 0, z: 0, angle: Math.PI / 2, length: 10, width: 4 },
     1,
     3,

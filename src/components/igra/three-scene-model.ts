@@ -279,19 +279,32 @@ export function roofRiseMetres(widthMetres: number, heightMetres: number) {
   return Math.min((widthMetres / 2) * ROOF_PITCH, heightMetres * MAX_RIDGE_SHARE);
 }
 
+/** Dvostrešni krov ima zabat, četverostrešni nema — jedina razlika je sljeme. */
+export type RoofShape = "gabled" | "hipped";
+
 /**
- * Četverostrešni krov nad opisanim pravokutnikom tlocrta.
+ * Kosi krov nad opisanim pravokutnikom tlocrta.
+ *
+ * Obje su izvedbe isti komad geometrije: sljeme dvostrešnog krova ide od ruba
+ * do ruba, pa se čeoni trokuti usprave u zabate; kod četverostrešnog se
+ * povuče za pola širine unutra, pa isti ti trokuti legnu u kosine. Kad je
+ * tlocrt gotovo kvadratan, četverostrešni se stegne u vrh i ispadne
+ * piramidalan — kakav na takvoj kući i jest.
  *
  * Krov se ne diže nad stvarnim tlocrtom nego nad njegovim pravokutnikom, i to
  * je izbor: pravi kosi krov nad razvedenim tlocrtom traži skelet poligona, a
- * pravokutnik nad njim viri koliko i prava streha. Kad je tlocrt gotovo
- * kvadratan, sljeme se stegne u vrh i krov ispadne piramidalan — kakav na
- * takvoj kući i jest.
+ * pravokutnik nad njim viri koliko i prava streha.
  */
-export function buildHipRoof(frame: RoofFrame, eaveY: number, ridgeY: number): RoadRibbon {
+export function buildPitchedRoof(
+  frame: RoofFrame,
+  eaveY: number,
+  ridgeY: number,
+  shape: RoofShape = "hipped",
+): RoadRibbon {
   const halfLength = frame.length / 2;
   const halfWidth = frame.width / 2;
-  const ridgeHalf = Math.max(0, halfLength - halfWidth);
+  const ridgeHalf =
+    shape === "gabled" ? halfLength : Math.max(0, halfLength - halfWidth);
   const cos = Math.cos(frame.angle);
   const sin = Math.sin(frame.angle);
 

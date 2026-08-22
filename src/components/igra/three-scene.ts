@@ -6,7 +6,7 @@ import { IGRA_SCENE } from "@/generated/igra-scene";
 
 import {
   buildDrapedRibbon,
-  buildHipRoof,
+  buildPitchedRoof,
   buildingWorldHeight,
   DEFAULT_EXAGGERATION,
   groundHeight,
@@ -646,7 +646,12 @@ function addBuildings(parent: THREE.Object3D, grid: ReliefGrid) {
     walls.set(key, current);
 
     if (rise > 0 && frame) {
-      const roof = buildHipRoof(frame, eave, metresToUnits(topMetres));
+      const roof = buildPitchedRoof(
+        frame,
+        eave,
+        metresToUnits(topMetres),
+        building.roofShape === "gabled" ? "gabled" : "hipped",
+      );
       const roofGeometry = new THREE.BufferGeometry();
       roofGeometry.setAttribute(
         "position",

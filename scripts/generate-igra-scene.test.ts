@@ -25,6 +25,8 @@ type GeneratedScene = {
     baseMetres: number | null;
     ridgeMetres: number | null;
     roof: "flat" | "pitched" | null;
+    roofShape: "gabled" | "hipped" | null;
+    roofSource: "city-gis" | "openstreetmap" | null;
     roofFrame: { x: number; z: number; angle: number; length: number; width: number } | null;
   }>;
   aqueduct: { arches: Array<[number, number]> };
@@ -164,8 +166,14 @@ test("measured city heights reach every building that has one, not just the larg
     const guessed = scene.buildings.filter((b) => b.heightSource === "neighbourhood-median");
     assert.ok(guessed.length > 0);
     assert.ok(
-      guessed.every((b) => b.baseMetres === null && b.ridgeMetres === null && b.roof === null),
-      "a guessed building must not carry an absolute elevation or a roof shape",
+      guessed.every((b) => b.baseMetres === null && b.ridgeMetres === null),
+      "a guessed building must not carry an absolute elevation",
+    );
+    // Krov smije: oblik dolazi iz OSM-a i ne pretvara procijenjenu visinu u
+    // izmjerenu — izvor svakog od to dvoje stoji zasebno.
+    assert.ok(
+      guessed.every((b) => b.roofSource !== "city-gis"),
+      "a guessed building must not borrow the city layer's authority for its roof",
     );
 
     const pitched = scene.buildings.filter((b) => b.roof === "pitched");
@@ -181,6 +189,53 @@ test("measured city heights reach every building that has one, not just the larg
     assert.ok(
       pitched.every((b) => !b.roofFrame || b.roofFrame.length >= b.roofFrame.width),
       "the ridge always runs along the longer axis",
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("OSM names the roof shape but never overrules a measured flat roof", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "kvart-igra-krov-"));
+  const outputPath = path.join(directory, "scene.ts");
+
+  try {
+    const generated = generate(outputPath);
+    assert.equal(generated.status, 0, generated.stderr || generated.stdout);
+    const scene = parseGeneratedModule(readFileSync(outputPath, "utf8"));
+
+    // Gdje grad govori, grad odlučuje ima li krov nagib. Provjera nad oba
+    // izvora pokazala je da svih 22 neslaganja idu na istu stranu — grad je
+    // izmjerio ravan krov, OSM tvrdi kosi — pa bi OSM-ov glas ovdje samo
+    // pretvorio mjerenje u pretpostavku.
+    const measured = scene.buildings.filter((b) => b.heightSource === "city-gis");
+    assert.ok(
+      measured.every((b) => b.roofSource === "city-gis"),
+      "a measured building must take its roof from the layer that measured it",
+    );
+
+    const fromOsm = scene.buildings.filter((b) => b.roofSource === "openstreetmap");
+    assert.ok(fromOsm.length >= 100, "OSM should speak where the city layer is silent");
+    assert.ok(
+      fromOsm.every((b) => b.heightSource !== "city-gis"),
+      "OSM may only fill silence, never overwrite",
+    );
+
+    // Oblik zna samo OSM; bez njegove riječi kosi krov ostaje četverostrešan.
+    assert.ok(
+      scene.buildings.every((b) => (b.roofShape === null) === (b.roof !== "pitched")),
+      "a shape belongs to a pitched roof and to nothing else",
+    );
+    const gabled = scene.buildings.filter((b) => b.roofShape === "gabled");
+    const hipped = scene.buildings.filter((b) => b.roofShape === "hipped");
+    assert.ok(gabled.length > 0 && hipped.length > 0);
+    assert.ok(
+      hipped.every((b) => b.roofSource === "city-gis"),
+      "hipped is the fallback for a pitched roof no one described, not a claim",
+    );
+    assert.ok(
+      scene.buildings.every((b) => b.roof !== "flat" || b.roofShape === null),
+      "a flat roof has no ridge to run anywhere",
     );
   } finally {
     rmSync(directory, { recursive: true, force: true });

@@ -330,6 +330,61 @@ function matchBuilding(feature: Feature) {
 }
 
 /**
+ * Oblik krova iz OpenStreetMapa, jedini izvor koji uopće imenuje oblik.
+ *
+ * Gradski GIS razlikuje samo ravno i neravno; OSM ima `roof:shape`. Ali na
+ * 528 zgrada taj je ključ 405 puta „gabled” i 2 puta „flat” — to nije 405
+ * opažanja nego jedna zadana vrijednost razmazana preko sloja. Provjera to i
+ * pokazuje: ondje gdje oba izvora govore (97 zgrada) slažu se u 77 %, a svih
+ * 22 neslaganja idu na istu stranu — grad je izmjerio ravan krov, OSM tvrdi
+ * dvostrešni. Nikad obrnuto.
+ *
+ * Zato OSM ovdje ne smije nadglasati grad o tome ima li krov nagib. Smije
+ * samo dvoje: reći kojeg je oblika nagib koji je grad već potvrdio, i
+ * govoriti ondje gdje grad šuti. To drugo nije popuštanje kriterija nego
+ * ispravak: tih 134 zgrada sad stoje kao ravne kutije, a ravna kutija u selu
+ * pod kupom kanalicom je tvrdnja koja je pogrešna češće (77 %) nego OSM-ova.
+ */
+type RoofCandidate = {
+  feature: Feature;
+  bounds: Bbox;
+  geometryArea: number;
+  pitched: boolean;
+  shape: "gabled" | "hipped";
+};
+
+const roofCandidates: RoofCandidate[] = osmBuildingSource.features.flatMap((feature) => {
+  if (feature.geometry.type !== "Polygon") return [];
+  const tag = String(feature.properties["roof:shape"] ?? "");
+  if (!tag) return [];
+  return [{
+    feature,
+    bounds: candidateBounds(feature),
+    geometryArea: turfArea(polygonFeature(feature)),
+    pitched: tag !== "flat",
+    shape: tag === "gabled" ? ("gabled" as const) : ("hipped" as const),
+  }];
+});
+
+function matchRoof(feature: Feature) {
+  const source = polygonFeature(feature);
+  const sourceBounds = candidateBounds(feature);
+  const sourceArea = turfArea(source);
+  let best: (RoofCandidate & { score: number }) | null = null;
+
+  for (const candidate of roofCandidates) {
+    if (!boundsOverlap(sourceBounds, candidate.bounds)) continue;
+    const overlap = intersect(featureCollection([source, polygonFeature(candidate.feature)]));
+    if (!overlap) continue;
+    const score = turfArea(overlap) / Math.max(sourceArea, candidate.geometryArea);
+    if (score < 0.45 || (best && best.score >= score)) continue;
+    best = { ...candidate, score };
+  }
+
+  return best;
+}
+
+/**
  * Najmanji pravokutnik oko tlocrta, u koordinatama makete.
  *
  * Kosi krov treba sljeme, a sljeme treba dužu os zgrade. Pravokutnik se traži
@@ -432,6 +487,7 @@ const topDecileIndices = new Set(
 
 const visibleBuildings = polygonBuildings.filter((feature) => feature.footprintArea >= 75);
 const buildingMatches = visibleBuildings.map((feature) => matchBuilding(feature));
+const roofMatches = visibleBuildings.map((feature) => matchRoof(feature));
 
 /**
  * Zamjenska visina je medijan izmjerenih zgrada iste veličine u ovom kvartu.
@@ -480,7 +536,14 @@ const buildings = visibleBuildings.map((feature, index) => {
   const topDecile = topDecileIndices.has(feature.sourceIndex);
   const match = buildingMatches[index];
   const heightMeters = match?.heightMeters ?? fallbackHeightMetres(area);
-  const roof = match?.roof ?? null;
+  const osmRoof = roofMatches[index];
+
+  // Grad odlučuje ima li krov nagib; OSM govori samo ondje gdje grad šuti.
+  const roof = match?.roof ?? (osmRoof ? (osmRoof.pitched ? "pitched" : "flat") : null);
+  const roofSource = match?.roof ? "city-gis" : osmRoof ? "openstreetmap" : null;
+  // Oblik zna samo OSM. Bez njega kosi krov ostaje četverostrešan, jer je to
+  // oblik koji ni na jednom tlocrtu ne ispadne besmislen.
+  const roofShape = roof === "pitched" ? (osmRoof?.shape ?? "hipped") : null;
   return {
     id: `zgrada-${feature.sourceIndex}`,
     kind,
@@ -494,6 +557,8 @@ const buildings = visibleBuildings.map((feature, index) => {
       ? null
       : round(match.ridgeMetres),
     roof,
+    roofShape,
+    roofSource,
     roofFrame:
       roof === "pitched" && feature.geometry.type === "Polygon"
         ? fittedRoofFrame(orientedBox(feature.geometry.coordinates[0]), area)

@@ -216,12 +216,17 @@ export function ThreeDiorama() {
           </p>
           <p className="igra-o-maketi-izvori">
             Reljef: DGU-ov LiDAR digitalni model reljefa (DMR) · ceste, zelene
-            površine i odlagalište: OpenStreetMap (ODbL) · zgrade, visine,
-            oblik krova i Dioklecijanov vodovod: GIS Grada Splita. Izmjerenu
-            visinu ima 181 od 415 zgrada; ostale stoje na medijanu izmjerenih
-            zgrada istog tlocrta u ovom kvartu, što je procjena o kvartu, a ne
-            o toj zgradi. Prikaz je pojednostavljena maketa, nije geodetski
-            proizvod.
+            površine, odlagalište i oblik krova: OpenStreetMap (ODbL) ·
+            zgrade, visine i Dioklecijanov vodovod: GIS Grada Splita.
+          </p>
+          <p className="igra-o-maketi-izvori">
+            Izmjerenu visinu ima 181 od 415 zgrada; ostale stoje na medijanu
+            izmjerenih zgrada istog tlocrta u ovom kvartu, što je procjena o
+            kvartu, a ne o toj zgradi. Da krov ima nagib, za 181 zgradu tvrdi
+            grad, za još njih 134 samo OSM. Kojeg je oblika zna jedino OSM, a
+            ondje je „dvostrešni” zadana vrijednost razmazana preko sloja, ne
+            opažanje po kući. Prikaz je pojednostavljena maketa, nije
+            geodetski proizvod.
           </p>
           <button type="button" className="fokus" onClick={() => setInfoOpen(false)}>
             Zatvori
