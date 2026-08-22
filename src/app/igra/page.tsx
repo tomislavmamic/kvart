@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const DIRECTION_CONTRACT = `<!--
 THESIS: Stvarni kvart postaje izrezan blok terena; prepoznatljivost dolazi iz LiDAR reljefa i GIS geometrije, ne iz generičnih igračaka.
-OWN-WORLD: Mediteranski niski poligoni na golom vapnencu, maslina i makija po stvarnim zelenim površinama, izohipse urezane u tlo, izravno sunce i ortografska kamera.
+OWN-WORLD: Mediteranski niski poligoni, kupa kanalica na kosim krovovima, pokrov tla iz stvarnih poligona, izohipse urezane u tlo, izravno sunce i ortografska kamera.
 STORY: Posjetitelj prvo vidi da kvart stoji na padini, zatim prepoznaje mrežu cesta i akvadukt, pa zaokrene blok da vidi usjeke i terase.
 FIRST VIEWPORT: WebGL reljef ispunjava prostor ispod zaglavlja; naslov je gore lijevo, pauza gore desno, izvor uvijek pri dnu.
 FORM: Three.js građanska maketa na LiDAR terenu, slobodan zaokret iznad obzora, preuveličanje visina ×1/×2/×3,5, seed kvart-threejs-rct-20260811.
@@ -38,8 +38,11 @@ export default function IgraPage() {
 
       <p className="igra-source">
         Reljef: DGU-ov LiDAR digitalni model reljefa (DMR) · ceste i zelene
-        površine: OpenStreetMap · zgrade i Dioklecijanov vodovod: GIS Grada
-        Splita · prikaz je pojednostavljena maketa, nije geodetski proizvod.
+        površine: OpenStreetMap · zgrade, visine, oblik krova i Dioklecijanov
+        vodovod: GIS Grada Splita. Izmjerenu visinu ima 181 od 415 zgrada;
+        ostale stoje na medijanu izmjerenih zgrada istog tlocrta u ovom
+        kvartu, što je procjena o kvartu, a ne o toj zgradi. Prikaz je
+        pojednostavljena maketa, nije geodetski proizvod.
       </p>
     </section>
   );

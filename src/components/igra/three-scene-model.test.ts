@@ -84,6 +84,7 @@ test("ground height reads the same surface the terrain mesh draws", async () => 
     rows: 2,
     world: { west: 0, north: 0, east: 10, south: 10 },
     heights: Float32Array.from([10, 14, 20, 24]),
+    cover: Uint8Array.from([0, 0, 0, 0]),
   };
 
   assert.equal(model.groundHeight(grid, 0, 0), 10);
@@ -125,6 +126,66 @@ test("draped ribbons carry a height per vertex instead of one flat elevation", a
 
   assert.deepEqual(ribbon.positions, [0, 1, 1, 0, 1, -1, 10, 3, 1, 10, 3, -1]);
   assert.deepEqual(ribbon.indices, [0, 2, 1, 2, 3, 1]);
+});
+
+test("hip roofs face outward and shrink to a pyramid on a square footprint", async () => {
+  const model = await import("./three-scene-model");
+
+  // Front-facing is clockwise in (x, z), the same winding the terrain mesh
+  // uses; a flipped roof would simply not be drawn.
+  function facesUp(roof: { positions: number[]; indices: number[] }) {
+    const at = (i: number) => [roof.positions[i * 3], roof.positions[i * 3 + 2]];
+    for (let t = 0; t < roof.indices.length; t += 3) {
+      const [ax, az] = at(roof.indices[t]);
+      const [bx, bz] = at(roof.indices[t + 1]);
+      const [cx, cz] = at(roof.indices[t + 2]);
+      const determinant = (bx - ax) * (cz - az) - (bz - az) * (cx - ax);
+      if (determinant > 1e-9) return false;
+    }
+    return true;
+  }
+
+  const long = model.buildHipRoof(
+    { x: 0, z: 0, angle: 0, length: 10, width: 4 },
+    1,
+    3,
+  );
+  assert.equal(long.positions.length / 3, 6, "four eaves and a two-point ridge");
+  assert.ok(facesUp(long), "every roof triangle must be wound outward");
+  const ridgeY = long.positions.filter((_, i) => i % 3 === 1).filter((y) => y === 3);
+  assert.equal(ridgeY.length, 2, "a long footprint keeps a ridge, not an apex");
+
+  const square = model.buildHipRoof(
+    { x: 0, z: 0, angle: 0, length: 6, width: 6 },
+    1,
+    3,
+  );
+  assert.ok(facesUp(square));
+  const apex = [0, 1, 2, 3, 4, 5]
+    .map((i) => [square.positions[i * 3], square.positions[i * 3 + 2]])
+    .filter((_, i) => i >= 4);
+  assert.deepEqual(apex[0], apex[1], "a square footprint collapses the ridge to one apex");
+
+  // Kut zaokreće cijeli krov, a ne samo sljeme.
+  const turned = model.buildHipRoof(
+    { x: 0, z: 0, angle: Math.PI / 2, length: 10, width: 4 },
+    1,
+    3,
+  );
+  assert.ok(facesUp(turned), "rotating the frame must not flip the winding");
+  // Zaokret za pravi kut zamijeni osi: duljina od 10 m sad ide po z, širina
+  // od 4 m po x. Prva streha stoji na (2, −5), a ne na (−5, −2).
+  assert.ok(Math.abs(turned.positions[0] - 2) < 1e-6);
+  assert.ok(Math.abs(turned.positions[2] + 5) < 1e-6);
+});
+
+test("roof rise follows the building's width until the building is too low for it", async () => {
+  const model = await import("./three-scene-model");
+
+  // 8 m wide under a 22° pitch is about 1,6 m of ridge.
+  assert.ok(Math.abs(model.roofRiseMetres(8, 9) - 4 * Math.tan((22 * Math.PI) / 180)) < 1e-9);
+  // A wide, low shed would otherwise grow a tent for a roof.
+  assert.equal(model.roofRiseMetres(40, 4), 4 * 0.45);
 });
 
 test("the exaggeration control cycles through a true scale and back", async () => {

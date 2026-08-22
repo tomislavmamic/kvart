@@ -135,6 +135,8 @@ export type ReliefGrid = Readonly<{
   rows: number;
   world: Readonly<{ west: number; north: number; east: number; south: number }>;
   heights: Float32Array;
+  /** Razred pokrova po ćeliji; 0 je nerazvrstano tlo. */
+  cover: Uint8Array;
 }>;
 
 /**
@@ -247,6 +249,75 @@ export function buildDrapedRibbon(
   });
 
   return { positions, indices };
+}
+
+/**
+ * Najmanji opisani pravokutnik tlocrta, kakav ga generator izračuna.
+ *
+ * `angle` je kut duže osi u ravnini tla, `length` uvijek ide uz nju.
+ */
+export type RoofFrame = Readonly<{
+  x: number;
+  z: number;
+  angle: number;
+  length: number;
+  width: number;
+}>;
+
+/**
+ * Nagib kosog krova. Dalmatinska kuća pod kupom kanalicom drži oko 22°.
+ *
+ * Gradski GIS zna kotu vrha i kotu dna, ali ne i kotu strehe — a razlika je
+ * upravo ono što odlučuje izgleda li kuća kao kuća ili kao kutija s kapom.
+ * Uspon sljemena se zato izvodi iz širine zgrade pod stalnim nagibom, i
+ * ograniči na 45 % ukupne visine da plitka prizemnica ne postane šator.
+ */
+const ROOF_PITCH = Math.tan((22 * Math.PI) / 180);
+const MAX_RIDGE_SHARE = 0.45;
+
+export function roofRiseMetres(widthMetres: number, heightMetres: number) {
+  return Math.min((widthMetres / 2) * ROOF_PITCH, heightMetres * MAX_RIDGE_SHARE);
+}
+
+/**
+ * Četverostrešni krov nad opisanim pravokutnikom tlocrta.
+ *
+ * Krov se ne diže nad stvarnim tlocrtom nego nad njegovim pravokutnikom, i to
+ * je izbor: pravi kosi krov nad razvedenim tlocrtom traži skelet poligona, a
+ * pravokutnik nad njim viri koliko i prava streha. Kad je tlocrt gotovo
+ * kvadratan, sljeme se stegne u vrh i krov ispadne piramidalan — kakav na
+ * takvoj kući i jest.
+ */
+export function buildHipRoof(frame: RoofFrame, eaveY: number, ridgeY: number): RoadRibbon {
+  const halfLength = frame.length / 2;
+  const halfWidth = frame.width / 2;
+  const ridgeHalf = Math.max(0, halfLength - halfWidth);
+  const cos = Math.cos(frame.angle);
+  const sin = Math.sin(frame.angle);
+
+  const positions: number[] = [];
+  const place = (u: number, v: number, y: number) => {
+    const index = positions.length / 3;
+    positions.push(frame.x + u * cos - v * sin, y, frame.z + u * sin + v * cos);
+    return index;
+  };
+
+  const a = place(-halfLength, -halfWidth, eaveY);
+  const b = place(halfLength, -halfWidth, eaveY);
+  const c = place(halfLength, halfWidth, eaveY);
+  const d = place(-halfLength, halfWidth, eaveY);
+  const near = place(-ridgeHalf, 0, ridgeY);
+  const far = place(ridgeHalf, 0, ridgeY);
+
+  return {
+    positions,
+    indices: [
+      near, far, b, near, b, a,
+      far, near, d, far, d, c,
+      a, d, near,
+      c, b, far,
+    ],
+  };
 }
 
 /**

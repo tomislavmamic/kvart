@@ -21,12 +21,17 @@ type GeneratedScene = {
     sourceVertexCount: number;
     footprintArea: number;
     heightMeters: number;
-    heightSource: "city-gis" | "openstreetmap" | "estimated";
+    heightSource: "city-gis" | "openstreetmap" | "neighbourhood-median";
+    baseMetres: number | null;
+    ridgeMetres: number | null;
+    roof: "flat" | "pitched" | null;
+    roofFrame: { x: number; z: number; angle: number; length: number; width: number } | null;
   }>;
   aqueduct: { arches: Array<[number, number]> };
   vehiclePaths: Array<{ points: Array<[number, number]> }>;
   trees: Array<{ point: [number, number]; kind: string; size: number }>;
   relief: {
+    cover: { file: string; classes: readonly string[] };
     file: string;
     cols: number;
     rows: number;
@@ -113,6 +118,106 @@ test("local GIS sources generate a deterministic recognizable Kvart scene", () =
     assert.deepEqual(
       scene.labels.map((label) => label.text).toSorted(),
       ["Akvadukt", "Bilice", "Dračevac"],
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("measured city heights reach every building that has one, not just the largest", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "kvart-igra-zgrade-"));
+  const outputPath = path.join(directory, "scene.ts");
+
+  try {
+    const generated = generate(outputPath);
+    assert.equal(generated.status, 0, generated.stderr || generated.stdout);
+    const scene = parseGeneratedModule(readFileSync(outputPath, "utf8"));
+
+    const measured = scene.buildings.filter((b) => b.heightSource === "city-gis");
+    assert.ok(
+      measured.length >= 170,
+      `matching was limited to the top decile before; every building is tried now (${measured.length})`,
+    );
+    assert.ok(
+      measured.filter((b) => !b.topDecile).length >= 100,
+      "most of the newly measured buildings are ordinary homes, not the large ones",
+    );
+
+    // Kota dna i kota vrha idu zajedno ili nikako — pola para ne postavlja
+    // zgradu ni na što.
+    assert.ok(
+      measured.every((b) => b.baseMetres !== null && b.ridgeMetres !== null),
+      "a measured building must carry both its floor and its ridge elevation",
+    );
+    assert.ok(
+      measured.every((b) => b.ridgeMetres! > b.baseMetres!),
+      "the ridge must stand above the floor",
+    );
+    assert.ok(
+      measured.every(
+        (b) => Math.abs(b.ridgeMetres! - b.baseMetres! - b.heightMeters) < 0.02,
+      ),
+      "height must be the difference of the two measured elevations, not a separate claim",
+    );
+
+    // Nemjerene zgrade ne smiju se predstavljati kao mjerene.
+    const guessed = scene.buildings.filter((b) => b.heightSource === "neighbourhood-median");
+    assert.ok(guessed.length > 0);
+    assert.ok(
+      guessed.every((b) => b.baseMetres === null && b.ridgeMetres === null && b.roof === null),
+      "a guessed building must not carry an absolute elevation or a roof shape",
+    );
+
+    const pitched = scene.buildings.filter((b) => b.roof === "pitched");
+    assert.ok(pitched.length >= 120, "most measured buildings here are ROOF_NOT_FLAT");
+    assert.ok(
+      scene.buildings.every((b) => b.roofFrame === null || b.roof === "pitched"),
+      "only a pitched roof gets a frame to be built on",
+    );
+    assert.ok(
+      pitched.filter((b) => b.roofFrame).length < pitched.length,
+      "footprints too ragged for a hip roof must fall back to plain massing",
+    );
+    assert.ok(
+      pitched.every((b) => !b.roofFrame || b.roofFrame.length >= b.roofFrame.width),
+      "the ridge always runs along the longer axis",
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("land cover is rasterised into the same grid the heights use", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "kvart-igra-pokrov-"));
+  const outputPath = path.join(directory, "scene.ts");
+
+  try {
+    const generated = generate(outputPath);
+    assert.equal(generated.status, 0, generated.stderr || generated.stdout);
+    const scene = parseGeneratedModule(readFileSync(outputPath, "utf8"));
+    const { relief } = scene;
+
+    const cover = readFileSync(path.join(directory, path.basename(relief.cover.file)));
+    assert.equal(
+      cover.byteLength,
+      relief.cols * relief.rows,
+      "one cover byte per height cell, or the two grids cannot be read together",
+    );
+    assert.ok(
+      cover.every((value) => value < relief.cover.classes.length),
+      "no cell may name a class that does not exist",
+    );
+
+    const tally = relief.cover.classes.map(
+      (_, value) => cover.reduce((n, cell) => (cell === value ? n + 1 : n), 0),
+    );
+    // Nerazvrstano ostaje najveći razred: OSM ne pokriva kvart do kraja, a
+    // prešutno proglašavanje ostatka kamenjarom bila bi tvrdnja bez izvora.
+    assert.equal(relief.cover.classes[0], "golo");
+    assert.ok(tally[0] > cover.byteLength * 0.4, "unclassified ground must stay unclassified");
+    assert.ok(
+      relief.cover.classes.slice(1).every((_, index) => tally[index + 1] > 0),
+      "every declared class must actually appear somewhere on the grid",
     );
   } finally {
     rmSync(directory, { recursive: true, force: true });

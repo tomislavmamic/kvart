@@ -6,12 +6,14 @@ import { IGRA_SCENE } from "@/generated/igra-scene";
 
 import {
   buildDrapedRibbon,
+  buildHipRoof,
   buildingWorldHeight,
   DEFAULT_EXAGGERATION,
   groundHeight,
   nextCameraZoom,
   nextExaggeration,
   resamplePolyline,
+  roofRiseMetres,
   samplePolyline,
   sceneFrustumHeight,
   scenePointToWorld,
@@ -64,6 +66,8 @@ const ROAD_WIDTHS = {
 
 const BUILDING_COLORS = [0xd9c67f, 0xd3b36e, 0xd6c4a1, 0xb7c1b4, 0xd39c68];
 const LARGE_BUILDING_COLORS = [0xc89c52, 0xb98a43, 0xaaa07d, 0x8ea08e, 0xb8784f];
+/** Kupa kanalica: jedna boja za sve kose krovove, jer ih na terenu i ima jedna. */
+const ROOF_TILE = 0xb0673f;
 
 /**
  * Boje terena po visini i nagibu.
@@ -79,6 +83,22 @@ const TERRAIN_HIGH = new THREE.Color(0xc0b894);
 const TERRAIN_ROCK = new THREE.Color(0xa39c8b);
 const PLINTH_TOP = new THREE.Color(0xc0b191);
 const PLINTH_BOTTOM = new THREE.Color(0x574f40);
+
+/**
+ * Boje pokrova, redom kojim ih generator upisuje u mrežu.
+ *
+ * Prvi razred je nerazvrstano tlo — ondje gdje ni jedan izvor ne tvrdi što
+ * raste. Njegova težina miješanja je nula, pa se tamo vidi čisti raspon po
+ * visini i nagibu: nepoznato ostaje nepoznato, a ne postaje kamenjar.
+ */
+const COVER_TONES = [
+  { tone: 0xa79f8d, mix: 0 },
+  { tone: 0x93a566, mix: 0.5 },
+  { tone: 0x7d8a5d, mix: 0.5 },
+  { tone: 0x4a6b41, mix: 0.62 },
+  { tone: 0xb5a488, mix: 0.55 },
+  { tone: 0x9a9078, mix: 0.66 },
+] as const;
 
 /** Ekvidistancija izohipsi urezanih u plohu terena, u metrima. */
 const CONTOUR_INTERVAL_METRES = 5;
@@ -107,23 +127,35 @@ function polygonShape(points: readonly (readonly [number, number])[]) {
  * što se ijedan trokut nacrta.
  */
 async function loadRelief(signal: AbortSignal): Promise<ReliefGrid> {
-  const response = await fetch(RELIEF.file, { signal });
-  if (!response.ok) {
-    throw new Error(`Mreža visina nije dohvaćena: ${response.status}`);
-  }
-  const buffer = await response.arrayBuffer();
-  const decimetres = new Int16Array(buffer);
   const expected = RELIEF.cols * RELIEF.rows;
+  const [heightResponse, coverResponse] = await Promise.all([
+    fetch(RELIEF.file, { signal }),
+    fetch(RELIEF.cover.file, { signal }),
+  ]);
+  if (!heightResponse.ok) {
+    throw new Error(`Mreža visina nije dohvaćena: ${heightResponse.status}`);
+  }
+  const decimetres = new Int16Array(await heightResponse.arrayBuffer());
   if (decimetres.length !== expected) {
     throw new Error(`Mreža visina ne odgovara sceni: ${decimetres.length} ≠ ${expected}`);
   }
   const heights = new Float32Array(expected);
   for (let index = 0; index < expected; index += 1) heights[index] = decimetres[index] / 10;
+
+  // Pokrov je ukras nad podatkom, ne podatak: ako izostane, teren se oboji
+  // samo po visini i nagibu, kao prije, umjesto da scena padne.
+  let cover = new Uint8Array(expected);
+  if (coverResponse.ok) {
+    const raw = new Uint8Array(await coverResponse.arrayBuffer());
+    if (raw.length === expected) cover = raw;
+  }
+
   return {
     cols: RELIEF.cols,
     rows: RELIEF.rows,
     world: RELIEF.world,
     heights,
+    cover,
   };
 }
 
@@ -139,9 +171,12 @@ function thinRelief(grid: ReliefGrid, factor: number): ReliefGrid {
   const cols = Math.floor((grid.cols - 1) / factor) + 1;
   const rows = Math.floor((grid.rows - 1) / factor) + 1;
   const heights = new Float32Array(cols * rows);
+  const cover = new Uint8Array(cols * rows);
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
-      heights[row * cols + col] = grid.heights[row * factor * grid.cols + col * factor];
+      const source = row * factor * grid.cols + col * factor;
+      heights[row * cols + col] = grid.heights[source];
+      cover[row * cols + col] = grid.cover[source];
     }
   }
   const spanX = grid.world.east - grid.world.west;
@@ -156,12 +191,14 @@ function thinRelief(grid: ReliefGrid, factor: number): ReliefGrid {
       south: grid.world.north + (spanZ * ((rows - 1) * factor)) / (grid.rows - 1),
     },
     heights,
+    cover,
   };
 }
 
 function terrainGeometry(grid: ReliefGrid) {
-  const { cols, rows, world, heights } = grid;
+  const { cols, rows, world, heights, cover } = grid;
   const positions = new Float32Array(cols * rows * 3);
+  const covers = new Float32Array(cols * rows);
   const spanX = world.east - world.west;
   const spanZ = world.south - world.north;
 
@@ -172,6 +209,7 @@ function terrainGeometry(grid: ReliefGrid) {
       positions[offset] = world.west + (spanX * col) / (cols - 1);
       positions[offset + 1] = metresToUnits(heights[row * cols + col]);
       positions[offset + 2] = z;
+      covers[row * cols + col] = cover[row * cols + col];
     }
   }
 
@@ -195,6 +233,7 @@ function terrainGeometry(grid: ReliefGrid) {
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("aCover", new THREE.BufferAttribute(covers, 1));
   geometry.setIndex(new THREE.BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
@@ -226,19 +265,33 @@ function terrainMaterial() {
     shader.uniforms.reliefUnits = { value: UNITS_PER_METRE };
     shader.uniforms.contourInterval = { value: CONTOUR_INTERVAL_METRES };
 
+    const coverTone = COVER_TONES.map(({ tone }) => {
+      const colour = new THREE.Color(tone);
+      return `vec3(${colour.r.toFixed(4)}, ${colour.g.toFixed(4)}, ${colour.b.toFixed(4)})`;
+    }).join(", ");
+    const coverMix = COVER_TONES.map(({ mix }) => mix.toFixed(3)).join(", ");
+
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
         `#include <common>
          varying float vReliefMetres;
          varying float vReliefFlatness;
-         uniform float reliefUnits;`,
+         varying vec3 vCoverTone;
+         varying float vCoverMix;
+         attribute float aCover;
+         uniform float reliefUnits;
+         const vec3 COVER_TONE[${COVER_TONES.length}] = vec3[${COVER_TONES.length}](${coverTone});
+         const float COVER_MIX[${COVER_TONES.length}] = float[${COVER_TONES.length}](${coverMix});`,
       )
       .replace(
         "#include <begin_vertex>",
         `#include <begin_vertex>
          vReliefMetres = position.y / reliefUnits;
-         vReliefFlatness = normal.y;`,
+         vReliefFlatness = normal.y;
+         int coverIndex = int(clamp(aCover, 0.0, ${(COVER_TONES.length - 1).toFixed(1)}));
+         vCoverTone = COVER_TONE[coverIndex];
+         vCoverMix = COVER_MIX[coverIndex];`,
       );
 
     shader.fragmentShader = shader.fragmentShader
@@ -247,6 +300,8 @@ function terrainMaterial() {
         `#include <common>
          varying float vReliefMetres;
          varying float vReliefFlatness;
+         varying vec3 vCoverTone;
+         varying float vCoverMix;
          uniform vec3 reliefLow;
          uniform vec3 reliefMid;
          uniform vec3 reliefHigh;
@@ -277,6 +332,9 @@ function terrainMaterial() {
          float majorWidth = fwidth(majorPhase);
          float majorEdge = abs(fract(majorPhase) - 0.5);
          float majorLine = 1.0 - smoothstep(0.0, majorWidth * 1.4, 0.5 - majorEdge);
+         // Pokrov se miješa preko raspona po visini, ne umjesto njega: i pod
+         // šumom se mora vidjeti da teren pada.
+         reliefTone = mix(reliefTone, vCoverTone * (0.72 + 0.56 * reliefBand), vCoverMix);
          reliefTone *= 1.0 - contourLine * 0.13 - majorLine * 0.2;
 
          diffuseColor.rgb *= reliefTone;`,
@@ -536,28 +594,46 @@ function addNeighbourhoodEdges(parent: THREE.Object3D, grid: ReliefGrid) {
 }
 
 /**
- * Zgrade sjedaju na vlastiti teren.
+ * Zgrade sjedaju na vlastiti teren, a 181 od njih na vlastitu izmjerenu kotu.
  *
- * Dno ide metar ispod najniže točke tlocrta, a vrh se mjeri od prosječne — na
- * padini zgrada tako ulazi u brdo umjesto da nad njim lebdi, a krov ostaje
- * vodoravan, kakav i jest.
+ * Gradski GIS uz visinu nosi i kotu dna i kotu vrha — apsolutne, u metrima
+ * nad morem. Gdje ih ima, zgrada se postavi između njih i ne pita teren za
+ * visinu: dva nezavisna izvora, a kota dna se od LiDAR-ove plohe razlikuje za
+ * median od 30 cm, pa se smiju gledati u oči. Gdje ih nema, ostaje staro
+ * pravilo — pod od najniže točke tlocrta, krov od prosječne.
+ *
+ * Dno u oba slučaja ide metar ispod najnižeg tla pod tlocrtom: kota dna je
+ * jedan broj za cijelu zgradu, a padina nije.
  */
 function addBuildings(parent: THREE.Object3D, grid: ReliefGrid) {
-  const groups = new Map<string, THREE.BufferGeometry[]>();
+  const walls = new Map<string, THREE.BufferGeometry[]>();
+  const roofs: THREE.BufferGeometry[] = [];
 
   IGRA_SCENE.buildings.forEach((building) => {
     const ground = building.base.map((point) => {
       const world = scenePointToWorld(point);
       return groundHeight(grid, world.x, world.z);
     });
-    const lowest = Math.min(...ground);
-    const average = ground.reduce((sum, value) => sum + value, 0) / ground.length;
-    const bottom = metresToUnits(lowest - 1);
-    const top =
-      metresToUnits(average) + buildingWorldHeight(building.heightMeters, UNITS_PER_METRE);
+    const lowestGround = Math.min(...ground);
+    const averageGround = ground.reduce((sum, value) => sum + value, 0) / ground.length;
 
+    const measured = building.baseMetres !== null && building.ridgeMetres !== null;
+    const topMetres = measured
+      ? building.ridgeMetres!
+      : averageGround + buildingWorldHeight(building.heightMeters, UNITS_PER_METRE) / UNITS_PER_METRE;
+    const floorMetres = Math.min(measured ? building.baseMetres! : lowestGround, lowestGround) - 1;
+
+    const frame = building.roofFrame;
+    const rise =
+      building.roof === "pitched" && frame
+        ? roofRiseMetres(frame.width / UNITS_PER_METRE, topMetres - floorMetres)
+        : 0;
+    const eaveMetres = topMetres - rise;
+
+    const bottom = metresToUnits(floorMetres);
+    const eave = metresToUnits(eaveMetres);
     const geometry = new THREE.ExtrudeGeometry(polygonShape(building.base), {
-      depth: Math.max(0.02, top - bottom),
+      depth: Math.max(0.02, eave - bottom),
       bevelEnabled: false,
       curveSegments: 1,
       steps: 1,
@@ -565,12 +641,24 @@ function addBuildings(parent: THREE.Object3D, grid: ReliefGrid) {
     geometry.rotateX(-Math.PI / 2);
     geometry.translate(0, bottom, 0);
     const key = `${building.kind}-${building.tone}`;
-    const current = groups.get(key) ?? [];
+    const current = walls.get(key) ?? [];
     current.push(geometry);
-    groups.set(key, current);
+    walls.set(key, current);
+
+    if (rise > 0 && frame) {
+      const roof = buildHipRoof(frame, eave, metresToUnits(topMetres));
+      const roofGeometry = new THREE.BufferGeometry();
+      roofGeometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(roof.positions, 3),
+      );
+      roofGeometry.setIndex(roof.indices);
+      roofGeometry.computeVertexNormals();
+      roofs.push(roofGeometry);
+    }
   });
 
-  groups.forEach((geometries, key) => {
+  walls.forEach((geometries, key) => {
     const merged = mergeGeometries(geometries);
     geometries.forEach((geometry) => geometry.dispose());
     if (!merged) return;
@@ -589,6 +677,17 @@ function addBuildings(parent: THREE.Object3D, grid: ReliefGrid) {
     mesh.receiveShadow = true;
     parent.add(mesh);
   });
+
+  const roof = mergeGeometries(roofs);
+  roofs.forEach((geometry) => geometry.dispose());
+  if (!roof) return;
+  const mesh = new THREE.Mesh(
+    roof,
+    new THREE.MeshStandardMaterial({ color: ROOF_TILE, roughness: 0.94, flatShading: true }),
+  );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
 }
 
 /**

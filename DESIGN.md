@@ -579,13 +579,45 @@ cannot read.
 Three.js is loaded only on this route, device pixel ratio is capped, the grid
 is thinned to 6 m on small or low-core devices, and pausing stops the
 animation frame loop. If WebGL fails or the grid does not arrive, the visible
-recovery path is `/svg`. The largest 10% of building footprints retain every
-source vertex. Their vertical scale uses a measured City-GIS height only after
-an 85% geometric overlap match, then OSM height or floor count, then a visibly
-conservative estimate. Footprint area must never be reused as a proxy for
-height. Trees are no longer a hand-written list of 24 positions: the generator
-scatters them from a fixed seed across OpenStreetMap wood, scrub and grassland
-polygons, at a density and a real height per cover type.
+recovery path is `/svg`.
+
+**Buildings are measured where a measurement exists, and say so where none
+does.** Every footprint is matched against the City-GIS height layer, not only
+the largest decile: 181 of 415 buildings carry a measured height, and they are
+placed between their own `kota_dna` and `kota_vrha` — absolute metres above
+sea — rather than sampled off the terrain and given a guess. The two sources
+agree: the city's floor elevation sits a median 0,30 m below the LiDAR
+surface. The 85% overlap threshold is not tuned; the distribution is bimodal,
+a building either coincides almost entirely or is absent, and lowering the
+threshold to 70% buys three buildings out of 415. A wrongly joined height is
+worse than an unknown one, because it looks like a measurement.
+
+The 231 buildings with no match take **the median measured height of buildings
+with the same footprint size in this same neighbourhood**, and the scene names
+that source `neighbourhood-median` — never `estimated`. The three invented
+constants it replaces (6, 7 and 8 m by area) were all too low; the measured
+medians are 7,9, 8,9 and 9,8 m. Area remains a poor predictor — the median
+moves three metres across a twentyfold range of footprint while the spread
+inside one band is twice that — which is why the fallback is a median and not
+a formula, and why footprint area must never be reused as a proxy for height.
+
+Roof shape is measured too: `krov` distinguishes flat from pitched, and 141 of
+the matched buildings are pitched. A hip roof is raised over the footprint's
+minimum-area rectangle at a 22° pitch, capped at 45% of the building's height
+so a wide low shed does not grow a tent. It is only raised where the footprint
+fills that rectangle to at least 78% — an L-shaped plan would otherwise get a
+table on posts — and the 18 that fail keep plain massing up to their measured
+ridge. Every footprint now keeps every source vertex.
+
+**The ground is land cover, not only elevation.** A `uint8` per height cell,
+in the same grid and shipped beside it, records what is actually there:
+grassland, scrub, wood, built-up (footprints dilated three cells, so the yard
+reads and not just the roof) and the Karepovac body, painted general-to-
+specific so the more specific claim wins. Cover tints the elevation ramp
+rather than replacing it, so a slope still reads as a slope under forest. The
+first class is unclassified ground — 64% of the grid, where no source says
+anything — and it is mixed at zero weight: unknown stays unknown rather than
+quietly becoming bare karst.
 
 ## Do's and Don'ts
 

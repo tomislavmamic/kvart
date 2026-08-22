@@ -30,6 +30,7 @@ const sources = {
   osmBuildings: "public/geo/zgrade.geojson",
   aqueduct: "public/geo/grad/kulturno-dobro.geojson",
   green: "public/geo/zelene-povrsine.geojson",
+  landfill: "public/geo/karepovac.geojson",
   heightHeader: "public/geo/reljef/visine.json",
   heightGrid: "public/geo/reljef/visine.bin.gz",
 } as const;
@@ -52,6 +53,7 @@ const buildingHeightSource = readGeoJson(sources.buildingHeights);
 const osmBuildingSource = readGeoJson(sources.osmBuildings);
 const aqueductSource = readGeoJson(sources.aqueduct);
 const greenSource = readGeoJson(sources.green);
+const landfillSource = readGeoJson(sources.landfill);
 
 function geometryPositions(feature: Feature): Position[] {
   if (feature.geometry.type === "Polygon") return feature.geometry.coordinates.flat();
@@ -224,6 +226,10 @@ type HeightCandidate = {
   bounds: Bbox;
   geometryArea: number;
   heightMeters: number;
+  /** Kota dna i vrha su apsolutne, u metrima nad morem — samo gradski GIS ih ima. */
+  baseMetres: number | null;
+  ridgeMetres: number | null;
+  roof: "flat" | "pitched" | null;
   source: "city-gis" | "openstreetmap";
 };
 
@@ -257,11 +263,20 @@ const heightCandidates: HeightCandidate[] = [
     if (feature.geometry.type !== "Polygon") return [];
     const heightMeters = Number(feature.properties.visina);
     if (!Number.isFinite(heightMeters) || heightMeters < 2 || heightMeters > 80) return [];
+    const baseMetres = Number(feature.properties.kota_dna);
+    const ridgeMetres = Number(feature.properties.kota_vrha);
+    const krov = String(feature.properties.krov ?? "");
     return [{
       feature,
       bounds: candidateBounds(feature),
       geometryArea: turfArea(polygonFeature(feature)),
       heightMeters,
+      baseMetres: Number.isFinite(baseMetres) ? baseMetres : null,
+      ridgeMetres: Number.isFinite(ridgeMetres) ? ridgeMetres : null,
+      roof:
+        krov === "ROOF_NOT_FLAT" ? ("pitched" as const)
+        : krov === "ROOF_FLAT" ? ("flat" as const)
+        : null,
       source: "city-gis" as const,
     }];
   }),
@@ -274,16 +289,32 @@ const heightCandidates: HeightCandidate[] = [
       bounds: candidateBounds(feature),
       geometryArea: turfArea(polygonFeature(feature)),
       heightMeters,
+      baseMetres: null,
+      ridgeMetres: null,
+      roof: null,
       source: "openstreetmap" as const,
     }];
   }),
 ];
 
-function matchHeight(feature: Feature) {
+/**
+ * Traži istu zgradu u sloju s izmjerenim visinama.
+ *
+ * Prag preklapanja je 85 % i to nije fino ugođena brojka: raspodjela je
+ * dvojna — zgrada se ili poklapa gotovo cijela, ili je u drugom sloju nema.
+ * Spuštanje praga na 70 % dobiva tri zgrade od 415, pa se prag drži visok
+ * jer krivo spojena visina nije manja greška od nepoznate visine, nego veća:
+ * izgleda kao mjerenje.
+ *
+ * Prije se tražilo samo za najveći decil, jer je tada visina služila samo
+ * velikoj masi. Sad je traženje za svaku zgradu: 181 od 415 vidljivih ima
+ * izmjerenu visinu umjesto dosadašnjih 69.
+ */
+function matchBuilding(feature: Feature) {
   const source = polygonFeature(feature);
   const sourceBounds = candidateBounds(feature);
   const sourceArea = turfArea(source);
-  let best: { score: number; heightMeters: number; source: HeightCandidate["source"] } | null = null;
+  let best: (HeightCandidate & { score: number }) | null = null;
 
   for (const candidate of heightCandidates) {
     if (!boundsOverlap(sourceBounds, candidate.bounds)) continue;
@@ -292,20 +323,93 @@ function matchHeight(feature: Feature) {
     const score = turfArea(overlap) / Math.max(sourceArea, candidate.geometryArea);
     const minimumScore = candidate.source === "city-gis" ? 0.85 : 0.45;
     if (score < minimumScore || (best && best.score >= score)) continue;
-    best = {
-      score,
-      heightMeters: candidate.heightMeters,
-      source: candidate.source,
-    };
+    best = { ...candidate, score };
   }
 
   return best;
 }
 
-function estimatedHeightMeters(area: number) {
-  if (area >= 1200) return 8;
-  if (area >= 400) return 7;
-  return 6;
+/**
+ * Najmanji pravokutnik oko tlocrta, u koordinatama makete.
+ *
+ * Kosi krov treba sljeme, a sljeme treba dužu os zgrade. Pravokutnik se traži
+ * po poznatom svojstvu: najmanji opisani pravokutnik ima stranicu položenu uz
+ * jedan brid samog tlocrta, pa se isproba svaki brid i uzme najmanja površina.
+ *
+ * Računa se u svjetskim koordinatama, ne u SVG-ovim: projekcija scene je
+ * smicanje, pa bi kut izmjeren nad njezinim točkama pao krivo na tlo.
+ */
+function orientedBox(points: readonly Position[]) {
+  const world = points.map(projectWorld);
+  let best: { x: number; z: number; angle: number; length: number; width: number } | null = null;
+
+  for (let index = 1; index < world.length; index += 1) {
+    const from = world[index - 1];
+    const to = world[index];
+    const edgeAngle = Math.atan2(to.z - from.z, to.x - from.x);
+    const cos = Math.cos(edgeAngle);
+    const sin = Math.sin(edgeAngle);
+    let minU = Infinity;
+    let maxU = -Infinity;
+    let minV = Infinity;
+    let maxV = -Infinity;
+    for (const point of world) {
+      const u = point.x * cos + point.z * sin;
+      const v = -point.x * sin + point.z * cos;
+      if (u < minU) minU = u;
+      if (u > maxU) maxU = u;
+      if (v < minV) minV = v;
+      if (v > maxV) maxV = v;
+    }
+    const spanU = maxU - minU;
+    const spanV = maxV - minV;
+    if (best && best.length * best.width <= spanU * spanV) continue;
+    const centreU = (minU + maxU) / 2;
+    const centreV = (minV + maxV) / 2;
+    best = {
+      x: centreU * cos - centreV * sin,
+      z: centreU * sin + centreV * cos,
+      angle: edgeAngle,
+      length: spanU,
+      width: spanV,
+    };
+  }
+
+  if (!best) return null;
+  // Sljeme uvijek ide po dužoj osi; ako je brid dao kraću, okreni okvir.
+  const box =
+    best.length >= best.width
+      ? best
+      : { ...best, angle: best.angle + Math.PI / 2, length: best.width, width: best.length };
+  return {
+    x: round6(box.x),
+    z: round6(box.z),
+    angle: round6(box.angle),
+    length: round6(box.length),
+    width: round6(box.width),
+  };
+}
+
+/**
+ * Kosi krov se diže samo nad tlocrtom koji je dovoljno pravokutan.
+ *
+ * Krov se gradi nad opisanim pravokutnikom, pa nad razvedenim tlocrtom —
+ * slovom L, dvorišnim krilom — pokrije i ono čega nema i ispadne stol na
+ * stupovima. Prag je udio tlocrta u tom pravokutniku: 78 %. Većina zgrada je
+ * ionako pravokutna (medijan popunjenosti je 0,99), pa prag odbaci 18 od 141
+ * — i za njih ostaje ravna masa do kote vrha, što je i dalje izmjerena
+ * visina, samo bez izmišljenog oblika krova.
+ */
+const MIN_ROOF_FILL = 0.78;
+
+function fittedRoofFrame(
+  frame: ReturnType<typeof orientedBox>,
+  footprintArea: number,
+) {
+  if (!frame) return null;
+  const boxArea = (frame.length / unitsPerMetre) * (frame.width / unitsPerMetre);
+  if (boxArea <= 0 || footprintArea / boxArea < MIN_ROOF_FILL) return null;
+  return frame;
 }
 
 const polygonBuildings: BuildingFeature[] = buildingSource.features.flatMap(
@@ -327,24 +431,78 @@ const topDecileIndices = new Set(
 );
 
 const visibleBuildings = polygonBuildings.filter((feature) => feature.footprintArea >= 75);
-const buildings = visibleBuildings.map((feature) => {
+const buildingMatches = visibleBuildings.map((feature) => matchBuilding(feature));
+
+/**
+ * Zamjenska visina je medijan izmjerenih zgrada iste veličine u ovom kvartu.
+ *
+ * Dosad su to bile tri izmišljene brojke (6, 7 i 8 m po površini tlocrta) i
+ * sve tri su bile prenizak pogodak: izmjereni medijani istih razreda su 7,9,
+ * 8,9 i 9,8 m. Površina uz to slabo predviđa visinu — medijan se preko
+ * dvadeserostruke razlike u tlocrtu pomakne za tri metra, a rasap unutar
+ * jednog razreda je dvostruko veći od toga. Zato ovdje stoji medijan razreda
+ * i ništa pametnije: to je tvrdnja o kvartu, ne o toj zgradi, i tako se i
+ * imenuje u sceni.
+ */
+const AREA_BANDS = [150, 300, 600, 1500, Infinity] as const;
+
+function areaBand(area: number) {
+  return AREA_BANDS.findIndex((limit) => area < limit);
+}
+
+const bandMedians = AREA_BANDS.map((_, band) => {
+  const measured = visibleBuildings
+    .flatMap((feature, index) => {
+      const match = buildingMatches[index];
+      if (!match || match.source !== "city-gis") return [];
+      return areaBand(feature.footprintArea) === band ? [match.heightMeters] : [];
+    })
+    .toSorted((left, right) => left - right);
+  return measured.length === 0 ? null : measured[Math.floor(measured.length / 2)];
+});
+
+/** Kad ni jedan razred nema mjerenja, ostaje medijan svih izmjerenih zgrada. */
+const overallMedian = (() => {
+  const measured = buildingMatches
+    .flatMap((match) => (match && match.source === "city-gis" ? [match.heightMeters] : []))
+    .toSorted((left, right) => left - right);
+  return measured.length === 0 ? 8 : measured[Math.floor(measured.length / 2)];
+})();
+
+function fallbackHeightMetres(area: number) {
+  return bandMedians[areaBand(area)] ?? overallMedian;
+}
+
+const buildings = visibleBuildings.map((feature, index) => {
   const area = feature.footprintArea;
   const kind = area >= 400 ? "large" : "home";
   const height = kind === "large" ? 14 + Math.min(8, area / 250) : 5 + Math.min(6, area / 80);
   const topDecile = topDecileIndices.has(feature.sourceIndex);
-  const heightMatch = topDecile ? matchHeight(feature) : null;
-  const heightMeters = heightMatch?.heightMeters ?? estimatedHeightMeters(area);
+  const match = buildingMatches[index];
+  const heightMeters = match?.heightMeters ?? fallbackHeightMetres(area);
+  const roof = match?.roof ?? null;
   return {
     id: `zgrada-${feature.sourceIndex}`,
     kind,
     height: round(Math.max(5, Math.min(kind === "large" ? 26 : 15, height * 1.3))),
     heightMeters: round(heightMeters),
-    heightSource: heightMatch?.source ?? "estimated",
+    heightSource: match?.source ?? "neighbourhood-median",
+    baseMetres: match?.baseMetres === null || match?.baseMetres === undefined
+      ? null
+      : round(match.baseMetres),
+    ridgeMetres: match?.ridgeMetres === null || match?.ridgeMetres === undefined
+      ? null
+      : round(match.ridgeMetres),
+    roof,
+    roofFrame:
+      roof === "pitched" && feature.geometry.type === "Polygon"
+        ? fittedRoofFrame(orientedBox(feature.geometry.coordinates[0]), area)
+        : null,
     footprintArea: round(area),
     topDecile,
     sourceVertexCount: feature.geometry.coordinates[0].length,
     tone: feature.sourceIndex % 5,
-    base: topDecile ? completePolygonPoints(feature) : polygonPoints(feature, 7),
+    base: completePolygonPoints(feature),
   };
 });
 
@@ -530,6 +688,7 @@ const relief = (() => {
   return {
     cells,
     holes,
+    grid: { cols, rows, columnLongitude, rowLatitude, firstCol, firstRow },
     scene: {
       file: RELIEF_FILE,
       cols,
@@ -547,6 +706,122 @@ const relief = (() => {
       source: header.izvor,
     },
   };
+})();
+
+/**
+ * Pokrov tla, upisan u istu mrežu u kojoj stoje i visine.
+ *
+ * Bez njega je tlo bilo isključivo funkcija visine i nagiba — dakle graf, ne
+ * mjesto: gola vrtača i sred sela izgledale su jednako jer su na istoj koti.
+ * Ovdje se u svaku ćeliju upiše ono što na njoj stvarno raste ili stoji, pa
+ * boja tla postaje podatak kao i sve ostalo na maketi.
+ *
+ * Redoslijed slaganja ide od općeg prema određenom: travnjak, makija, šuma,
+ * izgrađeno, odlagalište. Zadnji upis pobjeđuje jer tvrdi više — odlagalište
+ * na travnjaku je odlagalište.
+ *
+ * Rezultat je `uint8` po ćeliji, ista širina i visina kao mreža visina, u
+ * zasebnoj datoteci: 278 kB sirovo, ali blokovito, pa preko žice ostane malo.
+ */
+const COVER_CLASSES = [
+  "golo",
+  "travnjak",
+  "makija",
+  "suma",
+  "izgradjeno",
+  "odlagaliste",
+] as const;
+const COVER_FILE = "/igra/pokrov.bin";
+/** Koliko se ćelija izgrađenog širi oko tlocrta — dvorište, prilaz, ograda. */
+const BUILT_UP_SPREAD_CELLS = 3;
+
+const COVER_BY_GREEN: Record<string, number> = {
+  grass: 1,
+  grassland: 1,
+  meadow: 1,
+  garden: 1,
+  scrub: 2,
+  wood: 3,
+};
+
+function pointInRing(ring: readonly Position[], lon: number, lat: number) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function pointInPolygon(rings: readonly Position[][], lon: number, lat: number) {
+  if (rings.length === 0 || !pointInRing(rings[0], lon, lat)) return false;
+  for (let index = 1; index < rings.length; index += 1) {
+    if (pointInRing(rings[index], lon, lat)) return false;
+  }
+  return true;
+}
+
+const cover = (() => {
+  const { cols, rows, columnLongitude, rowLatitude, firstCol, firstRow } = relief.grid;
+  const cells = new Uint8Array(cols * rows);
+  const longitudes = Array.from({ length: cols }, (_, col) => columnLongitude(firstCol + col));
+  const latitudes = Array.from({ length: rows }, (_, row) => rowLatitude(firstRow + row));
+
+  function paint(feature: Feature, value: number, target: Uint8Array) {
+    if (feature.geometry.type !== "Polygon") return;
+    const rings = feature.geometry.coordinates;
+    const [west, south, east, north] = candidateBounds(feature);
+    // Binarno bi bilo brže, ali mreža ima 671 stupac — linearno traženje ruba
+    // je ovdje jeftinije od složenosti koja bi ga zamijenila.
+    for (let row = 0; row < rows; row += 1) {
+      const lat = latitudes[row];
+      if (lat < south || lat > north) continue;
+      for (let col = 0; col < cols; col += 1) {
+        const lon = longitudes[col];
+        if (lon < west || lon > east) continue;
+        if (pointInPolygon(rings, lon, lat)) target[row * cols + col] = value;
+      }
+    }
+  }
+
+  greenSource.features.forEach((feature) => {
+    const kind = String(
+      feature.properties.natural ?? feature.properties.landuse ?? feature.properties.leisure ?? "",
+    );
+    const value = COVER_BY_GREEN[kind];
+    if (value) paint(feature, value, cells);
+  });
+
+  // Izgrađeno se slika u svoju mrežu pa proširi: tlocrt sam po sebi nestane
+  // pod zgradom koja na njemu stoji, a ono što se vidi je dvorište oko nje.
+  const built = new Uint8Array(cols * rows);
+  buildingSource.features.forEach((feature) => paint(feature, 1, built));
+  for (let pass = 0; pass < BUILT_UP_SPREAD_CELLS; pass += 1) {
+    const previous = Uint8Array.from(built);
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        if (previous[row * cols + col]) continue;
+        const up = row > 0 && previous[(row - 1) * cols + col];
+        const down = row < rows - 1 && previous[(row + 1) * cols + col];
+        const left = col > 0 && previous[row * cols + col - 1];
+        const right = col < cols - 1 && previous[row * cols + col + 1];
+        if (up || down || left || right) built[row * cols + col] = 1;
+      }
+    }
+  }
+  for (let index = 0; index < cells.length; index += 1) {
+    if (built[index]) cells[index] = 4;
+  }
+
+  landfillSource.features.forEach((feature) => paint(feature, 5, cells));
+
+  const tally = COVER_CLASSES.map(
+    (_, value) => cells.reduce((count, cell) => (cell === value ? count + 1 : count), 0),
+  );
+  return { cells, tally };
 })();
 
 /**
@@ -639,7 +914,7 @@ const scene = {
   },
   vehiclePaths,
   trees,
-  relief: relief.scene,
+  relief: { ...relief.scene, cover: { file: COVER_FILE, classes: COVER_CLASSES } },
   labels,
 };
 
@@ -667,11 +942,16 @@ writeFileSync(
   path.join(reliefDirectory, path.basename(RELIEF_FILE)),
   Buffer.from(relief.cells.buffer, relief.cells.byteOffset, relief.cells.byteLength),
 );
+writeFileSync(
+  path.join(reliefDirectory, path.basename(COVER_FILE)),
+  Buffer.from(cover.cells.buffer, cover.cells.byteOffset, cover.cells.byteLength),
+);
 
 process.stdout.write(
   `Generirano: ${path.relative(root, outputPath)} (${roads.length} cesta, ` +
     `${buildings.length} zgrada, ${trees.length} stabala, reljef ` +
     `${relief.scene.cols} × ${relief.scene.rows} ćelija, ` +
-    `${relief.scene.lowestMetres}–${relief.scene.highestMetres} m` +
+    `${relief.scene.lowestMetres}–${relief.scene.highestMetres} m, pokrov ` +
+    `${COVER_CLASSES.map((name, value) => `${name} ${cover.tally[value]}`).join(", ")}` +
     `${relief.holes ? `, popunjeno ${relief.holes} praznih ćelija` : ""})\n`,
 );
