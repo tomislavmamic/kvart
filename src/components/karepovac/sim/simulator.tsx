@@ -203,6 +203,15 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       const nadeni = najbliziDostupan(pocetna, satIzAdrese);
       if (nadeni) postaviPomak(nadeni.pomak);
     }
+
+    // Želja za mirovanjem se prati, ne samo pročita pri otvaranju. Tko je
+    // uključi dok karta stoji otvorena, dobiva mirnu kartu odmah — a ne tek
+    // kad je sljedeći put učita. Isto radi i maketa na `/igra`.
+    const prati = (d: MediaQueryListEvent) => {
+      postaviStanje((s) => ({ ...s, prikaz: { ...s.prikaz, mirovanje: d.matches } }));
+    };
+    mir.addEventListener("change", prati);
+    return () => mir.removeEventListener("change", prati);
   }, [pocetna]);
 
   /** Dodaje WebGL sloj ispod postaja, čim i karta i osnove postoje. */
