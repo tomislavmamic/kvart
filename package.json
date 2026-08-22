@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:karta": "next dev --webpack",
     "build": "npm run generate:igra && next build",
     "start": "next start",
     "test": "tsx --test \"{src,tests,scripts}/**/*.test.ts\" \"src/**/*.test.tsx\"",

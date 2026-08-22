@@ -45,6 +45,17 @@ import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
  * koji su gotovi. Na kraju stiže izmjereni vjetar s AZO-a i zamjenjuje
  * modelski ondje gdje ga ima.
  *
+ * ## Pod `next dev` karta ostaje prazna
+ *
+ * Turbopackov razvojni način ne posluži MapLibreove radnike: zahtjevi za
+ * `turbopack-worker-…` ostanu visjeti, pa svi GeoJSON izvori zauvijek stoje
+ * na „neučitano”. Karta pritom ne javi nikakvu grešku — pločice se skinu,
+ * platno ima veličinu, a ne nacrta se ništa. Rasterski slojevi rade jer im
+ * radnik ne treba, pa je zavaravajuće: izgleda kao greška u ovom kodu.
+ *
+ * Za razvoj karte zato ide `npm run dev:karta` (Webpack), gdje radi. Gradnja
+ * i `npm start` rade oba načina — provjereno 22. 8. 2026.
+ *
  * Nijedan od tih koraka nije uvjet za prethodni. Ako osnove ne stignu, karta
  * ostaje karta; ako radnici padnu, piše zašto; ako AZO šuti, satovi ostaju na
  * modelu i tako i piše uz njih.
