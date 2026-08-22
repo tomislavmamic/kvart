@@ -84,6 +84,19 @@ export function UpravljackaPloca({
 
   return (
     <div className="space-y-5 p-4">
+      {/* Ograda stoji prva i ne da se zatvoriti. Perjanicu ovdje računa model
+          čestica, građen da pokaže kuda zrak ide — ne da pogodi koliko ga
+          ima. Bazdareni model raspršenja na istim satima daje drukčiju sliku,
+          pa bi prešutjeti razliku značilo prikaz predstaviti kao predviđanje. */}
+      <aside className="rounded-lg border-l-[3px] border-amber-500 bg-amber-50/70 px-3 py-2.5 text-xs leading-5 text-zinc-700">
+        <b className="text-zinc-900">Ovo je prikaz, ne mjerenje.</b> Perjanicu
+        crta model čestica: pokazuje kuda zrak ide, ali širina i doseg nisu
+        provjereni mjerenjem. Bazdareni model raspršenja na istim satima daje
+        užu perjanicu pri umjerenom vjetru. Boja je usidrena na medijan
+        izmjeren na postaji uz plohu — jedina točka u kojoj se prikaz i
+        mjerenje dodiruju.
+      </aside>
+
       <section>
         <Naslov>Što gledam</Naslov>
         <div className="space-y-4">
@@ -141,8 +154,8 @@ export function UpravljackaPloca({
                     onChange={(e) => postaviTvar(tvar, { jacina: Number(e.target.value) })}
                     aria-valuetext={
                       t.jacina === 1
-                        ? "koliko ploha ispušta prema mjerenjima"
-                        : `${t.jacina.toFixed(1).replace(".", ",")} puta više nego prema mjerenjima — zamišljeni slučaj`
+                        ? "zadana jačina prikaza"
+                        : `${t.jacina.toFixed(1).replace(".", ",")} puta jače od zadanog — zamišljeni slučaj`
                     }
                     className="fokus mt-1 w-full cursor-pointer accent-zinc-900"
                   />
@@ -150,8 +163,8 @@ export function UpravljackaPloca({
                     {t.jacina === 0
                       ? "Ploha ne ispušta ništa."
                       : Math.abs(t.jacina - 1) < 0.05
-                        ? "Onoliko koliko ploha ispušta prema mjerenjima."
-                        : `Zamišljeni slučaj: ${t.jacina.toFixed(1).replace(".", ",")}× od izmjerenog.`}
+                        ? "Zadana jačina — ona pri kojoj boja odgovara medijanu izmjerenom na postaji."
+                        : `Zamišljeni slučaj: ${t.jacina.toFixed(1).replace(".", ",")}× od zadanog.`}
                   </p>
                 </div>
               </div>
