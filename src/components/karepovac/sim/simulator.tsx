@@ -176,6 +176,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   // Ploča je zatvorena dok je netko ne zatraži: karta je ono što se gleda.
   const [plocaOtvorena, postaviPlocu] = useState(false);
   const [sadaOcitanja, postaviSada] = useState<readonly Vjetar[]>([]);
+  /** Dohvat vjetra traje dvadesetak sekundi; do tada pribadače čekaju. */
+  const [vjetarStigao, postaviVjetarStigao] = useState(false);
   /** Satni nizovi po postaji; AZO ih objavljuje, DHMZ i METAR ne. */
   const [serije, postaviSerije] = useState<
     ReadonlyMap<Postaja, ReadonlyMap<string, SatniVjetar>>
@@ -395,6 +397,9 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       } catch {
         // Izmjereni vjetar je poboljšanje, ne uvjet: bez njega satovi ostaju
         // na modelu i uz njih to i piše.
+      } finally {
+        // I kad padne: pokušali smo, pa postaja bez brojke doista šuti.
+        if (!otkazano) postaviVjetarStigao(true);
       }
     })();
     return () => {
@@ -423,8 +428,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   // Odabrani sat → brojke na pribadačama.
   useEffect(() => {
-    oznakeRef.current?.postavi(kadar, sadaOcitanja, serije, crta.kadrovi);
-  }, [kadar, sadaOcitanja, serije, crta, stanjeKarte]);
+    oznakeRef.current?.postavi(kadar, sadaOcitanja, serije, crta.kadrovi, vjetarStigao);
+  }, [kadar, sadaOcitanja, serije, crta, vjetarStigao, stanjeKarte]);
 
   // Postavke prikaza → scena.
   useEffect(() => {

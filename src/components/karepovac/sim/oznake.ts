@@ -96,25 +96,78 @@ export function natpisMjerenja(
 }
 
 /**
+ * Zadnje očitanje vjetra iz satnog niza, zaključno s odabranim satom.
+ *
+ * Args:
+ *   niz: Satni niz te postaje.
+ *   sat: Odabrani sat, puni ISO 8601.
+ *
+ * Returns:
+ *   Zadnje očitanje u tom satu ili prije njega, ili ništa.
+ */
+export function zadnjiIzNiza(
+  niz: ReadonlyMap<string, SatniVjetar> | undefined,
+  sat: string,
+): SatniVjetar | null {
+  if (!niz) return null;
+  let najbolji: SatniVjetar | null = null;
+  for (const v of niz.values()) {
+    if (v.sat > sat) continue;
+    if (!najbolji || v.sat > najbolji.sat) najbolji = v;
+  }
+  return najbolji;
+}
+
+/**
  * Što pribadača postaje vjetra piše u zadanom satu.
  *
- * DHMZ i METAR objavljuju samo zadnje očitanje, pa brojka stoji jedino dok je
- * klizač na sadašnjem satu. Povučen unatrag, ostaje mjesto bez brojke.
+ * Redoslijed je isti kao kod postaja uz plohu: prvo očitanje **iz odabranog
+ * sata**, pa zadnje objavljeno **uz sat u kojem je izmjereno**, pa tek onda
+ * praznina. Brojka bez sata bila bi tvrdnja o krivom satu; prazna pribadača
+ * bila bi tvrdnja da postaja ne mjeri.
+ *
+ * Razlika prema plohi je u tome što DHMZ i METAR ne objavljuju povijest, nego
+ * samo zadnje očitanje. Ono zna biti i **novije** od odabranog sata — gledaš
+ * jutros, a postaja javlja podne. Zato sat uz brojku ondje nije ukras nego
+ * jedino što razliku čini vidljivom.
  */
 export function natpisVjetra(
   kadar: Kadar | null,
   imena: string,
   ocitanje: Vjetar | undefined,
-  /** Satni niz te postaje, ako ga uopće objavljuje. */
+  /** Očitanje te postaje točno u odabranom satu, ako ga ima. */
   niz?: SatniVjetar | undefined,
-): { imena: string; vrijednost: string; nema: boolean } {
-  // AZO objavljuje satni niz, pa njegova brojka prati klizač kao i sve ostalo.
-  if (niz) return { imena, vrijednost: brzinaISmjer(niz), nema: false };
-  // DHMZ i METAR objavljuju samo zadnje očitanje; ono vrijedi jedino sada.
-  const naSada = kadar?.vrsta === "sada";
-  if (!naSada) return { imena, vrijednost: "bez povijesti", nema: true };
-  if (!ocitanje) return { imena, vrijednost: "šuti", nema: true };
-  return { imena, vrijednost: brzinaISmjer(ocitanje), nema: false };
+  /** Zadnje očitanje iz njezina niza zaključno s odabranim satom. */
+  raniji?: SatniVjetar | null,
+  /** Je li dohvat vjetra uopće završio; do tada se ne zna ništa. */
+  stiglo: boolean = true,
+): { imena: string; vrijednost: string; nema: boolean; kada: string | null } {
+  if (niz) return { imena, vrijednost: brzinaISmjer(niz), nema: false, kada: null };
+  if (raniji) {
+    return {
+      imena,
+      vrijednost: brzinaISmjer(raniji),
+      nema: false,
+      kada: satMjesno(raniji.sat),
+    };
+  }
+  if (ocitanje) {
+    return {
+      imena,
+      vrijednost: brzinaISmjer(ocitanje),
+      nema: false,
+      kada: satMjesno(ocitanje.opazeno),
+    };
+  }
+  // Dok dohvat traje, postaja nije šutljiva nego neispitana. Razlika je
+  // važna: „šuti” je tvrdnja o postaji, a čekanje je stanje ove stranice.
+  // Dohvat s AZO-a traje dvadesetak sekundi jer se pozivi moraju razmaknuti.
+  return {
+    imena,
+    vrijednost: stiglo ? "šuti" : "…",
+    nema: true,
+    kada: null,
+  };
 }
 
 export type Oznake = {
@@ -125,6 +178,8 @@ export type Oznake = {
     serije: ReadonlyMap<Postaja, ReadonlyMap<string, SatniVjetar>>,
     /** Svi kadrovi crte; iz njih se vadi zadnje objavljeno mjerenje. */
     kadrovi: readonly Kadar[],
+    /** Je li dohvat vjetra završio; do tada pribadače čekaju, ne šute. */
+    vjetarStigao: boolean,
   ): void;
   vidljivost(vidljive: boolean): void;
   ukloni(): void;
@@ -251,7 +306,7 @@ export function stvoriOznake(
   });
 
   return {
-    postavi(kadar, sada, serije, kadrovi) {
+    postavi(kadar, sada, serije, kadrovi, vjetarStigao) {
       // Postaje uz plohu prate klizač: njihov niz je satni.
       const redci = SIM_POSTAJE.map((p) => {
         const zadnje = kadar ? zadnjeOcitanje(kadrovi, kadar.pomak, p.oznaka) : null;
@@ -267,31 +322,37 @@ export function stvoriOznake(
         "Izmjereno na postajama uz plohu, µg/m³. Kad uz brojku stoji sat, " +
         "mjerenje za odabrani sat još nije objavljeno, pa se pokazuje zadnje.";
 
-      // Postaje vjetra nemaju povijest, pa brojka stoji samo na sadašnjem satu.
-      const naSada = kadar?.vrsta === "sada";
       for (const m of vjetrovi) {
         const imena = m.postaje.map((k) => POSTAJE[k].oznaka).join(" · ");
         // Ako neka od postaja na ovoj točki ima satni niz, on ima prednost.
         const izNiza = kadar
           ? m.postaje.map((k) => serije.get(k)?.get(kadar.sat)).find(Boolean)
           : undefined;
+        const raniji = kadar
+          ? m.postaje.map((k) => zadnjiIzNiza(serije.get(k), kadar.sat)).find(Boolean)
+          : null;
         const n = natpisVjetra(
           kadar,
           imena,
           sada.find((v) => m.postaje.includes(v.postaja)),
           izNiza,
+          raniji,
+          vjetarStigao,
         );
         const klasa = n.nema ? "sim-oznaka__red sim-oznaka__red--nema" : "sim-oznaka__red";
         const v = n.nema ? `<i>${n.vrijednost}</i>` : n.vrijednost;
-        m.ploca.innerHTML = `<span class="${klasa}"><b>${n.imena}</b> ${v}</span>`;
-        const opis = rijecima(izNiza ?? (naSada ? sada.find((v) => m.postaje.includes(v.postaja)) : undefined));
-        m.ploca.title = izNiza
-          ? `${imena} — ${opis}, izmjereno u odabranom satu`
-          : naSada
-            ? opis
-              ? `${imena} — ${opis}, zadnje objavljeno očitanje`
-              : `${imena} — trenutačno ne javlja`
-            : `${imena} — objavljuje samo zadnje očitanje, ne i povijest`;
+        const kada = n.kada ? ` <em>${n.kada}</em>` : "";
+        m.ploca.innerHTML = `<span class="${klasa}"><b>${n.imena}</b> ${v}${kada}</span>`;
+        const opis = rijecima(
+          izNiza ?? raniji ?? sada.find((v) => m.postaje.includes(v.postaja)),
+        );
+        m.ploca.title = !opis
+          ? vjetarStigao
+            ? `${imena} — trenutačno ne javlja`
+            : `${imena} — čekam očitanje`
+          : izNiza
+            ? `${imena} — ${opis}, izmjereno u odabranom satu`
+            : `${imena} — ${opis}, izmjereno u ${n.kada}, ne u odabranom satu`;
         m.ploca.setAttribute("aria-label", m.ploca.title);
       }
     },

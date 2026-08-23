@@ -5,6 +5,7 @@ import {
   natpisMjerenja,
   natpisVjetra,
   zadnjeOcitanje,
+  zadnjiIzNiza,
 } from "@/components/karepovac/sim/oznake";
 import type { Kadar } from "@/lib/sim/kadrovi";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
@@ -63,22 +64,25 @@ test("bez kadra se ne izmišlja vrijednost", () => {
   assert.equal(natpisMjerenja(null, K1).vrijednost, "—");
 });
 
-test("postaja vjetra pokazuje brojku samo na sadašnjem satu", () => {
+test("postaja bez povijesti pokazuje zadnje očitanje, uz sat", () => {
   const sada = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-Marjan", OCITANJE);
-  assert.match(sada.vrijednost, /^3,4 m\/s <svg/, "brzina, mjera, pa strelica");
-  assert.equal(sada.nema, false);
+  assert.match(sada.vrijednost, /^3,4 m\/s <svg/);
+  assert.ok(sada.kada, "i na sadašnjem satu stoji sat očitanja, jer nije satni niz");
 
-  // Isto očitanje, ali klizač je u prošlosti: DHMZ i METAR nemaju povijest,
-  // pa bi ista brojka ondje bila tvrdnja koju nitko nije izmjerio.
+  // Klizač u prošlosti: DHMZ nema povijest, pa je zadnje očitanje jedino što
+  // postoji. Ono je čak i novije od odabranog sata — zato sat mora stajati uz
+  // brojku, inače bi ispalo da je izmjereno onda kad nije.
   const prije = natpisVjetra(kadar(), "Split-Marjan", OCITANJE);
-  assert.equal(prije.vrijednost, "bez povijesti");
-  assert.equal(prije.nema, true);
+  assert.match(prije.vrijednost, /^3,4 m\/s <svg/);
+  assert.ok(prije.kada, "brojka iz drugog sata ne smije stajati bez sata");
+  assert.equal(prije.nema, false);
 });
 
-test("postaja koja trenutačno ne javlja to i kaže", () => {
+test("postaja koja nikad nije javila to i kaže", () => {
   const n = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-Marjan", undefined);
   assert.equal(n.vrijednost, "šuti");
   assert.equal(n.nema, true);
+  assert.equal(n.kada, null);
 });
 
 test("tišina se piše riječju, jer smjer tada ništa ne znači", () => {
@@ -222,4 +226,48 @@ test("pri tišini nema strelice, jer smjer tada ništa ne znači", () => {
   });
   assert.equal(n.vrijednost, "tišina");
   assert.doesNotMatch(n.vrijednost, /svg/);
+});
+
+test("očitanje iz odabranog sata nema sat uz sebe, ono iz drugog ga ima", () => {
+  const k = kadar();
+  const uSatu = { sat: k.sat, smjerOd: 200, brzina: 2.2, tisina: false, izvor: "split2" as const };
+  const raniji = { ...uSatu, sat: "2026-08-21T11:00:00.000Z", brzina: 1.4 };
+
+  const tocno = natpisVjetra(k, "Split-2", undefined, uSatu, raniji);
+  assert.equal(tocno.kada, null, "za odabrani sat sat se ne piše");
+  assert.match(tocno.vrijednost, /^2,2 m\/s/);
+
+  const rupa = natpisVjetra(k, "Split-2", undefined, undefined, raniji);
+  assert.ok(rupa.kada, "rupa u nizu pada na ranije očitanje, uz sat");
+  assert.match(rupa.vrijednost, /^1,4 m\/s/);
+});
+
+test("iz niza se bira zadnje očitanje do odabranog sata, ne bilo koje", () => {
+  const niz = new Map(
+    ["09:00", "11:00", "16:00"].map((h) => {
+      const sat = `2026-08-21T${h.slice(0, 2)}:00:00.000Z`;
+      return [sat, { sat, smjerOd: 90, brzina: Number(h.slice(0, 2)), tisina: false, izvor: "split2" as const }];
+    }),
+  );
+  const nadeno = zadnjiIzNiza(niz, "2026-08-21T14:00:00.000Z");
+  assert.equal(nadeno?.brzina, 11, "uzima 11:00, ne 16:00 koji je poslije");
+  assert.equal(zadnjiIzNiza(niz, "2026-08-21T08:00:00.000Z"), null, "prije svega — ništa");
+  assert.equal(zadnjiIzNiza(undefined, "2026-08-21T14:00:00.000Z"), null);
+});
+
+test("dok dohvat traje, postaja čeka — ne šuti", () => {
+  // „šuti” je tvrdnja o postaji; dok se ne zna, tvrdnje nema. Dohvat s AZO-a
+  // traje dvadesetak sekundi, pa bi inače cijela mreža na prvi pogled
+  // izgledala kao da je pala.
+  const ceka = natpisVjetra(kadar(), "Split-3", undefined, undefined, null, false);
+  assert.equal(ceka.vrijednost, "…");
+  assert.equal(ceka.nema, true);
+
+  const stiglo = natpisVjetra(kadar(), "Split-3", undefined, undefined, null, true);
+  assert.equal(stiglo.vrijednost, "šuti", "kad je dohvat gotov, šutnja je nalaz");
+});
+
+test("kad podatak postoji, čekanje ga ne skriva", () => {
+  const n = natpisVjetra(kadar(), "Split-Marjan", OCITANJE, undefined, null, false);
+  assert.match(n.vrijednost, /^3,4 m\/s/, "ono što je stiglo pokazuje se odmah");
 });
