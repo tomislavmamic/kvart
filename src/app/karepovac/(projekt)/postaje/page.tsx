@@ -4,7 +4,11 @@ import {
   PageIntro,
   SectionHeading,
 } from "@/components/karepovac/project-components";
-import { SluzbenePostaje } from "@/components/karepovac/sluzbena-mjerenja";
+import {
+  MjestoPostaje,
+  SluzbenePostaje,
+  VjetrokaziOkoKvarta,
+} from "@/components/karepovac/sluzbena-mjerenja";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -17,7 +21,7 @@ export default function PostajePage() {
   return (
     <div className="space-y-14">
       <PageIntro title="Dvije službene postaje već stoje na Karepovcu">
-        <p>Na jugoistočnom rubu odlagališta rade dvije mjerne postaje i objavljuju satne tablice, mjesec po mjesecu. Jednu vodi Čistoća, drugu Grad Split; obje mjeri Nastavni zavod za javno zdravstvo. Nismo to znali dok nismo potražili — pa to ovdje pišemo prije nego što išta kažemo o vlastitim uređajima.</p>
+        <p>Jugoistočno od odlagališta, u udolini prema Kamenu, rade dvije mjerne postaje i objavljuju satne tablice, mjesec po mjesecu. Jednu vodi Čistoća, drugu Grad Split; obje mjeri Nastavni zavod za javno zdravstvo. Nismo to znali dok nismo potražili — pa to ovdje pišemo prije nego što išta kažemo o vlastitim uređajima.</p>
       </PageIntro>
 
       <section>
@@ -27,12 +31,20 @@ export default function PostajePage() {
         </p>
       </section>
 
+      <section>
+        <MjestoPostaje />
+      </section>
+
+      <section>
+        <VjetrokaziOkoKvarta />
+      </section>
+
       <section className="overflow-hidden rounded-2xl border border-kamen-rub bg-white lg:grid lg:grid-cols-[1.1fr_0.9fr]">
         <StationField />
         <div className="flex flex-col justify-center bg-kamen-tinta p-6 text-white sm:p-9">
           <p className="text-3xl font-bold tracking-[-0.025em]">Naših postaja: nijedna</p>
           <p className="mt-4 text-lg leading-8 text-zinc-300">
-            Službene postaje stoje uz samo odlagalište, a ne u kvartu. Zato i dalje trebamo vlastite uređaje — najmanje tri, raspoređena tako da mjere ondje gdje ljudi žive. Nećemo prikazivati izmišljene oznake samo da bi karta izgledala popunjeno.
+            Obje službene postaje stoje na istoj točki, s druge strane odlagališta od kvarta. Zato i dalje trebamo vlastite uređaje — najmanje tri, raspoređena tako da mjere ondje gdje ljudi žive. Nećemo prikazivati izmišljene oznake samo da bi karta izgledala popunjeno.
           </p>
           <Link
             href="/karepovac/ukljuci-se"

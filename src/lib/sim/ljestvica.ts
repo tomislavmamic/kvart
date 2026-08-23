@@ -38,9 +38,17 @@ import { LJESTVICA, LJESTVICA_MERKAPTANA, type Ljestvica, type Tvar } from "@/li
  * kao da smrdi trostruko jače nego što model tvrdi.
  *
  * Izmjereno kao 99. postotak gustoće nad plohom, da jedna ćelija ne odlučuje.
- * Provjerava se u `simulacija.test.ts`.
+ * Provjerava se u `simulacija.test.ts` — i ta je provjera već jednom spasila
+ * ljestvicu: `eabae8e` je modelu dodao vrtložno lutanje, perjanica se raširila,
+ * a gustoća nad plohom pala s 29,9 na 19,33. Bez provjere bi ljestvica ostala
+ * na starom sidru i bojila kvart za pola reda veličine pretamno.
+ *
+ * Iz toga slijedi i slabost: sidro je ručno izmjeren broj koji tiho prati
+ * svaku promjenu modela prikaza. Kad se to lutanje ukloni (traži ga #19),
+ * pomaknut će se opet. Trajno rješenje nije novo mjerenje nego izlaz u
+ * µg/m³ — tada sidra nema jer ga nema što sidriti.
  */
-export const SIDRO_SIMULATORA = 29.9;
+export const SIDRO_SIMULATORA = 19.33;
 
 /** Jačina izvora koju gledatelj bira, u odnosu na bazdarenu. */
 export const JACINA = { najmanja: 0, najveca: 5, zadana: 1, korak: 0.1 } as const;

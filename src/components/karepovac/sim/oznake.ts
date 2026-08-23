@@ -14,8 +14,9 @@
  *   povučen unatrag, pribadača ostaje, a brojka nestane. Zadnje očitanje uz
  *   jučerašnji sat bilo bi tvrdnja koju nitko nije izmjerio.
  *
- * AZO-ove postaje (Split-2, Split-3) nemaju javno objavljene koordinate, pa se
- * ne zabadaju. Vidi napomenu uz `POSTAJE` u `src/lib/vjetar.ts`.
+ * Mjesta dolaze iz `POSTAJE_VJETRA` u generiranoj karti — jedini zapis
+ * koordinata u projektu. Ondje stoji i podrijetlo svake točke, pa se na karti
+ * ne može naći postaja koju nitko nije ni potražio.
  *
  * Radi se izravno s DOM-om, bez Reacta: pribadače žive i umiru s kartom, a ne
  * s prikazom, pa bi ih React morao stalno pratiti kroz `ref`.
@@ -27,6 +28,7 @@ import { TVARI } from "@/lib/dim";
 import type { Kadar } from "@/lib/sim/kadrovi";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
+import { POSTAJE_VJETRA } from "@/generated/karepovac-karta";
 import { POSTAJE, type Postaja, type Vjetar } from "@/lib/vjetar";
 import { strana } from "@/components/karepovac/sim/vjetar-kartica";
 
@@ -90,20 +92,21 @@ function broj(x: number, decimala: number): string {
   return x.toFixed(decimala).replace(".", ",");
 }
 
-/** Postaje vjetra koje se mogu zabosti — one kojima izvor objavljuje mjesto. */
-const SA_MJESTOM = (Object.keys(POSTAJE) as Postaja[]).filter(
-  (k) => POSTAJE[k].lat !== null && POSTAJE[k].lon !== null,
-);
+/** Mjesto svake postaje vjetra, po oznaci. */
+const MJESTA = new Map(POSTAJE_VJETRA.map((p) => [p.oznaka as Postaja, p]));
+
+/** Postaje vjetra koje se mogu zabosti — one kojima registar zna mjesto. */
+const SA_MJESTOM = (Object.keys(POSTAJE) as Postaja[]).filter((k) => MJESTA.has(k));
 
 /** Zračna luka nosi dvije postaje na istoj točki; zabada se jednom. */
 function poMjestu(): { kljuc: string; lat: number; lon: number; postaje: Postaja[] }[] {
   const skup = new Map<string, { kljuc: string; lat: number; lon: number; postaje: Postaja[] }>();
   for (const k of SA_MJESTOM) {
-    const p = POSTAJE[k];
+    const p = MJESTA.get(k)!;
     const kljuc = `${p.lat},${p.lon}`;
     const dosad = skup.get(kljuc);
     if (dosad) dosad.postaje.push(k);
-    else skup.set(kljuc, { kljuc, lat: p.lat!, lon: p.lon!, postaje: [k] });
+    else skup.set(kljuc, { kljuc, lat: p.lat, lon: p.lon, postaje: [k] });
   }
   return [...skup.values()];
 }

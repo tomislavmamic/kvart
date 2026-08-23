@@ -611,6 +611,42 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     group: "Zrak",
     phase: 1,
   },
+  // Jedini prijemnik na kojem se model uopće provjerava — i on stoji s
+  // *druge* strane odlagališta, u udolini prema Kamenu, 676 m od sredine
+  // plohe na 140°, dok su Dračevac i Bilice na 282° i 286°. Kut između je
+  // 150°, dakle gotovo suprotne strane. Sloj stoji uz oba modelirana sloja
+  // namjerno: tko upali „sati godišnje”, mora vidjeti i odakle je jačina tog
+  // polja bazdarena.
+  {
+    id: "postaje-zraka",
+    label: "Službene postaje za zrak (Karepovac 1 i 2)",
+    type: "geojson",
+    url: "/geo/postaje-zraka.geojson",
+    attribution: "NZJZ SDŽ · položaj provjeren na terenu i u LiDAR reljefu",
+    color: "#1d4ed8",
+    group: "Zrak",
+    phase: 1,
+  },
+  // Anemometri. Vjetar je jedini **izmjeren** ulaz modela, a nijedan mu se
+  // mjerač ne nalazi bliže od 4,3 km — i svi su na zapadu, u gradu ili iza
+  // Kozjaka. Sloj to pokazuje udaljenošću, a ne rečenicom u fusnoti.
+  //
+  // Samo najbliži, Split-3, pada unutar `MAP_MAX_BOUNDS`, i to na samom rubu.
+  // Ostala tri leže zapadnije nego što se karta da povući. Okvir se zbog toga
+  // ne rasteže: preko Splita i Kaštela nijedan od preostalih slojeva nema
+  // podatke, pa bi se dobilo tri četvrtine praznog okna. Umjesto toga to piše
+  // u natpisu sloja, a koordinate, udaljenosti i azimuti svih pet stoje u
+  // tablici na `/karepovac/postaje`.
+  {
+    id: "postaje-vjetra",
+    label: "Postaje za vjetar (4–16 km zapadno, uglavnom izvan okvira)",
+    type: "geojson",
+    url: "/geo/postaje-vjetra.geojson",
+    attribution: "AZO, DHMZ i METAR · položaji provjereni na terenu i u popisima",
+    color: "#0f766e",
+    group: "Zrak",
+    phase: 1,
+  },
   {
     id: "karepovac-prosjek",
     label: "Zrak s Karepovca — prosječni H₂S",
@@ -1389,11 +1425,22 @@ const POGLEDI: MapView[] = [
     razina: "pitanje",
     description:
       "Kamo vjetar nosi zrak s odlagališta, računato sat po sat kroz godinu " +
-      "dana i bazdareno na mjerenjima postaje uz samu plohu. Ovo je izvod, " +
-      "ne mjerenje: govori gdje je zrak s plohe češće prolazio, a ne koliko " +
-      "je tada smrdjelo — merkaptane, koje nos zapravo prepoznaje, model ne " +
-      "pogađa. Cijelo objašnjenje stoji na stranici o zraku.",
-    layerIds: ["karepovac-sati", "karepovac-prosjek", "reljef"],
+      "dana i bazdareno na mjerenjima jedne postaje — a ona stoji u udolini " +
+      "jugoistočno od plohe, s druge strane odlagališta nego kvart. Upali " +
+      "sloj postaja i vidjet ćeš gdje: smjer prema njoj i smjer prema " +
+      "Dračevcu razilaze se za 153°. Ovo je izvod, ne mjerenje: govori gdje " +
+      "je zrak s plohe češće prolazio, a ne koliko je tada smrdjelo — " +
+      "merkaptane, koje nos zapravo prepoznaje, model ne pogađa. Vjetar koji " +
+      "sve to nosi mjeri se 4 do 16 km zapadno; od tih postaja unutar ovog " +
+      "okvira stoji samo najbliža, pa njihov popis s udaljenostima stoji na " +
+      "stranici o zraku. Cijelo objašnjenje stoji ondje.",
+    layerIds: [
+      "karepovac-sati",
+      "karepovac-prosjek",
+      "postaje-zraka",
+      "postaje-vjetra",
+      "reljef",
+    ],
     legend: [
       { boja: "#fdedc7", kod: "malo", opis: "rijetko u perjanici" },
       { boja: "#e99c42", kod: "srednje", opis: "povremeno" },

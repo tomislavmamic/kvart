@@ -20,7 +20,7 @@ Ključna je usporedba unutar tihih sati: vedro prema oblačno. Naoblaka je ono
 što zaustavlja izračivanje, pa ako vedrina ne doda ništa iznad same tišine,
 otjecanja nema i nema se što modelirati.
 
-## Nalaz: otjecanja nema, bio je to samo kalendar
+## Nalaz: na ovoj postaji otjecanja nema — a više od toga se odavde ne vidi
 
 Sirove brojke izgledaju uvjerljivo — u tišini je sumporovodika pod vedrim
 nebom 1,3× više nego pod oblačnim, merkaptana 2,6×, a nadzorni ugljikov
@@ -36,8 +36,33 @@ među sektorima ostaje jednak kao po vjetrovitim satima (1,55× prema 1,57×).
 
 Ono što u tablici **jest** stvarno je razlika između tišine i vjetra: medijan
 sumporovodika je 1,8 µg/m³ u tihim satima prema 1,1 u vjetrovitima. Zastoj
-zraka nosi, vedrina ne. Skripta ostaje da se nalaz može ponoviti, i da se ne
-provjerava dvaput.
+zraka nosi, vedrina ne.
+
+## Dokle taj nalaz seže
+
+Ranija inačica ovog teksta iz gornjeg je računa izvela da otjecanja **nema**.
+To je više nego što se odavde može vidjeti, i sada se zna zašto.
+
+Obje postaje stoje na jednoj točki, a ta točka nije između plohe i kvarta.
+Nađena je na terenu (43,516651 / 16,516912, vidi `postaje.py`): udolina
+jugoistočno od plohe, prema Kamenu, 676 m od sredine odlagališta na azimutu
+140°, na 40 m nadmorske visine — dakle 74 m ispod vrha plohe. Dračevac je s
+iste sredine na 282°, Bilice na 286°. Kut između smjera prema postaji i smjera
+prema kvartu je 153°: **gotovo suprotne strane odlagališta**.
+
+Hladan zrak ne bira jednu padinu. Ako otječe, otječe niz svaku, i onda su
+sjeverozapadna padina (prema Dračevcu) i jugoistočna udolina (prema postaji)
+dva odvojena toka. Ovaj račun mjeri drugi od njih. Da na prvom otjecanja ima,
+ovoj postaji to ne bi ni na koji način moralo doći do senzora.
+
+Pošteno čitanje je dakle: **u udolini jugoistočno od plohe otjecanje ne
+objašnjava ništa iznad samog zastoja zraka.** O sjeverozapadnoj padini, na
+kojoj ljudi žive i s koje dolaze prijave, ovaj račun ne govori ni za ni protiv.
+Na to pitanje odgovaraju prostorno raspoređene prijave (`odour_reports`) i
+motrišta u kvartu — ili, kao zamjena dok njih nema, ugrađivanje katabatičkog
+člana u polje vjetra i ponovno bazdarenje nad istim satima (vidi #21).
+
+Skripta ostaje da se nalaz može ponoviti, i da se ne provjerava dvaput.
 
 Pokretanje: `npm run provjeri-vedre-noci`
 """

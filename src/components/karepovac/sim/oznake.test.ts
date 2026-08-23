@@ -4,6 +4,7 @@ import test from "node:test";
 import { natpisMjerenja, natpisVjetra } from "@/components/karepovac/sim/oznake";
 import type { Kadar } from "@/lib/sim/kadrovi";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
+import { POSTAJE_VJETRA } from "@/generated/karepovac-karta";
 import { POSTAJE, type Vjetar } from "@/lib/vjetar";
 
 const K1 = SIM_POSTAJE[0];
@@ -85,17 +86,23 @@ test("tišina se piše riječju, jer smjer tada ništa ne znači", () => {
   assert.equal(n.vrijednost, "tišina");
 });
 
-test("svaka postaja vjetra ima provjereno mjesto", () => {
-  // AZO ne objavljuje koordinate; izmišljena točka na karti izgleda jednako
-  // pouzdano kao izmjerena, pa se te postaje ne zabadaju.
-  // Sve su nađene na terenu ili u popisu izvora; nijedna nije pogođena.
-  assert.ok(Math.abs(POSTAJE.split3.lat - 43.504211) < 1e-5);
-  assert.ok(Math.abs(POSTAJE.split2.lat - 43.518471) < 1e-5);
-  assert.equal(POSTAJE.marjan.lat, 43.508333);
-  assert.equal(POSTAJE.aerodrom.lon, 16.301);
+test("svaka postaja vjetra ima provjereno mjesto, iz jednog registra", () => {
+  const mjesta = new Map<string, (typeof POSTAJE_VJETRA)[number]>(
+    POSTAJE_VJETRA.map((p) => [p.oznaka, p]),
+  );
+  for (const oznaka of Object.keys(POSTAJE)) {
+    assert.ok(mjesta.has(oznaka), `${oznaka} nema mjesto u registru`);
+  }
+  // Podrijetlo svake točke mora biti zapisano; bez toga se ne zna je li
+  // nađena na terenu ili prepisana iz popisa koji promašuje desetke metara.
+  for (const p of POSTAJE_VJETRA) {
+    assert.ok(p.podrijetlo.length > 10, `${p.oznaka} bez podrijetla`);
+  }
+  const aerodrom = mjesta.get("aerodrom")!;
+  const ldsp = mjesta.get("ldsp")!;
   assert.deepEqual(
-    [POSTAJE.aerodrom.lat, POSTAJE.aerodrom.lon],
-    [POSTAJE.ldsp.lat, POSTAJE.ldsp.lon],
+    [aerodrom.lat, aerodrom.lon],
+    [ldsp.lat, ldsp.lon],
     "METAR mjeri na istoj zračnoj luci, pa je to jedna točka",
   );
 });

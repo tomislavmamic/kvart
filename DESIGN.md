@@ -542,21 +542,115 @@ controls, only a 44px pause button. Reduced-motion preference starts the scene
 paused. The source line and the statement that the model is simplified are
 part of the component, not optional footer copy.
 
-`/igra` is the WebGL expression of the same sourced model. It inverts the
-generated isometric coordinates into a true ground plane before a Three.js
-orthographic camera is applied. Its angle remains fixed; wheel/pinch zoom works
-toward the pointer from 1× to 5×, drag pans only within bounded scene limits,
-and visible plus, minus and reset controls provide keyboard equivalents. Roads are merged ribbon meshes, buildings are
-conservative extrusions, trees are instanced, and the aqueduct is repeated
-limestone massing on its generated alignment. Scene-only colours — muted water
-`#9bc9ce`, terrain greens, limestone and clay building tones — are deliberately
-outside the product palette and must never become interface tokens. Three.js is
-loaded only on this route, device pixel ratio is capped, and pausing stops the
-animation frame loop. If WebGL fails, the visible recovery path is `/svg`.
-The largest 10% of building footprints retain every source vertex. Their
-vertical scale uses a measured City-GIS height only after an 85% geometric
-overlap match, then OSM height or floor count, then a visibly conservative
-estimate. Footprint area must never be reused as a proxy for height.
+`/igra` is the WebGL expression of the same sourced model, standing on real
+ground. Its terrain is the DGU LiDAR bare-earth model (DMR) at its native 3 m
+step, cropped to the scene and shipped as a 0,5 MB `int16` binary beside the
+generated module — half a million heights would otherwise arrive as JavaScript
+number literals. Roads, the neighbourhood boundary, buildings, trees, the
+aqueduct and the traffic all read their height from that grid rather than
+lying on a plane: roads are resampled every 4 m before they are draped,
+buildings take their floor from the lowest point of their own footprint and
+their roof from the mean, and aqueduct piers grow to reach one level deck.
+
+Everything with a height lives in one group whose `scale.y` **is** the
+exaggeration, so ×1, ×2 and ×3,5 restretch hill, house and pier together
+without rebuilding a triangle. ×1 is the true proportion — 105 m of relief
+across 2 km reads nearly flat, and that is the honest picture; ×2 is the
+default because it is the scale the building massing was already drawn at.
+The control shows the current factor as its label, because there is no icon
+for "twice as tall".
+
+Terrain colour and contours are computed per fragment from the vertex's own
+elevation and the unexaggerated geometry normal — green in the valley, dry
+ochre mid-slope, bare limestone on every steep face — with 5 m contours and a
+heavier line every 25 m. The block sits on a plinth cut at −40 m whose face
+carries a band every 10 m, so the height of the kvart can be counted off the
+side the way the contours count off the top. None of these colours may become
+interface tokens.
+
+The camera is orthographic and now orbits: drag rotates, right-drag or two
+fingers pan, wheel or pinch zooms 1× to 5× toward the pointer, and plus, minus,
+reset and the exaggeration factor are visible keyboard-reachable controls.
+Rotation is bounded above the horizon, panning is bounded to the grid, and
+reset returns the angle, the zoom and the exaggeration at once. Relief is the
+reason the fixed angle went: a slope you cannot look across is a slope you
+cannot read.
+
+Three.js is loaded only on this route, device pixel ratio is capped, the grid
+is thinned to 6 m on small or low-core devices, and pausing stops the
+animation frame loop. If WebGL fails or the grid does not arrive, the visible
+recovery path is `/svg`.
+
+**Buildings are measured where a measurement exists, and say so where none
+does.** Every footprint is matched against the City-GIS height layer, not only
+the largest decile: 181 of 415 buildings carry a measured height, and they are
+placed between their own `kota_dna` and `kota_vrha` — absolute metres above
+sea — rather than sampled off the terrain and given a guess. The two sources
+agree: the city's floor elevation sits a median 0,30 m below the LiDAR
+surface. The 85% overlap threshold is not tuned; the distribution is bimodal,
+a building either coincides almost entirely or is absent, and lowering the
+threshold to 70% buys three buildings out of 415. A wrongly joined height is
+worse than an unknown one, because it looks like a measurement.
+
+The 231 buildings with no match take **the median measured height of buildings
+with the same footprint size in this same neighbourhood**, and the scene names
+that source `neighbourhood-median` — never `estimated`. The three invented
+constants it replaces (6, 7 and 8 m by area) were all too low; the measured
+medians are 7,9, 8,9 and 9,8 m. Area remains a poor predictor — the median
+moves three metres across a twentyfold range of footprint while the spread
+inside one band is twice that — which is why the fallback is a median and not
+a formula, and why footprint area must never be reused as a proxy for height.
+
+Roof shape is measured too, from two sources that are allowed to say different
+amounts. The City-GIS `krov` field distinguishes flat from pitched — that is
+all it knows — and OpenStreetMap's `roof:shape` is the only source that names
+a shape at all. **The city always wins on whether a roof is pitched.** Where
+both speak (97 buildings) they agree 77% of the time, and every one of the 22
+disagreements runs the same way: the city measured a flat roof and OSM claims
+gabled, never the reverse. That is the signature of a default value smeared
+across a layer — 405 of 528 OSM buildings carry `gabled` — not of 405
+observations.
+
+OSM is therefore allowed exactly two things: to name the shape of a pitch the
+city has already confirmed, and to speak where the city is silent. The second
+is a correction rather than a relaxed standard. Those 134 buildings previously
+rendered as flat boxes, and a flat box in a village roofed in tile is itself a
+claim — one wrong more often (77%) than OSM's. Roof knowledge now covers 315
+of 415 buildings, up from 181, and `roofSource` records which layer spoke.
+
+The roof itself is raised over the footprint's minimum-area rectangle at a 22°
+pitch, capped at 45% of the building's height so a wide low shed does not grow
+a tent. Gabled and hipped are the same geometry: a gable runs its ridge to
+both end walls so the end triangles stand up as gables, a hip pulls the ridge
+in by half the width so the same triangles lie down as slopes, and a nearly
+square plan collapses the hip to a pyramid. Pitched roofs with no OSM shape
+stay hipped, because that is the form no footprint makes absurd. A roof is
+only raised where the footprint fills its rectangle to at least 78% — an
+L-shaped plan would otherwise get a table on posts — and those that fail keep
+plain massing up to their measured ridge. Every footprint now keeps every
+source vertex.
+
+**`/igra` has no chrome at all.** It is the one route where `SiteChrome`
+renders nothing — not even the floating pill `/karta` gets — because the model
+is the page. The way out is a single cross in the top corner; every control is
+one 44px column on the right: zoom in, zoom out, reset, the exaggeration
+factor, pause, and ⓘ. Nothing else is drawn over the terrain.
+
+The title, the camera help and the full source line live inside the ⓘ panel,
+which stays in the document while closed rather than being mounted on click:
+the OpenStreetMap and DGU attribution is a licence condition, and it has to
+survive a reader that never runs the script. The panel is what the canvas's
+`aria-describedby` points at, so the camera instructions are still announced.
+
+**The ground is land cover, not only elevation.** A `uint8` per height cell,
+in the same grid and shipped beside it, records what is actually there:
+grassland, scrub, wood, built-up (footprints dilated three cells, so the yard
+reads and not just the roof) and the Karepovac body, painted general-to-
+specific so the more specific claim wins. Cover tints the elevation ramp
+rather than replacing it, so a slope still reads as a slope under forest. The
+first class is unclassified ground — 64% of the grid, where no source says
+anything — and it is mixed at zero weight: unknown stays unknown rather than
+quietly becoming bare karst.
 
 ## Do's and Don'ts
 
@@ -579,8 +673,14 @@ estimate. Footprint area must never be reused as a proxy for height.
   record.
 - **Do** cite the source next to any figure or layer, and keep licence
   attribution visible; it is a condition of use, not a courtesy.
-- **Do** keep `/svg` and `/igra` visibly sourced simulations: fixed camera angle, place labels,
-  pause control, and the simplified-model disclaimer in the first viewport.
+- **Do** keep `/svg` and `/igra` visibly sourced simulations: place labels, a
+  pause control, and the sources and simplified-model disclaimer reachable
+  without leaving the view. `/svg` keeps them in the first viewport; `/igra`
+  keeps them one tap away behind ⓘ, because on a model that fills the window
+  every panel is something standing between the eye and the ground. Reachable
+  is the floor — attribution may be folded away, never dropped.
+- **Do** keep `/svg`'s fixed camera; `/igra` may be turned, because its
+  subject is a slope.
 - **Do** design the phone first: single column, thumb-reachable, tap targets no
   smaller than 44px.
 - **Do** write every number in Croatian conventions — decimal comma, correct
@@ -591,8 +691,13 @@ estimate. Footprint area must never be reused as a proxy for height.
 - **Don't** add a webfont. Not for headings, not for icons, not "just one
   weight".
 - **Don't** restyle, recolour or "clean up" a plan's palette to match the brand.
-- **Don't** reuse the `/svg` or `/igra` terrain, water or building palette as general
-  interface colours; they belong to that bounded scene, not the product chrome.
+- **Don't** reuse the `/svg` or `/igra` terrain, water, plinth or building
+  palette as general interface colours; they belong to that bounded scene, not
+  the product chrome.
+- **Don't** resample the LiDAR grid to make `/igra` lighter. The 3 m step is
+  what makes road cuts, terraces and the landfill's benches visible at all; a
+  smoothed terrain is a picture of a hill, not of this hill. Thin it per
+  device instead, and say so.
 - **Don't** use Maslina decoratively — no green mood backgrounds, no green
   section rules, no green headings. It marks action and affiliation only.
 - **Don't** give surfaces a resting shadow to make them pop; use a tonal step or

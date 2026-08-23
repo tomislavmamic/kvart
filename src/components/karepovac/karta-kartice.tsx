@@ -13,6 +13,7 @@ import {
   CESTE_UZ_PLOHU,
   OKVIR,
   PODLOGA,
+  POSTAJE as POSTAJE_ZRAKA,
   PRSTENI,
   TOCKE,
   TOKOVI,
@@ -141,6 +142,85 @@ function Mjerilo({ blizu = false }: { blizu?: boolean }) {
           S
         </text>
       </g>
+    </g>
+  );
+}
+
+/** Boja službene postaje; ista je i na sloju `postaje-zraka` u `/karta`. */
+const BOJA_POSTAJE = "#1d4ed8";
+
+/**
+ * Službena postaja na rubu okvira — jer u okviru je nema.
+ *
+ * Obje postaje Zavoda stoje na istoj točki, u udolini jugoistočno od plohe.
+ * Ta točka pada 193 m **južno od donjeg ruba** ovih kartica, pa se ne može
+ * nacrtati ondje gdje jest. Okvir se zato ne rasteže: južno od njega nema ni
+ * izohipsi ni zgrada (slojevi su izrezani na kvart), a rasterski slojevi
+ * raspršenja ne bi se dali pomaknuti bez ponovnog godišnjeg računa.
+ *
+ * Umjesto toga znak stoji na rubu i kaže koliko je dalje. To nije ukras nego
+ * glavna ograda oko svega na ovim karticama: jačina izvora bazdarena je na toj
+ * jednoj točki, a ona gleda odlagalište s **druge strane** nego Dračevac i
+ * Bilice — kut između ta dva smjera je 153°.
+ */
+export function PostajaNaRubu({ blizu = false }: { blizu?: boolean }) {
+  const postaja = POSTAJE_ZRAKA[0];
+  const x0 = blizu ? BLIZI_OKVIR.x : 0;
+  const y0 = blizu ? BLIZI_OKVIR.y : 0;
+  const sirina = blizu ? BLIZI_OKVIR.sirina : OKVIR.sirina;
+  const visina = blizu ? BLIZI_OKVIR.visina : OKVIR.visina;
+
+  // Dvije različite točke, i razlika je važna. `naRubu` je mjesto gdje okvir
+  // prestaje — po njemu se mjeri koliko terena ostaje iza. Znak se onda uvuče
+  // za `rub` piksela da ne visi preko ruba; kad bi se udaljenost mjerila od
+  // uvučenog znaka, natpis bi tvrdio pedesetak metara više nego što jest.
+  const rubX = Math.min(Math.max(postaja.x, x0), x0 + sirina);
+  const rubY = Math.min(Math.max(postaja.y, y0), y0 + visina);
+  const iza = Math.round(
+    Math.hypot(postaja.x - rubX, postaja.y - rubY) / OKVIR.pxPoMetru / 10,
+  ) * 10;
+
+  const rub = 11;
+  const x = Math.min(Math.max(postaja.x, x0 + rub), x0 + sirina - rub);
+  const y = Math.min(Math.max(postaja.y, y0 + rub), y0 + visina - rub);
+  const dx = postaja.x - x;
+  const dy = postaja.y - y;
+  const daleko = Math.hypot(dx, dy);
+
+  const kut = daleko > 0.5 ? (Math.atan2(dy, dx) * 180) / Math.PI : null;
+  const natpis =
+    iza > 0
+      ? `postaje Karepovac 1 i 2 · ${iza} m iza ruba`
+      : "postaje Karepovac 1 i 2";
+
+  return (
+    <g aria-hidden="true">
+      {kut === null ? null : (
+        <path
+          d="M0 -5 L9 0 L0 5 Z"
+          transform={`translate(${x} ${y}) rotate(${kut}) translate(6 0)`}
+          fill={BOJA_POSTAJE}
+        />
+      )}
+      <circle
+        cx={x}
+        cy={y}
+        r={5}
+        fill={BOJA_POSTAJE}
+        stroke="#ffffff"
+        strokeWidth={2}
+        {...NESKALIRANO}
+      />
+      <text
+        x={x - 13}
+        y={y + 3.2}
+        fontSize={8.5}
+        fontWeight={700}
+        textAnchor="end"
+        className="karepovac-mjesto"
+      >
+        {natpis}
+      </text>
     </g>
   );
 }
@@ -304,6 +384,7 @@ function NatpisiKarte({ opis, children }: { opis: string; children?: ReactNode }
       <Ploha ispuna={false} />
       {children}
       <Mjesta />
+      <PostajaNaRubu />
       <Mjerilo />
     </svg>
   );
@@ -1147,7 +1228,7 @@ export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
           izvorOznaka="Za istražiti"
           napomena="Senzori su jeftini i provjereni. Ostaje vidjeti ima li u Splitu postaja s kojom bismo se usporedili prije nego išta objavimo."
         >
-          <Karta opis="Karta s oglednim postajama za lebdeće čestice; znakovi su veći bliže odlagalištu.">
+          <Karta opis="Karta s oglednim postajama za lebdeće čestice; znakovi su veći bliže odlagalištu, uz oznaku službenih postaja iza jugoistočnog ruba.">
             <Ploha />
             {TOCKE.map((t, i) => (
               <g key={t.d}>
@@ -1156,6 +1237,7 @@ export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
               </g>
             ))}
             <Mjesta />
+            <PostajaNaRubu />
           </Karta>
         </Kartica>
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 
-import { razina, UBRZANJE } from "@/lib/dim";
+import { GUSTOCA_NA_PLOHI, razina, UBRZANJE } from "@/lib/dim";
 import { SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
 import { razloziOsnove } from "@/lib/sim/polje";
 import {
@@ -110,10 +110,15 @@ test("ljestvica simulatora usidrena je na izmjerenu gustoću nad plohom", () => 
   );
 });
 
-test("sidro simulatora nije isto kao ono užeg okvira", () => {
-  // Ćelija je 32 m umjesto 13 m, pa ista perjanica daje veći broj. Kad bi se
-  // brojevi izjednačili, netko je prepisao sidro umjesto da ga izmjeri.
-  assert.ok(SIDRO_SIMULATORA > 20, "krupnija ćelija mora dati veći broj");
+test("sidro simulatora nije prepisano s užeg okvira", () => {
+  // Ćelija je 32 m umjesto 13 m, pa ista perjanica ovdje daje veći broj. Prag
+  // se ne piše kao okrugla brojka nego se veže uz sidro užeg okvira: oba se
+  // pomiču kad se model prikaza promijeni, a ono što mora ostati istina je da
+  // su različiti — izjednače se jedino ako je netko prepisao umjesto izmjerio.
+  assert.ok(
+    SIDRO_SIMULATORA > GUSTOCA_NA_PLOHI * 1.5,
+    `sidro ${SIDRO_SIMULATORA} nije osjetno veće od ${GUSTOCA_NA_PLOHI}`,
+  );
 });
 
 test("na sidru se sumporovodik čita kao oko dva puta iznad praga mirisa", () => {

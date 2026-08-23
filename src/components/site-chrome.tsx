@@ -19,14 +19,15 @@ import { SiteHeader, PlutajuciIzbornik } from "./site-header";
 const PUNI_PROZOR: ReadonlySet<string> = new Set(["/karta"]);
 
 /**
- * Stranice bez ijednog dijela okvira stranice — ni plutajućeg izbornika.
+ * Rute na kojima okvir otpada do kraja — ni plutajuće pločice.
  *
- * Simulator na `/karepovac/sim` je jedan zaslon s vlastitim gumbima u oba
- * gornja kuta. Plutajući izbornik ondje ne bi bio dodatak nego treći gumb
- * preko karte, na mjestu na kojem simulator već ima svoje. Izlaz vodi natrag
- * na pregled zraka, pa se iz njega ne može zapeti.
+ * Maketa se gleda, a ne čita: svaka traka preko nje je nešto što stoji između
+ * oka i terena. Isto vrijedi za simulator: on je jedan zaslon s vlastitim
+ * gumbima u oba gornja kuta, pa bi plutajući izbornik ondje bio treći gumb na
+ * mjestu na kojem već stoje dva. Obje stranice izlaz nude same, križićem u
+ * kutu, pa se iz njih ne može zapeti.
  */
-const BEZ_OKVIRA: ReadonlySet<string> = new Set(["/karepovac/sim"]);
+const BEZ_OKVIRA: ReadonlySet<string> = new Set(["/igra", "/karepovac/sim"]);
 
 export function SiteChrome({
   children,
