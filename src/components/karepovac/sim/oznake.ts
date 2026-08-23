@@ -109,20 +109,12 @@ export function natpisVjetra(
   niz?: SatniVjetar | undefined,
 ): { imena: string; vrijednost: string; nema: boolean } {
   // AZO objavljuje satni niz, pa njegova brojka prati klizač kao i sve ostalo.
-  if (niz) {
-    if (niz.tisina) return { imena, vrijednost: "tišina", nema: false };
-    return { imena, vrijednost: `${broj(niz.brzina, 1)} ${strana(niz.smjerOd)}`, nema: false };
-  }
+  if (niz) return { imena, vrijednost: brzinaISmjer(niz), nema: false };
   // DHMZ i METAR objavljuju samo zadnje očitanje; ono vrijedi jedino sada.
   const naSada = kadar?.vrsta === "sada";
   if (!naSada) return { imena, vrijednost: "bez povijesti", nema: true };
   if (!ocitanje) return { imena, vrijednost: "šuti", nema: true };
-  if (ocitanje.tisina) return { imena, vrijednost: "tišina", nema: false };
-  return {
-    imena,
-    vrijednost: `${broj(ocitanje.brzina, 1)} ${strana(ocitanje.smjerOd)}`,
-    nema: false,
-  };
+  return { imena, vrijednost: brzinaISmjer(ocitanje), nema: false };
 }
 
 export type Oznake = {
@@ -144,6 +136,25 @@ function broj(x: number, decimala: number): string {
 
 /** Mjesto svake postaje vjetra, po oznaci. */
 const MJESTA = new Map(POSTAJE_VJETRA.map((p) => [p.oznaka as Postaja, p]));
+
+/**
+ * Vjetar u obliku u kojem ga nose sve pribadače: brzina, mjera, smjer.
+ *
+ * Mjera stoji uz brojku, a ne u opisu: `1,2 JJZ` se dade pročitati i kao
+ * čvorovi i kao km/h, a razlika između 1,2 m/s i 1,2 čvora je razlika između
+ * tišine i povjetarca. Pri tišini se brojka izostavlja jer smjer tada ništa ne
+ * znači — vidi `tisina` u `vjetar.ts`.
+ *
+ * Args:
+ *   v: Očitanje s postaje, satno ili zadnje objavljeno.
+ *
+ * Returns:
+ *   Natpis oblika `1,2 m/s JJZ`, ili `tišina`.
+ */
+function brzinaISmjer(v: { brzina: number; smjerOd: number; tisina: boolean }): string {
+  if (v.tisina) return "tišina";
+  return `${broj(v.brzina, 1)} m/s ${strana(v.smjerOd)}`;
+}
 
 /** Postaje vjetra koje se mogu zabosti — one kojima registar zna mjesto. */
 const SA_MJESTOM = (Object.keys(POSTAJE) as Postaja[]).filter((k) => MJESTA.has(k));

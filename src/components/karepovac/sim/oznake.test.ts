@@ -65,7 +65,7 @@ test("bez kadra se ne izmišlja vrijednost", () => {
 
 test("postaja vjetra pokazuje brojku samo na sadašnjem satu", () => {
   const sada = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-Marjan", OCITANJE);
-  assert.equal(sada.vrijednost, "3,4 Z", "zapadnjak pri 3,4 m/s");
+  assert.equal(sada.vrijednost, "3,4 m/s Z", "brzina, mjera, pa smjer");
   assert.equal(sada.nema, false);
 
   // Isto očitanje, ali klizač je u prošlosti: DHMZ i METAR nemaju povijest,
@@ -129,7 +129,7 @@ test("postaja sa satnim nizom prati klizač, i u prošlosti", () => {
     izvor: "split2" as const,
   };
   const n = natpisVjetra(kadar(), "Split-2", undefined, niz);
-  assert.equal(n.vrijednost, "2,2 SI");
+  assert.equal(n.vrijednost, "2,2 m/s SI");
   assert.equal(n.nema, false, "niz ima povijest, pa brojka stoji i unatrag");
 });
 
@@ -142,7 +142,7 @@ test("satni niz ima prednost pred zadnjim očitanjem", () => {
     izvor: "split2" as const,
   };
   const n = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-2", OCITANJE, niz);
-  assert.equal(n.vrijednost, "2,2 SI", "za odabrani sat vrijedi niz, ne zadnje očitanje");
+  assert.equal(n.vrijednost, "2,2 m/s SI", "za odabrani sat vrijedi niz, ne zadnje očitanje");
 });
 
 test("kad mjerenje za sat još nije objavljeno, pokazuje se zadnje — sa satom", () => {
@@ -185,4 +185,19 @@ test("prognozirani sat ne posuđuje mjerenje iz prošlosti", () => {
     sat: "2026-08-21T13:00:00.000Z",
   });
   assert.equal(n.vrijednost, "—", "budućnost se ne popunjava prošlošću");
+});
+
+test("sve pribadače vjetra nose isti oblik: brzina, mjera, smjer", () => {
+  const oblik = /^\d+,\d m\/s (S|SSI|SI|ISI|I|IJI|JI|JJI|J|JJZ|JZ|ZJZ|Z|ZSZ|SZ|SSZ)$/;
+  const sada = kadar({ vrsta: "sada", pomak: 0 });
+
+  // Postaja sa satnim nizom i postaja sa zadnjim očitanjem moraju izgledati
+  // jednako; gledatelj ne treba znati koja od njih objavljuje povijest.
+  const izNiza = natpisVjetra(sada, "Split-2", undefined, {
+    sat: sada.sat, smjerOd: 200, brzina: 2.2, tisina: false, izvor: "split2",
+  });
+  const izOcitanja = natpisVjetra(sada, "Split-Marjan", OCITANJE);
+  for (const n of [izNiza, izOcitanja]) {
+    assert.match(n.vrijednost, oblik, `${n.imena}: „${n.vrijednost}” nije u dogovorenom obliku`);
+  }
 });
