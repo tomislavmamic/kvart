@@ -1,0 +1,120 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "split3",
+    "naziv": "Split-3",
+    "mreza": "AZO, državna mreža",
+    "lat": 43.50421139510805,
+    "lon": 16.453605895567744,
+    "visina": null,
+    "podrijetlo": "nađeno na terenu; AZO-ov popis daje 43,504167 / 16,453333 (22 m)",
+    "odKvartaKm": 4.3,
+    "azimutOdKvarta": 238,
+    "odPloheKm": 5.0,
+    "azimutOdPlohe": 248
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.453605895567744,
+     43.50421139510805
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "split2",
+    "naziv": "Split-2",
+    "mreza": "AZO, državna mreža",
+    "lat": 43.5184711569566,
+    "lon": 16.44246833781461,
+    "visina": null,
+    "podrijetlo": "nađeno na terenu; AZO-ov popis daje 43,518333 / 16,442222 (25 m)",
+    "odKvartaKm": 4.6,
+    "azimutOdKvarta": 261,
+    "odPloheKm": 5.6,
+    "azimutOdPlohe": 267
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.44246833781461,
+     43.5184711569566
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "marjan",
+    "naziv": "Split-Marjan",
+    "mreza": "DHMZ, glavna meteorološka postaja",
+    "lat": 43.508333,
+    "lon": 16.426333,
+    "visina": 122.0,
+    "podrijetlo": "DHMZ-ov popis glavnih postaja, 43° 30′ 30,0″ N / 16° 25′ 34,8″ E",
+    "odKvartaKm": 6.2,
+    "azimutOdKvarta": 253,
+    "odPloheKm": 7.0,
+    "azimutOdPlohe": 258
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.426333,
+     43.508333
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "aerodrom",
+    "naziv": "Split-aerodrom",
+    "mreza": "DHMZ, glavna meteorološka postaja",
+    "lat": 43.539,
+    "lon": 16.301,
+    "visina": 16.0,
+    "podrijetlo": "Resnik; koordinata iz METAR servisa za LDSP",
+    "odKvartaKm": 16.1,
+    "azimutOdKvarta": 276,
+    "odPloheKm": 17.1,
+    "azimutOdPlohe": 277
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.301,
+     43.539
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "ldsp",
+    "naziv": "LDSP, Zračna luka Split",
+    "mreza": "METAR",
+    "lat": 43.539,
+    "lon": 16.301,
+    "visina": 16.0,
+    "podrijetlo": "aviationweather.gov, polja lat/lon/elev za LDSP",
+    "odKvartaKm": 16.1,
+    "azimutOdKvarta": 276,
+    "odPloheKm": 17.1,
+    "azimutOdPlohe": 277
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.301,
+     43.539
+    ]
+   }
+  }
+ ]
+}

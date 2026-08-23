@@ -32,15 +32,50 @@
  * pretpostavljeni slučaj i to piše.
  */
 
+import { POSTAJE_VJETRA } from "@/generated/karepovac-karta";
 import type { StanjeZraka } from "@/lib/polje-dima";
 
-/** Postaje s kojih uzimamo vjetar, od najbliže prema najdaljoj. */
+/**
+ * Postaje s kojih uzimamo vjetar, od najbliže prema najdaljoj.
+ *
+ * Udaljenosti su dugo stajale ovdje kao ručno upisane brojke (4,3 / 4,6 / 6 /
+ * 16 / 16). Ispale su točne, ali nisu bile provjerljive: nigdje nije pisalo od
+ * koje se točke mjere ni gdje postaje stoje. Sada se računaju iz koordinata u
+ * `scripts/postaje_vjetra.py` — Split-2 i Split-3 nađeni su na terenu, Marjan
+ * je iz DHMZ-ova popisa, a zračna luka iz istog METAR servisa iz kojega dolazi
+ * i sam vjetar. Mjeri se od središta kvarta, jer sučelje kaže „N km od kvarta”;
+ * generirani modul nosi i udaljenost od plohe, koja je oko kilometar veća.
+ */
+const MJESTA = Object.fromEntries(
+  POSTAJE_VJETRA.map((p) => [p.oznaka, p]),
+) as Record<string, (typeof POSTAJE_VJETRA)[number]>;
+
 export const POSTAJE = {
-  split3: { oznaka: "Split-3", ime: "AZO, postaja Split-3", udaljenostKm: 4.3 },
-  split2: { oznaka: "Split-2", ime: "AZO, postaja Split-2", udaljenostKm: 4.6 },
-  marjan: { oznaka: "Split-Marjan", ime: "DHMZ, Split-Marjan", udaljenostKm: 6 },
-  aerodrom: { oznaka: "Split-aerodrom", ime: "DHMZ, Split-aerodrom", udaljenostKm: 16 },
-  ldsp: { oznaka: "LDSP", ime: "METAR, Zračna luka Split", udaljenostKm: 16 },
+  split3: {
+    oznaka: "Split-3",
+    ime: "AZO, postaja Split-3",
+    udaljenostKm: MJESTA.split3.odKvartaKm,
+  },
+  split2: {
+    oznaka: "Split-2",
+    ime: "AZO, postaja Split-2",
+    udaljenostKm: MJESTA.split2.odKvartaKm,
+  },
+  marjan: {
+    oznaka: "Split-Marjan",
+    ime: "DHMZ, Split-Marjan",
+    udaljenostKm: MJESTA.marjan.odKvartaKm,
+  },
+  aerodrom: {
+    oznaka: "Split-aerodrom",
+    ime: "DHMZ, Split-aerodrom",
+    udaljenostKm: MJESTA.aerodrom.odKvartaKm,
+  },
+  ldsp: {
+    oznaka: "LDSP",
+    ime: "METAR, Zračna luka Split",
+    udaljenostKm: MJESTA.ldsp.odKvartaKm,
+  },
 } as const;
 
 export type Postaja = keyof typeof POSTAJE;

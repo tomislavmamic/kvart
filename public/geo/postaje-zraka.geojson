@@ -1,0 +1,49 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "k1",
+    "naziv": "Karepovac 1",
+    "opis": "udolina jugoistočno od plohe, suprotna strana od kvarta",
+    "lat": 43.516650515206784,
+    "lon": 16.51691228544307,
+    "visina": 39.6,
+    "odPlohe": 676,
+    "azimut": 140,
+    "kutDracevac": 153,
+    "kutBilice": 150
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.51691228544307,
+     43.516650515206784
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "k2",
+    "naziv": "Karepovac 2",
+    "opis": "udolina jugoistočno od plohe, suprotna strana od kvarta",
+    "lat": 43.516650515206784,
+    "lon": 16.51691228544307,
+    "visina": 39.6,
+    "odPlohe": 676,
+    "azimut": 140,
+    "kutDracevac": 153,
+    "kutBilice": 150
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.51691228544307,
+     43.516650515206784
+    ]
+   }
+  }
+ ]
+}

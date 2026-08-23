@@ -18,6 +18,8 @@ osam kilobajta u svakom posjetu. Uklonjen je; ovdje ostaje sama geometrija.
 Pokretanje: `npm run izvedi-karepovac`
 """
 
+import array
+import gzip
 import json
 import math
 import os
@@ -27,10 +29,14 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import okvir  # noqa: E402
+import postaje  # noqa: E402
+import postaje_vjetra  # noqa: E402
 
 KORIJEN = Path(__file__).resolve().parent.parent
 GEO = KORIJEN / "public" / "geo"
 IZLAZ = KORIJEN / "src" / "generated" / "karepovac-karta.ts"
+IZLAZ_POSTAJE = GEO / "postaje-zraka.geojson"
+IZLAZ_VJETAR = GEO / "postaje-vjetra.geojson"
 
 # Okvir stoji u `scripts/okvir.py`, da ga dijele i ova skripta i polje dima.
 # Dok je stajao ovdje u vlastitoj kopiji, prva promjena granica razišla bi
@@ -251,6 +257,186 @@ def azimut_prema(prsten) -> float:
 AZIMUT = round(azimut_prema(zone["Dračevac"]))
 UX, UY = math.sin(math.radians(AZIMUT)), -math.cos(math.radians(AZIMUT))
 
+
+# ------------------------------------------------------------------ postaje --
+#
+# Službene postaje ne stoje u kvartu nego s druge strane odlagališta, u
+# udolini prema Kamenu. To je najvažnija ograda oko svega što model tvrdi, jer
+# se na tom jednom prijemniku bazdari jačina izvora — pa mu mjesto mora stajati
+# na karti, a ne samo u opisu metodologije.
+#
+# Točka pada **izvan** okvira kvarta, oko 190 m južno od donjeg ruba. Ne
+# rasteže se zato okvir: južno od njega nema ni izohipsi ni zgrada (slojevi su
+# izrezani na kvart), a rasterske slojeve raspršenja ne bi se dalo pomaknuti
+# bez ponovnog godišnjeg računa. Umjesto toga se sprema i položaj u pikselima i
+# koliko je izvan, pa prikaz može nacrtati oznaku na rubu i reći koliko dalje.
+
+_VISINE_ZAGLAVLJE = json.loads(
+    (GEO / "reljef" / "visine.json").read_text(encoding="utf8")
+)
+with gzip.open(GEO / "reljef" / "visine.bin.gz", "rb") as _f:
+    _VISINE = array.array("h")
+    _VISINE.frombytes(_f.read())
+
+
+def visina_lidar(lon: float, lat: float) -> float | None:
+    """Nadmorska visina tla iz DGU-ova LiDAR reljefa, u metrima.
+
+    Izohipse iz `izohipse.geojson` ovdje ne pomažu: izrezane su na kvart i
+    prestaju na 16,5115° E, a postaja je istočnije od toga.
+
+    Args:
+        lon: Zemljopisna dužina u stupnjevima, WGS84.
+        lat: Zemljopisna širina u stupnjevima, WGS84.
+
+    Returns:
+        Visinu u metrima ili `None` ako je točka izvan mreže ili bez podatka.
+    """
+    z = _VISINE_ZAGLAVLJE
+    c = round((lon - z["zapad"]) / (z["istok"] - z["zapad"]) * z["stupaca"])
+    r = round((z["sjever"] - lat) / (z["sjever"] - z["jug"]) * z["redaka"])
+    if not (0 <= r < z["redaka"] and 0 <= c < z["stupaca"]):
+        return None
+    v = _VISINE[r * z["stupaca"] + c]
+    return None if v == z["prazno"] else v / 10.0
+
+
+def _teziste(prsten) -> tuple[float, float]:
+    """Težište poligona po površini, ne prosjek vrhova.
+
+    Prosjek vrhova vuče prema strani na kojoj je obris gušće opisan, a obris
+    plohe to jest — istočni rub ima terase, zapadni je ravna crta. Razlika je
+    na Karepovcu ~190 m, dakle petina udaljenosti do postaje.
+    """
+    a = cx = cy = 0.0
+    for i in range(len(prsten) - 1):
+        x1, y1 = prsten[i]
+        x2, y2 = prsten[i + 1]
+        k = x1 * y2 - x2 * y1
+        a += k
+        cx += (x1 + x2) * k
+        cy += (y1 + y2) * k
+    if a == 0:
+        return (
+            sum(t[0] for t in prsten) / len(prsten),
+            sum(t[1] for t in prsten) / len(prsten),
+        )
+    return cx / (3 * a), cy / (3 * a)
+
+
+_PX, _PY = _teziste(ploha_prsten)
+
+
+def _od_plohe(lon: float, lat: float) -> tuple[float, float]:
+    """Vraća (udaljenost u metrima, azimut u stupnjevima) od sredine plohe."""
+    dx = (lon - _PX) * M_PO_LON
+    dy = (lat - _PY) * M_PO_LAT
+    return math.hypot(dx, dy), (math.degrees(math.atan2(dx, dy)) + 360) % 360
+
+
+def _kut(a: float, b: float) -> float:
+    """Najmanji kut između dva azimuta, u stupnjevima."""
+    return abs((a - b + 180) % 360 - 180)
+
+
+_AZ_DRACEVAC = azimut_prema(zone["Dračevac"])
+_AZ_BILICE = azimut_prema(zone["Bilice"])
+
+POSTAJE = []
+for _p in postaje.POSTAJE:
+    _x, _y = projiciraj((_p.lon, _p.lat))
+    _d, _az = _od_plohe(_p.lon, _p.lat)
+    _izvan = max(0.0, (okvir.JUG - _p.lat)) * M_PO_LAT
+    POSTAJE.append(
+        {
+            "oznaka": _p.oznaka,
+            "naziv": _p.naziv,
+            "opis": _p.opis,
+            "lat": _p.lat,
+            "lon": _p.lon,
+            "x": round(_x, 1),
+            "y": round(_y, 1),
+            "visina": round(visina_lidar(_p.lon, _p.lat) or _p.visina, 1),
+            "odPlohe": round(_d),
+            "azimut": round(_az),
+            "kutDracevac": round(_kut(_az, _AZ_DRACEVAC)),
+            "kutBilice": round(_kut(_az, _AZ_BILICE)),
+            "uOkviru": 0 <= _x <= SIRINA and 0 <= _y <= VISINA,
+            "izvanOkviraM": round(_izvan),
+        }
+    )
+
+def _vrh_unutar(prsten) -> float:
+    """Najviša točka LiDAR-a **unutar** poligona, u metrima.
+
+    Po obrisu se ne smije mjeriti: obris plohe ide podnožjem tijela, pa uzduž
+    njega piše 85 m, dok je zaravnjeni vrh 35 m više.
+    """
+    z = _VISINE_ZAGLAVLJE
+    lon = [t[0] for t in prsten]
+    lat = [t[1] for t in prsten]
+    d_lon = (z["istok"] - z["zapad"]) / z["stupaca"]
+    d_lat = (z["sjever"] - z["jug"]) / z["redaka"]
+    naj = 0.0
+    korak = 3  # svaka treća ćelija; korak mreže je 3 m, ploha je 500 m široka
+    c = int((min(lon) - z["zapad"]) / d_lon)
+    while c < (max(lon) - z["zapad"]) / d_lon:
+        r = int((z["sjever"] - max(lat)) / d_lat)
+        while r < (z["sjever"] - min(lat)) / d_lat:
+            t = (z["zapad"] + (c + 0.5) * d_lon, z["sjever"] - (r + 0.5) * d_lat)
+            if u_poligonu(t, prsten):
+                v = visina_lidar(*t)
+                if v is not None and v > naj:
+                    naj = v
+            r += korak
+        c += korak
+    return naj
+
+
+#: Vrh plohe iz LiDAR-a, radi visinske razlike prema postaji.
+VRH_PLOHE = round(_vrh_unutar(ploha_prsten), 1)
+
+
+# ------------------------------------------------------------ vjetrokazi ---
+#
+# Anemometri s kojih model uzima vjetar. Nijedan nije bliže od četiri
+# kilometra i svi su na zapadu; to je druga velika ograda oko modela, uz onu
+# o mjestu mjerne postaje. Udaljenosti se ovdje računaju, a ne prepisuju —
+# `src/lib/vjetar.ts` ih je dotad držao kao ručno upisane brojke.
+#
+# Mjeri se od dvije referentne točke jer se u tekstu koriste obje: sučelje
+# govori „N km od kvarta”, a rasprava o modelu mjeri od izvora, dakle od plohe.
+
+_KVART = (43.5249, 16.4993)  # KVART_CENTER iz src/lib/map-views.ts
+
+
+def _odnos(od: tuple[float, float], lon: float, lat: float) -> tuple[float, float]:
+    """Vraća (udaljenost u km, azimut u stupnjevima) od zadane točke."""
+    dx = (lon - od[1]) * M_PO_LON
+    dy = (lat - od[0]) * M_PO_LAT
+    return math.hypot(dx, dy) / 1000.0, (math.degrees(math.atan2(dx, dy)) + 360) % 360
+
+
+POSTAJE_VJETRA = []
+for _v in postaje_vjetra.POSTAJE_VJETRA:
+    _dk, _ak = _odnos(_KVART, _v.lon, _v.lat)
+    _dp, _ap = _odnos((_PY, _PX), _v.lon, _v.lat)
+    POSTAJE_VJETRA.append(
+        {
+            "oznaka": _v.oznaka,
+            "naziv": _v.naziv,
+            "mreza": _v.mreza,
+            "lat": _v.lat,
+            "lon": _v.lon,
+            "visina": _v.visina,
+            "podrijetlo": _v.podrijetlo,
+            "odKvartaKm": round(_dk, 1),
+            "azimutOdKvarta": round(_ak),
+            "odPloheKm": round(_dp, 1),
+            "azimutOdPlohe": round(_ap),
+        }
+    )
+
 CELIJA = 5.0
 NX, NY = int(SIRINA / CELIJA) + 3, int(VISINA / CELIJA) + 3
 GX0 = GY0 = -CELIJA
@@ -411,6 +597,9 @@ OKVIR = {
     "mjerilo500": round(500 * PX_PO_M, 1),
     "srediste": [round(sx, 1), round(sy, 1)],
     "azimut": AZIMUT,
+    # Granice u WGS84, da se u prikazu može projicirati i točka koje ovdje
+    # nema — bez druge kopije istih brojki na strani preglednika.
+    "granice": {"zapad": Z, "jug": J, "istok": I, "sjever": S},
 }
 
 BLIZI_OKVIR = {
@@ -444,6 +633,12 @@ redovi = [
     "",
     f"export const VIIRS = {ts(VIIRS)} as const;",
     "",
+    f"export const POSTAJE = {ts(POSTAJE)} as const;",
+    "",
+    f"export const VRH_PLOHE = {ts(VRH_PLOHE)};",
+    "",
+    f"export const POSTAJE_VJETRA = {ts(POSTAJE_VJETRA)} as const;",
+    "",
     "",
     "",
 ]
@@ -451,9 +646,66 @@ redovi = [
 IZLAZ.parent.mkdir(parents=True, exist_ok=True)
 IZLAZ.write_text("\n".join(redovi), encoding="utf8")
 
+# Isti podatak i kao geojson, jer ga `/karta` uzima kao sloj s pribadačama.
+IZLAZ_POSTAJE.write_text(
+    json.dumps(
+        {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        k: v
+                        for k, v in p.items()
+                        if k not in ("x", "y", "uOkviru", "izvanOkviraM")
+                    },
+                    "geometry": {"type": "Point", "coordinates": [p["lon"], p["lat"]]},
+                }
+                for p in POSTAJE
+            ],
+        },
+        ensure_ascii=False,
+        indent=1,
+    )
+    + "\n",
+    encoding="utf8",
+)
+
+IZLAZ_VJETAR.write_text(
+    json.dumps(
+        {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": p,
+                    "geometry": {"type": "Point", "coordinates": [p["lon"], p["lat"]]},
+                }
+                for p in POSTAJE_VJETRA
+            ],
+        },
+        ensure_ascii=False,
+        indent=1,
+    )
+    + "\n",
+    encoding="utf8",
+)
+
 print(f"okvir {SIRINA:.0f}x{VISINA} px, {SIRINA_M:.0f}x{VISINA_M:.0f} m")
 print(f"azimut prema kvartu {AZIMUT}°")
 print(f"visine {VISINE}")
 print(f"točaka {len(TOCKE)}, tokova s plohe {len(odabrani)} (sjeme {len(sjeme)})")
 print(f"VIIRS ćelija {len(VIIRS)}")
+for _p in POSTAJE:
+    print(
+        f"{_p['naziv']}: {_p['visina']} m, {_p['odPlohe']} m od plohe na "
+        f"{_p['azimut']}°, kut prema Dračevcu {_p['kutDracevac']}°, "
+        + ("u okviru" if _p["uOkviru"] else f"{_p['izvanOkviraM']} m izvan okvira")
+    )
+print(f"vrh plohe {VRH_PLOHE} m")
+for _v in POSTAJE_VJETRA:
+    print(
+        f"vjetar {_v['naziv']}: {_v['odKvartaKm']} km od kvarta na "
+        f"{_v['azimutOdKvarta']}°, {_v['odPloheKm']} km od plohe"
+    )
 print(f"zapisano {IZLAZ.relative_to(KORIJEN)} ({IZLAZ.stat().st_size // 1024} kB)")

@@ -143,6 +143,7 @@ def glavno() -> None:
                 "opis": postaja.opis,
                 "lat": postaja.lat,
                 "lon": postaja.lon,
+                "visina": postaja.visina,
                 "od": str(zapisi[0]["t"]),
                 "do": str(zapisi[-1]["t"]),
                 "glavna": glavna,

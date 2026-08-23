@@ -74,6 +74,7 @@ class Postaja:
         naziv: Ime kako ga objavljuje Zavod.
         lat: Zemljopisna širina u stupnjevima, WGS84.
         lon: Zemljopisna dužina u stupnjevima, WGS84.
+        visina: Nadmorska visina tla u metrima, iz DGU-ova LiDAR reljefa.
         opis: Gdje postaja stoji u odnosu na plohu.
     """
 
@@ -81,18 +82,69 @@ class Postaja:
     naziv: str
     lat: float
     lon: float
+    visina: float
     opis: str
 
 
-#: Očevidnik kvalitete zraka (iszz.azo.hr) obje postaje vodi na istoj točki,
-#: zaokruženoj na tri decimale — dakle na ~100 m. To je jugoistočni rub plohe,
-#: prema Kamenu. Godišnji izvještaj Zavoda za 2021. navodi drugu koordinatu
-#: (N 43° 31′ 47,90″), koja bi postaju stavila sjeverno od plohe; ruža mirisa
-#: to isključuje, jer H₂S raste kad vjetar puše sa sjeverozapada, dakle s
-#: plohe prema postaji. Vidi `scripts/provjeri-vjetar.py`.
+#: Točka na kojoj stoje obje postaje, nađena na terenu i provjerena reljefom.
+#:
+#: Ovdje stoji **jedna** točka za obje postaje, i to je namjerno. Ulica ih vidi
+#: kao dva jednaka kućišta jedno do drugoga, unutar ograđenog prostora uz
+#: groblje (34 m od ove točke), s pločom Nastavnog zavoda za javno zdravstvo
+#: SDŽ na lijevome. Razmak među njima je nekoliko metara — manje od ćelije
+#: rešetke modela (25 m), pa bi dvije koordinate bile lažna preciznost.
+#:
+#: Zapisi se s time ne slažu do kraja, i vrijedi znati kako:
+#:
+#: - Satne tablice (`zrak-zavod-split.info`) ne daju koordinatu uopće.
+#: - AZO-ov popis (`https://iszz.azo.hr/iskzl/rs/postaja/koordinate`, JSON, šest
+#:   decimala) vodi ih kao dvije točke ~20 m razmaknute: „Karepovac” na
+#:   43,516275 / 16,516897 i „Karepovac 2” na 43,516389 / 16,516667. Obje su
+#:   34–42 m od ove.
+#: - Stariji zapis u ovoj datoteci tvrdio je da ih očevidnik vodi na istoj
+#:   točki zaokruženoj na tri decimale. To nije bilo točno; zaokružena
+#:   koordinata dolazi iz drugog prikaza istog popisa.
+#:
+#: Zaokružena koordinata (43,516 / 16,517) sjedala je 72 m južnije od ove, na
+#: 42 m nadmorske visine umjesto na 40 m. Smjer se time nije mijenjao, ali se
+#: mijenjala ćelija rešetke iz koje model čita svoju vrijednost pri bazdarenju.
+#:
+#: Gdje je to zapravo, i zašto je to glavna ograda oko svega što slijedi:
+#:
+#: - **676 m jugoistočno od težišta plohe**, azimut 140°.
+#: - **Dračevac je 900 m zapadno-sjeverozapadno** od istog težišta, azimut
+#:   293°, a Bilice 1547 m na 290°. Kut između smjera prema postaji i smjera
+#:   prema kvartu je **153° odnosno 150°** — gotovo suprotne strane
+#:   odlagališta.
+#: - Postaja je na **39,6 m** nadmorske visine, u udolini; najviša točka plohe
+#:   je na 113,7 m. Nije na padini prema kvartu nego na suprotnoj strani.
+#:
+#: Te brojke ne stoje samo ovdje: `izvedi-karepovac-karticu.py` ih računa iz
+#: obrisa plohe i LiDAR reljefa i sprema u `POSTAJE` generiranog modula, a
+#: `tests/postaja.test.ts` pazi da se ne raziđu s ovim tekstom.
+#:
+#: Iz toga slijedi jedno: mjerenje na ovoj točki govori o satima kad zrak s
+#: plohe ide prema *Kamenu*, a ne prema Dračevcu i Bilicama. Bazdarenje izvora
+#: (`scripts/bazdari-izvor.py`) i svaka ocjena modela naslanjaju se na jedan
+#: jedini prijemnik na krivoj strani izvora, pa se slaba korelacija ne smije
+#: čitati kao „modela nema”. Dokle nalazi s ove postaje sežu, a dokle ne,
+#: raspisano je u `scripts/provjeri-vedre-noci.py`.
+#:
+#: Godišnji izvještaj Zavoda za 2021. navodi drugu koordinatu (N 43° 31′
+#: 47,90″), koja bi postaju stavila sjeverno od plohe; ruža mirisa to
+#: isključuje, jer H₂S raste kad vjetar puše sa sjeverozapada, dakle s plohe
+#: prema postaji. Vidi `scripts/provjeri-vjetar.py`.
+LAT_POSTAJE, LON_POSTAJE = 43.516650515206784, 16.51691228544307
+
+#: Nadmorska visina tla na toj točki, očitana iz DGU-ova LiDAR reljefa
+#: (`public/geo/reljef/visine.bin.gz`, korak 3 m).
+VISINA_POSTAJE = 39.6
+
+_OPIS = "udolina jugoistočno od plohe, suprotna strana od kvarta"
+
 POSTAJE = (
-    Postaja("k1", "Karepovac 1", 43.516, 16.517, "jugoistočni rub plohe"),
-    Postaja("k2", "Karepovac 2", 43.516, 16.517, "jugoistočni rub plohe"),
+    Postaja("k1", "Karepovac 1", LAT_POSTAJE, LON_POSTAJE, VISINA_POSTAJE, _OPIS),
+    Postaja("k2", "Karepovac 2", LAT_POSTAJE, LON_POSTAJE, VISINA_POSTAJE, _OPIS),
 )
 
 _BROJ = re.compile(r"^-?\d+(?:[.,]\d+)?$")

@@ -1,7 +1,7 @@
 // Generirano iz public/geo/*.geojson.
 // Pokretanje: npm run izvedi-karepovac — ne uređivati ručno.
 
-export const OKVIR = {"viewBox":"0 0 660 325.5","sirina":660.0,"visina":325.5,"pxPoMetru":0.25159,"mjerilo500":125.8,"srediste":[483.3,238.2],"azimut":294} as const;
+export const OKVIR = {"viewBox":"0 0 660 325.5","sirina":660.0,"visina":325.5,"pxPoMetru":0.25159,"mjerilo500":125.8,"srediste":[483.3,238.2],"azimut":294,"granice":{"zapad":16.4867,"jug":43.5184,"istok":16.5192,"sjever":43.5301}} as const;
 
 export const BLIZI_OKVIR = {"viewBox":"311.1 145.3 386.9 190.8","x":311.1,"y":145.3,"sirina":386.9,"visina":190.8,"mjerilo200":50.3} as const;
 
@@ -18,5 +18,11 @@ export const CESTE_UZ_PLOHU = "M312.0 74.4L311.8 78.0L310.3 80.3L304.9 83.8L302.
 export const PRSTENI = [{"metara":400,"d":"M382.7 238.2a100.6 100.6 0 1 0 201.3 0a100.6 100.6 0 1 0 -201.3 0Z","istaknut":false},{"metara":800,"d":"M282.0 238.2a201.3 201.3 0 1 0 402.5 0a201.3 201.3 0 1 0 -402.5 0Z","istaknut":true},{"metara":1200,"d":"M181.4 238.2a301.9 301.9 0 1 0 603.8 0a301.9 301.9 0 1 0 -603.8 0Z","istaknut":false}] as const;
 
 export const VIIRS = [{"x":377.4,"y":94.3,"a":94.3,"pogodak":true},{"x":377.4,"y":188.7,"a":94.3,"pogodak":true},{"x":377.4,"y":283.0,"a":94.3,"pogodak":true},{"x":377.4,"y":377.4,"a":94.3,"pogodak":false},{"x":471.7,"y":94.3,"a":94.3,"pogodak":true},{"x":471.7,"y":188.7,"a":94.3,"pogodak":true},{"x":471.7,"y":283.0,"a":94.3,"pogodak":true},{"x":471.7,"y":377.4,"a":94.3,"pogodak":false},{"x":566.1,"y":94.3,"a":94.3,"pogodak":false},{"x":566.1,"y":188.7,"a":94.3,"pogodak":true},{"x":566.1,"y":283.0,"a":94.3,"pogodak":true},{"x":566.1,"y":377.4,"a":94.3,"pogodak":false},{"x":660.4,"y":94.3,"a":94.3,"pogodak":false},{"x":660.4,"y":188.7,"a":94.3,"pogodak":false},{"x":660.4,"y":283.0,"a":94.3,"pogodak":false},{"x":660.4,"y":377.4,"a":94.3,"pogodak":false}] as const;
+
+export const POSTAJE = [{"oznaka":"k1","naziv":"Karepovac 1","opis":"udolina jugoistočno od plohe, suprotna strana od kvarta","lat":43.516650515206784,"lon":16.51691228544307,"x":613.5,"y":374.2,"visina":39.6,"odPlohe":676,"azimut":140,"kutDracevac":153,"kutBilice":150,"uOkviru":false,"izvanOkviraM":193},{"oznaka":"k2","naziv":"Karepovac 2","opis":"udolina jugoistočno od plohe, suprotna strana od kvarta","lat":43.516650515206784,"lon":16.51691228544307,"x":613.5,"y":374.2,"visina":39.6,"odPlohe":676,"azimut":140,"kutDracevac":153,"kutBilice":150,"uOkviru":false,"izvanOkviraM":193}] as const;
+
+export const VRH_PLOHE = 113.7;
+
+export const POSTAJE_VJETRA = [{"oznaka":"split3","naziv":"Split-3","mreza":"AZO, državna mreža","lat":43.50421139510805,"lon":16.453605895567744,"visina":null,"podrijetlo":"nađeno na terenu; AZO-ov popis daje 43,504167 / 16,453333 (22 m)","odKvartaKm":4.3,"azimutOdKvarta":238,"odPloheKm":5.0,"azimutOdPlohe":248},{"oznaka":"split2","naziv":"Split-2","mreza":"AZO, državna mreža","lat":43.5184711569566,"lon":16.44246833781461,"visina":null,"podrijetlo":"nađeno na terenu; AZO-ov popis daje 43,518333 / 16,442222 (25 m)","odKvartaKm":4.6,"azimutOdKvarta":261,"odPloheKm":5.6,"azimutOdPlohe":267},{"oznaka":"marjan","naziv":"Split-Marjan","mreza":"DHMZ, glavna meteorološka postaja","lat":43.508333,"lon":16.426333,"visina":122.0,"podrijetlo":"DHMZ-ov popis glavnih postaja, 43° 30′ 30,0″ N / 16° 25′ 34,8″ E","odKvartaKm":6.2,"azimutOdKvarta":253,"odPloheKm":7.0,"azimutOdPlohe":258},{"oznaka":"aerodrom","naziv":"Split-aerodrom","mreza":"DHMZ, glavna meteorološka postaja","lat":43.539,"lon":16.301,"visina":16.0,"podrijetlo":"Resnik; koordinata iz METAR servisa za LDSP","odKvartaKm":16.1,"azimutOdKvarta":276,"odPloheKm":17.1,"azimutOdPlohe":277},{"oznaka":"ldsp","naziv":"LDSP, Zračna luka Split","mreza":"METAR","lat":43.539,"lon":16.301,"visina":16.0,"podrijetlo":"aviationweather.gov, polja lat/lon/elev za LDSP","odKvartaKm":16.1,"azimutOdKvarta":276,"odPloheKm":17.1,"azimutOdPlohe":277}] as const;
 
 
