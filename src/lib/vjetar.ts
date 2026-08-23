@@ -37,45 +37,48 @@ import type { StanjeZraka } from "@/lib/polje-dima";
 /**
  * Postaje s kojih uzimamo vjetar, od najbliže prema najdaljoj.
  *
- * Koordinate su ondje gdje ih izvor sam objavljuje: DHMZ ih piše uz svaku
- * postaju u satnom izvještaju (`<Lat>`, `<Lon>`), a METAR ih vraća uz
- * očitanje. AZO ih ne objavljuje ni na jednom otvorenom putu — provjereno
- * 22. 8. 2026. — pa za Split-3 ovdje i dalje stoji `null`. Karta tu postaju
- * ne zabada nego je navodi bez mjesta; izmišljena bi točka bila gora od
- * nijedne, jer na karti izgleda jednako pouzdano kao izmjerena.
+ * Koordinate su preuzete, znamenku po znamenku, iz registra koji usporedno
+ * nastaje u `scripts/postaje_vjetra.py` (grana `session/cunning-dove-frf1`):
+ * Split-2 i Split-3 nađeni su na terenu — AZO-ov popis promašuje ih za 22 i
+ * 25 m — Marjan je iz DHMZ-ova popisa glavnih postaja, a zračna luka iz istog
+ * METAR servisa iz kojega dolazi i sam vjetar, pa se izvor podatka i izvor
+ * položaja ne mogu raziću.
  *
- * `udaljenostKm` se mjeri **od kvarta**, ne od plohe. To se dade provjeriti na
- * postajama kojima mjesto znamo: Marjan ispadne 6,2 km (zapisano 6), zračna
- * luka 16,1 km (zapisano 16). Po istoj mjeri je i Split-2 na 4,64 km, što se
- * poklapa sa zapisanih 4,6 — tako je i prepoznat kad je koordinata stigla bez
- * imena.
+ * `udaljenostKm` se mjeri **od središta kvarta**, ne od plohe; od plohe je
+ * svaka oko kilometar dalja. To se dade provjeriti: Marjan ispadne 6,2 km
+ * (zapisano 6), zračna luka 16,1 km (zapisano 16).
+ *
+ * TODO(spajanje): kad ta grana sleti, ovaj zapis treba **obrisati** i čitati
+ * `POSTAJE_VJETRA` iz `@/generated/karepovac-karta` — ondje uz koordinate
+ * stoje i visina, mreža, podrijetlo i azimuti. Ovdje je samo onoliko koliko
+ * karti simulatora treba da zabode pribadaču.
  */
 export const POSTAJE = {
   split3: {
     oznaka: "Split-3",
     ime: "AZO, postaja Split-3",
     udaljenostKm: 4.3,
-    lat: null,
-    lon: null,
+    lat: 43.50421139510805,
+    lon: 16.453605895567744,
   },
   split2: {
     oznaka: "Split-2",
     ime: "AZO, postaja Split-2",
     udaljenostKm: 4.6,
-    lat: 43.5184712,
-    lon: 16.4424683,
+    lat: 43.5184711569566,
+    lon: 16.44246833781461,
   },
   marjan: {
     oznaka: "Split-Marjan",
     ime: "DHMZ, Split-Marjan",
-    udaljenostKm: 6,
-    lat: 43.508,
-    lon: 16.426,
+    udaljenostKm: 6.2,
+    lat: 43.508333,
+    lon: 16.426333,
   },
   aerodrom: {
     oznaka: "Split-aerodrom",
     ime: "DHMZ, Split-aerodrom",
-    udaljenostKm: 16,
+    udaljenostKm: 16.1,
     lat: 43.539,
     lon: 16.301,
   },
@@ -84,7 +87,7 @@ export const POSTAJE = {
   ldsp: {
     oznaka: "LDSP",
     ime: "METAR, Zračna luka Split",
-    udaljenostKm: 16,
+    udaljenostKm: 16.1,
     lat: 43.539,
     lon: 16.301,
   },

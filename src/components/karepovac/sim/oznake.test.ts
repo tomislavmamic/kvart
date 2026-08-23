@@ -85,14 +85,13 @@ test("tišina se piše riječju, jer smjer tada ništa ne znači", () => {
   assert.equal(n.vrijednost, "tišina");
 });
 
-test("zabadaju se samo postaje kojima izvor objavljuje mjesto", () => {
+test("svaka postaja vjetra ima provjereno mjesto", () => {
   // AZO ne objavljuje koordinate; izmišljena točka na karti izgleda jednako
   // pouzdano kao izmjerena, pa se te postaje ne zabadaju.
-  // Split-3 i dalje nema javno objavljeno mjesto; Split-2 je prepoznat po
-  // udaljenosti od kvarta (4,64 km prema zapisanih 4,6).
-  assert.equal(POSTAJE.split3.lat, null);
-  assert.ok(POSTAJE.split2.lat !== null && Math.abs(POSTAJE.split2.lat - 43.51847) < 1e-4);
-  assert.equal(POSTAJE.marjan.lat, 43.508);
+  // Sve su nađene na terenu ili u popisu izvora; nijedna nije pogođena.
+  assert.ok(Math.abs(POSTAJE.split3.lat - 43.504211) < 1e-5);
+  assert.ok(Math.abs(POSTAJE.split2.lat - 43.518471) < 1e-5);
+  assert.equal(POSTAJE.marjan.lat, 43.508333);
   assert.equal(POSTAJE.aerodrom.lon, 16.301);
   assert.deepEqual(
     [POSTAJE.aerodrom.lat, POSTAJE.aerodrom.lon],
