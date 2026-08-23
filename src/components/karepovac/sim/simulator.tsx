@@ -423,8 +423,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   // Odabrani sat → brojke na pribadačama.
   useEffect(() => {
-    oznakeRef.current?.postavi(kadar, sadaOcitanja, serije);
-  }, [kadar, sadaOcitanja, serije, stanjeKarte]);
+    oznakeRef.current?.postavi(kadar, sadaOcitanja, serije, crta.kadrovi);
+  }, [kadar, sadaOcitanja, serije, crta, stanjeKarte]);
 
   // Postavke prikaza → scena.
   useEffect(() => {

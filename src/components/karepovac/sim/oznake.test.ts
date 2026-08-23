@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { natpisMjerenja, natpisVjetra } from "@/components/karepovac/sim/oznake";
+import {
+  natpisMjerenja,
+  natpisVjetra,
+  zadnjeOcitanje,
+} from "@/components/karepovac/sim/oznake";
 import type { Kadar } from "@/lib/sim/kadrovi";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
 import { POSTAJE_VJETRA } from "@/generated/karepovac-karta";
@@ -139,4 +143,46 @@ test("satni niz ima prednost pred zadnjim očitanjem", () => {
   };
   const n = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-2", OCITANJE, niz);
   assert.equal(n.vrijednost, "2,2 SI", "za odabrani sat vrijedi niz, ne zadnje očitanje");
+});
+
+test("kad mjerenje za sat još nije objavljeno, pokazuje se zadnje — sa satom", () => {
+  const kadrovi: Kadar[] = [
+    kadar({ pomak: -2, sat: "2026-08-21T13:00:00.000Z" }),
+    kadar({
+      pomak: -1,
+      sat: "2026-08-21T14:00:00.000Z",
+      ocitanja: [
+        { postaja: "k1", tvar: "sumporovodik", vrijednost: null, jedinica: "µg/m³", ispodGranice: false },
+      ],
+    }),
+    kadar({ pomak: 0, vrsta: "sada", sat: "2026-08-21T15:00:00.000Z", ocitanja: [] }),
+  ];
+  const sada = kadrovi[2];
+  const zadnje = zadnjeOcitanje(kadrovi, sada.pomak, "k1");
+  assert.equal(zadnje?.sat, "2026-08-21T13:00:00.000Z", "preskače sat bez vrijednosti");
+
+  const n = natpisMjerenja(sada, K1, zadnje);
+  assert.equal(n.vrijednost, "2,76");
+  assert.equal(n.nema, false, "brojka postoji, samo je iz ranijeg sata");
+  assert.ok(n.kada, "uz staru brojku mora stajati sat u kojem je izmjerena");
+});
+
+test("brojka iz odabranog sata nema sat uz sebe", () => {
+  const n = natpisMjerenja(kadar(), K1, { vrijednost: 9.9, sat: "2026-08-20T10:00:00.000Z" });
+  assert.equal(n.vrijednost, "2,76", "vrijednost odabranog sata ima prednost");
+  assert.equal(n.kada, null, "sat se piše samo kad brojka nije iz odabranog sata");
+});
+
+test("kad postaja nikad nije javila, ostaje praznina", () => {
+  const prazni = [kadar({ pomak: 0, vrsta: "sada", ocitanja: [] })];
+  assert.equal(zadnjeOcitanje(prazni, 0, "k1"), null);
+  assert.equal(natpisMjerenja(prazni[0], K1, null).vrijednost, "nema");
+});
+
+test("prognozirani sat ne posuđuje mjerenje iz prošlosti", () => {
+  const n = natpisMjerenja(kadar({ vrsta: "prognoza", pomak: 2 }), K1, {
+    vrijednost: 2.5,
+    sat: "2026-08-21T13:00:00.000Z",
+  });
+  assert.equal(n.vrijednost, "—", "budućnost se ne popunjava prošlošću");
 });

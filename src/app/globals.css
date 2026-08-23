@@ -785,6 +785,14 @@ body {
   font-style: normal;
 }
 
+/* Sat uz brojku: stoji samo kad mjerenje nije iz odabranog sata. */
+.sim-oznaka__red em {
+  font-style: normal;
+  font-size: 10px;
+  color: #8b9099;
+  margin-left: 1px;
+}
+
 /* Na uskom zaslonu oznake se lako pretvore u zid teksta preko karte. */
 @media (max-width: 640px) {
   .sim-oznaka__ploca {

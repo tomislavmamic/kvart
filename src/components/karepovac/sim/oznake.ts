@@ -26,25 +26,73 @@ import type { Map as MapaLibre, Marker } from "maplibre-gl";
 
 import { TVARI } from "@/lib/dim";
 import type { Kadar } from "@/lib/sim/kadrovi";
-import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
+import { SIM_POSTAJE, type OznakaPostaje } from "@/lib/sim/postaje-satno";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 import { POSTAJE_VJETRA } from "@/generated/karepovac-karta";
 import { POSTAJE, type Postaja, type Vjetar } from "@/lib/vjetar";
 import { strana } from "@/components/karepovac/sim/vjetar-kartica";
+import { satMjesno } from "@/components/karepovac/sim/vremenska-crta";
 
-/** Što pribadača postaje uz plohu piše za jednu tvar u zadanom satu. */
+/**
+ * Zadnje očitanje te postaje zaključno s odabranim satom.
+ *
+ * Zavodove tablice kasne sat-dva, pa sadašnji sat gotovo uvijek stoji prazan.
+ * Prazna pribadača na najsvježijem satu čita se kao „ništa se ne mjeri”, a
+ * mjeri se — samo još nije objavljeno.
+ *
+ * Args:
+ *   kadrovi: Kadrovi crte, rastuće po vremenu.
+ *   doPomaka: Pomak odabranog sata; gleda se on i sve prije njega.
+ *   oznaka: Postaja koja se traži.
+ *
+ * Returns:
+ *   Zadnja izmjerena vrijednost i sat u kojem je izmjerena, ili ništa.
+ */
+export function zadnjeOcitanje(
+  kadrovi: readonly Kadar[],
+  doPomaka: number,
+  oznaka: OznakaPostaje,
+): { vrijednost: number; sat: string } | null {
+  for (let i = kadrovi.length - 1; i >= 0; i -= 1) {
+    const k = kadrovi[i];
+    if (k.pomak > doPomaka || k.vrsta === "prognoza") continue;
+    const o = k.ocitanja.find((x) => x.postaja === oznaka);
+    if (o && o.vrijednost !== null) return { vrijednost: o.vrijednost, sat: k.sat };
+  }
+  return null;
+}
+
+/**
+ * Što pribadača postaje uz plohu piše za jednu tvar u zadanom satu.
+ *
+ * Kad za odabrani sat mjerenja još nema, pokazuje se **zadnje objavljeno**, uz
+ * sat u kojem je izmjereno. Brojka bez sata bila bi tvrdnja o krivom satu;
+ * prazno mjesto bila bi tvrdnja da se ne mjeri. Sat uz brojku je jedino što je
+ * oboje istina.
+ */
 export function natpisMjerenja(
   kadar: Kadar | null,
   postaja: (typeof SIM_POSTAJE)[number],
-): { kratica: string; vrijednost: string; nema: boolean } {
+  zadnje?: { vrijednost: number; sat: string } | null,
+): { kratica: string; vrijednost: string; nema: boolean; kada: string | null } {
   const kratica = TVARI[postaja.tvar].kratica;
   // Budućnost se ne mjeri; crtica, a ne prazno mjesto koje bi izgledalo kao nula.
   if (!kadar || kadar.vrsta === "prognoza") {
-    return { kratica, vrijednost: "—", nema: true };
+    return { kratica, vrijednost: "—", nema: true, kada: null };
   }
   const o = kadar.ocitanja.find((x) => x.postaja === postaja.oznaka);
-  if (!o || o.vrijednost === null) return { kratica, vrijednost: "nema", nema: true };
-  return { kratica, vrijednost: broj(o.vrijednost, 2), nema: false };
+  if (o && o.vrijednost !== null) {
+    return { kratica, vrijednost: broj(o.vrijednost, 2), nema: false, kada: null };
+  }
+  if (zadnje) {
+    return {
+      kratica,
+      vrijednost: broj(zadnje.vrijednost, 2),
+      nema: false,
+      kada: satMjesno(zadnje.sat),
+    };
+  }
+  return { kratica, vrijednost: "nema", nema: true, kada: null };
 }
 
 /**
@@ -83,6 +131,8 @@ export type Oznake = {
     kadar: Kadar | null,
     sada: readonly Vjetar[],
     serije: ReadonlyMap<Postaja, ReadonlyMap<string, SatniVjetar>>,
+    /** Svi kadrovi crte; iz njih se vadi zadnje objavljeno mjerenje. */
+    kadrovi: readonly Kadar[],
   ): void;
   vidljivost(vidljive: boolean): void;
   ukloni(): void;
@@ -159,16 +209,21 @@ export function stvoriOznake(
   });
 
   return {
-    postavi(kadar, sada, serije) {
+    postavi(kadar, sada, serije, kadrovi) {
       // Postaje uz plohu prate klizač: njihov niz je satni.
       const redci = SIM_POSTAJE.map((p) => {
-        const n = natpisMjerenja(kadar, p);
+        const zadnje = kadar ? zadnjeOcitanje(kadrovi, kadar.pomak, p.oznaka) : null;
+        const n = natpisMjerenja(kadar, p, zadnje);
         const klasa = n.nema ? "sim-oznaka__red sim-oznaka__red--nema" : "sim-oznaka__red";
         const v = n.nema ? `<i>${n.vrijednost}</i>` : n.vrijednost;
-        return `<span class="${klasa}"><b>${n.kratica}</b> ${v}</span>`;
+        // Sat se piše samo kad brojka nije iz odabranog sata.
+        const kada = n.kada ? ` <em>${n.kada}</em>` : "";
+        return `<span class="${klasa}"><b>${n.kratica}</b> ${v}${kada}</span>`;
       });
       plocaMjerenja.innerHTML = redci.join("");
-      plocaMjerenja.title = "Izmjereno na postajama uz plohu, µg/m³";
+      plocaMjerenja.title =
+        "Izmjereno na postajama uz plohu, µg/m³. Kad uz brojku stoji sat, " +
+        "mjerenje za odabrani sat još nije objavljeno, pa se pokazuje zadnje.";
 
       // Postaje vjetra nemaju povijest, pa brojka stoji samo na sadašnjem satu.
       const naSada = kadar?.vrsta === "sada";
