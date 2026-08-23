@@ -17,9 +17,12 @@ Doprinos jednog oblačića na tlu, s odbijanjem od tla:
 
     C = M / (2π σ_h²) · f_z · exp(−r² / (2σ_h²))
 
-gdje je `f_z = min(2/(√(2π)·σ_z), 1/H)` — dok je oblačić tanji od miješanog
+gdje je `f_z = max(2/(√(2π)·σ_z), 1/H)` — dok je oblačić tanji od miješanog
 sloja širi se slobodno, a kad ga ispuni, dalje se razrjeđuje samo vodoravno.
-Time inverzija radi ono što u prirodi i radi: poklopac.
+Time inverzija radi ono što u prirodi i radi: poklopac. (Račun u `_vrhovi`
+oduvijek uzima veće od toga dvoga; ovdje je dugo pisalo `min`, što bi svježi
+oblačić razrijedilo kao da je već ispunio sloj — dakle šesnaest puta previše
+na prijemniku blizu plohe.)
 
 Rast σ ide po Briggsovim izrazima za otvoreno tlo, po Pasquillovu razredu
 stabilnosti. Razred se određuje po Turnerovoj shemi iz brzine vjetra, sunčeva

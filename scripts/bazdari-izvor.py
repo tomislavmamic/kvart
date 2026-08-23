@@ -25,6 +25,25 @@ pretpostavka o izvoru. Ta se razlika ne vidi ni iz čega osim iz ovakve provjere
 **3. Usporedba izvedbi.** Tri izvora vjetra i model sa i bez pamćenja, da se
 vidi koliko koji zahvat doista donosi.
 
+## Ograda koju treba pročitati prije svake brojke odavde
+
+Prijemnik je jedan, i nije na strani na kojoj ljudi žive. Postaja stoji 676 m
+jugoistočno od težišta plohe, na azimutu 140°, u udolini prema Kamenu na 40 m
+nadmorske visine — 74 m ispod vrha odlagališta. Dračevac je na 293°, Bilice na
+290°: kut između smjera prema postaji i smjera prema kvartu je 150–153°.
+
+Bazdarenje zato mjeri jačinu izvora kroz sate u kojima zrak s plohe ide na
+**suprotnu** stranu od one koja nas zanima. To ne čini račun besmislenim —
+jačina izvora ne ovisi o strani — ali čini ocjenu slijepom za pola pitanja:
+model koji dobro pogađa jugoistočnu udolinu, a promašuje sjeverozapadnu
+padinu, ovdje bi izgledao jednako kao model koji pogađa oboje.
+
+Koordinata je do kolovoza 2026. bila zaokružena na tri decimale (43,516 /
+16,517), dakle netočna 72 m. Ponovni račun s točkom nađenom na terenu:
+Spearman 0,134 → 0,128, AUC 0,577 → 0,573, jačina izvora 2076 → 1822 µg S/s.
+Dakle nije se popravilo ništa mjerljivo — što i jest nalaz: ono što ovdje
+nedostaje nije stotinjak metara, nego drugi prijemnik.
+
 Pokretanje: `npm run bazdari-izvor`
 """
 
