@@ -26,6 +26,7 @@ import type { Map as MapaLibre, Marker } from "maplibre-gl";
 import { TVARI } from "@/lib/dim";
 import type { Kadar } from "@/lib/sim/kadrovi";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
+import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 import { POSTAJE, type Postaja, type Vjetar } from "@/lib/vjetar";
 import { strana } from "@/components/karepovac/sim/vjetar-kartica";
 
@@ -54,7 +55,15 @@ export function natpisVjetra(
   kadar: Kadar | null,
   imena: string,
   ocitanje: Vjetar | undefined,
+  /** Satni niz te postaje, ako ga uopće objavljuje. */
+  niz?: SatniVjetar | undefined,
 ): { imena: string; vrijednost: string; nema: boolean } {
+  // AZO objavljuje satni niz, pa njegova brojka prati klizač kao i sve ostalo.
+  if (niz) {
+    if (niz.tisina) return { imena, vrijednost: "tišina", nema: false };
+    return { imena, vrijednost: `${broj(niz.brzina, 1)} ${strana(niz.smjerOd)}`, nema: false };
+  }
+  // DHMZ i METAR objavljuju samo zadnje očitanje; ono vrijedi jedino sada.
   const naSada = kadar?.vrsta === "sada";
   if (!naSada) return { imena, vrijednost: "bez povijesti", nema: true };
   if (!ocitanje) return { imena, vrijednost: "šuti", nema: true };
@@ -68,7 +77,11 @@ export function natpisVjetra(
 
 export type Oznake = {
   /** Osvježava brojke za odabrani sat. */
-  postavi(kadar: Kadar | null, sada: readonly Vjetar[]): void;
+  postavi(
+    kadar: Kadar | null,
+    sada: readonly Vjetar[],
+    serije: ReadonlyMap<Postaja, ReadonlyMap<string, SatniVjetar>>,
+  ): void;
   vidljivost(vidljive: boolean): void;
   ukloni(): void;
 };
@@ -143,7 +156,7 @@ export function stvoriOznake(
   });
 
   return {
-    postavi(kadar, sada) {
+    postavi(kadar, sada, serije) {
       // Postaje uz plohu prate klizač: njihov niz je satni.
       const redci = SIM_POSTAJE.map((p) => {
         const n = natpisMjerenja(kadar, p);
@@ -158,13 +171,24 @@ export function stvoriOznake(
       const naSada = kadar?.vrsta === "sada";
       for (const m of vjetrovi) {
         const imena = m.postaje.map((k) => POSTAJE[k].oznaka).join(" · ");
-        const n = natpisVjetra(kadar, imena, sada.find((v) => m.postaje.includes(v.postaja)));
+        // Ako neka od postaja na ovoj točki ima satni niz, on ima prednost.
+        const izNiza = kadar
+          ? m.postaje.map((k) => serije.get(k)?.get(kadar.sat)).find(Boolean)
+          : undefined;
+        const n = natpisVjetra(
+          kadar,
+          imena,
+          sada.find((v) => m.postaje.includes(v.postaja)),
+          izNiza,
+        );
         const klasa = n.nema ? "sim-oznaka__red sim-oznaka__red--nema" : "sim-oznaka__red";
         const v = n.nema ? `<i>${n.vrijednost}</i>` : n.vrijednost;
         m.ploca.innerHTML = `<span class="${klasa}"><b>${n.imena}</b> ${v}</span>`;
-        m.ploca.title = naSada
-          ? `${imena} — zadnje objavljeno očitanje`
-          : `${imena} — objavljuje samo zadnje očitanje, ne i povijest`;
+        m.ploca.title = izNiza
+          ? `${imena} — izmjereno u odabranom satu`
+          : naSada
+            ? `${imena} — zadnje objavljeno očitanje`
+            : `${imena} — objavljuje samo zadnje očitanje, ne i povijest`;
       }
     },
     vidljivost(vidljive) {

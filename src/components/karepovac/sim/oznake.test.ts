@@ -88,8 +88,10 @@ test("tišina se piše riječju, jer smjer tada ništa ne znači", () => {
 test("zabadaju se samo postaje kojima izvor objavljuje mjesto", () => {
   // AZO ne objavljuje koordinate; izmišljena točka na karti izgleda jednako
   // pouzdano kao izmjerena, pa se te postaje ne zabadaju.
+  // Split-3 i dalje nema javno objavljeno mjesto; Split-2 je prepoznat po
+  // udaljenosti od kvarta (4,64 km prema zapisanih 4,6).
   assert.equal(POSTAJE.split3.lat, null);
-  assert.equal(POSTAJE.split2.lat, null);
+  assert.ok(POSTAJE.split2.lat !== null && Math.abs(POSTAJE.split2.lat - 43.51847) < 1e-4);
   assert.equal(POSTAJE.marjan.lat, 43.508);
   assert.equal(POSTAJE.aerodrom.lon, 16.301);
   assert.deepEqual(
@@ -105,4 +107,30 @@ test("postaje uz plohu stoje na izmjerenoj točki, ne na AZO-ovu zaokruženju", 
     "koordinata mora biti precizna, ne zaokružena na tri decimale",
   );
   assert.deepEqual([K1.lat, K1.lon], [K2.lat, K2.lon], "obje postaje su na istom mjestu");
+});
+
+test("postaja sa satnim nizom prati klizač, i u prošlosti", () => {
+  // AZO objavljuje satni niz, pa Split-2 ne mora čekati sadašnji sat.
+  const niz = {
+    sat: "2026-08-21T15:00:00.000Z",
+    smjerOd: 45,
+    brzina: 2.2,
+    tisina: false,
+    izvor: "split2" as const,
+  };
+  const n = natpisVjetra(kadar(), "Split-2", undefined, niz);
+  assert.equal(n.vrijednost, "2,2 SI");
+  assert.equal(n.nema, false, "niz ima povijest, pa brojka stoji i unatrag");
+});
+
+test("satni niz ima prednost pred zadnjim očitanjem", () => {
+  const niz = {
+    sat: "2026-08-21T15:00:00.000Z",
+    smjerOd: 45,
+    brzina: 2.2,
+    tisina: false,
+    izvor: "split2" as const,
+  };
+  const n = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-2", OCITANJE, niz);
+  assert.equal(n.vrijednost, "2,2 SI", "za odabrani sat vrijedi niz, ne zadnje očitanje");
 });

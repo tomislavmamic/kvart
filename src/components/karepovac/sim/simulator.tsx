@@ -17,7 +17,7 @@ import { pokreniPogon, type Pogon, type StanjePogona } from "@/lib/sim/pogon";
 import { razloziOsnove, slozi, type Osnove } from "@/lib/sim/polje";
 import type { SatSimulacije } from "@/lib/sim/simulacija";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
-import type { Vjetar } from "@/lib/vjetar";
+import type { Postaja, Vjetar } from "@/lib/vjetar";
 import { zapisiGustocu } from "@/lib/sim/zapis-gustoce";
 import {
   dodajZgrade,
@@ -176,6 +176,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   // Ploča je zatvorena dok je netko ne zatraži: karta je ono što se gleda.
   const [plocaOtvorena, postaviPlocu] = useState(false);
   const [sadaOcitanja, postaviSada] = useState<readonly Vjetar[]>([]);
+  /** Satni nizovi po postaji; AZO ih objavljuje, DHMZ i METAR ne. */
+  const [serije, postaviSerije] = useState<
+    ReadonlyMap<Postaja, ReadonlyMap<string, SatniVjetar>>
+  >(new Map());
   const oznakeRef = useRef<Oznake | null>(null);
   /**
    * Je li WebGL sloj spremljen u `scenaRef`.
@@ -367,9 +371,23 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       try {
         const odgovor = await fetch("/api/karepovac/sim/vjetar");
         if (!odgovor.ok) return;
-        const podatci: { satovi?: SatniVjetar[]; sada?: Vjetar[] } = await odgovor.json();
+        const podatci: {
+          satovi?: SatniVjetar[];
+          sada?: Vjetar[];
+          serije?: Partial<Record<Postaja, SatniVjetar[]>>;
+        } = await odgovor.json();
         if (otkazano) return;
         if (podatci.sada?.length) postaviSada(podatci.sada);
+        if (podatci.serije) {
+          postaviSerije(
+            new Map(
+              Object.entries(podatci.serije).map(([postaja, niz]) => [
+                postaja as Postaja,
+                new Map((niz ?? []).map((v) => [v.sat, v])),
+              ]),
+            ),
+          );
+        }
         if (!podatci.satovi?.length) return;
         postaviCrtu((stara) =>
           primijeniVjetar(stara, new Map(podatci.satovi!.map((v) => [v.sat, v]))),
@@ -405,8 +423,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   // Odabrani sat → brojke na pribadačama.
   useEffect(() => {
-    oznakeRef.current?.postavi(kadar, sadaOcitanja);
-  }, [kadar, sadaOcitanja, stanjeKarte]);
+    oznakeRef.current?.postavi(kadar, sadaOcitanja, serije);
+  }, [kadar, sadaOcitanja, serije, stanjeKarte]);
 
   // Postavke prikaza → scena.
   useEffect(() => {

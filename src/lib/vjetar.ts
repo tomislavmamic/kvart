@@ -40,9 +40,15 @@ import type { StanjeZraka } from "@/lib/polje-dima";
  * Koordinate su ondje gdje ih izvor sam objavljuje: DHMZ ih piše uz svaku
  * postaju u satnom izvještaju (`<Lat>`, `<Lon>`), a METAR ih vraća uz
  * očitanje. AZO ih ne objavljuje ni na jednom otvorenom putu — provjereno
- * 22. 8. 2026. — pa im ovdje stoji `null`. Karta te postaje zato ne zabada
- * nego ih navodi bez mjesta; izmišljena bi točka bila gora od nijedne, jer
- * na karti izgleda jednako pouzdano kao izmjerena.
+ * 22. 8. 2026. — pa za Split-3 ovdje i dalje stoji `null`. Karta tu postaju
+ * ne zabada nego je navodi bez mjesta; izmišljena bi točka bila gora od
+ * nijedne, jer na karti izgleda jednako pouzdano kao izmjerena.
+ *
+ * `udaljenostKm` se mjeri **od kvarta**, ne od plohe. To se dade provjeriti na
+ * postajama kojima mjesto znamo: Marjan ispadne 6,2 km (zapisano 6), zračna
+ * luka 16,1 km (zapisano 16). Po istoj mjeri je i Split-2 na 4,64 km, što se
+ * poklapa sa zapisanih 4,6 — tako je i prepoznat kad je koordinata stigla bez
+ * imena.
  */
 export const POSTAJE = {
   split3: {
@@ -56,8 +62,8 @@ export const POSTAJE = {
     oznaka: "Split-2",
     ime: "AZO, postaja Split-2",
     udaljenostKm: 4.6,
-    lat: null,
-    lon: null,
+    lat: 43.5184712,
+    lon: 16.4424683,
   },
   marjan: {
     oznaka: "Split-Marjan",

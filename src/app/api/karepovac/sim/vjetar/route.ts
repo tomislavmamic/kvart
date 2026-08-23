@@ -20,20 +20,33 @@
  * očitanje uz sat od jučer značilo bi tvrditi nešto što nitko nije izmjerio.
  */
 
-import { azoVjetar } from "@/lib/sim/dohvat";
+import { azoSerije } from "@/lib/sim/dohvat";
 import { dohvatiZrak } from "@/lib/vjetar";
 
 /** Isti rok kao ostali izvori vjetra, da se dvije karte ne raziđu. */
 export const revalidate = 900;
 
 export async function GET(): Promise<Response> {
-  const [izmjereno, sada] = await Promise.all([
-    azoVjetar(new Date()),
+  const [serije, sada] = await Promise.all([
+    azoSerije(new Date()),
     // Ne ruši odgovor ako padne: pribadače su dodatak, niz je ono glavno.
     dohvatiZrak().catch(() => null),
   ]);
+  // Niz koji vodi model je prve postaje koja je javila; redoslijed je onaj
+  // provjereni iz `vjetar.ts`.
+  const vodeci =
+    serije.get("split3")?.size ? serije.get("split3")! : serije.get("split2") ?? new Map();
+
   return Response.json(
-    { satovi: [...izmjereno.values()], sada: sada?.ocitanja ?? [] },
+    {
+      satovi: [...vodeci.values()],
+      // Po postaji, za pribadače: AZO objavljuje satni niz, pa te brojke
+      // prate klizač umjesto da stoje samo na sadašnjem satu.
+      serije: Object.fromEntries(
+        [...serije].map(([postaja, niz]) => [postaja, [...niz.values()]]),
+      ),
+      sada: sada?.ocitanja ?? [],
+    },
     {
       headers: {
         // Preglednik smije držati kratko; posluživanje ionako ide iz

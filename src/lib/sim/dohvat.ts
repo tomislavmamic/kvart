@@ -17,7 +17,7 @@
  * vjetra i na crti se vidi kao rupa, a ne kao izmišljen zrak.
  */
 
-import { azoAdresa } from "@/lib/vjetar";
+import { azoAdresa, type Postaja } from "@/lib/vjetar";
 import {
   type Kadar,
   type Crta,
@@ -147,16 +147,39 @@ export function slozOcitanja(
  *   Vjetar po satu s prve postaje koja je javila i brzinu i smjer; prazno ako
  *   nijedna nije.
  */
-export async function azoVjetar(sada: Date): Promise<Map<string, SatniVjetar>> {
-  // Redoslijed je isti kao u `vjetar.ts`: nije po udaljenosti nego po tome što
-  // je prošlo provjeru prema izmjerenom H₂S-u.
+export async function azoSerije(
+  sada: Date,
+): Promise<Map<Postaja, Map<string, SatniVjetar>>> {
+  const izlaz = new Map<Postaja, Map<string, SatniVjetar>>();
+  // Obje postaje, a ne samo prva koja javi: prva vodi model, ali druga ima
+  // svoje mjesto na karti i ondje pokazuje što je sama izmjerila.
   for (const postaja of ["split3", "split2"] as const) {
     const brzine = await uzmi(azoAdresa(postaja, AZO.brzina, sada), ROK_VJETRA);
     await pricekaj(RAZMAK_AZO_MS);
     const smjerovi = await uzmi(azoAdresa(postaja, AZO.smjer, sada), ROK_VJETRA);
     const niz = procitajAzoNiz(postaja, brzine, smjerovi);
-    if (niz.size) return niz;
+    if (niz.size) izlaz.set(postaja, niz);
     await pricekaj(RAZMAK_AZO_MS);
+  }
+  return izlaz;
+}
+
+/**
+ * Vjetar koji vodi model: prva postaja koja je javila i brzinu i smjer.
+ *
+ * Args:
+ *   sada: Trenutak za koji se traži dan unatrag.
+ *
+ * Returns:
+ *   Vjetar po satu s te postaje; prazno ako nijedna nije javila.
+ */
+export async function azoVjetar(sada: Date): Promise<Map<string, SatniVjetar>> {
+  const serije = await azoSerije(sada);
+  // Redoslijed je isti kao u `vjetar.ts`: nije po udaljenosti nego po tome što
+  // je prošlo provjeru prema izmjerenom H₂S-u.
+  for (const postaja of ["split3", "split2"] as const) {
+    const niz = serije.get(postaja);
+    if (niz?.size) return niz;
   }
   return new Map();
 }
