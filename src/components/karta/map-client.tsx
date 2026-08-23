@@ -3688,10 +3688,19 @@ function dodajSloj(
           };
         },
         pointToLayer: (_f, latlng) =>
+          // Postaje su jedina mjerena točka na cijeloj karti zraka; sve
+          // ostalo u toj skupini je izvod. Zato veći, obrubljen znak — da se
+          // pri upaljenom polju raspršenja i dalje vidi.
           L.circleMarker(latlng, {
-            radius: 5,
+            radius:
+              layer.id === "postaje-zraka" || layer.id === "postaje-vjetra"
+                ? 8
+                : 5,
             color: "#fff",
-            weight: 1.5,
+            weight:
+              layer.id === "postaje-zraka" || layer.id === "postaje-vjetra"
+                ? 2.5
+                : 1.5,
             fillColor: layer.color,
             fillOpacity: 1,
           }),
@@ -3702,6 +3711,14 @@ function dodajSloj(
           lyr.on("click", () => {
             pogodakSloja.current = Date.now();
           });
+          if (layer.id === "postaje-zraka") {
+            lyr.bindPopup(popupPostaje(p));
+            return;
+          }
+          if (layer.id === "postaje-vjetra") {
+            lyr.bindPopup(popupVjetrokaza(p));
+            return;
+          }
           // Katastar je jedini sloj kod kojeg klik ne pita „što je ovo”, nego
           // „što je sve ovdje” — pa umjesto vlastitih polja otvara dosje
           // sastavljen od svih slojeva. Ostali slojevi ostaju sami sebi.
@@ -4644,6 +4661,59 @@ function popupGrad(p: Record<string, unknown>, nazivSloja: string): string {
   return (
     glava +
     `<br><span style="color:#71717b">${redci.join("<br>")}</span>`
+  );
+}
+
+/**
+ * Natpis službene postaje — s onim što joj je najvažnije svojstvo: strana.
+ *
+ * Postaja nije „mjerenje kvarta”. Stoji u udolini jugoistočno od plohe, prema
+ * Kamenu, na suprotnoj strani odlagališta od Dračevca i Bilica i osamdesetak
+ * metara niže od vrha plohe. Sve što model tvrdi o kvartu bazdareno je na toj
+ * jednoj točki, pa natpis to kaže odmah, a ne u fusnoti metodologije.
+ */
+function popupPostaje(p: Record<string, unknown>): string {
+  const broj = (x: unknown) =>
+    Number(x).toLocaleString("hr-HR", { maximumFractionDigits: 0 });
+  return (
+    `<b>${esc(p.naziv)}</b><br>` +
+    `<span style="color:#71717b">službena postaja, NZJZ SDŽ · ` +
+    `${broj(p.visina)} m n.v.</span>` +
+    `<hr style="margin:6px 0;border:0;border-top:1px solid #e4e4e7">` +
+    `<span style="color:#3f3f46">` +
+    `${broj(p.odPlohe)} m od sredine plohe, azimut ${broj(p.azimut)}°.<br>` +
+    `Prema Dračevcu je ${broj(p.kutDracevac)}°, prema Bilicama ` +
+    `${broj(p.kutBilice)}° od tog smjera — dakle <b>s druge strane ` +
+    `odlagališta</b> nego kvart.<br>` +
+    `Mjeri sate kad zrak s plohe ide prema Kamenu, ne prema kvartu.` +
+    `</span>`
+  );
+}
+
+/**
+ * Natpis anemometra — s brojkom koja o njemu govori najviše: koliko je daleko.
+ *
+ * Vjetar je jedini izmjeren ulaz modela raspršenja. Da mu je mjerač na plohi,
+ * ovo bi bio dosadan natpis. Ovako svaki nosi udaljenost i smjer, jer upravo
+ * to određuje koliko mu se smije vjerovati nad našom padinom.
+ */
+function popupVjetrokaza(p: Record<string, unknown>): string {
+  const km = Number(p.odKvartaKm).toLocaleString("hr-HR", {
+    maximumFractionDigits: 1,
+  });
+  const visina =
+    p.visina == null
+      ? ""
+      : ` · ${Number(p.visina).toLocaleString("hr-HR")} m n.v.`;
+  return (
+    `<b>${esc(p.naziv)}</b><br>` +
+    `<span style="color:#71717b">${esc(p.mreza)}${visina}</span>` +
+    `<hr style="margin:6px 0;border:0;border-top:1px solid #e4e4e7">` +
+    `<span style="color:#3f3f46">` +
+    `<b>${km} km</b> od kvarta, azimut ${Number(p.azimutOdKvarta)}° ` +
+    `(od plohe ${Number(p.odPloheKm).toLocaleString("hr-HR", { maximumFractionDigits: 1 })} km).<br>` +
+    `Na Karepovcu anemometra nema, pa vjetar u modelu dolazi odavde.<br>` +
+    `<i>${esc(p.podrijetlo)}</i></span>`
   );
 }
 

@@ -62,8 +62,8 @@ export default function KarepovacPage() {
       <section className="space-y-8">
         <SectionHeading title="Što već znamo iz službenih mjerenja">
           <p>
-            Naših uređaja još nema, ali na rubu odlagališta dvije službene
-            postaje mjere svakoga sata. Skinuli smo sve što su objavile —
+            Naših uređaja još nema, ali jugoistočno od odlagališta dvije
+            službene postaje mjere svakoga sata. Skinuli smo sve što su objavile —
             {" "}{H2S_SATI.toLocaleString("hr-HR")} sati sumporovodika i{" "}
             {MERKAPTANI_SATI.toLocaleString("hr-HR")} sati merkaptana — i evo
             što u tome piše.
@@ -73,9 +73,10 @@ export default function KarepovacPage() {
         <RuzaMirisa />
         <div className="rounded-xl border border-kamen-tlo bg-kamen-plitko p-6 sm:flex sm:items-center sm:justify-between sm:gap-8">
           <p className="max-w-2xl text-base leading-7 text-kamen-tekst">
-            Obje ruže gore stoje na rubu odlagališta. Ono što se osjeti u
-            kvartu, kilometar dalje, ne mjeri nitko — osim ljudi koji ondje
-            žive.
+            Obje ruže gore stoje na istoj točki, u udolini jugoistočno od plohe
+            — dakle s druge strane odlagališta nego kvart. One bilježe sate kad
+            zrak s plohe ide prema Kamenu. Ono što se osjeti u kvartu, na
+            suprotnu stranu, ne mjeri nitko — osim ljudi koji ondje žive.
           </p>
           <Link
             href="/karepovac/dojava"

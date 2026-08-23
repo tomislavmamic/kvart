@@ -1,4 +1,9 @@
 import { Ruza } from "@/components/karepovac/ruza";
+import {
+  POSTAJE,
+  POSTAJE_VJETRA,
+  VRH_PLOHE,
+} from "@/generated/karepovac-karta";
 import { MJERENJA } from "@/generated/karepovac-mjerenja";
 import { SEKTOR_IMENA as RUZA_IMENA } from "@/lib/dojave";
 
@@ -71,6 +76,133 @@ export function SluzbenePostaje() {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Gdje postaje zapravo stoje — i zašto je to glavna ograda oko modela.
+ *
+ * Dugo smo znali samo zaokruženu koordinatu iz očevidnika (43,516 / 16,517,
+ * dakle na ~100 m). Točka je sada nađena na terenu i provjerena u LiDAR
+ * reljefu, i pokazuje ono što se iz zaokružene brojke nije vidjelo: postaja
+ * nije „uz plohu” u smislu „između plohe i kvarta”. Stoji u udolini prema
+ * Kamenu, na suprotnoj strani odlagališta, i sedamdesetak metara niže od
+ * njegova vrha.
+ *
+ * To ne obezvrjeđuje mjerenje — ono je i dalje jedino satno mjerenje koje o
+ * ovom odlagalištu postoji. Mijenja se što se iz njega smije zaključiti: ono
+ * bilježi sate kad zrak s plohe ide prema jugoistoku, a Dračevac i Bilice su
+ * na suprotnu stranu. Zato slaba veza između modela i mjerenja nije dokaz da
+ * modela nema, nego posljedica toga da mu se prijemnik nalazi drugdje.
+ */
+export function MjestoPostaje() {
+  const p = POSTAJE[0];
+  const razlika = Math.round(VRH_PLOHE - p.visina);
+  const stavke: [string, string][] = [
+    ["Koordinate", `${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`],
+    ["Nadmorska visina", `${p.visina} m — vrh plohe je ${razlika} m više`],
+    ["Od sredine plohe", `${p.odPlohe} m, azimut ${p.azimut}°`],
+    [
+      "Kut prema kvartu",
+      `${p.kutDracevac}° do smjera Dračevca, ${p.kutBilice}° do Bilica`,
+    ],
+  ];
+
+  return (
+    <figure className="rounded-xl border border-kamen-tlo bg-white p-6">
+      <figcaption className="text-xl font-bold text-kamen-tinta">
+        Obje postaje stoje na istoj točki — i to s druge strane odlagališta
+      </figcaption>
+      <p className="mt-3 max-w-2xl text-base leading-7 text-kamen-tekst">
+        Nije riječ o mjestu između odlagališta i kvarta. Postaja je u udolini
+        jugoistočno od plohe, prema Kamenu. Gledano sa sredine odlagališta,
+        smjer prema postaji i smjer prema Dračevcu razilaze se za{" "}
+        {p.kutDracevac}° — dakle gotovo suprotne strane.
+      </p>
+      <dl className="mt-5 grid gap-px overflow-hidden rounded-lg border border-kamen-rub bg-kamen-rub text-base sm:grid-cols-2">
+        {stavke.map(([naziv, vrijednost]) => (
+          <div key={naziv} data-kind="official" className="bg-white p-4">
+            <dt className="font-semibold text-kamen-tinta">{naziv}</dt>
+            <dd className="mt-0.5 text-kamen-tekst">{vrijednost}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-5 max-w-2xl text-base leading-7 text-kamen-drugi">
+        Zato se ovo mjerenje ne smije čitati kao mjerenje kvarta. Ono bilježi
+        sate u kojima zrak s plohe ide prema jugoistoku. Sati u kojima ide na
+        Dračevac i Bilice na njemu se vide slabo ili nikako — a upravo je na
+        tom nizu bazdarena jačina izvora u modelu raspršenja.
+      </p>
+    </figure>
+  );
+}
+
+/**
+ * Anemometri: jedini izmjeren ulaz modela, i nijedan nije blizu.
+ *
+ * Vrijedi ga staviti uz mjesto mjerne postaje, jer su to dvije polovice iste
+ * ograde. Plin se mjeri na jednoj točki s krive strane odlagališta, a vjetar
+ * koji bi ga trebao nositi mjeri se četiri do šesnaest kilometara zapadno, u
+ * gradu ili iza Kozjaka. Na samom Karepovcu ne mjeri se ni jedno ni drugo.
+ *
+ * Zračna luka i DHMZ-ov „Split-aerodrom” stoje na istom mjestu i zato se ovdje
+ * spajaju u jedan redak — dva retka s istim koordinatama izgledala bi kao dva
+ * mjerača, a mjerač je jedan.
+ */
+export function VjetrokaziOkoKvarta() {
+  const redci = POSTAJE_VJETRA.filter((p) => p.oznaka !== "aerodrom");
+
+  return (
+    <figure className="rounded-xl border border-kamen-tlo bg-white p-6">
+      <figcaption className="text-xl font-bold text-kamen-tinta">
+        Vjetar se mjeri 4 do 16 km zapadno, nijednom na Karepovcu
+      </figcaption>
+      <p className="mt-3 max-w-2xl text-base leading-7 text-kamen-tekst">
+        Smjer i brzina vjetra jedino su što u modelu doista netko izmjeri —
+        polje strujanja, dubina sloja i jačina izvora su izvodi. Obje postaje uz
+        plohu u AZO-ovoj bazi za vjetar vraćaju prazno, pa se uzima najbliža
+        koja ga objavljuje.
+      </p>
+      <div className="mt-5 overflow-x-auto">
+        <table className="w-full min-w-[34rem] border-collapse text-base">
+          <thead>
+            <tr className="border-b border-kamen-tlo text-left">
+              <th className="py-2 pr-4 font-semibold text-kamen-tinta">Postaja</th>
+              <th className="py-2 pr-4 font-semibold text-kamen-tinta">Tko je vodi</th>
+              <th className="py-2 pr-4 text-right font-semibold text-kamen-tinta">
+                Od kvarta
+              </th>
+              <th className="py-2 text-right font-semibold text-kamen-tinta">Smjer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {redci.map((p) => (
+              <tr key={p.oznaka} className="border-b border-kamen-rub last:border-0">
+                <td className="py-2 pr-4 text-kamen-tinta">{p.naziv}</td>
+                <td className="py-2 pr-4 text-kamen-drugi">{p.mreza}</td>
+                <td className="py-2 pr-4 text-right tabular-nums text-kamen-tekst">
+                  {p.odKvartaKm.toLocaleString("hr-HR", {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}{" "}
+                  km
+                </td>
+                <td className="py-2 text-right tabular-nums text-kamen-tekst">
+                  {p.azimutOdKvarta}°
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-5 max-w-2xl text-base leading-7 text-kamen-drugi">
+        Svi su na zapadu. Zračna luka, jedina koja uvijek javi, leži iza Kozjaka
+        i opisuje kaštelansko polje, a ne našu padinu — zato u redoslijedu stoji
+        posljednja iako je najpouzdanija u dostupnosti. Koordinate su
+        provjerene: Split-2 i Split-3 na terenu, Marjan iz DHMZ-ova popisa,
+        zračna luka iz istog METAR servisa iz kojega dolazi i vjetar.
+      </p>
+    </figure>
   );
 }
 
