@@ -65,7 +65,7 @@ test("bez kadra se ne izmišlja vrijednost", () => {
 
 test("postaja vjetra pokazuje brojku samo na sadašnjem satu", () => {
   const sada = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-Marjan", OCITANJE);
-  assert.equal(sada.vrijednost, "3,4 m/s Z", "brzina, mjera, pa smjer");
+  assert.match(sada.vrijednost, /^3,4 m\/s <svg/, "brzina, mjera, pa strelica");
   assert.equal(sada.nema, false);
 
   // Isto očitanje, ali klizač je u prošlosti: DHMZ i METAR nemaju povijest,
@@ -129,7 +129,7 @@ test("postaja sa satnim nizom prati klizač, i u prošlosti", () => {
     izvor: "split2" as const,
   };
   const n = natpisVjetra(kadar(), "Split-2", undefined, niz);
-  assert.equal(n.vrijednost, "2,2 m/s SI");
+  assert.match(n.vrijednost, /^2,2 m\/s <svg/);
   assert.equal(n.nema, false, "niz ima povijest, pa brojka stoji i unatrag");
 });
 
@@ -142,7 +142,7 @@ test("satni niz ima prednost pred zadnjim očitanjem", () => {
     izvor: "split2" as const,
   };
   const n = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "Split-2", OCITANJE, niz);
-  assert.equal(n.vrijednost, "2,2 m/s SI", "za odabrani sat vrijedi niz, ne zadnje očitanje");
+  assert.match(n.vrijednost, /^2,2 m\/s <svg/, "za odabrani sat vrijedi niz, ne zadnje očitanje");
 });
 
 test("kad mjerenje za sat još nije objavljeno, pokazuje se zadnje — sa satom", () => {
@@ -188,7 +188,7 @@ test("prognozirani sat ne posuđuje mjerenje iz prošlosti", () => {
 });
 
 test("sve pribadače vjetra nose isti oblik: brzina, mjera, smjer", () => {
-  const oblik = /^\d+,\d m\/s (S|SSI|SI|ISI|I|IJI|JI|JJI|J|JJZ|JZ|ZJZ|Z|ZSZ|SZ|SSZ)$/;
+  const oblik = /^\d+,\d m\/s <svg class="sim-oznaka__strelica"/;
   const sada = kadar({ vrsta: "sada", pomak: 0 });
 
   // Postaja sa satnim nizom i postaja sa zadnjim očitanjem moraju izgledati
@@ -200,4 +200,26 @@ test("sve pribadače vjetra nose isti oblik: brzina, mjera, smjer", () => {
   for (const n of [izNiza, izOcitanja]) {
     assert.match(n.vrijednost, oblik, `${n.imena}: „${n.vrijednost}” nije u dogovorenom obliku`);
   }
+});
+
+test("strelica pokazuje kamo nosi, a ne odakle puše", () => {
+  // Vjetar iz juga (180°) nosi zrak prema sjeveru; strelica mora biti
+  // zaokrenuta za 0°, dakle prema vrhu. Da pokazuje odakle puše, bilo bi 180°.
+  const juzni = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "P", {
+    ...OCITANJE, smjerOd: 180,
+  });
+  assert.match(juzni.vrijednost, /rotate\(0 6 6\)/, "jugo nosi prema sjeveru");
+
+  const zapadni = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "P", {
+    ...OCITANJE, smjerOd: 270,
+  });
+  assert.match(zapadni.vrijednost, /rotate\(90 6 6\)/, "zapadnjak nosi prema istoku");
+});
+
+test("pri tišini nema strelice, jer smjer tada ništa ne znači", () => {
+  const n = natpisVjetra(kadar({ vrsta: "sada", pomak: 0 }), "P", {
+    ...OCITANJE, brzina: 0.2, tisina: true,
+  });
+  assert.equal(n.vrijednost, "tišina");
+  assert.doesNotMatch(n.vrijednost, /svg/);
 });

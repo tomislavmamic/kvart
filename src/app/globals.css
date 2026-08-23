@@ -785,6 +785,20 @@ body {
   font-style: normal;
 }
 
+/* Strelica pokazuje kamo vjetar nosi; „iz JZ” stoji u opisu, ne na slici. */
+.sim-oznaka__strelica {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  vertical-align: -1px;
+  fill: #14202c;
+}
+
+/* Opis se čita mišem, pa ploča prima pokazivač iako oznaka u cjelini ne. */
+.sim-oznaka__ploca {
+  pointer-events: auto;
+}
+
 /* Sat uz brojku: stoji samo kad mjerenje nije iz odabranog sata. */
 .sim-oznaka__red em {
   font-style: normal;

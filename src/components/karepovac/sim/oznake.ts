@@ -138,22 +138,53 @@ function broj(x: number, decimala: number): string {
 const MJESTA = new Map(POSTAJE_VJETRA.map((p) => [p.oznaka as Postaja, p]));
 
 /**
- * Vjetar u obliku u kojem ga nose sve pribadače: brzina, mjera, smjer.
+ * Strelica koja pokazuje **kamo** vjetar nosi.
  *
- * Mjera stoji uz brojku, a ne u opisu: `1,2 JJZ` se dade pročitati i kao
- * čvorovi i kao km/h, a razlika između 1,2 m/s i 1,2 čvora je razlika između
- * tišine i povjetarca. Pri tišini se brojka izostavlja jer smjer tada ništa ne
- * znači — vidi `tisina` u `vjetar.ts`.
+ * Ista je pogodba kao na kartici gore lijevo: crta se kamo zrak ide, a piše se
+ * odakle puše. To dvoje je suprotno i stalno se brka, pa strelica nikad ne
+ * stoji sama — uz nju u `title` i za čitač zaslona ide „iz JZ”, riječima.
+ * Slika odgovara na pitanje tko je niz vjetar, natpis na pitanje kako se taj
+ * vjetar zove.
+ *
+ * Args:
+ *   smjerOd: Meteorološki smjer iz kojega puše, u stupnjevima.
+ *
+ * Returns:
+ *   SVG strelice, zaokrenut prema odredištu.
+ */
+function strelica(smjerOd: number): string {
+  const kut = (smjerOd + 180) % 360;
+  return (
+    `<svg class="sim-oznaka__strelica" viewBox="0 0 12 12" aria-hidden="true">` +
+    `<path d="M6 1.5 L9 10 L6 8 L3 10 Z" transform="rotate(${kut.toFixed(0)} 6 6)"/>` +
+    `</svg>`
+  );
+}
+
+/**
+ * Vjetar u obliku u kojem ga nose sve pribadače: brzina, mjera, strelica.
+ *
+ * Mjera stoji uz brojku, a ne u opisu: `1,2` se dade pročitati i kao čvorovi i
+ * kao km/h, a razlika između 1,2 m/s i 1,2 čvora je razlika između tišine i
+ * povjetarca. Pri tišini se brojka izostavlja jer smjer tada ništa ne znači —
+ * vidi `tisina` u `vjetar.ts`.
  *
  * Args:
  *   v: Očitanje s postaje, satno ili zadnje objavljeno.
  *
  * Returns:
- *   Natpis oblika `1,2 m/s JJZ`, ili `tišina`.
+ *   Natpis oblika `1,2 m/s ↗`, ili `tišina`.
  */
 function brzinaISmjer(v: { brzina: number; smjerOd: number; tisina: boolean }): string {
   if (v.tisina) return "tišina";
-  return `${broj(v.brzina, 1)} m/s ${strana(v.smjerOd)}`;
+  return `${broj(v.brzina, 1)} m/s ${strelica(v.smjerOd)}`;
+}
+
+/** Riječima, za `title` i čitače zaslona; strelica sama ne kaže odakle puše. */
+function rijecima(v: { brzina: number; smjerOd: number; tisina: boolean } | undefined): string {
+  if (!v) return "";
+  if (v.tisina) return "tišina, vjetar praktički ne nosi";
+  return `iz ${strana(v.smjerOd)}, ${broj(v.brzina, 1)} m/s`;
 }
 
 /** Postaje vjetra koje se mogu zabosti — one kojima registar zna mjesto. */
@@ -253,11 +284,15 @@ export function stvoriOznake(
         const klasa = n.nema ? "sim-oznaka__red sim-oznaka__red--nema" : "sim-oznaka__red";
         const v = n.nema ? `<i>${n.vrijednost}</i>` : n.vrijednost;
         m.ploca.innerHTML = `<span class="${klasa}"><b>${n.imena}</b> ${v}</span>`;
+        const opis = rijecima(izNiza ?? (naSada ? sada.find((v) => m.postaje.includes(v.postaja)) : undefined));
         m.ploca.title = izNiza
-          ? `${imena} — izmjereno u odabranom satu`
+          ? `${imena} — ${opis}, izmjereno u odabranom satu`
           : naSada
-            ? `${imena} — zadnje objavljeno očitanje`
+            ? opis
+              ? `${imena} — ${opis}, zadnje objavljeno očitanje`
+              : `${imena} — trenutačno ne javlja`
             : `${imena} — objavljuje samo zadnje očitanje, ne i povijest`;
+        m.ploca.setAttribute("aria-label", m.ploca.title);
       }
     },
     vidljivost(vidljive) {
