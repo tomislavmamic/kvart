@@ -12,17 +12,28 @@
  *
  * Odgovor je namjerno mršav: samo satovi koje je mjerenje doista pokrilo.
  * Sat kojega ovdje nema ostaje na modelu i tako i piše na karti.
+ *
+ * Uz niz ide i `sada` — što svaka postaja javlja u ovom trenutku. To nije isto
+ * što i niz: DHMZ i METAR ne objavljuju povijest, nego samo zadnje očitanje.
+ * Karta ih zato zabada s vrijednošću samo dok stoji na sadašnjem satu; kad se
+ * klizač povuče unatrag, pribadača ostaje, a brojka nestane. Prikazati zadnje
+ * očitanje uz sat od jučer značilo bi tvrditi nešto što nitko nije izmjerio.
  */
 
 import { azoVjetar } from "@/lib/sim/dohvat";
+import { dohvatiZrak } from "@/lib/vjetar";
 
 /** Isti rok kao ostali izvori vjetra, da se dvije karte ne raziđu. */
 export const revalidate = 900;
 
 export async function GET(): Promise<Response> {
-  const izmjereno = await azoVjetar(new Date());
+  const [izmjereno, sada] = await Promise.all([
+    azoVjetar(new Date()),
+    // Ne ruši odgovor ako padne: pribadače su dodatak, niz je ono glavno.
+    dohvatiZrak().catch(() => null),
+  ]);
   return Response.json(
-    { satovi: [...izmjereno.values()] },
+    { satovi: [...izmjereno.values()], sada: sada?.ocitanja ?? [] },
     {
       headers: {
         // Preglednik smije držati kratko; posluživanje ionako ide iz

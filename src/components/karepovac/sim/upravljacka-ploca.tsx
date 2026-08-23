@@ -1,10 +1,7 @@
 "use client";
 
 import { TVARI, type Tvar } from "@/lib/dim";
-import type { Kadar } from "@/lib/sim/kadrovi";
 import { BOJE, JACINA, bojaZa, uGradijent } from "@/lib/sim/ljestvica";
-import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
-import { imeIzvora } from "@/lib/sim/vrijeme-satno";
 import type { PostavkePrikaza } from "@/components/karepovac/sim/sim-scena";
 import type { Podloga } from "@/components/karepovac/sim/sim-karta";
 
@@ -63,14 +60,11 @@ export type PloceStanje = {
 
 export function UpravljackaPloca({
   stanje,
-  kadar,
   naPrikaz,
   naStanje,
   naSredinu,
 }: {
   stanje: PloceStanje;
-  /** Odabrani sat; iz njega dolaze očitanja postaja i podatci o vjetru. */
-  kadar: Kadar | null;
   naPrikaz: (p: PostavkePrikaza) => void;
   naStanje: (p: Partial<PloceStanje>) => void;
   naSredinu: () => void;
@@ -187,36 +181,6 @@ export function UpravljackaPloca({
         >
           Čestice u pokretu
         </Prekidac>
-        {kadar?.vjetar ? (
-          <p className="mt-1 text-xs leading-5 text-zinc-600">
-            {kadar.vjetar.tisina ? (
-              <>Tišina — vjetar praktički ne nosi.</>
-            ) : (
-              <>
-                Puše iz{" "}
-                <span className="font-semibold tabular-nums">
-                  {Math.round(kadar.vjetar.smjerOd)}°
-                </span>{" "}
-                brzinom{" "}
-                <span className="font-semibold tabular-nums">
-                  {kadar.vjetar.brzina.toFixed(1).replace(".", ",")} m/s
-                </span>
-                .
-              </>
-            )}{" "}
-            Sloj miješanja{" "}
-            <span className="tabular-nums">{kadar.stanje?.dubina} m</span>.
-            <br />
-            <span className="text-zinc-500">
-              Izvor: {imeIzvora(kadar.vjetar.izvor)}
-              {kadar.vjetar.izvor === "model" && kadar.vrsta !== "prognoza"
-                ? " — izmjereni vjetar za ovaj sat nije stigao"
-                : ""}
-            </span>
-          </p>
-        ) : (
-          <p className="mt-1 text-xs text-zinc-500">Za ovaj sat vjetar nije poznat.</p>
-        )}
       </section>
 
       <section>
@@ -265,38 +229,14 @@ export function UpravljackaPloca({
 
       <section>
         <Naslov>Tko to mjeri</Naslov>
-        <ul className="space-y-2">
-          {SIM_POSTAJE.map((p) => {
-            const o = kadar?.ocitanja.find((x) => x.postaja === p.oznaka);
-            return (
-              <li key={p.oznaka} className="rounded-lg border border-zinc-200 p-2.5 text-sm">
-                <div className="font-semibold text-zinc-900">{p.naziv}</div>
-                <div className="text-xs text-zinc-500">
-                  {p.opis} · {TVARI[p.tvar].naziv.toLowerCase()}
-                </div>
-                <div className="mt-1 tabular-nums">
-                  {kadar?.vrsta === "prognoza" ? (
-                    <span className="text-zinc-500">Sat još nije prošao.</span>
-                  ) : o && o.vrijednost !== null ? (
-                    <span className="font-semibold text-zinc-900">
-                      {o.vrijednost.toFixed(3).replace(".", ",")} {o.jedinica}
-                      {o.ispodGranice ? (
-                        <span className="ml-1 font-normal text-zinc-500">
-                          (ispod granice određivanja)
-                        </span>
-                      ) : null}
-                    </span>
-                  ) : (
-                    <span className="text-zinc-500">Nema mjerenja.</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="mt-2 text-xs leading-5 text-zinc-500">
+        <p className="text-xs leading-5 text-zinc-600">
+          Brojke stoje na karti, uz samu točku mjerenja — pitanje je koliko je
+          bilo <i>ondje</i>, a ploča na to ne može odgovoriti.
+        </p>
+        <p className="mt-1.5 text-xs leading-5 text-zinc-500">
           Satne tablice Zavoda za javno zdravstvo SDŽ, nevalidirane — Zavod ih
-          naknadno provjerava.
+          naknadno provjerava. Postaje vjetra objavljuju samo zadnje očitanje,
+          pa im brojka stoji tek dok je klizač na sadašnjem satu.
         </p>
       </section>
     </div>

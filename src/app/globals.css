@@ -653,3 +653,67 @@ body {
     opacity: 0.5;
   }
 }
+
+
+/* --- Pribadače simulatora (`/karepovac/sim`) -----------------------------
+   Brojka stoji uz točku mjerenja, ne u ploči sa strane: pitanje je „koliko je
+   bilo ondje”, a ploča ne zna gdje je ondje. Zato je oznaka mala, prozirna i
+   uvijek uz svoju točku, i ne smije prekriti perjanicu ispod sebe. */
+.sim-oznaka {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-oznaka__tocka {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2.5px #14202c, 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.sim-oznaka--vjetar .sim-oznaka__tocka {
+  border-radius: 2px;
+  box-shadow: 0 0 0 2.5px #4b5b6b, 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+.sim-oznaka__ploca {
+  display: flex;
+  gap: 8px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(2px);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #14202c;
+  white-space: nowrap;
+}
+
+.sim-oznaka__red b {
+  font-weight: 700;
+  color: #6b7580;
+  margin-right: 2px;
+}
+
+.sim-oznaka__red--nema {
+  color: #8b9099;
+}
+
+.sim-oznaka__red i {
+  font-style: normal;
+}
+
+/* Na uskom zaslonu oznake se lako pretvore u zid teksta preko karte. */
+@media (max-width: 640px) {
+  .sim-oznaka__ploca {
+    font-size: 10px;
+    padding: 1px 5px;
+    gap: 6px;
+  }
+}

@@ -12,6 +12,18 @@
  * - Vrijeme je mjesno (Europe/Zagreb), pa se pretvara u UTC.
  * - `< 0,1` znači ispod granice određivanja; uzima se polovica granice.
  * - `-` znači da uređaj nije radio — i to ostaje `null`, ne nula.
+ * Koordinate su izmjerene na terenu, ne preuzete iz AZO-ove baze: ondje su
+ * obje postaje zaokružene na tri decimale (43,516 / 16,517), dakle promašene
+ * za 72 m, i obje na istoj točki. Na karti koja pokazuje gdje se mjeri to je
+ * predaleko od istine.
+ *
+ * TODO(spajanje): usporedno se sprema ista točka kao `LAT_POSTAJE` /
+ * `LON_POSTAJE` u `scripts/postaje.py`, odakle je izvodi
+ * `izvedi-karepovac-karticu.py` u `POSTAJE` u `karepovac-karta.ts`. Kad ta
+ * grana sleti, ovaj zapis treba **obrisati** i čitati iz generiranog modula —
+ * inače je ovo još jedna kopija koja se ima kamo razići. Vrijednost je ista,
+ * provjereno znamenku po znamenku.
+ *
  * - Postaje ne slažu redke istim redoslijedom: k1 piše najnoviji sat prvi,
  *   k2 najstariji. Zato se ne smije uzeti „zadnji redak” nego se traži po
  *   vremenu.
@@ -26,8 +38,8 @@ export const SIM_POSTAJE = [
     oznaka: "k1",
     naziv: "Karepovac 1",
     opis: "jugoistočni rub plohe",
-    lat: 43.516,
-    lon: 16.517,
+    lat: 43.5166505,
+    lon: 16.5169123,
     tvar: "sumporovodik",
     /** Ime stupca u tablici Zavoda. */
     stupac: "H2S",
@@ -37,8 +49,8 @@ export const SIM_POSTAJE = [
     oznaka: "k2",
     naziv: "Karepovac 2",
     opis: "južna strana plohe",
-    lat: 43.516,
-    lon: 16.517,
+    lat: 43.5166505,
+    lon: 16.5169123,
     tvar: "merkaptani",
     stupac: "metil+etilmerkaptan",
     jedinica: "µg/m³",

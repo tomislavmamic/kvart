@@ -18,6 +18,16 @@ import { SiteHeader, PlutajuciIzbornik } from "./site-header";
  */
 const PUNI_PROZOR: ReadonlySet<string> = new Set(["/karta"]);
 
+/**
+ * Stranice bez ijednog dijela okvira stranice — ni plutajućeg izbornika.
+ *
+ * Simulator na `/karepovac/sim` je jedan zaslon s vlastitim gumbima u oba
+ * gornja kuta. Plutajući izbornik ondje ne bi bio dodatak nego treći gumb
+ * preko karte, na mjestu na kojem simulator već ima svoje. Izlaz vodi natrag
+ * na pregled zraka, pa se iz njega ne može zapeti.
+ */
+const BEZ_OKVIRA: ReadonlySet<string> = new Set(["/karepovac/sim"]);
+
 export function SiteChrome({
   children,
   podnozje,
@@ -26,6 +36,7 @@ export function SiteChrome({
   podnozje: ReactNode;
 }) {
   const pathname = usePathname();
+  if (BEZ_OKVIRA.has(pathname)) return <>{children}</>;
   if (PUNI_PROZOR.has(pathname)) {
     return (
       <>

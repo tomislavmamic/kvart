@@ -29,10 +29,13 @@ export const SREDISTE: [number, number] = [SIM_POLJE.izvor.lon, SIM_POLJE.izvor.
  * bio jedini put natrag.
  */
 export const NAJVECI_OBUHVAT: [number, number, number, number] = [
-  SIM_POLJE.granice.zapad - 0.03,
-  SIM_POLJE.granice.jug - 0.02,
-  SIM_POLJE.granice.istok + 0.03,
-  SIM_POLJE.granice.sjever + 0.02,
+  // Dovoljno široko da se odzumiranjem vide i postaje vjetra: najdalja je
+  // zračna luka, 16 km zapadno. Perjanica se ondje više ne crta i to se vidi
+  // jer prestaje na rubu okvira — ali barem je vidljivo odakle vjetar dolazi.
+  16.24,
+  43.44,
+  SIM_POLJE.granice.istok + 0.05,
+  SIM_POLJE.granice.sjever + 0.04,
 ];
 
 /** Početni pogled: cijeli okvir polja, s plohom u sredini. */

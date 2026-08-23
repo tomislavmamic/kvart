@@ -34,13 +34,54 @@
 
 import type { StanjeZraka } from "@/lib/polje-dima";
 
-/** Postaje s kojih uzimamo vjetar, od najbliže prema najdaljoj. */
+/**
+ * Postaje s kojih uzimamo vjetar, od najbliže prema najdaljoj.
+ *
+ * Koordinate su ondje gdje ih izvor sam objavljuje: DHMZ ih piše uz svaku
+ * postaju u satnom izvještaju (`<Lat>`, `<Lon>`), a METAR ih vraća uz
+ * očitanje. AZO ih ne objavljuje ni na jednom otvorenom putu — provjereno
+ * 22. 8. 2026. — pa im ovdje stoji `null`. Karta te postaje zato ne zabada
+ * nego ih navodi bez mjesta; izmišljena bi točka bila gora od nijedne, jer
+ * na karti izgleda jednako pouzdano kao izmjerena.
+ */
 export const POSTAJE = {
-  split3: { oznaka: "Split-3", ime: "AZO, postaja Split-3", udaljenostKm: 4.3 },
-  split2: { oznaka: "Split-2", ime: "AZO, postaja Split-2", udaljenostKm: 4.6 },
-  marjan: { oznaka: "Split-Marjan", ime: "DHMZ, Split-Marjan", udaljenostKm: 6 },
-  aerodrom: { oznaka: "Split-aerodrom", ime: "DHMZ, Split-aerodrom", udaljenostKm: 16 },
-  ldsp: { oznaka: "LDSP", ime: "METAR, Zračna luka Split", udaljenostKm: 16 },
+  split3: {
+    oznaka: "Split-3",
+    ime: "AZO, postaja Split-3",
+    udaljenostKm: 4.3,
+    lat: null,
+    lon: null,
+  },
+  split2: {
+    oznaka: "Split-2",
+    ime: "AZO, postaja Split-2",
+    udaljenostKm: 4.6,
+    lat: null,
+    lon: null,
+  },
+  marjan: {
+    oznaka: "Split-Marjan",
+    ime: "DHMZ, Split-Marjan",
+    udaljenostKm: 6,
+    lat: 43.508,
+    lon: 16.426,
+  },
+  aerodrom: {
+    oznaka: "Split-aerodrom",
+    ime: "DHMZ, Split-aerodrom",
+    udaljenostKm: 16,
+    lat: 43.539,
+    lon: 16.301,
+  },
+  // METAR mjeri na istoj zračnoj luci kao i DHMZ-ova postaja, pa im se točke
+  // poklapaju; karta ih zato prikazuje kao jedno mjesto s dva izvora.
+  ldsp: {
+    oznaka: "LDSP",
+    ime: "METAR, Zračna luka Split",
+    udaljenostKm: 16,
+    lat: 43.539,
+    lon: 16.301,
+  },
 } as const;
 
 export type Postaja = keyof typeof POSTAJE;

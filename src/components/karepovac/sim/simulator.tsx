@@ -17,6 +17,7 @@ import { pokreniPogon, type Pogon, type StanjePogona } from "@/lib/sim/pogon";
 import { razloziOsnove, slozi, type Osnove } from "@/lib/sim/polje";
 import type { SatSimulacije } from "@/lib/sim/simulacija";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
+import type { Vjetar } from "@/lib/vjetar";
 import { zapisiGustocu } from "@/lib/sim/zapis-gustoce";
 import {
   dodajZgrade,
@@ -27,7 +28,9 @@ import {
   stiloviKarte,
 } from "@/components/karepovac/sim/sim-karta";
 import type { PostavkePrikaza, Scena } from "@/components/karepovac/sim/sim-scena";
+import { stvoriOznake, type Oznake } from "@/components/karepovac/sim/oznake";
 import { UpravljackaPloca, type PloceStanje } from "@/components/karepovac/sim/upravljacka-ploca";
+import { VjetarKartica } from "@/components/karepovac/sim/vjetar-kartica";
 import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
 
 /**
@@ -170,7 +173,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   const [stanjeKarte, postaviStanjeKarte] = useState<"ucitavanje" | "spremna" | "bezWebgl">(
     "ucitavanje",
   );
+  // Ploča je zatvorena dok je netko ne zatraži: karta je ono što se gleda.
   const [plocaOtvorena, postaviPlocu] = useState(false);
+  const [sadaOcitanja, postaviSada] = useState<readonly Vjetar[]>([]);
+  const oznakeRef = useRef<Oznake | null>(null);
   /**
    * Je li WebGL sloj spremljen u `scenaRef`.
    *
@@ -244,7 +250,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
     void (async () => {
       try {
-        const { Map: MapaLibre, NavigationControl, ScaleControl } = await import("maplibre-gl");
+        const { Map: MapaLibre, Marker, NavigationControl, ScaleControl } = await import("maplibre-gl");
         if (otkazano) return;
 
         const karta = new MapaLibre({
@@ -256,7 +262,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           fitBoundsOptions: { padding: { top: 64, bottom: 120, left: 16, right: 16 } },
           maxBounds: NAJVECI_OBUHVAT,
           maxZoom: 17,
-          minZoom: 11,
+          // Do 10 se vidi cijela mreža postaja vjetra, sve do zračne luke.
+          minZoom: 10,
           // Pogled odozgo je zadan: iz njega se uspoređuje dokle perjanica
           // seže. Nagib ostaje moguć rukom, ali se ne nameće.
           pitch: 0,
@@ -280,6 +287,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           for (const sloj of SLOJEVI_POSTAJA) {
             if (!karta.getLayer(sloj.id)) karta.addLayer(sloj);
           }
+          if (!oznakeRef.current) oznakeRef.current = stvoriOznake(karta, Marker);
           kartaSpremnaRef.current = true;
           dodajSloj();
           postaviStanjeKarte("spremna");
@@ -292,6 +300,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     return () => {
       otkazano = true;
       scenaRef.current = null;
+      oznakeRef.current?.ukloni();
+      oznakeRef.current = null;
       postaviScenuSpremnom(false);
       kartaSpremnaRef.current = false;
       kartaRef.current?.remove();
@@ -357,8 +367,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       try {
         const odgovor = await fetch("/api/karepovac/sim/vjetar");
         if (!odgovor.ok) return;
-        const podatci: { satovi?: SatniVjetar[] } = await odgovor.json();
-        if (otkazano || !podatci.satovi?.length) return;
+        const podatci: { satovi?: SatniVjetar[]; sada?: Vjetar[] } = await odgovor.json();
+        if (otkazano) return;
+        if (podatci.sada?.length) postaviSada(podatci.sada);
+        if (!podatci.satovi?.length) return;
         postaviCrtu((stara) =>
           primijeniVjetar(stara, new Map(podatci.satovi!.map((v) => [v.sat, v]))),
         );
@@ -391,6 +403,11 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     }
   }, [kadar, izracunati, scenaSpremna]);
 
+  // Odabrani sat → brojke na pribadačama.
+  useEffect(() => {
+    oznakeRef.current?.postavi(kadar, sadaOcitanja);
+  }, [kadar, sadaOcitanja, stanjeKarte]);
+
   // Postavke prikaza → scena.
   useEffect(() => {
     scenaRef.current?.postaviPrikaz(stanje.prikaz);
@@ -409,6 +426,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     vidljivost(PODLOGE.ortofoto, stanje.podloga === "ortofoto");
     vidljivost("reljef", stanje.reljef);
     vidljivost("postaje-krug", stanje.postaje);
+    oznakeRef.current?.vidljivost(stanje.postaje);
     // Zgrade stižu tek na zahtjev; do tada sloja nema pa se nema što skrivati.
     if (stanje.zgrade) dodajZgrade(karta);
     vidljivost("zgrade", stanje.zgrade);
@@ -459,72 +477,84 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           kontrole i ne javlja grešku — samo ne traži nijednu pločicu. */}
       <div ref={spremnik} className="h-full w-full" />
 
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 shadow backdrop-blur">
-          <Link
-            href="/karepovac/zrak"
-            aria-label="Natrag na pregled zraka"
-            className="fokus -ml-1 rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            ←
-          </Link>
-          <div>
-            <h1 className="text-sm font-bold leading-tight text-zinc-900">
-              Simulator mirisa s Karepovca
-            </h1>
-            <p className="text-xs leading-tight text-zinc-500">
-              {napredak.greska
-                ? napredak.greska
-                : napredak.gotovo < napredak.ukupno
-                  ? `Računam perjanicu — ${napredak.gotovo} od ${napredak.ukupno} sati`
-                  : "Svi sati izračunati"}
-            </p>
-          </div>
-        </div>
+      {/* Gore lijevo stoji ono što vodi cijelu kartu: vjetar koji model uzima
+          za odabrani sat. Ispod njega samo napredak računa, i to dok traje. */}
+      <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col items-start gap-1.5">
+        <VjetarKartica kadar={kadar} />
+        {napredak.greska || napredak.gotovo < napredak.ukupno ? (
+          <span className="pointer-events-auto rounded bg-zinc-900/80 px-2 py-1 text-[11px] font-medium text-white">
+            {napredak.greska ?? `Računam ${napredak.gotovo}/${napredak.ukupno} sati`}
+          </span>
+        ) : null}
+      </div>
 
+      {/* Gore desno: izlaz i otvaranje ploče. Ništa više — navigacija stranice
+          je na ovoj karti sakrivena (vidi PUNI_PROZOR u site-chrome). */}
+      <div className="absolute right-3 top-3 z-30 flex items-center gap-1.5">
         <button
           type="button"
           onClick={() => postaviPlocu((v) => !v)}
           aria-expanded={plocaOtvorena}
-          className="pointer-events-auto fokus min-h-11 rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-sm font-semibold text-zinc-800 shadow backdrop-blur lg:hidden"
+          aria-label={plocaOtvorena ? "Zatvori postavke" : "Otvori postavke"}
+          className="fokus flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white hover:text-zinc-900"
         >
-          {plocaOtvorena ? "Zatvori" : "Postavke"}
+          <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">
+            <path
+              d="M3 6h14M3 10h14M3 14h14"
+              className="stroke-current"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
         </button>
-      </header>
-
-      {/* Ploča: sa strane na širokom zaslonu, odozdo na uskom. */}
-      <div
-        className={
-          plocaOtvorena
-            ? "absolute inset-x-0 bottom-0 z-30 max-h-[70%] overflow-y-auto border-t border-zinc-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] lg:inset-x-auto lg:right-3 lg:top-16 lg:bottom-28 lg:w-80 lg:rounded-xl lg:border"
-            : "absolute right-3 top-16 bottom-28 z-30 hidden w-80 overflow-y-auto rounded-xl border border-zinc-200 bg-white/95 shadow-lg backdrop-blur lg:block"
-        }
-      >
-        <UpravljackaPloca
-          stanje={stanje}
-          kadar={kadar}
-          naPrikaz={(prikaz) => postaviStanje((s) => ({ ...s, prikaz }))}
-          naStanje={(p) => postaviStanje((s) => ({ ...s, ...p }))}
-          naSredinu={() =>
-            kartaRef.current?.fitBounds(POCETNI_OBUHVAT, { duration: 600, pitch: 0 })
-          }
-        />
+        <Link
+          href="/karepovac/zrak"
+          aria-label="Zatvori simulator"
+          className="fokus flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white hover:text-zinc-900"
+        >
+          <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">
+            <path
+              d="M5 5l10 10M15 5L5 15"
+              className="stroke-current"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
+        </Link>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 lg:pr-[21.5rem]">
-        {!spreman && kadar ? (
-          <p className="pointer-events-auto mb-2 inline-block rounded-lg bg-zinc-900/85 px-3 py-1.5 text-xs font-medium text-white">
-            {kadar.dostupnost === "nedostupno"
-              ? "Za ovaj sat nema podataka o vjetru."
-              : "Računam ovaj sat…"}
-          </p>
-        ) : null}
-        <VremenskaCrta
-          crta={crta}
-          pomak={pomak}
-          izracunati={izracunati}
-          naPromjenu={naPomak}
-        />
+      {/* Ploča se otvara na zahtjev i sa strane, da karta ostane vidljiva. */}
+      {plocaOtvorena ? (
+        <div className="absolute inset-x-0 bottom-0 top-16 z-20 overflow-y-auto border-t border-black/5 bg-white/90 backdrop-blur-md sm:inset-x-auto sm:right-3 sm:bottom-14 sm:w-[19rem] sm:rounded-xl sm:border sm:shadow-lg">
+          <UpravljackaPloca
+            stanje={stanje}
+            naPrikaz={(prikaz) => postaviStanje((s) => ({ ...s, prikaz }))}
+            naStanje={(p) => postaviStanje((s) => ({ ...s, ...p }))}
+            naSredinu={() =>
+              kartaRef.current?.fitBounds(POCETNI_OBUHVAT, { duration: 600, pitch: 0 })
+            }
+          />
+        </div>
+      ) : null}
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3">
+        <div className="mx-auto max-w-3xl">
+          {!spreman && kadar ? (
+            <p className="pointer-events-auto mb-1.5 inline-block rounded bg-zinc-900/80 px-2 py-1 text-[11px] font-medium text-white">
+              {kadar.dostupnost === "nedostupno"
+                ? "Za ovaj sat nema podataka o vjetru."
+                : "Računam ovaj sat…"}
+            </p>
+          ) : null}
+          <VremenskaCrta
+            crta={crta}
+            pomak={pomak}
+            izracunati={izracunati}
+            naPromjenu={naPomak}
+          />
+        </div>
       </div>
     </div>
   );
