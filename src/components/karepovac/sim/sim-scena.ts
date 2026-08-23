@@ -24,6 +24,7 @@ import * as THREE from "three";
 
 import { MIRISNI_RASPON, TVARI, type Tvar, ljestvicaBoja } from "@/lib/dim";
 import { bojaZa, SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
+import { razmakPoteza, RAZMAK_S } from "@/lib/sim/potezi";
 import { PROZOR } from "@/lib/sim/zapis-gustoce";
 import type { Osnove } from "@/lib/sim/polje";
 import { izvediStrujnice } from "@/lib/sim/strujnice-sim";
@@ -38,9 +39,6 @@ const PODJELA = 24;
  * na istoj karti ne mjere vrijeme različito.
  */
 const UBRZANJE_STRUJNICA = 60;
-
-/** Razmak između svjetlećih poteza, u sekundama putovanja zraka. */
-const RAZMAK_POTEZA = 110;
 
 /** Koliko čestica nosi animirani vjetar. */
 const CESTICA = 1400;
@@ -298,7 +296,7 @@ export function stvoriSlojPerjanice(
 
   const strujaUniforme = {
     uVrijeme: { value: 0 },
-    uRazmak: { value: RAZMAK_POTEZA },
+    uRazmak: { value: RAZMAK_S.najveci as number },
     uBoja: { value: new THREE.Color(0x14202c) },
   };
 
@@ -442,6 +440,14 @@ export function stvoriSlojPerjanice(
         }
       }
     }
+
+    // Razmak se prilagođava vjetru tako da na karti ostane isti put, a ne
+    // isto vrijeme; brzina poteza time ostaje netaknuta.
+    let zbroj = 0;
+    for (let i = 0; i < polje.vx.length; i += 1) {
+      zbroj += Math.hypot(polje.vx[i], polje.vy[i]);
+    }
+    strujaUniforme.uRazmak.value = razmakPoteza(zbroj / Math.max(1, polje.vx.length));
 
     strujeGeo.setAttribute(
       "position",
