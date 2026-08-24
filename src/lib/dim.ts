@@ -200,6 +200,27 @@ const EMISIJA_PO_SEKUNDI = 2000;
 const PRIJELAZA_DO_USTALJENJA = 2.2;
 
 /**
+ * Ispod koje srednje brzine vjetra u okviru počinje zastojno širenje, u m/s.
+ *
+ * Smjer vjetra dolazi s anemometara kilometrima daleko i pri slabom vjetru
+ * je šum — a prikaz ga je uzimao doslovno, pa je i pri tišini cijela
+ * perjanica poslušno curila u jednu stranu. Model raspršenja je na dvije
+ * godine mjerenja H₂S-a uz plohu pokazao suprotno: pri tišini meandar
+ * razmaže zrak na sve strane, a satne vrijednosti nose potpis zastoja, ne
+ * smjera (vidi `oblacici.K_PO_RAZREDU` i `bazdari-izvor.py`).
+ */
+const PRAG_ZASTOJA = 1.0;
+
+/**
+ * Koliko se vrtlog najviše pojača pri potpunoj tišini.
+ *
+ * Vrtložni šum nema divergencije, pa pojačanje ne stvara ni izvor ni ponor
+ * mase — samo mijenja omjer između razmazivanja i nošenja, u korist
+ * razmazivanja, onako kako mjerenja kažu da pri tišini i jest.
+ */
+const ZASTOJNO_SIRENJE = 2.5;
+
+/**
  * Koliko se čestice razilaze u fazi vrtložnog šuma.
  *
  * Šum je jedno jedino polje sinusa, pa bi bez ovoga cijela perjanica disala
@@ -331,14 +352,19 @@ export function stvoriDimSirovo(
   }
   // Srednja brzina u okviru odlučuje koliko prikaz treba da se ustali: pri
   // tišini se zrak dugo nakuplja, pri buri je okvir pun za nekoliko sekundi.
-  let zbrojBrzina = 0;
-  for (let i = 0; i < VX.length; i += 1) {
-    zbrojBrzina += Math.hypot(
-      (VX[i] / 255) * 2 * skala - skala,
-      (VY[i] / 255) * 2 * skala - skala,
-    );
+  // Ista brojka nosi i zastojno širenje, pa se osvježava kad simulator
+  // podmetne polje drugog sata (`postaviPolje`).
+  function izmjeriSrednju(): number {
+    let zbrojBrzina = 0;
+    for (let i = 0; i < VX.length; i += 1) {
+      zbrojBrzina += Math.hypot(
+        (VX[i] / 255) * 2 * skala - skala,
+        (VY[i] / 255) * 2 * skala - skala,
+      );
+    }
+    return Math.max(zbrojBrzina / Math.max(1, VX.length), 0.05);
   }
-  const srednjaBrzina = Math.max(zbrojBrzina / Math.max(1, VX.length), 0.05);
+  let srednjaBrzina = izmjeriSrednju();
 
   const izvor = zarista(celije, par.zarista, gw, gh, slucaj);
   const nIzvor = izvor.length / 2;
@@ -441,6 +467,11 @@ export function stvoriDimSirovo(
     const kx = (par.ubrzanje / par.metaraX) * dt;
     const ky = (par.ubrzanje / par.metaraY) * dt;
 
+    // Pri tišini razmazivanje nadjača nošenje: smjer je tada šum, a mjerenja
+    // uz plohu kažu da se zrak razlije oko nje, ne u nit niz javljeni smjer.
+    const zastoj =
+      1 + ZASTOJNO_SIRENJE * Math.max(0, 1 - srednjaBrzina / PRAG_ZASTOJA);
+
     const e = 0.004;
     for (let n = 0; n < N; n += 1) {
       if (!ziv[n]) continue;
@@ -476,8 +507,8 @@ export function stvoriDimSirovo(
       const tt = t * par.vrtnja + pomak[n] * FAZA_VRTLOGA;
       const dx = (psi(x, y + e, tt) - psi(x, y - e, tt)) / (2 * e);
       const dy = (psi(x + e, y, tt) - psi(x - e, y, tt)) / (2 * e);
-      vx += dy * a * par.snaga;
-      vy += -dx * a * par.snaga;
+      vx += dy * a * par.snaga * zastoj;
+      vy += -dx * a * par.snaga * zastoj;
 
       px[n] = x + vx * kx;
       py[n] = y + vy * ky;
@@ -570,6 +601,7 @@ export function stvoriDimSirovo(
       VX = novo.vx;
       VY = novo.vy;
       skala = novo.skala;
+      srednjaBrzina = izmjeriSrednju();
     },
   };
 }

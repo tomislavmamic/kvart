@@ -181,6 +181,58 @@ test("slab vjetar nakuplja zrak, jak ga raznese", () => {
   );
 });
 
+test("pri tišini se zrak razlije oko plohe, a ne u nit niz javljeni smjer", () => {
+  // Smjer pri slabom vjetru dolazi kao šum s anemometara kilometrima daleko,
+  // a prikaz ga je uzimao doslovno: i pri tišini je cijela perjanica curila
+  // u jednu stranu. Mjerenja uz plohu kažu suprotno — pri tišini se zrak
+  // razmaže oko izvora (vidi `PRAG_ZASTOJA` u `dim.ts`). Mjera oblika je
+  // koliko mase stoji niz vjetar od izvora: nit gotovo svu masu drži niz
+  // javljeni smjer, razliveni oblak i sa svih ostalih strana. Uspoređuju se
+  // tišina i slab vjetar **istog smjera**, pa je razlika samo u brzini.
+  const TIH = sastaviPolje({ smjerOd: 112.5, brzina: 0.4, dubina: 60 });
+
+  function nizVjetar(polje: typeof SLAB): number {
+    const sim = stvoriDim(polje, { cestica: 8_000 });
+    // Sidro je težište netom ispuštenog dima: pola sekunde prikaza, da se
+    // izvor još ne stigne odnijeti nizvjetar.
+    pusti(sim, 0.5);
+    const [x0, y0] = tezisteXY(sim.crtaj(), sim.sirina, sim.visina);
+    pusti(sim, USTALJENO);
+    const g = sim.crtaj();
+    // Kamo vjetar nosi, u koordinatama zaslona (y raste prema jugu).
+    const az = ((112.5 + 180) * Math.PI) / 180;
+    const dx = Math.sin(az);
+    const dy = -Math.cos(az);
+    let zbrojKos = 0;
+    let tezina = 0;
+    for (let j = 0; j < sim.visina; j += 1) {
+      for (let i = 0; i < sim.sirina; i += 1) {
+        const v = g[j * sim.sirina + i];
+        if (v <= 0) continue;
+        const rx = (i / sim.sirina - x0) * OKVIR_M.sirina;
+        const ry = (j / sim.visina - y0) * OKVIR_M.visina;
+        const r = Math.hypot(rx, ry);
+        if (r < 40) continue;
+        zbrojKos += v * ((rx * dx + ry * dy) / r);
+        tezina += v;
+      }
+    }
+    return tezina > 0 ? zbrojKos / tezina : 0;
+  }
+
+  const tiho = nizVjetar(TIH);
+  const vjetrovito = nizVjetar(SLAB);
+  assert.ok(
+    vjetrovito > 0.5,
+    `pri slabom vjetru je niz vjetar samo ${vjetrovito.toFixed(2)} — nit se raspala`,
+  );
+  assert.ok(
+    tiho < vjetrovito - 0.2,
+    `pri tišini je masa niz vjetar ${tiho.toFixed(2)}, pri slabom vjetru `
+      + `${vjetrovito.toFixed(2)} — tišina i dalje crta nit`,
+  );
+});
+
 test("nošenje ide brzinom stvarnog vjetra, uz poznato ubrzanje", () => {
   // Ovo je brojka koju je prikaz prije imao krivu: perjanica je išla oko dvjesto
   // puta brže od stvarnog vjetra, pa je slab istočnjak izgledao kao oluja.
@@ -531,6 +583,21 @@ function pokrivenost(g: Float32Array): number {
   let n = 0;
   for (let i = 0; i < g.length; i += 1) if (g[i] > 0.02) n += 1;
   return n / g.length;
+}
+
+function tezisteXY(g: Float32Array, W: number, H: number): [number, number] {
+  let zx = 0;
+  let zy = 0;
+  let tezina = 0;
+  for (let j = 0; j < H; j += 1) {
+    for (let i = 0; i < W; i += 1) {
+      const v = g[j * W + i];
+      zx += v * i;
+      zy += v * j;
+      tezina += v;
+    }
+  }
+  return tezina > 0 ? [zx / tezina / W, zy / tezina / H] : [0.5, 0.5];
 }
 
 function tezisteX(g: Float32Array, W: number, H: number): number {

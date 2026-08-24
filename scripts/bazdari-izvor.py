@@ -44,6 +44,21 @@ Spearman 0,134 → 0,128, AUC 0,577 → 0,573, jačina izvora 2076 → 1822 µg 
 Dakle nije se popravilo ništa mjerljivo — što i jest nalaz: ono što ovdje
 nedostaje nije stotinjak metara, nego drugi prijemnik.
 
+## Ugađanje fizike i zaštita od preugađanja (kolovoz 2026.)
+
+Postaja stoji u udolini, 74 m ispod vrha plohe, a stari je model i pri
+tišini cijelu perjanicu slao za smjerom s anemometara 4–16 km daleko — pa je
+na drugoj godini mjerenja imao Spearman ≈ 0. Vrtloženje po razredu
+stabilnosti (`oblacici.K_PO_RAZREDU`) to popravlja; meandar smjera i
+drenaža niz padinu isprobani su i odbačeni (ne dodaju ništa povrh
+vrtloženja). Cijeli je izbor rađen na prvoj godini i provjeren na drugoj.
+
+Zato se i ovdje najbolja izvedba **bira po drugoj godini** (`REZ`), ne po
+cijelom razdoblju: zračna luka je na prvoj godini imala Spearman 0,25, na
+drugoj 0,07 — izbor po cijelom razdoblju uzeo bi baš nju, dakle izvedbu
+koja se izvan uzorka raspala. Regresija jačine izvora ide na svim satima
+odabrane izvedbe, jer nagib nije biran po tim podacima.
+
 Pokretanje: `npm run bazdari-izvor`
 """
 
@@ -73,6 +88,9 @@ KORIJEN = Path(__file__).resolve().parent.parent
 IZLAZ = KORIJEN / "src" / "generated" / "karepovac-bazdarenje.ts"
 
 OD, DO = "2024-09-01", "2026-08-17"
+#: Rez ugađanje/provjera: fizika je ugođena na satima prije ovog dana, pa je
+#: ocjena na satima poslije njega jedina koja ne laska modelu.
+REZ = "2025-09-01"
 #: Tvar po kojoj se bazdari: mjeri se na postaji uz plohu i dolazi s odlagališta.
 TVAR, POSTAJA = "H2S", "k1"
 
@@ -207,7 +225,7 @@ def _tocke_izvora() -> tuple[np.ndarray, float]:
 
 def _niz_modela(
     izvor_vjetra: str, pamcenje: bool, okolnosti: dict, tocke: np.ndarray,
-    mjesto: tuple[float, float]
+    mjesto: tuple[float, float], ugodba: oblacici.Ugodba | None = None,
 ) -> dict[str, float]:
     """Modelirani satni niz na mjestu postaje, uz jediničnu emisiju."""
     sati = oblacici.slozi_sate(vjetar.ucitaj(izvor_vjetra, OD, DO), okolnosti)
@@ -215,9 +233,29 @@ def _niz_modela(
     return {
         sat.t: float(v[0])
         for sat, v in oblacici.prodji(
-            sati, tocke, 1.0, RASPRSENJE, prijemnici=prijemnici, pamcenje=pamcenje
+            sati, tocke, 1.0, RASPRSENJE, prijemnici=prijemnici,
+            pamcenje=pamcenje, ugodba=ugodba,
         )
     }
+
+
+def _ocjene(
+    niz: dict[str, float], mjereno: dict[str, float]
+) -> dict[str, float | int]:
+    """Spearman i AUC na svim satima te odvojeno prije i poslije `REZ`."""
+    zajedno = sorted(set(niz) & set(mjereno))
+    ocjene: dict[str, float | int] = {"sati": len(zajedno)}
+    dijelovi = {
+        "": zajedno,
+        "Ugadjanje": [t for t in zajedno if t[:10] < REZ],
+        "Provjera": [t for t in zajedno if t[:10] >= REZ],
+    }
+    for ime, ts in dijelovi.items():
+        x = np.array([niz[t] for t in ts])
+        y = np.array([mjereno[t] for t in ts])
+        ocjene[f"spearman{ime}"] = round(spearman(x, y), 4)
+        ocjene[f"auc{ime}"] = round(auc_vrha(x, y), 4)
+    return ocjene
 
 
 def _mjerenja(oznaka: str, tvar: str) -> dict[str, float]:
@@ -245,26 +283,38 @@ def glavno() -> None:
         len({t[:7] for t in sirovo}) - len({t[:7] for t in mjereno}),
     )
 
-    logger.info("\n%-8s %-9s %9s %9s %8s", "vjetar", "pamćenje", "Spearman", "AUC vrha", "sati")
-    izvedbe, najbolja, najbolja_ocjena = {}, None, -2.0
-    for izvor_vjetra in KROZ_MODEL:
-        for pamcenje in (True, False):
-            niz = _niz_modela(izvor_vjetra, pamcenje, okolnosti, tocke, mjesto)
-            zajedno = sorted(set(niz) & set(mjereno))
-            x = np.array([niz[t] for t in zajedno])
-            y = np.array([mjereno[t] for t in zajedno])
-            rho, auc = spearman(x, y), auc_vrha(x, y)
-            izvedbe[(izvor_vjetra, pamcenje)] = (niz, rho, auc, len(zajedno))
-            logger.info(
-                "%-8s %-9s %9.3f %9.3f %8d",
-                izvor_vjetra, "da" if pamcenje else "ne", rho, auc, len(zajedno),
-            )
-            if rho > najbolja_ocjena:
-                najbolja_ocjena, najbolja = rho, (izvor_vjetra, pamcenje)
-
-    niz, rho, auc, sati = izvedbe[najbolja]
     logger.info(
-        "\nnajbolja izvedba: vjetar %s, pamćenje %s", najbolja[0],
+        "\n%-14s %-9s %9s %9s %10s %10s %8s",
+        "vjetar", "pamćenje", "Spearman", "AUC vrha", "ρ-provj.", "AUC-provj.",
+        "sati",
+    )
+    izvedbe: dict[tuple[str, bool], tuple[dict[str, float], dict]] = {}
+    najbolja, najbolja_ocjena = None, -2.0
+    stara = oblacici.Ugodba(k_vrtlozenje=(oblacici.K_VRTLOZENJE,) * 6)
+    prolazi = [(iv, p, None) for iv in KROZ_MODEL for p in (True, False)]
+    # Stara fizika kao usporedba, na spojenom vjetru — da razlika koju je
+    # ugađanje donijelo ostane zapisana uz brojke, a ne samo u povijesti.
+    prolazi.append(("spoj", True, stara))
+    for izvor_vjetra, pamcenje, ugodba in prolazi:
+        niz = _niz_modela(izvor_vjetra, pamcenje, okolnosti, tocke, mjesto, ugodba)
+        o = _ocjene(niz, mjereno)
+        kljuc = izvor_vjetra if ugodba is None else f"{izvor_vjetra}-staro"
+        izvedbe[(kljuc, pamcenje)] = (niz, o)
+        logger.info(
+            "%-14s %-9s %9.3f %9.3f %10.3f %10.3f %8d",
+            kljuc, "da" if pamcenje else "ne", o["spearman"], o["auc"],
+            o["spearmanProvjera"], o["aucProvjera"], o["sati"],
+        )
+        # Bira se po drugoj godini: fizika je ugođena na prvoj, pa samo druga
+        # govori kako model radi na podacima koje nije vidio. Stara fizika ne
+        # ulazi u izbor — ona je tu za usporedbu.
+        if ugodba is None and o["spearmanProvjera"] > najbolja_ocjena:
+            najbolja_ocjena, najbolja = float(o["spearmanProvjera"]), (kljuc, pamcenje)
+
+    niz, o = izvedbe[najbolja]
+    rho, auc, sati = float(o["spearman"]), float(o["auc"]), int(o["sati"])
+    logger.info(
+        "\nnajbolja izvedba (po provjeri): vjetar %s, pamćenje %s", najbolja[0],
         "da" if najbolja[1] else "ne",
     )
 
@@ -312,6 +362,7 @@ def glavno() -> None:
             {
                 "od": OD,
                 "do": DO,
+                "rez": REZ,
                 "tvar": TVAR,
                 "postaja": POSTAJA,
                 "vjetar": najbolja[0],
@@ -319,16 +370,16 @@ def glavno() -> None:
                 "sati": sati,
                 "spearman": round(rho, 4),
                 "auc": round(auc, 4),
+                "spearmanProvjera": o["spearmanProvjera"],
+                "aucProvjera": o["aucProvjera"],
                 "pozadina": round(odsjecak, 3),
                 "emisijaUgS": [round(donja, 1), round(nagib, 1), round(gornja, 1)],
                 "plohaM2": round(ploha),
                 "pragNjuha": list(PRAG_NJUHA),
                 "kontrola": {k: round(v, 4) for k, v in kontrola.items()},
                 "izvedbe": {
-                    f"{i}-{'pamti' if p else 'bez'}": {
-                        "spearman": round(r, 4), "auc": round(a, 4), "sati": n
-                    }
-                    for (i, p), (_, r, a, n) in izvedbe.items()
+                    f"{i}-{'pamti' if p else 'bez'}": ocjene
+                    for (i, p), (_, ocjene) in izvedbe.items()
                 },
             },
             ensure_ascii=False,

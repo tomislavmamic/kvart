@@ -12,63 +12,63 @@ export const MJERENJA = {
       "lon": 16.51691228544307,
       "visina": 39.6,
       "od": "2024-08-31T22:00Z",
-      "do": "2026-08-18T16:00Z",
+      "do": "2026-08-21T19:00Z",
       "glavna": "H2S",
       "tvari": [
         {
           "naziv": "H2S",
-          "sati": 16001,
-          "medijan": 0.915,
-          "p98": 3.896,
+          "sati": 16076,
+          "medijan": 0.924,
+          "p98": 3.898,
           "najvise": 44.106
         },
         {
           "naziv": "NH3",
-          "sati": 17097,
-          "medijan": 6.583,
-          "p98": 28.926,
+          "sati": 17172,
+          "medijan": 6.627,
+          "p98": 28.907,
           "najvise": 117.962
         },
         {
           "naziv": "NO2",
-          "sati": 16919,
-          "medijan": 6.362,
+          "sati": 16994,
+          "medijan": 6.36,
           "p98": 18.619,
           "najvise": 51.282
         },
         {
           "naziv": "SO2",
-          "sati": 16865,
-          "medijan": 3.791,
-          "p98": 10.713,
+          "sati": 16940,
+          "medijan": 3.796,
+          "p98": 10.71,
           "najvise": 191.221
         }
       ],
       "dnevniHod": [
-        1.213,
-        1.224,
-        1.2,
-        1.269,
-        1.189,
-        1.16,
-        1.119,
-        1.082,
-        1.051,
-        1.042,
-        1.001,
-        0.945,
-        0.911,
-        0.904,
-        0.971,
-        0.925,
-        0.977,
-        1.016,
-        1.064,
-        1.189,
-        1.214,
-        1.243,
-        1.272,
-        1.225
+        1.22,
+        1.232,
+        1.207,
+        1.275,
+        1.196,
+        1.17,
+        1.126,
+        1.089,
+        1.058,
+        1.048,
+        1.008,
+        0.952,
+        0.918,
+        0.912,
+        0.98,
+        0.935,
+        0.987,
+        1.024,
+        1.071,
+        1.197,
+        1.225,
+        1.255,
+        1.282,
+        1.233
       ],
       "ruza": {
         "srednje": [
@@ -117,14 +117,14 @@ export const MJERENJA = {
       "lon": 16.51691228544307,
       "visina": 39.6,
       "od": "2024-04-08T22:00Z",
-      "do": "2026-08-18T16:00Z",
+      "do": "2026-08-21T19:00Z",
       "glavna": "metil+etilmerkaptan",
       "tvari": [
         {
           "naziv": "Ozon (O3)",
-          "sati": 18340,
-          "medijan": 62.605,
-          "p98": 122.01,
+          "sati": 18415,
+          "medijan": 62.71,
+          "p98": 122.09,
           "najvise": 212.2
         },
         {
@@ -136,35 +136,35 @@ export const MJERENJA = {
         },
         {
           "naziv": "Benzen",
-          "sati": 18375,
+          "sati": 18450,
           "medijan": 0.05,
           "p98": 1.3,
           "najvise": 72.573
         },
         {
           "naziv": "Toluen",
-          "sati": 18375,
+          "sati": 18450,
           "medijan": 0.05,
-          "p98": 6.459,
+          "p98": 6.453,
           "najvise": 261.316
         },
         {
           "naziv": "Etilbenzen",
-          "sati": 18212,
+          "sati": 18287,
           "medijan": 0.05,
           "p98": 0.934,
           "najvise": 6.467
         },
         {
           "naziv": "o-ksilen",
-          "sati": 18375,
+          "sati": 18450,
           "medijan": 0.05,
           "p98": 0.844,
           "najvise": 26.343
         },
         {
           "naziv": "mp-ksilen",
-          "sati": 18375,
+          "sati": 18450,
           "medijan": 0.05,
           "p98": 0.454,
           "najvise": 108.19
@@ -259,23 +259,23 @@ export const MJERENJA = {
   ],
   "godisnjaSlika": {
     "godina": 2025,
-    "sati": 7554,
-    "najviseSatno": 4.6,
+    "sati": 8758,
+    "najviseSatno": 12.17,
     "iznad": [
       {
         "razina": 0.2,
-        "najviseSati": 1071
+        "najviseSati": 3521
       },
       {
         "razina": 0.7,
-        "najviseSati": 202
+        "najviseSati": 842
       },
       {
         "razina": 2.0,
-        "najviseSati": 37
+        "najviseSati": 122
       }
     ],
-    "uPerjaniciMedijan": 478,
-    "uPerjaniciNajvise": 6802
+    "uPerjaniciMedijan": 976,
+    "uPerjaniciNajvise": 7541
   }
 } as const;

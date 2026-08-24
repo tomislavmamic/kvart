@@ -4,18 +4,21 @@
 export const BAZDARENJE = {
   "od": "2024-09-01",
   "do": "2026-08-17",
+  "rez": "2025-09-01",
   "tvar": "H2S",
   "postaja": "k1",
-  "vjetar": "ldsp",
+  "vjetar": "spoj",
   "pamcenje": true,
-  "sati": 11334,
-  "spearman": 0.128,
-  "auc": 0.5733,
-  "pozadina": 1.247,
+  "sati": 12962,
+  "spearman": 0.1071,
+  "auc": 0.6129,
+  "spearmanProvjera": 0.1311,
+  "aucProvjera": 0.5952,
+  "pozadina": 1.263,
   "emisijaUgS": [
-    811.4,
-    1822.3,
-    2776.8
+    6410.4,
+    8865.0,
+    11977.7
   ],
   "plohaM2": 313750,
   "pragNjuha": [
@@ -23,41 +26,74 @@ export const BAZDARENJE = {
     7.0
   ],
   "kontrola": {
-    "k2 Ozon (O3)": -0.3887,
-    "k2 Ugljikov monoksid (CO)": 0.0924,
-    "k2 metil+etilmerkaptan": -0.0553,
-    "k1 NH3": -0.0155
+    "k2 Ozon (O3)": -0.0829,
+    "k2 Ugljikov monoksid (CO)": -0.0043,
+    "k2 metil+etilmerkaptan": -0.0648,
+    "k1 NH3": 0.0462
   },
   "izvedbe": {
     "era5-pamti": {
-      "spearman": -0.0089,
-      "auc": 0.5445,
-      "sati": 12954
+      "sati": 12978,
+      "spearman": 0.097,
+      "auc": 0.6154,
+      "spearmanUgadjanje": 0.1181,
+      "aucUgadjanje": 0.6257,
+      "spearmanProvjera": 0.0661,
+      "aucProvjera": 0.5873
     },
     "era5-bez": {
-      "spearman": -0.0217,
-      "auc": 0.5317,
-      "sati": 12954
+      "sati": 12978,
+      "spearman": 0.091,
+      "auc": 0.6147,
+      "spearmanUgadjanje": 0.1136,
+      "aucUgadjanje": 0.6249,
+      "spearmanProvjera": 0.0588,
+      "aucProvjera": 0.5876
     },
     "ldsp-pamti": {
-      "spearman": 0.128,
-      "auc": 0.5733,
-      "sati": 11334
+      "sati": 11334,
+      "spearman": 0.1612,
+      "auc": 0.5974,
+      "spearmanUgadjanje": 0.251,
+      "aucUgadjanje": 0.633,
+      "spearmanProvjera": 0.075,
+      "aucProvjera": 0.5954
     },
     "ldsp-bez": {
-      "spearman": 0.098,
-      "auc": 0.5556,
-      "sati": 11334
+      "sati": 11334,
+      "spearman": 0.152,
+      "auc": 0.5989,
+      "spearmanUgadjanje": 0.2382,
+      "aucUgadjanje": 0.6334,
+      "spearmanProvjera": 0.0681,
+      "aucProvjera": 0.5973
     },
     "spoj-pamti": {
-      "spearman": -0.0653,
-      "auc": 0.4873,
-      "sati": 12946
+      "sati": 12962,
+      "spearman": 0.1071,
+      "auc": 0.6129,
+      "spearmanUgadjanje": 0.112,
+      "aucUgadjanje": 0.624,
+      "spearmanProvjera": 0.1311,
+      "aucProvjera": 0.5952
     },
     "spoj-bez": {
-      "spearman": -0.0985,
-      "auc": 0.454,
-      "sati": 12946
+      "sati": 12962,
+      "spearman": 0.0809,
+      "auc": 0.5969,
+      "spearmanUgadjanje": 0.0814,
+      "aucUgadjanje": 0.6039,
+      "spearmanProvjera": 0.1063,
+      "aucProvjera": 0.5866
+    },
+    "spoj-staro-pamti": {
+      "sati": 12962,
+      "spearman": -0.0581,
+      "auc": 0.4912,
+      "spearmanUgadjanje": -0.0802,
+      "aucUgadjanje": 0.4924,
+      "spearmanProvjera": -0.008,
+      "aucProvjera": 0.4835
     }
   }
 } as const;

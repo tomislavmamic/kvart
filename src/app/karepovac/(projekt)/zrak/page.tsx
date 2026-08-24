@@ -102,12 +102,14 @@ export default function KarepovacPage() {
           </Link>
         </SectionHeading>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
-          <h2 className="text-xl font-bold">Provjera na tuđim tvarima</h2>
+          <h2 className="text-xl font-bold">Provjera na mjerenjima</h2>
           <ul className="mt-5 space-y-4 leading-7">
             <Fact>
-              Ozon i ugljikov monoksid ne dolaze s Karepovca — ovise samo o tome
-              koliko se zrak miješa. Njih model pogađa dobro, pa mu račun
-              razrjeđenja valja.
+              Fizika modela ugođena je na prvoj godini mjerenja H₂S-a i
+              provjerena na drugoj, koju model nije vidio. Pogađa slabo, ali
+              stvarno — a prije ugađanja nije pogađao ništa: pri tišini je
+              perjanicu slao za smjerom s anemometara kilometrima daleko, dok
+              se zrak zapravo razlijeva oko plohe.
             </Fact>
             <Fact>
               Merkaptane, koji dolaze s Karepovca, model ne pogađa. Ne valja mu,
