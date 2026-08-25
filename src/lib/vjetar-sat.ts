@@ -82,6 +82,24 @@ async function uzmi(url: string, rok: number): Promise<unknown | null> {
 }
 
 /**
+ * Poziv prema AZO-u koji ogradu na brzinu plaća samo kad je udari.
+ *
+ * Stara je izvedba spavala 5,5 s između svih poziva, bezuvjetno — pa je
+ * dohvat izmjerenog niza trajao šesnaest sekundi i kad su svi odgovori već
+ * bili u predmemoriji. Tko je na niz čekao s rokom (zalet kartice, 3 s),
+ * nikad ga nije dočekao i tiho je padao na model — i dvije su se karte
+ * opet razilazile, ovaj put kroz povijest. Sad se prvo pokuša odmah:
+ * pogodak iz predmemorije ne košta ništa, a tek odbijeni poziv čeka
+ * ogradu pa pokušava još jednom.
+ */
+async function uzmiUzOgradu(url: string): Promise<unknown | null> {
+  const prvi = await uzmi(url, ROK_VJETRA);
+  if (prvi !== null) return prvi;
+  await pricekaj(RAZMAK_AZO_MS);
+  return uzmi(url, ROK_VJETRA);
+}
+
+/**
  * Čita izmjereni satni vjetar s AZO-ovih postaja, redom i bez navale.
  *
  * Args:
@@ -97,12 +115,10 @@ export async function azoSerije(
   // Obje postaje, a ne samo prva koja javi: prva vodi model, ali druga ima
   // svoje mjesto na karti i ondje pokazuje što je sama izmjerila.
   for (const postaja of ["split3", "split2"] as const) {
-    const brzine = await uzmi(azoAdresa(postaja, AZO.brzina, sada), ROK_VJETRA);
-    await pricekaj(RAZMAK_AZO_MS);
-    const smjerovi = await uzmi(azoAdresa(postaja, AZO.smjer, sada), ROK_VJETRA);
+    const brzine = await uzmiUzOgradu(azoAdresa(postaja, AZO.brzina, sada));
+    const smjerovi = await uzmiUzOgradu(azoAdresa(postaja, AZO.smjer, sada));
     const niz = procitajAzoNiz(postaja, brzine, smjerovi);
     if (niz.size) izlaz.set(postaja, niz);
-    await pricekaj(RAZMAK_AZO_MS);
   }
   return izlaz;
 }
