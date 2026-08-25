@@ -58,44 +58,153 @@ export function sektor(smjer: number): number {
   return Math.floor((((smjer + korak / 2) % 360) + 360) % 360 / korak);
 }
 
-export type Dojava = { occurredAt: Date; strength: OdourStrength };
+/**
+ * Najviše sati koliko jedan raspon smije nositi.
+ *
+ * Raspon je zamišljen kao „smrdjelo je od devet do jedanaest”, a ne kao
+ * cijeli dan: bez granice bi jedna dojava od dvanaest sati nadglasala
+ * dvadeset kratkih, i to bez ijednog dodatnog opažanja iza sebe.
+ */
+export const NAJDULJI_RASPON_SATI = 6;
+
+export type Dojava = {
+  /** Sat u kojem je miris počeo, zaokružen na puni sat. */
+  occurredAt: Date;
+  /** Kraj razdoblja; prazno znači jedan sat. */
+  endedAt?: Date | null;
+  /** Je li se miris osjetio; dojava „ne smrdi” ima laž. */
+  smelled?: boolean;
+  /** Jačina; nema je kad se miris nije osjetio. */
+  strength?: OdourStrength | null;
+  /** Nasumična oznaka preglednika, bez veze s identitetom. */
+  reporterId?: string | null;
+};
+
+/** Jedno opažanje: jedan dojavitelj, jedan sat. */
+type Opazanje = {
+  sat: number;
+  smelled: boolean;
+  tezina: number;
+};
 
 export type RuzaDojava = {
   /** Zbroj težina po sektoru, od sjevera nadesno. */
   tezine: number[];
-  /** Broj dojava po sektoru. */
+  /** Broj opažanja s mirisom po sektoru. */
   broj: number[];
-  /** Koliko je dojava ušlo u ružu i koliko ih čeka podatak o vjetru. */
+  /** Broj opažanja bez mirisa po sektoru — „bio sam, nije smrdjelo”. */
+  brojBez: number[];
+  /**
+   * Udio opažanja u kojima je smrdjelo, po sektoru; `null` gdje nema
+   * nijednog opažanja.
+   *
+   * Ovo je jedina brojka u ruži koja ne ovisi o tome koliko je tko voljan
+   * javljati: sektor s tri dojave od pet opažanja smrdi češće od sektora s
+   * deset dojava od pedeset, iako je drugi „veći”.
+   */
+  udio: (number | null)[];
+  /** Koliko je opažanja ušlo u ružu i koliko ih čeka podatak o vjetru. */
   uporabljeno: number;
   bezVjetra: number;
+  /** Koliko je opažanja sažeto jer je isti dojavitelj javio isti sat. */
+  sazeto: number;
 };
 
 /**
- * Slaže ružu dojava: svaka dojava dobiva sat, svaki sat svoj izmjereni vjetar.
+ * Razlaže dojavu na satna opažanja.
+ *
+ * Dojava s rasponom nosi po jedno opažanje za svaki puni sat koji pokriva —
+ * jer svaki od tih sati ima svoj izmjereni vjetar, i upravo je to ono što
+ * ružu čini upotrebljivom. Raspon dulji od `NAJDULJI_RASPON_SATI` reže se,
+ * a raspon unatrag (kraj prije početka) svodi se na jedan sat.
+ */
+function satiDojave(dojava: Dojava): number[] {
+  const pocetak = Math.floor(dojava.occurredAt.getTime() / 3_600_000);
+  const kraj = dojava.endedAt
+    ? Math.floor(dojava.endedAt.getTime() / 3_600_000)
+    : pocetak;
+  if (!(kraj > pocetak)) return [pocetak];
+  const zadnji = Math.min(kraj, pocetak + NAJDULJI_RASPON_SATI - 1);
+  const sati: number[] = [];
+  for (let h = pocetak; h <= zadnji; h += 1) sati.push(h);
+  return sati;
+}
+
+/**
+ * Slaže ružu dojava: svako opažanje dobiva sat, svaki sat svoj izmjereni vjetar.
  *
  * Ovo ne treba nikakav model raspršenja i vrijedi samo za sebe. Ako se vrh
  * ruže poklopi sa smjerom u kojem leži Karepovac, to je nalaz i bez ijedne
  * jednadžbe; ako se ne poklopi, to je jednako tako nalaz.
  *
+ * Tri stvari koje ruža radi, a nisu očite:
+ *
+ * 1. **Broji i tišinu.** Dojava „bio sam, nije smrdjelo” ide u `brojBez`, pa
+ *    se iz sektora može čitati *udio*, a ne samo zbroj. Bez toga zbroj mjeri
+ *    koliko je tko voljan javljati jednako koliko i koliko je smrdjelo.
+ * 2. **Raspon je više sati.** Dojava od 21 do 23 h nosi tri opažanja, svako
+ *    sa svojim vjetrom — jer se vjetar u te tri sata mogao okrenuti.
+ * 3. **Isti nos u istom satu broji se jednom.** Dva javljanja istog
+ *    dojavitelja za isti sat su jedno opažanje (uzima se jače), inače bi
+ *    jedan uporan dojavitelj sam nacrtao ružu.
+ *
  * @param dojave Dojave koje ulaze u zbroj.
- * @returns Ružu po sektorima i koliko je dojava ostalo bez vjetra.
+ * @returns Ružu po sektorima, s udjelima i koliko je opažanja ostalo bez vjetra.
  */
 export function ruzaDojava(dojave: readonly Dojava[]): RuzaDojava {
   const tezine = new Array<number>(SEKTORA).fill(0);
   const broj = new Array<number>(SEKTORA).fill(0);
+  const brojBez = new Array<number>(SEKTORA).fill(0);
   let uporabljeno = 0;
   let bezVjetra = 0;
 
+  // Sažimanje po dojavitelju i satu. Dojava bez oznake preglednika (stari
+  // zapisi, ili tko je oznaku obrisao) ne smije se sažeti ni s čim — svaka
+  // takva dobiva svoj ključ, jer o njoj ne znamo je li isti nos ili nije.
+  const poKljucu = new Map<string, Opazanje>();
+  let redni = 0;
   for (const dojava of dojave) {
-    const vjetar = vjetarUSatu(dojava.occurredAt);
+    const smelled = dojava.smelled ?? true;
+    const tezina = smelled ? TEZINA[dojava.strength ?? "osjetno"] : 0;
+    const oznaka = dojava.reporterId ?? `bez-oznake-${(redni += 1)}`;
+    for (const sat of satiDojave(dojava)) {
+      const kljuc = `${oznaka}@${sat}`;
+      const dosad = poKljucu.get(kljuc);
+      // Jače opažanje nadjačava slabije: tko je javio i „slabo” i „jako” za
+      // isti sat, opisao je isti sat dvaput, a ne dva puta smrad.
+      if (
+        !dosad ||
+        (smelled && !dosad.smelled) ||
+        (smelled === dosad.smelled && tezina > dosad.tezina)
+      ) {
+        poKljucu.set(kljuc, { sat, smelled, tezina });
+      }
+    }
+  }
+
+  const sazeto = [...dojave].reduce((n, d) => n + satiDojave(d).length, 0)
+    - poKljucu.size;
+
+  for (const opazanje of poKljucu.values()) {
+    const vjetar = vjetarUSatu(new Date(opazanje.sat * 3_600_000));
     if (!vjetar) {
       bezVjetra += 1;
       continue;
     }
     const s = sektor(vjetar.smjer);
-    tezine[s] += TEZINA[dojava.strength];
-    broj[s] += 1;
+    if (opazanje.smelled) {
+      tezine[s] += opazanje.tezina;
+      broj[s] += 1;
+    } else {
+      brojBez[s] += 1;
+    }
     uporabljeno += 1;
   }
-  return { tezine, broj, uporabljeno, bezVjetra };
+
+  const udio = broj.map((n, i) => {
+    const ukupno = n + brojBez[i];
+    return ukupno > 0 ? n / ukupno : null;
+  });
+
+  return { tezine, broj, brojBez, udio, uporabljeno, bezVjetra, sazeto };
 }

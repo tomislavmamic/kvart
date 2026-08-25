@@ -40,6 +40,12 @@ export default async function DojavaPage() {
     kljuc: kljuc as OdourStrength,
     broj: dojave.filter((d) => d.strength === kljuc).length,
   }));
+  const bezMirisa = dojave.filter((d) => d.smelled === false).length;
+
+  // Udio se crta tek kad u ruži ima i tišine: bez nje bi svaki sektor imao
+  // udio 1 i grafikon bi tvrdio da uvijek smrdi, što nitko nije javio.
+  const imaTisine = ruza.brojBez.some((n) => n > 0);
+  const udjeli = ruza.udio.map((u) => u ?? 0);
 
   return (
     <div className="space-y-14">
@@ -92,9 +98,11 @@ export default async function DojavaPage() {
                   : `Karepovac leži u smjeru ${SEKTOR_IMENA[SEKTOR_KAREPOVCA]}. Vrh dojava stoji drugdje, i to ovdje piše jednako kao da se poklopilo.`}
               </p>
               <p className="mt-4 max-w-md text-base leading-7 text-kamen-drugi">
-                U ruži je {ruza.uporabljeno.toLocaleString("hr-HR")} dojava.
+                U ruži je {ruza.uporabljeno.toLocaleString("hr-HR")} opažanja.
                 {ruza.bezVjetra > 0 &&
                   ` Još ${ruza.bezVjetra.toLocaleString("hr-HR")} čeka podatak o vjetru za svoj sat.`}
+                {ruza.sazeto > 0 &&
+                  ` ${ruza.sazeto.toLocaleString("hr-HR")} javljanja sažeto je jer je isti preglednik javio isti sat.`}
               </p>
             </div>
           </div>
@@ -109,6 +117,55 @@ export default async function DojavaPage() {
           </div>
         )}
       </section>
+
+      {dovoljno && (
+        <section>
+          <SectionHeading title="Koliko često je smrdjelo">
+            <p>
+              Ruža gore broji dojave, pa raste i s time koliko je tko voljan
+              javljati. Ova broji <strong>udio</strong>: od svih sati u kojima
+              je netko bio vani i javio, u kolikom ih je dijelu smrdjelo. To je
+              jedina brojka koja ne ovisi o volji za javljanjem — i zato
+              tražimo i dojave da <strong>nije</strong> smrdjelo.
+            </p>
+          </SectionHeading>
+          {imaTisine ? (
+            <div className="mt-7 grid items-center gap-8 sm:grid-cols-[minmax(0,320px)_1fr]">
+              <Ruza
+                vrijednosti={udjeli}
+                boja="#0f766e"
+                opisZaCitac="Ruža udjela: u kolikom je dijelu opažanja smrdjelo, po smjeru vjetra."
+                opisi={ruza.udio.map((u, i) =>
+                  u === null
+                    ? `${SEKTOR_IMENA[i]}: nitko nije javio`
+                    : `${SEKTOR_IMENA[i]}: smrdjelo u ${Math.round(u * 100)} % od ${ruza.broj[i] + ruza.brojBez[i]} opažanja`,
+                )}
+                biljeg={{ sektor: SEKTOR_KAREPOVCA, naziv: "Karepovac" }}
+              />
+              <div>
+                <p className="max-w-md text-base leading-7 text-kamen-tekst">
+                  Prazan krak ovdje ne znači „nije smrdjelo” nego „nitko nije
+                  javio”. Razlika je bitna: prvo je nalaz, drugo je rupa.
+                </p>
+                <p className="mt-4 max-w-md text-base leading-7 text-kamen-drugi">
+                  Dojava da nije smrdjelo dosad ima{" "}
+                  {bezMirisa.toLocaleString("hr-HR")}.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-7 rounded-xl border border-kamen-tlo bg-kamen-plitko p-6">
+              <p className="text-lg leading-8 text-kamen-tekst">
+                Zasad nema nijedne dojave da <strong>nije</strong> smrdjelo, pa
+                se udio ne može izračunati — zbroj gore mjeri i miris i volju
+                za javljanjem, a razdvojiti ih može samo tišina koju netko
+                zabilježi. Ako ste bili vani i zrak je bio čist, i to je
+                podatak.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
       <section>
         <SectionHeading title="Što je dosad javljeno" />
@@ -125,7 +182,9 @@ export default async function DojavaPage() {
           ))}
         </dl>
         <p className="mt-4 max-w-3xl text-base leading-7 text-kamen-drugi">
-          Zbroj za zadnjih godinu dana. Dojava nije mjerenje i tako je i
+          Uz to {bezMirisa.toLocaleString("hr-HR")}{" "}
+          {bezMirisa === 1 ? "dojava" : "dojava"} da nije smrdjelo. Zbroj za
+          zadnjih godinu dana. Dojava nije mjerenje i tako je i
           označavamo — ali je jedini podatak u ovom projektu koji dolazi odande
           gdje ljudi zapravo žive, a ne s ruba odlagališta.
         </p>

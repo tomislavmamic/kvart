@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { storeFile } from "@/lib/upload";
 import { NEIGHBORHOODS, CATEGORIES, ODOUR_STRENGTHS } from "@/lib/constants";
 import type { Neighborhood, Category, OdourStrength } from "@/lib/constants";
+import { procitajMjesto } from "@/lib/mjesto";
 
 export type SubmitResult = { ok: true } | { ok: false; error: string };
 
@@ -108,12 +109,22 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
     };
   }
 
+  // Dojava „ne smrdi" vrijedi koliko i „smrdi" — bez nje se ne zna koliko
+  // je često smrdjelo, nego samo koliko je ljudi javilo.
+  const smelled = String(formData.get("smelled") ?? "da") !== "ne";
   const strength = String(formData.get("strength") ?? "");
   const neighborhood = String(formData.get("neighborhood") ?? "");
   const place = String(formData.get("place") ?? "").trim() || null;
   const note = String(formData.get("note") ?? "").trim() || null;
+  const ongoing = String(formData.get("ongoing") ?? "") === "1";
+  // Oznaka preglednika: nasumična, bez veze s identitetom (vidi
+  // `src/lib/dojavitelj.ts`). Prima se samo ako izgleda kao ono što taj
+  // modul piše — tuđi sadržaj u tom stupcu ne bi imao nikakvu svrhu.
+  const sirovaOznaka = String(formData.get("reporterId") ?? "");
+  const reporterId = /^[0-9a-f]{32}$/.test(sirovaOznaka) ? sirovaOznaka : null;
+  const mjesto = procitajMjesto(formData.get("lat"), formData.get("lng"));
 
-  if (!(strength in ODOUR_STRENGTHS)) {
+  if (smelled && !(strength in ODOUR_STRENGTHS)) {
     return { ok: false, error: "Odaberite koliko se jako osjetilo." };
   }
   if (!(neighborhood in NEIGHBORHOODS)) {
@@ -147,13 +158,39 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   // ne bi dodala ništa, a rekla bi o dojavitelju više nego što treba.
   const occurredAt = new Date(Math.floor(kada.getTime() / 3_600_000) * 3_600_000);
 
+  // Kraj razdoblja: dojava time postaje raspon sati, a svaki sat nosi svoj
+  // vjetar. Kraj prije početka ili predaleko u budućnosti nije raspon nego
+  // pogreška unosa, pa se odbija umjesto da tiho pokvari ružu.
+  let endedAt: Date | null = null;
+  const sirovKraj = String(formData.get("doKada") ?? "");
+  if (smelled && sirovKraj) {
+    const kraj = new Date(sirovKraj);
+    if (Number.isNaN(kraj.getTime())) {
+      return { ok: false, error: "Odaberite kada je miris prestao." };
+    }
+    if (kraj.getTime() < kada.getTime()) {
+      return { ok: false, error: "Kraj mirisa ne može biti prije početka." };
+    }
+    if (kraj.getTime() > sada + 3_600_000) {
+      return { ok: false, error: "Kraj mirisa ne može biti u budućnosti." };
+    }
+    endedAt = new Date(Math.floor(kraj.getTime() / 3_600_000) * 3_600_000);
+  }
+
   try {
     await db.insert(odourReports).values({
       occurredAt,
-      strength: strength as OdourStrength,
+      endedAt,
+      ongoing: smelled && ongoing,
+      smelled,
+      // Kad se nije osjetilo, jačine nema — a ne „slabo”.
+      strength: smelled ? (strength as OdourStrength) : null,
       neighborhood: neighborhood as Neighborhood,
       place,
       note,
+      reporterId,
+      lat: mjesto?.lat ?? null,
+      lng: mjesto?.lng ?? null,
     });
   } catch {
     return { ok: false, error: "Dojava nije spremljena. Pokušajte ponovno." };

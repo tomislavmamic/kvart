@@ -110,11 +110,48 @@ export const odourReports = pgTable(
     id: serial("id").primaryKey(),
     /** Sat u kojem se miris osjetio, zaokružen na puni sat, u UTC-u. */
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
-    strength: odourStrengthEnum("strength").notNull(),
+    /**
+     * Je li se miris osjetio ili ne.
+     *
+     * Dojava „ne smrdi" vrijedi koliko i „smrdi": bez nje se iz zbroja ne
+     * može izvesti *koliko često* smrdi, nego samo koliko je ljudi javilo —
+     * a to miješa miris s voljom za javljanjem. Mrežna metoda iz EN 16841-1
+     * na istom počiva: promatrač bilježi i kad nema mirisa.
+     *
+     * Stari zapisi nemaju stupac, pa im zadana vrijednost mora biti istina.
+     */
+    smelled: boolean("smelled").notNull().default(true),
+    /** Jačina; nema je kad se miris nije osjetio. */
+    strength: odourStrengthEnum("strength"),
     neighborhood: neighborhoodEnum("neighborhood").notNull(),
     /** Ulica ili orijentir; slobodan tekst, nije obavezan. */
     place: text("place"),
     note: text("note"),
+    /**
+     * Kraj razdoblja u kojem se miris osjećao, zaokružen na puni sat.
+     *
+     * Dojava time postaje raspon, a ne trenutak: model i EN 16841 govore u
+     * *satima mirisa*, pa raspon od 21 do 23 h nosi tri sata, svaki sa
+     * svojim izmjerenim vjetrom. Prazno znači da je dojava jedan sat.
+     */
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    /** Miris je u trenutku javljanja još trajao; kraj se tada ne zna. */
+    ongoing: boolean("ongoing").notNull().default(false),
+    /**
+     * Nasumična oznaka preglednika, bez ikakve veze s identitetom.
+     *
+     * Služi dvomu: da se ista dojava ne broji dvaput i da jedan uporan nos
+     * ne prevlada zbroj — dojave se pri računu sažimaju po dojavitelju i
+     * satu. Oznaka se stvara u pregledniku, ne prima ime ni kontakt, i
+     * dojavitelj je smije obrisati.
+     */
+    reporterId: text("reporter_id"),
+    /**
+     * Mjesto s kojeg je dojava, zaokruženo na ~100 m prije spremanja.
+     *
+     * Model ima razlučivost od nekoliko stotina metara, pa točnija koordinata
+     * ne bi rekla ništa više o zraku, a rekla bi previše o dojavitelju.
+     */
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     /** Sakriva pojedinu dojavu iz zbroja, bez brisanja traga. */
@@ -123,7 +160,10 @@ export const odourReports = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("odour_reports_occurred_at_idx").on(table.occurredAt)],
+  (table) => [
+    index("odour_reports_occurred_at_idx").on(table.occurredAt),
+    index("odour_reports_reporter_idx").on(table.reporterId),
+  ],
 );
 
 export const documents = pgTable("documents", {

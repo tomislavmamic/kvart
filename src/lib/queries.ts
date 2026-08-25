@@ -85,9 +85,14 @@ export async function getOdourReports(danaUnatrag = 365) {
     .select({
       id: odourReports.id,
       occurredAt: odourReports.occurredAt,
+      endedAt: odourReports.endedAt,
+      smelled: odourReports.smelled,
       strength: odourReports.strength,
       neighborhood: odourReports.neighborhood,
       place: odourReports.place,
+      // Oznaka preglednika ide u račun, ali nikamo dalje: ruža po njoj samo
+      // sažima dojave istog nosa u istom satu.
+      reporterId: odourReports.reporterId,
     })
     .from(odourReports)
     .where(and(eq(odourReports.hidden, false), gte(odourReports.occurredAt, od)))
