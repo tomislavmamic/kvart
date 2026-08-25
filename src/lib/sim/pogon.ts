@@ -35,6 +35,14 @@ export type StanjePogona = {
 export type Pogon = {
   /** Traži satove; već izračunati se ne računaju ponovno. */
   trazi(odabrani: string): void;
+  /**
+   * Mijenja stanja satova i poništava zadane satove, da se izračunaju iznova.
+   *
+   * Izmjereni vjetar stiže nakon što je crta izračunata na modelskom; sat
+   * kojem se vjetar promijenio mora kroz radnike još jednom, inače karta
+   * crta perjanicu vjetra kojega više nigdje ne piše.
+   */
+  osvjezi(svi: readonly SatSimulacije[], sati: readonly string[]): void;
   ugasi(): void;
 };
 
@@ -62,6 +70,7 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
     Math.min(NAJVISE_RADNIKA, (navigator.hardwareConcurrency || 2) - 1),
   );
   const radnici: Worker[] = [];
+  let svi = postavke.svi;
   const izracunati = new Set<string>();
   // Zatraženo, ne izračunato: radnik posao obrađuje redom, pa bi ponovni
   // zahtjev za satom koji mu već stoji u redu značio da ga računa dvaput.
@@ -127,7 +136,7 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
         vrsta: "racunaj",
         // Osnove se šalju kao kopija: prijenos bi ih oduzeo ostalim radnicima.
         osnove: prvi ? postavke.osnove.slice(0) : null,
-        svi: postavke.svi,
+        svi,
         moji: hrpe[i],
       };
       poslano.add(radnik);
@@ -139,6 +148,15 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
 
   return {
     trazi,
+    osvjezi: (noviSvi, sati) => {
+      if (ugasen) return;
+      svi = noviSvi;
+      for (const sat of sati) {
+        izracunati.delete(sat);
+        zatrazeni.delete(sat);
+      }
+      javiStanje();
+    },
     ugasi: () => {
       ugasen = true;
       for (const radnik of radnici) radnik.terminate();

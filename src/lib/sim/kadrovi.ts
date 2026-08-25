@@ -207,3 +207,55 @@ export function najbliziDostupan(crta: Crta, pomak: number): Kadar | null {
   }
   return najbolji;
 }
+
+/**
+ * Satovi čije kadrove treba računati iznova nakon promjene vjetra.
+ *
+ * Promjena jednog sata ne mijenja samo njegov kadar: svaki se kadar računa
+ * iz svog zaleta, pa promjena povlači i sljedećih `zaletSati` sati. Vraćaju
+ * se samo satovi crte (zalet nema kadra), redom.
+ *
+ * Args:
+ *   stari: Crta prije promjene.
+ *   novi: Crta poslije promjene.
+ *   zaletSati: Koliko sati zaleta kadar nosi.
+ *
+ * Returns:
+ *   Satove crte kojima kadar više ne vrijedi.
+ */
+export function zahvaceniSati(
+  stari: Crta,
+  novi: Crta,
+  zaletSati: number,
+): string[] {
+  const prijePoSatu = new Map(
+    [...stari.zalet, ...stari.kadrovi].map((k) => [k.sat, k.stanje]),
+  );
+  const redom = [...novi.zalet, ...novi.kadrovi].filter((k) => k.stanje !== null);
+  const promijenjeni = new Set<string>();
+  for (const k of redom) {
+    const prije = prijePoSatu.get(k.sat);
+    if (
+      prije &&
+      k.stanje &&
+      (prije.smjerOd !== k.stanje.smjerOd || prije.brzina !== k.stanje.brzina)
+    ) {
+      promijenjeni.add(k.sat);
+    }
+  }
+  if (!promijenjeni.size) return [];
+  const satiCrte = new Set(
+    novi.kadrovi.filter((k) => k.stanje !== null).map((k) => k.sat),
+  );
+  const zahvaceni: string[] = [];
+  redom.forEach((k, i) => {
+    if (!satiCrte.has(k.sat)) return;
+    for (let d = 0; d <= zaletSati && i - d >= 0; d += 1) {
+      if (promijenjeni.has(redom[i - d].sat)) {
+        zahvaceni.push(k.sat);
+        break;
+      }
+    }
+  });
+  return zahvaceni;
+}

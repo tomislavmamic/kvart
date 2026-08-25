@@ -8,9 +8,11 @@ import {
   SATI_ZALETA,
   satoviCrte,
   slozCrtu,
+  zahvaceniSati,
   slozKadar,
   type OcitanjePostaje,
 } from "@/lib/sim/kadrovi";
+import { primijeniVjetar } from "@/lib/sim/dohvat";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 
 const SADA = new Date("2026-08-21T15:00:00.000Z");
@@ -148,3 +150,58 @@ test("kad nijedan sat nema vjetra, crta to prizna", () => {
   assert.equal(najbliziDostupan(crta, 0), null);
   assert.ok(crta.kadrovi.every((k) => k.dostupnost === "nedostupno"));
 });
+
+test("promjena vjetra povlači i sate koji je nose u zaletu", () => {
+  // Kadar sata H računa se iz H-3..H, pa promjena u H kvari i H+1..H+3.
+  const crta = slozCrtu(
+    new Date("2026-08-25T06:00:00Z"),
+    new Map(
+      satoviOko("2026-08-25T06:00:00Z").map((sat) => [
+        sat,
+        { sat, smjerOd: 50, brzina: 2, tisina: false, izvor: "model" as const },
+      ]),
+    ),
+    new Map(satoviOko("2026-08-25T06:00:00Z").map((sat) => [sat, 100])),
+    new Map(),
+  );
+  const mapa = new Map([
+    [
+      "2026-08-25T06:00:00.000Z",
+      {
+        sat: "2026-08-25T06:00:00.000Z",
+        smjerOd: 87,
+        brzina: 1.4,
+        tisina: false,
+        izvor: "split3" as const,
+      },
+    ],
+  ]);
+  const nova = primijeniVjetar(crta, mapa);
+  const zahvaceni = zahvaceniSati(crta, nova, 3);
+  // Prognozirani satovi zadržavaju modelski vjetar, ali se njihovi kadrovi
+  // griju kroz ispravljeni 06 h — pa i oni idu na ponovni račun.
+  assert.deepEqual(zahvaceni, [
+    "2026-08-25T06:00:00.000Z",
+    "2026-08-25T07:00:00.000Z",
+    "2026-08-25T08:00:00.000Z",
+    "2026-08-25T09:00:00.000Z",
+  ]);
+  // Promjena u sredini crte povlači i tri sata za njom.
+  const sredina = "2026-08-25T02:00:00.000Z";
+  const mapa2 = new Map([[sredina, { sat: sredina, smjerOd: 120, brzina: 3, tisina: false, izvor: "split3" as const }]]);
+  const nova2 = primijeniVjetar(crta, mapa2);
+  const zahvaceni2 = zahvaceniSati(crta, nova2, 3);
+  assert.deepEqual(
+    zahvaceni2,
+    ["2026-08-25T02:00:00.000Z", "2026-08-25T03:00:00.000Z", "2026-08-25T04:00:00.000Z", "2026-08-25T05:00:00.000Z"],
+  );
+});
+
+function satoviOko(vrh: string): string[] {
+  const t0 = Date.parse(vrh);
+  const sati: string[] = [];
+  for (let k = -(SATI_UNATRAG + SATI_ZALETA); k <= SATI_UNAPRIJED; k += 1) {
+    sati.push(new Date(t0 + k * 3600_000).toISOString());
+  }
+  return sati;
+}

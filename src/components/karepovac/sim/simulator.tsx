@@ -11,11 +11,11 @@ import type { Tvar } from "@/lib/dim";
 import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
 import { primijeniVjetar } from "@/lib/sim/dohvat";
 import type { Crta } from "@/lib/sim/kadrovi";
-import { najbliziDostupan } from "@/lib/sim/kadrovi";
+import { najbliziDostupan, zahvaceniSati } from "@/lib/sim/kadrovi";
 import { jacinaURasponu, SIDRO_SIMULATORA, ZADANA_BOJA } from "@/lib/sim/ljestvica";
 import { pokreniPogon, type Pogon, type StanjePogona } from "@/lib/sim/pogon";
 import { razloziOsnove, slozi, type Osnove } from "@/lib/sim/polje";
-import type { SatSimulacije } from "@/lib/sim/simulacija";
+import { ZALET_SATI, type SatSimulacije } from "@/lib/sim/simulacija";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 import type { Postaja, Vjetar } from "@/lib/vjetar";
 import { zapisiGustocu } from "@/lib/sim/zapis-gustoce";
@@ -163,6 +163,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   const [crta, postaviCrtu] = useState<Crta>(pocetna);
   const [pomak, postaviPomak] = useState<number>(0);
+  const pomakRef = useRef(0);
   const [stanje, postaviStanje] = useState<PloceStanje>(ZADANO_STANJE);
   const [izracunati, postaviIzracunate] = useState<ReadonlySet<string>>(new Set());
   const [napredak, postaviNapredak] = useState<StanjePogona>({
@@ -366,6 +367,33 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Šalje radnicima na ponovni račun sate kojima je vjetar promijenjen.
+   *
+   * `primijeniVjetar` mijenja podatke, ali slike su već izračunate na
+   * modelskom vjetru — bez ovoga bi karta crtala perjanicu vjetra kojega
+   * više nigdje ne piše, a upravo je tekući sat onaj koji AZO najčešće
+   * javi tek naknadno. Promjena sata utječe i na sljedeća tri: svaki se
+   * kadar računa iz svog zaleta (`ZALET_SATI`).
+   */
+  const preracunajPromijenjene = useCallback((stari: Crta, novi: Crta) => {
+    const pogon = pogonRef.current;
+    if (!pogon) return;
+    const zaKadar = zahvaceniSati(stari, novi, ZALET_SATI);
+    if (!zaKadar.length) return;
+    for (const sat of zaKadar) kadroviRef.current.delete(sat);
+    postaviIzracunate(new Set(kadroviRef.current.keys()));
+    pogon.osvjezi(
+      [...novi.zalet, ...novi.kadrovi]
+        .filter((k) => k.stanje !== null)
+        .map((k) => ({ sat: k.sat, stanje: k.stanje! })),
+      zaKadar,
+    );
+    const gledani =
+      novi.kadrovi.find((k) => k.pomak === pomakRef.current)?.sat ?? zaKadar[0];
+    pogon.trazi(gledani);
+  }, []);
+
   // Izmjereni vjetar stiže naknadno i zamjenjuje modelski gdje ga ima.
   useEffect(() => {
     let otkazano = false;
@@ -391,9 +419,14 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           );
         }
         if (!podatci.satovi?.length) return;
-        postaviCrtu((stara) =>
-          primijeniVjetar(stara, new Map(podatci.satovi!.map((v) => [v.sat, v]))),
-        );
+        postaviCrtu((stara) => {
+          const nova = primijeniVjetar(
+            stara,
+            new Map(podatci.satovi!.map((v) => [v.sat, v])),
+          );
+          preracunajPromijenjene(stara, nova);
+          return nova;
+        });
       } catch {
         // Izmjereni vjetar je poboljšanje, ne uvjet: bez njega satovi ostaju
         // na modelu i uz njih to i piše.
@@ -458,6 +491,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   // Adresa pamti odabrani slučaj, da se dade podijeliti.
   useEffect(() => {
     uAdresu(stanje, pomak);
+    pomakRef.current = pomak;
   }, [stanje, pomak]);
 
   const naPomak = useCallback(
