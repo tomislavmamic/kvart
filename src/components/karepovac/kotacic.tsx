@@ -88,10 +88,13 @@ export function Kotacic<T extends string | number>({
 
   return (
     <div className="relative" style={{ height: REDAK * redaka }}>
-      {/* Pojas u sredini: pokazuje koja je vrijednost odabrana. */}
+      {/* Pojas u sredini: pokazuje koja je vrijednost odabrana.
+          Stoji ispod popisa, ne iznad njega — položeni element inače crta
+          preko sadržaja koji nije položen, pa je pojas prekrivao upravo
+          odabranu vrijednost i ona je nestajala. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 rounded-lg bg-kamen-plitko"
+        className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 rounded-lg bg-kamen-plitko"
         style={{ height: REDAK }}
       />
       <div
@@ -100,7 +103,7 @@ export function Kotacic<T extends string | number>({
         aria-label={naslov}
         tabIndex={-1}
         onScroll={kliznuo}
-        className="kotacic h-full overflow-y-auto overscroll-contain scroll-smooth snap-y snap-mandatory"
+        className="kotacic relative z-10 h-full overflow-y-auto overscroll-contain scroll-smooth snap-y snap-mandatory"
         style={{
           paddingTop: REDAK * ((redaka - 1) / 2),
           paddingBottom: REDAK * ((redaka - 1) / 2),
