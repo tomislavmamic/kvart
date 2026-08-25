@@ -252,12 +252,15 @@ export function ObrazacDojave() {
         <span className={NATPIS}>Gdje ste bili?</span>
         <div className="mt-2 grid grid-cols-[auto_1fr] gap-2">
           {mjesto.vrsta === "imam" ? (
+            // Kratak natpis namjerno: na zaslonu od 320 px duži gumb pojede
+            // polje za adresu. Što je zabilježeno piše u retku ispod.
             <button
               type="button"
               onClick={() => setMjesto({ vrsta: "nema" })}
+              aria-label="Ukloni zabilježenu lokaciju"
               className="fokus flex min-h-12 items-center justify-center rounded-xl border border-maslina bg-maslina-vez px-4 text-base font-semibold text-maslina-noc"
             >
-              Lokacija uzeta · ukloni
+              Ukloni
             </button>
           ) : (
             <button
@@ -276,12 +279,14 @@ export function ObrazacDojave() {
             autoComplete="street-address"
             aria-label="Najbliža adresa"
             placeholder="Najbliža adresa"
-            className="fokus block min-h-12 w-full rounded-xl border border-kamen-rub bg-white px-4 text-base text-kamen-tinta placeholder:text-kamen-drugi"
+            // `min-w-0` drži polje u rešetki: bez toga ga vlastiti najmanji
+            // sadržaj gurne preko ruba na uskom zaslonu.
+            className="fokus block min-h-12 w-full min-w-0 rounded-xl border border-kamen-rub bg-white px-4 text-base text-kamen-tinta placeholder:text-kamen-drugi"
           />
         </div>
         {mjesto.vrsta === "imam" && (
           <p className="mt-2 text-base leading-6 text-kamen-drugi">
-            Zabilježena je zaokružena na stotinjak metara, još u vašem
+            Lokacija je zabilježena, zaokružena na stotinjak metara još u vašem
             pregledniku.
           </p>
         )}

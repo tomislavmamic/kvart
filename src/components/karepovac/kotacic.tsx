@@ -16,14 +16,19 @@ import { useEffect, useRef } from "react";
  * (razred `.kotacic` u `globals.css`). Odabir se čita iz položaja klizanja,
  * pa prst radi ono što i na budilici.
  *
- * Pristupačnost je razlog zbog kojega ovo nije samo `div` koji se kliže:
- * svaka je vrijednost `option` u `listbox`-u, dohvatljiva tabom i strelicama,
- * pa kotačić radi i bez ijednog pokreta prstom. Tko ne želi gibanje
- * (`prefers-reduced-motion`), dobiva skok umjesto klizanja.
+ * Dvije stvari koje kotačić čine upotrebljivim i bez prsta:
+ *
+ * - **Jedno zaustavljanje tabulatorom, ne dvadeset četiri.** Popis je
+ *   `listbox` s pomičnim `tabindex`: dohvatljiva je samo odabrana
+ *   vrijednost, a strelice pomiču odabir i žarište zajedno. Bez toga bi se
+ *   do sljedećeg polja stizalo kroz dvadeset četiri zaustavljanja.
+ * - **Visina raste s tekstom.** Redak se mjeri u `rem`, a računica klizanja
+ *   čita stvarnu visinu iz DOM-a, pa povećanje teksta na 200 % (WCAG 1.4.4)
+ *   razmakne kotačić umjesto da odreže slova.
  */
 
-/** Visina jednog retka u pikselima; mora se poklapati s `h-9` u razredu. */
-const REDAK = 36;
+/** Visina retka u `rem`; raste s postavkom veličine teksta. */
+const REDAK_REM = 2.25;
 
 /** Koliko redaka kotačić pokazuje; neparan broj, da sredina bude sredina. */
 const REDAKA = 5;
@@ -54,13 +59,20 @@ export function Kotacic<T extends string | number>({
     stavke.findIndex((s) => s.vrijednost === vrijednost),
   );
 
+  /** Stvarna visina retka; čita se iz DOM-a jer ovisi o veličini teksta. */
+  function visinaRetka(el: HTMLDivElement): number {
+    const prvi = el.firstElementChild as HTMLElement | null;
+    return prvi?.getBoundingClientRect().height || 1;
+  }
+
   // Kad se vrijednost promijeni izvana — recimo kad odabir dana odreže sate
   // koji su tek u budućnosti — kotačić se mora pomaknuti za njom.
   useEffect(() => {
     const el = okvir.current;
     if (!el) return;
-    const cilj = odabrani * REDAK;
-    if (Math.abs(el.scrollTop - cilj) < REDAK / 2) return;
+    const redak = visinaRetka(el);
+    const cilj = odabrani * redak;
+    if (Math.abs(el.scrollTop - cilj) < redak / 2) return;
     const mirno = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     el.scrollTo({ top: cilj, behavior: mirno ? "auto" : "smooth" });
   }, [odabrani]);
@@ -72,22 +84,30 @@ export function Kotacic<T extends string | number>({
     // Čita se tek kad prst stane: usput bi svaki međupoložaj javio svoju
     // vrijednost, pa bi se stanje mijenjalo desetak puta po pokretu.
     mirovanje.current = setTimeout(() => {
-      const i = Math.round(el.scrollTop / REDAK);
+      const i = Math.round(el.scrollTop / visinaRetka(el));
       const stavka = stavke[Math.min(Math.max(i, 0), stavke.length - 1)];
       if (stavka && stavka.vrijednost !== vrijednost) promijeni(stavka.vrijednost);
     }, 90);
   }
 
-  function tipka(e: React.KeyboardEvent, i: number) {
-    const pomak = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+  function tipka(e: React.KeyboardEvent<HTMLDivElement>) {
+    const pomak =
+      e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : e.key === "Home" ? -odabrani
+      : e.key === "End" ? stavke.length - 1 - odabrani : 0;
     if (!pomak) return;
     e.preventDefault();
-    const sljedeci = stavke[i + pomak];
-    if (sljedeci) promijeni(sljedeci.vrijednost);
+    const sljedeci = stavke[odabrani + pomak];
+    if (!sljedeci) return;
+    promijeni(sljedeci.vrijednost);
+    // Žarište ide za odabirom, inače bi tabulator poslije strelice skočio
+    // natrag na staru vrijednost.
+    const el = okvir.current;
+    const cilj = el?.children[odabrani + pomak] as HTMLElement | undefined;
+    cilj?.focus();
   }
 
   return (
-    <div className="relative" style={{ height: REDAK * redaka }}>
+    <div className="relative" style={{ height: `${redaka * REDAK_REM}rem` }}>
       {/* Pojas u sredini: pokazuje koja je vrijednost odabrana.
           Stoji ispod popisa, ne iznad njega — položeni element inače crta
           preko sadržaja koji nije položen, pa je pojas prekrivao upravo
@@ -95,18 +115,17 @@ export function Kotacic<T extends string | number>({
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 rounded-lg bg-kamen-plitko"
-        style={{ height: REDAK }}
+        style={{ height: `${REDAK_REM}rem` }}
       />
       <div
         ref={okvir}
         role="listbox"
         aria-label={naslov}
-        tabIndex={-1}
         onScroll={kliznuo}
         className="kotacic relative z-10 h-full overflow-y-auto overscroll-contain scroll-smooth snap-y snap-mandatory"
         style={{
-          paddingTop: REDAK * ((redaka - 1) / 2),
-          paddingBottom: REDAK * ((redaka - 1) / 2),
+          paddingTop: `${((redaka - 1) / 2) * REDAK_REM}rem`,
+          paddingBottom: `${((redaka - 1) / 2) * REDAK_REM}rem`,
         }}
       >
         {stavke.map((stavka, i) => (
@@ -114,22 +133,21 @@ export function Kotacic<T extends string | number>({
             key={String(stavka.vrijednost)}
             role="option"
             aria-selected={i === odabrani}
-            tabIndex={0}
+            // Pomični tabindex: samo odabrana vrijednost je zaustavljanje.
+            tabIndex={i === odabrani ? 0 : -1}
             onClick={() => promijeni(stavka.vrijednost)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 promijeni(stavka.vrijednost);
               } else {
-                tipka(e, i);
+                tipka(e);
               }
             }}
             className={`fokus flex cursor-pointer snap-center items-center justify-center rounded-lg text-lg tabular-nums transition-colors ${
-              i === odabrani
-                ? "font-bold text-kamen-tinta"
-                : "text-kamen-drugi"
+              i === odabrani ? "font-bold text-kamen-tinta" : "text-kamen-tekst"
             }`}
-            style={{ height: REDAK }}
+            style={{ height: `${REDAK_REM}rem` }}
           >
             {stavka.natpis}
           </div>
