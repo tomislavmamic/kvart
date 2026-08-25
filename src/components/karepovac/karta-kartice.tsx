@@ -403,11 +403,13 @@ function NatpisiKarte({ opis, children }: { opis: string; children?: ReactNode }
 export function KartaDima({
   opis,
   polje,
+  zalet,
   slika,
   children,
 }: {
   opis: string;
   polje?: ZrakZaKartu["polje"];
+  zalet?: ZrakZaKartu["zalet"];
   /** Nepomična slika umjesto perjanice koja se računa u pregledniku. */
   slika?: string;
   children?: ReactNode;
@@ -419,7 +421,7 @@ export function KartaDima({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={slika} alt="" className="absolute inset-0 block h-full w-full" />
       ) : polje ? (
-        <DimPerjanica polje={polje} />
+        <DimPerjanica polje={polje} zalet={zalet} />
       ) : null}
       <NatpisiKarte opis={opis}>{children}</NatpisiKarte>
     </div>
@@ -486,7 +488,7 @@ export async function PoljeDimaVeliko() {
  *
  * Sama nosi definiciju podloge jer je na toj stranici nema tko drugi postaviti.
  */
-export function PrikazPoljaDima({ zrak, polje, opis }: ZrakZaKartu) {
+export function PrikazPoljaDima({ zrak, polje, opis, zalet }: ZrakZaKartu) {
   const godisnji = SIRA_KARTA.slojevi.map((sloj) => ({
     kljuc: sloj.kljuc,
     naziv: sloj.naziv,
@@ -533,6 +535,7 @@ export function PrikazPoljaDima({ zrak, polje, opis }: ZrakZaKartu) {
             <div className="mt-4">
               <PerjanicaSIzborom
                 polje={polje}
+                zalet={zalet}
                 podloga={<PodlogaKarte />}
                 natpisi={
                   <NatpisiKarte opis={`Karta kvarta: ${opis.recenica}`}>
@@ -812,6 +815,7 @@ export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
         >
           <KartaDima
             polje={zrak.polje}
+            zalet={zrak.zalet}
             opis={`Karta kvarta: ${zrak.opis.recenica}`}
           >
             <Mjesto x={OKVIR.sirina - 18} y={OKVIR.visina - 30} sidro="end" velicina={9.5}>

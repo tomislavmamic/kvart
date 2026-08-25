@@ -95,6 +95,32 @@ export function korakZaBrzinu(brzina: number, celijaM: number): number {
   return Math.min(KORAK.najveci, Math.max(KORAK.najmanji, dopusteno));
 }
 
+/**
+ * Plan koračanja jednog sata: broj koraka i njihova stvarna duljina.
+ *
+ * Ovo je **jedino** pravilo koračanja: po njemu satove odrađuje i radnik
+ * simulatora i zalet kartice na `/karepovac`. Dva mjesta s vlastitim
+ * pravilom već su se jednom razišla — kartica je grijala izmišljenim
+ * vjetrom, simulator stvarnim — pa pravilo stoji ovdje, na jednom mjestu.
+ *
+ * Args:
+ *   brzina: Brzina vjetra na otvorenom, u m/s.
+ *   celijaM: Veličina ćelije polja u metrima.
+ *   sekundi: Koliko sekundi prikaza sat traje; zadano puni sat.
+ *
+ * Returns:
+ *   Broj koraka i korak u sekundama prikaza; umnožak je točno `sekundi`.
+ */
+export function planSata(
+  brzina: number,
+  celijaM: number,
+  sekundi: number = SEKUNDI_PO_SATU,
+): { koraka: number; dt: number } {
+  const dt = korakZaBrzinu(brzina, celijaM);
+  const koraka = Math.max(1, Math.round(sekundi / dt));
+  return { koraka, dt: sekundi / koraka };
+}
+
 /** Jedan sat crte, sveden na ono što simulacija treba. */
 export type SatSimulacije = {
   readonly sat: string;
@@ -144,11 +170,9 @@ export function odradiSatove(
     // ono zbog čega zrak s prošlog sata još visi nad kvartom u ovome.
     else sim.postaviPolje(polje);
 
-    const dt = korakZaBrzinu(stanje.brzina, celijaM);
-    const koraka = Math.max(1, Math.round(SEKUNDI_PO_SATU / dt));
     // Korak se poravnava na cijeli broj koraka po satu, da sat traje točno sat.
-    const stvarni = SEKUNDI_PO_SATU / koraka;
-    for (let i = 0; i < koraka; i += 1) sim.korak(stvarni);
+    const { koraka, dt } = planSata(stanje.brzina, celijaM);
+    for (let i = 0; i < koraka; i += 1) sim.korak(dt);
   }
 
   const gotov = sim as Simulacija;

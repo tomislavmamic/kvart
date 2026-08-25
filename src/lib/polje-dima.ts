@@ -154,6 +154,7 @@ export function sastaviPolje(
     vx: zapakiraj(bx),
     vy: zapakiraj(by),
     maska: osnove.maska,
+    dubina: stanje.dubina,
     // y u okviru raste prema jugu, pa se za azimut vraća natrag.
     azimut: Math.round(
       ((Math.atan2(zbrojX, -zbrojY) * 180) / Math.PI + 360) % 360,

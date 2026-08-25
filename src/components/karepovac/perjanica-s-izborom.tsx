@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react";
 
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
+import type { ZaletnoPolje } from "@/lib/zrak";
 import {
   type PoljeDima,
   type Ljestvica,
@@ -49,11 +50,14 @@ function broj(x: number): string {
  */
 export function PerjanicaSIzborom({
   polje,
+  zalet,
   podloga,
   natpisi,
 }: {
   /** Polje vjetra složeno za vjetar koji trenutačno puše. */
   polje: PoljeDima;
+  /** Polja prethodnih sati za zalet; vidi `DimPerjanica`. */
+  zalet?: readonly ZaletnoPolje[];
   /** Nepomični SVG ispod platna. */
   podloga: ReactNode;
   /** Nepomični SVG iznad platna. */
@@ -67,7 +71,7 @@ export function PerjanicaSIzborom({
       <div className="overflow-hidden rounded-lg border border-kamen-tlo">
         <div className="relative">
           {podloga}
-          <DimPerjanica polje={polje} tvar={tvar} />
+          <DimPerjanica polje={polje} zalet={zalet} tvar={tvar} />
           {natpisi}
         </div>
       </div>

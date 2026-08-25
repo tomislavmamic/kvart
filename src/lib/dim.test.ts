@@ -181,6 +181,40 @@ test("slab vjetar nakuplja zrak, jak ga raznese", () => {
   );
 });
 
+/**
+ * Koliko mase stoji niz vjetar od izvora, od −1 do 1.
+ *
+ * Sidro je težište netom ispuštenog dima (pola sekunde prikaza, da ga izvor
+ * još ne stigne odnijeti); smjer je 112,5°, isti za sva polja koja se ovako
+ * uspoređuju. Nit daje vrijednost blizu 1, razliveni oblak znatno manje.
+ */
+function nizVjetarOblika(polje: typeof SLAB): number {
+  const sim = stvoriDim(polje, { cestica: 8_000 });
+  pusti(sim, 0.5);
+  const [x0, y0] = tezisteXY(sim.crtaj(), sim.sirina, sim.visina);
+  pusti(sim, USTALJENO);
+  const g = sim.crtaj();
+  // Kamo vjetar nosi, u koordinatama zaslona (y raste prema jugu).
+  const az = ((112.5 + 180) * Math.PI) / 180;
+  const dx = Math.sin(az);
+  const dy = -Math.cos(az);
+  let zbrojKos = 0;
+  let tezina = 0;
+  for (let j = 0; j < sim.visina; j += 1) {
+    for (let i = 0; i < sim.sirina; i += 1) {
+      const v = g[j * sim.sirina + i];
+      if (v <= 0) continue;
+      const rx = (i / sim.sirina - x0) * OKVIR_M.sirina;
+      const ry = (j / sim.visina - y0) * OKVIR_M.visina;
+      const r = Math.hypot(rx, ry);
+      if (r < 40) continue;
+      zbrojKos += v * ((rx * dx + ry * dy) / r);
+      tezina += v;
+    }
+  }
+  return tezina > 0 ? zbrojKos / tezina : 0;
+}
+
 test("pri tišini se zrak razlije oko plohe, a ne u nit niz javljeni smjer", () => {
   // Smjer pri slabom vjetru dolazi kao šum s anemometara kilometrima daleko,
   // a prikaz ga je uzimao doslovno: i pri tišini je cijela perjanica curila
@@ -191,37 +225,8 @@ test("pri tišini se zrak razlije oko plohe, a ne u nit niz javljeni smjer", () 
   // tišina i slab vjetar **istog smjera**, pa je razlika samo u brzini.
   const TIH = sastaviPolje({ smjerOd: 112.5, brzina: 0.4, dubina: 60 });
 
-  function nizVjetar(polje: typeof SLAB): number {
-    const sim = stvoriDim(polje, { cestica: 8_000 });
-    // Sidro je težište netom ispuštenog dima: pola sekunde prikaza, da se
-    // izvor još ne stigne odnijeti nizvjetar.
-    pusti(sim, 0.5);
-    const [x0, y0] = tezisteXY(sim.crtaj(), sim.sirina, sim.visina);
-    pusti(sim, USTALJENO);
-    const g = sim.crtaj();
-    // Kamo vjetar nosi, u koordinatama zaslona (y raste prema jugu).
-    const az = ((112.5 + 180) * Math.PI) / 180;
-    const dx = Math.sin(az);
-    const dy = -Math.cos(az);
-    let zbrojKos = 0;
-    let tezina = 0;
-    for (let j = 0; j < sim.visina; j += 1) {
-      for (let i = 0; i < sim.sirina; i += 1) {
-        const v = g[j * sim.sirina + i];
-        if (v <= 0) continue;
-        const rx = (i / sim.sirina - x0) * OKVIR_M.sirina;
-        const ry = (j / sim.visina - y0) * OKVIR_M.visina;
-        const r = Math.hypot(rx, ry);
-        if (r < 40) continue;
-        zbrojKos += v * ((rx * dx + ry * dy) / r);
-        tezina += v;
-      }
-    }
-    return tezina > 0 ? zbrojKos / tezina : 0;
-  }
-
-  const tiho = nizVjetar(TIH);
-  const vjetrovito = nizVjetar(SLAB);
+  const tiho = nizVjetarOblika(TIH);
+  const vjetrovito = nizVjetarOblika(SLAB);
   assert.ok(
     vjetrovito > 0.5,
     `pri slabom vjetru je niz vjetar samo ${vjetrovito.toFixed(2)} — nit se raspala`,
@@ -230,6 +235,23 @@ test("pri tišini se zrak razlije oko plohe, a ne u nit niz javljeni smjer", () 
     tiho < vjetrovito - 0.2,
     `pri tišini je masa niz vjetar ${tiho.toFixed(2)}, pri slabom vjetru `
       + `${vjetrovito.toFixed(2)} — tišina i dalje crta nit`,
+  );
+});
+
+test("dubok sloj gasi zastojno širenje i pri tišini", () => {
+  // Puno zastojno širenje traži oboje: slab vjetar I plitak sloj. Slab
+  // prizemni vjetar pod dubokim miješanjem nije inverzija — zrak se tada
+  // miješa uvis i nit niz smjer nije laž. Uspoređuje se **isto polje** s
+  // dvije deklarirane dubine, jer se s dubinom mijenja i oblik polja
+  // (tanak sloj ubrzava preko grebena), a ovdje se mjeri samo širenje.
+  const PLITKO = sastaviPolje({ smjerOd: 112.5, brzina: 0.4, dubina: 60 });
+  const KAO_DUBOKO = { ...PLITKO, dubina: 400 };
+  const plitko = nizVjetarOblika(PLITKO);
+  const duboko = nizVjetarOblika(KAO_DUBOKO);
+  assert.ok(
+    plitko < duboko - 0.1,
+    `pod plitkim slojem niz vjetar ${plitko.toFixed(2)}, pod dubokim `
+      + `${duboko.toFixed(2)} — dubina ne razdvaja zastoj od niti`,
   );
 });
 

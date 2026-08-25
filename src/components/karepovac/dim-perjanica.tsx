@@ -4,12 +4,18 @@ import { useEffect, useRef } from "react";
 
 import {
   ljestvicaBoja,
+  OKVIR_M,
+  raspakirajPolje,
   razina,
-  stvoriDim,
+  stvoriDimSirovo,
+  UBRZANJE,
   type PoljeDima,
+  type SirovoPolje,
   type Tvar,
   TVARI,
 } from "@/lib/dim";
+import { planSata } from "@/lib/sim/simulacija";
+import type { ZaletnoPolje } from "@/lib/zrak";
 
 /**
  * Zagrijavanje: simulacija u komadima, dok se gustoća ne ustali.
@@ -59,10 +65,20 @@ const ZAGRIJAVANJE = { korak: 0.25, komadMs: 12, strpljenje: 1500 };
  */
 export function DimPerjanica({
   polje,
+  zalet = [],
   tvar = "sumporovodik",
   klasa = "",
 }: {
   polje: PoljeDima;
+  /**
+   * Polja prethodnih sati, najstariji prvi.
+   *
+   * Zagrijavanje tada ide kroz stvarne prošle sate — isto pravilo koračanja
+   * kao u simulatoru (`planSata`) — pa prizor pri učitavanju nosi zrak koji
+   * se s plohe digao prije sat-dva, pod tadašnjim vjetrom, a ne izmišljeno
+   * ponavljanje trenutačnoga.
+   */
+  zalet?: readonly ZaletnoPolje[];
   /** Koja se tvar boji; gibanje je isto za obje. */
   tvar?: Tvar;
   klasa?: string;
@@ -82,7 +98,28 @@ export function DimPerjanica({
     if (!ctx) return;
 
     const mirno = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const sim = stvoriDim(polje, {});
+
+    // Zagrijavanje po fazama: stvarni prethodni sati, pa načeti tekući.
+    // Bez zaleta ostaje stara jedna faza s trenutačnim poljem.
+    const glavno = raspakirajPolje(polje);
+    const celijaM = OKVIR_M.sirina / polje.gw;
+    const faze: { polje: SirovoPolje; sekundi: number; dt: number }[] =
+      zalet.map((z) => {
+        const { koraka, dt } = planSata(z.brzina, celijaM);
+        return {
+          polje: raspakirajPolje({ ...z, maska: polje.maska }),
+          sekundi: koraka * dt,
+          dt,
+        };
+      });
+    const sim = stvoriDimSirovo(faze.length ? faze[0].polje : glavno, {});
+    faze.push({
+      polje: glavno,
+      sekundi: zalet.length
+        ? Math.max((new Date().getUTCMinutes() * 60) / UBRZANJE, 5)
+        : sim.zagrijavanje,
+      dt: ZAGRIJAVANJE.korak,
+    });
     const lut: Record<Tvar, Uint8ClampedArray> = {
       sumporovodik: ljestvicaBoja(TVARI.sumporovodik.ljestvica),
       merkaptani: ljestvicaBoja(TVARI.merkaptani.ljestvica),
@@ -124,23 +161,31 @@ export function DimPerjanica({
     let ugaseno = false;
 
     const pocetakZagrijavanja = performance.now();
-    const zagrij = (preostaloSekundi: number) => {
+    let faza = 0;
+    let ostaloFaze = faze[0].sekundi;
+    const zagrij = () => {
       if (ugaseno) return;
-      if (preostaloSekundi <= 0) {
-        zagrijano = true;
-        nacrtaj();
-        return;
-      }
       const kraj = performance.now() + ZAGRIJAVANJE.komadMs;
-      let ostalo = preostaloSekundi;
       do {
-        sim.korak(ZAGRIJAVANJE.korak);
-        ostalo -= ZAGRIJAVANJE.korak;
-      } while (ostalo > 0 && performance.now() < kraj);
+        if (ostaloFaze <= 0) {
+          faza += 1;
+          if (faza >= faze.length) {
+            zagrijano = true;
+            nacrtaj();
+            return;
+          }
+          // Čestice ostaju gdje jesu; mijenja se samo vjetar koji ih nosi —
+          // isto kao pri koračanju satova u simulatoru.
+          sim.postaviPolje(faze[faza].polje);
+          ostaloFaze = faze[faza].sekundi;
+        }
+        sim.korak(faze[faza].dt);
+        ostaloFaze -= faze[faza].dt;
+      } while (performance.now() < kraj);
       if (performance.now() - pocetakZagrijavanja > ZAGRIJAVANJE.strpljenje) {
         nacrtaj();
       }
-      tajmer = setTimeout(() => zagrij(ostalo), 0);
+      tajmer = setTimeout(zagrij, 0);
     };
 
     const petlja = (t: number) => {
@@ -163,7 +208,7 @@ export function DimPerjanica({
           return;
         }
         if (!zagrijano && tajmer === undefined) {
-          zagrij(sim.zagrijavanje);
+          zagrij();
         }
       },
       { rootMargin: "120px" },
@@ -177,7 +222,7 @@ export function DimPerjanica({
       if (tajmer !== undefined) clearTimeout(tajmer);
       promatrac.disconnect();
     };
-  }, [polje]);
+  }, [polje, zalet]);
 
   return (
     <canvas

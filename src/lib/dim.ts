@@ -38,6 +38,14 @@ export type PoljeDima = {
   readonly vx: string;
   readonly vy: string;
   readonly maska: string;
+  /**
+   * Debljina miješanog sloja za koju je polje složeno, u metrima.
+   *
+   * Nosi zastojno širenje: plitak sloj znači noćnu inverziju, u kojoj se
+   * zrak razlijeva oko plohe umjesto da ide za javljenim smjerom. Bez nje
+   * se uzima da je sloj plitak, pa širenje ovisi samo o brzini.
+   */
+  readonly dubina?: number;
 };
 
 /**
@@ -55,6 +63,8 @@ export type SirovoPolje = {
   readonly vx: Uint8Array;
   readonly vy: Uint8Array;
   readonly maska: Uint8Array;
+  /** Debljina miješanog sloja, u metrima; vidi `PoljeDima.dubina`. */
+  readonly dubina?: number;
 };
 
 /**
@@ -129,6 +139,14 @@ export type Postavke = {
   zamucenje?: number;
   /** Broj žarišta na plohi. */
   zarista?: number;
+  /** Ispod koje srednje brzine počinje zastojno širenje, u m/s. */
+  pragZastoja?: number;
+  /** Koliko se vrtlog najviše pojača pri potpunoj tišini. */
+  zastojnoSirenje?: number;
+  /** Do koje dubine sloja zastojno širenje vrijedi u punoj mjeri, u m. */
+  zastojPlitko?: number;
+  /** Od koje dubine sloja zastojnog širenja više nema, u m. */
+  zastojDuboko?: number;
 };
 
 export type Simulacija = {
@@ -156,6 +174,55 @@ export type Simulacija = {
   postaviPolje(polje: SirovoPolje): void;
 };
 
+/**
+ * Ispod koje srednje brzine vjetra u okviru počinje zastojno širenje, u m/s.
+ *
+ * Smjer vjetra dolazi s anemometara kilometrima daleko i pri slabom vjetru
+ * je šum — a prikaz ga je uzimao doslovno, pa je i pri tišini cijela
+ * perjanica poslušno curila u jednu stranu. Model raspršenja je na dvije
+ * godine mjerenja H₂S-a uz plohu pokazao suprotno: pri tišini meandar
+ * razmaže zrak na sve strane, a satne vrijednosti nose potpis zastoja, ne
+ * smjera (vidi `oblacici.K_PO_RAZREDU` i `bazdari-izvor.py`).
+ */
+const PRAG_ZASTOJA = 1.0;
+
+/**
+ * Raspon dubine miješanog sloja preko kojega zastojno širenje slabi, u m.
+ *
+ * Zastoj nije samo slab vjetar nego slab vjetar **pod poklopcem**: plitka
+ * noćna inverzija drži zrak pri tlu i meandar ga razlijeva oko plohe. Kad je
+ * sloj dubok, i slab se prizemni vjetar miješa s višim slojevima, pa nit niz
+ * javljeni smjer nije laž. Puno širenje vrijedi do `plitko`, iznad `duboko`
+ * ga nema, između pada pravocrtno po logaritmu dubine — istom ljestvicom po
+ * kojoj se polje vjetra interpolira (`razineDubine`).
+ */
+const ZASTOJ_DUBINA = { plitko: 60, duboko: 250 } as const;
+
+/**
+ * Koliko se vrtlog najviše pojača pri potpunoj tišini.
+ *
+ * Vrtložni šum nema divergencije, pa pojačanje ne stvara ni izvor ni ponor
+ * mase — samo mijenja omjer između razmazivanja i nošenja, u korist
+ * razmazivanja, onako kako mjerenja kažu da pri tišini i jest.
+ */
+const ZASTOJNO_SIRENJE = 2.5;
+
+/**
+ * Težina zastoja po dubini sloja: 1 pod plitkom inverzijom, 0 nad dubokim
+ * miješanjem. Polje bez dubine (stariji zapis) računa se kao plitko, da se
+ * širenje ne izgubi tiho.
+ */
+function tezinaDubine(
+  dubina: number | undefined,
+  plitko: number,
+  duboko: number,
+): number {
+  if (dubina === undefined) return 1;
+  if (dubina <= plitko) return 1;
+  if (dubina >= duboko) return 0;
+  return 1 - Math.log(dubina / plitko) / Math.log(duboko / plitko);
+}
+
 const ZADANO = {
   sirina: 200,
   cestica: 30_000,
@@ -175,6 +242,10 @@ const ZADANO = {
   vrtnja: 0.16,
   zamucenje: 3,
   zarista: 12,
+  pragZastoja: PRAG_ZASTOJA,
+  zastojnoSirenje: ZASTOJNO_SIRENJE,
+  zastojPlitko: ZASTOJ_DUBINA.plitko,
+  zastojDuboko: ZASTOJ_DUBINA.duboko,
 } as const;
 
 /**
@@ -199,26 +270,6 @@ const EMISIJA_PO_SEKUNDI = 2000;
  */
 const PRIJELAZA_DO_USTALJENJA = 2.2;
 
-/**
- * Ispod koje srednje brzine vjetra u okviru počinje zastojno širenje, u m/s.
- *
- * Smjer vjetra dolazi s anemometara kilometrima daleko i pri slabom vjetru
- * je šum — a prikaz ga je uzimao doslovno, pa je i pri tišini cijela
- * perjanica poslušno curila u jednu stranu. Model raspršenja je na dvije
- * godine mjerenja H₂S-a uz plohu pokazao suprotno: pri tišini meandar
- * razmaže zrak na sve strane, a satne vrijednosti nose potpis zastoja, ne
- * smjera (vidi `oblacici.K_PO_RAZREDU` i `bazdari-izvor.py`).
- */
-const PRAG_ZASTOJA = 1.0;
-
-/**
- * Koliko se vrtlog najviše pojača pri potpunoj tišini.
- *
- * Vrtložni šum nema divergencije, pa pojačanje ne stvara ni izvor ni ponor
- * mase — samo mijenja omjer između razmazivanja i nošenja, u korist
- * razmazivanja, onako kako mjerenja kažu da pri tišini i jest.
- */
-const ZASTOJNO_SIRENJE = 2.5;
 
 /**
  * Koliko se čestice razilaze u fazi vrtložnog šuma.
@@ -313,6 +364,7 @@ export function raspakirajPolje(polje: PoljeDima): SirovoPolje {
     vx: raspakiraj(polje.vx),
     vy: raspakiraj(polje.vy),
     maska: raspakiraj(polje.maska),
+    dubina: polje.dubina,
   };
 }
 
@@ -328,6 +380,7 @@ export function stvoriDimSirovo(
   const { gw, gh } = polje;
   // Polje se smije zamijeniti u hodu, pa ovo nisu konstante nego stanje.
   let skala = polje.skala;
+  let dubina = polje.dubina;
   let VX = polje.vx;
   let VY = polje.vy;
   const MK = polje.maska;
@@ -467,10 +520,15 @@ export function stvoriDimSirovo(
     const kx = (par.ubrzanje / par.metaraX) * dt;
     const ky = (par.ubrzanje / par.metaraY) * dt;
 
-    // Pri tišini razmazivanje nadjača nošenje: smjer je tada šum, a mjerenja
-    // uz plohu kažu da se zrak razlije oko nje, ne u nit niz javljeni smjer.
+    // Pri tišini pod plitkim slojem razmazivanje nadjača nošenje: smjer je
+    // tada šum, a mjerenja uz plohu kažu da se zrak razlije oko plohe, ne u
+    // nit niz javljeni smjer. Puno pojačanje traži oboje — slab vjetar i
+    // plitak sloj; duboko miješanje ga gasi i pri tišini.
     const zastoj =
-      1 + ZASTOJNO_SIRENJE * Math.max(0, 1 - srednjaBrzina / PRAG_ZASTOJA);
+      1 +
+      par.zastojnoSirenje *
+        Math.max(0, 1 - srednjaBrzina / par.pragZastoja) *
+        tezinaDubine(dubina, par.zastojPlitko, par.zastojDuboko);
 
     const e = 0.004;
     for (let n = 0; n < N; n += 1) {
@@ -601,6 +659,7 @@ export function stvoriDimSirovo(
       VX = novo.vx;
       VY = novo.vy;
       skala = novo.skala;
+      dubina = novo.dubina;
       srednjaBrzina = izmjeriSrednju();
     },
   };

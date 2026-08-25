@@ -142,5 +142,13 @@ export function slozi(stanje: StanjeZraka, osnove: Osnove): SirovoPolje {
     by[i] = Math.round((vy[i] / skala) * 127.5 + 127.5);
   }
 
-  return { gw: osnove.gw, gh: osnove.gh, skala, vx: bx, vy: by, maska: osnove.maska };
+  return {
+    gw: osnove.gw,
+    gh: osnove.gh,
+    skala,
+    vx: bx,
+    vy: by,
+    maska: osnove.maska,
+    dubina: stanje.dubina,
+  };
 }
