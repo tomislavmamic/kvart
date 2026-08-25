@@ -156,11 +156,19 @@ export async function azoVjetar(sada: Date): Promise<Map<string, SatniVjetar>> {
 export function dopuniSadasnjim(
   satovi: ReadonlyMap<string, SatniVjetar>,
   vrh: Date,
-  opazanje: { postaja: Postaja; smjerOd: number; brzina: number } | null,
+  opazanje: {
+    postaja: Postaja;
+    smjerOd: number;
+    brzina: number;
+    promjenjiv?: boolean;
+  } | null,
 ): Map<string, SatniVjetar> {
   const izlaz = new Map(satovi);
   const sat = vrh.toISOString();
-  if (!opazanje || izlaz.has(sat)) return izlaz;
+  // Promjenjiv smjer (METAR VRB) nije smjer: upisati ga značilo bi voditi
+  // perjanicu brojkom koja ništa ne znači. Sat tada ostaje na modelu, a
+  // natpis uz kartu i dalje smije reći „promjenjiv”.
+  if (!opazanje || opazanje.promjenjiv || izlaz.has(sat)) return izlaz;
   izlaz.set(sat, {
     sat,
     smjerOd: opazanje.smjerOd,

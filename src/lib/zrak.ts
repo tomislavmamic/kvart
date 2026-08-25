@@ -9,7 +9,7 @@
 
 import { sastaviPolje, type SlozenoPolje, type StanjeZraka } from "@/lib/polje-dima";
 import { stanjeSata, vrhSata } from "@/lib/sim/vrijeme-satno";
-import { satniVjetar } from "@/lib/vjetar-sat";
+import { satniVjetar, type SatniVjetarISlojevi } from "@/lib/vjetar-sat";
 import { izvediStrujnice, type Strujnice } from "@/lib/strujnice";
 import { dohvatiZrak, type ZrakSada } from "@/lib/vjetar";
 import { opisiZrak, type OpisZraka } from "@/lib/zrak-rijeci";
@@ -57,19 +57,11 @@ export const SATI_ZALETA_KARTICE = 2;
  * Returns:
  *   Stanja po satu, najstariji prvi; prazno kad izvor ne odgovori.
  */
-export async function dohvatiZalet(
-  sada: Date = new Date(),
+export function stanjaZaleta(
+  vjetar: SatniVjetarISlojevi,
+  sada: Date,
   koliko: number = SATI_ZALETA_KARTICE,
-): Promise<StanjeZraka[]> {
-  // Isto pravilo kao svugdje (`satniVjetar`), s rokom na izmjereni niz:
-  // kad predmemorija AZO-a nije topla, ovaj prolaz ide na modelu, a pozivi
-  // u pozadini griju sljedeći. Zalet je poboljšanje, ne uvjet.
-  let vjetar: Awaited<ReturnType<typeof satniVjetar>>;
-  try {
-    vjetar = await satniVjetar(sada, 1, 1, 3000);
-  } catch {
-    return [];
-  }
+): StanjeZraka[] {
   const vrh = vrhSata(sada).getTime();
   const stanja: StanjeZraka[] = [];
   for (let k = koliko; k >= 1; k -= 1) {
@@ -117,10 +109,30 @@ export function slozi(
 /**
  * Dohvaća trenutačno stanje zraka i slaže ga za prikaz.
  *
+ * Perjanicu vodi `satniVjetar` — isto pravilo kao simulator: izmjereni sat
+ * gdje ga ima, opažanje gdje ga nema, model za ostalo, a promjenjiv smjer
+ * nikad ne vodi. `dohvatiZrak` ostaje izvor za natpise (tko je javio, kada,
+ * je li promjenjiv) i pričuva kad satni niz ne stigne. Rok na izmjereni niz
+ * je tri sekunde: hladna predmemorija ne smije držati stranicu, a pozivi u
+ * pozadini griju sljedeći prolaz.
+ *
  * Returns:
  *   Očitanja, polje za simulaciju i natpisi uz kartu.
  */
 export async function pripremiZrak(): Promise<ZrakZaKartu> {
-  const [zrak, zalet] = await Promise.all([dohvatiZrak(), dohvatiZalet()]);
-  return slozi(zrak, zalet);
+  const sada = new Date();
+  const [zrak, vjetar] = await Promise.all([
+    dohvatiZrak(sada),
+    satniVjetar(sada, 1, 1, 3000).catch(() => null),
+  ]);
+  if (!vjetar) return slozi(zrak);
+  const satni = vjetar.vjetrovi.get(vrhSata(sada).toISOString());
+  const stanje: StanjeZraka = satni
+    ? {
+        smjerOd: satni.smjerOd,
+        brzina: satni.brzina,
+        dubina: vjetar.dubine.get(vrhSata(sada).toISOString()) ?? zrak.stanje.dubina,
+      }
+    : zrak.stanje;
+  return slozi({ ...zrak, stanje }, stanjaZaleta(vjetar, sada));
 }

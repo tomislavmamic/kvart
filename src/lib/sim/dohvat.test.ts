@@ -113,3 +113,14 @@ test("opažanje ne pregazi izmjereni sat i podnosi izostanak", () => {
   assert.equal(s.get(sat)?.smjerOd, 100, "izmjereni sat ostaje");
   assert.equal(dopuniSadasnjim(izmjeren, vrh, null).get(sat)?.smjerOd, 100);
 });
+
+test("promjenjiv smjer nikad ne vodi tekući sat", () => {
+  const vrh = new Date("2026-08-25T15:00:00Z");
+  const s = dopuniSadasnjim(new Map(), vrh, {
+    postaja: "aerodrom",
+    smjerOd: 112.5,
+    brzina: 4.9,
+    promjenjiv: true,
+  });
+  assert.equal(s.size, 0, "VRB nije smjer — sat ostaje na modelu");
+});
