@@ -567,9 +567,13 @@ export function stvoriDimSirovo(
         vy += ny * poprecno;
       }
 
-      // Blizu plohe je mlaz, dalje se raspliće.
+      // Blizu plohe je mlaz, dalje se raspliće — i ne prestaje. Rast je
+      // korijenski, kao σ ∝ √t kod vrtložne difuzije (ista fizika po kojoj
+      // je ugođen model oblačića): do `rastVrtloga` isto kao prije, dalje
+      // nastavlja umjesto da stane. Sa zasićenim je rastom perjanica držala
+      // istu širinu do kraja okvira i izgledala kao cijev, a ne kao dim.
       const a =
-        par.vrtlog * (0.22 + par.sirenje * Math.min(1, dob[n] / par.rastVrtloga));
+        par.vrtlog * (0.22 + par.sirenje * Math.sqrt(dob[n] / par.rastVrtloga));
       const tt = t * par.vrtnja + pomak[n] * FAZA_VRTLOGA;
       const dx = (psi(x, y + e, tt) - psi(x, y - e, tt)) / (2 * e);
       const dy = (psi(x + e, y, tt) - psi(x - e, y, tt)) / (2 * e);
