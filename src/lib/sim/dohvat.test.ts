@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { primijeniVjetar, slozOcitanja } from "@/lib/sim/dohvat";
+import { dopuniSadasnjim, primijeniVjetar, slozOcitanja } from "@/lib/sim/dohvat";
 import { slozCrtu, SATI_UNATRAG, SATI_ZALETA, SATI_UNAPRIJED } from "@/lib/sim/kadrovi";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 
@@ -92,4 +92,23 @@ test("dvije stranice iste postaje ne udvostručuju očitanje", () => {
     <tr><td>21.08.2026</td><td>3:00</td><td>2.758</td></tr></table>`;
   const po = slozOcitanja(new Map([["k1", [stranica, stranica]]]));
   assert.equal(po.get("2026-08-21T00:00:00.000Z")?.length, 1);
+});
+
+test("tekući sat bez AZO-a dobiva opažanje koje vodi kartu", () => {
+  const vrh = new Date("2026-08-25T06:00:00Z");
+  const prazno = new Map();
+  const s = dopuniSadasnjim(prazno, vrh, { postaja: "marjan", smjerOd: 87, brzina: 1.4 });
+  const sat = s.get(vrh.toISOString());
+  assert.equal(sat?.smjerOd, 87);
+  assert.equal(sat?.izvor, "marjan");
+  assert.equal(prazno.size, 0, "ulaz se ne mijenja");
+});
+
+test("opažanje ne pregazi izmjereni sat i podnosi izostanak", () => {
+  const vrh = new Date("2026-08-25T06:00:00Z");
+  const sat = vrh.toISOString();
+  const izmjeren = new Map([[sat, { sat, smjerOd: 100, brzina: 2, tisina: false, izvor: "split3" as const }]]);
+  const s = dopuniSadasnjim(izmjeren, vrh, { postaja: "marjan", smjerOd: 87, brzina: 1.4 });
+  assert.equal(s.get(sat)?.smjerOd, 100, "izmjereni sat ostaje");
+  assert.equal(dopuniSadasnjim(izmjeren, vrh, null).get(sat)?.smjerOd, 100);
 });

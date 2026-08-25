@@ -185,6 +185,40 @@ export async function azoVjetar(sada: Date): Promise<Map<string, SatniVjetar>> {
 }
 
 /**
+ * Dopunjava izmjereni niz opažanjem za tekući sat, kad ga niz ne pokriva.
+ *
+ * AZO često javi zadnji sat s kašnjenjem, a karta na `/karepovac` tada vodi
+ * po najsvježijem opažanju (DHMZ, METAR…). Bez ove dopune bi simulator isti
+ * sat vrtio na modelu, pa bi dvije karte istoga kvarta nosile dva vjetra —
+ * i to baš na satu koji svi gledaju.
+ *
+ * Args:
+ *   satovi: Izmjereni satni niz koji vodi model.
+ *   vrh: Početak tekućeg sata.
+ *   opazanje: Opažanje koje trenutačno vodi kartu, ili ništa.
+ *
+ * Returns:
+ *   Niz s dopunjenim tekućim satom; ulaz se ne mijenja.
+ */
+export function dopuniSadasnjim(
+  satovi: ReadonlyMap<string, SatniVjetar>,
+  vrh: Date,
+  opazanje: { postaja: Postaja; smjerOd: number; brzina: number } | null,
+): Map<string, SatniVjetar> {
+  const izlaz = new Map(satovi);
+  const sat = vrh.toISOString();
+  if (!opazanje || izlaz.has(sat)) return izlaz;
+  izlaz.set(sat, {
+    sat,
+    smjerOd: opazanje.smjerOd,
+    brzina: opazanje.brzina,
+    tisina: opazanje.brzina < 0.5,
+    izvor: opazanje.postaja,
+  });
+  return izlaz;
+}
+
+/**
  * Dohvaća sve izvore i slaže vremensku crtu.
  *
  * Izmjereni vjetar ovdje **ne** ulazi: AZO traži pet sekundi između dvaju

@@ -8,12 +8,14 @@
  */
 
 import { sastaviPolje, type SlozenoPolje, type StanjeZraka } from "@/lib/polje-dima";
+import { azoVjetar } from "@/lib/sim/dohvat";
 import {
   adresaModela,
   procitajDubine,
   procitajModelskiVjetar,
   stanjeSata,
   vrhSata,
+  type SatniVjetar,
 } from "@/lib/sim/vrijeme-satno";
 import { izvediStrujnice, type Strujnice } from "@/lib/strujnice";
 import { dohvatiZrak, type ZrakSada } from "@/lib/vjetar";
@@ -49,11 +51,11 @@ export type ZrakZaKartu = {
 export const SATI_ZALETA_KARTICE = 2;
 
 /**
- * Stanja prethodnih punih sati, iz modelskog satnog niza.
+ * Stanja prethodnih punih sati, po istom pravilu kao u simulatoru.
  *
- * Modelski niz (Open-Meteo) jedini pokriva svaki prošli sat odmah i bez
- * navale na izvore; izmjereni AZO niz traži spore uzastopne pozive, pa ga
- * kartica ne čeka — kao ni prva slika simulatora.
+ * Izmjereni AZO niz vodi gdje god pokriva sat; model (Open-Meteo) popunjava
+ * ostatak i uvijek daje dubinu sloja. Time kartica i simulator za isti sat
+ * nose isti vjetar — dvije karte istoga kvarta ne smiju pokazivati dva.
  *
  * Args:
  *   sada: Trenutak prikaza.
@@ -77,13 +79,23 @@ export async function dohvatiZalet(
     // Zalet je poboljšanje, ne uvjet: bez njega se kartica grije kao dosad.
     return [];
   }
+  // Prošli sati po istom pravilu kao u simulatoru: izmjereno gdje ga ima,
+  // model gdje ga nema. AZO traži spore uzastopne pozive, pa dobiva rok:
+  // kad predmemorija nije topla, ovaj prolaz ide na modelu, a pozivi u
+  // pozadini griju sljedeći.
+  const izmjereno = await Promise.race([
+    azoVjetar(sada).catch(() => new Map<string, SatniVjetar>()),
+    new Promise<Map<string, SatniVjetar>>((rijesi) =>
+      setTimeout(() => rijesi(new Map()), 3000),
+    ),
+  ]);
   const vjetar = procitajModelskiVjetar(odgovor);
   const dubine = procitajDubine(odgovor);
   const vrh = vrhSata(sada).getTime();
   const stanja: StanjeZraka[] = [];
   for (let k = koliko; k >= 1; k -= 1) {
     const sat = new Date(vrh - k * 3600_000).toISOString();
-    const stanje = stanjeSata(vjetar.get(sat), dubine.get(sat));
+    const stanje = stanjeSata(izmjereno.get(sat) ?? vjetar.get(sat), dubine.get(sat));
     if (stanje) stanja.push(stanje);
   }
   return stanja;

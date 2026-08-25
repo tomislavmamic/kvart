@@ -20,7 +20,8 @@
  * očitanje uz sat od jučer značilo bi tvrditi nešto što nitko nije izmjerio.
  */
 
-import { azoSerije } from "@/lib/sim/dohvat";
+import { azoSerije, dopuniSadasnjim } from "@/lib/sim/dohvat";
+import { vrhSata } from "@/lib/sim/vrijeme-satno";
 import { dohvatiZrak } from "@/lib/vjetar";
 
 /** Isti rok kao ostali izvori vjetra, da se dvije karte ne raziđu. */
@@ -36,10 +37,13 @@ export async function GET(): Promise<Response> {
   // provjereni iz `vjetar.ts`.
   const vodeci =
     serije.get("split3")?.size ? serije.get("split3")! : serije.get("split2") ?? new Map();
+  // Tekući sat: kad ga AZO još nije objavio, vodi isto opažanje koje vodi i
+  // kartu na `/karepovac` — da dvije karte istoga kvarta ne nose dva vjetra.
+  const dopunjeno = dopuniSadasnjim(vodeci, vrhSata(new Date()), sada?.vjetar ?? null);
 
   return Response.json(
     {
-      satovi: [...vodeci.values()],
+      satovi: [...dopunjeno.values()],
       // Po postaji, za pribadače: AZO objavljuje satni niz, pa te brojke
       // prate klizač umjesto da stoje samo na sadašnjem satu.
       serije: Object.fromEntries(
