@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { dopuniSadasnjim, primijeniVjetar, slozOcitanja } from "@/lib/sim/dohvat";
+import { primijeniVjetar, slozOcitanja } from "@/lib/sim/dohvat";
+import { dopuniSadasnjim } from "@/lib/vjetar-sat";
 import { slozCrtu, SATI_UNATRAG, SATI_ZALETA, SATI_UNAPRIJED } from "@/lib/sim/kadrovi";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 

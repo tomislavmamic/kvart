@@ -399,7 +399,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     let otkazano = false;
     void (async () => {
       try {
-        const odgovor = await fetch("/api/karepovac/sim/vjetar");
+        const odgovor = await fetch("/api/karepovac/vjetar");
         if (!odgovor.ok) return;
         const podatci: {
           satovi?: SatniVjetar[];

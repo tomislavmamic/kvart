@@ -17,7 +17,6 @@
  * vjetra i na crti se vidi kao rupa, a ne kao izmišljen zrak.
  */
 
-import { azoAdresa, type Postaja } from "@/lib/vjetar";
 import {
   type Kadar,
   type Crta,
@@ -33,18 +32,8 @@ import {
   procitajTablicu,
   SIM_POSTAJE,
 } from "@/lib/sim/postaje-satno";
-import {
-  adresaModela,
-  procitajAzoNiz,
-  procitajDubine,
-  procitajModelskiVjetar,
-  slozeniVjetar,
-  vrhSata,
-  type SatniVjetar,
-} from "@/lib/sim/vrijeme-satno";
-
-/** AZO-ove oznake postaja i veličina; iste kao u `vjetar.ts`. */
-const AZO = { split3: 305, split2: 304, brzina: 477, smjer: 478 } as const;
+import { vrhSata, type SatniVjetar } from "@/lib/sim/vrijeme-satno";
+import { satniVjetar } from "@/lib/vjetar-sat";
 
 /** METAR i AZO se objavljuju u satu; kraći rok ne bi donio noviji podatak. */
 const ROK_VJETRA = 900;
@@ -55,34 +44,10 @@ const ROK_POSTAJA = 1800;
 /** Poziv koji ne smije držati prikaz stranice. */
 const ISTEK_MS = 6000;
 
-/**
- * Razmak između uzastopnih poziva prema AZO-u, u milisekundama.
- *
- * AZO-ov izvoz ima ogradu na brzinu, i to strogu: brzina i smjer traže se dvama
- * pozivima (jedan zahtjev nosi samo jedan polutant — `polutant=477,478` vrati
- * 404, a ponovljeni parametar tiho uzme samo prvi), a drugi poziv vrati
- * `429 Too many requests` sve dok između njih ne prođe oko pet sekundi.
- * Izmjereno 21. 8. 2026.: razmak 0 i 2 s → 429, 5 s → 200.
- *
- * Posljedica prebrzog dohvata nije bila prazna karta nego gora stvar: smjer bi
- * izostao, svaki bi sat pao na modelski vjetar, i crta bi izgledala uredno dok
- * bi tiho prestala biti izmjerena.
- *
- * Zato AZO ne stoji na putu prikaza. Stranica se crta na modelskom vjetru, koji
- * pokriva sve satove odjednom, a izmjereni stiže naknadno s
- * `/api/karepovac/sim/vjetar` — ondje ovih nekoliko sekundi plati predmemorija
- * jednom u petnaest minuta, a ne svaki posjetitelj.
- */
-const RAZMAK_AZO_MS = 5500;
-
 // Bez dijakritike: zaglavlje HTTP-a nosi samo znakove do 255.
 const ZAGLAVLJA = {
   "user-agent": "kvart (Karepovac air watch; +https://kvart-sage.vercel.app)",
 } as const;
-
-function pricekaj(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
 
 async function uzmi(
   url: string,
@@ -138,93 +103,12 @@ export function slozOcitanja(
 }
 
 /**
- * Čita izmjereni satni vjetar s AZO-ovih postaja, redom i bez navale.
- *
- * Args:
- *   sada: Trenutak za koji se traži dan unatrag.
- *
- * Returns:
- *   Vjetar po satu s prve postaje koja je javila i brzinu i smjer; prazno ako
- *   nijedna nije.
- */
-export async function azoSerije(
-  sada: Date,
-): Promise<Map<Postaja, Map<string, SatniVjetar>>> {
-  const izlaz = new Map<Postaja, Map<string, SatniVjetar>>();
-  // Obje postaje, a ne samo prva koja javi: prva vodi model, ali druga ima
-  // svoje mjesto na karti i ondje pokazuje što je sama izmjerila.
-  for (const postaja of ["split3", "split2"] as const) {
-    const brzine = await uzmi(azoAdresa(postaja, AZO.brzina, sada), ROK_VJETRA);
-    await pricekaj(RAZMAK_AZO_MS);
-    const smjerovi = await uzmi(azoAdresa(postaja, AZO.smjer, sada), ROK_VJETRA);
-    const niz = procitajAzoNiz(postaja, brzine, smjerovi);
-    if (niz.size) izlaz.set(postaja, niz);
-    await pricekaj(RAZMAK_AZO_MS);
-  }
-  return izlaz;
-}
-
-/**
- * Vjetar koji vodi model: prva postaja koja je javila i brzinu i smjer.
- *
- * Args:
- *   sada: Trenutak za koji se traži dan unatrag.
- *
- * Returns:
- *   Vjetar po satu s te postaje; prazno ako nijedna nije javila.
- */
-export async function azoVjetar(sada: Date): Promise<Map<string, SatniVjetar>> {
-  const serije = await azoSerije(sada);
-  // Redoslijed je isti kao u `vjetar.ts`: nije po udaljenosti nego po tome što
-  // je prošlo provjeru prema izmjerenom H₂S-u.
-  for (const postaja of ["split3", "split2"] as const) {
-    const niz = serije.get(postaja);
-    if (niz?.size) return niz;
-  }
-  return new Map();
-}
-
-/**
- * Dopunjava izmjereni niz opažanjem za tekući sat, kad ga niz ne pokriva.
- *
- * AZO često javi zadnji sat s kašnjenjem, a karta na `/karepovac` tada vodi
- * po najsvježijem opažanju (DHMZ, METAR…). Bez ove dopune bi simulator isti
- * sat vrtio na modelu, pa bi dvije karte istoga kvarta nosile dva vjetra —
- * i to baš na satu koji svi gledaju.
- *
- * Args:
- *   satovi: Izmjereni satni niz koji vodi model.
- *   vrh: Početak tekućeg sata.
- *   opazanje: Opažanje koje trenutačno vodi kartu, ili ništa.
- *
- * Returns:
- *   Niz s dopunjenim tekućim satom; ulaz se ne mijenja.
- */
-export function dopuniSadasnjim(
-  satovi: ReadonlyMap<string, SatniVjetar>,
-  vrh: Date,
-  opazanje: { postaja: Postaja; smjerOd: number; brzina: number } | null,
-): Map<string, SatniVjetar> {
-  const izlaz = new Map(satovi);
-  const sat = vrh.toISOString();
-  if (!opazanje || izlaz.has(sat)) return izlaz;
-  izlaz.set(sat, {
-    sat,
-    smjerOd: opazanje.smjerOd,
-    brzina: opazanje.brzina,
-    tisina: opazanje.brzina < 0.5,
-    izvor: opazanje.postaja,
-  });
-  return izlaz;
-}
-
-/**
  * Dohvaća sve izvore i slaže vremensku crtu.
  *
- * Izmjereni vjetar ovdje **ne** ulazi: AZO traži pet sekundi između dvaju
- * poziva, što je predugo da stoji pred prvim prikazom. Crta se slaže na
- * modelskom vjetru, koji pokriva sve satove, a izmjereni se dodaje naknadno
- * (`primijeniVjetar`) čim ga `/api/karepovac/sim/vjetar` isporuči.
+ * Vjetar bira `satniVjetar` — isto pravilo kao svugdje — ali bez čekanja
+ * na izmjereni AZO niz: on traži sekunde, predugo za prvi prikaz, pa stiže
+ * naknadno (`primijeniVjetar`) čim ga `/api/karepovac/vjetar` isporuči.
+ * Opažanje za tekući sat ulazi odmah, jer ne košta ništa.
  *
  * Args:
  *   sada: Trenutak za koji se crta slaže; zadano je sadašnji.
@@ -242,9 +126,9 @@ export async function dohvatiCrtu(sada: Date = new Date()): Promise<Crta> {
     trazeniMjeseci.map((m) => ({ postaja: p.oznaka, url: adresaTablice(p.oznaka, m) })),
   );
 
-  const [model, ...tablice] = await Promise.all([
+  const [vjetar, ...tablice] = await Promise.all([
     // Dva dana unatrag pokrivaju i zalet, dva unaprijed s viškom pokrivaju tri sata.
-    uzmi(adresaModela(2, 2), ROK_VJETRA),
+    satniVjetar(sada, 2, 2, 0),
     ...stranice.map((s) => uzmi(s.url, ROK_POSTAJA, "tekst")),
   ]);
 
@@ -255,20 +139,7 @@ export async function dohvatiCrtu(sada: Date = new Date()): Promise<Crta> {
     poPostaji.set(s.postaja, [...(poPostaji.get(s.postaja) ?? []), tekst]);
   });
 
-  const satovi: string[] = [];
-  for (
-    let t = najstariji.getTime();
-    t <= najnoviji.getTime();
-    t += 3600000
-  ) {
-    satovi.push(new Date(t).toISOString());
-  }
-
-  const vjetrovi: Map<string, SatniVjetar> = slozeniVjetar(satovi, [
-    procitajModelskiVjetar(model),
-  ]);
-
-  return slozCrtu(vrh, vjetrovi, procitajDubine(model), slozOcitanja(poPostaji));
+  return slozCrtu(vrh, vjetar.vjetrovi, vjetar.dubine, slozOcitanja(poPostaji));
 }
 
 /**

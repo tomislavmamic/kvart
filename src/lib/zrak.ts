@@ -8,15 +8,8 @@
  */
 
 import { sastaviPolje, type SlozenoPolje, type StanjeZraka } from "@/lib/polje-dima";
-import { azoVjetar } from "@/lib/sim/dohvat";
-import {
-  adresaModela,
-  procitajDubine,
-  procitajModelskiVjetar,
-  stanjeSata,
-  vrhSata,
-  type SatniVjetar,
-} from "@/lib/sim/vrijeme-satno";
+import { stanjeSata, vrhSata } from "@/lib/sim/vrijeme-satno";
+import { satniVjetar } from "@/lib/vjetar-sat";
 import { izvediStrujnice, type Strujnice } from "@/lib/strujnice";
 import { dohvatiZrak, type ZrakSada } from "@/lib/vjetar";
 import { opisiZrak, type OpisZraka } from "@/lib/zrak-rijeci";
@@ -68,34 +61,20 @@ export async function dohvatiZalet(
   sada: Date = new Date(),
   koliko: number = SATI_ZALETA_KARTICE,
 ): Promise<StanjeZraka[]> {
-  let odgovor: unknown = null;
+  // Isto pravilo kao svugdje (`satniVjetar`), s rokom na izmjereni niz:
+  // kad predmemorija AZO-a nije topla, ovaj prolaz ide na modelu, a pozivi
+  // u pozadini griju sljedeći. Zalet je poboljšanje, ne uvjet.
+  let vjetar: Awaited<ReturnType<typeof satniVjetar>>;
   try {
-    const r = await fetch(adresaModela(1, 1), {
-      signal: AbortSignal.timeout(4000),
-      next: { revalidate: 900 },
-    });
-    if (r.ok) odgovor = await r.json();
+    vjetar = await satniVjetar(sada, 1, 1, 3000);
   } catch {
-    // Zalet je poboljšanje, ne uvjet: bez njega se kartica grije kao dosad.
     return [];
   }
-  // Prošli sati po istom pravilu kao u simulatoru: izmjereno gdje ga ima,
-  // model gdje ga nema. AZO traži spore uzastopne pozive, pa dobiva rok:
-  // kad predmemorija nije topla, ovaj prolaz ide na modelu, a pozivi u
-  // pozadini griju sljedeći.
-  const izmjereno = await Promise.race([
-    azoVjetar(sada).catch(() => new Map<string, SatniVjetar>()),
-    new Promise<Map<string, SatniVjetar>>((rijesi) =>
-      setTimeout(() => rijesi(new Map()), 3000),
-    ),
-  ]);
-  const vjetar = procitajModelskiVjetar(odgovor);
-  const dubine = procitajDubine(odgovor);
   const vrh = vrhSata(sada).getTime();
   const stanja: StanjeZraka[] = [];
   for (let k = koliko; k >= 1; k -= 1) {
     const sat = new Date(vrh - k * 3600_000).toISOString();
-    const stanje = stanjeSata(izmjereno.get(sat) ?? vjetar.get(sat), dubine.get(sat));
+    const stanje = stanjeSata(vjetar.vjetrovi.get(sat), vjetar.dubine.get(sat));
     if (stanje) stanja.push(stanje);
   }
   return stanja;
