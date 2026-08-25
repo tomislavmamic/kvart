@@ -133,6 +133,13 @@ export type Slika = {
   readonly visina: number;
   /** Gustoća po ćeliji, u jedinicama `Simulacija.crtaj`. */
   readonly gustoca: Float32Array;
+  /**
+   * Ista gustoća, ali s česticama izvaganima po satu rođenja merkaptanskim
+   * profilom izvora (`PROFIL_MERKAPTANA`): merkaptani izlaze kad se na
+   * plohi radi, pa njihova perjanica noću izostane ondje gdje
+   * sumporovodikova stoji.
+   */
+  readonly merkaptani: Float32Array;
 };
 
 /**
@@ -162,17 +169,32 @@ export function odradiSatove(
     metaraY: osnove.visinaM,
   };
 
+  // Stvarno vrijeme prvog sata veže sat rođenja čestice uz sat na zidu, za
+  // profil izvora. Provjere koriste izmišljene oznake sati („s0”) — tada
+  // vremena nema, profil miruje i obje tvari dijele isto polje.
+  const pocetakMs = Date.parse(satovi[0].sat);
   let sim: Simulacija | null = null;
-  for (const { stanje } of satovi) {
+  for (const [i, { stanje }] of satovi.entries()) {
     const polje = slozi(stanje, osnove);
-    if (sim === null) sim = stvoriDimSirovo(polje, par);
-    // Čestice ostaju gdje jesu; mijenja se samo vjetar koji ih nosi. To je
-    // ono zbog čega zrak s prošlog sata još visi nad kvartom u ovome.
-    else sim.postaviPolje(polje);
+    if (sim === null) {
+      sim = stvoriDimSirovo(
+        polje,
+        Number.isNaN(pocetakMs)
+          ? par
+          : { ...par, pocetakMs, krajMs: pocetakMs + 3600_000 },
+      );
+    } else {
+      // Čestice ostaju gdje jesu; mijenja se samo vjetar koji ih nosi. To
+      // je ono zbog čega zrak s prošlog sata još visi nad kvartom u ovome.
+      sim.postaviPolje(polje);
+    }
+    if (!Number.isNaN(pocetakMs)) {
+      sim.postavi("krajMs", pocetakMs + (i + 1) * 3600_000);
+    }
 
     // Korak se poravnava na cijeli broj koraka po satu, da sat traje točno sat.
     const { koraka, dt } = planSata(stanje.brzina, celijaM);
-    for (let i = 0; i < koraka; i += 1) sim.korak(dt);
+    for (let k = 0; k < koraka; k += 1) sim.korak(dt);
   }
 
   const gotov = sim as Simulacija;
@@ -183,6 +205,7 @@ export function odradiSatove(
     // `crtaj` vraća svoj unutarnji spremnik, koji sljedeći poziv prepisuje.
     // Slika mora preživjeti idući sat, pa se kopira.
     gustoca: Float32Array.from(gotov.crtaj()),
+    merkaptani: Float32Array.from(gotov.crtaj("merkaptani")),
   };
 }
 

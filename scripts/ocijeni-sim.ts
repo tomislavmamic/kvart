@@ -87,7 +87,12 @@ const par: Postavke = {
 
 let maskaCelija: number[] | null = null;
 
-function ocitaj(sim: Simulacija, polje: SirovoPolje): { postaja: number; ploha: number } {
+function ocitaj(
+  sim: Simulacija,
+  polje: SirovoPolje,
+): { postaja: number; merkaptani: number; ploha: number } {
+  // `crtaj` vraća unutarnji spremnik — drugi poziv prepisuje prvi — pa se
+  // iz sumporovodikove slike očita sve što treba prije merkaptanske.
   const g = sim.crtaj();
   const i0 = Math.round(
     ((k1.lon - granice.zapad) / (granice.istok - granice.zapad)) * sim.sirina,
@@ -123,11 +128,28 @@ function ocitaj(sim: Simulacija, polje: SirovoPolje): { postaja: number; ploha: 
   const p99 = naPlohi.length
     ? naPlohi[Math.min(naPlohi.length - 1, Math.floor(naPlohi.length * 0.99))]
     : 0;
-  return { postaja: n ? zbroj / n : 0, ploha: p99 };
+  const gm = sim.crtaj("merkaptani");
+  let zbrojM = 0;
+  let nM = 0;
+  for (let dj = -1; dj <= 1; dj += 1) {
+    for (let di = -1; di <= 1; di += 1) {
+      const i = i0 + di;
+      const j = j0 + dj;
+      if (i < 0 || i >= sim.sirina || j < 0 || j >= sim.visina) continue;
+      zbrojM += gm[j * sim.sirina + i];
+      nM += 1;
+    }
+  }
+  return {
+    postaja: n ? zbroj / n : 0,
+    merkaptani: nM ? zbrojM / nM : 0,
+    ploha: p99,
+  };
 }
 
 const celijaM = sirinaM / gwPolja;
 const niz: Record<string, number> = {};
+const nizMerkaptana: Record<string, number> = {};
 const nizPlohe: Record<string, number> = {};
 let sim: Simulacija | null = null;
 let prosli = "";
@@ -142,8 +164,12 @@ for (const t of sati) {
   const stanje = sviSati[t];
   const polje = sloziPolje(stanje);
   const hladno = sim === null || prosli === "" || satPlusJedan(prosli) !== t;
-  if (sim === null) sim = stvoriDimSirovo(polje, par);
-  else sim.postaviPolje(polje);
+  if (sim === null) {
+    // Stvarno vrijeme veže sat rođenja čestice uz sat na zidu, za profil
+    // izvora merkaptana.
+    sim = stvoriDimSirovo(polje, { ...par, pocetakMs: Date.parse(t) });
+  } else sim.postaviPolje(polje);
+  sim.postavi("krajMs", Date.parse(t) + 3600_000);
   if (hladno) zagrijano = 0;
 
   const dt = korakZaBrzinu(stanje.brzina, celijaM);
@@ -155,12 +181,14 @@ for (const t of sati) {
   if (zagrijano > ZALET_SATI) {
     const o = ocitaj(sim, polje);
     niz[t] = o.postaja;
+    nizMerkaptana[t] = o.merkaptani;
     nizPlohe[t] = o.ploha;
   }
   prosli = t;
 }
 
 writeFileSync(izlazPut, JSON.stringify(niz));
+writeFileSync(izlazPut.replace(/\.json$/, ".merk.json"), JSON.stringify(nizMerkaptana));
 writeFileSync(izlazPut.replace(/\.json$/, ".ploha.json"), JSON.stringify(nizPlohe));
 console.error(
   `${Object.keys(niz).length} sati u ${((Date.now() - pocetak) / 1000).toFixed(0)} s`,

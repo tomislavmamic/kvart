@@ -66,7 +66,12 @@ export type PostavkePrikaza = {
 
 export type Scena = {
   /** Postavlja sliku gustoće za odabrani sat. */
-  postaviGustocu(bajtovi: Uint8Array, sirina: number, visina: number): void;
+  postaviGustocu(
+    bajtovi: Uint8Array,
+    bajtoviMerkaptana: Uint8Array,
+    sirina: number,
+    visina: number,
+  ): void;
   /** Postavlja polje vjetra za odabrani sat, u m/s po ćeliji. */
   postaviVjetar(vx: Float32Array, vy: Float32Array, gw: number, gh: number): void;
   postaviPrikaz(postavke: PostavkePrikaza): void;
@@ -109,6 +114,7 @@ const PIKSELI = /* glsl */ `
   varying vec2 vUv;
 
   uniform sampler2D uGustoca;
+  uniform sampler2D uGustocaB;
   uniform sampler2D uLutA;
   uniform sampler2D uLutB;
   uniform float uSkala;
@@ -124,11 +130,14 @@ const PIKSELI = /* glsl */ `
   }
 
   void main() {
+    // Tvari više ne dijele polje: merkaptanski izvor prati radne sate, pa
+    // njegova gustoća stoji u vlastitoj teksturi.
     float u = texture2D(uGustoca, vUv).r;
+    float uB = texture2D(uGustocaB, vUv).r;
     // Bajt nula znači „ispod prozora zapisa”, dakle nema ničega. Bez ove
     // provjere bi prazan zrak dobio dno ljestvice, a ono pri jakom izvoru
     // više nije prozirno — cijela bi karta poprimila boju.
-    if (u <= 0.0) discard;
+    if (u <= 0.0 && uB <= 0.0) discard;
 
     // Rub okvira nije rub perjanice nego rub onoga što je izračunato. Oštar
     // rez ondje čita se kao „dalje je čisto”, što nije istina — zrak ide
@@ -137,8 +146,9 @@ const PIKSELI = /* glsl */ `
     float rub = smoothstep(0.0, 0.045, min(doRuba.x, doRuba.y));
 
     float razina = u * uSkala + uBaza;
-    vec4 a = uzmi(uLutA, razina + uPomakA, uVidljivA);
-    vec4 b = uzmi(uLutB, razina + uPomakB, uVidljivB);
+    float razinaB = uB * uSkala + uBaza;
+    vec4 a = u <= 0.0 ? vec4(0.0) : uzmi(uLutA, razina + uPomakA, uVidljivA);
+    vec4 b = uB <= 0.0 ? vec4(0.0) : uzmi(uLutB, razinaB + uPomakB, uVidljivB);
 
     // Druga tvar ide preko prve; obje su prozirne, pa se preklop vidi kao
     // miješana boja, a ne kao da je jedna pojela drugu.
@@ -250,6 +260,7 @@ export function stvoriSlojPerjanice(
   const kamera = new THREE.Camera();
 
   const gustoca = new THREE.DataTexture(new Uint8Array(1), 1, 1, THREE.RedFormat);
+  const gustocaB = new THREE.DataTexture(new Uint8Array(1), 1, 1, THREE.RedFormat);
   gustoca.minFilter = THREE.LinearFilter;
   gustoca.magFilter = THREE.LinearFilter;
   gustoca.wrapS = THREE.ClampToEdgeWrapping;
@@ -263,6 +274,7 @@ export function stvoriSlojPerjanice(
 
   const uniforme = {
     uGustoca: { value: gustoca },
+    uGustocaB: { value: gustocaB },
     uLutA: { value: lutovi.A },
     uLutB: { value: lutovi.B },
     // Zapis pokriva šest redova veličine; ljestvica prikaza svoj vlastiti
@@ -461,15 +473,20 @@ export function stvoriSlojPerjanice(
   }
 
   const upravljac: Scena = {
-    postaviGustocu(bajtovi, sirina, visina) {
-      gustoca.dispose();
-      const nova = new THREE.DataTexture(bajtovi, sirina, visina, THREE.RedFormat);
-      nova.minFilter = THREE.LinearFilter;
-      nova.magFilter = THREE.LinearFilter;
-      nova.wrapS = THREE.ClampToEdgeWrapping;
-      nova.wrapT = THREE.ClampToEdgeWrapping;
-      nova.needsUpdate = true;
-      uniforme.uGustoca.value = nova;
+    postaviGustocu(bajtovi, bajtoviMerkaptana, sirina, visina) {
+      const tekstura = (b: Uint8Array) => {
+        const nova = new THREE.DataTexture(b, sirina, visina, THREE.RedFormat);
+        nova.minFilter = THREE.LinearFilter;
+        nova.magFilter = THREE.LinearFilter;
+        nova.wrapS = THREE.ClampToEdgeWrapping;
+        nova.wrapT = THREE.ClampToEdgeWrapping;
+        nova.needsUpdate = true;
+        return nova;
+      };
+      (uniforme.uGustoca.value as THREE.DataTexture).dispose();
+      (uniforme.uGustocaB.value as THREE.DataTexture).dispose();
+      uniforme.uGustoca.value = tekstura(bajtovi);
+      uniforme.uGustocaB.value = tekstura(bajtoviMerkaptana);
       karta?.triggerRepaint();
     },
     postaviVjetar(vx, vy, gw, gh) {
@@ -512,6 +529,7 @@ export function stvoriSlojPerjanice(
       lutovi.A.dispose();
       lutovi.B.dispose();
       (uniforme.uGustoca.value as THREE.DataTexture).dispose();
+      (uniforme.uGustocaB.value as THREE.DataTexture).dispose();
       renderer?.dispose();
       renderer = null;
       karta = null;

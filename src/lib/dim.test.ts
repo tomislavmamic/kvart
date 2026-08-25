@@ -9,6 +9,7 @@ import {
   LJESTVICA_MERKAPTANA,
   OKVIR_M,
   PRAG_NA_LJESTVICI,
+  PROFIL_MERKAPTANA,
   TVARI,
   UBRZANJE,
   ljestvicaBoja,
@@ -252,6 +253,41 @@ test("dubok sloj gasi zastojno širenje i pri tišini", () => {
     `pod plitkim slojem niz vjetar ${plitko.toFixed(2)}, pod dubokim `
       + `${duboko.toFixed(2)} — dubina ne razdvaja zastoj od niti`,
   );
+});
+
+test("profil merkaptana ima srednju 1, pa sidra ljestvica ostaju valjana", () => {
+  // Srednja 1 znači da je dugoročni prosjek ponderiranog polja jednak
+  // neponderiranom — sidra su izvedena na neponderiranom, pa smiju ostati.
+  const srednja = PROFIL_MERKAPTANA.reduce((a, b) => a + b, 0) / 24;
+  assert.ok(Math.abs(srednja - 1) < 0.02, `srednja je ${srednja.toFixed(3)}`);
+  assert.ok(Math.max(...PROFIL_MERKAPTANA) > 1.5, "radni sati moraju stršati");
+  assert.ok(Math.min(...PROFIL_MERKAPTANA) < 0.6, "noć mora utihnuti");
+});
+
+test("merkaptanska perjanica noću izostane, sumporovodikova ostane", () => {
+  // Ista simulacija, dvije tvari: čestice rođene oko ponoći nose merkaptanski
+  // profil ~0,45, danju ~1,5. Omjer ukupne mase merkaptana i sumporovodika
+  // mora zato pratiti sat rođenja — bez profila bio bi točno 1.
+  function omjer(pocetakISO: string): number {
+    const pocetakMs = Date.parse(pocetakISO);
+    const sim = stvoriDim(SLAB, {
+      cestica: 8_000,
+      pocetakMs,
+      krajMs: pocetakMs + 3600_000,
+    });
+    pusti(sim, USTALJENO);
+    const merk = zbroj(sim.crtaj("merkaptani"));
+    const h2s = zbroj(sim.crtaj("sumporovodik"));
+    return merk / Math.max(h2s, 1e-9);
+  }
+  const nocu = omjer("2026-08-24T22:00:00Z");
+  const danju = omjer("2026-08-24T10:00:00Z");
+  assert.ok(nocu < 0.6, `noću je omjer ${nocu.toFixed(2)} — profil ne gasi noć`);
+  assert.ok(danju > 1.2, `danju je omjer ${danju.toFixed(2)} — profil ne diže dan`);
+  // Bez stvarnog vremena profila nema i tvari dijele polje.
+  const bez = stvoriDim(SLAB, { cestica: 8_000 });
+  pusti(bez, 30);
+  assert.equal(zbroj(bez.crtaj("merkaptani")), zbroj(bez.crtaj("sumporovodik")));
 });
 
 test("nošenje ide brzinom stvarnog vjetra, uz poznato ubrzanje", () => {

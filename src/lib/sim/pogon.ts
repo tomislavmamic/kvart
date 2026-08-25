@@ -51,7 +51,13 @@ export type PogonPostavke = {
   readonly svi: readonly SatSimulacije[];
   /** Satovi koje crta prikazuje; zalet nije među njima. */
   readonly crta: readonly string[];
-  onKadar(sat: string, sirina: number, visina: number, gustoca: Float32Array): void;
+  onKadar(
+    sat: string,
+    sirina: number,
+    visina: number,
+    gustoca: Float32Array,
+    merkaptani: Float32Array,
+  ): void;
   onStanje(stanje: StanjePogona): void;
 };
 
@@ -96,7 +102,13 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
       const poruka = dogadaj.data;
       if (poruka.vrsta === "kadar") {
         izracunati.add(poruka.sat);
-        postavke.onKadar(poruka.sat, poruka.sirina, poruka.visina, poruka.gustoca);
+        postavke.onKadar(
+          poruka.sat,
+          poruka.sirina,
+          poruka.visina,
+          poruka.gustoca,
+          poruka.merkaptani,
+        );
         javiStanje();
       } else if (poruka.vrsta === "greska") {
         greska = poruka.poruka;

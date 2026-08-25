@@ -36,11 +36,12 @@ function broj(x: number): string {
  * Perjanica s izborom tvari i ljestvicom koja kaže što boja znači.
  *
  * Zašto izbor tvari, a ne dvije karte: sumporovodik i merkaptani izlaze iz
- * iste plohe i na ovoj udaljenosti putuju istim zrakom. Nacrtati ih kao dvije
- * perjanice različitog oblika bila bi izmišljotina. Razlika koja postoji je
- * druga i veća — merkaptana ima više, a osjete se pri mnogo manjoj količini,
- * pa se isti zrak koji je za sumporovodik na rubu osjetljivosti za merkaptane
- * odavno smrdi. Zato se mijenja ljestvica, a ne gibanje.
+ * iste plohe i na ovoj udaljenosti putuju istim zrakom, pa je gibanje jedno.
+ * Dvije su stvarne razlike. Prva: merkaptana ima više i osjete se pri mnogo
+ * manjoj količini — to je razlika u ljestvici. Druga, iz mjerenja: merkaptani
+ * izlaze kad se na plohi radi, pa se njihove čestice važu satnim profilom
+ * izvora (`PROFIL_MERKAPTANA`) i noću njihova perjanica utihne ondje gdje
+ * sumporovodikova, koja curi kroz pokrov stalno, i dalje stoji.
  *
  * Ljestvica je u mirisnim jedinicama: koliko je puta tvari više nego što treba
  * da se osjeti. Korak na traci je jedinica — ondje počinje smrad.

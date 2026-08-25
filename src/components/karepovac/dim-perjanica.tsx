@@ -58,10 +58,10 @@ const ZAGRIJAVANJE = { korak: 0.25, komadMs: 12, strpljenje: 1500 };
  * puše (`src/lib/vjetar.ts`), pa se pri tišini čestice jedva miču — i upravo
  * se tada nad kvartom nakuplja najviše zraka s plohe.
  *
- * Promjena tvari ne ruši simulaciju. Sumporovodik i merkaptani putuju istim
- * zrakom i na ovoj udaljenosti jednako; razlikuju se po tome koliko ih ima i
- * pri kojoj se količini osjete, a to je razlika u ljestvici, ne u gibanju.
- * Zato se pri prebacivanju mijenja samo tablica boja i prizor ne trepne.
+ * Promjena tvari ne ruši simulaciju. Obje tvari putuju istim zrakom, pa se
+ * pri prebacivanju ne računa ništa iznova: mijenja se tablica boja i način
+ * vaganja čestica (merkaptanski izvor prati radne sate, vidi
+ * `PROFIL_MERKAPTANA`), oboje u istom kadru.
  */
 export function DimPerjanica({
   polje,
@@ -112,7 +112,13 @@ export function DimPerjanica({
           dt,
         };
       });
-    const sim = stvoriDimSirovo(faze.length ? faze[0].polje : glavno, {});
+    // Stvarno vrijeme prizora, za profil izvora merkaptana: t = 0 je
+    // početak zaleta (puni sat), a prizor predstavlja „sada”.
+    const vrhMs = Math.floor(Date.now() / 3600_000) * 3600_000;
+    const sim = stvoriDimSirovo(faze.length ? faze[0].polje : glavno, {
+      pocetakMs: vrhMs - zalet.length * 3600_000,
+      krajMs: Date.now(),
+    });
     faze.push({
       polje: glavno,
       sekundi: zalet.length
@@ -135,7 +141,7 @@ export function DimPerjanica({
     if (!mirno) element.style.transition = "opacity 220ms ease-out";
 
     const nacrtaj = () => {
-      const g = sim.crtaj();
+      const g = sim.crtaj(odabrana.current);
       // Ljestvica je nepomična. Kad se povlačila za vrhom u kadru, tišina i
       // bura izgledale su jednako tamno — a upravo je ta razlika ono što
       // prikaz ima reći. Sad pri tišini prizor potamni sam, a pri buri splasne.

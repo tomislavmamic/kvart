@@ -147,6 +147,16 @@ export type Postavke = {
   zastojPlitko?: number;
   /** Od koje dubine sloja zastojnog širenja više nema, u m. */
   zastojDuboko?: number;
+  /**
+   * Stvarni trenutak (epoha, ms) kojem odgovara početak prikaza (t = 0).
+   *
+   * Treba samo tvarima čiji izvor ovisi o dobu dana (merkaptani): po njemu
+   * se za svaku česticu zna u kojem je mjesnom satu rođena. Bez njega se
+   * profil izvora ne primjenjuje i sve tvari dijele isto polje.
+   */
+  pocetakMs?: number;
+  /** Stvarni trenutak koji prizor predstavlja; rođenja poslije njega broje se u njemu. */
+  krajMs?: number;
 };
 
 export type Simulacija = {
@@ -154,7 +164,12 @@ export type Simulacija = {
   readonly visina: number;
   readonly cestica: number;
   korak(dt: number): void;
-  crtaj(): Float32Array;
+  /**
+   * Gustoća po ćeliji; uz tvar s profilom izvora čestice se važu po satu
+   * rođenja (`pocetakMs`), pa merkaptanska perjanica noću izostane ondje
+   * gdje sumporovodikova stoji.
+   */
+  crtaj(tvar?: Tvar): Float32Array;
   zivih(): number;
   /** Ukupno ispuštenih čestica od početka; za provjeru da izvor ne staje. */
   ispusteno(): number;
@@ -385,6 +400,10 @@ export function stvoriDimSirovo(
   postavke: Postavke = {},
 ): Simulacija {
   const par: Parametri = { ...ZADANO, ...postavke };
+  // Stvarno vrijeme prizora stoji izvan `par`: nije broj iz ZADANO nego
+  // vezivo prema satu na zidu, i smije ga ne biti.
+  const pocetakMs = postavke.pocetakMs;
+  let krajMs = postavke.krajMs;
   const { gw, gh } = polje;
   // Polje se smije zamijeniti u hodu, pa ovo nisu konstante nego stanje.
   let skala = polje.skala;
@@ -613,12 +632,22 @@ export function stvoriDimSirovo(
     }
   }
 
-  function crtaj(): Float32Array {
+  function crtaj(tvar?: Tvar): Float32Array {
     gust.fill(0);
     const masa = ((EMISIJA_PO_SEKUNDI * par.punjenje) / par.cestica) * povrsina;
+    const opis = tvar ? TVARI[tvar] : undefined;
+    const profil = opis && "profil" in opis ? opis.profil : undefined;
     for (let n = 0; n < N; n += 1) {
       if (!ziv[n]) continue;
-      const w = tezina(dob[n]) * masa;
+      let w = tezina(dob[n]) * masa;
+      if (profil && pocetakMs !== undefined) {
+        // Sat rođenja u stvarnom vremenu; prizor ne tvrdi ništa poslije
+        // `krajMs`, pa se kasnija rođenja (živa petlja ubrzano juri
+        // naprijed) broje u satu koji prizor predstavlja.
+        let rodjen = pocetakMs + (t - dob[n]) * par.ubrzanje * 1000;
+        if (krajMs !== undefined && rodjen > krajMs) rodjen = krajMs;
+        w *= profil[mjesniSat(rodjen)];
+      }
       if (w <= 0.002) continue;
       const i0 = (px[n] * W) | 0;
       const j0 = (py[n] * H) | 0;
@@ -659,6 +688,10 @@ export function stvoriDimSirovo(
     zivih: () => ziv.reduce((a: number, b) => a + b, 0),
     ispusteno: () => ukupnoIspusteno,
     postavi: (ime, vrijednost) => {
+      if (ime === "krajMs") {
+        krajMs = vrijednost;
+        return;
+      }
       par[ime as keyof Parametri] = vrijednost;
     },
     postaviPolje: (novo) => {
@@ -737,6 +770,35 @@ export const LJESTVICA_MERKAPTANA: Ljestvica = [
  * merkaptana sedamnaest. Zato zrak može smrdjeti i u satu u kojem je
  * sumporovodik uredan.
  */
+/**
+ * Satni profil izvora merkaptana, po mjesnom satu (0–23), srednja = 1.
+ *
+ * Merkaptani ne cure kroz pokrov kao sumporovodik nego izlaze kad se na
+ * plohi radi. Profil je izveden iz mjerenja, 25. 8. 2026.: medijan omjera
+ * merkaptana (Karepovac 2) i H₂S-a (Karepovac 1) po satu dana, na dvije
+ * godine zajedničkih sati. Omjer, a ne sam merkaptan: H₂S izlazi stalno,
+ * pa dijeljenje s njim pokrati dnevni hod razrjeđenja — ostane potpis
+ * izvora. Vrh je u 15 h (1,75×), noću padne na ~0,45×; srednja je 1, pa
+ * dugoročni prosjek polja ostaje jednak neponderiranom i sidra ljestvica
+ * (`SIDRO_KARTICE`, `SIDRO_SIMULATORA`) vrijede nepromijenjena.
+ */
+export const PROFIL_MERKAPTANA = [
+  0.45, 0.5, 0.47, 0.5, 0.42, 0.62, 0.61, 0.72, 0.98, 1.33, 1.53, 1.52,
+  1.59, 1.47, 1.42, 1.75, 1.52, 1.28, 1.18, 1.16, 0.97, 0.88, 0.54, 0.58,
+] as const;
+
+/**
+ * Mjesni sat u Splitu za zadani trenutak.
+ *
+ * Namjerno ista aproksimacija (CEST 4.–10. mjesec, inače CET) kojom je
+ * profil i izveden — da se izvod i primjena ne raziđu oko granica sata.
+ */
+export function mjesniSat(ms: number): number {
+  const d = new Date(ms);
+  const pomak = d.getUTCMonth() >= 3 && d.getUTCMonth() <= 9 ? 2 : 1;
+  return (d.getUTCHours() + pomak) % 24;
+}
+
 export const TVARI = {
   sumporovodik: {
     naziv: "Sumporovodik",
@@ -755,6 +817,8 @@ export const TVARI = {
     /** Prag mirisa, µg/m³. */
     prag: 0.138,
     ljestvica: LJESTVICA_MERKAPTANA,
+    /** Izvor prati rad na plohi, ne vrijeme; vidi `PROFIL_MERKAPTANA`. */
+    profil: PROFIL_MERKAPTANA,
   },
 } as const;
 

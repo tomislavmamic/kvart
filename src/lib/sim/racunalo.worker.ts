@@ -34,6 +34,8 @@ export type OdgovorRacunala =
       readonly sirina: number;
       readonly visina: number;
       readonly gustoca: Float32Array;
+      /** Ista gustoća s merkaptanskim profilom izvora; vidi `Slika`. */
+      readonly merkaptani: Float32Array;
     }
   | { readonly vrsta: "gotovo" }
   | { readonly vrsta: "greska"; readonly poruka: string };
@@ -59,9 +61,12 @@ self.onmessage = (dogadaj: MessageEvent<ZadatakRacunala>) => {
         sirina: slika.sirina,
         visina: slika.visina,
         gustoca: slika.gustoca,
+        merkaptani: slika.merkaptani,
       };
-      // Prijenos, ne kopija: spremnik nakon ovoga pripada stranici.
-      self.postMessage(odgovor, { transfer: [slika.gustoca.buffer] });
+      // Prijenos, ne kopija: spremnici nakon ovoga pripadaju stranici.
+      self.postMessage(odgovor, {
+        transfer: [slika.gustoca.buffer, slika.merkaptani.buffer],
+      });
     }
     self.postMessage({ vrsta: "gotovo" } satisfies OdgovorRacunala);
   } catch (greska) {

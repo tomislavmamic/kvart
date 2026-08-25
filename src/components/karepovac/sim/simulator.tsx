@@ -64,7 +64,16 @@ import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
  * modelu i tako i piše uz njih.
  */
 
-type Kadrovi = Map<string, { bajtovi: Uint8Array; sirina: number; visina: number }>;
+type Kadrovi = Map<
+  string,
+  {
+    bajtovi: Uint8Array;
+    /** Merkaptanska gustoća; drugi zapis jer izvor prati radne sate. */
+    bajtoviMerkaptana: Uint8Array;
+    sirina: number;
+    visina: number;
+  }
+>;
 
 const ZADANI_PRIKAZ: PostavkePrikaza = {
   tvari: {
@@ -334,10 +343,11 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           osnove: spremnikOsnova,
           svi: sviSatovi,
           crta: crta.kadrovi.filter((k) => k.stanje !== null).map((k) => k.sat),
-          onKadar: (sat, sirina, visina, gustoca) => {
+          onKadar: (sat, sirina, visina, gustoca, merkaptani) => {
             if (otkazano) return;
             kadroviRef.current.set(sat, {
               bajtovi: zapisiGustocu(gustoca, SIDRO_SIMULATORA),
+              bajtoviMerkaptana: zapisiGustocu(merkaptani, SIDRO_SIMULATORA),
               sirina,
               visina,
             });
@@ -446,7 +456,14 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     const osnove = osnoveRef.current;
     if (!scena || !kadar) return;
     const slika = kadroviRef.current.get(kadar.sat);
-    if (slika) scena.postaviGustocu(slika.bajtovi, slika.sirina, slika.visina);
+    if (slika) {
+      scena.postaviGustocu(
+        slika.bajtovi,
+        slika.bajtoviMerkaptana,
+        slika.sirina,
+        slika.visina,
+      );
+    }
     if (osnove && kadar.stanje) {
       const polje = slozi(kadar.stanje, osnove);
       const vx = new Float32Array(polje.vx.length);
