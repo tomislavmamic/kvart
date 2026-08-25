@@ -153,6 +153,19 @@ export const odourReports = pgTable(
     /** Miris je u trenutku javljanja još trajao; kraj se tada ne zna. */
     ongoing: boolean("ongoing").notNull().default(false),
     /**
+     * Koliko je epizoda trajala, u minutama; prazno kad dojavitelj ne zna.
+     *
+     * Epizode su često kratke — petnaestak minuta — a sat je najsitnija
+     * jedinica s kojom se dojava može spojiti s vjetrom, jer se vjetar mjeri
+     * po satu. Bez ovog stupca bi se petnaest minuta i puni sat zapisali
+     * jednako, pa bi se izgubila upravo razlika koju ljudi osjete.
+     *
+     * Sat u kojem je bilo mirisa i dalje se broji kao sat s mirisom, ma
+     * koliko epizoda kratko trajala — tako radi i mrežna metoda, i tako
+     * ostaje usporedivo. Trajanje stoji uz to, a ne umjesto toga.
+     */
+    durationMin: integer("duration_min"),
+    /**
      * Nasumična oznaka preglednika, bez ikakve veze s identitetom.
      *
      * Služi dvomu: da se ista dojava ne broji dvaput i da jedan uporan nos

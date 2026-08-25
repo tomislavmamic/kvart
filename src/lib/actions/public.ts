@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { storeFile } from "@/lib/upload";
 import { NEIGHBORHOODS, CATEGORIES, ODOUR_STRENGTHS } from "@/lib/constants";
 import type { Neighborhood, Category, OdourStrength } from "@/lib/constants";
+import { DOPUSTENE_MINUTE, krajEpizode } from "@/lib/dojava-trajanje";
 import { procitajMjesto } from "@/lib/mjesto";
 
 export type SubmitResult = { ok: true } | { ok: false; error: string };
@@ -118,6 +119,11 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   // prikazivala, a napomenu nitko nije mogao pretvoriti u brojku.
   const place = String(formData.get("place") ?? "").trim() || null;
   const ongoing = String(formData.get("ongoing") ?? "") === "1";
+  // Trajanje je razred, ne mjerenje: prima se samo ono što obrazac nudi.
+  const sirovoTrajanje = Number(formData.get("trajanjeMin"));
+  const durationMin = DOPUSTENE_MINUTE.includes(sirovoTrajanje)
+    ? sirovoTrajanje
+    : null;
   // Oznaka preglednika: nasumična, bez veze s identitetom (vidi
   // `src/lib/dojavitelj.ts`). Prima se samo ako izgleda kao ono što taj
   // modul piše — tuđi sadržaj u tom stupcu ne bi imao nikakvu svrhu.
@@ -156,32 +162,16 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   // ne bi dodala ništa, a rekla bi o dojavitelju više nego što treba.
   const occurredAt = new Date(Math.floor(kada.getTime() / 3_600_000) * 3_600_000);
 
-  // Kraj razdoblja: dojava time postaje raspon sati, a svaki sat nosi svoj
-  // vjetar. Kraj prije početka ili predaleko u budućnosti nije raspon nego
-  // pogreška unosa, pa se odbija umjesto da tiho pokvari ružu.
-  let endedAt: Date | null = null;
-  const sirovKraj = String(formData.get("doKada") ?? "");
-  if (smelled && sirovKraj) {
-    const kraj = new Date(sirovKraj);
-    if (Number.isNaN(kraj.getTime())) {
-      return { ok: false, error: "Odaberite sat u kojem je miris prestao." };
-    }
-    if (kraj.getTime() < kada.getTime()) {
-      return {
-        ok: false,
-        error: "Miris ne može prestati prije nego što je počeo.",
-      };
-    }
-    if (kraj.getTime() > sada + 3_600_000) {
-      return { ok: false, error: "Sat u kojem je prestalo još nije došao." };
-    }
-    endedAt = new Date(Math.floor(kraj.getTime() / 3_600_000) * 3_600_000);
-  }
+  // Kraj razdoblja izvodi se iz trajanja, a ne iz drugog odabira sata:
+  // epizoda kraća od sata je jedan sat s mirisom, dulja se razlije na
+  // onoliko sati koliko doista pokriva, jer se vjetar mogao okrenuti.
+  const endedAt = smelled ? krajEpizode(occurredAt, durationMin) : null;
 
   try {
     await db.insert(odourReports).values({
       occurredAt,
       endedAt,
+      durationMin: smelled ? durationMin : null,
       ongoing: smelled && ongoing,
       smelled,
       // Kad se nije osjetilo, jačine nema — a ne „slabo”.

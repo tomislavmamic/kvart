@@ -86,6 +86,7 @@ export async function getOdourReports(danaUnatrag = 365) {
       id: odourReports.id,
       occurredAt: odourReports.occurredAt,
       endedAt: odourReports.endedAt,
+      durationMin: odourReports.durationMin,
       smelled: odourReports.smelled,
       strength: odourReports.strength,
       neighborhood: odourReports.neighborhood,

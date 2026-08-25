@@ -70,7 +70,14 @@ export const NAJDULJI_RASPON_SATI = 6;
 export type Dojava = {
   /** Sat u kojem je miris počeo, zaokružen na puni sat. */
   occurredAt: Date;
-  /** Kraj razdoblja; prazno znači jedan sat. */
+  /**
+   * Kraj razdoblja; prazno znači jedan sat.
+   *
+   * Epizoda kraća od sata nema kraj i broji se kao jedan sat s mirisom —
+   * vjetar se mjeri po satu, pa je sat najsitnija jedinica koja se s njim
+   * da spojiti. Koliko je epizoda doista trajala pamti se odvojeno
+   * (`durationMin`), da se petnaest minuta i puni sat ne zapišu jednako.
+   */
   endedAt?: Date | null;
   /** Je li se miris osjetio; dojava „ne smrdi” ima laž. */
   smelled?: boolean;

@@ -6,6 +6,7 @@ import { Kotacic } from "@/components/karepovac/kotacic";
 import { prijaviMiris } from "@/lib/actions/public";
 import { ODOUR_STRENGTHS, ODOUR_STRENGTH_SHORT } from "@/lib/constants";
 import type { OdourStrength } from "@/lib/constants";
+import { JOS_TRAJE, TRAJANJA } from "@/lib/dojava-trajanje";
 import { imeSata, satiZaDan, uRasponu, uTrenutak } from "@/lib/dojava-vrijeme";
 import { oznakaDojavitelja, zaboraviDojavitelja } from "@/lib/dojavitelj";
 import { uOkviru, zaokruziMjesto } from "@/lib/mjesto";
@@ -22,9 +23,9 @@ import { uOkviru, zaokruziMjesto } from "@/lib/mjesto";
  * - **Kotačić umjesto kalendara i tipkovnice.** Dan i sat biraju se kao na
  *   budilici (`Kotacic`): jedan pokret palca, stalna visina.
  * - **Nema biranja datuma.** Miris se javlja dok se pamti — danas ili jučer.
- * - **Kraj se pita tek kad ga netko ima.** Dva gumba stoje uvijek, kotačić
- *   sati pojavi se samo onome tko je odabrao „prestalo je”; inače bi
- *   sporedno pitanje uzelo trećinu zaslona.
+ * - **Pita se trajanje, ne sat u kojem je prestalo.** Epizode su često
+ *   kratke — petnaestak minuta — a nitko ne pamti u kojem je satu točno
+ *   prestalo. „Do 15 minuta” je odgovor koji čovjek doista ima.
  * - **Svaka skupina ima vidljiv natpis.** Kotačić bez natpisa je zagonetka:
  *   vrijednosti se vide, ali ne i pitanje na koje odgovaraju.
  */
@@ -55,8 +56,7 @@ export function ObrazacDojave() {
   const [jacina, setJacina] = useState<OdourStrength>("osjetno");
   const [danas, setDanas] = useState(true);
   const [sat, setSat] = useState(() => new Date().getHours());
-  const [kraj, setKraj] = useState<"traje" | "prestalo" | null>(null);
-  const [krajSata, setKrajSata] = useState<number | null>(null);
+  const [trajanje, setTrajanje] = useState<number | typeof JOS_TRAJE | "">("");
   const [mjesto, setMjesto] = useState<StanjeMjesta>({ vrsta: "nema" });
   const [zaboravljen, setZaboravljen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,21 +69,9 @@ export function ObrazacDojave() {
     vrijednost: i,
     natpis: imeSata(i),
   }));
-  const krajeviSati = Array.from({ length: Math.max(0, najveciSat - sat) }, (_, i) => ({
-    vrijednost: sat + 1 + i,
-    natpis: imeSata(sat + 1 + i),
-  }));
-
   function odaberiDan(noviDanas: boolean) {
     setDanas(noviDanas);
     if (noviDanas && sat > new Date().getHours()) setSat(new Date().getHours());
-    setKraj(null);
-    setKrajSata(null);
-  }
-
-  function odaberiSat(noviSat: number) {
-    setSat(noviSat);
-    if (krajSata !== null && krajSata <= noviSat) setKrajSata(null);
   }
 
   function trazimMjesto() {
@@ -119,12 +107,13 @@ export function ObrazacDojave() {
     formData.set("kada", pocetak.toISOString());
     formData.set("smelled", smrdi ? "da" : "ne");
     if (smrdi) formData.set("strength", jacina);
-    if (smrdi && kraj === "prestalo" && krajSata !== null) {
-      formData.set("doKada", uTrenutak(danas, krajSata).toISOString());
+    formData.delete("doKada");
+    if (smrdi && typeof trajanje === "number") {
+      formData.set("trajanjeMin", String(trajanje));
     } else {
-      formData.delete("doKada");
+      formData.delete("trajanjeMin");
     }
-    formData.set("ongoing", smrdi && kraj === "traje" ? "1" : "0");
+    formData.set("ongoing", smrdi && trajanje === JOS_TRAJE ? "1" : "0");
     const moja = oznakaDojavitelja();
     if (moja) formData.set("reporterId", moja);
     if (mjesto.vrsta === "imam") {
@@ -235,7 +224,7 @@ export function ObrazacDojave() {
           <Kotacic
             stavke={satiKotacica}
             vrijednost={sat}
-            promijeni={odaberiSat}
+            promijeni={setSat}
             naslov="Sat"
           />
         </div>
@@ -244,48 +233,18 @@ export function ObrazacDojave() {
       {smrdi && (
         <fieldset>
           <legend className={NATPIS}>
-            Traje li još?{" "}
-            <span className="font-normal text-kamen-drugi">(nije obavezno)</span>
+            Koliko je trajalo?{" "}
+            <span className="font-normal text-kamen-drugi">(ako znate)</span>
           </legend>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {[
-              { kljuc: "traje" as const, natpis: "Još traje" },
-              { kljuc: "prestalo" as const, natpis: "Prestalo je" },
-            ].map((izbor) => (
-              <label key={izbor.kljuc} className={IZBOR}>
-                <input
-                  type="radio"
-                  name="kraj-izbor"
-                  checked={kraj === izbor.kljuc}
-                  onChange={() => {
-                    setKraj(izbor.kljuc);
-                    if (izbor.kljuc === "traje") setKrajSata(null);
-                    else if (krajSata === null && krajeviSati.length > 0) {
-                      setKrajSata(krajeviSati[0].vrijednost);
-                    }
-                  }}
-                  className="sr-only"
-                />
-                {izbor.natpis}
-              </label>
-            ))}
+          <div className="mt-2 rounded-xl border border-kamen-rub bg-white px-2 py-1">
+            <Kotacic
+              stavke={TRAJANJA}
+              vrijednost={trajanje}
+              promijeni={setTrajanje}
+              naslov="Trajanje"
+              redaka={3}
+            />
           </div>
-          {kraj === "prestalo" && krajeviSati.length > 0 && (
-            <div className="mt-2 rounded-xl border border-kamen-rub bg-white px-2 py-1">
-              <Kotacic
-                stavke={krajeviSati}
-                vrijednost={krajSata ?? krajeviSati[0].vrijednost}
-                promijeni={setKrajSata}
-                naslov="Sat u kojem je prestalo"
-                redaka={3}
-              />
-            </div>
-          )}
-          {kraj === "prestalo" && krajeviSati.length === 0 && (
-            <p className="mt-2 text-base leading-6 text-kamen-drugi">
-              Za taj sat nema kasnijeg sata na koji bi miris mogao prestati.
-            </p>
-          )}
         </fieldset>
       )}
 
