@@ -196,7 +196,7 @@ const PRAG_ZASTOJA = 1.0;
  * ga nema, između pada pravocrtno po logaritmu dubine — istom ljestvicom po
  * kojoj se polje vjetra interpolira (`razineDubine`).
  */
-const ZASTOJ_DUBINA = { plitko: 60, duboko: 250 } as const;
+const ZASTOJ_DUBINA = { plitko: 60, duboko: 400 } as const;
 
 /**
  * Koliko se vrtlog najviše pojača pri potpunoj tišini.
@@ -204,8 +204,16 @@ const ZASTOJ_DUBINA = { plitko: 60, duboko: 250 } as const;
  * Vrtložni šum nema divergencije, pa pojačanje ne stvara ni izvor ni ponor
  * mase — samo mijenja omjer između razmazivanja i nošenja, u korist
  * razmazivanja, onako kako mjerenja kažu da pri tišini i jest.
+ *
+ * Vrijednost je ugođena na dvije godine satnog H₂S-a uz plohu, pogonom
+ * `scripts/ocijeni-sim.ts`: bez pojačanja Spearman na godini izvan uzorka
+ * 0,09, s pojačanjem 2,5 → 0,108, s 4 → 0,117 (noću 0,144); 6 ne donosi
+ * ništa više. Isto ugađanje pomaknulo je i `ZASTOJ_DUBINA.duboko` na 400 m.
+ * Prag brzine ostaje 1 m/s: jače dizanje praga dobiva još mrvicu na
+ * mjerenjima, ali dira i izgled prikaza pri slabom vjetru, koji čuvaju
+ * provjere u `dim.test.ts`.
  */
-const ZASTOJNO_SIRENJE = 2.5;
+const ZASTOJNO_SIRENJE = 4.0;
 
 /**
  * Težina zastoja po dubini sloja: 1 pod plitkom inverzijom, 0 nad dubokim
@@ -257,7 +265,7 @@ const ZADANO = {
  *
  * Broj je proizvoljan, ali mora stajati sam za sebe. Kad je bio izveden iz
  * zadanog broja čestica, smanjenje tog broja radi brzine podijelilo je sve
- * gustoće — i `GUSTOCA_NA_PLOHI`, dakle cijela ljestvica boja, tiho je
+ * gustoće — i `SIDRO_KARTICE`, dakle cijela ljestvica boja, tiho je
  * prestala odgovarati. Mijenjati samo zajedno sa sidrom ljestvice.
  */
 const EMISIJA_PO_SEKUNDI = 2000;
@@ -752,18 +760,32 @@ export function mirisneJedinice(tvar: Tvar): number {
 }
 
 /**
- * Gustoća iz `crtaj` koja odgovara medijanu izmjerenom uz samu plohu.
+ * Gustoća iz `crtaj` koja na okviru kartice odgovara izmjerenom medijanu.
  *
- * Prikaz računa čestice, a ne mikrograme. Da bi se iz njega ipak moglo čitati
- * hoće li se osjetiti, jedna se točka usidri u mjerenje: gustoća koju
- * perjanica pri slabom istočnjaku drži nad samom plohom uzima se kao razina
- * koju postaja ondje i mjeri kao medijan. Sve ostalo slijedi iz omjera.
+ * Prikaz računa čestice, a ne mikrograme. Da bi se iz njega ipak moglo
+ * čitati hoće li se osjetiti, ljestvica se sidri u mjerenje — ali u ono
+ * jedino koje postoji: postaju Karepovac 1, u udolini 676 m jugoistočno od
+ * plohe. Staro je sidro (10,9) izjednačavalo gustoću **nad samom plohom** s
+ * medijanom te postaje, kao da postaja stoji na odlagalištu — pa je svaka
+ * ćelija tvrdila višestruko veću koncentraciju nego što model, provjeren na
+ * mjerenjima, smije tvrditi.
  *
- * Broj je izmjeren iz ustaljenog stanja pri slabom istok-jugoistočnjaku od
- * 1,2 m/s pod slojem od 80 m — vremenu na koje se ljudi i žale — kao 99.
- * postotak gustoće, da jedan piksel ne odlučuje. Provjerava se u `dim.test.ts`.
+ * Sad se sidri regresijom: dvije godine satne gustoće na mjestu postaje
+ * (`scripts/ocijeni-sim.ts`, lanac stvarnih sati) prema izmjerenom H₂S-u
+ * daje nagib µg/m³ po jedinici gustoće i pozadinu 1,27 µg/m³ — istu koju
+ * neovisno nalazi i bazdareni model oblačića (1,26). Sidro je medijan
+ * mjerenja podijeljen nagibom, prevezen na ovaj okvir omjerom gustoća nad
+ * plohom u oba okvira (ćelije su različite veličine, pa isti zrak daje
+ * različit broj). Nagib nosi širok raspon (95 %: pola–dvostruko), jer je
+ * prijemnik jedan i u udolini — ali smjer popravka je nedvojben: stara je
+ * ljestvica na ovom okviru pretjerivala oko 1,8 puta, a na okviru
+ * simulatora oko četiri (omjer okvira R = 0,26, medijan po 4 326 sati).
+ *
+ * Izvođenje: `OKVIR=zrak npx tsx scripts/ocijeni-sim.ts …` pa regresija u
+ * bilješci uz `SIDRO_SIMULATORA`; oblik perjanice čuva kanarinac u
+ * `dim.test.ts` — kad on padne, sidro treba izvesti iznova.
  */
-export const GUSTOCA_NA_PLOHI = 10.9;
+export const SIDRO_KARTICE = 19.9;
 
 /**
  * Raspon ljestvice u mirisnim jedinicama — koliko puta iznad praga mirisa.
@@ -789,9 +811,10 @@ const _RASPON_SIRINA = Math.log10(MIRISNI_RASPON.do) - _RASPON_OD;
  * Args:
  *   g: Gustoća iz `Simulacija.crtaj`.
  *   tvar: Koja se tvar prikazuje.
- *   sidro: Gustoća koja odgovara medijanu izmjerenom uz plohu. Ovisi o okviru:
- *     ista perjanica na okviru s krupnijim ćelijama daje veći broj, jer u
- *     ćeliju stane više zraka. Simulator zato nosi svoje (`SIDRO_SIMULATORA`).
+ *   sidro: Gustoća koja odgovara medijanu izmjerenom na postaji Karepovac 1.
+ *     Ovisi o okviru: ista perjanica na okviru s krupnijim ćelijama daje
+ *     veći broj, jer u ćeliju stane više zraka. Simulator zato nosi svoje
+ *     (`SIDRO_SIMULATORA`).
  *
  * Returns:
  *   Broj između 0 i 1 za `ljestvicaBoja`.
@@ -799,7 +822,7 @@ const _RASPON_SIRINA = Math.log10(MIRISNI_RASPON.do) - _RASPON_OD;
 export function razina(
   g: number,
   tvar: Tvar,
-  sidro: number = GUSTOCA_NA_PLOHI,
+  sidro: number = SIDRO_KARTICE,
 ): number {
   const jedinica = (mirisneJedinice(tvar) * g) / sidro;
   if (!(jedinica > 0)) return 0;

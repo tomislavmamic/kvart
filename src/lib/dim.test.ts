@@ -5,7 +5,6 @@ import { OKVIR } from "@/generated/karepovac-karta";
 import { OSNOVE_DIMA } from "@/generated/karepovac-polje";
 import { sastaviPolje } from "@/lib/polje-dima";
 import {
-  GUSTOCA_NA_PLOHI,
   LJESTVICA,
   LJESTVICA_MERKAPTANA,
   OKVIR_M,
@@ -444,20 +443,25 @@ test("mirisne jedinice su ono što piše u tablici tvari", () => {
   }
 });
 
-test("sidro ljestvice odgovara gustoći koju perjanica drži nad plohom", () => {
-  // Bez postavki, kao na stranici. Jednom je mjerilo gustoće bilo izvedeno iz
-  // zadanog broja čestica, pa je smanjenje tog broja radi brzine podijelilo
-  // sve gustoće s tri — perjanica je gotovo nestala, a nijedna provjera to
-  // nije uhvatila jer su sve zadavale svoj broj čestica.
+test("oblik perjanice nad plohom stoji — inače sidro treba izvesti iznova", () => {
+  // Kanarinac za mjerilo gustoće. Sidro ljestvice (`SIDRO_KARTICE`) izvodi
+  // se regresijom dvogodišnjeg lanca prema mjerenjima i ne može se
+  // izračunati u provjeri — ali ovisi o obliku i mjerilu perjanice. Ovdje se
+  // zato čuva referentna gustoća nad plohom pri slabom istočnjaku: promijeni
+  // li se model prikaza toliko da ovo padne, brojka se ne prepisuje nego se
+  // sidro izvodi iznova (`scripts/ocijeni-sim.ts`, bilješka uz
+  // `SIDRO_SIMULATORA`). Jednom je mjerilo tiho palo trostruko kad je broj
+  // čestica smanjen radi brzine — ovo je provjera koja bi to uhvatila.
+  const GUSTOCA_NAD_PLOHOM_REF = 10.9;
   const sim = stvoriDim(SLAB);
   pusti(sim);
   pusti(sim, 20);
   const sortirano = Array.from(sim.crtaj()).sort((a, b) => a - b);
   const p99 = sortirano[Math.floor(sortirano.length * 0.99)];
   assert.ok(
-    Math.abs(p99 - GUSTOCA_NA_PLOHI) < GUSTOCA_NA_PLOHI * 0.25,
-    `99. postotak gustoće je ${p99.toFixed(1)}, a sidro `
-      + `${GUSTOCA_NA_PLOHI} — ljestvica boja više ne odgovara`,
+    Math.abs(p99 - GUSTOCA_NAD_PLOHOM_REF) < GUSTOCA_NAD_PLOHOM_REF * 0.25,
+    `99. postotak gustoće je ${p99.toFixed(1)}, referenca `
+      + `${GUSTOCA_NAD_PLOHOM_REF} — oblik se promijenio, sidro izvedi iznova`,
   );
 });
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 
-import { GUSTOCA_NA_PLOHI, razina, UBRZANJE } from "@/lib/dim";
+import { razina, SIDRO_KARTICE, UBRZANJE } from "@/lib/dim";
 import { SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
 import { razloziOsnove } from "@/lib/sim/polje";
 import {
@@ -100,24 +100,30 @@ test("računa se od odabranog sata prema van", () => {
   assert.equal(redoslijed(satovi, "c").length, satovi.length, "nijedan se ne gubi");
 });
 
-test("ljestvica simulatora usidrena je na izmjerenu gustoću nad plohom", () => {
+test("oblik perjanice nad plohom stoji — inače sidro treba izvesti iznova", () => {
+  // Kanarinac za mjerilo gustoće simulatora; vidi istoimenu provjeru u
+  // `dim.test.ts`. Sidro (`SIDRO_SIMULATORA`) izvodi se regresijom prema
+  // mjerenjima i ovisi o obliku perjanice — kad se oblik promijeni, sidro se
+  // ne prepisuje nego izvodi iznova.
+  const GUSTOCA_NAD_PLOHOM_REF = 19.33;
   const o = osnove();
   const slika = odradiSatove(zaSat(niz(8), "s7"), o);
   const izmjereno = nadPlohom(slika, o);
   assert.ok(
-    Math.abs(izmjereno - SIDRO_SIMULATORA) / SIDRO_SIMULATORA < 0.1,
-    `sidro je ${SIDRO_SIMULATORA}, a model daje ${izmjereno.toFixed(1)} — ljestvica bi lagala`,
+    Math.abs(izmjereno - GUSTOCA_NAD_PLOHOM_REF) / GUSTOCA_NAD_PLOHOM_REF < 0.1,
+    `referenca je ${GUSTOCA_NAD_PLOHOM_REF}, a model daje ${izmjereno.toFixed(1)} — `
+      + "oblik se promijenio, sidro izvedi iznova",
   );
 });
 
 test("sidro simulatora nije prepisano s užeg okvira", () => {
-  // Ćelija je 32 m umjesto 13 m, pa ista perjanica ovdje daje veći broj. Prag
-  // se ne piše kao okrugla brojka nego se veže uz sidro užeg okvira: oba se
-  // pomiču kad se model prikaza promijeni, a ono što mora ostati istina je da
-  // su različiti — izjednače se jedino ako je netko prepisao umjesto izmjerio.
+  // Ćelija je 32 m umjesto 13 m, pa ista perjanica ovdje daje veći broj.
+  // Oba sidra izlaze iz iste regresije prema mjerenjima, a razlikuju se
+  // upravo omjerom gustoća dvaju okvira — izjednače se jedino ako je netko
+  // prepisao umjesto izveo.
   assert.ok(
-    SIDRO_SIMULATORA > GUSTOCA_NA_PLOHI * 1.5,
-    `sidro ${SIDRO_SIMULATORA} nije osjetno veće od ${GUSTOCA_NA_PLOHI}`,
+    SIDRO_SIMULATORA > SIDRO_KARTICE * 1.5,
+    `sidro ${SIDRO_SIMULATORA} nije osjetno veće od ${SIDRO_KARTICE}`,
   );
 });
 

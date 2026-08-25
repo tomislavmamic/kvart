@@ -25,30 +25,28 @@
 import { LJESTVICA, LJESTVICA_MERKAPTANA, type Ljestvica, type Tvar } from "@/lib/dim";
 
 /**
- * Gustoća koja na okviru simulatora odgovara medijanu izmjerenom uz plohu.
+ * Gustoća koja na okviru simulatora odgovara medijanu izmjerenom na postaji.
  *
- * Ljestvica boja usidrena je na jednu izmjerenu točku: gustoću koju perjanica
- * pri slabom istok-jugoistočnjaku (112,5°, 1,2 m/s, sloj 80 m) drži nad samom
- * plohom. `GUSTOCA_NA_PLOHI` u `dim.ts` je ista veličina, ali izmjerena na
- * užem okviru `/karepovac/zrak`.
+ * Sidro više nije pretpostavka nego regresija: dvije godine satne gustoće na
+ * mjestu postaje Karepovac 1 (`scripts/ocijeni-sim.ts`, lanac stvarnih sati,
+ * 12 872 zajednička sata) prema izmjerenom H₂S-u daju nagib
+ * 0,0149 µg/m³ po jedinici gustoće i pozadinu 1,27 µg/m³ — istu pozadinu
+ * koju neovisno nalazi i bazdareni model oblačića (1,26). Sidro je medijan
+ * mjerenja (1,132 µg/m³) podijeljen nagibom.
  *
- * Brojevi se razlikuju jer gustoća nije koncentracija nego masa po ćeliji, a
- * ćelija simulatora je 32 m naspram 13 m. Ista perjanica zato ovdje daje
- * gotovo trostruko veći broj. Prepisati staro sidro značilo bi obojiti kvart
- * kao da smrdi trostruko jače nego što model tvrdi.
+ * Staro sidro (19,33) izjednačavalo je gustoću **nad samom plohom** s
+ * medijanom postaje — kao da postaja stoji na odlagalištu, a stoji 676 m
+ * jugoistočno, u udolini. Zato je ljestvica svaku ćeliju bojila oko četiri
+ * puta prejako; usporedba s bazdarenim modelom pokazivala je 55 ha „iznad
+ * praga” ondje gdje bazdareni model daje 1,2 ha.
  *
- * Izmjereno kao 99. postotak gustoće nad plohom, da jedna ćelija ne odlučuje.
- * Provjerava se u `simulacija.test.ts` — i ta je provjera već jednom spasila
- * ljestvicu: `eabae8e` je modelu dodao vrtložno lutanje, perjanica se raširila,
- * a gustoća nad plohom pala s 29,9 na 19,33. Bez provjere bi ljestvica ostala
- * na starom sidru i bojila kvart za pola reda veličine pretamno.
- *
- * Iz toga slijedi i slabost: sidro je ručno izmjeren broj koji tiho prati
- * svaku promjenu modela prikaza. Kad se to lutanje ukloni (traži ga #19),
- * pomaknut će se opet. Trajno rješenje nije novo mjerenje nego izlaz u
- * µg/m³ — tada sidra nema jer ga nema što sidriti.
+ * Nagib nosi širok raspon (95 %: 0,005–0,027, dakle sidro 41–225): prijemnik
+ * je jedan i na krivoj strani plohe. Zato je sidro red veličine, ne mjera —
+ * ali red veličine izveden iz mjerenja, a ne iz pretpostavke o mjestu
+ * postaje. Oblik perjanice, o kojem izvod ovisi, čuvaju kanarinci u
+ * `dim.test.ts` i `simulacija.test.ts`; kad padnu, regresiju treba ponoviti.
  */
-export const SIDRO_SIMULATORA = 19.33;
+export const SIDRO_SIMULATORA = 76.2;
 
 /** Jačina izvora koju gledatelj bira, u odnosu na bazdarenu. */
 export const JACINA = { najmanja: 0, najveca: 5, zadana: 1, korak: 0.1 } as const;
