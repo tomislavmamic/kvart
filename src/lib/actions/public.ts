@@ -158,9 +158,12 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
       error: `Javiti se može za zadnjih ${NAJSTARIJA_DOJAVA_DANA} dana.`,
     };
   }
-  // Sat se zaokružuje jer se vjetar ionako vodi po punom satu; točnija minuta
-  // ne bi dodala ništa, a rekla bi o dojavitelju više nego što treba.
-  const occurredAt = new Date(Math.floor(kada.getTime() / 3_600_000) * 3_600_000);
+  // Minuta se zaokružuje na pet, ne na puni sat. Sat bi bio pregrub: epizoda
+  // koja počne u 14.50 i traje petnaest minuta prelazi u sljedeći sat, pa je
+  // nosi vjetar obaju sati — a zaokružena na 14.00 cijela bi pripala prvomu.
+  // Pet minuta je i dovoljno grubo da o dojavitelju ne govori više od potrebe.
+  const KORAK_MS = 5 * 60_000;
+  const occurredAt = new Date(Math.floor(kada.getTime() / KORAK_MS) * KORAK_MS);
 
   // Kraj razdoblja izvodi se iz trajanja, a ne iz drugog odabira sata:
   // epizoda kraća od sata je jedan sat s mirisom, dulja se razlije na

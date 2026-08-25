@@ -130,10 +130,12 @@ test("sektor bez ijednog opažanja nema udio, umjesto da ima nulu", () => {
 test("raspon nosi po jedno opažanje za svaki sat, ali ne bez granice", () => {
   const kada = satSVjetrom();
   if (!kada) return;
+  // `endedAt` je stvarni trenutak kraja, ne oznaka sata: epizoda od 14.00 do
+  // 17.00 provedena je u satima 14, 15 i 16 — u 17.00 je već gotova.
   const triSata = ruzaDojava([
     {
       occurredAt: kada,
-      endedAt: new Date(kada.getTime() + 2 * 3_600_000),
+      endedAt: new Date(kada.getTime() + 3 * 3_600_000),
       smelled: true,
       strength: "osjetno",
       reporterId: "a",
@@ -142,7 +144,7 @@ test("raspon nosi po jedno opažanje za svaki sat, ali ne bez granice", () => {
   assert.equal(
     triSata.uporabljeno + triSata.bezVjetra,
     3,
-    "od 21 do 23 h su tri sata, svaki sa svojim vjetrom",
+    "tri sata trajanja su tri sata, svaki sa svojim vjetrom",
   );
 
   const dug = ruzaDojava([
@@ -228,4 +230,50 @@ test("stara dojava bez novih polja i dalje vrijedi kao prije", () => {
   assert.equal(ruza.broj[s], 1, "bez `smelled` dojava znači da je smrdjelo");
   assert.equal(ruza.brojBez[s], 0);
   assert.ok(ruza.tezine[s] > 0);
+});
+
+test("kratka epizoda preko granice sata nosi oba sata, inače samo svoj", () => {
+  // Ovo je razlog zbog kojega se vrijeme bira satom i minutom: epizoda od
+  // petnaest minuta u 14.50 doista je bila i u satu 14 i u satu 15, pa je
+  // nosi vjetar obaju. Ista epizoda u 14.00 tiče se samo sata 14.
+  const kada = satSVjetrom();
+  if (!kada) return;
+
+  const preko = ruzaDojava([
+    {
+      occurredAt: new Date(kada.getTime() + 50 * 60_000),
+      endedAt: new Date(kada.getTime() + 65 * 60_000),
+      smelled: true,
+      strength: "osjetno",
+      reporterId: "a",
+    },
+  ]);
+  assert.equal(preko.uporabljeno + preko.bezVjetra, 2, "14.50–15.05 su dva sata");
+
+  const unutra = ruzaDojava([
+    {
+      occurredAt: kada,
+      endedAt: new Date(kada.getTime() + 15 * 60_000),
+      smelled: true,
+      strength: "osjetno",
+      reporterId: "a",
+    },
+  ]);
+  assert.equal(unutra.uporabljeno + unutra.bezVjetra, 1, "14.00–14.15 je jedan sat");
+
+  // Puni sat završava na granici, ali je proveden u satu koji je počeo.
+  const tocnoSat = ruzaDojava([
+    {
+      occurredAt: kada,
+      endedAt: new Date(kada.getTime() + 60 * 60_000),
+      smelled: true,
+      strength: "osjetno",
+      reporterId: "a",
+    },
+  ]);
+  assert.equal(
+    tocnoSat.uporabljeno + tocnoSat.bezVjetra,
+    1,
+    "u 15.00 je epizoda gotova, pa sat 15 ne broji",
+  );
 });

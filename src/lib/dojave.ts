@@ -127,8 +127,10 @@ export type RuzaDojava = {
  */
 function satiDojave(dojava: Dojava): number[] {
   const pocetak = Math.floor(dojava.occurredAt.getTime() / 3_600_000);
+  // Kraj se umanjuje za trenutak: epizoda od 14.00 do 15.00 provedena je u
+  // satu 14, a ne i u satu 15 — u 15.00 je već gotova.
   const kraj = dojava.endedAt
-    ? Math.floor(dojava.endedAt.getTime() / 3_600_000)
+    ? Math.floor((dojava.endedAt.getTime() - 1) / 3_600_000)
     : pocetak;
   if (!(kraj > pocetak)) return [pocetak];
   const zadnji = Math.min(kraj, pocetak + NAJDULJI_RASPON_SATI - 1);
@@ -150,7 +152,9 @@ function satiDojave(dojava: Dojava): number[] {
  *    se iz sektora može čitati *udio*, a ne samo zbroj. Bez toga zbroj mjeri
  *    koliko je tko voljan javljati jednako koliko i koliko je smrdjelo.
  * 2. **Raspon je više sati.** Dojava od 21 do 23 h nosi tri opažanja, svako
- *    sa svojim vjetrom — jer se vjetar u te tri sata mogao okrenuti.
+ *    sa svojim vjetrom — jer se vjetar u te tri sata mogao okrenuti. Iz istog
+ *    razloga epizoda od petnaest minuta koja počne u 14.50 nosi dva: dotiče
+ *    i sat 14 i sat 15.
  * 3. **Isti nos u istom satu broji se jednom.** Dva javljanja istog
  *    dojavitelja za isti sat su jedno opažanje (uzima se jače), inače bi
  *    jedan uporan dojavitelj sam nacrtao ružu.

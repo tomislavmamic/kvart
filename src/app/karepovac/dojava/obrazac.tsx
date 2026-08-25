@@ -7,7 +7,14 @@ import { prijaviMiris } from "@/lib/actions/public";
 import { ODOUR_STRENGTHS, ODOUR_STRENGTH_SHORT } from "@/lib/constants";
 import type { OdourStrength } from "@/lib/constants";
 import { JOS_TRAJE, TRAJANJA } from "@/lib/dojava-trajanje";
-import { imeSata, satiZaDan, uRasponu, uTrenutak } from "@/lib/dojava-vrijeme";
+import {
+  dvoznamenkasto,
+  KORAK_MINUTA,
+  minuteZaSat,
+  satiZaDan,
+  uRasponu,
+  uTrenutak,
+} from "@/lib/dojava-vrijeme";
 import { oznakaDojavitelja, zaboraviDojavitelja } from "@/lib/dojavitelj";
 import { uOkviru, zaokruziMjesto } from "@/lib/mjesto";
 
@@ -20,8 +27,10 @@ import { uOkviru, zaokruziMjesto } from "@/lib/mjesto";
  *
  * Odatle izbori koje treba znati prije mijenjanja:
  *
- * - **Kotačić umjesto kalendara i tipkovnice.** Dan i sat biraju se kao na
- *   budilici (`Kotacic`): jedan pokret palca, stalna visina.
+ * - **Kotačić umjesto kalendara i tipkovnice.** Dan, sat i minuta biraju se
+ *   kao na budilici (`Kotacic`): jedan pokret palca, stalna visina. Minuta
+ *   nije sitničarenje — epizoda koja počne u 14.50 i traje petnaest minuta
+ *   prelazi u sljedeći sat, pa je nosi vjetar obaju sati.
  * - **Nema biranja datuma.** Miris se javlja dok se pamti — danas ili jučer.
  * - **Pita se trajanje, ne sat u kojem je prestalo.** Epizode su često
  *   kratke — petnaestak minuta — a nitko ne pamti u kojem je satu točno
@@ -56,6 +65,9 @@ export function ObrazacDojave() {
   const [jacina, setJacina] = useState<OdourStrength>("osjetno");
   const [danas, setDanas] = useState(true);
   const [sat, setSat] = useState(() => new Date().getHours());
+  const [minuta, setMinuta] = useState(
+    () => Math.floor(new Date().getMinutes() / KORAK_MINUTA) * KORAK_MINUTA,
+  );
   const [trajanje, setTrajanje] = useState<number | typeof JOS_TRAJE | "">("");
   const [mjesto, setMjesto] = useState<StanjeMjesta>({ vrsta: "nema" });
   const [zaboravljen, setZaboravljen] = useState(false);
@@ -63,15 +75,24 @@ export function ObrazacDojave() {
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
 
-  const dopusteniSati = satiZaDan(danas);
-  const najveciSat = dopusteniSati[dopusteniSati.length - 1];
-  const satiKotacica = dopusteniSati.map((i) => ({
+  const satiKotacica = satiZaDan(danas).map((i) => ({
     vrijednost: i,
-    natpis: imeSata(i),
+    natpis: dvoznamenkasto(i),
   }));
-  function odaberiDan(noviDanas: boolean) {
+  const dopusteneMinute = minuteZaSat(danas, sat);
+  const minuteKotacica = dopusteneMinute.map((m) => ({
+    vrijednost: m,
+    natpis: dvoznamenkasto(m),
+  }));
+  /** Odabir dana ili sata ne smije ostaviti minutu koja još nije došla. */
+  function pripaziNaBuducnost(noviDanas: boolean, noviSat: number) {
+    const sada = new Date();
+    const stegnutiSat =
+      noviDanas && noviSat > sada.getHours() ? sada.getHours() : noviSat;
+    const moguce = minuteZaSat(noviDanas, stegnutiSat, sada);
     setDanas(noviDanas);
-    if (noviDanas && sat > new Date().getHours()) setSat(new Date().getHours());
+    setSat(stegnutiSat);
+    if (!moguce.includes(minuta)) setMinuta(moguce[moguce.length - 1] ?? 0);
   }
 
   function trazimMjesto() {
@@ -98,7 +119,7 @@ export function ObrazacDojave() {
   async function posalji(formData: FormData) {
     setPending(true);
     setError(null);
-    const pocetak = uTrenutak(danas, sat);
+    const pocetak = uTrenutak(danas, sat, minuta);
     if (!uRasponu(pocetak, DANA_UNATRAG)) {
       setPending(false);
       setError("Javiti se može za zadnjih trideset dana.");
@@ -211,21 +232,28 @@ export function ObrazacDojave() {
 
       <fieldset>
         <legend className={NATPIS}>{smrdi ? "Kada je počelo?" : "Kada?"}</legend>
-        <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-kamen-rub bg-white px-2 py-1">
+        {/* Dan, sat i minuta — tri kotačića kao na budilici. */}
+        <div className="mt-2 grid grid-cols-[1.4fr_1fr_1fr] gap-1 rounded-xl border border-kamen-rub bg-white px-2 py-1">
           <Kotacic
             stavke={[
               { vrijednost: "jucer", natpis: "Jučer" },
               { vrijednost: "danas", natpis: "Danas" },
             ]}
             vrijednost={danas ? "danas" : "jucer"}
-            promijeni={(v) => odaberiDan(v === "danas")}
+            promijeni={(v) => pripaziNaBuducnost(v === "danas", sat)}
             naslov="Dan"
           />
           <Kotacic
             stavke={satiKotacica}
             vrijednost={sat}
-            promijeni={setSat}
+            promijeni={(v) => pripaziNaBuducnost(danas, v)}
             naslov="Sat"
+          />
+          <Kotacic
+            stavke={minuteKotacica}
+            vrijednost={minuta}
+            promijeni={setMinuta}
+            naslov="Minuta"
           />
         </div>
       </fieldset>

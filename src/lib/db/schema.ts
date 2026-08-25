@@ -108,7 +108,13 @@ export const odourReports = pgTable(
   "odour_reports",
   {
     id: serial("id").primaryKey(),
-    /** Sat u kojem se miris osjetio, zaokružen na puni sat, u UTC-u. */
+    /**
+     * Kada je miris počeo, zaokruženo na pet minuta, u UTC-u.
+     *
+     * Ne zaokružuje se na puni sat: epizoda koja počne pred kraj sata prelazi
+     * u sljedeći, pa je nosi vjetar obaju sati. Koje sate dojava pokriva
+     * računa `satiDojave` u `dojave.ts`, iz stvarnog početka i trajanja.
+     */
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
     /**
      * Je li se miris osjetio ili ne.
@@ -143,7 +149,7 @@ export const odourReports = pgTable(
      */
     note: text("note"),
     /**
-     * Kraj razdoblja u kojem se miris osjećao, zaokružen na puni sat.
+     * Kraj razdoblja u kojem se miris osjećao; početak plus trajanje.
      *
      * Dojava time postaje raspon, a ne trenutak: model i EN 16841 govore u
      * *satima mirisa*, pa raspon od 21 do 23 h nosi tri sata, svaki sa

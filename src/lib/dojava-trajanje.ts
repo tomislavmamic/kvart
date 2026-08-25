@@ -44,18 +44,18 @@ export const DOPUSTENE_MINUTE = TRAJANJA.map((t) => t.vrijednost).filter(
 );
 
 /**
- * Kraj epizode za zadano trajanje, zaokružen na puni sat.
+ * Stvarni kraj epizode: početak plus trajanje.
  *
- * Epizoda kraća od sata ne dobiva kraj: ona je jedan sat s mirisom, i taj
- * jedan sat već nosi `occurredAt`. Dulja se razlije na onoliko sati koliko
- * doista pokriva, jer se vjetar u međuvremenu mogao okrenuti.
+ * Ne zaokružuje se ni na što. Koje sate epizoda pokriva odlučuje `satiDojave`
+ * u `dojave.ts`, i to iz stvarnih trenutaka — jer epizoda od petnaest minuta
+ * koja počne u 14.50 doista dotiče i sat 14 i sat 15, a ona koja počne u
+ * 14.00 dotiče samo sat 14.
  *
- * @param pocetak Početak epizode, zaokružen na puni sat.
+ * @param pocetak Stvarni početak epizode, sa satom i minutom.
  * @param minuta Trajanje u minutama, ili `null` kad se ne zna.
- * @returns Kraj epizode ili `null` kad dojava pokriva jedan sat.
+ * @returns Kraj epizode ili `null` kad se trajanje ne zna.
  */
 export function krajEpizode(pocetak: Date, minuta: number | null): Date | null {
-  if (minuta === null || minuta <= 60) return null;
-  const sati = Math.floor((minuta - 1) / 60);
-  return new Date(pocetak.getTime() + sati * 3_600_000);
+  if (minuta === null || minuta <= 0) return null;
+  return new Date(pocetak.getTime() + minuta * 60_000);
 }
