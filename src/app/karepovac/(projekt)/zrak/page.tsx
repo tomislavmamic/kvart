@@ -72,12 +72,22 @@ export default function KarepovacPage() {
         <DnevniHod />
         <RuzaMirisa />
         <div className="rounded-xl border border-kamen-tlo bg-kamen-plitko p-6 sm:flex sm:items-center sm:justify-between sm:gap-8">
-          <p className="max-w-2xl text-base leading-7 text-kamen-tekst">
-            Obje ruže gore stoje na istoj točki, u udolini jugoistočno od plohe
-            — dakle s druge strane odlagališta nego kvart. One bilježe sate kad
-            zrak s plohe ide prema Kamenu. Ono što se osjeti u kvartu, na
-            suprotnu stranu, ne mjeri nitko — osim ljudi koji ondje žive.
-          </p>
+          <div className="max-w-2xl">
+            <p className="text-base leading-7 text-kamen-tekst">
+              Obje ruže gore stoje na istoj točki, u udolini jugoistočno od
+              plohe — dakle s druge strane odlagališta nego kvart. One bilježe
+              sate kad zrak s plohe ide prema Kamenu. Ono što se osjeti u
+              kvartu, na suprotnu stranu, ne mjeri nitko — osim ljudi koji
+              ondje žive.
+            </p>
+            <p className="mt-4 text-base leading-7 text-kamen-tekst">
+              Zato obrazac za dojavu traži sat, a ne opis. Sat je ono što
+              dojavu čini upotrebljivom — s njim se spaja s izmjerenim vjetrom,
+              bez njega ostaje priča. Jednako vrijedi i dojava da{" "}
+              <strong>nije</strong> smrdjelo: bez nje se ne zna koliko je često
+              smrdjelo, nego samo koliko je ljudi stiglo javiti.
+            </p>
+          </div>
           <Link
             href="/karepovac/dojava"
             className="fokus mt-4 inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-maslina px-6 py-3 font-semibold text-white hover:bg-maslina-tamna sm:mt-0"

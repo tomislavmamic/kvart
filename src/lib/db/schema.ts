@@ -123,9 +123,24 @@ export const odourReports = pgTable(
     smelled: boolean("smelled").notNull().default(true),
     /** Jačina; nema je kad se miris nije osjetio. */
     strength: odourStrengthEnum("strength"),
-    neighborhood: neighborhoodEnum("neighborhood").notNull(),
-    /** Ulica ili orijentir; slobodan tekst, nije obavezan. */
+    /**
+     * Kvart; ostaje zbog starih zapisa, ali obrazac ga više ne pita.
+     *
+     * Dvije kućice s istim odgovorom za sve dojave iz jednog kvarta nisu
+     * govorile ništa što adresa ili koordinata ne kažu bolje, a bile su dva
+     * dodira više na mobitelu.
+     */
+    neighborhood: neighborhoodEnum("neighborhood"),
+    /** Najbliža adresa ili orijentir, kako ju je dojavitelj napisao. */
     place: text("place"),
+    /**
+     * Slobodna napomena; obrazac je više ne pita.
+     *
+     * Stupac ostaje zbog starih zapisa. Napomenu nitko nije čitao ni mogao
+     * pretvoriti u brojku — a polje koje ništa ne mijenja u zaključku samo
+     * produljuje obrazac. Ako ikad zatreba, bolja je zamjena jedno pitanje
+     * sa zadanim odgovorima (trulo jaje / dim / drugo), jer se ono da zbrojiti.
+     */
     note: text("note"),
     /**
      * Kraj razdoblja u kojem se miris osjećao, zaokružen na puni sat.

@@ -815,3 +815,27 @@ body {
     gap: 6px;
   }
 }
+
+/* Kotačić dojave: klizač se ne prikazuje, jer pojas u sredini već kaže gdje
+   smo, a rubovi blijede da se vidi kako popis ide dalje. Crna u maski nije
+   boja nego prozirnost — maska čita samo alfa-kanal. */
+.kotacic {
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 28%,
+    #000 72%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 28%,
+    #000 72%,
+    transparent
+  );
+}
+.kotacic::-webkit-scrollbar {
+  display: none;
+}

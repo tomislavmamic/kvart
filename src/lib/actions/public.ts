@@ -105,7 +105,8 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   if (!checkRateLimit(ip)) {
     return {
       ok: false,
-      error: "Previše dojava u kratkom vremenu. Pokušajte ponovno za sat vremena.",
+      error:
+        "Pet dojava na sat je najviše što primamo. Pokušajte ponovno kasnije.",
     };
   }
 
@@ -113,9 +114,9 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   // je često smrdjelo, nego samo koliko je ljudi javilo.
   const smelled = String(formData.get("smelled") ?? "da") !== "ne";
   const strength = String(formData.get("strength") ?? "");
-  const neighborhood = String(formData.get("neighborhood") ?? "");
+  // Adresa je zamijenila kvart i slobodnu napomenu: kvart nijedna karta nije
+  // prikazivala, a napomenu nitko nije mogao pretvoriti u brojku.
   const place = String(formData.get("place") ?? "").trim() || null;
-  const note = String(formData.get("note") ?? "").trim() || null;
   const ongoing = String(formData.get("ongoing") ?? "") === "1";
   // Oznaka preglednika: nasumična, bez veze s identitetom (vidi
   // `src/lib/dojavitelj.ts`). Prima se samo ako izgleda kao ono što taj
@@ -127,14 +128,11 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   if (smelled && !(strength in ODOUR_STRENGTHS)) {
     return { ok: false, error: "Odaberite koliko se jako osjetilo." };
   }
-  if (!(neighborhood in NEIGHBORHOODS)) {
-    return { ok: false, error: "Odaberite kvart." };
-  }
   if (place && place.length > 120) {
-    return { ok: false, error: "Ulica ili orijentir smije imati najviše 120 znakova." };
-  }
-  if (note && note.length > 500) {
-    return { ok: false, error: "Napomena smije imati najviše 500 znakova." };
+    return {
+      ok: false,
+      error: "Adresa je predugačka — skratite je na 120 znakova.",
+    };
   }
 
   // Sat dolazi iz preglednika, pa se ovdje provjerava ponovno. Bez ispravnog
@@ -143,10 +141,10 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   const kada = new Date(String(formData.get("kada") ?? ""));
   const sada = Date.now();
   if (Number.isNaN(kada.getTime())) {
-    return { ok: false, error: "Odaberite kada se miris osjetio." };
+    return { ok: false, error: "Odaberite dan i sat." };
   }
   if (kada.getTime() > sada + 3_600_000) {
-    return { ok: false, error: "Vrijeme dojave ne može biti u budućnosti." };
+    return { ok: false, error: "Odabrani sat još nije došao." };
   }
   if (kada.getTime() < sada - NAJSTARIJA_DOJAVA_DANA * 86_400_000) {
     return {
@@ -166,13 +164,16 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   if (smelled && sirovKraj) {
     const kraj = new Date(sirovKraj);
     if (Number.isNaN(kraj.getTime())) {
-      return { ok: false, error: "Odaberite kada je miris prestao." };
+      return { ok: false, error: "Odaberite sat u kojem je miris prestao." };
     }
     if (kraj.getTime() < kada.getTime()) {
-      return { ok: false, error: "Kraj mirisa ne može biti prije početka." };
+      return {
+        ok: false,
+        error: "Miris ne može prestati prije nego što je počeo.",
+      };
     }
     if (kraj.getTime() > sada + 3_600_000) {
-      return { ok: false, error: "Kraj mirisa ne može biti u budućnosti." };
+      return { ok: false, error: "Sat u kojem je prestalo još nije došao." };
     }
     endedAt = new Date(Math.floor(kraj.getTime() / 3_600_000) * 3_600_000);
   }
@@ -185,15 +186,16 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
       smelled,
       // Kad se nije osjetilo, jačine nema — a ne „slabo”.
       strength: smelled ? (strength as OdourStrength) : null,
-      neighborhood: neighborhood as Neighborhood,
       place,
-      note,
       reporterId,
       lat: mjesto?.lat ?? null,
       lng: mjesto?.lng ?? null,
     });
   } catch {
-    return { ok: false, error: "Dojava nije spremljena. Pokušajte ponovno." };
+    return {
+      ok: false,
+      error: "Dojava nije spremljena. Provjerite vezu i pokušajte ponovno.",
+    };
   }
   return { ok: true };
 }
