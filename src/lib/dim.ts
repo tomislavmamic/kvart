@@ -774,17 +774,35 @@ export const LJESTVICA_MERKAPTANA: Ljestvica = [
  * Satni profil izvora merkaptana, po mjesnom satu (0–23), srednja = 1.
  *
  * Merkaptani ne cure kroz pokrov kao sumporovodik nego izlaze kad se na
- * plohi radi. Profil je izveden iz mjerenja, 25. 8. 2026.: medijan omjera
- * merkaptana (Karepovac 2) i H₂S-a (Karepovac 1) po satu dana, na dvije
- * godine zajedničkih sati. Omjer, a ne sam merkaptan: H₂S izlazi stalno,
- * pa dijeljenje s njim pokrati dnevni hod razrjeđenja — ostane potpis
- * izvora. Vrh je u 15 h (1,75×), noću padne na ~0,45×; srednja je 1, pa
+ * plohi radi. Profil je medijan omjera merkaptana (Karepovac 2) i H₂S-a
+ * (Karepovac 1) po satu dana. Omjer, a ne sam merkaptan: H₂S izlazi stalno,
+ * pa dijeljenje s njim pokrati dnevni hod razrjeđenja i ostane potpis
+ * izvora. Vrh je u 15 h, dno oko ponoći, raspon 2×; srednja je 1, pa
  * dugoročni prosjek polja ostaje jednak neponderiranom i sidra ljestvica
  * (`SIDRO_KARTICE`, `SIDRO_SIMULATORA`) vrijede nepromijenjena.
+ *
+ * **Dva zamke koje su prvu izvedbu (26. 8. 2026.) učinile dvostruko
+ * prejakom, pa ih ovdje treba znati:**
+ *
+ * 1. **Cenzurirana mjerenja.** U prvoj godini 33 % sati merkaptana stoji na
+ *    granici određivanja („< 0,1” → 0,05). Noću je nalaz sjedio na toj
+ *    granici, danju se dizao iznad nje, pa je iz toga ispadao dnevni hod od
+ *    8,7× — a to je dobrim dijelom bio potpis granice, ne plohe. Profil se
+ *    zato izvodi **samo iz sati iznad granice**; tada prva godina daje 2,1×.
+ * 2. **Uređaj se promijenio.** Između 8/2025 i 10/2025 (9/2025 nedostaje)
+ *    medijan merkaptana skoči 8,7× dok H₂S poraste 1,5×, a udio nalaza na
+ *    granici padne s 33 % na 1 %. Takav skok nije ploha nego osjetljivost
+ *    mjerila. Zato se ne spajaju sirovi omjeri dviju godina nego njihovi
+ *    **normirani oblici**, svaki s jednakom težinom: promjena mjerila mijenja
+ *    razinu, a oblik dana preživi.
+ *
+ * Obje godine slažu se u smjeru (Spearman po satima +0,78): dizanje u radne
+ * sate, dno noću. Kad se program mjerenja opet promijeni, profil treba
+ * izvesti iznova — postupak je opisan gore i ponovljiv iz `postaje.satno`.
  */
 export const PROFIL_MERKAPTANA = [
-  0.45, 0.5, 0.47, 0.5, 0.42, 0.62, 0.61, 0.72, 0.98, 1.33, 1.53, 1.52,
-  1.59, 1.47, 1.42, 1.75, 1.52, 1.28, 1.18, 1.16, 0.97, 0.88, 0.54, 0.58,
+  0.7, 0.84, 0.8, 0.9, 0.71, 0.98, 0.86, 0.96, 0.97, 1.14, 1.29, 1.31,
+  1.33, 1.23, 1.19, 1.37, 1.22, 0.92, 0.98, 1.02, 0.89, 0.9, 0.7, 0.8,
 ] as const;
 
 /**

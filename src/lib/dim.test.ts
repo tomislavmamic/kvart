@@ -260,8 +260,20 @@ test("profil merkaptana ima srednju 1, pa sidra ljestvica ostaju valjana", () =>
   // neponderiranom — sidra su izvedena na neponderiranom, pa smiju ostati.
   const srednja = PROFIL_MERKAPTANA.reduce((a, b) => a + b, 0) / 24;
   assert.ok(Math.abs(srednja - 1) < 0.02, `srednja je ${srednja.toFixed(3)}`);
-  assert.ok(Math.max(...PROFIL_MERKAPTANA) > 1.5, "radni sati moraju stršati");
-  assert.ok(Math.min(...PROFIL_MERKAPTANA) < 0.6, "noć mora utihnuti");
+
+  // Raspon je mjeren, ne odabran: iz necenzuriranih sati obiju godina izlazi
+  // oko 2×. Prva izvedba imala je 4,2× jer je u nju ušlo 33 % nalaza koji su
+  // stajali na granici određivanja — noću na granici, danju iznad nje, pa je
+  // granica izgledala kao dnevni hod. Ako ovo ikad naraste preko ~2,5×,
+  // vjerojatno su se cenzurirani sati vratili u izvod.
+  const raspon = Math.max(...PROFIL_MERKAPTANA) / Math.min(...PROFIL_MERKAPTANA);
+  assert.ok(raspon > 1.5 && raspon < 2.5, `raspon je ${raspon.toFixed(1)}×`);
+
+  // Vrh mora pasti u radne sate, a dno u noć — to je ono što se mjeri.
+  const vrh = PROFIL_MERKAPTANA.indexOf(Math.max(...PROFIL_MERKAPTANA));
+  const dno = PROFIL_MERKAPTANA.indexOf(Math.min(...PROFIL_MERKAPTANA));
+  assert.ok(vrh >= 8 && vrh <= 17, `vrh je u ${vrh} h, izvan radnih sati`);
+  assert.ok(dno >= 21 || dno <= 5, `dno je u ${dno} h, a noć je drugdje`);
 });
 
 test("merkaptanska perjanica noću izostane, sumporovodikova ostane", () => {
@@ -282,8 +294,10 @@ test("merkaptanska perjanica noću izostane, sumporovodikova ostane", () => {
   }
   const nocu = omjer("2026-08-24T22:00:00Z");
   const danju = omjer("2026-08-24T10:00:00Z");
-  assert.ok(nocu < 0.6, `noću je omjer ${nocu.toFixed(2)} — profil ne gasi noć`);
-  assert.ok(danju > 1.2, `danju je omjer ${danju.toFixed(2)} — profil ne diže dan`);
+  // Razlika je oko dvostruka, koliko je i izmjerena — ne više.
+  assert.ok(nocu < 0.9, `noću je omjer ${nocu.toFixed(2)} — profil ne stišava noć`);
+  assert.ok(danju > 1.1, `danju je omjer ${danju.toFixed(2)} — profil ne diže dan`);
+  assert.ok(danju / nocu > 1.3, `dan/noć je ${(danju / nocu).toFixed(2)}× — premalo`);
   // Bez stvarnog vremena profila nema i tvari dijele polje.
   const bez = stvoriDim(SLAB, { cestica: 8_000 });
   pusti(bez, 30);
