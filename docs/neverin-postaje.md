@@ -42,9 +42,7 @@ Dvije stvari koje se iz tablice ne vide, a mijenjaju sliku:
 - **Stobreč, Duilovo i Solin imaju niz od listopada 2021.** — dulji od razdoblja
   na kojem je rađena postojeća provjera. To su jedini kandidati koje bi se
   uopće dalo ocijeniti postojećim postupkom.
-- **HPD Kozjak je na 460 m.** Ne mjeri prizemno strujanje nad kvartom nego zrak
-  iznad sloja miješanja. Za `dubina` u modelu bi mogao vrijediti više nego za
-  `smjerOd`, ali niz mu počinje 22. 8. 2026. — za sada nema što ocijeniti.
+- **HPD Kozjak je na 460 m** i zato je posve druga vrsta podatka — vidi niže.
 
 ## Zašto se ovo ne može samo priključiti
 
@@ -71,27 +69,87 @@ podskup (21–06 h) bio bi oko 290 sati, a `ocijeni()` traži najmanje 500. Bez
 dogovora s Neverinom ove se postaje ne mogu ni ocijeniti, a nekamoli pustiti da
 vode kartu.
 
+## HPD Kozjak nije vjetrokaz nego termometar za stabilnost
+
+Postaju na 460 m ne treba gledati kao lošu postaju vjetra — kao takva je
+beskorisna: 7,7 km daleko, na drugoj gori, mjeri strujanje koje nad kvartom ne
+vrijedi (isti prigovor koji je zračnu luku strpao na začelje). Vrijedna je zbog
+**visine**, ne unatoč njoj.
+
+Model ima dva ulaza. Jedan je vjetar i on je izmjeren. Drugi je `dubina`, dubina
+miješanog sloja, i `src/lib/vjetar.ts` o njemu kaže: „modelska, jer se ne mjeri
+nigdje u blizini. Ona odlučuje hoće li se zrak s plohe razrijediti ili ostati
+pri tlu.” Uzima se `boundary_layer_height` s Open-Metea — dakle broj iz modela,
+u projektu koji je dvaput odbio ERA5 upravo zato što nije mjeren.
+
+Razlika temperatura između dviju visina taj broj mjeri izravno. Suhoadijabatski
+pad je 9,8 °C/km, pa na 444 m visinske razlike prema Split-aerodromu (16 m)
+dobro izmiješan zrak daje oko **4,3 °C hladnije gore**. Što je razlika manja,
+sloj je stabilniji; kad Kozjak ispadne **topliji** od obale, iznad kvarta stoji
+inverzija i prizemni zrak nema kamo. To je točno stanje koje
+`docs/provjera-izvora-vjetra.md` naziva noćnim zastojem zraka i za koje
+`provjeri-vedre-noci.py` zaključuje da „zastoj zraka nosi, vedrina ne”.
+
+Par se može složiti odmah, iz izvora koje projekt već dohvaća:
+
+| visina | postaja | odakle temperatura |
+| --- | --- | --- |
+| 460 m | HPD Kozjak | Ecowitt, uz vlasnikove ključeve |
+| 122 m | Split-Marjan | DHMZ `hrvatska_n.xml`, polje `Temp` — već se dohvaća |
+| 16 m | Split-aerodrom | isti XML; ili METAR `temp` za LDSP, isto već dohvaćeno |
+
+Provjereno 28. 8. 2026.: oba izvora doista nose temperaturu (Marjan 30,6 °C,
+aerodrom 31,1 °C u 10 h), pa je jedini nedostajući dio gornja točka.
+
+Ograda: 460 m je iznad noćnog inverzijskog sloja u većini slučajeva, što je
+dobro za mjerenje njegove **jačine**, ali ne daje njegovu **visinu**. I Kozjak
+je 7,7 km sjeverozapadno, pa mjeri stabilnost nad Kaštelanskim zaljevom, a ne
+nad samom plohom. To je i dalje mjerenje umjesto modela, ali nije mjerenje na
+pravom mjestu — i tako to treba i napisati na stranici.
+
+Niz mu počinje 22. 8. 2026., pa se ništa od ovoga ne može ocijeniti postojećim
+postupkom prije nego što se nakupi arhiva. Ecowittova povijest ide od
+priključenja konzole, koje je moglo biti i puno ranije od Neverinova preuzimanja
+— to je prvo što treba pitati.
+
 ## Putovi dalje
 
 Zajedničko svima: **do postaje se ide preko njezina vlasnika, ne preko
 Neverina.** Neverin je preprodavatelj tuđih očitanja i jedini dio lanca koji
 brani pristup.
 
-1. **Ecowitt, službenim API-jem.** Ove su postaje uglavnom Ecowittove konzole, a
-   Ecowitt ima otvoren i dokumentiran API: `api.ecowitt.net/api/v3/device/
-   real_time` i `/history`, uz `application_key` i `api_key` koje **vlasnik
-   uređaja** izradi u svojem profilu. Provjereno 28. 8. 2026. — poslužitelj radi
-   i odgovara `40010 Invalid application Key` na prazan ključ. Ovo je jedini put
-   koji daje i živa očitanja i punu arhivu, bez ičijih uvjeta korištenja u
-   sredini, i traži samo da vlasnik postaje pošalje dva ključa.
+1. **Ecowitt, službenim API-jem — u tijeku za HPD Kozjak.** Te su postaje
+   Ecowittove konzole, a Ecowitt ima otvoren i dokumentiran API:
+   `api.ecowitt.net/api/v3/device/real_time` i `/history`, uz `application_key`
+   i `api_key` koje **vlasnik uređaja** izradi u svojem profilu. Provjereno
+   28. 8. 2026. — poslužitelj radi i na prazan ključ odgovara `40010 Invalid
+   application Key`. Daje i živa očitanja i punu arhivu, bez ičijih uvjeta
+   korištenja u sredini.
+
+   Poveznica na dijeljenje koju vlasnik izda (`/home/share?authorize=…`) za ovo
+   **nije dovoljna**: samo je za gledanje, a `getSharePanel` na nju vraća
+   `403 You have no permission`. Trebaju sami ključevi.
+
+   Što tražiti od vlasnika HPD Kozjaka:
+   - `application_key` i `api_key` iz njegova Ecowittova profila (nisu lozinka,
+     i može ih poništiti kad god);
+   - MAC ili IMEI konzole, koji `/history` traži uz ključeve;
+   - **od kada konzola šalje.** Ovo je najvažnije pitanje: na Neverinu niz počinje
+     22. 8. 2026., ali to je datum kad ga je Neverin preuzeo, ne kad je postaja
+     proradila. Ako Ecowittova povijest seže godinu ili dvije unatrag, mjerena
+     stabilnost može odmah proći postupak iz `provjeri-izvore-vjetra.py`; ako ne,
+     čeka se da se arhiva nakupi.
 2. **Pisati Neverinu.** Uvjeti sami upućuju na e-poštu obrta (Neverin, vl. Alen
    Šterpin) za zahtjeve za dopuštenje. Kvart je nekomercijalan projekt praćenja
-   zraka, pa zamolba ima izgledan ishod — ali i dalje bi ovisila o tuđem releju
-   i o arhivi od 30 dana, osim ako se ne dogovori više.
+   zraka, pa zamolba ima izgledan ishod. Ovo je jedini put do **Vrborana**, koji
+   je Neverinova vlastita postaja i geometrijski najvrjedniji od svih — ali bi i
+   dalje ovisio o tuđem releju i o arhivi od 30 dana, osim ako se ne dogovori
+   više.
 3. **Wunderground izravno.** Duilovo, Pujanke, Solin i Stobreč Neverin preuzima
    s Wundergrounda (polje `source` u odgovoru). Njihovoj se arhivi može doći
-   službenim PWS API-jem uz besplatan ključ. Treba naći oznake postaja (`I……`);
-   na neverinovoj stranici ne stoje.
+   službenim PWS API-jem uz besplatan ključ, a nizovi im sežu do 10/2021 — jedini
+   kandidati koji bi odmah prošli prag od 500 sati. Treba naći oznake postaja
+   (`I……`); na neverinovoj stranici ne stoje.
 4. **Ostaviti kako jest.** Model već nosi ogradu o udaljenosti i ona je istinita.
    Ništa se ne kvari time što se čeka.
 
@@ -107,3 +165,8 @@ Te su postaje k tome privatne, uglavnom kućne. Nitko ne jamči da im je
 vjetrulja orijentirana, ni da anemometar nije u zavjetrini kuće. Postojeći
 postupak (nizvjetar/uzvjetar, vrh po sektoru) upravo bi to i uhvatio — ali tek
 kad bude podataka na kojima se može pokrenuti.
+
+Za Kozjak vrijedi obrnuta ograda: njegova vrijednost ne ovisi o tome kako mu je
+vjetrulja okrenuta, jer se od njega ne uzima vjetar nego temperatura, a nju je
+teško krivo postaviti. Ovisi o tome je li mu senzor u hladu i prozračen. To se
+vidi iz podataka — dnevni hod na 460 m ne bi smio biti veći nego na obali.
