@@ -170,17 +170,15 @@ export function UpravljackaPloca({
       <section>
         <Naslov>Kuda ide</Naslov>
         <Prekidac
-          ukljucen={stanje.prikaz.strelice}
-          naPromjenu={(v) => naPrikaz({ ...stanje.prikaz, strelice: v })}
+          ukljucen={stanje.prikaz.vjetar}
+          naPromjenu={(v) => naPrikaz({ ...stanje.prikaz, vjetar: v })}
         >
-          Strujnice vjetra
+          Tragovi vjetra
         </Prekidac>
-        <Prekidac
-          ukljucen={stanje.prikaz.cestice}
-          naPromjenu={(v) => naPrikaz({ ...stanje.prikaz, cestice: v })}
-        >
-          Čestice u pokretu
-        </Prekidac>
+        <p className="ml-6.5 text-xs leading-5 text-zinc-500">
+          Svaki trag je čestica zraka; rep pokazuje odakle je došla, a koliko
+          brzo putuje toliko ondje puše.
+        </p>
       </section>
 
       <section>

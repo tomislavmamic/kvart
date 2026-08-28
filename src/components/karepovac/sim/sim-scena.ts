@@ -1,5 +1,5 @@
 /**
- * Sloj koji na kartu crta perjanicu, strujnice i čestice vjetra.
+ * Sloj koji na kartu crta perjanicu i tragove vjetra.
  *
  * Ide kao MapLibreov „custom layer”: karta ostaje gospodar zemljopisa —
  * projekcije, pomicanja, uvećanja, poretka slojeva — a ovdje se samo crta u
@@ -24,30 +24,13 @@ import * as THREE from "three";
 
 import { MIRISNI_RASPON, TVARI, type Tvar, ljestvicaBoja } from "@/lib/dim";
 import { bojaZa, SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
-import { razmakPoteza, RAZMAK_S } from "@/lib/sim/potezi";
 import { PROZOR } from "@/lib/sim/zapis-gustoce";
 import type { Osnove } from "@/lib/sim/polje";
-import { izvediStrujnice } from "@/lib/sim/strujnice-sim";
+import type { Podloga } from "@/components/karepovac/sim/sim-karta";
+import { stvoriTragove, type Tragovi } from "@/components/karepovac/sim/tragovi";
 
 /** Koliko puta se pravokutnik perjanice dijeli po svakoj osi. */
 const PODJELA = 24;
-
-/**
- * Koliko se sekundi stvarnog vjetra prijeđe u sekundi prikaza, na strujnicama.
- *
- * Isto ubrzanje kojim teče i perjanica (`UBRZANJE` u `dim.ts`), da dvije stvari
- * na istoj karti ne mjere vrijeme različito.
- */
-const UBRZANJE_STRUJNICA = 60;
-
-/** Koliko čestica nosi animirani vjetar. */
-const CESTICA = 1400;
-
-/** Sekundi koliko čestica živi prije nego se vrati na slučajno mjesto. */
-const VIJEK_CESTICE = 2.4;
-
-/** Ubrzanje prikaza čestica: koliko stvarnih metara u sekundi prikaza. */
-const UBRZANJE_CESTICA = 26;
 
 export type PrikazTvari = {
   readonly vidljiv: boolean;
@@ -58,9 +41,8 @@ export type PrikazTvari = {
 
 export type PostavkePrikaza = {
   readonly tvari: Readonly<Record<Tvar, PrikazTvari>>;
-  /** Strujnice vjetra — duge putanje s potezom koji po njima teče. */
-  readonly strelice: boolean;
-  readonly cestice: boolean;
+  /** Tragovi vjetra — čestice koje za sobom vuku rep koji blijedi. */
+  readonly vjetar: boolean;
   readonly mirovanje: boolean;
 };
 
@@ -75,6 +57,8 @@ export type Scena = {
   /** Postavlja polje vjetra za odabrani sat, u m/s po ćeliji. */
   postaviVjetar(vx: Float32Array, vy: Float32Array, gw: number, gh: number): void;
   postaviPrikaz(postavke: PostavkePrikaza): void;
+  /** Podloga ne mijenja ništa u računu, ali mijenja boju kojom se tragovi vide. */
+  postaviPodlogu(podloga: Podloga): void;
   dispose(): void;
 };
 
@@ -210,35 +194,6 @@ function geometrijaPerjanice(granice: Osnove["granice"]): THREE.BufferGeometry {
   return geo;
 }
 
-const STRUJA_VRHOVI = /* glsl */ `
-  attribute float vrijeme;
-  varying float vVrijeme;
-  void main() {
-    vVrijeme = vrijeme;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const STRUJA_PIKSELI = /* glsl */ `
-  precision highp float;
-  varying float vVrijeme;
-  uniform float uVrijeme;
-  uniform float uRazmak;
-  uniform vec3 uBoja;
-
-  void main() {
-    // Potez teče po **vremenu putovanja**, ne po duljini. Zato sam od sebe
-    // juri ondje gdje je vjetar jak i jedva se miče ondje gdje je tišina —
-    // bez ijedne postavke koja bi tu razliku glumila.
-    float faza = fract((vVrijeme - uVrijeme) / uRazmak);
-    float glava = 1.0 - smoothstep(0.0, 0.12, faza);
-    // Tanak stalni trag ispod poteza: bez njega se pri tišini ne vidi kuda
-    // bi zrak išao kad bi ga bilo, a upravo se tada nad kvartom nakuplja.
-    float alfa = 0.10 + 0.80 * glava;
-    gl_FragColor = vec4(uBoja * alfa, alfa);
-  }
-`;
-
 /**
  * Stvara sloj i vraća upravljač njime.
  *
@@ -296,181 +251,21 @@ export function stvoriSlojPerjanice(
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      // Vidi napomenu uz strelice: orijentacija ovdje nije pouzdana.
+      // Karta zna okrenuti obilazak vrhova (zrcaljena projekcija, nagib), pa
+      // se na jednu stranu ne računa.
       side: THREE.DoubleSide,
     }),
   );
   perjanica.frustumCulled = false;
   scena.add(perjanica);
 
-  // Strelice i čestice dijele polje vjetra; drži se ovdje da ga oboje čita.
-  let polje: { vx: Float32Array; vy: Float32Array; gw: number; gh: number } | null = null;
-
-  const strujaUniforme = {
-    uVrijeme: { value: 0 },
-    uRazmak: { value: RAZMAK_S.najveci as number },
-    uBoja: { value: new THREE.Color(0x14202c) },
-  };
-
-  const strujeGeo = new THREE.BufferGeometry();
-  const strujeMat = new THREE.ShaderMaterial({
-    uniforms: strujaUniforme,
-    vertexShader: STRUJA_VRHOVI,
-    fragmentShader: STRUJA_PIKSELI,
-    transparent: true,
-    depthTest: false,
-    depthWrite: false,
-  });
-  const strujnice = new THREE.LineSegments(strujeGeo, strujeMat);
-  strujnice.frustumCulled = false;
-  strujnice.visible = false;
-  scena.add(strujnice);
-
-  const cesticeGeo = new THREE.BufferGeometry();
-  const cesticePol = new Float32Array(CESTICA * 3);
-  const cesticeDob = new Float32Array(CESTICA);
-  cesticeGeo.setAttribute("position", new THREE.BufferAttribute(cesticePol, 3));
-  const cestice = new THREE.Points(
-    cesticeGeo,
-    new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 3,
-      sizeAttenuation: false,
-      transparent: true,
-      opacity: 0.75,
-      depthTest: false,
-      depthWrite: false,
-    }),
-  );
-  cestice.frustumCulled = false;
-  cestice.visible = false;
-  scena.add(cestice);
+  // Vjetar ide u svoj sloj: račun roja je u `@/lib/sim/tragovi-vjetra`, a
+  // pretvorba u koordinate karte i crtanje u `tragovi.ts`.
+  const tragovi: Tragovi = stvoriTragove(osnove);
+  scena.add(tragovi.objekt);
 
   let mirovanje = false;
   let zadnjiTrenutak = 0;
-
-  /** Očitava polje u točki zadanoj udjelom okvira. */
-  function uzmiVjetar(u: number, v: number): [number, number] {
-    if (!polje) return [0, 0];
-    const i = Math.min(polje.gw - 1, Math.max(0, Math.round(u * (polje.gw - 1))));
-    const j = Math.min(polje.gh - 1, Math.max(0, Math.round(v * (polje.gh - 1))));
-    const k = j * polje.gw + i;
-    return [polje.vx[k], polje.vy[k]];
-  }
-
-  /** Vraća čestici slučajno mjesto i dob, da se rođenja ne slože u takt. */
-  function rodiCesticu(n: number, prvi: boolean): void {
-    const u = Math.random();
-    const v = Math.random();
-    const m = MercatorCoordinate.fromLngLat(
-      {
-        lng: osnove.granice.zapad + u * (osnove.granice.istok - osnove.granice.zapad),
-        lat: osnove.granice.sjever - v * (osnove.granice.sjever - osnove.granice.jug),
-      },
-      0,
-    );
-    cesticePol[n * 3] = m.x;
-    cesticePol[n * 3 + 1] = m.y;
-    cesticePol[n * 3 + 2] = 0;
-    cesticeDob[n] = prvi ? Math.random() * VIJEK_CESTICE : 0;
-  }
-
-  for (let n = 0; n < CESTICA; n += 1) rodiCesticu(n, true);
-
-  /** Koliko Mercatorovih jedinica ide na metar na ovoj širini. */
-  const metarU = (() => {
-    const sredina = (osnove.granice.jug + osnove.granice.sjever) / 2;
-    const a = MercatorCoordinate.fromLngLat({ lng: osnove.granice.zapad, lat: sredina }, 0);
-    const b = MercatorCoordinate.fromLngLat({ lng: osnove.granice.istok, lat: sredina }, 0);
-    return (b.x - a.x) / osnove.sirinaM;
-  })();
-
-  function pomakniCestice(dt: number): void {
-    if (!polje) return;
-    const zapad = osnove.granice.zapad;
-    const sirinaLon = osnove.granice.istok - zapad;
-    const sjever = osnove.granice.sjever;
-    const visinaLat = sjever - osnove.granice.jug;
-    for (let n = 0; n < CESTICA; n += 1) {
-      cesticeDob[n] += dt;
-      if (cesticeDob[n] > VIJEK_CESTICE) {
-        rodiCesticu(n, false);
-        continue;
-      }
-      // Natrag u udjele okvira, da se polje očita na pravom mjestu.
-      const x = cesticePol[n * 3];
-      const y = cesticePol[n * 3 + 1];
-      const lonLat = new MercatorCoordinate(x, y, 0).toLngLat();
-      const u = (lonLat.lng - zapad) / sirinaLon;
-      const v = (sjever - lonLat.lat) / visinaLat;
-      if (!(u >= 0 && u <= 1 && v >= 0 && v <= 1)) {
-        rodiCesticu(n, false);
-        continue;
-      }
-      const [vx, vy] = uzmiVjetar(u, v);
-      cesticePol[n * 3] = x + vx * UBRZANJE_CESTICA * dt * metarU;
-      cesticePol[n * 3 + 1] = y + vy * UBRZANJE_CESTICA * dt * metarU;
-    }
-    (cesticeGeo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-  }
-
-  /**
-   * Gradi strujnice za trenutačno polje.
-   *
-   * Točke putanja dolaze kao udjeli okvira, pa se ovdje pretvaraju u
-   * Mercatorove koordinate karte — svaka posebno, jer projekcija po širini
-   * nije linearna.
-   */
-  function osvjeziStrujnice(): void {
-    if (!polje) return;
-    const putanje = izvediStrujnice(
-      polje.vx,
-      polje.vy,
-      polje.gw,
-      polje.gh,
-      osnove.sirinaM,
-      osnove.visinaM,
-    );
-
-    const polozaji: number[] = [];
-    const vremena: number[] = [];
-    const zapad = osnove.granice.zapad;
-    const sirinaLon = osnove.granice.istok - zapad;
-    const sjever = osnove.granice.sjever;
-    const visinaLat = sjever - osnove.granice.jug;
-
-    for (const p of putanje) {
-      for (let i = 1; i < p.tocke.length; i += 1) {
-        for (const k of [i - 1, i]) {
-          const [u, v] = p.tocke[k];
-          const m = MercatorCoordinate.fromLngLat(
-            { lng: zapad + u * sirinaLon, lat: sjever - v * visinaLat },
-            0,
-          );
-          polozaji.push(m.x, m.y, 0);
-          vremena.push(p.vremena[k]);
-        }
-      }
-    }
-
-    // Razmak se prilagođava vjetru tako da na karti ostane isti put, a ne
-    // isto vrijeme; brzina poteza time ostaje netaknuta.
-    let zbroj = 0;
-    for (let i = 0; i < polje.vx.length; i += 1) {
-      zbroj += Math.hypot(polje.vx[i], polje.vy[i]);
-    }
-    strujaUniforme.uRazmak.value = razmakPoteza(zbroj / Math.max(1, polje.vx.length));
-
-    strujeGeo.setAttribute(
-      "position",
-      new THREE.BufferAttribute(new Float32Array(polozaji), 3),
-    );
-    strujeGeo.setAttribute(
-      "vrijeme",
-      new THREE.BufferAttribute(new Float32Array(vremena), 1),
-    );
-    strujeGeo.computeBoundingSphere();
-  }
 
   const upravljac: Scena = {
     postaviGustocu(bajtovi, bajtoviMerkaptana, sirina, visina) {
@@ -490,8 +285,9 @@ export function stvoriSlojPerjanice(
       karta?.triggerRepaint();
     },
     postaviVjetar(vx, vy, gw, gh) {
-      polje = { vx, vy, gw, gh };
-      osvjeziStrujnice();
+      // Pri mirovanju se roj ne miče sam od sebe, pa mu se novi sat mora
+      // uvesti sjetvom — inače bi tragovi ostali oni iz prošloga.
+      tragovi.postaviPolje(vx, vy, gw, gh, mirovanje);
       karta?.triggerRepaint();
     },
     postaviPrikaz(postavke) {
@@ -514,18 +310,18 @@ export function stvoriSlojPerjanice(
           uniforme.uPomakB.value = pomakLjestvice(tvar, t.jacina);
         }
       }
-      strujnice.visible = postavke.strelice;
-      cestice.visible = postavke.cestice;
+      tragovi.postaviVidljivost(postavke.vjetar);
       mirovanje = postavke.mirovanje;
+      karta?.triggerRepaint();
+    },
+    postaviPodlogu(podloga) {
+      tragovi.postaviPodlogu(podloga);
       karta?.triggerRepaint();
     },
     dispose() {
       perjanica.geometry.dispose();
       (perjanica.material as THREE.Material).dispose();
-      strujeGeo.dispose();
-      strujeMat.dispose();
-      cesticeGeo.dispose();
-      (cestice.material as THREE.Material).dispose();
+      tragovi.dispose();
       lutovi.A.dispose();
       lutovi.B.dispose();
       (uniforme.uGustoca.value as THREE.DataTexture).dispose();
@@ -559,12 +355,25 @@ export function stvoriSlojPerjanice(
       const dt = zadnjiTrenutak ? Math.min(0.1, sada - zadnjiTrenutak) : 0;
       zadnjiTrenutak = sada;
 
-      if (!mirovanje && dt > 0) {
-        if (cestice.visible) pomakniCestice(dt);
-        if (strujnice.visible) {
-          strujaUniforme.uVrijeme.value += dt * UBRZANJE_STRUJNICA;
+      if (tragovi.objekt.visible) {
+        // Debljina poteza mora ostati ista u pikselima, pa sloj svaku sliku
+        // dobiva veličinu platna; iz nje se izvodi i koliko se čestica nosi.
+        const platno = renderer.getContext().canvas;
+        // Broj čestica ide po tome koliko okvir polja zauzima zaslona, a ne
+        // koliko ga zauzima prozor: pri zadanom pogledu okvir je manji od
+        // trećine karte.
+        const sz = karta?.project([osnove.granice.zapad, osnove.granice.sjever]);
+        const ji = karta?.project([osnove.granice.istok, osnove.granice.jug]);
+        tragovi.postaviPogled(
+          platno.width,
+          platno.height,
+          typeof window === "undefined" ? 1 : window.devicePixelRatio || 1,
+          sz && ji ? Math.abs(ji.x - sz.x) * Math.abs(ji.y - sz.y) : 0,
+        );
+        if (!mirovanje && dt > 0) {
+          tragovi.korak(dt);
+          karta?.triggerRepaint();
         }
-        if (cestice.visible || strujnice.visible) karta?.triggerRepaint();
       }
 
       kamera.projectionMatrix = new THREE.Matrix4().fromArray(

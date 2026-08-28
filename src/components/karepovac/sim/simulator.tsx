@@ -80,8 +80,7 @@ const ZADANI_PRIKAZ: PostavkePrikaza = {
     sumporovodik: { vidljiv: true, boja: ZADANA_BOJA.sumporovodik, jacina: 1 },
     merkaptani: { vidljiv: false, boja: ZADANA_BOJA.merkaptani, jacina: 1 },
   },
-  strelice: true,
-  cestice: true,
+  vjetar: true,
   mirovanje: false,
 };
 
@@ -122,8 +121,15 @@ function izAdrese(zadano: PloceStanje): { stanje: PloceStanje; pomak: number | n
     stanje: {
       prikaz: {
         tvari: { sumporovodik: tvar("sumporovodik", "h"), merkaptani: tvar("merkaptani", "m") },
-        strelice: zastavica("str", zadano.prikaz.strelice),
-        cestice: zastavica("ces", zadano.prikaz.cestice),
+        // Adrese podijeljene prije nego su strujnice i čestice srasle u
+        // tragove nose `str` i `ces`; tko je imao upaljeno ijedno od toga,
+        // htio je vidjeti vjetar, pa mu ostane upaljen.
+        vjetar:
+          p.get("vje") === null
+            ? p.get("str") === null && p.get("ces") === null
+              ? zadano.prikaz.vjetar
+              : p.get("str") === "1" || p.get("ces") === "1"
+            : p.get("vje") === "1",
         mirovanje: zadano.prikaz.mirovanje,
       },
       podloga: p.get("pod") === "ortofoto" ? "ortofoto" : "karta",
@@ -144,8 +150,7 @@ function uAdresu(stanje: PloceStanje, pomak: number): void {
     p.set(`${kratica}b`, t.boja);
     p.set(`${kratica}j`, String(t.jacina));
   }
-  p.set("str", stanje.prikaz.strelice ? "1" : "0");
-  p.set("ces", stanje.prikaz.cestice ? "1" : "0");
+  p.set("vje", stanje.prikaz.vjetar ? "1" : "0");
   p.set("pod", stanje.podloga);
   p.set("rel", stanje.reljef ? "1" : "0");
   p.set("zgr", stanje.zgrade ? "1" : "0");
@@ -495,6 +500,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
         karta.setLayoutProperty(sloj, "visibility", vidljiv ? "visible" : "none");
       }
     };
+    scenaRef.current?.postaviPodlogu(stanje.podloga);
     vidljivost(PODLOGE.karta, stanje.podloga === "karta");
     vidljivost(PODLOGE.ortofoto, stanje.podloga === "ortofoto");
     vidljivost("reljef", stanje.reljef);
