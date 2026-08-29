@@ -12,13 +12,18 @@
  * pribadače; `sada` su trenutačna očitanja svih postaja.
  */
 
+import { zapisiZrakPoslije } from "@/lib/arhiva-zraka";
 import { satniVjetar } from "@/lib/vjetar-sat";
 
 /** Isti rok kao ostali izvori vjetra, da se dvije karte ne raziđu. */
 export const revalidate = 900;
 
 export async function GET(): Promise<Response> {
-  const { vjetrovi, serije, sada } = await satniVjetar(new Date());
+  const vjetar = await satniVjetar(new Date());
+  const { vjetrovi, serije, sada } = vjetar;
+  // Ovdje se izmjereni niz čeka do kraja, pa je ovo najbogatiji ulov za
+  // arhivu: cijele serije po postaji, ne samo tekuće očitanje.
+  await zapisiZrakPoslije(sada, vjetar);
 
   return Response.json(
     {

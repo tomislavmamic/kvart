@@ -7,6 +7,7 @@
  * dvije bi karte istoga kvarta pokazivale dva različita vjetra.
  */
 
+import { zapisiZrakPoslije } from "@/lib/arhiva-zraka";
 import { sastaviPolje, type SlozenoPolje, type StanjeZraka } from "@/lib/polje-dima";
 import { stanjeSata, vrhSata } from "@/lib/sim/vrijeme-satno";
 import { satniVjetar, type SatniVjetarISlojevi } from "@/lib/vjetar-sat";
@@ -125,6 +126,8 @@ export async function pripremiZrak(): Promise<ZrakZaKartu> {
     dohvatiZrak(sada),
     satniVjetar(sada, 1, 1, 3000).catch(() => null),
   ]);
+  // Sve što je upravo dohvaćeno ide i u arhivu — iza odgovora, ne pred njim.
+  await zapisiZrakPoslije(zrak, vjetar);
   if (!vjetar) return slozi(zrak);
   const satni = vjetar.vjetrovi.get(vrhSata(sada).toISOString());
   const stanje: StanjeZraka = satni

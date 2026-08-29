@@ -284,6 +284,7 @@ test("Neverin: svježe očitanje se čita, wavg je brzina", () => {
   assert.equal(v?.postaja, "vrboran");
   assert.equal(v?.brzina, 0.6);
   assert.equal(v?.smjerOd, 111);
+  assert.equal(v?.naleti, 2.6);
   assert.equal(v?.opazeno, "2026-08-19T14:10:00.000Z");
 });
 

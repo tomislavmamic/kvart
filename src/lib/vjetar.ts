@@ -217,6 +217,8 @@ export type Vjetar = {
   readonly tisina: boolean;
   /** METAR je javio promjenjiv smjer (VRB). */
   readonly promjenjiv: boolean;
+  /** Najjači nalet u m/s; javljaju ga samo Neverin i METAR. */
+  readonly naleti?: number;
   /** Vrijeme opažanja, ISO 8601. */
   readonly opazeno: string;
 };
@@ -282,6 +284,7 @@ export function procitajVjetar(odgovor: unknown, sada: Date): Vjetar | null {
   const sirovSmjer = najnovije.wdir;
   const promjenjiv = sirovSmjer === "VRB" || broj(sirovSmjer) === null;
   const smjer = broj(sirovSmjer);
+  const nalet = broj(najnovije.wgst);
 
   return {
     postaja: "ldsp",
@@ -291,6 +294,9 @@ export function procitajVjetar(odgovor: unknown, sada: Date): Vjetar | null {
     brzina: Number(brzina.toFixed(2)),
     tisina: brzina < 0.5,
     promjenjiv,
+    ...(nalet !== null && nalet > 0
+      ? { naleti: Number((nalet * CVOROVI_U_MS).toFixed(2)) }
+      : {}),
     opazeno: opazeno.toISOString(),
   };
 }
@@ -366,12 +372,14 @@ export function procitajNeverin(
   if (brzina === null || brzina < 0) return null;
 
   const smjer = broj(z.wdir);
+  const nalet = broj(z.wgust);
   return {
     postaja,
     smjerOd: smjer === null ? PRETPOSTAVLJENO.smjerOd : ((smjer % 360) + 360) % 360,
     brzina: Number(brzina.toFixed(2)),
     tisina: brzina < 0.5,
     promjenjiv: smjer === null,
+    ...(nalet !== null && nalet >= 0 ? { naleti: Number(nalet.toFixed(2)) } : {}),
     opazeno: opazeno.toISOString(),
   };
 }

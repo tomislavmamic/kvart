@@ -8,6 +8,7 @@ import {
   doublePrecision,
   boolean,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -210,6 +211,77 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Arhiva izmjerenog vjetra: svako očitanje koje kroz stranicu prođe, trajno.
+ *
+ * Stranica svejedno dohvaća vjetar svakih petnaest minuta; ovdje se to što je
+ * već dohvaćeno i zapiše. Razlog je ovisnost o tuđim poslužiteljima: Neverinov
+ * naslijeđeni API daje samo *zadnje* očitanje (arhiva ne postoji, a bez nje se
+ * postaja ne može ocijeniti na plinu), DHMZ-ov XML nosi samo tekući termin, a
+ * i izvori s arhivom znaju je stanjiti ili zatvoriti. Modeliranje ne smije
+ * ovisiti o tome — što je jednom skupljeno, ostaje naše.
+ *
+ * `directionDeg` je prazan kad postaja nije javila smjer (METAR-ov VRB i
+ * slično): pretpostavljeni smjer kojim prikaz tada crta os NE ulazi u arhivu,
+ * jer bi izmišljeni stupanj otrovao svaku kasniju ocjenu.
+ *
+ * Ista postaja i isti trenutak upisuju se jednom (`onConflictDoNothing`):
+ * dohvat se ponavlja mnogo češće nego što postaje javljaju.
+ */
+export const windReadings = pgTable(
+  "wind_readings",
+  {
+    id: serial("id").primaryKey(),
+    /** Oznaka postaje, ista kao `Postaja` u `src/lib/vjetar.ts`. */
+    station: text("station").notNull(),
+    /** Vrijeme opažanja kako ga je izvor javio, u UTC-u. */
+    observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+    /** Smjer iz kojega puše; prazno kad je promjenjiv ili nejavljen. */
+    directionDeg: doublePrecision("direction_deg"),
+    speedMs: doublePrecision("speed_ms").notNull(),
+    /** Najjači nalet; javljaju ga samo Neverin i METAR. */
+    gustMs: doublePrecision("gust_ms"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("wind_readings_station_observed_idx").on(
+      table.station,
+      table.observedAt,
+    ),
+    index("wind_readings_observed_idx").on(table.observedAt),
+  ],
+);
+
+/**
+ * Arhiva dubine miješanog sloja, iz istog razloga kao vjetar.
+ *
+ * Dubina je modelska (Open-Meteo) i model je zna naknadno popraviti, pa se
+ * ovdje, za razliku od vjetra, kasniji zapis za isti sat prepiše preko
+ * ranijeg — čuva se ono što je stranica *zadnje* koristila za taj sat.
+ */
+export const mixingReadings = pgTable(
+  "mixing_readings",
+  {
+    id: serial("id").primaryKey(),
+    /** Izvor vrijednosti; zasad samo `openmeteo`. */
+    source: text("source").notNull(),
+    /** Sat na koji se dubina odnosi, u UTC-u. */
+    observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+    depthM: doublePrecision("depth_m").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("mixing_readings_source_observed_idx").on(
+      table.source,
+      table.observedAt,
+    ),
+  ],
+);
+
 export const proposalsRelations = relations(proposals, ({ many }) => ({
   statusUpdates: many(statusUpdates),
   documents: many(documents),
@@ -234,3 +306,5 @@ export type StatusUpdate = typeof statusUpdates.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type DocumentRow = typeof documents.$inferSelect;
 export type OdourReport = typeof odourReports.$inferSelect;
+export type WindReading = typeof windReadings.$inferSelect;
+export type MixingReading = typeof mixingReadings.$inferSelect;
