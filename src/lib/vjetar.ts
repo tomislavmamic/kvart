@@ -58,17 +58,17 @@ const MJESTA = Object.fromEntries(
 
 export const POSTAJE = {
   vrboran: {
-    oznaka: "Split-Vrboran",
+    oznaka: "Split-Vrboran (Neverin.hr)",
     ime: "Neverin.hr, Split-Vrboran",
     udaljenostKm: MJESTA.vrboran.odKvartaKm,
   },
   pujanke: {
-    oznaka: "Split-Pujanke",
+    oznaka: "Split-Pujanke (Neverin.hr)",
     ime: "Neverin.hr, Split-Pujanke",
     udaljenostKm: MJESTA.pujanke.odKvartaKm,
   },
   solin: {
-    oznaka: "Solin",
+    oznaka: "Solin (Neverin.hr)",
     ime: "Neverin.hr, Solin",
     udaljenostKm: MJESTA.solin.odKvartaKm,
   },
@@ -93,7 +93,7 @@ export const POSTAJE = {
     udaljenostKm: MJESTA.aerodrom.odKvartaKm,
   },
   zrnovnica: {
-    oznaka: "Žrnovnica",
+    oznaka: "Žrnovnica (Neverin.hr)",
     ime: "Neverin.hr, Žrnovnica",
     udaljenostKm: MJESTA.zrnovnica.odKvartaKm,
   },
