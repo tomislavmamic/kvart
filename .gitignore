@@ -103,3 +103,6 @@ __pycache__/
 # prekinutog rada; u Git i javni build ulazi isključivo sanitizirani GeoJSON.
 /.cache/targeted-ownership/
 /.cache/pregled/
+
+# Izvoz dojava iz produkcije (npm run izvezi-dojave): oznake preglednika i adrese — ne ide u repo.
+data/dojave.json

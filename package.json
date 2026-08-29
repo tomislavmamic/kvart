@@ -38,7 +38,8 @@
     "slobodne-sire": "/opt/homebrew/bin/python3 scripts/slobodne-parcele.py --obuhvat sire",
     "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py",
     "provjeri-vedre-noci": "/opt/homebrew/bin/python3 scripts/provjeri-vedre-noci.py",
-    "izvedi-presjek": "/opt/homebrew/bin/python3 scripts/izvedi-presjek.py"
+    "izvedi-presjek": "/opt/homebrew/bin/python3 scripts/izvedi-presjek.py",
+    "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts"
   },
   "dependencies": {
     "@turf/turf": "^7.3.5",

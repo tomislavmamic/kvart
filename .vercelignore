@@ -19,6 +19,10 @@
 # .gitignore ne može spriječiti jer ovdje git nije u igri.
 /public/geo/grad/katastar-vlasnistvo.geojson
 
+# Izvoz dojava iz produkcije (npm run izvezi-dojave): oznake preglednika
+# i adrese dojavitelja. Analiza na razvojnom stroju, nikad na stranici.
+/data/dojave.json
+
 # Izvorna građa: prevelika, a za rad stranice nepotrebna.
 /*.zip
 /data/sources/
