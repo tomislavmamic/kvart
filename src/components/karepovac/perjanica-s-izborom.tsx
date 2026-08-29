@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type MouseEvent, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { DimPerjanica } from "@/components/karepovac/dim-perjanica";
 import type { ZaletnoPolje } from "@/lib/zrak";
@@ -65,16 +65,138 @@ export function PerjanicaSIzborom({
   natpisi: ReactNode;
 }) {
   const [tvar, odaberi] = useState<Tvar>("sumporovodik");
+  const [prosireno, postaviProsireno] = useState(false);
   const odabrana = TVARI[tvar];
+  const okvir = useRef<HTMLDivElement>(null);
+  const zatvarac = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!prosireno) return;
+
+    const stariOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // Dok je prizor povećan, ostatak stranice doista nije dostupan — isto
+    // obećanje koje `aria-modal` daje čitaču zaslona.
+    const promijenjeni: HTMLElement[] = [];
+    let grana: HTMLElement | null = okvir.current;
+    while (grana?.parentElement) {
+      const roditelj = grana.parentElement;
+      for (const dijete of roditelj.children) {
+        if (dijete === grana || !(dijete instanceof HTMLElement) || dijete.inert)
+          continue;
+        dijete.inert = true;
+        promijenjeni.push(dijete);
+      }
+      if (roditelj === document.body) break;
+      grana = roditelj;
+    }
+
+    const fokus = requestAnimationFrame(() => zatvarac.current?.focus());
+    const tipka = (dogadaj: KeyboardEvent) => {
+      if (dogadaj.key === "Escape") {
+        dogadaj.preventDefault();
+        postaviProsireno(false);
+      } else if (dogadaj.key === "Tab") {
+        dogadaj.preventDefault();
+        zatvarac.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", tipka);
+
+    return () => {
+      cancelAnimationFrame(fokus);
+      document.removeEventListener("keydown", tipka);
+      document.body.style.overflow = stariOverflow;
+      for (const element of promijenjeni) element.inert = false;
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLButtonElement>(
+            '#vizualizacija-zraka button[data-part="expand-trigger"]',
+          )
+          ?.focus();
+      });
+    };
+  }, [prosireno]);
+
+  const zatvoriPozadinu = (dogadaj: MouseEvent<HTMLDivElement>) => {
+    if (prosireno && dogadaj.target === dogadaj.currentTarget) {
+      postaviProsireno(false);
+    }
+  };
 
   return (
     <div>
-      <div className="overflow-hidden rounded-lg border border-kamen-tlo">
-        <div className="relative">
+      <div
+        ref={okvir}
+        id="vizualizacija-zraka"
+        data-component="VizualizacijaZraka"
+        data-part="viewport"
+        data-state={prosireno ? "expanded" : "inline"}
+        role={prosireno ? "dialog" : undefined}
+        aria-modal={prosireno || undefined}
+        aria-label={prosireno ? "Povećana vizualizacija zraka" : undefined}
+        onClick={zatvoriPozadinu}
+        className={
+          prosireno
+            ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 sm:p-8"
+            : "relative overflow-hidden rounded-lg border border-kamen-tlo"
+        }
+      >
+        <div
+          data-part="canvas-stack"
+          className={
+            prosireno
+              ? "relative w-full max-w-7xl overflow-hidden rounded-xl bg-white"
+              : "relative"
+          }
+        >
           {podloga}
           <DimPerjanica polje={polje} zalet={zalet} tvar={tvar} />
           {natpisi}
         </div>
+
+        {prosireno ? (
+          <button
+            ref={zatvarac}
+            type="button"
+            onClick={() => postaviProsireno(false)}
+            aria-label="Zatvori povećanu vizualizaciju zraka"
+            className="fokus absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-kamen-tinta hover:bg-kamen-plitko"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-part="expand-trigger"
+            onClick={() => postaviProsireno(true)}
+            aria-label="Povećaj vizualizaciju zraka"
+            aria-haspopup="dialog"
+            className="fokus group absolute inset-0 z-20 cursor-zoom-in rounded-lg"
+          >
+            <span className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-kamen-rub bg-white/90 text-kamen-tinta group-hover:bg-white">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+                <path
+                  d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">

@@ -248,45 +248,112 @@ function Ploha({ ispuna = true }: { ispuna?: boolean }) {
 
 /** Podloga se crta jednom pa je svaka kartica samo poziva — tako sve stoje
  *  nad istim ulicama i datoteka ostaje razumne veličine. */
+export function PodlogaPozadina() {
+  return (
+    <rect
+      x={-40}
+      y={-40}
+      width={OKVIR.sirina + 80}
+      height={OKVIR.visina + 80}
+      fill="#fcfbf9"
+    />
+  );
+}
+
+export function PodlogaIzohipseSporedne() {
+  return (
+    <path
+      d={PODLOGA.izohipseSporedne}
+      fill="none"
+      stroke="#e9e4da"
+      strokeWidth={0.6}
+      {...NESKALIRANO}
+    />
+  );
+}
+
+export function PodlogaIzohipseGlavne() {
+  return (
+    <path
+      d={PODLOGA.izohipseGlavne}
+      fill="none"
+      stroke="#d6cec0"
+      strokeWidth={1}
+      {...NESKALIRANO}
+    />
+  );
+}
+
+export function PodlogaZgrade() {
+  return <path d={PODLOGA.zgrade} fill="#e2e0dd" />;
+}
+
+export function PodlogaUlice() {
+  return (
+    <path
+      d={PODLOGA.ulice}
+      fill="none"
+      stroke="#c4c2bf"
+      strokeWidth={1.3}
+      strokeLinecap="round"
+      {...NESKALIRANO}
+    />
+  );
+}
+
+export function PodlogaGranicaDracevac() {
+  return (
+    <path
+      d={PODLOGA.granicaDracevac}
+      fill="none"
+      stroke="var(--color-maslina)"
+      strokeWidth={1.7}
+      strokeDasharray="5 4"
+      {...NESKALIRANO}
+    />
+  );
+}
+
+export function PodlogaGranicaBilice() {
+  return (
+    <path
+      d={PODLOGA.granicaBilice}
+      fill="none"
+      stroke="var(--color-maslina)"
+      strokeWidth={1.7}
+      strokeDasharray="5 4"
+      {...NESKALIRANO}
+    />
+  );
+}
+
+export function PodlogaReljef() {
+  return (
+    <image
+      href="/karepovac/kvart-reljef.png"
+      x={0}
+      y={0}
+      width={OKVIR.sirina}
+      height={OKVIR.visina}
+      opacity={0.65}
+      style={{ mixBlendMode: "multiply" }}
+      preserveAspectRatio="none"
+    />
+  );
+}
+
 export function PodlogaDefinicija() {
   return (
     <svg width={0} height={0} aria-hidden="true" focusable="false" className="absolute">
       <defs>
         <g id="karepovac-podloga">
-          <rect
-            x={-40}
-            y={-40}
-            width={OKVIR.sirina + 80}
-            height={OKVIR.visina + 80}
-            fill="#fcfbf9"
-          />
-          <path d={PODLOGA.izohipseSporedne} fill="none" stroke="#e9e4da" strokeWidth={0.6} {...NESKALIRANO} />
-          <path d={PODLOGA.izohipseGlavne} fill="none" stroke="#d6cec0" strokeWidth={1} {...NESKALIRANO} />
-          <path d={PODLOGA.zgrade} fill="#e2e0dd" />
-          <path
-            d={PODLOGA.ulice}
-            fill="none"
-            stroke="#c4c2bf"
-            strokeWidth={1.3}
-            strokeLinecap="round"
-            {...NESKALIRANO}
-          />
-          <path
-            d={PODLOGA.granicaDracevac}
-            fill="none"
-            stroke="var(--color-maslina)"
-            strokeWidth={1.7}
-            strokeDasharray="5 4"
-            {...NESKALIRANO}
-          />
-          <path
-            d={PODLOGA.granicaBilice}
-            fill="none"
-            stroke="var(--color-maslina)"
-            strokeWidth={1.7}
-            strokeDasharray="5 4"
-            {...NESKALIRANO}
-          />
+          <PodlogaPozadina />
+          <PodlogaIzohipseSporedne />
+          <PodlogaIzohipseGlavne />
+          <PodlogaZgrade />
+          <PodlogaUlice />
+          <PodlogaGranicaDracevac />
+          <PodlogaGranicaBilice />
         </g>
         <clipPath id="karepovac-okvir">
           <rect width={OKVIR.sirina} height={OKVIR.visina} />
@@ -354,26 +421,17 @@ function NatpisOkvira({ children }: { children: string }) {
  * Način miješanja je `multiply`, a ne neprozirna slika: podloga ispod nosi
  * ceste, zgrade i izohipse, pa ih sjena smije potamniti ali ne i pojesti.
  */
-function PodlogaKarte() {
+export function PodlogaKarte() {
   return (
     <svg viewBox={OKVIR.viewBox} aria-hidden="true" className="block h-auto w-full">
       <use href="#karepovac-podloga" />
-      <image
-        href="/karepovac/kvart-reljef.png"
-        x={0}
-        y={0}
-        width={OKVIR.sirina}
-        height={OKVIR.visina}
-        opacity={0.65}
-        style={{ mixBlendMode: "multiply" }}
-        preserveAspectRatio="none"
-      />
+      <PodlogaReljef />
     </svg>
   );
 }
 
 /** Obris plohe, imena mjesta i mjerilo — sve što dim ne smije progutati. */
-function NatpisiKarte({ opis, children }: { opis: string; children?: ReactNode }) {
+export function NatpisiKarte({ opis, children }: { opis: string; children?: ReactNode }) {
   return (
     <svg
       viewBox={OKVIR.viewBox}

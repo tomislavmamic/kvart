@@ -130,3 +130,22 @@ test("platno leži ispod natpisa, da dim ne proguta imena mjesta", () => {
   assert.ok(platno > 0 && natpis > 0, "oba sloja moraju postojati");
   assert.ok(platno < natpis, "natpisi se crtaju nakon platna");
 });
+
+test("vizualizacija ima stabilan nametag i zasebnu kontrolu za povećanje", () => {
+  const markup = nacrtaj(JUGO);
+  const pocetak = markup.indexOf('id="vizualizacija-zraka"');
+  const kraj = markup.indexOf("Boja pokazuje", pocetak);
+
+  assert.ok(pocetak > 0 && kraj > pocetak, "vizualizacija mora imati imenovani omotač");
+  const vizualizacija = markup.slice(pocetak, kraj);
+  assert.match(vizualizacija, /data-component="VizualizacijaZraka"/);
+  assert.match(vizualizacija, /data-part="viewport"/);
+  assert.match(vizualizacija, /data-state="inline"/);
+  assert.match(vizualizacija, /<canvas\b/);
+  assert.match(vizualizacija, /Dračevac/);
+  assert.match(
+    vizualizacija,
+    /<button[^>]*aria-label="Povećaj vizualizaciju zraka"[^>]*aria-haspopup="dialog"/,
+  );
+  assert.equal(markup.match(/<canvas\b/g)?.length, 1, "povećanje ne smije udvostručiti simulaciju");
+});
