@@ -5,12 +5,18 @@
  * nego na dvjema veličinama koje se ovdje dohvaćaju:
  *
  * 1. **vjetar** — izmjeren, s najbliže postaje koja ga u tom trenutku objavljuje.
- *    Redom: AZO-ove postaje Split-3 (4,3 km) i Split-2 (4,6 km), pa DHMZ-ov
- *    Split-Marjan (6 km) i Split-aerodrom, pa METAR iste zračne luke (LDSP,
- *    16 km). Nijedan izvor sam nije dovoljan: Marjanu vjetar u javnom
- *    izvještaju često stoji kao „−” iako ga postaja mjeri, AZO daje sirova
- *    satna očitanja, a METAR je jedini koji uvijek stigne i jedini na kojem je
- *    veza s plinom provjerena.
+ *    Redom: Neverinov Split-Vrboran (1,1 km, korak od pet minuta), pa AZO-ove
+ *    postaje Split-3 (4,3 km) i Split-2 (4,6 km), DHMZ-ov Split-Marjan (6 km)
+ *    i Split-aerodrom, pa METAR iste zračne luke (LDSP, 16 km). Nijedan izvor
+ *    sam nije dovoljan: Marjanu vjetar u javnom izvještaju često stoji kao „−”
+ *    iako ga postaja mjeri, AZO daje sirova satna očitanja, a METAR je jedini
+ *    koji uvijek stigne i jedini na kojem je veza s plinom provjerena.
+ *
+ *    Neverinove postaje (Vrboran, Pujanke, Solin, Žrnovnica) idu preko
+ *    naslijeđenog API-ja `api.neverin.hr/v2`, uz pisano dopuštenje vlasnika
+ *    (29. 8. 2026.) i uz uvjet da se izvor navede — zato „Neverin.hr” stoji u
+ *    imenu postaje i ide svugdje gdje se ime prikaže. Vidi
+ *    `docs/neverin-postaje.md`.
  *
  *    Na samom Karepovcu anemometra nema: obje postaje uz plohu (Karepovac,
  *    Karepovac 2) u AZO-ovoj bazi vraćaju prazno za brzinu i smjer vjetra.
@@ -51,6 +57,21 @@ const MJESTA = Object.fromEntries(
 ) as Record<string, (typeof POSTAJE_VJETRA)[number]>;
 
 export const POSTAJE = {
+  vrboran: {
+    oznaka: "Split-Vrboran",
+    ime: "Neverin.hr, Split-Vrboran",
+    udaljenostKm: MJESTA.vrboran.odKvartaKm,
+  },
+  pujanke: {
+    oznaka: "Split-Pujanke",
+    ime: "Neverin.hr, Split-Pujanke",
+    udaljenostKm: MJESTA.pujanke.odKvartaKm,
+  },
+  solin: {
+    oznaka: "Solin",
+    ime: "Neverin.hr, Solin",
+    udaljenostKm: MJESTA.solin.odKvartaKm,
+  },
   split3: {
     oznaka: "Split-3",
     ime: "AZO, postaja Split-3",
@@ -71,6 +92,11 @@ export const POSTAJE = {
     ime: "DHMZ, Split-aerodrom",
     udaljenostKm: MJESTA.aerodrom.odKvartaKm,
   },
+  zrnovnica: {
+    oznaka: "Žrnovnica",
+    ime: "Neverin.hr, Žrnovnica",
+    udaljenostKm: MJESTA.zrnovnica.odKvartaKm,
+  },
   ldsp: {
     oznaka: "LDSP",
     ime: "METAR, Zračna luka Split",
@@ -89,11 +115,25 @@ export type Postaja = keyof typeof POSTAJE;
  * (AUC 0,51), a gradske i marjanska postaja imaju (0,54–0,59). Zato je zračna
  * luka posljednja iako je jedina koja uvijek javi, a Marjan je iznad Splita-2
  * iako je dalje.
+ *
+ * Vrboran je iznimka od tog pravila i to treba reći otvoreno: kroz provjeru
+ * nije prošao, jer arhive nema — naslijeđeni API daje samo zadnje očitanje.
+ * Vodi zato što je četiri puta bliži od svega provjerenog (1,1 km od kvarta,
+ * 1,4 km od plohe) i javlja svakih pet minuta, a provjera je mjerila koliko
+ * satni niz objašnjava H₂S unatrag, ne tko bolje zna što puše sada. Ako se
+ * pokaže lošim, prvi je kandidat za spuštanje — jedna crta u ovom popisu.
+ * Pujanke i Solin stoje iza svega provjerenog, jer za njih ni taj argument
+ * blizine nije tako jak; Žrnovnica je s nizom stalim 2. 2. 2025. ionako
+ * mrtva i preskače je provjera starosti.
  */
 const REDOSLIJED: readonly Postaja[] = [
+  "vrboran",
   "split3",
   "marjan",
   "split2",
+  "pujanke",
+  "solin",
+  "zrnovnica",
   "aerodrom",
   "ldsp",
 ];
@@ -110,6 +150,26 @@ const AZO = {
   brzina: 477,
   smjer: 478,
 } as const;
+
+/**
+ * Neverinove oznake postaja u naslijeđenom API-ju.
+ *
+ * Dopuštenje vlasnika (29. 8. 2026.) vrijedi baš za ove četiri; novi je API u
+ * izradi, pa adresa može prestati raditi bez najave — svaki dohvat zato mora
+ * podnijeti i tišinu s ove strane.
+ */
+const NEVERIN = {
+  vrboran: "split-vrboran",
+  pujanke: "split-pujanke",
+  solin: "solin",
+  zrnovnica: "zrnovnica",
+} as const;
+
+type NeverinPostaja = keyof typeof NEVERIN;
+
+function neverinAdresa(postaja: NeverinPostaja): string {
+  return `https://api.neverin.hr/v2/stations/last/?station=${NEVERIN[postaja]}`;
+}
 
 const METAR_URL =
   "https://aviationweather.gov/api/data/metar?ids=LDSP&format=json&hours=3";
@@ -231,6 +291,87 @@ export function procitajVjetar(odgovor: unknown, sada: Date): Vjetar | null {
     brzina: Number(brzina.toFixed(2)),
     tisina: brzina < 0.5,
     promjenjiv,
+    opazeno: opazeno.toISOString(),
+  };
+}
+
+/**
+ * Pretvara Neverinov mjesni zapis vremena u trenutak.
+ *
+ * API piše „2026-08-29 15:10:00” u zoni Europe/Zagreb, bez oznake pomaka.
+ * Umjesto računanja ljetnog vremena isprobaju se oba pomaka koja ta zona
+ * ima, pa se zadrži onaj koji se, formatiran natrag u istu zonu, poklopi sa
+ * zapisom — isti pristup kao `trenutakIzTermina` za DHMZ, samo s minutama.
+ *
+ * Args:
+ *   zapis: Vrijeme kako ga API piše, „GGGG-MM-DD HH:MM:SS”.
+ *
+ * Returns:
+ *   Trenutak, ili ništa ako zapis nije vrijeme.
+ */
+export function trenutakNeverina(zapis: string): Date | null {
+  const pogodak = zapis.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}):\d{2}$/);
+  if (!pogodak) return null;
+  const kalendar = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Zagreb",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  for (const pomak of ["+02:00", "+01:00"]) {
+    const kad = new Date(`${pogodak[1]}T${pogodak[2]}:00${pomak}`);
+    if (Number.isNaN(kad.getTime())) continue;
+    const dijelovi = kalendar.formatToParts(kad);
+    const dio = (tip: string) => dijelovi.find((d) => d.type === tip)?.value ?? "";
+    const natrag = `${dio("year")}-${dio("month")}-${dio("day")} ${dio("hour")}:${dio("minute")}`;
+    if (natrag === `${pogodak[1]} ${pogodak[2]}`) return kad;
+  }
+  return null;
+}
+
+/**
+ * Čita zadnje očitanje s Neverinove postaje.
+ *
+ * Brzina je `wavg` — prosjek, ne `wgust`: model uzima vjetar koji nosi, a ne
+ * najjači nalet. Postaja koja je prestala javljati (Žrnovnica stoji od
+ * 2. 2. 2025.) otpada na istoj provjeri starosti kao i svi ostali izvori.
+ *
+ * Args:
+ *   postaja: Koja je postaja u pitanju.
+ *   odgovor: Razložen JSON s `api.neverin.hr`.
+ *   sada: Trenutak prema kojem se prosuđuje starost.
+ *
+ * Returns:
+ *   Vjetar, ili ništa ako očitanja nema, ako je prestaro ili bez brzine.
+ */
+export function procitajNeverin(
+  postaja: NeverinPostaja,
+  odgovor: unknown,
+  sada: Date,
+): Vjetar | null {
+  if (typeof odgovor !== "object" || odgovor === null) return null;
+  const data = (odgovor as Record<string, unknown>).data;
+  if (typeof data !== "object" || data === null) return null;
+  const zadnje = (data as Record<string, unknown>).last;
+  if (typeof zadnje !== "object" || zadnje === null) return null;
+  const z = zadnje as Record<string, unknown>;
+
+  const opazeno = typeof z.datetime === "string" ? trenutakNeverina(z.datetime) : null;
+  if (!opazeno || sada.getTime() - opazeno.getTime() > NAJSTARIJE_MS) return null;
+
+  const brzina = broj(z.wavg) ?? broj(z.wspeed);
+  if (brzina === null || brzina < 0) return null;
+
+  const smjer = broj(z.wdir);
+  return {
+    postaja,
+    smjerOd: smjer === null ? PRETPOSTAVLJENO.smjerOd : ((smjer % 360) + 360) % 360,
+    brzina: Number(brzina.toFixed(2)),
+    tisina: brzina < 0.5,
+    promjenjiv: smjer === null,
     opazeno: opazeno.toISOString(),
   };
 }
@@ -494,7 +635,8 @@ async function uzmi(
  *   Stanje za model, izvorna očitanja i oznaka koliko je od toga živo.
  */
 export async function dohvatiZrak(sada: Date = new Date()): Promise<ZrakSada> {
-  const [b3, s3, b2, s2, dhmz, metar, meteo] = await Promise.all([
+  const neverinske = Object.keys(NEVERIN) as NeverinPostaja[];
+  const [b3, s3, b2, s2, dhmz, metar, meteo, ...neverin] = await Promise.all([
     uzmi(azoAdresa("split3", AZO.brzina, sada), ROK_VJETRA),
     uzmi(azoAdresa("split3", AZO.smjer, sada), ROK_VJETRA),
     uzmi(azoAdresa("split2", AZO.brzina, sada), ROK_VJETRA),
@@ -502,11 +644,13 @@ export async function dohvatiZrak(sada: Date = new Date()): Promise<ZrakSada> {
     uzmi(DHMZ_URL, ROK_VJETRA, "tekst"),
     uzmi(METAR_URL, ROK_VJETRA),
     uzmi(MIJESANJE_URL, ROK_MIJESANJA),
+    ...neverinske.map((p) => uzmi(neverinAdresa(p), ROK_VJETRA)),
   ]);
 
   // Sve se čita, pa i ono što neće voditi kartu: tek kad se postaje usporede
   // vidi se koliko je vjetar nad gradom uopće jednoznačan.
   const ocitanja = [
+    ...neverinske.map((p, i) => procitajNeverin(p, neverin[i], sada)),
     procitajAzo("split3", b3, s3, sada),
     procitajAzo("split2", b2, s2, sada),
     procitajDhmz(dhmz, sada),

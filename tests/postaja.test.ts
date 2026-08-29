@@ -170,12 +170,27 @@ test("koordinate vjetrokaza izlaze iz jednog izvora", () => {
 });
 
 test("nijedan anemometar nije na Karepovcu, i to piše brojkom", () => {
-  // Rečenica „vjetar se mjeri 4 do 16 km zapadno” stoji na `/karepovac/postaje`
-  // i u natpisu sloja. Ovdje se drži uz podatak.
+  // Rečenica „vjetar se mjeri od 1,1 do 16 km od kvarta, nijednom na
+  // Karepovcu” stoji na stranici o zraku i u natpisu sloja. Ovdje se drži uz
+  // podatak: najbliža postaja je Neverinov Vrboran na 1,1 km, a nijedna ne
+  // stoji na samoj plohi.
+  const najbliza = Math.min(...POSTAJE_VJETRA.map((p) => p.odKvartaKm));
+  assert.equal(najbliza, 1.1, "tekst tvrdi da najbliža stoji na 1,1 km");
   for (const p of POSTAJE_VJETRA) {
     assert.ok(
+      p.odPloheKm >= 1,
+      `${p.naziv} je ${p.odPloheKm} km od plohe — na Karepovcu se vjetar ne mjeri`,
+    );
+  }
+
+  // Rečenica „državni anemometri stoje četiri do šesnaest kilometara zapadno”
+  // sada vrijedi samo za državne mreže; Neverinove postaje stoje i bliže i na
+  // drugim stranama.
+  const drzavne = POSTAJE_VJETRA.filter((p) => p.mreza !== "Neverin.hr");
+  for (const p of drzavne) {
+    assert.ok(
       p.odKvartaKm >= 4,
-      `${p.naziv} je na ${p.odKvartaKm} km — tekst tvrdi da je najbliži 4 km`,
+      `${p.naziv} je na ${p.odKvartaKm} km — tekst tvrdi da je najbliža državna 4 km`,
     );
     assert.ok(p.odPloheKm > p.odKvartaKm, "ploha je istočnije od kvarta");
     assert.ok(

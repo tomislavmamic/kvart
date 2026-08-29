@@ -627,22 +627,23 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     group: "Zrak",
     phase: 1,
   },
-  // Anemometri. Vjetar je jedini **izmjeren** ulaz modela, a nijedan mu se
-  // mjerač ne nalazi bliže od 4,3 km — i svi su na zapadu, u gradu ili iza
-  // Kozjaka. Sloj to pokazuje udaljenošću, a ne rečenicom u fusnoti.
+  // Anemometri. Vjetar je jedini **izmjeren** ulaz modela. Državne postaje
+  // stoje 4,3 do 16 km zapadno, u gradu ili iza Kozjaka; od 29. 8. 2026. tu
+  // su i Neverinove (dopuštenje vlasnika, izvor se navodi), s Vrboranom na
+  // 1,1 km od kvarta. Sloj to pokazuje udaljenošću, a ne rečenicom u fusnoti.
   //
-  // Samo najbliži, Split-3, pada unutar `MAP_MAX_BOUNDS`, i to na samom rubu.
-  // Ostala tri leže zapadnije nego što se karta da povući. Okvir se zbog toga
+  // Neverinove postaje i Split-3 padaju unutar `MAP_MAX_BOUNDS`; državne
+  // ostale leže zapadnije nego što se karta da povući. Okvir se zbog toga
   // ne rasteže: preko Splita i Kaštela nijedan od preostalih slojeva nema
   // podatke, pa bi se dobilo tri četvrtine praznog okna. Umjesto toga to piše
-  // u natpisu sloja, a koordinate, udaljenosti i azimuti svih pet stoje u
-  // tablici na `/karepovac/postaje`.
+  // u natpisu sloja, a koordinate, udaljenosti i azimuti svih stoje u
+  // tablici na stranici o zraku.
   {
     id: "postaje-vjetra",
-    label: "Postaje za vjetar (4–16 km zapadno, uglavnom izvan okvira)",
+    label: "Postaje za vjetar (od 1,1 km — Neverin.hr — do 16 km)",
     type: "geojson",
     url: "/geo/postaje-vjetra.geojson",
-    attribution: "AZO, DHMZ i METAR · položaji provjereni na terenu i u popisima",
+    attribution: "Neverin.hr, AZO, DHMZ i METAR · položaji provjereni na terenu i u popisima",
     color: "#0f766e",
     group: "Zrak",
     phase: 1,
@@ -1431,9 +1432,9 @@ const POGLEDI: MapView[] = [
       "Dračevcu razilaze se za 153°. Ovo je izvod, ne mjerenje: govori gdje " +
       "je zrak s plohe češće prolazio, a ne koliko je tada smrdjelo — " +
       "merkaptane, koje nos zapravo prepoznaje, model ne pogađa. Vjetar koji " +
-      "sve to nosi mjeri se 4 do 16 km zapadno; od tih postaja unutar ovog " +
-      "okvira stoji samo najbliža, pa njihov popis s udaljenostima stoji na " +
-      "stranici o zraku. Cijelo objašnjenje stoji ondje.",
+      "je ovu kartu vodio mjeren je 4 do 16 km zapadno — bliže postaje " +
+      "(Neverin.hr, od 1,1 km) tada još nisu bile priključene i nemaju " +
+      "arhive. Popis postaja s udaljenostima stoji na stranici o zraku.",
     layerIds: [
       "karepovac-sati",
       "karepovac-prosjek",

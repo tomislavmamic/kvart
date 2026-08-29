@@ -138,12 +138,14 @@ export function MjestoPostaje() {
 }
 
 /**
- * Anemometri: jedini izmjeren ulaz modela, i nijedan nije blizu.
+ * Anemometri: jedini izmjeren ulaz modela.
  *
- * Vrijedi ga staviti uz mjesto mjerne postaje, jer su to dvije polovice iste
- * ograde. Plin se mjeri na jednoj točki s krive strane odlagališta, a vjetar
- * koji bi ga trebao nositi mjeri se četiri do šesnaest kilometara zapadno, u
- * gradu ili iza Kozjaka. Na samom Karepovcu ne mjeri se ni jedno ni drugo.
+ * Vrijedi ih staviti uz mjesto mjerne postaje, jer su to dvije polovice iste
+ * ograde. Plin se mjeri na jednoj točki s krive strane odlagališta, a državni
+ * anemometri stoje četiri do šesnaest kilometara zapadno. Od 29. 8. 2026. tu
+ * su i Neverinove postaje (uz pisano dopuštenje vlasnika, s navođenjem
+ * izvora), pa najbliži anemometar stoji na 1,1 km — no na samom Karepovcu i
+ * dalje se ne mjeri ni plin ni vjetar.
  *
  * Zračna luka i DHMZ-ov „Split-aerodrom” stoje na istom mjestu i zato se ovdje
  * spajaju u jedan redak — dva retka s istim koordinatama izgledala bi kao dva
@@ -155,13 +157,21 @@ export function VjetrokaziOkoKvarta() {
   return (
     <figure className="rounded-xl border border-kamen-tlo bg-white p-6">
       <figcaption className="text-xl font-bold text-kamen-tinta">
-        Vjetar se mjeri 4 do 16 km zapadno, nijednom na Karepovcu
+        Vjetar se mjeri od 1,1 do 16 km od kvarta, nijednom na Karepovcu
       </figcaption>
       <p className="mt-3 max-w-2xl text-base leading-7 text-kamen-tekst">
         Smjer i brzina vjetra jedino su što u modelu doista netko izmjeri —
         polje strujanja, dubina sloja i jačina izvora su izvodi. Obje postaje uz
         plohu u AZO-ovoj bazi za vjetar vraćaju prazno, pa se uzima najbliža
-        koja ga objavljuje.
+        koja ga objavljuje. Najbliže četiri javljaju preko{" "}
+        <a
+          className="fokus rounded-sm font-medium text-maslina underline decoration-maslina-rub underline-offset-2 hover:text-maslina-tamna"
+          href="https://www.neverin.hr"
+          rel="noopener"
+        >
+          Neverin.hr
+        </a>
+        , uz dopuštenje vlasnika mreže.
       </p>
       <div className="mt-5 overflow-x-auto">
         <table className="w-full min-w-[34rem] border-collapse text-base">
@@ -196,11 +206,14 @@ export function VjetrokaziOkoKvarta() {
         </table>
       </div>
       <p className="mt-5 max-w-2xl text-base leading-7 text-kamen-drugi">
-        Svi su na zapadu. Zračna luka, jedina koja uvijek javi, leži iza Kozjaka
-        i opisuje kaštelansko polje, a ne našu padinu — zato u redoslijedu stoji
-        posljednja iako je najpouzdanija u dostupnosti. Koordinate su
-        provjerene: Split-2 i Split-3 na terenu, Marjan iz DHMZ-ova popisa,
-        zračna luka iz istog METAR servisa iz kojega dolazi i vjetar.
+        Zračna luka, jedina koja uvijek javi, leži iza Kozjaka i opisuje
+        kaštelansko polje, a ne našu padinu — zato u redoslijedu stoji
+        posljednja iako je najpouzdanija u dostupnosti. Neverinove postaje
+        kroz provjeru na plinu još nisu prošle, jer im arhive nema: Vrboran
+        vodi kartu zbog blizine i koraka od pet minuta, i to otvoreno piše u
+        redoslijedu. Koordinate su provjerene: Split-2 i Split-3 na terenu,
+        Marjan iz DHMZ-ova popisa, zračna luka iz istog METAR servisa iz
+        kojega dolazi i vjetar, Neverinove iz njegova API-ja.
       </p>
     </figure>
   );

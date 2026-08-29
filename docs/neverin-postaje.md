@@ -3,13 +3,43 @@
 **Provjereno 28. 8. 2026.** Ponovljivo za geometriju:
 `scripts/neverin_postaje.py`.
 
+## Dopuštenje i priključenje (29. 8. 2026.)
+
+Vlasnik Neverina dao je pisano dopuštenje za korištenje naslijeđenog API-ja
+(`https://api.neverin.hr/v2/stations/last/?station=<oznaka>`) za četiri
+postaje: **Solin, Split-Pujanke, Split-Vrboran i Žrnovnicu**, uz uvjet da se
+izvor navede kao Neverin.hr. Novi je API u izradi, pa naslijeđena adresa može
+prestati raditi bez najave — dohvat u `src/lib/vjetar.ts` zato podnosi i
+tišinu s te strane.
+
+Sve četiri su priključene u živi lanac (`dohvatiZrak`), s „Neverin.hr” u
+imenu postaje svugdje gdje se ime prikaže. Vrboran vodi kartu — 1,1 km od
+kvarta, korak od pet minuta — i to kao **izjava geometrije, ne provjere**:
+kroz postupak iz `provjeri-izvore-vjetra.py` nije prošao, jer arhive nema
+(API daje samo zadnje očitanje). Pujanke i Solin stoje iza svega provjerenog.
+Odluka i obrazloženje stoje uz `REDOSLIJED` u `src/lib/vjetar.ts`, gdje se
+jednom crtom i mijenja.
+
+Dvije stvari izmjerene odmah po priključenju:
+
+- **Žrnovnica ne javlja od 2. 2. 2025.** Dopuštenje je ima, provjera starosti
+  je preskače; ako ikad proradi, uključit će se sama.
+- Prvo živo očitanje (29. 8. 2026. 15:25): Vrboran 185°, 0,5 m/s dok Marjan
+  javlja 225°, 4 m/s — postaja pod brdom mjeri bitno slabiji vjetar nego
+  izložena. To je točno ograda „zavjetrina kuće” iz zadnjeg odjeljka: blizina
+  nije vjernost, i ocjena na plinu ostaje nužna čim se nakupi arhiva.
+
+Arhive i dalje nema ni za jednu (naslijeđeni `/last` ne vraća povijest), pa
+sve u nastavku o ocjenjivanju i putovima do arhive ostaje na snazi.
+
 Cijeli model raspršenja stoji na jednom izmjerenom ulazu — vjetru — a
 `docs/provjera-izvora-vjetra.md` ga zaključuje ogradom: „Na samoj plohi
 anemometra nema. Sve gore je zaključivanje s 4 do 16 km udaljenosti.” Ovdje se
 provjeravalo može li se ta udaljenost skratiti postajama koje objavljuje
 `neverin.hr`.
 
-Odgovor je dvodijelan: **geometrijski da, pravno ne bez dopuštenja.**
+Odgovor je dvodijelan: **geometrijski da, pravno ne bez dopuštenja** — a
+dopuštenje je u međuvremenu stiglo, vidi gore.
 
 ## Što tamo stoji
 

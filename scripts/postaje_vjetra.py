@@ -9,6 +9,12 @@ nije bliže od četiri kilometra, i svi su na zapadu, u gradu ili iza Kozjaka.
 Na samom Karepovcu anemometra nema. Obje postaje uz plohu (`scripts/postaje.py`)
 u AZO-ovoj bazi vraćaju prazno za brzinu i smjer vjetra — provjereno 19. 8. 2026.
 
+Od 29. 8. 2026. tu su i četiri Neverinove postaje, s pisanim dopuštenjem
+vlasnika za naslijeđeni API (`api.neverin.hr/v2`) — vidi
+`docs/neverin-postaje.md`. Vrboran je prvi anemometar unutar kilometra i pol
+od plohe. Uvjet dopuštenja je navođenje izvora, pa "Neverin.hr" stoji u
+`mreza` i ide svugdje gdje se postaja imenuje.
+
 Koordinate se ne prepisuju iz teksta nego imaju podrijetlo, po postaji:
 
 - **Split-2 i Split-3** — nađene na terenu (22. 8. 2026.). Slažu se s AZO-ovim
@@ -59,6 +65,33 @@ class PostajaVjetra:
 #: Redoslijed je isti kao `POSTAJE` u `src/lib/vjetar.ts`, od najbliže dalje.
 POSTAJE_VJETRA = (
     PostajaVjetra(
+        "vrboran",
+        "Split-Vrboran",
+        "Neverin.hr",
+        43.515261,
+        16.496216,
+        74.0,
+        "api.neverin.hr, polja lat/lon/alt postaje; Neverinova vlastita postaja",
+    ),
+    PostajaVjetra(
+        "pujanke",
+        "Split-Pujanke",
+        "Neverin.hr",
+        43.516,
+        16.473,
+        82.0,
+        "api.neverin.hr, polja lat/lon/alt postaje",
+    ),
+    PostajaVjetra(
+        "solin",
+        "Solin",
+        "Neverin.hr",
+        43.544,
+        16.484,
+        63.0,
+        "api.neverin.hr, polja lat/lon/alt postaje",
+    ),
+    PostajaVjetra(
         "split3",
         "Split-3",
         "AZO, državna mreža",
@@ -75,6 +108,15 @@ POSTAJE_VJETRA = (
         16.44246833781461,
         None,
         "nađeno na terenu; AZO-ov popis daje 43,518333 / 16,442222 (25 m)",
+    ),
+    PostajaVjetra(
+        "zrnovnica",
+        "Žrnovnica",
+        "Neverin.hr",
+        43.519,
+        16.56,
+        32.0,
+        "api.neverin.hr, polja lat/lon/alt postaje; niz stoji od 2. 2. 2025.",
     ),
     PostajaVjetra(
         "marjan",

@@ -4,6 +4,75 @@
   {
    "type": "Feature",
    "properties": {
+    "oznaka": "vrboran",
+    "naziv": "Split-Vrboran",
+    "mreza": "Neverin.hr",
+    "lat": 43.515261,
+    "lon": 16.496216,
+    "visina": 74.0,
+    "podrijetlo": "api.neverin.hr, polja lat/lon/alt postaje; Neverinova vlastita postaja",
+    "odKvartaKm": 1.1,
+    "azimutOdKvarta": 193,
+    "odPloheKm": 1.4,
+    "azimutOdPlohe": 241
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.496216,
+     43.515261
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "pujanke",
+    "naziv": "Split-Pujanke",
+    "mreza": "Neverin.hr",
+    "lat": 43.516,
+    "lon": 16.473,
+    "visina": 82.0,
+    "podrijetlo": "api.neverin.hr, polja lat/lon/alt postaje",
+    "odKvartaKm": 2.3,
+    "azimutOdKvarta": 245,
+    "odPloheKm": 3.2,
+    "azimutOdPlohe": 259
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.473,
+     43.516
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "solin",
+    "naziv": "Solin",
+    "mreza": "Neverin.hr",
+    "lat": 43.544,
+    "lon": 16.484,
+    "visina": 63.0,
+    "podrijetlo": "api.neverin.hr, polja lat/lon/alt postaje",
+    "odKvartaKm": 2.4,
+    "azimutOdKvarta": 330,
+    "odPloheKm": 3.4,
+    "azimutOdPlohe": 318
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.484,
+     43.544
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
     "oznaka": "split3",
     "naziv": "Split-3",
     "mreza": "AZO, državna mreža",
@@ -44,6 +113,29 @@
     "coordinates": [
      16.44246833781461,
      43.5184711569566
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "oznaka": "zrnovnica",
+    "naziv": "Žrnovnica",
+    "mreza": "Neverin.hr",
+    "lat": 43.519,
+    "lon": 16.56,
+    "visina": 32.0,
+    "podrijetlo": "api.neverin.hr, polja lat/lon/alt postaje; niz stoji od 2. 2. 2025.",
+    "odKvartaKm": 4.9,
+    "azimutOdKvarta": 98,
+    "odPloheKm": 3.9,
+    "azimutOdPlohe": 94
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     16.56,
+     43.519
     ]
    }
   },

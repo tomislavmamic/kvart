@@ -7,8 +7,10 @@ import {
   procitajDhmz,
   procitajAzo,
   procitajMijesanje,
+  procitajNeverin,
   procitajVjetar,
   trenutakIzTermina,
+  trenutakNeverina,
 } from "@/lib/vjetar";
 
 const SADA = new Date("2026-08-19T14:20:00Z");
@@ -142,6 +144,26 @@ function azo(sati: readonly [number, number][]): unknown {
 
 type AzoPostaja = { brzina: unknown; smjer: unknown } | null;
 
+/**
+ * Odgovor Neverinova naslijeđenog API-ja, svučen na ono što se čita.
+ *
+ * Vrijeme je mjesno (Europe/Zagreb), kako ga API i piše; 16:10 je ono što u
+ * Splitu piše u 14:10 UTC ljeti.
+ */
+function neverinski(
+  datetime = "2026-08-19 16:10:00",
+  wavg: number | null = 0.6,
+  wdir: number | null = 111,
+) {
+  return {
+    status: "success",
+    data: {
+      last: { datetime, temp: 31, wspeed: null, wgust: 2.6, wavg, wdir },
+      station: { name: "Split-Vrboran", source: "Neverin", source_url: "https://www.neverin.hr" },
+    },
+  };
+}
+
 /** Odgovara kao svi izvori odjednom; AZO se razlikuje po oznaci postaje. */
 function posluzi(
   t: TestContext,
@@ -149,7 +171,13 @@ function posluzi(
     dhmz,
     split3 = null,
     split2 = null,
-  }: { dhmz: string; split3?: AzoPostaja; split2?: AzoPostaja },
+    neverin = {},
+  }: {
+    dhmz: string;
+    split3?: AzoPostaja;
+    split2?: AzoPostaja;
+    neverin?: Record<string, unknown>;
+  },
 ): string[] {
   const zvano: string[] = [];
   t.mock.method(globalThis, "fetch", async (url: string, opcije: RequestInit) => {
@@ -170,6 +198,10 @@ function posluzi(
         : [];
     } else if (url.includes("aviationweather")) {
       tijelo = [opazanje(10, 112, 4)];
+    } else if (url.includes("api.neverin.hr")) {
+      const oznaka = url.split("station=")[1];
+      // Postaja bez zadanog odgovora šuti kao da je pala — ništa u `data`.
+      tijelo = neverin[oznaka] ?? { status: "error", data: null };
     } else {
       tijelo = { hourly: { time: ["2026-08-19T14:00"], boundary_layer_height: [140] } };
     }
@@ -184,7 +216,7 @@ test("dohvat zove sve izvore i sastavlja stanje", async (t) => {
   const zvano = posluzi(t, { dhmz: xml([["Split-Marjan", "-", "-"]]) });
 
   const zrak = await dohvatiZrak(SADA);
-  assert.equal(zvano.length, 7, "sve postaje i sloj miješanja moraju biti pitani");
+  assert.equal(zvano.length, 11, "sve postaje i sloj miješanja moraju biti pitani");
   assert.equal(zrak.izvor, "uzivo");
   assert.equal(zrak.vjetar?.postaja, "ldsp", "bez DHMZ-ova vjetra ostaje METAR");
   assert.equal(zrak.stanje.smjerOd, 112);
@@ -233,6 +265,73 @@ test("prestaro AZO-ovo očitanje se odbacuje", () => {
   assert.equal(procitajAzo("split2", azo([[400, 2]]), azo([[400, 100]]), SADA), null);
   assert.equal(procitajAzo("split2", [], [], SADA), null);
   assert.equal(procitajAzo("split2", null, null, SADA), null);
+});
+
+test("Neverin: mjesni zapis vremena postaje trenutak, i ljeti i zimi", () => {
+  assert.equal(
+    trenutakNeverina("2026-08-19 16:10:00")?.toISOString(),
+    "2026-08-19T14:10:00.000Z",
+  );
+  assert.equal(
+    trenutakNeverina("2026-01-19 16:10:00")?.toISOString(),
+    "2026-01-19T15:10:00.000Z",
+  );
+  assert.equal(trenutakNeverina("prekjučer"), null);
+});
+
+test("Neverin: svježe očitanje se čita, wavg je brzina", () => {
+  const v = procitajNeverin("vrboran", neverinski(), SADA);
+  assert.equal(v?.postaja, "vrboran");
+  assert.equal(v?.brzina, 0.6);
+  assert.equal(v?.smjerOd, 111);
+  assert.equal(v?.opazeno, "2026-08-19T14:10:00.000Z");
+});
+
+test("Neverin: postaja koja je prestala javljati otpada na starosti", () => {
+  // Žrnovnica ovako stvarno stoji: zadnji zapis 2. 2. 2025.
+  const v = procitajNeverin("zrnovnica", neverinski("2025-02-02 01:25:00"), SADA);
+  assert.equal(v, null);
+});
+
+test("Neverin: bez brzine nema očitanja, bez smjera je promjenjiv", () => {
+  assert.equal(procitajNeverin("solin", neverinski(undefined, null), SADA), null);
+  const bezSmjera = procitajNeverin("solin", neverinski(undefined, 1.2, null), SADA);
+  assert.equal(bezSmjera?.promjenjiv, true);
+  assert.equal(bezSmjera?.smjerOd, PRETPOSTAVLJENO.smjerOd);
+  assert.equal(procitajNeverin("solin", { status: "error" }, SADA), null);
+});
+
+test("Neverin: tišina se prepoznaje kao i drugdje", () => {
+  const v = procitajNeverin("pujanke", neverinski(undefined, 0.2), SADA);
+  assert.equal(v?.tisina, true);
+});
+
+test("Vrboran preuzima vodstvo kad javi, a ostala očitanja se čuvaju", async (t) => {
+  posluzi(t, {
+    dhmz: xml([["Split-Marjan", "SW", "2"]]),
+    split3: { brzina: azo([[20, 1.7]]), smjer: azo([[20, 235.2]]) },
+    neverin: { "split-vrboran": neverinski() },
+  });
+
+  const zrak = await dohvatiZrak(SADA);
+  assert.equal(zrak.vjetar?.postaja, "vrboran");
+  assert.equal(zrak.stanje.brzina, 0.6);
+  assert.equal(zrak.stanje.smjerOd, 111);
+  assert.deepEqual(
+    zrak.ocitanja.map((o) => o.postaja),
+    ["vrboran", "split3", "marjan", "ldsp"],
+    "ostala očitanja se čuvaju za usporedbu",
+  );
+});
+
+test("kad Neverin šuti, karta ostaje na provjerenim postajama", async (t) => {
+  posluzi(t, {
+    dhmz: xml([["Split-Marjan", "SW", "2"]]),
+    split3: { brzina: azo([[20, 1.7]]), smjer: azo([[20, 235.2]]) },
+  });
+
+  const zrak = await dohvatiZrak(SADA);
+  assert.equal(zrak.vjetar?.postaja, "split3");
 });
 
 test("kad izvor padne, stanje se vraća na pretpostavku", async (t) => {
