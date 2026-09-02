@@ -44,6 +44,13 @@ export type StanjeZraka = {
   readonly brzina: number;
   /** Debljina sloja u kojem se zrak miješa, u metrima. */
   readonly dubina: number;
+  /**
+   * Pasquillov razred stabilnosti, 0–5 (A–F); vidi `sim/stabilnost.ts`.
+   *
+   * Neobavezan: sat bez njega se računa kao neutralan (D), što je isto
+   * ponašanje kao prije nego što je razred uveden.
+   */
+  readonly stabilnost?: number;
 };
 
 /** Polje s podatkom o tome kamo ga je vrijeme okrenulo. */

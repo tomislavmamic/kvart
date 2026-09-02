@@ -41,6 +41,7 @@ import {
 } from "@/lib/dim";
 import type { StanjeZraka } from "@/lib/polje-dima";
 import { slozi, type Osnove } from "@/lib/sim/polje";
+import { NEUTRALNO } from "@/lib/sim/stabilnost";
 
 /**
  * Koliko sati prije traženoga simulacija odradi da polje bude puno.
@@ -75,9 +76,32 @@ export const POSTAVKE_SIMULATORA: Postavke = {
    * tamna — samo zrnatija. Zamućenje na kraju taj trag pokupi.
    */
   cestica: 10_000,
+  /**
+   * Spremnik dostatan za vijek (`punjenje = vijek`), pa izvor curi jednoliko
+   * i pri tišini. S 45 s emisija je pri slabom vjetru padala na 18–100 %
+   * nazivne u naletima (vidi `Postavke.punjenje` u `dim.ts`; pokus E3 u
+   * `docs/STATUS.json`).
+   */
+  punjenje: 160,
+  /**
+   * Slučajno vodoravno vrtloženje po razredu stabilnosti (pokus E5): na dvije
+   * godine H₂S-a uz plohu Spearman 0,108 → 0,156 i AUC 0,58 → 0,61 na godini
+   * ugađanja, dosljedno bolje i na provjeri i na zadržanom razdoblju.
+   */
+  difuzija: 1,
   /** Rešetka gustoće; na okviru od 6,4 km to je ćelija od 32 m. */
   sirina: 200,
 };
+
+/**
+ * Koliko se puta u traženom satu gustoća slika i usrednji.
+ *
+ * Mjerenje je satni prosjek, a trenutak na kraju sata hvata jednu fazu
+ * vijuganja: pri stalnom vjetru gustoća na 700 m iz sata u sat skače i
+ * stotinu puta (`scripts/hindcast/model.test.ts`). Šest uzoraka je isto
+ * što i provjera (`--uzoraka 6`).
+ */
+export const UZORAKA_PO_SATU = 6;
 
 /**
  * Korak simulacije za zadanu brzinu vjetra.
@@ -174,6 +198,8 @@ export function odradiSatove(
   // vremena nema, profil miruje i obje tvari dijele isto polje.
   const pocetakMs = Date.parse(satovi[0].sat);
   let sim: Simulacija | null = null;
+  const zbroj: [Float32Array, Float32Array] = [new Float32Array(0), new Float32Array(0)];
+  let uzeto = 0;
   for (const [i, { stanje }] of satovi.entries()) {
     const polje = slozi(stanje, osnove);
     if (sim === null) {
@@ -191,22 +217,45 @@ export function odradiSatove(
     if (!Number.isNaN(pocetakMs)) {
       sim.postavi("krajMs", pocetakMs + (i + 1) * 3600_000);
     }
+    // Razred stabilnosti je svojstvo sata, kao i vjetar; bez njega D.
+    sim.postavi("stabilnost", stanje.stabilnost ?? NEUTRALNO);
 
     // Korak se poravnava na cijeli broj koraka po satu, da sat traje točno sat.
     const { koraka, dt } = planSata(stanje.brzina, celijaM);
-    for (let k = 0; k < koraka; k += 1) sim.korak(dt);
+    const zadnji = i === satovi.length - 1;
+    for (let k = 0; k < koraka; k += 1) {
+      sim.korak(dt);
+      if (!zadnji) continue;
+      // Uzorci ravnomjerno po satu, zadnji na samom kraju; zbrajaju se u
+      // vlastite spremnike jer `crtaj` vraća unutarnji, koji idući poziv
+      // prepisuje.
+      const naRedu = Math.floor(((k + 1) * UZORAKA_PO_SATU) / koraka) > Math.floor((k * UZORAKA_PO_SATU) / koraka);
+      if (!naRedu) continue;
+      pribroji(sim.crtaj(), 0);
+      pribroji(sim.crtaj("merkaptani"), 1);
+    }
   }
 
   const gotov = sim as Simulacija;
+  const n = Math.max(1, uzeto);
+  for (let k = 0; k < zbroj[0].length; k += 1) {
+    zbroj[0][k] /= n;
+    zbroj[1][k] /= n;
+  }
   return {
     sat: satovi[satovi.length - 1].sat,
     sirina: gotov.sirina,
     visina: gotov.visina,
-    // `crtaj` vraća svoj unutarnji spremnik, koji sljedeći poziv prepisuje.
-    // Slika mora preživjeti idući sat, pa se kopira.
-    gustoca: Float32Array.from(gotov.crtaj()),
-    merkaptani: Float32Array.from(gotov.crtaj("merkaptani")),
+    gustoca: zbroj[0],
+    merkaptani: zbroj[1],
   };
+
+  function pribroji(g: Float32Array, koji: 0 | 1): void {
+    if (zbroj[koji].length === 0) zbroj[koji] = new Float32Array(g.length);
+    const z = zbroj[koji];
+    for (let k = 0; k < g.length; k += 1) z[k] += g[k];
+    if (koji === 1) uzeto += 1;
+  }
 }
 
 /**

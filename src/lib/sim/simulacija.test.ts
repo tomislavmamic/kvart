@@ -105,7 +105,9 @@ test("oblik perjanice nad plohom stoji — inače sidro treba izvesti iznova", (
   // `dim.test.ts`. Sidro (`SIDRO_SIMULATORA`) izvodi se regresijom prema
   // mjerenjima i ovisi o obliku perjanice — kad se oblik promijeni, sidro se
   // ne prepisuje nego izvodi iznova.
-  const GUSTOCA_NAD_PLOHOM_REF = 19.33;
+  // 2. 9. 2026.: 19,33 → 30,0 uz E3 + E5 (spremnik za vijek, satni prosjek,
+  // difuzija po razredu); sidro izvedeno iznova, vidi `ljestvica.ts`.
+  const GUSTOCA_NAD_PLOHOM_REF = 30.0;
   const o = osnove();
   const slika = odradiSatove(zaSat(niz(8), "s7"), o);
   const izmjereno = nadPlohom(slika, o);

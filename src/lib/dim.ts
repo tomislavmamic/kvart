@@ -30,6 +30,8 @@
  * Modul ne dira DOM, da se može provjeriti i izvan preglednika.
  */
 
+import { mnoziteljRazreda, VRTLOZENJE_PO_RAZREDU } from "@/lib/sim/stabilnost";
+
 /** Polje vjetra iz `npm run izvedi-polje-dima`. */
 export type PoljeDima = {
   readonly gw: number;
@@ -65,6 +67,12 @@ export type SirovoPolje = {
   readonly maska: Uint8Array;
   /** Debljina miješanog sloja, u metrima; vidi `PoljeDima.dubina`. */
   readonly dubina?: number;
+  /**
+   * Jedinično polje otjecanja niz padinu, po ćeliji iste rešetke: smjer
+   * najvećeg pada (u koordinatama okvira, y prema jugu), oslabljen na
+   * ravnome. Bez njega otjecanja nema ma što postavke tražile.
+   */
+  readonly drenaza?: { readonly x: Float32Array; readonly y: Float32Array };
 };
 
 /**
@@ -100,7 +108,18 @@ export type Postavke = {
    * padao ispod šezdeset sličica.
    */
   cestica?: number;
-  /** Sekundi prikaza u kojima izvor ispusti `cestica` čestica. */
+  /**
+   * Sekundi prikaza u kojima izvor ispusti `cestica` čestica.
+   *
+   * Mora biti **bar `vijek`** ako izvor treba curiti jednoliko: spremnik
+   * se napuni za `punjenje` sekundi, a čestica živi do `vijek`, pa pri
+   * slabom vjetru (kad je ne odnese iz okvira) izvor stane dok se koja ne
+   * ugasi. Izmjereno (`scripts/hindcast/model.test.ts`): uz 45 s emisija
+   * pada na 18–100 % nazivne u naletima koji ovise o tome kad je simulacija
+   * pokrenuta, pa isti sat izračunat iz lanca i iz hladnog starta daje i
+   * deseterostruko drukčiju gustoću. Zadana vrijednost 45 ostaje radi
+   * izgleda uživo; provjera i simulator to mijenjaju postavkom.
+   */
   punjenje?: number;
   /** Koliko stvarnih sekundi prođe u sekundi prikaza. */
   ubrzanje?: number;
@@ -157,6 +176,46 @@ export type Postavke = {
   pocetakMs?: number;
   /** Stvarni trenutak koji prizor predstavlja; rođenja poslije njega broje se u njemu. */
   krajMs?: number;
+  /**
+   * Pasquillov razred stabilnosti sata, 0–5 (A–F); vidi `sim/stabilnost.ts`.
+   *
+   * Bez njega (ili uz množitelje 1) model ne razlikuje dan od noći.
+   */
+  stabilnost?: number;
+  /** Množitelj `raspad` u razredu A; razred D je uvijek 1. Zadano 1. */
+  raspadNestabilno?: number;
+  /** Množitelj `raspad` u razredu F; razred D je uvijek 1. Zadano 1. */
+  raspadStabilno?: number;
+  /**
+   * Gornja granica `vijek` kad ga razred produlji; zadano jednako `vijek`,
+   * dakle bez produljenja. Tko je digne mora dići i zalet (`ZALET_SATI`).
+   */
+  vijekNajvise?: number;
+  /**
+   * Množitelj slučajnog vodoravnog vrtloženja po razredu stabilnosti
+   * (`VRTLOZENJE_PO_RAZREDU`, m²/s); 0 isključuje, 1 daje vrijednosti iz
+   * modela oblačića. Zadano 0.
+   *
+   * Ovo je ono što vrtložni šum (`vrtlog`) i zastoj (`zastojnoSirenje`) ne
+   * daju: oni su polje sinusa, pa česticu premeću, ali je ne odnesu daleko —
+   * a mjerenja kažu da se u tihoj noći zrak s plohe za sat razmaže na
+   * stotine metara na sve strane. Slučajni hod s difuzivnošću K daje
+   * upravo σ = √(2Kt), po razredu, kako je na k1 ugođeno u
+   * `scripts/bazdari-izvor.py`.
+   */
+  difuzija?: number;
+  /**
+   * Brzina otjecanja hladnog zraka niz padinu pri punoj težini, u m/s;
+   * zadano 0 (isključeno).
+   *
+   * Noću se ohlađen zrak s plohe cijedi u niže dijelove — prema Dračevcu i
+   * Bilicama, koji leže 30–80 m ispod vrha plohe — bez obzira na to što
+   * javlja anemometar preko grada. Radi samo u stabilnim razredima (E, F) i
+   * gasi se kako vjetar jača (`drenazaPrag`). Smjer daje `SirovoPolje.drenaza`.
+   */
+  drenaza?: number;
+  /** Brzina vjetra pri kojoj otjecanje nestaje, u m/s; zadano 2. */
+  drenazaPrag?: number;
 };
 
 export type Simulacija = {
@@ -269,6 +328,13 @@ const ZADANO = {
   zastojnoSirenje: ZASTOJNO_SIRENJE,
   zastojPlitko: ZASTOJ_DUBINA.plitko,
   zastojDuboko: ZASTOJ_DUBINA.duboko,
+  stabilnost: 3,
+  raspadNestabilno: 1,
+  raspadStabilno: 1,
+  vijekNajvise: 160,
+  difuzija: 0,
+  drenaza: 0,
+  drenazaPrag: 2,
 } as const;
 
 /**
@@ -410,6 +476,7 @@ export function stvoriDimSirovo(
   let dubina = polje.dubina;
   let VX = polje.vx;
   let VY = polje.vy;
+  let DREN = polje.drenaza;
   const MK = polje.maska;
 
   const W = par.sirina;
@@ -487,6 +554,22 @@ export function stvoriDimSirovo(
     return (v / 255) * 2 * skala - skala;
   }
 
+  /** Bilinearno očitanje polja s pomičnim zarezom, s pridržanim rubom. */
+  function uzmiF(A: Float32Array, fx: number, fy: number): number {
+    const x = Math.min(Math.max(fx, 0), 1) * (gw - 1);
+    const y = Math.min(Math.max(fy, 0), 1) * (gh - 1);
+    const i0 = x | 0;
+    const j0 = y | 0;
+    const i1 = i0 + 1 < gw ? i0 + 1 : i0;
+    const j1 = j0 + 1 < gh ? j0 + 1 : j0;
+    const tx = x - i0;
+    const ty = y - j0;
+    return (
+      (A[j0 * gw + i0] * (1 - tx) + A[j0 * gw + i1] * tx) * (1 - ty) +
+      (A[j1 * gw + i0] * (1 - tx) + A[j1 * gw + i1] * tx) * ty
+    );
+  }
+
   /** Potencijal vrtložnog šuma; brzina mu je okomiti gradijent. */
   function psi(x: number, y: number, vrijeme: number): number {
     const m = par.mjerilo;
@@ -508,8 +591,23 @@ export function stvoriDimSirovo(
    * raspršenje ispod praga. Bez njega bi se pri bezvjetrici okvir zasitio i
    * ostao jednolično taman.
    */
-  function tezina(d: number): number {
-    return Math.min(1, d / par.pojava) * Math.exp(-d / par.raspad);
+  /**
+   * Prorjeđivanje i vijek ovog sata, prema razredu stabilnosti.
+   *
+   * Uzima se razred **trenutačnog** sata, ne onoga u kojem je čestica
+   * rođena: kad jutarnja konvekcija probije noćni sloj, razrijedi i zrak
+   * koji je pod njim proveo noć.
+   */
+  function raspadSada(): number {
+    return par.raspad * mnoziteljRazreda(par.stabilnost, par.raspadNestabilno, par.raspadStabilno);
+  }
+  function vijekSada(): number {
+    const m = mnoziteljRazreda(par.stabilnost, par.raspadNestabilno, par.raspadStabilno);
+    return Math.min(Math.max(par.vijek, par.vijekNajvise), par.vijek * Math.max(1, m));
+  }
+
+  function tezina(d: number, raspad: number): number {
+    return Math.min(1, d / par.pojava) * Math.exp(-d / raspad);
   }
 
   function rodi(n: number): void {
@@ -540,6 +638,7 @@ export function stvoriDimSirovo(
       ukupnoIspusteno += 1;
     }
     if (nSlobodnih === 0) ostatak = 0;
+    const vijek = vijekSada();
 
     // Okvir je dvostruko širi nego viši, pa ista brzina u m/s prijeđe manji
     // dio okvira vodoravno nego okomito. S jednim koeficijentom za oboje bi
@@ -557,11 +656,23 @@ export function stvoriDimSirovo(
         Math.max(0, 1 - srednjaBrzina / par.pragZastoja) *
         tezinaDubine(dubina, par.zastojPlitko, par.zastojDuboko);
 
+    // Slučajni hod: σ koraka u metrima je √(2·K·Δt), Δt u stvarnim
+    // sekundama; u okviru se dijeli s duljinom stranice.
+    const K = par.difuzija * VRTLOZENJE_PO_RAZREDU[Math.min(5, Math.max(0, Math.round(par.stabilnost)))];
+    const sigmaM = K > 0 ? Math.sqrt(2 * K * dt * par.ubrzanje) : 0;
+
+    // Otjecanje niz padinu: samo u stabilnim razredima i samo dok je vjetar
+    // slab; težina pada pravocrtno do `drenazaPrag`.
+    const wDren =
+      DREN && par.drenaza > 0 && par.stabilnost >= 4
+        ? par.drenaza * Math.max(0, 1 - srednjaBrzina / par.drenazaPrag)
+        : 0;
+
     const e = 0.004;
     for (let n = 0; n < N; n += 1) {
       if (!ziv[n]) continue;
       dob[n] += dt;
-      if (dob[n] > par.vijek) {
+      if (dob[n] > vijek) {
         ugasi(n);
         continue;
       }
@@ -598,9 +709,21 @@ export function stvoriDimSirovo(
       const dy = (psi(x + e, y, tt) - psi(x - e, y, tt)) / (2 * e);
       vx += dy * a * par.snaga * zastoj;
       vy += -dx * a * par.snaga * zastoj;
+      if (wDren > 0 && DREN) {
+        vx += wDren * uzmiF(DREN.x, x, y);
+        vy += wDren * uzmiF(DREN.y, x, y);
+      }
 
       px[n] = x + vx * kx;
       py[n] = y + vy * ky;
+      if (sigmaM > 0) {
+        // Box–Muller iz istog determinističkog niza, da račun ostane ponovljiv.
+        const u1 = Math.max(1e-12, slucaj());
+        const u2 = slucaj();
+        const r = Math.sqrt(-2 * Math.log(u1)) * sigmaM;
+        px[n] += (r * Math.cos(2 * Math.PI * u2)) / par.metaraX;
+        py[n] += (r * Math.sin(2 * Math.PI * u2)) / par.metaraY;
+      }
       // Napisano obrnuto namjerno: ovako se gasi i čestica čiji je položaj
       // ispao NaN, jer NaN ne zadovoljava nijednu usporedbu.
       if (
@@ -634,12 +757,13 @@ export function stvoriDimSirovo(
 
   function crtaj(tvar?: Tvar): Float32Array {
     gust.fill(0);
-    const masa = ((EMISIJA_PO_SEKUNDI * par.punjenje) / par.cestica) * povrsina;
+    const nazivna = ((EMISIJA_PO_SEKUNDI * par.punjenje) / par.cestica) * povrsina;
     const opis = tvar ? TVARI[tvar] : undefined;
     const profil = opis && "profil" in opis ? opis.profil : undefined;
+    const raspad = raspadSada();
     for (let n = 0; n < N; n += 1) {
       if (!ziv[n]) continue;
-      let w = tezina(dob[n]) * masa;
+      let w = tezina(dob[n], raspad) * nazivna;
       if (profil && pocetakMs !== undefined) {
         // Sat rođenja u stvarnom vremenu; prizor ne tvrdi ništa poslije
         // `krajMs`, pa se kasnija rođenja (živa petlja ubrzano juri
@@ -703,6 +827,7 @@ export function stvoriDimSirovo(
       }
       VX = novo.vx;
       VY = novo.vy;
+      DREN = novo.drenaza;
       skala = novo.skala;
       dubina = novo.dubina;
       srednjaBrzina = izmjeriSrednju();

@@ -34,7 +34,9 @@ import {
   procitajAzoNiz,
   procitajDubine,
   procitajModelskiVjetar,
+  procitajOkolnosti,
   vrhSata,
+  type OkolnostiSata,
   type SatniVjetar,
 } from "@/lib/sim/vrijeme-satno";
 
@@ -184,6 +186,8 @@ export type SatniVjetarISlojevi = {
   readonly vjetrovi: Map<string, SatniVjetar>;
   /** Dubina miješanog sloja po satu, uvijek modelska. */
   readonly dubine: Map<string, number>;
+  /** Zračenje i naoblaka po satu, modelski; za razred stabilnosti. */
+  readonly okolnosti: Map<string, OkolnostiSata>;
   /** Nizovi po postaji, za pribadače; prazno kad se izmjereno nije čekalo. */
   readonly serije: Map<Postaja, Map<string, SatniVjetar>>;
   /** Trenutačna očitanja i stanje koje vodi kartu; ništa ako dohvat padne. */
@@ -239,5 +243,11 @@ export async function satniVjetar(
   const vjetrovi = new Map(procitajModelskiVjetar(model));
   for (const [sat, v] of izmjereno) vjetrovi.set(sat, v);
 
-  return { vjetrovi, dubine: procitajDubine(model), serije, sada: zrak };
+  return {
+    vjetrovi,
+    dubine: procitajDubine(model),
+    okolnosti: procitajOkolnosti(model),
+    serije,
+    sada: zrak,
+  };
 }

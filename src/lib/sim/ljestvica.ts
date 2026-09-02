@@ -46,7 +46,17 @@ import { LJESTVICA, LJESTVICA_MERKAPTANA, type Ljestvica, type Tvar } from "@/li
  * postaje. Oblik perjanice, o kojem izvod ovisi, čuvaju kanarinci u
  * `dim.test.ts` i `simulacija.test.ts`; kad padnu, regresiju treba ponoviti.
  */
-export const SIDRO_SIMULATORA = 76.2;
+export const SIDRO_SIMULATORA = 47.2;
+
+/*
+ * 2. 9. 2026.: sidro izvedeno iznova nakon pokusa E3 + E5 (spremnik za vijek,
+ * satni prosjek, difuzija po razredu), koji su ušli u `POSTAVKE_SIMULATORA`.
+ * Regresija na 11 974 sata (`docs/hindcast/e5-difuzija.json`): nagib
+ * 0,024 µg/m³ po jedinici gustoće (95 %: 0,012–0,037), pozadina 1,48;
+ * sidro = 1,132 / 0,024 = 47,2 (raspon 31–94). Staro sidro 76,2 vrijedilo je
+ * za trenutak na kraju sata bez difuzije. Kanarinac oblika u
+ * `simulacija.test.ts` nosi novu referencu 30,0.
+ */
 
 /** Jačina izvora koju gledatelj bira, u odnosu na bazdarenu. */
 export const JACINA = { najmanja: 0, najveca: 5, zadana: 1, korak: 0.1 } as const;

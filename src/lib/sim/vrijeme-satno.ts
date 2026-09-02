@@ -22,6 +22,7 @@
  */
 
 import type { StanjeZraka } from "@/lib/polje-dima";
+import { NEUTRALNO, razredStabilnosti } from "@/lib/sim/stabilnost";
 import { POSTAJE, PRETPOSTAVLJENO, type Postaja } from "@/lib/vjetar";
 
 /** Otkud vjetar za pojedini sat. */
@@ -67,7 +68,7 @@ export function vrhSata(kad: Date): Date {
 export function adresaModela(unatrag: number, unaprijed: number): string {
   return (
     "https://api.open-meteo.com/v1/forecast?latitude=43.522&longitude=16.499" +
-    "&hourly=wind_speed_10m,wind_direction_10m,boundary_layer_height" +
+    "&hourly=wind_speed_10m,wind_direction_10m,boundary_layer_height,shortwave_radiation,cloud_cover" +
     "&wind_speed_unit=ms" +
     `&past_days=${unatrag}&forecast_days=${unaprijed}&timezone=UTC`
   );
@@ -112,6 +113,41 @@ export function procitajDubine(odgovor: unknown): Map<string, number> {
     const ms = Date.parse(`${blok.vremena[i]}Z`);
     if (Number.isNaN(ms)) continue;
     izlaz.set(new Date(ms).toISOString(), Math.max(NAJPLICI_SLOJ, Math.round(d)));
+  }
+  return izlaz;
+}
+
+/** Okolnosti sata koje određuju razred stabilnosti; vidi `sim/stabilnost.ts`. */
+export type OkolnostiSata = {
+  /** Kratkovalno zračenje na tlu, W/m². */
+  readonly sunce: number;
+  /** Naoblaka, %. */
+  readonly oblaci: number;
+};
+
+/**
+ * Čita satni niz zračenja i naoblake iz modela.
+ *
+ * Args:
+ *   odgovor: Razložen JSON s `api.open-meteo.com`, u UTC-u.
+ *
+ * Returns:
+ *   Okolnosti po satu; ključ je puni ISO 8601. Sat bez oba podatka izostaje.
+ */
+export function procitajOkolnosti(odgovor: unknown): Map<string, OkolnostiSata> {
+  const blok = satniBlok(odgovor);
+  const izlaz = new Map<string, OkolnostiSata>();
+  if (!blok) return izlaz;
+  const sunce = blok.polja.shortwave_radiation;
+  const oblaci = blok.polja.cloud_cover;
+  if (!sunce || !oblaci) return izlaz;
+  for (let i = 0; i < blok.vremena.length; i += 1) {
+    const s = sunce[i];
+    const o = oblaci[i];
+    if (s === null || s === undefined || o === null || o === undefined || !blok.vremena[i]) continue;
+    const ms = Date.parse(`${blok.vremena[i]}Z`);
+    if (Number.isNaN(ms)) continue;
+    izlaz.set(new Date(ms).toISOString(), { sunce: s, oblaci: o });
   }
   return izlaz;
 }
@@ -235,11 +271,20 @@ export function imeIzvora(izvor: IzvorVjetra): string {
   return izvor === "model" ? "Model (Open-Meteo)" : POSTAJE[izvor].ime;
 }
 
-/** Slaže stanje za model iz satnog vjetra i dubine sloja. */
+/**
+ * Slaže stanje za model iz satnog vjetra, dubine sloja i okolnosti.
+ *
+ * Razred stabilnosti se izvodi iz brzine, zračenja i naoblake (Turner);
+ * bez okolnosti sat je neutralan (D) i model se ponaša kao prije.
+ */
 export function stanjeSata(
   vjetar: SatniVjetar | undefined,
   dubina: number | undefined,
+  okolnosti?: OkolnostiSata,
 ): StanjeZraka | null {
   if (!vjetar || dubina === undefined) return null;
-  return { smjerOd: vjetar.smjerOd, brzina: vjetar.brzina, dubina };
+  const stabilnost = okolnosti
+    ? razredStabilnosti(vjetar.brzina, okolnosti.sunce, okolnosti.oblaci)
+    : NEUTRALNO;
+  return { smjerOd: vjetar.smjerOd, brzina: vjetar.brzina, dubina, stabilnost };
 }

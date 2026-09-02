@@ -36,6 +36,8 @@ export type Osnove = {
   readonly granice: { zapad: number; jug: number; istok: number; sjever: number };
   readonly sirinaM: number;
   readonly visinaM: number;
+  /** Polje otjecanja niz padinu, ako je izvedeno; vidi `SirovoPolje.drenaza`. */
+  readonly drenaza?: { readonly x: Float32Array; readonly y: Float32Array };
 };
 
 /**
@@ -150,5 +152,6 @@ export function slozi(stanje: StanjeZraka, osnove: Osnove): SirovoPolje {
     vy: by,
     maska: osnove.maska,
     dubina: stanje.dubina,
+    ...(osnove.drenaza ? { drenaza: osnove.drenaza } : {}),
   };
 }

@@ -139,7 +139,7 @@ export async function dohvatiCrtu(sada: Date = new Date()): Promise<Crta> {
     poPostaji.set(s.postaja, [...(poPostaji.get(s.postaja) ?? []), tekst]);
   });
 
-  return slozCrtu(vrh, vjetar.vjetrovi, vjetar.dubine, slozOcitanja(poPostaji));
+  return slozCrtu(vrh, vjetar.vjetrovi, vjetar.dubine, slozOcitanja(poPostaji), vjetar.okolnosti);
 }
 
 /**

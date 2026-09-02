@@ -20,6 +20,7 @@
 import type { StanjeZraka } from "@/lib/polje-dima";
 import {
   type IzvorVjetra,
+  type OkolnostiSata,
   type SatniVjetar,
   stanjeSata,
 } from "@/lib/sim/vrijeme-satno";
@@ -125,9 +126,10 @@ export function slozKadar(
   vjetar: SatniVjetar | undefined,
   dubina: number | undefined,
   ocitanja: readonly OcitanjePostaje[] = [],
+  okolnosti?: OkolnostiSata,
 ): Kadar {
   const vrsta: VrstaKadra = pomak > 0 ? "prognoza" : pomak === 0 ? "sada" : "izmjereno";
-  const stanje = stanjeSata(vjetar, dubina);
+  const stanje = stanjeSata(vjetar, dubina, okolnosti);
   // Postaje ne mjere budućnost. Kad bi prognozirani sat nosio mjerenje,
   // to bi bilo mjerenje nekog drugog sata pod krivom oznakom.
   const mjerenja = vrsta === "prognoza" ? [] : ocitanja;
@@ -161,6 +163,7 @@ export function slozCrtu(
   vjetrovi: Map<string, SatniVjetar>,
   dubine: Map<string, number>,
   ocitanja: Map<string, readonly OcitanjePostaje[]>,
+  okolnosti: ReadonlyMap<string, OkolnostiSata> = new Map(),
 ): Crta {
   // Prognoza se ne obećava nego broji: crta seže dokle model doista ima i
   // vjetar i dubinu, a ne dokle bi trebao imati.
@@ -173,7 +176,7 @@ export function slozCrtu(
 
   const { zalet, crta } = satoviCrte(sada, unaprijed);
   const uKadar = (sat: string, pomak: number) =>
-    slozKadar(sat, pomak, vjetrovi.get(sat), dubine.get(sat), ocitanja.get(sat) ?? []);
+    slozKadar(sat, pomak, vjetrovi.get(sat), dubine.get(sat), ocitanja.get(sat) ?? [], okolnosti.get(sat));
 
   return {
     sada: sada.toISOString(),
