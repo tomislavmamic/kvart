@@ -182,6 +182,8 @@ export type Oznake = {
     vjetarStigao: boolean,
   ): void;
   vidljivost(vidljive: boolean): void;
+  /** Ispod praga uvećanja pribadače vjetra gube natpis, da se ne preklapaju. */
+  postaviUvecanje(zoom: number): void;
   ukloni(): void;
 };
 
@@ -370,6 +372,15 @@ export function stvoriOznake(
     vidljivost(vidljive) {
       for (const p of pribadace) {
         p.getElement().style.display = vidljive ? "" : "none";
+      }
+    },
+    postaviUvecanje(zoom) {
+      // 13,4 je uvećanje pri kojem se tri pribadače oko plohe (Vrboran,
+      // Pujanke, H₂S) prestanu preklapati na zaslonu od 1280 px.
+      const kratko = zoom < 13.4;
+      for (const p of pribadace) {
+        const el = p.getElement();
+        if (el.classList.contains("sim-oznaka--vjetar")) el.classList.toggle("sim-oznaka--kratko", kratko);
       }
     },
     ukloni() {

@@ -36,11 +36,11 @@ export function PrijedlogKartica({
       aria-label="Predložena mjerna postaja"
       // Kartica je dugačka; iznad crte sati smije zauzeti najviše pola
       // zaslona, ostatak se lista unutar nje.
-      className="pointer-events-auto max-h-[52vh] w-full overflow-y-auto rounded-lg border border-dashed border-teal-700/60 bg-white/92 text-zinc-900 shadow-sm backdrop-blur-sm"
+      className="pointer-events-auto max-h-[52vh] w-full overflow-y-auto rounded-lg border border-dashed border-maslina/60 bg-white/92 text-zinc-900 shadow-sm backdrop-blur-sm"
     >
       <div className="flex items-start gap-2 px-3 pt-2.5">
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-teal-800">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-maslina-tamna">
             Predložena postaja · {FAZA[prijedlog.faza]}
           </div>
           <h2 className="mt-0.5 text-base font-bold leading-tight">{prijedlog.naziv}</h2>
@@ -50,7 +50,7 @@ export function PrijedlogKartica({
           type="button"
           onClick={naZatvori}
           aria-label="Zatvori karticu prijedloga"
-          className="fokus -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+          className="fokus -mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
             <path d="M5 5l10 10M15 5L5 15" className="stroke-current" strokeWidth="1.8" strokeLinecap="round" fill="none" />
@@ -92,7 +92,7 @@ export function PrijedlogKartica({
           href={ZAHTJEV_URL}
           target="_blank"
           rel="noreferrer"
-          className="fokus font-semibold text-teal-800 underline underline-offset-2 hover:text-teal-900"
+          className="fokus -my-2 inline-flex min-h-11 items-center font-semibold text-maslina-tamna underline underline-offset-2 hover:text-maslina-noc"
         >
           Cijeli popis (#28)
         </a>

@@ -161,7 +161,7 @@ export function VremenskaCrta({
           onClick={() => naReprodukciju(!reproducira)}
           aria-pressed={reproducira}
           aria-label={reproducira ? "Zaustavi prikaz po satima" : "Pokreni prikaz po satima"}
-          className="fokus flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white hover:bg-zinc-700"
+          className="fokus flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white hover:bg-zinc-700"
         >
           {reproducira ? (
             <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">

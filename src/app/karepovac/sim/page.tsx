@@ -18,11 +18,11 @@ export const revalidate = 300;
 export default async function SimulatorPage() {
   const crta = await dohvatiCrtu();
   return (
-    <div>
+    <main>
       {/* Naslov živi u zaglavlju nad kartom; ovdje ostaje za čitače zaslona i
           tražilice, da karta dobije cijelu visinu prozora. */}
       <h1 className="sr-only">Simulator mirisa s Karepovca</h1>
       <Simulator pocetna={crta} />
-    </div>
+    </main>
   );
 }

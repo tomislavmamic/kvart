@@ -843,6 +843,7 @@ body {
 /* Predložene mjerne postaje (simulator): crtkan obrub i tikvina boja, da se
    prijedlog ne zamijeni s postajom koja doista mjeri. */
 .sim-prijedlog {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -853,20 +854,33 @@ body {
   pointer-events: auto;
   font: inherit;
 }
+/* Cilj dodira je 44 px iako je točka 11 px: pseudoelement širi ono što se
+   da pogoditi, a ne ono što se vidi. */
+.sim-prijedlog::before {
+  content: "";
+  position: absolute;
+  left: -17px;
+  top: -17px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
 .sim-prijedlog__tocka {
   width: 11px;
   height: 11px;
   flex: none;
   border-radius: 50%;
   background: #fff;
-  border: 2px dashed #0f766e;
+  border: 2px dashed var(--color-maslina);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
 }
+/* Faze se razlikuju gustoćom, ne novom bojom: prijedlog je „naš”, a to je
+   maslina (One Green Rule); B je tamnija, C je kamen. */
 .sim-prijedlog__tocka[data-faza="B"] {
-  border-color: #0e7490;
+  border-color: var(--color-maslina-tamna);
 }
 .sim-prijedlog__tocka[data-faza="C"] {
-  border-color: #6b7280;
+  border-color: var(--color-kamen-drugi);
 }
 /* Natpis se vidi tek na prelazak ili odabir: devet natpisa odjednom prekrilo
    bi kvart. Točke same, crtkane i tikvine, dovoljno govore da nešto predlažu. */
@@ -875,16 +889,16 @@ body {
   font-size: 10.5px;
   line-height: 1;
   font-weight: 600;
-  color: #0f766e;
+  color: var(--color-maslina-tamna);
   background: rgb(255 255 255 / 0.85);
-  border: 1px dashed rgb(15 118 110 / 0.6);
+  border: 1px dashed var(--color-maslina);
   border-radius: 4px;
   padding: 2px 5px;
   white-space: nowrap;
 }
 .sim-prijedlog--odabran .sim-prijedlog__tocka {
   border-style: solid;
-  box-shadow: 0 0 0 3px rgb(15 118 110 / 0.35);
+  box-shadow: 0 0 0 3px var(--color-maslina-rub);
 }
 .sim-prijedlog:hover .sim-prijedlog__natpis,
 .sim-prijedlog:focus-visible .sim-prijedlog__natpis,
@@ -892,7 +906,32 @@ body {
   display: inline;
 }
 .sim-prijedlog--odabran .sim-prijedlog__natpis {
-  background: #0f766e;
+  background: var(--color-maslina);
   color: #fff;
   border-style: solid;
+}
+
+/* Pribadače vjetra pri manjem uvećanju: samo točka, natpis na prelazak i
+   fokus. Vidi `postaviUvecanje` u oznake.ts. */
+.sim-oznaka--kratko .sim-oznaka__ploca {
+  display: none;
+}
+.sim-oznaka--kratko:hover .sim-oznaka__ploca,
+.sim-oznaka--kratko:focus-within .sim-oznaka__ploca {
+  display: block;
+}
+
+/* MapLibreovi gumbi su 29 px; prag dodira na ovoj stranici je 44. */
+.maplibregl-ctrl.maplibregl-ctrl-group > button,
+.maplibregl-ctrl.maplibregl-ctrl-group > button + button {
+  width: 44px;
+  height: 44px;
+}
+
+/* Na uskom zaslonu pilule „Postavke” i „Zatvori” zauzimaju gornji desni kut,
+   pa MapLibreovi gumbi idu ispod njih umjesto pod njih. */
+@media (max-width: 639px) {
+  .maplibregl-map .maplibregl-ctrl-top-right {
+    top: 3.75rem;
+  }
 }

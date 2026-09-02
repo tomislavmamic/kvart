@@ -15,7 +15,7 @@ import {
 import { imeIzvora } from "@/lib/sim/vrijeme-satno";
 import { bojaRazine } from "@/components/karepovac/sim/razina-boje";
 import { strana } from "@/components/karepovac/sim/vjetar-kartica";
-import { danMjesno, satMjesno } from "@/components/karepovac/sim/vremenska-crta";
+import { danMjesno, opisKadra, satMjesno } from "@/components/karepovac/sim/vremenska-crta";
 
 /**
  * Kartica situacije: ono što karta mora reći u pet sekundi.
@@ -86,6 +86,7 @@ export function SituacijaKartica({
   kadar,
   izracunat,
   ljestvica,
+  prijedlozi = false,
   naVise,
   plocaOtvorena,
 }: {
@@ -95,6 +96,8 @@ export function SituacijaKartica({
   izracunat: boolean;
   /** Ljestvica tvari koja se gleda; iz nje su boje pločica. */
   ljestvica: Ljestvica;
+  /** Jesu li na karti predložene postaje; tada legenda objašnjava točke. */
+  prijedlozi?: boolean;
   naVise: () => void;
   plocaOtvorena: boolean;
 }) {
@@ -158,12 +161,20 @@ export function SituacijaKartica({
           ) : null}
         </div>
 
-        {/* Koliko: jedna riječ, jedna boja. */}
+        {/* Koliko: jedna riječ, jedna boja. Čitaču zaslona ide jedna rečenica
+            po satu, jer se naslov mijenja i s tipkovnicom i s reprodukcijom,
+            a slider javlja samo sat. */}
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          {`${satMjesno(kadar.sat)}, ${opisKadra(kadar)}: ${naslov.toLowerCase()}, pouzdanost ${
+            RIJECI_POUZDANOSTI[situacija.pouzdanost]
+          }`}
+        </p>
         <div className="mt-1 flex items-center gap-2.5">
           <Plocica razina={razinaNaslova} ljestvica={ljestvica} velika />
           <h2 className="text-lg font-bold leading-6 text-zinc-900">{naslov}</h2>
         </div>
-        {podnaslov ? <p className="mt-0.5 text-xs leading-5 text-zinc-600">{podnaslov}</p> : null}
+        {/* Rečenica koju stanovnik čita: 1rem, ne gusto (Reading-Size Rule). */}
+        {podnaslov ? <p className="mt-0.5 text-base leading-6 text-zinc-700">{podnaslov}</p> : null}
 
         {/* Gdje: naselja koja perjanica dotiče, od najjačeg. */}
         {zahvacena.length ? (
@@ -212,7 +223,9 @@ export function SituacijaKartica({
           <dd className="flex items-center gap-1">
             <span>
               pouzdanost{" "}
-              <b className={nesigurno ? "text-amber-700" : "text-zinc-900"}>
+              {/* Riječ nosi značenje sama; boja izvan palete (jantar) bi
+                  glumila upozorenje koje sustav boja ne poznaje. */}
+              <b className={nesigurno ? "text-zinc-900 underline decoration-dotted underline-offset-2" : "text-zinc-900"}>
                 {RIJECI_POUZDANOSTI[situacija.pouzdanost]}
               </b>
             </span>
@@ -220,7 +233,7 @@ export function SituacijaKartica({
               type="button"
               onClick={() => postaviZasto((z) => !z)}
               aria-expanded={zasto}
-              className="fokus rounded px-1 font-semibold text-sky-700 underline decoration-dotted underline-offset-2 hover:bg-sky-50"
+              className="fokus -my-2 min-h-11 rounded px-1.5 font-semibold text-maslina underline decoration-dotted underline-offset-2 hover:bg-maslina-vez"
             >
               zašto?
             </button>
@@ -238,7 +251,7 @@ export function SituacijaKartica({
       </dl>
 
       {zasto ? (
-        <ul className="mx-3.5 mb-2 list-disc space-y-0.5 rounded-lg bg-zinc-50 py-2 pl-7 pr-3 text-xs leading-5 text-zinc-700">
+        <ul className="mx-3.5 mb-2 list-disc space-y-1 rounded-lg bg-zinc-50 py-2 pl-7 pr-3 text-base leading-6 text-zinc-700">
           {situacija.razlozi.map((r) => (
             <li key={r}>{r}</li>
           ))}
@@ -264,12 +277,18 @@ export function SituacijaKartica({
               {RIJECI_RAZINA[r]}
             </span>
           ))}
+          {prijedlozi ? (
+            <span className="flex items-center gap-1" title="Mjesta gdje bi se isplatilo mjeriti; klik na točku kaže što i pošto">
+              <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full border-2 border-dashed border-maslina" />
+              predložene postaje
+            </span>
+          ) : null}
         </span>
         <button
           type="button"
           onClick={naVise}
           aria-expanded={plocaOtvorena}
-          className="fokus rounded px-1.5 py-0.5 font-semibold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+          className="fokus -my-2 min-h-11 min-w-11 rounded px-2.5 font-semibold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
         >
           {plocaOtvorena ? "Zatvori" : "Više"}
         </button>

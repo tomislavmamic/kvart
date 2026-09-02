@@ -94,7 +94,7 @@ export function TockaKartica({
           type="button"
           onClick={naZatvori}
           aria-label="Makni odabrano mjesto"
-          className="fokus -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+          className="fokus -mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
             <path d="M5 5l10 10M15 5L5 15" className="stroke-current" strokeWidth="1.8" strokeLinecap="round" fill="none" />
@@ -108,7 +108,7 @@ export function TockaKartica({
         </span>
         <span>
           pouzdanost:{" "}
-          <b className={`font-semibold ${nesigurno ? "text-amber-700" : ""}`}>
+          <b className={`font-semibold ${nesigurno ? "underline decoration-dotted underline-offset-2" : ""}`}>
             {RIJECI_POUZDANOSTI[situacija.pouzdanost]}
           </b>
         </span>
@@ -155,7 +155,7 @@ export function TockaKartica({
         <span className="text-zinc-600">Osjećate li miris ovdje?</span>
         <Link
           href={adresaDojave(tocka)}
-          className="fokus rounded-md bg-zinc-900 px-2.5 py-1 font-semibold text-white hover:bg-zinc-700"
+          className="fokus flex min-h-11 items-center rounded-full bg-maslina px-3.5 font-semibold text-white hover:bg-maslina-tamna"
         >
           Javi za ovo mjesto
         </Link>

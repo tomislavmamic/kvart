@@ -270,6 +270,20 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   );
   // Ploča je zatvorena dok je netko ne zatraži: karta je ono što se gleda.
   const [plocaOtvorena, postaviPlocu] = useState(false);
+  const postavkeGumbRef = useRef<HTMLButtonElement | null>(null);
+
+  // Escape zatvara ploču i vraća fokus onome tko ju je otvorio; bez toga je
+  // tipkovnica u ploči zarobljena, a Escape na karti ne radi ništa.
+  useEffect(() => {
+    if (!plocaOtvorena) return;
+    const naTipku = (d: KeyboardEvent) => {
+      if (d.key !== "Escape") return;
+      postaviPlocu(false);
+      postavkeGumbRef.current?.focus();
+    };
+    window.addEventListener("keydown", naTipku);
+    return () => window.removeEventListener("keydown", naTipku);
+  }, [plocaOtvorena]);
   const [reproducira, postaviReprodukciju] = useState(false);
   const [sadaOcitanja, postaviSada] = useState<readonly Vjetar[]>([]);
   /** Dohvat vjetra traje dvadesetak sekundi; do tada pribadače čekaju. */
@@ -440,6 +454,12 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
             });
           }
           kartaSpremnaRef.current = true;
+          // Pri manjem uvećanju pribadače postaja oko plohe se preklapaju u
+          // nečitljivu hrpu; tada ostaje samo točka, a natpis se vraća s
+          // uvećanjem. Mjerna pribadača (H₂S) uvijek nosi natpis.
+          const poUvecanju = () => oznakeRef.current?.postaviUvecanje(karta.getZoom());
+          karta.on("zoom", poUvecanju);
+          poUvecanju();
           dodajSloj();
           postaviStanjeKarte("spremna");
         });
@@ -854,6 +874,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
               kadar={kadar}
               izracunat={spreman}
               ljestvica={ljestvicaKartice}
+              prijedlozi={stanje.prijedlozi}
               naVise={() => postaviPlocu((v) => !v)}
               plocaOtvorena={plocaOtvorena}
             />
@@ -887,13 +908,18 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
         {/* Gore desno: izlaz i otvaranje ploče. Ništa više — navigacija
             stranice je na ovoj karti sakrivena (vidi BEZ_OKVIRA u site-chrome). */}
-        <div className="pointer-events-auto z-30 flex shrink-0 items-center gap-1.5">
+        {/* Postavke i izlaz nisu blizanci: postavke su pilula s riječju, izlaz
+            stoji sam na desnom rubu s riječju. Dva ista kvadrata jedan do
+            drugoga (jedan otvara ploču, drugi napušta stranicu) su u kritici
+            od 2. 9. 2026. bila zamka u koju je i ocjenjivač upao. */}
+        <div className="pointer-events-auto z-30 flex shrink-0 items-center gap-3">
           <button
+            ref={postavkeGumbRef}
             type="button"
             onClick={() => postaviPlocu((v) => !v)}
             aria-expanded={plocaOtvorena}
             aria-label={plocaOtvorena ? "Zatvori postavke" : "Otvori postavke"}
-            className="fokus flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white hover:text-zinc-900"
+            className="fokus flex min-h-11 items-center gap-1.5 rounded-full bg-white/85 px-3 text-sm font-semibold text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white"
           >
             <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">
               <path
@@ -904,13 +930,14 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
                 fill="none"
               />
             </svg>
+            <span>Postavke</span>
           </button>
           <Link
             href="/karepovac/zrak"
-            aria-label="Zatvori simulator"
-            className="fokus flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white hover:text-zinc-900"
+            className="fokus flex min-h-11 items-center gap-1 rounded-full bg-white/85 px-3 text-sm font-semibold text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white"
           >
-            <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">
+            <span>Zatvori</span>
+            <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
               <path
                 d="M5 5l10 10M15 5L5 15"
                 className="stroke-current"
