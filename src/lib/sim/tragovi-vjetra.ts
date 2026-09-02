@@ -194,7 +194,30 @@ function glatko(x: number): number {
  * Returns:
  *   Roj; dok mu se ne zada polje i broj, ne radi ništa.
  */
-export function stvoriRoj(sirinaM: number, visinaM: number, najvise: number): Roj {
+/**
+ * Gdje unutar okvira roja leži polje vjetra, u udjelima okvira.
+ *
+ * Roj smije biti širi od polja: pri zadanom pogledu polje od 6,4 km pokriva
+ * tek srednji dio zaslona, a vjetar puše i izvan njega. Izvan polja se uzima
+ * rubna vrijednost polja (`uzorak` pridržava rub) — dakle vjetar na
+ * otvorenom kakav polje ima na svom rubu, bez reljefa kojega ondje nema.
+ */
+export type OkvirPolja = {
+  readonly od: readonly [number, number];
+  readonly do: readonly [number, number];
+};
+
+const CIJELI_OKVIR: OkvirPolja = { od: [0, 0], do: [1, 1] };
+
+export function stvoriRoj(
+  sirinaM: number,
+  visinaM: number,
+  najvise: number,
+  okvirPolja: OkvirPolja = CIJELI_OKVIR,
+): Roj {
+  const [pu0, pv0] = okvirPolja.od;
+  const mjeriloU = okvirPolja.do[0] - pu0;
+  const mjeriloV = okvirPolja.do[1] - pv0;
   const trag = new Float32Array(najvise * TRAG_TOCAKA * 2);
   const glava = new Int32Array(najvise);
   /** Prijeđeni put, u metrima; ujedno je i mjera vijeka. */
@@ -218,8 +241,11 @@ export function stvoriRoj(sirinaM: number, visinaM: number, najvise: number): Ro
       ocitanje[1] = 0;
       return;
     }
-    ocitanje[0] = uzorak(polje.vx, polje.gw, polje.gh, u, v);
-    ocitanje[1] = uzorak(polje.vy, polje.gw, polje.gh, u, v);
+    // Udio okvira roja → udio polja; izvan polja `uzorak` drži rub.
+    const fu = (u - pu0) / mjeriloU;
+    const fv = (v - pv0) / mjeriloV;
+    ocitanje[0] = uzorak(polje.vx, polje.gw, polje.gh, fu, fv);
+    ocitanje[1] = uzorak(polje.vy, polje.gw, polje.gh, fu, fv);
   }
 
   function celija(u: number, v: number): number {

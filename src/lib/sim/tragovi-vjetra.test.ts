@@ -204,3 +204,30 @@ test("novi sat pri mirovanju presloži roj, jer se sam neće razići", () => {
   );
   assert.ok(t[t.length - 1][1] > t[0][1], "rep mora voditi prema jugu");
 });
+
+test("roj širi od polja izvan polja uzima rubnu vrijednost polja", () => {
+  // Polje 2×2: vjetar prema istoku 1 m/s na zapadnoj polovici, 3 m/s na istočnoj.
+  const gw = 2;
+  const gh = 2;
+  const vx = new Float32Array([1, 3, 1, 3]);
+  const vy = new Float32Array(4);
+  const uski = stvoriRoj(1000, 1000, 4);
+  const siroki = stvoriRoj(2000, 2000, 4, { od: [0.25, 0.25], do: [0.75, 0.75] });
+  uski.postaviPolje(vx, vy, gw, gh, true);
+  siroki.postaviPolje(vx, vy, gw, gh, true);
+  uski.postaviBroj(4);
+  siroki.postaviBroj(4);
+  // Oba roja moraju sijati i micati čestice; širi ih smije imati i izvan
+  // polja, a nijedna ne smije stajati (vjetar je posvuda ≥ 1 m/s).
+  for (let k = 0; k < 20; k += 1) {
+    uski.korak(0.1);
+    siroki.korak(0.1);
+  }
+  const zivih = (r: ReturnType<typeof stvoriRoj>) => {
+    let n = 0;
+    for (let i = 0; i < r.broj; i += 1) if (r.zivot(i) > 0) n += 1;
+    return n;
+  };
+  assert.ok(zivih(siroki) >= 1, "širi roj ima žive čestice");
+  assert.ok(zivih(uski) >= 1, "uski roj ima žive čestice");
+});

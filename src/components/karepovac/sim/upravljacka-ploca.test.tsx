@@ -18,6 +18,7 @@ const STANJE: PloceStanje = {
   reljef: false,
   zgrade: false,
   postaje: true,
+  prijedlozi: true,
 };
 
 function nacrtaj(stanje: PloceStanje = STANJE) {

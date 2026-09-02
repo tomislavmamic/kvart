@@ -56,6 +56,8 @@ export type PloceStanje = {
   readonly reljef: boolean;
   readonly zgrade: boolean;
   readonly postaje: boolean;
+  /** Predložene mjerne postaje iz zahtjeva #28, kao oznake na karti. */
+  readonly prijedlozi: boolean;
 };
 
 export function UpravljackaPloca({
@@ -215,6 +217,10 @@ export function UpravljackaPloca({
         </Prekidac>
         <Prekidac ukljucen={stanje.postaje} naPromjenu={(v) => naStanje({ postaje: v })}>
           Mjerne postaje
+        </Prekidac>
+        <Prekidac ukljucen={stanje.prijedlozi} naPromjenu={(v) => naStanje({ prijedlozi: v })}>
+          Predložene postaje
+          <span className="ml-1 text-xs text-zinc-500">(crtkane točke; klik otvara što, čime i pošto)</span>
         </Prekidac>
         <button
           type="button"

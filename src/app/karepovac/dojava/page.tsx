@@ -40,7 +40,23 @@ export const metadata = createPageMetadata({
  */
 const SEKTOR_KAREPOVCA = 5;
 
-export default async function DojavaPage() {
+/** Točka iz adrese (`?lat=…&lng=…`), kad je stigla iz simulatora; inače ništa. */
+function mjestoIzAdrese(p: Record<string, string | string[] | undefined>) {
+  const broj = (v: string | string[] | undefined) => {
+    const n = Number(Array.isArray(v) ? v[0] : v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const lat = broj(p.lat);
+  const lng = broj(p.lng);
+  return lat !== null && lng !== null ? { lat, lng } : null;
+}
+
+export default async function DojavaPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const pocetnoMjesto = mjestoIzAdrese((await searchParams) ?? {});
   const dojave = await getOdourReports();
   const ruza = ruzaDojava(dojave);
   const dovoljno = ruza.uporabljeno >= 20;
@@ -64,7 +80,7 @@ export default async function DojavaPage() {
       </h1>
 
       <div className="mt-4">
-        <ObrazacDojave />
+        <ObrazacDojave pocetnoMjesto={pocetnoMjesto} />
       </div>
 
       {dovoljno && vrh !== null && (

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:karta": "next dev --webpack",
-    "build": "npm run generate:igra && next build",
+    "build": "npm run generate:igra && npm run kopiraj:maplibre-radnik && next build",
     "start": "next start",
     "test": "tsx --test \"{src,tests,scripts}/**/*.test.ts\" \"src/**/*.test.tsx\"",
     "lint": "eslint",
@@ -39,7 +39,12 @@
     "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py",
     "provjeri-vedre-noci": "/opt/homebrew/bin/python3 scripts/provjeri-vedre-noci.py",
     "izvedi-presjek": "/opt/homebrew/bin/python3 scripts/izvedi-presjek.py",
-    "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts"
+    "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
+    "hindcast": "tsx scripts/hindcast/pokreni.ts",
+    "hindcast:ulazi": "tsx scripts/hindcast/ulazi.ts",
+    "hindcast:epizode": "tsx scripts/hindcast/epizode.ts",
+    "kopiraj:maplibre-radnik": "mkdir -p public/karepovac/maplibre && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs public/karepovac/maplibre/",
+    "postinstall": "npm run kopiraj:maplibre-radnik"
   },
   "dependencies": {
     "@turf/turf": "^7.3.5",

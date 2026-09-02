@@ -15,8 +15,8 @@
 import { zapisiZrakPoslije } from "@/lib/arhiva-zraka";
 import { satniVjetar } from "@/lib/vjetar-sat";
 
-/** Isti rok kao ostali izvori vjetra, da se dvije karte ne raziđu. */
-export const revalidate = 900;
+/** Pet minuta, kao Neverinove postaje i stranica simulatora. */
+export const revalidate = 300;
 
 export async function GET(): Promise<Response> {
   const vjetar = await satniVjetar(new Date());
@@ -37,7 +37,7 @@ export async function GET(): Promise<Response> {
       headers: {
         // Preglednik smije držati kratko; posluživanje ionako ide iz
         // zajedničke predmemorije, pa čest povratak na stranicu ne budi AZO.
-        "cache-control": "public, max-age=60, stale-while-revalidate=900",
+        "cache-control": "public, max-age=60, stale-while-revalidate=300",
       },
     },
   );

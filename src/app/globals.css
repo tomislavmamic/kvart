@@ -839,3 +839,60 @@ body {
 .kotacic::-webkit-scrollbar {
   display: none;
 }
+
+/* Predložene mjerne postaje (simulator): crtkan obrub i tikvina boja, da se
+   prijedlog ne zamijeni s postajom koja doista mjeri. */
+.sim-prijedlog {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  font: inherit;
+}
+.sim-prijedlog__tocka {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px dashed #0f766e;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+.sim-prijedlog__tocka[data-faza="B"] {
+  border-color: #0e7490;
+}
+.sim-prijedlog__tocka[data-faza="C"] {
+  border-color: #6b7280;
+}
+/* Natpis se vidi tek na prelazak ili odabir: devet natpisa odjednom prekrilo
+   bi kvart. Točke same, crtkane i tikvine, dovoljno govore da nešto predlažu. */
+.sim-prijedlog__natpis {
+  display: none;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 600;
+  color: #0f766e;
+  background: rgb(255 255 255 / 0.85);
+  border: 1px dashed rgb(15 118 110 / 0.6);
+  border-radius: 4px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+.sim-prijedlog--odabran .sim-prijedlog__tocka {
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 0.35);
+}
+.sim-prijedlog:hover .sim-prijedlog__natpis,
+.sim-prijedlog:focus-visible .sim-prijedlog__natpis,
+.sim-prijedlog--odabran .sim-prijedlog__natpis {
+  display: inline;
+}
+.sim-prijedlog--odabran .sim-prijedlog__natpis {
+  background: #0f766e;
+  color: #fff;
+  border-style: solid;
+}

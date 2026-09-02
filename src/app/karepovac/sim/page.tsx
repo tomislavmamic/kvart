@@ -8,8 +8,12 @@ export const metadata = createPageMetadata({
     "Kamo je zrak s Karepovca išao zadnja 24 sata i kamo ide sljedeća tri — na karti, po satu, uz mjerenja s postaja uz plohu.",
 });
 
-/** Isti rok kao ostali prikazi zraka, da dvije karte ne pokazuju dva vjetra. */
-export const revalidate = 900;
+/**
+ * Pet minuta, koliko i Neverinove postaje: sat koji vodi kartu je Vrboranov,
+ * a tko otvori stranicu i neverin.hr jedno uz drugo mora vidjeti isti vjetar.
+ * Isti rok nosi i `/api/karepovac/vjetar`.
+ */
+export const revalidate = 300;
 
 export default async function SimulatorPage() {
   const crta = await dohvatiCrtu();

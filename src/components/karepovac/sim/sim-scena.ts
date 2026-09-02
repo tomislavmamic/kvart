@@ -16,13 +16,28 @@
  * vrha tekstura bi se razvukla pravocrtno i sjeverni bi rub perjanice bio
  * pomaknut. Na 6,4 km to je manje od metra, ali podjela stoji ništa: svaki
  * vrh dobiva svoj pravi položaj, pa greške nema nikakve.
+ *
+ * ## Prijelaz među satima i nesigurnost prognoze
+ *
+ * Sat se ne zamjenjuje odsjekom nego se dvije slike **pretapaju** (~400 ms):
+ * sjenčar drži prošlu i novu teksturu i miješa gotove boje. Ništa se ne
+ * pomiče ni ne okreće — prošla perjanica samo blijedi dok nova izranja. Bilo
+ * bi lako „animirati” zrak razvlačenjem prošle slike prema novoj, ali to bi
+ * bila slika koju model nikad nije izračunao; kadrovi su istina modela i
+ * između njih se ne izmišlja.
+ *
+ * Prognozirani sat crta se **kao prognoza**: bljeđe, sivlje i s prošaranim
+ * rubom ispod praga mirisa, i to jače što je sat dalje (+1 h jedva, +3 h
+ * jasno). Nema vjerojatnosnih izolinija — model daje jedno polje, ne
+ * ansambl — ali sat koji je nagađanje ne smije izgledati kao sat koji se
+ * dogodio.
  */
 
 import type { Map as MapaLibre, CustomLayerInterface } from "maplibre-gl";
 import { MercatorCoordinate } from "maplibre-gl";
 import * as THREE from "three";
 
-import { MIRISNI_RASPON, TVARI, type Tvar, ljestvicaBoja } from "@/lib/dim";
+import { MIRISNI_RASPON, PRAG_NA_LJESTVICI, TVARI, type Tvar, ljestvicaBoja } from "@/lib/dim";
 import { bojaZa, SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
 import { PROZOR } from "@/lib/sim/zapis-gustoce";
 import type { Osnove } from "@/lib/sim/polje";
@@ -47,13 +62,25 @@ export type PostavkePrikaza = {
 };
 
 export type Scena = {
-  /** Postavlja sliku gustoće za odabrani sat. */
+  /**
+   * Postavlja sliku gustoće za odabrani sat.
+   *
+   * `prijelazMs` veći od nule pretapa prošlu sliku u novu; nula je oštar
+   * rez (mirovanje, snimka zaslona). Prazni bajtovi (duljina 0) brišu
+   * perjanicu — sat koji još nije izračunat ne smije nositi tuđu sliku.
+   */
   postaviGustocu(
     bajtovi: Uint8Array,
     bajtoviMerkaptana: Uint8Array,
     sirina: number,
     visina: number,
+    prijelazMs?: number,
   ): void;
+  /**
+   * Koliko je sat nagađanje: 0 za izmjeren ili sadašnji, do 1 za najdalju
+   * prognozu. Mijenja samo prikaz — bljeđe, sivlje, prošaran rub.
+   */
+  postaviNesigurnost(nesigurnost: number): void;
   /** Postavlja polje vjetra za odabrani sat, u m/s po ćeliji. */
   postaviVjetar(vx: Float32Array, vy: Float32Array, gw: number, gh: number): void;
   postaviPrikaz(postavke: PostavkePrikaza): void;
@@ -99,6 +126,8 @@ const PIKSELI = /* glsl */ `
 
   uniform sampler2D uGustoca;
   uniform sampler2D uGustocaB;
+  uniform sampler2D uPrije;
+  uniform sampler2D uPrijeB;
   uniform sampler2D uLutA;
   uniform sampler2D uLutB;
   uniform float uSkala;
@@ -107,21 +136,51 @@ const PIKSELI = /* glsl */ `
   uniform float uPomakB;
   uniform float uVidljivA;
   uniform float uVidljivB;
+  /** 0 = prošla slika, 1 = nova; između se pretapa. */
+  uniform float uMjesavina;
+  /** 0 = izmjereno, 1 = najdalja prognoza. */
+  uniform float uNesigurnost;
+  /** Gdje na ljestvici stoji prag mirisa; ispod njega je rub „moguće”. */
+  uniform float uPrag;
 
   vec4 uzmi(sampler2D lut, float razina, float vidljiv) {
     if (vidljiv < 0.5) return vec4(0.0);
     return texture2D(lut, vec2(clamp(razina, 0.0, 1.0), 0.5));
   }
 
-  void main() {
-    // Tvari više ne dijele polje: merkaptanski izvor prati radne sate, pa
-    // njegova gustoća stoji u vlastitoj teksturi.
-    float u = texture2D(uGustoca, vUv).r;
-    float uB = texture2D(uGustocaB, vUv).r;
+  // Boja jedne slike (obje tvari), već pomnožena neprozirnošću; uz nju i
+  // najviši položaj na ljestvici, da se rub ispod praga dade prepoznati.
+  vec4 slozi(sampler2D gA, sampler2D gB, out float polozaj) {
+    float u = texture2D(gA, vUv).r;
+    float uB = texture2D(gB, vUv).r;
+    polozaj = 0.0;
     // Bajt nula znači „ispod prozora zapisa”, dakle nema ničega. Bez ove
     // provjere bi prazan zrak dobio dno ljestvice, a ono pri jakom izvoru
     // više nije prozirno — cijela bi karta poprimila boju.
-    if (u <= 0.0 && uB <= 0.0) discard;
+    if (u <= 0.0 && uB <= 0.0) return vec4(0.0);
+    float razinaA = u * uSkala + uBaza + uPomakA;
+    float razinaB = uB * uSkala + uBaza + uPomakB;
+    vec4 a = u <= 0.0 ? vec4(0.0) : uzmi(uLutA, razinaA, uVidljivA);
+    vec4 b = uB <= 0.0 ? vec4(0.0) : uzmi(uLutB, razinaB, uVidljivB);
+    polozaj = max(u <= 0.0 || uVidljivA < 0.5 ? 0.0 : razinaA,
+                  uB <= 0.0 || uVidljivB < 0.5 ? 0.0 : razinaB);
+    // Druga tvar ide preko prve; obje su prozirne, pa se preklop vidi kao
+    // miješana boja, a ne kao da je jedna pojela drugu.
+    vec3 boja = a.rgb * a.a;
+    float alfa = a.a;
+    boja = b.rgb * b.a + boja * (1.0 - b.a);
+    alfa = b.a + alfa * (1.0 - b.a);
+    return vec4(boja, alfa);
+  }
+
+  void main() {
+    float polozajSada;
+    float polozajPrije;
+    vec4 sada = slozi(uGustoca, uGustocaB, polozajSada);
+    vec4 prije = uMjesavina >= 1.0 ? vec4(0.0) : slozi(uPrije, uPrijeB, polozajPrije);
+    vec4 c = uMjesavina >= 1.0 ? sada : mix(prije, sada, uMjesavina);
+    float polozaj = uMjesavina >= 1.0 ? polozajSada : mix(polozajPrije, polozajSada, uMjesavina);
+    if (c.a <= 0.0) discard;
 
     // Rub okvira nije rub perjanice nego rub onoga što je izračunato. Oštar
     // rez ondje čita se kao „dalje je čisto”, što nije istina — zrak ide
@@ -129,22 +188,22 @@ const PIKSELI = /* glsl */ `
     vec2 doRuba = min(vUv, 1.0 - vUv);
     float rub = smoothstep(0.0, 0.045, min(doRuba.x, doRuba.y));
 
-    float razina = u * uSkala + uBaza;
-    float razinaB = uB * uSkala + uBaza;
-    vec4 a = u <= 0.0 ? vec4(0.0) : uzmi(uLutA, razina + uPomakA, uVidljivA);
-    vec4 b = uB <= 0.0 ? vec4(0.0) : uzmi(uLutB, razinaB + uPomakB, uVidljivB);
+    if (uNesigurnost > 0.0) {
+      // Prognoza: sivlja i bljeđa, a pojas ispod praga prošaran kosim
+      // crtama u pikselima zaslona — čita se kao „možda”, ne kao ploha.
+      float siva = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+      c.rgb = mix(c.rgb, vec3(siva), 0.4 * uNesigurnost);
+      float ispodPraga = 1.0 - smoothstep(uPrag - 0.04, uPrag + 0.04, polozaj);
+      float srafura = step(0.5, fract((gl_FragCoord.x + gl_FragCoord.y) / 12.0));
+      float prosarano = mix(1.0, mix(0.35, 1.0, srafura), ispodPraga * uNesigurnost);
+      c *= prosarano * mix(1.0, 0.7, uNesigurnost);
+    }
 
-    // Druga tvar ide preko prve; obje su prozirne, pa se preklop vidi kao
-    // miješana boja, a ne kao da je jedna pojela drugu.
-    vec3 boja = a.rgb * a.a;
-    float alfa = a.a;
-    boja = b.rgb * b.a + boja * (1.0 - b.a);
-    alfa = b.a + alfa * (1.0 - b.a);
-    alfa *= rub;
-    if (alfa <= 0.002) discard;
+    c *= rub;
+    if (c.a <= 0.002) discard;
 
     // MapLibre očekuje boju već pomnoženu neprozirnošću.
-    gl_FragColor = vec4(boja * rub, alfa);
+    gl_FragColor = c;
   }
 `;
 
@@ -214,13 +273,23 @@ export function stvoriSlojPerjanice(
   const scena = new THREE.Scene();
   const kamera = new THREE.Camera();
 
-  const gustoca = new THREE.DataTexture(new Uint8Array(1), 1, 1, THREE.RedFormat);
-  const gustocaB = new THREE.DataTexture(new Uint8Array(1), 1, 1, THREE.RedFormat);
-  gustoca.minFilter = THREE.LinearFilter;
-  gustoca.magFilter = THREE.LinearFilter;
-  gustoca.wrapS = THREE.ClampToEdgeWrapping;
-  gustoca.wrapT = THREE.ClampToEdgeWrapping;
-  gustoca.needsUpdate = true;
+  /** Tekstura gustoće; prazna je 1 × 1 nula, što sjenčar čita kao „ništa”. */
+  const tekstura = (b: Uint8Array, sirina: number, visina: number) => {
+    const prazna = b.length === 0;
+    const t = new THREE.DataTexture(
+      prazna ? new Uint8Array(1) : b,
+      prazna ? 1 : sirina,
+      prazna ? 1 : visina,
+      THREE.RedFormat,
+    );
+    t.minFilter = THREE.LinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.wrapS = THREE.ClampToEdgeWrapping;
+    t.wrapT = THREE.ClampToEdgeWrapping;
+    t.needsUpdate = true;
+    return t;
+  };
+  const prazno = new Uint8Array(0);
 
   const lutovi: Record<"A" | "B", THREE.DataTexture> = {
     A: lutTekstura("jantar", "sumporovodik"),
@@ -228,8 +297,13 @@ export function stvoriSlojPerjanice(
   };
 
   const uniforme = {
-    uGustoca: { value: gustoca },
-    uGustocaB: { value: gustocaB },
+    uGustoca: { value: tekstura(prazno, 1, 1) },
+    uGustocaB: { value: tekstura(prazno, 1, 1) },
+    uPrije: { value: tekstura(prazno, 1, 1) },
+    uPrijeB: { value: tekstura(prazno, 1, 1) },
+    uMjesavina: { value: 1 },
+    uNesigurnost: { value: 0 },
+    uPrag: { value: PRAG_NA_LJESTVICI },
     uLutA: { value: lutovi.A },
     uLutB: { value: lutovi.B },
     // Zapis pokriva šest redova veličine; ljestvica prikaza svoj vlastiti
@@ -266,22 +340,46 @@ export function stvoriSlojPerjanice(
 
   let mirovanje = false;
   let zadnjiTrenutak = 0;
+  /** Prijelaz u tijeku: kad je počeo i koliko traje; `null` kad ga nema. */
+  let prijelaz: { pocetak: number; trajanje: number; odNesigurnosti: number } | null = null;
+  let nesigurnost = 0;
+  /** Je li ikad postavljena prava slika; prvi sat nema iz čega pretapati. */
+  let imaSliku = false;
 
   const upravljac: Scena = {
-    postaviGustocu(bajtovi, bajtoviMerkaptana, sirina, visina) {
-      const tekstura = (b: Uint8Array) => {
-        const nova = new THREE.DataTexture(b, sirina, visina, THREE.RedFormat);
-        nova.minFilter = THREE.LinearFilter;
-        nova.magFilter = THREE.LinearFilter;
-        nova.wrapS = THREE.ClampToEdgeWrapping;
-        nova.wrapT = THREE.ClampToEdgeWrapping;
-        nova.needsUpdate = true;
-        return nova;
-      };
-      (uniforme.uGustoca.value as THREE.DataTexture).dispose();
-      (uniforme.uGustocaB.value as THREE.DataTexture).dispose();
-      uniforme.uGustoca.value = tekstura(bajtovi);
-      uniforme.uGustocaB.value = tekstura(bajtoviMerkaptana);
+    postaviGustocu(bajtovi, bajtoviMerkaptana, sirina, visina, prijelazMs = 0) {
+      const staraA = uniforme.uGustoca.value as THREE.DataTexture;
+      const staraB = uniforme.uGustocaB.value as THREE.DataTexture;
+      (uniforme.uPrije.value as THREE.DataTexture).dispose();
+      (uniforme.uPrijeB.value as THREE.DataTexture).dispose();
+      if (prijelazMs > 0 && imaSliku) {
+        // Prošla slika ostaje u sjenčaru dok nova izranja preko nje.
+        uniforme.uPrije.value = staraA;
+        uniforme.uPrijeB.value = staraB;
+        uniforme.uMjesavina.value = 0;
+        prijelaz = {
+          pocetak: performance.now(),
+          trajanje: prijelazMs,
+          odNesigurnosti: uniforme.uNesigurnost.value,
+        };
+      } else {
+        staraA.dispose();
+        staraB.dispose();
+        uniforme.uPrije.value = tekstura(prazno, 1, 1);
+        uniforme.uPrijeB.value = tekstura(prazno, 1, 1);
+        uniforme.uMjesavina.value = 1;
+        uniforme.uNesigurnost.value = nesigurnost;
+        prijelaz = null;
+      }
+      uniforme.uGustoca.value = tekstura(bajtovi, sirina, visina);
+      uniforme.uGustocaB.value = tekstura(bajtoviMerkaptana, sirina, visina);
+      imaSliku = true;
+      karta?.triggerRepaint();
+    },
+    postaviNesigurnost(n) {
+      nesigurnost = Math.max(0, Math.min(1, n));
+      // Bez prijelaza u tijeku vrijedi odmah; s prijelazom se pretapa s njim.
+      if (!prijelaz) uniforme.uNesigurnost.value = nesigurnost;
       karta?.triggerRepaint();
     },
     postaviVjetar(vx, vy, gw, gh) {
@@ -326,6 +424,8 @@ export function stvoriSlojPerjanice(
       lutovi.B.dispose();
       (uniforme.uGustoca.value as THREE.DataTexture).dispose();
       (uniforme.uGustocaB.value as THREE.DataTexture).dispose();
+      (uniforme.uPrije.value as THREE.DataTexture).dispose();
+      (uniforme.uPrijeB.value as THREE.DataTexture).dispose();
       renderer?.dispose();
       renderer = null;
       karta = null;
@@ -354,6 +454,24 @@ export function stvoriSlojPerjanice(
       const sada = performance.now() / 1000;
       const dt = zadnjiTrenutak ? Math.min(0.1, sada - zadnjiTrenutak) : 0;
       zadnjiTrenutak = sada;
+
+      if (prijelaz) {
+        const t = Math.min(1, (performance.now() - prijelaz.pocetak) / prijelaz.trajanje);
+        // Glatko na oba kraja, da pretapanje ne „sjekne” ni na početku ni na kraju.
+        const glatko = t * t * (3 - 2 * t);
+        uniforme.uMjesavina.value = glatko;
+        uniforme.uNesigurnost.value =
+          prijelaz.odNesigurnosti + (nesigurnost - prijelaz.odNesigurnosti) * glatko;
+        if (t >= 1) {
+          prijelaz = null;
+          (uniforme.uPrije.value as THREE.DataTexture).dispose();
+          (uniforme.uPrijeB.value as THREE.DataTexture).dispose();
+          uniforme.uPrije.value = tekstura(prazno, 1, 1);
+          uniforme.uPrijeB.value = tekstura(prazno, 1, 1);
+        } else {
+          karta?.triggerRepaint();
+        }
+      }
 
       if (tragovi.objekt.visible) {
         // Debljina poteza mora ostati ista u pikselima, pa sloj svaku sliku

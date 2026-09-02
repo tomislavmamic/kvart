@@ -7,12 +7,30 @@
  * WebGL sloj koji crta zrak. Uplesti to u postojeću komponentu značilo bi da
  * svaka promjena simulatora dira i planersku kartu.
  *
- * Zajedničko im ostaje ono što i treba: iste adrese podloga i isti navodi
- * izvora (`src/lib/map-views.ts`), pa se dvije karte istoga kvarta ne mogu
+ * ## Podloga bez ključa
+ *
+ * Ulična podloga bila je CARTO-ov raster; od rujna 2026. bez ključa vraća
+ * pločice s vodenim žigom „API KEY REQUIRED”, pa je karta ispod perjanice
+ * bila nečitljiva. Sad je podloga **OpenFreeMap** (vektorski stil Positron,
+ * bez ključa i bez ograničenja prometa, OpenMapTiles nad OSM-om). Stil se
+ * skida kao JSON i naši se izvori i slojevi dodaju **poslije** njega u
+ * `dodajSlojeveSimulatora`, jer MapLibre pri `setStyle` briše sve što stil
+ * ne nosi.
+ *
+ * Vektorska podloga traži MapLibreov radnik, kao i GeoJSON slojevi — pod
+ * `next dev` (Turbopack) ne radi, vidi bilješku u `simulator.tsx`. Ako stil
+ * ne stigne (mreža, pad poslužitelja), ide **OSM-ov raster** kao rezerva.
+ * Ta rezerva mora ostati rezerva: pravila OSM-ove poslužiteljske mreže
+ * dopuštaju samo lagan promet i traže navod izvora, a ovo je mala stranica
+ * jednoga kvarta pa u to stane — ali kao zadana podloga za sve posjete ne bi
+ * bila u redu.
+ *
+ * Zajedničko s `/karta` ostaje ono što i treba: iste adrese ortofota i
+ * reljefa i isti navodi izvora, pa se dvije karte istoga kvarta ne mogu
  * razići u tome što pokazuju.
  */
 
-import type { StyleSpecification } from "maplibre-gl";
+import type { Map as MapaLibre, StyleSpecification } from "maplibre-gl";
 
 import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
@@ -46,8 +64,12 @@ export const POCETNI_OBUHVAT: [[number, number], [number, number]] = [
 
 export type Podloga = "karta" | "ortofoto";
 
+/** Vektorski stil bez ključa; `liberty` je šareniji, Positron ne guši perjanicu. */
+export const STIL_PODLOGE = "https://tiles.openfreemap.org/styles/positron";
+
 const NAVODI = {
-  carto: "© OpenStreetMap contributors © CARTO",
+  openfreemap: "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors",
+  osm: "© OpenStreetMap contributors",
   dof: "DOF 2024 © Državna geodetska uprava (Otvorena dozvola)",
   dmr: "DMR iz LiDAR-a © Državna geodetska uprava (Otvorena dozvola)",
   grad: "Objekti © Grad Split (GIS izvoz)",
@@ -56,95 +78,136 @@ const NAVODI = {
 /** Sjenčani reljef postoji do z17; dalje se rasteže isti podatak. */
 const RELJEF_NAJVECI_Z = 17;
 
+/** Koliko se čeka na stil prije nego se posegne za rezervom. */
+const ISTEK_STILA_MS = 6000;
+
 /**
- * Slaže MapLibreov opis karte.
+ * Rezervna podloga: OSM-ov raster, bez ključa.
+ *
+ * Samo kad vektorski stil ne stigne. OSM-ova pravila (operations.osmfoundation
+ * .org/policies/tiles) traže navod izvora i lagan promet; obje stvari ovdje
+ * vrijede, ali se raster ne uzima kao zadana podloga.
+ */
+export function rezervniStil(): StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      karta: {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: NAVODI.osm,
+      },
+    },
+    layers: [
+      { id: "pozadina", type: "background", paint: { "background-color": "#eceae5" } },
+      { id: "karta", type: "raster", source: "karta" },
+    ],
+  };
+}
+
+/**
+ * Skida vektorski stil podloge; kad ne stigne, vraća rezervni raster.
+ *
+ * Stil se skida ovdje, a ne predaje karti kao adresa: tako se pad stila vidi
+ * kao pad, a ne kao siva ploha bez greške, i tako se navod izvora smije
+ * dopisati prije nego karta išta nacrta.
+ *
+ * Returns:
+ *   Stil spreman za `new maplibregl.Map({ style })`.
+ */
+export async function ucitajStil(): Promise<StyleSpecification> {
+  try {
+    const odgovor = await fetch(STIL_PODLOGE, { signal: AbortSignal.timeout(ISTEK_STILA_MS) });
+    if (!odgovor.ok) throw new Error(`stil ${odgovor.status}`);
+    const stil = (await odgovor.json()) as StyleSpecification;
+    if (stil.version !== 8 || !stil.layers?.length) throw new Error("stil nije MapLibreov");
+    // Navod stoji na izvoru, jer ga karta odande čita; OpenFreeMap ga u stilu
+    // ne nosi, a bez njega bi karta prešutjela odakle su joj ulice.
+    for (const izvor of Object.values(stil.sources)) {
+      const s = izvor as { attribution?: string };
+      if (!s.attribution) s.attribution = NAVODI.openfreemap;
+    }
+    return stil;
+  } catch (greska) {
+    console.warn("[sim] vektorska podloga nije stigla, ide OSM raster:", greska);
+    return rezervniStil();
+  }
+}
+
+/**
+ * Dodaje izvore i slojeve simulatora povrh učitanog stila.
  *
  * Svi slojevi postoje od početka; pale se i gase vidljivošću, a ne dodavanjem.
  * Tako poredak ostaje isti bez obzira na to kojim ih redom netko uključi —
  * inače zgrade znaju završiti iznad perjanice, a postaje ispod nje.
  *
- * Returns:
- *   Opis spreman za `new maplibregl.Map({ style })`.
+ * Args:
+ *   karta: Karta kojoj je stil već složen (`style.load`).
  */
-export function stiloviKarte(): StyleSpecification {
-  return {
-    version: 8,
-    glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
-    sources: {
-      karta: {
-        type: "raster",
-        tiles: [
-          "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-          "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-          "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        ],
-        tileSize: 256,
-        attribution: NAVODI.carto,
-      },
-      ortofoto: {
-        type: "raster",
-        tiles: [
-          "https://geoportal.dgu.hr/services/dof/wms?service=WMS&version=1.1.1" +
-            "&request=GetMap&layers=DOF05_VPI_2024&styles=&format=image/jpeg" +
-            "&transparent=false&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}",
-        ],
-        tileSize: 512,
-        attribution: NAVODI.dof,
-      },
-      reljef: {
-        type: "raster",
-        tiles: ["/geo/reljef/{z}/{x}/{y}.png"],
-        tileSize: 256,
-        maxzoom: RELJEF_NAJVECI_Z,
-        attribution: NAVODI.dmr,
-      },
-      postaje: {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: SIM_POSTAJE.map((p) => ({
-            type: "Feature" as const,
-            geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
-            properties: { oznaka: p.oznaka, naziv: p.naziv, tvar: p.tvar },
-          })),
-        },
-      },
-      ploha: {
-        type: "geojson",
-        data: "/geo/karepovac.geojson",
-      },
-    },
-    layers: [
-      { id: "pozadina", type: "background", paint: { "background-color": "#eceae5" } },
-      { id: "karta", type: "raster", source: "karta", paint: { "raster-opacity": 1 } },
-      {
-        id: "ortofoto",
-        type: "raster",
-        source: "ortofoto",
-        layout: { visibility: "none" },
-      },
-      {
-        id: "reljef",
-        type: "raster",
-        source: "reljef",
-        layout: { visibility: "none" },
-        // Reljef ide preko podloge kao sjena, da se ispod njega i dalje vide
-        // ulice; pun bi ih prekrio i karta bi ostala bez imena.
-        paint: { "raster-opacity": 0.55 },
-      },
-      {
-        id: "ploha-obris",
-        type: "line",
-        source: "ploha",
-        paint: {
-          "line-color": "#7c182c",
-          "line-width": 1.6,
-          "line-dasharray": [3, 2],
-          "line-opacity": 0.9,
-        },
-      },
-    ],
+export function dodajSlojeveSimulatora(karta: MapaLibre): void {
+  const dodajIzvor = (id: string, izvor: Parameters<MapaLibre["addSource"]>[1]) => {
+    if (!karta.getSource(id)) karta.addSource(id, izvor);
   };
+  dodajIzvor("ortofoto", {
+    type: "raster",
+    tiles: [
+      "https://geoportal.dgu.hr/services/dof/wms?service=WMS&version=1.1.1" +
+        "&request=GetMap&layers=DOF05_VPI_2024&styles=&format=image/jpeg" +
+        "&transparent=false&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}",
+    ],
+    tileSize: 512,
+    attribution: NAVODI.dof,
+  });
+  dodajIzvor("reljef", {
+    type: "raster",
+    tiles: ["/geo/reljef/{z}/{x}/{y}.png"],
+    tileSize: 256,
+    maxzoom: RELJEF_NAJVECI_Z,
+    attribution: NAVODI.dmr,
+  });
+  dodajIzvor("postaje", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: SIM_POSTAJE.map((p) => ({
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
+        properties: { oznaka: p.oznaka, naziv: p.naziv, tvar: p.tvar },
+      })),
+    },
+  });
+  dodajIzvor("ploha", { type: "geojson", data: "/geo/karepovac.geojson" });
+
+  const dodajSloj = (sloj: Parameters<MapaLibre["addLayer"]>[0]) => {
+    if (!karta.getLayer(sloj.id)) karta.addLayer(sloj);
+  };
+  // Ortofoto ide preko cijele podloge, uključujući natpise: sivi natpisi
+  // Positrona na snimci iz zraka bili bi nečitljivi, a ortofoto se i gleda
+  // zbog terena, ne zbog imena ulica.
+  dodajSloj({ id: "ortofoto", type: "raster", source: "ortofoto", layout: { visibility: "none" } });
+  dodajSloj({
+    id: "reljef",
+    type: "raster",
+    source: "reljef",
+    layout: { visibility: "none" },
+    // Reljef ide preko podloge kao sjena, da se ispod njega i dalje vide
+    // ulice; pun bi ih prekrio i karta bi ostala bez imena.
+    paint: { "raster-opacity": 0.55 },
+  });
+  dodajSloj({
+    id: "ploha-obris",
+    type: "line",
+    source: "ploha",
+    paint: {
+      "line-color": "#7c182c",
+      "line-width": 1.6,
+      "line-dasharray": [3, 2],
+      "line-opacity": 0.9,
+    },
+  });
+  for (const sloj of SLOJEVI_POSTAJA) dodajSloj(sloj);
 }
 
 /** Slojevi postaja; dodaju se nakon perjanice da ostanu iznad nje. */
@@ -176,7 +239,7 @@ export const SLOJEVI_POSTAJA = [
  * Returns:
  *   Ništa; ako sloj već postoji, ne radi se ništa.
  */
-export function dodajZgrade(karta: import("maplibre-gl").Map): void {
+export function dodajZgrade(karta: MapaLibre): void {
   if (karta.getSource("zgrade")) return;
   karta.addSource("zgrade", {
     type: "geojson",
@@ -195,7 +258,12 @@ export function dodajZgrade(karta: import("maplibre-gl").Map): void {
   );
 }
 
-/** Koji je sloj podloge za koji izbor. */
+/**
+ * Koji je sloj podloge za koji izbor.
+ *
+ * Ulična podloga je vektorski stil, dakle desetci slojeva: ne gasi se, nego
+ * je ortofoto prekrije. `karta` ovdje stoji samo za rezervni raster.
+ */
 export const PODLOGE: Record<Podloga, string> = {
   karta: "karta",
   ortofoto: "ortofoto",

@@ -47,7 +47,19 @@ import {
 const GUSTOCA = 0.0007;
 
 const NAJMANJE_CESTICA = 150;
-const NAJVISE_CESTICA = 1200;
+const NAJVISE_CESTICA = 2400;
+
+/**
+ * Koliko je okvir roja širi od polja vjetra, po svakoj osi.
+ *
+ * Polje pokriva 6,4 km, a zadani pogled na širokom zaslonu oko 9 km; s rojem
+ * samo nad poljem tragovi su stajali u srednjoj trećini karte i rub polja
+ * se čitao kao rub vjetra. Izvan polja roj uzima rubnu vrijednost polja
+ * (vidi `OkvirPolja` u `tragovi-vjetra.ts`): vjetar na otvorenom, bez
+ * reljefa kojega polje ondje nema. Dva puta pokriva cijeli zadani pogled i
+ * još jedan korak odzumiranja.
+ */
+const PROSIRENJE = 2;
 
 /** Debljina poteza u CSS pikselima. */
 const SIRINA_PX = 1.8;
@@ -144,7 +156,17 @@ export type Tragovi = {
  *   Upravljač slojem; `objekt` se dodaje u scenu.
  */
 export function stvoriTragove(osnove: Osnove): Tragovi {
-  const { granice } = osnove;
+  // Okvir roja: polje prošireno oko svog središta.
+  const polaSir = ((osnove.granice.istok - osnove.granice.zapad) * PROSIRENJE) / 2;
+  const polaVis = ((osnove.granice.sjever - osnove.granice.jug) * PROSIRENJE) / 2;
+  const sredLon = (osnove.granice.istok + osnove.granice.zapad) / 2;
+  const sredLat = (osnove.granice.sjever + osnove.granice.jug) / 2;
+  const granice = {
+    zapad: sredLon - polaSir,
+    istok: sredLon + polaSir,
+    jug: sredLat - polaVis,
+    sjever: sredLat + polaVis,
+  };
   // Mercator razvlači po širini, pa udio okvira nije posve linearan u `y`.
   // Nad 6,4 km ta je razlika ispod metra i ovdje se zanemaruje: čestice se
   // siju nasumice, pa im podmetarski pomak ne znači ništa. Perjanica, kojoj
@@ -162,7 +184,13 @@ export function stvoriTragove(osnove: Osnove): Tragovi {
   const sirX = jugoistok.x - x0;
   const visY = jugoistok.y - y0;
 
-  const roj: Roj = stvoriRoj(osnove.sirinaM, osnove.visinaM, NAJVISE_CESTICA);
+  const rubPolja = (PROSIRENJE - 1) / (2 * PROSIRENJE);
+  const roj: Roj = stvoriRoj(
+    osnove.sirinaM * PROSIRENJE,
+    osnove.visinaM * PROSIRENJE,
+    NAJVISE_CESTICA,
+    { od: [rubPolja, rubPolja], do: [1 - rubPolja, 1 - rubPolja] },
+  );
 
   // Šest brojeva po potezu: dva kraja i prozirnost na svakom od njih.
   const podatci = new Float32Array(NAJVISE_CESTICA * POTEZA_PO_TRAGU * 6);
@@ -280,9 +308,14 @@ export function stvoriTragove(osnove: Osnove): Tragovi {
       uniforme.uSirina.value = SIRINA_PX * omjer;
       // Broj se ne prepravlja na svaki piksel uvećanja: inače bi se pri svakom
       // pomaku karte sijale nove čestice i roj bi treperio.
+      // `okvirPx` je površina polja na zaslonu; roj pokriva PROSIRENJE² puta
+      // više, pa i čestica treba toliko puta više da gustoća ostane ista.
       const broj = Math.min(
         NAJVISE_CESTICA,
-        Math.max(NAJMANJE_CESTICA, Math.round((okvirPx * GUSTOCA) / 25) * 25),
+        Math.max(
+          NAJMANJE_CESTICA,
+          Math.round((okvirPx * PROSIRENJE * PROSIRENJE * GUSTOCA) / 25) * 25,
+        ),
       );
       if (broj === zadnjiBroj) return;
       zadnjiBroj = broj;

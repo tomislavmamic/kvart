@@ -60,7 +60,15 @@ const IZBOR =
 /** Natpis skupine; govori na koje pitanje polja ispod odgovaraju. */
 const NATPIS = "block text-base font-bold text-kamen-tinta";
 
-export function ObrazacDojave() {
+/**
+ * Mjesto s kojim obrazac počinje, npr. točka na koju je netko kliknuo u
+ * simulatoru (`/karepovac/dojava?lat=…&lng=…`). Zaokružuje se i provjerava
+ * kao i mjesto s uređaja; izvan okvira se ne uzima, da adresa ne podmetne
+ * mjesto koje obrazac ne bi prihvatio.
+ */
+export type PocetnoMjesto = { readonly lat: number; readonly lng: number } | null;
+
+export function ObrazacDojave({ pocetnoMjesto = null }: { pocetnoMjesto?: PocetnoMjesto } = {}) {
   const [smrdi, setSmrdi] = useState(true);
   const [jacina, setJacina] = useState<OdourStrength>("osjetno");
   const [danas, setDanas] = useState(true);
@@ -69,7 +77,11 @@ export function ObrazacDojave() {
     () => Math.floor(new Date().getMinutes() / KORAK_MINUTA) * KORAK_MINUTA,
   );
   const [trajanje, setTrajanje] = useState<number | typeof JOS_TRAJE | "">("");
-  const [mjesto, setMjesto] = useState<StanjeMjesta>({ vrsta: "nema" });
+  const [mjesto, setMjesto] = useState<StanjeMjesta>(() =>
+    pocetnoMjesto && uOkviru(pocetnoMjesto)
+      ? { vrsta: "imam", ...zaokruziMjesto(pocetnoMjesto) }
+      : { vrsta: "nema" },
+  );
   const [zaboravljen, setZaboravljen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
