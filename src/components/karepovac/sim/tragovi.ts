@@ -263,7 +263,7 @@ export function stvoriTragove(osnove: Osnove): Tragovi {
       const g = roj.glava[n];
       // Svakoj se čestici crta njezin udio repa, a prozirnost se razapinje po
       // tome što se crta — inače bi kraći repovi počinjali na pola svjetline.
-      const prva = TRAG_TOCAKA - 1 - Math.round((TRAG_TOCAKA - 1) * roj.udio[n]);
+      const prva = TRAG_TOCAKA - 1 - Math.round((TRAG_TOCAKA - 1) * roj.udioRepa(n));
       const raspon = TRAG_TOCAKA - 1 - prva;
       for (let k = TRAG_TOCAKA - 1; k - PODJELA_TRAGA >= prva; k -= PODJELA_TRAGA) {
         const stariji = k - PODJELA_TRAGA;

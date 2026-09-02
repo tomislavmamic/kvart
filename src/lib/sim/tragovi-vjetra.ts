@@ -81,6 +81,24 @@ export const POTEZA_PO_TRAGU = Math.floor((TRAG_TOCAKA - 1) / PODJELA_TRAGA);
 const NAJKRACI_UDIO = 0.55;
 
 /**
+ * Koliko sekundi stvarnog vjetra rep pokriva.
+ *
+ * Rep je dosad bio zadan **putem** (uvijek ~520 m), pa je pri slabom vjetru
+ * ispadao jednako dug kao pri buri — a upravo je pri 0,5–1 m/s izgledao kao
+ * duga struja ondje gdje se zrak jedva miče. Neverin i Windy repu daju
+ * vrijeme, pa mu duljina prati brzinu; ovdje je isto, uz dvije ograde:
+ * najviše koliko rep uopće pamti (`DULJINA_TRAGA_M`), najmanje `NAJKRACI_M`
+ * da pri tišini ostane kratka crtica, a ne točka.
+ *
+ * Pri 0,7 m/s to je oko 100 m, pri 2 m/s oko 300 m, pri 4 m/s i više puna
+ * duljina repa.
+ */
+const TRAJANJE_REPA_S = 150;
+
+/** Najkraći rep u metrima, da se pri tišini vidi barem smjer crtice. */
+const NAJKRACI_M = 55;
+
+/**
  * Koliko metara puta čestica prijeđe prije nego je zamijeni nova.
  *
  * Tri duljine repa: dovoljno da se vidi kamo je otišla, prekratko da se roj
@@ -136,6 +154,11 @@ export type Roj = {
   readonly glava: Int32Array;
   /** Koliki se udio repa svakoj čestici crta; zadan pri rođenju. */
   readonly udio: Float32Array;
+  /**
+   * Udio repa koji se doista crta: nasumična raznolikost (`udio`) stisnuta
+   * brzinom vjetra na mjestu čestice, da rep prati brzinu kao na Neverinu.
+   */
+  udioRepa(n: number): number;
   /** Koliko je čestica živo; ostatak polja je zauzet, ali se ne crta. */
   readonly broj: number;
   /**
@@ -225,6 +248,8 @@ export function stvoriRoj(
   /** Put od zadnje zapisane točke repa, u metrima. */
   const putic = new Float32Array(najvise);
   const udio = new Float32Array(najvise);
+  /** Zadnja izmjerena brzina na mjestu čestice, u m/s; za duljinu repa. */
+  const brzinaCestice = new Float32Array(najvise);
   const mreza = new Uint16Array(MREZA * MREZA);
   // Jedan zajednički par umjesto niza po pozivu: ovo se zove desetke tisuća
   // puta po slici, a svaki bi novi niz bio smeće za skupljanje.
@@ -296,6 +321,12 @@ export function stvoriRoj(
     let u = (i + Math.random()) / MREZA;
     let v = (j + Math.random()) / MREZA;
 
+    // Brzina na mjestu rođenja: duljina repa ovisi o njoj, a čestica ju
+    // inače dobije tek prvim korakom — pa bi svaki novi rep, i cijeli roj u
+    // mirnom prikazu, ispao najkraći bez obzira na vjetar.
+    vjetar(u, v);
+    brzinaCestice[n] = Math.hypot(ocitanje[0], ocitanje[1]);
+
     const baza = n * TRAG_TOCAKA * 2;
     const zadnja = TRAG_TOCAKA - 1;
     trag[baza + zadnja * 2] = u;
@@ -327,6 +358,7 @@ export function stvoriRoj(
 
       vjetar(u, v);
       const brzina = Math.hypot(ocitanje[0], ocitanje[1]);
+      brzinaCestice[n] = brzina;
       const put = (brzina + MIRNI_VJETAR) * UBRZANJE * KORAK_S;
 
       dob[n] += mreza[celija(u, v)] > prag ? put * ZURBA : put;
@@ -370,6 +402,13 @@ export function stvoriRoj(
     trag,
     glava,
     udio,
+    udioRepa(n) {
+      const metara = Math.min(
+        DULJINA_TRAGA_M,
+        Math.max(NAJKRACI_M, brzinaCestice[n] * TRAJANJE_REPA_S),
+      );
+      return udio[n] * (metara / DULJINA_TRAGA_M);
+    },
     get broj() {
       return broj;
     },

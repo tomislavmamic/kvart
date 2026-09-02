@@ -231,3 +231,29 @@ test("roj širi od polja izvan polja uzima rubnu vrijednost polja", () => {
   assert.ok(zivih(siroki) >= 1, "širi roj ima žive čestice");
   assert.ok(zivih(uski) >= 1, "uski roj ima žive čestice");
 });
+
+test("rep prati brzinu: pri slabom vjetru je kraći nego pri jakom", () => {
+  const gw = 2;
+  const gh = 2;
+  const vy = new Float32Array(4);
+  const udioPri = (brzina: number) => {
+    const roj = stvoriRoj(4000, 4000, 4);
+    roj.postaviPolje(new Float32Array([brzina, brzina, brzina, brzina]), vy, gw, gh, true);
+    roj.postaviBroj(4);
+    for (let k = 0; k < 5; k += 1) roj.korak(0.2);
+    return roj.udioRepa(0) / roj.udio[0];
+  };
+  const slab = udioPri(0.7);
+  const jak = udioPri(5);
+  assert.ok(slab < 0.35, `pri 0,7 m/s rep je ${(slab * 100).toFixed(0)} % najduljega`);
+  assert.equal(jak, 1, "pri 5 m/s rep je pun");
+  assert.ok(udioPri(0) > 0.05, "pri tišini ostane kratka crtica, ne točka");
+});
+
+test("rep prati brzinu i prije prvog koraka, jer je čestica brzinu dobila pri rođenju", () => {
+  const vy = new Float32Array(4);
+  const roj = stvoriRoj(4000, 4000, 4);
+  roj.postaviPolje(new Float32Array([5, 5, 5, 5]), vy, 2, 2, true);
+  roj.postaviBroj(4);
+  assert.equal(roj.udioRepa(0) / roj.udio[0], 1, "pun rep odmah pri jakom vjetru");
+});

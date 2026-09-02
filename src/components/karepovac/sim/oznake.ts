@@ -230,15 +230,26 @@ function strelica(smjerOd: number): string {
  * Returns:
  *   Natpis oblika `1,2 m/s ↗`, ili `tišina`.
  */
-function brzinaISmjer(v: { brzina: number; smjerOd: number; tisina: boolean }): string {
+function brzinaISmjer(v: {
+  brzina: number;
+  smjerOd: number;
+  tisina: boolean;
+  promjenjiv?: boolean;
+}): string {
+  // Promjenjiv smjer (METAR VRB, AZO bez smjera) nije smjer: strelica bi
+  // tvrdila ono što nitko nije izmjerio. Brzina ostaje, smjera nema.
+  if (v.promjenjiv && !v.tisina) return `${broj(v.brzina, 1)} m/s <em>smjer nepoznat</em>`;
   if (v.tisina) return "tišina";
   return `${broj(v.brzina, 1)} m/s ${strelica(v.smjerOd)}`;
 }
 
 /** Riječima, za `title` i čitače zaslona; strelica sama ne kaže odakle puše. */
-function rijecima(v: { brzina: number; smjerOd: number; tisina: boolean } | undefined): string {
+function rijecima(
+  v: { brzina: number; smjerOd: number; tisina: boolean; promjenjiv?: boolean } | undefined,
+): string {
   if (!v) return "";
   if (v.tisina) return "tišina, vjetar praktički ne nosi";
+  if (v.promjenjiv) return `${broj(v.brzina, 1)} m/s, smjer nepoznat`;
   return `iz ${strana(v.smjerOd)}, ${broj(v.brzina, 1)} m/s`;
 }
 
