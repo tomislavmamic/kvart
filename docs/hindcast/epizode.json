@@ -1,0 +1,553 @@
+[
+ {
+  "id": "jak-miris-2024-09-07",
+  "naziv": "Jak miris na k1, 2024-09-07",
+  "razdoblje": {
+   "od": "2024-09-06",
+   "do": "2024-09-08"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "jak-miris",
+   "jesen"
+  ],
+  "opis": "Jak miris na k1, 2024-09-07; mjera 5.61. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "bez-mirisa-2024-09-10",
+  "naziv": "Bez mirisa na k1, 2024-09-10",
+  "razdoblje": {
+   "od": "2024-09-09",
+   "do": "2024-09-11"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "bez-mirisa",
+   "jesen"
+  ],
+  "opis": "Bez mirisa na k1, 2024-09-10; mjera 0.88. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "promjena-vjetra-2024-09-14",
+  "naziv": "Okreti vjetra, 2024-09-14",
+  "razdoblje": {
+   "od": "2024-09-13",
+   "do": "2024-09-15"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "promjena-vjetra",
+   "jesen"
+  ],
+  "opis": "Okreti vjetra, 2024-09-14; mjera 8.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "tisina-2024-10-24",
+  "naziv": "Tišina, 2024-10-24",
+  "razdoblje": {
+   "od": "2024-10-23",
+   "do": "2024-10-25"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "tisina",
+   "jesen"
+  ],
+  "opis": "Tišina, 2024-10-24; mjera 0.50. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "bez-mirisa-2024-11-21",
+  "naziv": "Bez mirisa na k1, 2024-11-21",
+  "razdoblje": {
+   "od": "2024-11-20",
+   "do": "2024-11-22"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "bez-mirisa",
+   "jesen"
+  ],
+  "opis": "Bez mirisa na k1, 2024-11-21; mjera 0.88. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "noc-inverzija-2024-12-30",
+  "naziv": "Plitka noć, 2024-12-30",
+  "razdoblje": {
+   "od": "2024-12-29",
+   "do": "2024-12-31"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "noc-inverzija",
+   "zima"
+  ],
+  "opis": "Plitka noć, 2024-12-30; mjera 25.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2025-02-27",
+  "naziv": "Jak miris na k1, 2025-02-27",
+  "razdoblje": {
+   "od": "2025-02-26",
+   "do": "2025-02-28"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "jak-miris",
+   "zima"
+  ],
+  "opis": "Jak miris na k1, 2025-02-27; mjera 4.52. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "noc-inverzija-2025-03-05",
+  "naziv": "Plitka noć, 2025-03-05",
+  "razdoblje": {
+   "od": "2025-03-04",
+   "do": "2025-03-06"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "noc-inverzija",
+   "proljece"
+  ],
+  "opis": "Plitka noć, 2025-03-05; mjera 25.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "tisina-2025-03-08",
+  "naziv": "Tišina, 2025-03-08",
+  "razdoblje": {
+   "od": "2025-03-07",
+   "do": "2025-03-09"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "tisina",
+   "proljece"
+  ],
+  "opis": "Tišina, 2025-03-08; mjera 0.54. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "stalan-vjetar-2025-03-23",
+  "naziv": "Stalan vjetar, 2025-03-23",
+  "razdoblje": {
+   "od": "2025-03-22",
+   "do": "2025-03-24"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "stalan-vjetar",
+   "proljece"
+  ],
+  "opis": "Stalan vjetar, 2025-03-23; mjera 2.99. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "promjena-vjetra-2025-04-04",
+  "naziv": "Okreti vjetra, 2025-04-04",
+  "razdoblje": {
+   "od": "2025-04-03",
+   "do": "2025-04-05"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "promjena-vjetra",
+   "proljece"
+  ],
+  "opis": "Okreti vjetra, 2025-04-04; mjera 8.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2025-04-06",
+  "naziv": "Jak miris na k1, 2025-04-06",
+  "razdoblje": {
+   "od": "2025-04-05",
+   "do": "2025-04-07"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "jak-miris",
+   "proljece"
+  ],
+  "opis": "Jak miris na k1, 2025-04-06; mjera 4.93. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "dan-mijesanje-2025-07-10",
+  "naziv": "Duboko dnevno miješanje, 2025-07-10",
+  "razdoblje": {
+   "od": "2025-07-09",
+   "do": "2025-07-11"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "dan-mijesanje",
+   "ljeto"
+  ],
+  "opis": "Duboko dnevno miješanje, 2025-07-10; mjera 2295.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2025-07-20",
+  "naziv": "Jak miris na k1, 2025-07-20",
+  "razdoblje": {
+   "od": "2025-07-19",
+   "do": "2025-07-21"
+  },
+  "uloga": "ugadjanje",
+  "vrsta": [
+   "jak-miris",
+   "ljeto"
+  ],
+  "opis": "Jak miris na k1, 2025-07-20; mjera 5.06. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "noc-inverzija-2025-09-01",
+  "naziv": "Plitka noć, 2025-09-01",
+  "razdoblje": {
+   "od": "2025-08-31",
+   "do": "2025-09-02"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "noc-inverzija",
+   "jesen"
+  ],
+  "opis": "Plitka noć, 2025-09-01; mjera 25.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "noc-inverzija-2025-09-04",
+  "naziv": "Plitka noć, 2025-09-04",
+  "razdoblje": {
+   "od": "2025-09-03",
+   "do": "2025-09-05"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "noc-inverzija",
+   "jesen"
+  ],
+  "opis": "Plitka noć, 2025-09-04; mjera 25.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-01-06",
+  "naziv": "Jak miris na k1, 2026-01-06",
+  "razdoblje": {
+   "od": "2026-01-05",
+   "do": "2026-01-07"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "jak-miris",
+   "zima"
+  ],
+  "opis": "Jak miris na k1, 2026-01-06; mjera 10.76. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "promjena-vjetra-2026-01-12",
+  "naziv": "Okreti vjetra, 2026-01-12",
+  "razdoblje": {
+   "od": "2026-01-11",
+   "do": "2026-01-13"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "promjena-vjetra",
+   "zima"
+  ],
+  "opis": "Okreti vjetra, 2026-01-12; mjera 7.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "bez-mirisa-2026-03-07",
+  "naziv": "Bez mirisa na k1, 2026-03-07",
+  "razdoblje": {
+   "od": "2026-03-06",
+   "do": "2026-03-08"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "bez-mirisa",
+   "proljece"
+  ],
+  "opis": "Bez mirisa na k1, 2026-03-07; mjera 1.28. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "tisina-2026-04-07",
+  "naziv": "Tišina, 2026-04-07",
+  "razdoblje": {
+   "od": "2026-04-06",
+   "do": "2026-04-08"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "tisina",
+   "proljece"
+  ],
+  "opis": "Tišina, 2026-04-07; mjera 0.46. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "stalan-vjetar-2026-04-14",
+  "naziv": "Stalan vjetar, 2026-04-14",
+  "razdoblje": {
+   "od": "2026-04-13",
+   "do": "2026-04-15"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "stalan-vjetar",
+   "proljece"
+  ],
+  "opis": "Stalan vjetar, 2026-04-14; mjera 5.83. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "promjena-vjetra-2026-05-02",
+  "naziv": "Okreti vjetra, 2026-05-02",
+  "razdoblje": {
+   "od": "2026-05-01",
+   "do": "2026-05-03"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "promjena-vjetra",
+   "proljece",
+   "dan-mijesanje"
+  ],
+  "opis": "Okreti vjetra, 2026-05-02; mjera 7.00. Odabrano pravilom u epizode.ts, bez pogleda na model. Također: Duboko dnevno miješanje, 2026-05-02; mjera 2575.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-05-23",
+  "naziv": "Jak miris na k1, 2026-05-23",
+  "razdoblje": {
+   "od": "2026-05-22",
+   "do": "2026-05-24"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "jak-miris",
+   "proljece"
+  ],
+  "opis": "Jak miris na k1, 2026-05-23; mjera 27.25. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-05-24",
+  "naziv": "Jak miris na k1, 2026-05-24",
+  "razdoblje": {
+   "od": "2026-05-23",
+   "do": "2026-05-25"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "jak-miris",
+   "proljece"
+  ],
+  "opis": "Jak miris na k1, 2026-05-24; mjera 11.82. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-07-02",
+  "naziv": "Jak miris na k1, 2026-07-02",
+  "razdoblje": {
+   "od": "2026-07-01",
+   "do": "2026-07-03"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "jak-miris",
+   "ljeto"
+  ],
+  "opis": "Jak miris na k1, 2026-07-02; mjera 7.58. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "bez-mirisa-2026-07-24",
+  "naziv": "Bez mirisa na k1, 2026-07-24",
+  "razdoblje": {
+   "od": "2026-07-23",
+   "do": "2026-07-25"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "bez-mirisa",
+   "ljeto"
+  ],
+  "opis": "Bez mirisa na k1, 2026-07-24; mjera 1.30. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "tisina-2026-08-02",
+  "naziv": "Tišina, 2026-08-02",
+  "razdoblje": {
+   "od": "2026-08-01",
+   "do": "2026-08-03"
+  },
+  "uloga": "provjera",
+  "vrsta": [
+   "tisina",
+   "ljeto"
+  ],
+  "opis": "Tišina, 2026-08-02; mjera 0.50. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "dan-mijesanje-2026-08-18",
+  "naziv": "Duboko dnevno miješanje, 2026-08-18",
+  "razdoblje": {
+   "od": "2026-08-17",
+   "do": "2026-08-19"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "dan-mijesanje",
+   "ljeto"
+  ],
+  "opis": "Duboko dnevno miješanje, 2026-08-18; mjera 2065.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "noc-inverzija-2026-08-19",
+  "naziv": "Plitka noć, 2026-08-19",
+  "razdoblje": {
+   "od": "2026-08-18",
+   "do": "2026-08-20"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "noc-inverzija",
+   "ljeto"
+  ],
+  "opis": "Plitka noć, 2026-08-19; mjera 25.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "stalan-vjetar-2026-08-21",
+  "naziv": "Stalan vjetar, 2026-08-21",
+  "razdoblje": {
+   "od": "2026-08-20",
+   "do": "2026-08-22"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "stalan-vjetar",
+   "ljeto"
+  ],
+  "opis": "Stalan vjetar, 2026-08-21; mjera 12.07. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-08-22",
+  "naziv": "Jak miris na k1, 2026-08-22",
+  "razdoblje": {
+   "od": "2026-08-21",
+   "do": "2026-08-23"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "jak-miris",
+   "ljeto",
+   "promjena-vjetra"
+  ],
+  "opis": "Jak miris na k1, 2026-08-22; mjera 4.00. Odabrano pravilom u epizode.ts, bez pogleda na model. Također: Okreti vjetra, 2026-08-22; mjera 2.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-08-24",
+  "naziv": "Jak miris na k1, 2026-08-24",
+  "razdoblje": {
+   "od": "2026-08-23",
+   "do": "2026-08-25"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "jak-miris",
+   "ljeto"
+  ],
+  "opis": "Jak miris na k1, 2026-08-24; mjera 4.02. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-08-25",
+  "naziv": "Jak miris na k1, 2026-08-25",
+  "razdoblje": {
+   "od": "2026-08-24",
+   "do": "2026-08-26"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "jak-miris",
+   "ljeto",
+   "promjena-vjetra",
+   "noc-inverzija"
+  ],
+  "opis": "Jak miris na k1, 2026-08-25; mjera 4.29. Odabrano pravilom u epizode.ts, bez pogleda na model. Također: Okreti vjetra, 2026-08-25; mjera 4.00. Odabrano pravilom u epizode.ts, bez pogleda na model. Također: Plitka noć, 2026-08-25; mjera 25.00. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "jak-miris-2026-08-26",
+  "naziv": "Jak miris na k1, 2026-08-26",
+  "razdoblje": {
+   "od": "2026-08-25",
+   "do": "2026-08-27"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "jak-miris",
+   "ljeto"
+  ],
+  "opis": "Jak miris na k1, 2026-08-26; mjera 3.95. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "dojave-2026-08",
+  "naziv": "Prozor dojava, 26.–29. 8. 2026.",
+  "razdoblje": {
+   "od": "2026-08-26",
+   "do": "2026-08-30"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "dojave",
+   "ljeto",
+   "slab-vjetar"
+  ],
+  "opis": "Jedino razdoblje s prijemnicima na strani kvarta: 15 dojava (8 s mirisom, 7 bez) s Dračevca 7B i iz Solina. Slab jugoistočnjak i promjenjiv vjetar, jutarnje i večernje epizode."
+ },
+ {
+  "id": "bez-mirisa-2026-08-27",
+  "naziv": "Bez mirisa na k1, 2026-08-27",
+  "razdoblje": {
+   "od": "2026-08-26",
+   "do": "2026-08-28"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "bez-mirisa",
+   "ljeto"
+  ],
+  "opis": "Bez mirisa na k1, 2026-08-27; mjera 1.97. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "tisina-2026-08-28",
+  "naziv": "Tišina, 2026-08-28",
+  "razdoblje": {
+   "od": "2026-08-27",
+   "do": "2026-08-29"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "tisina",
+   "ljeto"
+  ],
+  "opis": "Tišina, 2026-08-28; mjera 0.42. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "tisina-2026-08-29",
+  "naziv": "Tišina, 2026-08-29",
+  "razdoblje": {
+   "od": "2026-08-28",
+   "do": "2026-08-30"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "tisina",
+   "ljeto"
+  ],
+  "opis": "Tišina, 2026-08-29; mjera 0.42. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ },
+ {
+  "id": "bez-mirisa-2026-08-31",
+  "naziv": "Bez mirisa na k1, 2026-08-31",
+  "razdoblje": {
+   "od": "2026-08-30",
+   "do": "2026-09-01"
+  },
+  "uloga": "zadrzano",
+  "vrsta": [
+   "bez-mirisa",
+   "ljeto"
+  ],
+  "opis": "Bez mirisa na k1, 2026-08-31; mjera 1.57. Odabrano pravilom u epizode.ts, bez pogleda na model."
+ }
+]

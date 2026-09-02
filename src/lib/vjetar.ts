@@ -181,6 +181,15 @@ const MIJESANJE_URL =
 /** METAR se objavljuje na pola sata; kraći rok ne bi donio noviji podatak. */
 const ROK_VJETRA = 900;
 
+/**
+ * Neverinove postaje javljaju svakih pet minuta, a upravo je Vrboran ono što
+ * vodi kartu. S rokom od petnaest minuta stranica bi do deset minuta
+ * pokazivala stariji vjetar nego neverin.hr za istu postaju — a tko usporedi,
+ * vidi razliku i prestane vjerovati. Provjereno 2. 9. 2026.: uz ovaj rok
+ * očitanje na kartici i Neverinov `last` su isti (148°, 0,7 m/s, 15:25).
+ */
+const ROK_NEVERINA = 300;
+
 /** Dubina sloja dolazi iz modela sa satnim korakom. */
 const ROK_MIJESANJA = 3600;
 
@@ -325,7 +334,7 @@ export function trenutakNeverina(zapis: string): Date | null {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
   });
   for (const pomak of ["+02:00", "+01:00"]) {
     const kad = new Date(`${pogodak[1]}T${pogodak[2]}:00${pomak}`);
@@ -472,7 +481,7 @@ export function trenutakIzTermina(
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
   });
   const trazeno = `${godina}-${String(mjesec).padStart(2, "0")}-${String(dan).padStart(2, "0")}`;
   const vrh = Math.floor(sada.getTime() / 3600000) * 3600000;
@@ -652,7 +661,7 @@ export async function dohvatiZrak(sada: Date = new Date()): Promise<ZrakSada> {
     uzmi(DHMZ_URL, ROK_VJETRA, "tekst"),
     uzmi(METAR_URL, ROK_VJETRA),
     uzmi(MIJESANJE_URL, ROK_MIJESANJA),
-    ...neverinske.map((p) => uzmi(neverinAdresa(p), ROK_VJETRA)),
+    ...neverinske.map((p) => uzmi(neverinAdresa(p), ROK_NEVERINA)),
   ]);
 
   // Sve se čita, pa i ono što neće voditi kartu: tek kad se postaje usporede

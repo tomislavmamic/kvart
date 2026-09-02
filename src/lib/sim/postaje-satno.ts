@@ -134,7 +134,7 @@ export function uUtc(dan: string, sat: number): Date | null {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
   });
   const trazeno = `${g}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   // Split je UTC+1 ili UTC+2; oba pomaka se probaju, a bira se onaj koji

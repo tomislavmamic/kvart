@@ -1,0 +1,1056 @@
+{
+  "azurirano": "2026-09-02T10:50:09.408Z",
+  "polazniModel": {
+    "git": "ff00376",
+    "opis": "Proizvodni čestični model (src/lib/dim.ts) nad sim-polje.bin, svaki sat iz hladnog starta 3 h ranije; vjetar po pravilu satniVjetar (AZO Split-3/2, pa Open-Meteo), dubina Open-Meteo."
+  },
+  "razdoblja": {
+    "ugadjanje": {
+      "od": "2024-09-01",
+      "do": "2025-08-31",
+      "napomena": "godina 1; na njoj su ugođeni i raniji parametri"
+    },
+    "provjera": {
+      "od": "2025-09-01",
+      "do": "2026-08-17",
+      "napomena": "godina 2; ZASTOJNO_SIRENJE=4 i ZASTOJ_DUBINA.duboko=400 su ugođeni na njoj (ocijeni-sim.ts), pa je poluneovisna"
+    },
+    "zadrzano": {
+      "od": "2026-08-18",
+      "do": "2026-09-02",
+      "napomena": "netaknuto ugađanjem; sadrži prozor dojava 26.–29. 8."
+    }
+  },
+  "pokusi": [
+    {
+      "id": "polazno",
+      "opis": "Proizvodni model kakav jest na ff00376: po satu iz hladnog starta, AZO vjetar označen sat kasnije kao na stranici, dubina Open-Meteo",
+      "oznaka": "ff00376-bed1dd39b8-5b354b1a",
+      "nacin": "proizvodnja",
+      "pravilo": "proizvodnja",
+      "azoKasni": true,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.1077,
+            "aucVrha": 0.5613,
+            "POD": 0.2553,
+            "FAR": 0.7447,
+            "nultiPojasSpearman": {
+              "min": 0.0182,
+              "max": 0.0575,
+              "medijan": 0.0351
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 5,
+              "tocneNegative": 2,
+              "POD": 0.5,
+              "FAR": 0.5556,
+              "CSI": 0.3077,
+              "aucDojava": 0.4911
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.108,
+            "aucVrha": 0.5829,
+            "POD": 0.1678,
+            "FAR": 0.8322,
+            "nultiPojasSpearman": {
+              "min": -0.0249,
+              "max": 0.0419,
+              "medijan": 0.0193
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.1323,
+            "aucVrha": 0.5393,
+            "POD": 0.3632,
+            "FAR": 0.6205,
+            "nultiPojasSpearman": {
+              "min": -0.0329,
+              "max": 0.1149,
+              "medijan": 0.0794
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.176,
+            "aucVrha": 0.4455,
+            "POD": 0.2794,
+            "FAR": 0.5476,
+            "nultiPojasSpearman": {
+              "min": -0.2239,
+              "max": 0.4666,
+              "medijan": 0.1177
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 4,
+              "tocneNegative": 3,
+              "POD": 0.5,
+              "FAR": 0.5,
+              "CSI": 0.3333,
+              "aucDojava": 0.4911
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/polazno.json"
+    },
+    {
+      "id": "e1-azo-bez-kasnjenja",
+      "opis": "E1: isti model, AZO vjetar označen na pravi sat (vrijeme je kraj sata)",
+      "oznaka": "ff00376-cf0e9e23c9-5b354b1a",
+      "nacin": "proizvodnja",
+      "uzoraka": 1,
+      "pravilo": "proizvodnja",
+      "azoKasni": false,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.0987,
+            "aucVrha": 0.55,
+            "POD": 0.2553,
+            "FAR": 0.7447,
+            "nultiPojasSpearman": {
+              "min": 0.0034,
+              "max": 0.0491,
+              "medijan": 0.0239
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 3,
+              "promasaji": 5,
+              "lazne": 5,
+              "tocneNegative": 2,
+              "POD": 0.375,
+              "FAR": 0.625,
+              "CSI": 0.2308,
+              "aucDojava": 0.2411
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.0909,
+            "aucVrha": 0.5741,
+            "POD": 0.1537,
+            "FAR": 0.8463,
+            "nultiPojasSpearman": {
+              "min": -0.0376,
+              "max": 0.0308,
+              "medijan": -0.0036
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.1346,
+            "aucVrha": 0.5377,
+            "POD": 0.3672,
+            "FAR": 0.6192,
+            "nultiPojasSpearman": {
+              "min": -0.0443,
+              "max": 0.1129,
+              "medijan": 0.0699
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.1999,
+            "aucVrha": 0.4334,
+            "POD": 0.2647,
+            "FAR": 0.5645,
+            "nultiPojasSpearman": {
+              "min": -0.2287,
+              "max": 0.4898,
+              "medijan": 0.0699
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 1,
+              "promasaji": 7,
+              "lazne": 4,
+              "tocneNegative": 3,
+              "POD": 0.125,
+              "FAR": 0.8,
+              "CSI": 0.0833,
+              "aucDojava": 0.2411
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e1-azo-bez-kasnjenja.json",
+      "zakljucak": "E1 (AZO na pravi sat) nije bolji od polaznog: ρ 0,099 naspram 0,108, provjera 0,135 naspram 0,132 — unutar šuma. Pomak sata ne objašnjava pogrešku; oznaka sata ostaje otvoren nalaz (P8), ne mijenja se u proizvodnji bez jačeg dokaza.",
+      "odluka": "ne zadržati"
+    },
+    {
+      "id": "e3-spremnik",
+      "opis": "E3: spremnik dostatan za vijek (punjenje=160) i satni prosjek gustoće (6 uzoraka); neprekinut lanac; ostalo kao polazno (AZO kasni)",
+      "oznaka": "ff00376-cf0e9e23c9-57be2963",
+      "nacin": "lanac",
+      "uzoraka": 6,
+      "pravilo": "proizvodnja",
+      "azoKasni": true,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.1176,
+            "aucVrha": 0.5664,
+            "POD": 0.2737,
+            "FAR": 0.7263,
+            "nultiPojasSpearman": {
+              "min": 0.0113,
+              "max": 0.0742,
+              "medijan": 0.0406
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.5,
+              "FAR": 0.6,
+              "CSI": 0.2857,
+              "aucDojava": 0.3571
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.1081,
+            "aucVrha": 0.5894,
+            "POD": 0.1763,
+            "FAR": 0.8237,
+            "nultiPojasSpearman": {
+              "min": -0.0201,
+              "max": 0.0488,
+              "medijan": 0.0117
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.1389,
+            "aucVrha": 0.5371,
+            "POD": 0.3814,
+            "FAR": 0.6186,
+            "nultiPojasSpearman": {
+              "min": -0.0468,
+              "max": 0.1359,
+              "medijan": 0.0764
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.0983,
+            "aucVrha": 0.526,
+            "POD": 0.4069,
+            "FAR": 0.506,
+            "nultiPojasSpearman": {
+              "min": -0.0668,
+              "max": 0.3742,
+              "medijan": 0.1107
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 3,
+              "promasaji": 5,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.375,
+              "FAR": 0.6667,
+              "CSI": 0.2143,
+              "aucDojava": 0.3571
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e3-spremnik.json",
+      "zakljucak": "E3 (spremnik dostatan za vijek + satni prosjek, lanac) daje isto rangiranje kao polazno: ugađanje ρ 0,108 = 0,108, provjera 0,139 naspram 0,132, AUC isti. Nalet izvora i faza vijuganja su stvarne mane po satu, ali na dvije godine ne mijenjaju vještinu — pogreška je u ulazima i fizici, ne u numerici. Zadržava se kao ispravak bez gubitka i kao jeftinija osnova (lanac 4× brži) za daljnje pokuse.",
+      "odluka": "zadrzati (bez gubitka)"
+    },
+    {
+      "id": "e2-spoj",
+      "opis": "E2: kao E3, ali vjetar po pravilu spoj (smjer Split-3/Marjan/LDSP, brzina s otvorenih postaja), AZO na pravi sat",
+      "oznaka": "ff00376-dfbdd21f1f-57be2963",
+      "nacin": "lanac",
+      "uzoraka": 6,
+      "pravilo": "spoj",
+      "azoKasni": false,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11943,
+            "spearman": 0.0918,
+            "aucVrha": 0.5555,
+            "POD": 0.2567,
+            "FAR": 0.7433,
+            "nultiPojasSpearman": {
+              "min": -0.0139,
+              "max": 0.0535,
+              "medijan": 0.0127
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 5,
+              "promasaji": 3,
+              "lazne": 5,
+              "tocneNegative": 2,
+              "POD": 0.625,
+              "FAR": 0.5,
+              "CSI": 0.3846,
+              "aucDojava": 0.4464
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7078,
+            "spearman": 0.0555,
+            "aucVrha": 0.5603,
+            "POD": 0.1475,
+            "FAR": 0.8525,
+            "nultiPojasSpearman": {
+              "min": -0.059,
+              "max": 0.0183,
+              "medijan": -0.0227
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4504,
+            "spearman": 0.162,
+            "aucVrha": 0.5431,
+            "POD": 0.3878,
+            "FAR": 0.6122,
+            "nultiPojasSpearman": {
+              "min": -0.0254,
+              "max": 0.1053,
+              "medijan": 0.0627
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.0931,
+            "aucVrha": 0.5455,
+            "POD": 0.3627,
+            "FAR": 0.5132,
+            "nultiPojasSpearman": {
+              "min": -0.1134,
+              "max": 0.2889,
+              "medijan": 0.0578
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 5,
+              "tocneNegative": 2,
+              "POD": 0.5,
+              "FAR": 0.5556,
+              "CSI": 0.3077,
+              "aucDojava": 0.4464
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e2-spoj.json",
+      "zakljucak": "E2 (spoj: brzina s otvorenih postaja, AZO na pravi sat) nije dosljedan: ugađanje ρ 0,056 (lošije od 0,108), provjera 0,162 (bolje od 0,139). Marjanov niz prestaje u ožujku 2026., pa provjera većim dijelom vozi LDSP-om — dvije godine nisu isti pokus. Ne zadržava se; brzina nošenja ostaje otvoreno pitanje dok Vrboranova arhiva ne naraste.",
+      "odluka": "ne zadržati"
+    },
+    {
+      "id": "e4-stabilnost",
+      "opis": "E4: kao E3 (spremnik 20000/320 s) plus razred stabilnosti (Turner) množi raspad 0,5× u A do 2,5× u F, vijek do 320 s",
+      "oznaka": "ff00376-dfbdd21f1f-3c0ab0de",
+      "nacin": "lanac",
+      "uzoraka": 6,
+      "pravilo": "proizvodnja",
+      "azoKasni": true,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.1218,
+            "aucVrha": 0.5692,
+            "POD": 0.2732,
+            "FAR": 0.7268,
+            "nultiPojasSpearman": {
+              "min": 0.0132,
+              "max": 0.0746,
+              "medijan": 0.0441
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 5,
+              "tocneNegative": 2,
+              "POD": 0.5,
+              "FAR": 0.5556,
+              "CSI": 0.3077,
+              "aucDojava": 0.3214
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.1142,
+            "aucVrha": 0.5935,
+            "POD": 0.1693,
+            "FAR": 0.8307,
+            "nultiPojasSpearman": {
+              "min": -0.0148,
+              "max": 0.052,
+              "medijan": 0.0182
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.1412,
+            "aucVrha": 0.5375,
+            "POD": 0.3719,
+            "FAR": 0.6281,
+            "nultiPojasSpearman": {
+              "min": -0.0436,
+              "max": 0.1244,
+              "medijan": 0.0772
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.1027,
+            "aucVrha": 0.5344,
+            "POD": 0.3824,
+            "FAR": 0.5301,
+            "nultiPojasSpearman": {
+              "min": -0.0722,
+              "max": 0.3813,
+              "medijan": 0.0468
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 3,
+              "promasaji": 5,
+              "lazne": 4,
+              "tocneNegative": 3,
+              "POD": 0.375,
+              "FAR": 0.5714,
+              "CSI": 0.25,
+              "aucDojava": 0.3214
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e4-stabilnost.json",
+      "zakljucak": "E4 (raspad 0,5× u A do 2,5× u F, vijek do 320 s) daje mrvicu: ugađanje ρ 0,114 naspram 0,108, provjera 0,141 naspram 0,139, AUC 0,594 naspram 0,589. Smjer je pravi, učinak ispod šuma; sam po sebi ne opravdava složenost.",
+      "odluka": "ne zadržati"
+    },
+    {
+      "id": "e5-difuzija",
+      "opis": "E5: kao E3 plus slučajni hod s vrtloženjem po razredu stabilnosti (1/1/1/6/45/120 m²/s, kao oblacici.py)",
+      "oznaka": "ff00376-dfbdd21f1f-506cfdba",
+      "nacin": "lanac",
+      "uzoraka": 6,
+      "pravilo": "proizvodnja",
+      "azoKasni": true,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.1388,
+            "aucVrha": 0.5856,
+            "POD": 0.2824,
+            "FAR": 0.7176,
+            "nultiPojasSpearman": {
+              "min": 0.0305,
+              "max": 0.0949,
+              "medijan": 0.0569
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.5,
+              "FAR": 0.6,
+              "CSI": 0.2857,
+              "aucDojava": 0.3929
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.1555,
+            "aucVrha": 0.6102,
+            "POD": 0.1664,
+            "FAR": 0.8336,
+            "nultiPojasSpearman": {
+              "min": -0.0015,
+              "max": 0.1027,
+              "medijan": 0.0495
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.1414,
+            "aucVrha": 0.5638,
+            "POD": 0.3735,
+            "FAR": 0.6265,
+            "nultiPojasSpearman": {
+              "min": -0.0286,
+              "max": 0.1291,
+              "medijan": 0.0815
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.073,
+            "aucVrha": 0.5582,
+            "POD": 0.4853,
+            "FAR": 0.5147,
+            "nultiPojasSpearman": {
+              "min": -0.0316,
+              "max": 0.4809,
+              "medijan": 0.1399
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.5,
+              "FAR": 0.6,
+              "CSI": 0.2857,
+              "aucDojava": 0.3929
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e5-difuzija.json",
+      "zakljucak": "E5 (slučajni hod s vrtloženjem po razredu, 1/1/1/6/45/120 m²/s) je prvi jasan dobitak, dosljedan na svim razdobljima: ugađanje ρ 0,156 (polazno 0,108), AUC 0,610 (0,583); provjera ρ 0,141 (0,132), AUC 0,564 (0,539); zadržano AUC 0,558 (0,446), POD 0,49 (0,28). Izjednačen s nultim modelom 1/brzina, prije je bio ispod. Dojave i dalje bez moći razlučivanja (n=15). ZADRŽAVA SE; ide u proizvodnju uz E3 (spremnik za vijek, satni prosjek).",
+      "odluka": "zadrzati"
+    },
+    {
+      "id": "e6-drenaza",
+      "opis": "E6: proizvodne postavke nakon E3+E5 plus otjecanje niz padinu 0,5 m/s u razredima E–F (gasi se do 2 m/s); polje iz LiDAR mreže (ploha, Dračevac, Bilice, Solin)",
+      "oznaka": "ff00376-f731cc2d65-21c16f56",
+      "nacin": "lanac",
+      "uzoraka": 6,
+      "pravilo": "proizvodnja",
+      "azoKasni": true,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.1418,
+            "aucVrha": 0.5869,
+            "POD": 0.2829,
+            "FAR": 0.7171,
+            "nultiPojasSpearman": {
+              "min": 0.0283,
+              "max": 0.0948,
+              "medijan": 0.0568
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.5,
+              "FAR": 0.6,
+              "CSI": 0.2857,
+              "aucDojava": 0.3393
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.1599,
+            "aucVrha": 0.6125,
+            "POD": 0.1608,
+            "FAR": 0.8392,
+            "nultiPojasSpearman": {
+              "min": -0.0034,
+              "max": 0.1033,
+              "medijan": 0.0507
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.1443,
+            "aucVrha": 0.5632,
+            "POD": 0.3759,
+            "FAR": 0.6241,
+            "nultiPojasSpearman": {
+              "min": -0.0326,
+              "max": 0.1285,
+              "medijan": 0.0844
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.0678,
+            "aucVrha": 0.5592,
+            "POD": 0.4902,
+            "FAR": 0.5098,
+            "nultiPojasSpearman": {
+              "min": -0.0443,
+              "max": 0.5151,
+              "medijan": 0.1384
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.5,
+              "FAR": 0.6,
+              "CSI": 0.2857,
+              "aucDojava": 0.3393
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e6-drenaza.json",
+      "zakljucak": "E6 (otjecanje 0,5 m/s u E–F povrh E5) = E5 unutar šuma: ugađanje ρ 0,160 (E5 0,156), provjera 0,144 (0,141), AUC isti. Očekivano: k1 stoji u jugoistočnoj udolini, a otjecanje prema Dračevcu ondje se ne vidi (P5). Ne zadržava se u proizvodnji dok ne bude prijemnika na sjeverozapadnoj strani; ostaje kao postavka `drenaza`.",
+      "odluka": "ne zadržati"
+    },
+    {
+      "id": "e7-difuzija-stabilnost",
+      "opis": "E7: proizvodne postavke nakon E3+E5 plus raspad 0,5×–2,5× po razredu, vijek do 320 s (spremnik 20000/320)",
+      "oznaka": "ff00376-f731cc2d65-5d16ddfe",
+      "nacin": "lanac",
+      "uzoraka": 6,
+      "pravilo": "proizvodnja",
+      "azoKasni": true,
+      "razdoblje": {
+        "od": "2024-08-29",
+        "do": "2026-09-03"
+      },
+      "ocjene": [
+        {
+          "uloga": "sve",
+          "h2s": {
+            "n": 11974,
+            "spearman": 0.142,
+            "aucVrha": 0.5834,
+            "POD": 0.2797,
+            "FAR": 0.7203,
+            "nultiPojasSpearman": {
+              "min": 0.0311,
+              "max": 0.0978,
+              "medijan": 0.0595
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 4,
+              "promasaji": 4,
+              "lazne": 6,
+              "tocneNegative": 1,
+              "POD": 0.5,
+              "FAR": 0.6,
+              "CSI": 0.2857,
+              "aucDojava": 0.2857
+            }
+          }
+        },
+        {
+          "uloga": "ugadjanje",
+          "h2s": {
+            "n": 7104,
+            "spearman": 0.1603,
+            "aucVrha": 0.61,
+            "POD": 0.1749,
+            "FAR": 0.8251,
+            "nultiPojasSpearman": {
+              "min": 0.0009,
+              "max": 0.1035,
+              "medijan": 0.0516
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "provjera",
+          "h2s": {
+            "n": 4509,
+            "spearman": 0.143,
+            "aucVrha": 0.5577,
+            "POD": 0.3632,
+            "FAR": 0.6368,
+            "nultiPojasSpearman": {
+              "min": -0.0208,
+              "max": 0.1244,
+              "medijan": 0.0953
+            },
+            "dojave": null
+          }
+        },
+        {
+          "uloga": "zadrzano",
+          "h2s": {
+            "n": 359,
+            "spearman": -0.0722,
+            "aucVrha": 0.5701,
+            "POD": 0.4804,
+            "FAR": 0.5196,
+            "nultiPojasSpearman": {
+              "min": -0.0603,
+              "max": 0.4366,
+              "medijan": 0.1263
+            },
+            "dojave": {
+              "n": 15,
+              "nSmrdi": 8,
+              "pogodci": 3,
+              "promasaji": 5,
+              "lazne": 5,
+              "tocneNegative": 2,
+              "POD": 0.375,
+              "FAR": 0.625,
+              "CSI": 0.2308,
+              "aucDojava": 0.2857
+            }
+          }
+        }
+      ],
+      "sazetak": "docs/hindcast/e7-difuzija-stabilnost.json",
+      "zakljucak": "E7 (raspad po razredu povrh E5) = E5 unutar šuma: 0,160/0,143 naspram 0,156/0,141. Ne zadržava se; složenost bez mjerljivog dobitka.",
+      "odluka": "ne zadržati"
+    }
+  ],
+  "nalaziKritike": [
+    {
+      "id": "K1",
+      "vrtnja": "e5-difuzija",
+      "nalaz": "Većina visokih sati na k1 nije prijenos s plohe niz vjetar: u ugađanju je 444 od 713 sati iznad praga uz vjetar iz sektora u kojem k1 stoji UZ vjetar od plohe (istok–jug), 204 bočno, samo 65 niz vjetar. Stopa po satu je niz vjetar 17 %, bočno 11 %, uz vjetar 9 % — smjer nosi signal, ali većina epizoda dolazi mimo njega. Model u 391 od tih 444 sati daje gustoću < 1.",
+      "vjerojatniUzrok": "(a) smjer sa Split-3 (4,3 km, grad) ne predstavlja lokalni vjetar uz plohu; (b) dio H₂S-a na k1 nije s glavne plohe (istočni/jugoistočni dio odlagališta, sanacijski radovi, drugi izvori uz postaju); (c) nesmjerni zastoj koji E5 hvata samo pod razredom F.",
+      "dokaz": "docs/hindcast/kritika-e5.md; najgora epizoda 22.–23. 5. 2026. (do 39,6 µg/m³, 8 sati) uz ENE vjetar 3–4 m/s (razred C/E) — model 0,0.",
+      "rang": 1,
+      "stoSlijedi": "Bez anemometra na plohi i prijemnika na strani kvarta (#28) ovo se ne da razdvojiti; u modelu se može dodati nesmjerna komponenta po satu dana/zastoju, ali bi to bilo ugađanje na k1."
+    },
+    {
+      "id": "K2",
+      "vrtnja": "e5-difuzija",
+      "nalaz": "Propusti su i danju: 114 propusta u razredu C uz ≥2 m/s i 72 u D — model tada nema ničega, jer sve ode s vjetrom ili se razrijedi, a k1 ipak mjeri 2–4 µg/m³.",
+      "vjerojatniUzrok": "izvor je stalan u modelu; danju (radovi na plohi, viša temperatura pokrova, pad tlaka) emisija je vjerojatno veća — P4.",
+      "rang": 2
+    },
+    {
+      "id": "K3",
+      "vrtnja": "e5-difuzija",
+      "nalaz": "Lažne uzbune se gomilaju uz zapadnjak 240–300° pri 1 m/s (razredi B i F, plitak sloj 25 m): model šalje pun oblak na k1, k1 mjeri pozadinu.",
+      "vjerojatniUzrok": "pri 1 m/s smjer sa Split-3 je šum (P2); uz to `zastoj` + difuzija razmažu previše prema jugoistočnoj udolini kad je sloj plitak.",
+      "rang": 3
+    },
+    {
+      "id": "K4",
+      "vrtnja": "sve",
+      "nalaz": "Dojave (15 satnih opažanja, jedan nos) nemaju moć razlučivanja ni u jednoj vrtnji (AUC 0,24–0,49). Model nema potvrde sa strane kvarta.",
+      "rang": 4
+    }
+  ],
+  "otvoreniProblemi": [
+    {
+      "id": "P1",
+      "naslov": "Spremnik čestica guši izvor pri slabom vjetru",
+      "dokaz": "scripts/hindcast/model.test.ts kanarinac: lanac vs po-satu do 10× na k1; emisija 18–100 % nazivne po 10 min pri ≤2 m/s",
+      "vjerojatniUzrok": "cestica=10000 < emisija×vijek (222/s × 160 s); kad je spremnik pun, ostatak se briše",
+      "stanje": "otvoreno"
+    },
+    {
+      "id": "P2",
+      "naslov": "Smjer vjetra pri tišini je šum, a model ga uzima doslovno; brzina nošenja sa zaklonjene postaje",
+      "dokaz": "docs/provjera-izvora-vjetra.md: najbolja postaja AUC 0,59 noću; Split-3 medijan brzine 2,0 vs 3,1 m/s na otvorenom",
+      "stanje": "otvoreno"
+    },
+    {
+      "id": "P3",
+      "naslov": "Nema stabilnosti ni vertikale: razrjeđenje jednako danju i noću",
+      "dokaz": "raspad=40 min stalan; samo zastoj ovisi o dubini; oblacici.py pokazuje da razred stabilnosti sam objašnjava više od starog prijenosa",
+      "stanje": "otvoreno"
+    },
+    {
+      "id": "P4",
+      "naslov": "Izvor stalan i izmišljeno raspoređen; sjeverna ploha nije izvor",
+      "dokaz": "zarista seed 1; emisija jedna brojka (95 % 0,5–2×); maska_plohe čita features[0]",
+      "stanje": "otvoreno"
+    },
+    {
+      "id": "P5",
+      "naslov": "Jedini dugi prijemnik je na krivoj strani plohe",
+      "dokaz": "k1/k2 na 140°, kvart na 282–293°; 15 dojava u 4 dana",
+      "stanje": "otvoreno — ograničava što se smije tvrditi, ne da se riješiti kodom"
+    },
+    {
+      "id": "P6",
+      "naslov": "Testovi na main: postaje-satno 2× (ponoć) ispravljeno; project-components 2× i dalje pada",
+      "dokaz": "npm test prije: 430/434. Uzrok ponoći: Intl hour12:false na Nodeu 21 ispisuje „24”; ispravljeno s hourCycle:'h23' u postaje-satno.ts i vjetar.ts (DHMZ termin 0 i Neverinova očitanja 00–01 h bila su odbacivana)",
+      "stanje": "djelomično riješeno 2026-09-02"
+    },
+    {
+      "id": "P7",
+      "naslov": "Python (numpy/gdal) nije instaliran; bazdari-izvor.py i izvedi-sim-polje.py se ovdje ne mogu pokrenuti",
+      "stanje": "otvoreno — sve ponovljive brojke idu kroz TS"
+    },
+    {
+      "id": "P8",
+      "naslov": "AZO-ov `vrijeme` je kraj sata, a stranica ga uzima kao početak — izmjereni vjetar kasni sat",
+      "dokaz": "scripts/hindcast/ulazi.ts: AZO 308 H2S identičan Zavodu k1 uz pomak −1 h (9528/9529 sati, r=1,000); vjetar Split-3 vs Marjan najbolje se slaže uz isti pomak",
+      "vjerojatniUzrok": "procitajAzoNiz u vrijeme-satno.ts i split3() u vjetar.py koriste vrhSata(vrijeme)",
+      "stanje": "otvoreno — pokus e1-azo-bez-kasnjenja mjeri učinak prije ispravka u proizvodnji"
+    },
+    {
+      "id": "P9",
+      "naslov": "AZO-ov izvoz H2S ima 3696 sati s točnom nulom (uređaj stajao); Zavodova tablica ih nema",
+      "dokaz": "scripts/hindcast/ulazi.ts kakvocaNiza",
+      "stanje": "riješeno u provjeri: zavod-k1 je zadani izvor istine, nule iz AZO-a ispadaju"
+    },
+    {
+      "id": "P10",
+      "naslov": "Vijuganje perjanice ima determinističku fazu: trenutak na kraju sata pri stalnom vjetru daje 0 → 47 → 39 → 5 → 0,4 na k1 iz sata u sat, a stranica svaki sat uhvati istu fazu",
+      "dokaz": "scripts/hindcast/model.test.ts (kanarinac 'vijuganje ima fazu'); amplituda poprečnog pomaka ≈ 0,59·v, period 48 min → ±300 m na 700 m od plohe",
+      "vjerojatniUzrok": "`vijuganje` u dim.ts je plohin sinus s fazom t·0,13, bez slučajnosti; prikaz je trenutak, a mjerenje satni prosjek (A14)",
+      "stanje": "otvoreno — provjera od sada usrednjuje po satu (--uzoraka 6); prikaz još pokazuje trenutak"
+    },
+    {
+      "id": "P11",
+      "naslov": "Podloga karte (CartoCDN raster) sada traži API ključ — korisnici vide 'API KEY REQUIRED' preko cijele karte",
+      "dokaz": ".cache/hindcast/ux/prije/desktop-sada.jpg",
+      "stanje": "riješeno: OpenFreeMap positron, radnik iz public/ (kopiraj:maplibre-radnik)"
+    },
+    {
+      "id": "P12",
+      "naslov": "Snimke zaslona WebGL karte su prazne bez preserveDrawingBuffer",
+      "stanje": "riješeno: ?snimka=1 (preserveDrawingBuffer + redraw svakih 300 ms); snimka i dalje traži dodir karte u skrivenoj kartici"
+    },
+    {
+      "id": "P13",
+      "naslov": "Mobilni raspored simulatora nije vizualno provjeren; pojas 'moguće' preblijed na karti",
+      "stanje": "otvoreno"
+    }
+  ],
+  "sljedeciKorak": "Predaja radnog stabla (ništa nije commitano); mobilna snimka; scenarij iz stvarnog jakog sata; #28 za nove ulaze.",
+  "polazniRezultat": {
+    "pokus": "polazno",
+    "napomena": "Proizvodni model kakav jest (po satu iz hladnog starta, trenutak na kraju sata, AZO vjetar kao na stranici). H2S na k1 iz Zavodove tablice; epizoda = sat iznad 90. postotka razdoblja ugađanja; prag modela izjednačen po udjelu.",
+    "h2s": {
+      "sve": {
+        "n": 11974,
+        "spearman": 0.1077,
+        "nultiPojas": [
+          0.0182,
+          0.0575
+        ],
+        "aucVrha": 0.5613,
+        "POD": 0.2553,
+        "FAR": 0.7447
+      },
+      "ugadjanje": {
+        "n": 7104,
+        "spearman": 0.108,
+        "aucVrha": 0.5829,
+        "POD": 0.1678,
+        "FAR": 0.8322
+      },
+      "provjera": {
+        "n": 4509,
+        "spearman": 0.1323,
+        "aucVrha": 0.5393,
+        "POD": 0.3632,
+        "FAR": 0.6205
+      },
+      "zadrzano": {
+        "n": 359,
+        "spearman": -0.176,
+        "nultiPojas": [
+          -0.2239,
+          0.4666
+        ],
+        "aucVrha": 0.4455,
+        "napomena": "359 sati je premalo: nulti pojas širi od nalaza"
+      }
+    },
+    "dojave": {
+      "n": 15,
+      "POD": 0.5,
+      "FAR": 0.5556,
+      "aucDojava": 0.4911,
+      "napomena": "bez razlučivanja; 15 satnih opažanja, jedan nos"
+    },
+    "citanje": "Model rangira sate na k1 tek malo bolje od nultog pojasa (ρ≈0,11 naspram ≤0,06) i pogađa četvrtinu epizoda uz tri četvrtine lažnih; na dojavama s prave strane plohe nema nikakve moći razlučivanja."
+  },
+  "uProizvodnji": {
+    "datum": "2026-09-02",
+    "promjene": [
+      "POSTAVKE_SIMULATORA: punjenje 45 → 160 (spremnik dostatan za vijek; E3), difuzija 0 → 1 (slučajni hod po razredu stabilnosti; E5)",
+      "Kadar nosi razred stabilnosti (Turner) iz Open-Meteo zračenja i naoblake; bez njih razred D",
+      "odradiSatove usrednjava traženi sat kroz 6 uzoraka umjesto trenutka na kraju sata",
+      "SIDRO_SIMULATORA 76,2 → 47,2 iz regresije E5 (nagib 0,024 µg/m³ po jedinici, 95 % 0,012–0,037)",
+      "hourCycle 'h23' u tri parsera (ponoćni redci); vidi P6"
+    ],
+    "neDirano": [
+      "/karepovac/zrak (živa kartica) i dalje vrti ZADANO iz dim.ts bez difuzije i sa spremnikom od 45 s — spojiti nakon što E5 prođe u proizvodnom načinu (e5-proizvodnja)"
+    ]
+  },
+  "vrata": {
+    "znanstvena": "prolaze uz ogradu: E5 bolji od polaznog na sva tri razdoblja (ρ 0,156/0,141, AUC 0,61/0,56, POD 0,49 na zadržanom), vještina i dalje niska i ograničena ulazima (K1)",
+    "proizvodna": "prolaze uz ograde: mobilni prikaz nesnimljen, pojas 'moguće' na karti preblijed; vidi docs/hindcast/IZVJESCE.md §10"
+  },
+  "uiKrug2": {
+    "datum": "2026-09-02",
+    "promjene": [
+      "Tragovi vjetra pokrivaju okvir dvostruko širi od polja (cijeli zadani pogled); izvan polja rubna vrijednost polja",
+      "Neverinove postaje: rok 5 min (kao neverin.hr); stranica i /api/karepovac/vjetar revalidate 300 s; provjereno da je očitanje jednako Neverinovu `last` (148°, 0,7 m/s, 15:25)",
+      "Klik na kartu: kartica za odabrano mjesto (razina, trend, pouzdanost, traka po satima za to mjesto, ?t=lat,lng u adresi) i gumb „Javi za ovo mjesto” → /karepovac/dojava?lat=&lng= s upisanim mjestom",
+      "Obrazac dojave prihvaća lat/lng iz adrese (unutar okvira dojava)"
+    ],
+    "snimke": [
+      ".cache/hindcast/ux/poslije/jak-sada-1280-tragovi.jpg",
+      ".cache/hindcast/ux/poslije/jak-sada-1280-tocka.jpg"
+    ]
+  },
+  "uiKrug3": {
+    "datum": "2026-09-02",
+    "promjene": [
+      "Predložene mjerne postaje iz #28 kao crtkane tikvine oznake na karti (uključeno zadano, prekidač „Predložene postaje”, ?pri=); klik otvara karticu: što mjeri, oprema, okvirna cijena stavke i faze, zašto ondje, što dogovoriti, poveznica na #28",
+      "Popis i položaji u src/lib/sim/prijedlozi-postaja.ts"
+    ],
+    "snimke": [
+      ".cache/hindcast/ux/poslije/prijedlog-jarbol-1280.jpg"
+    ]
+  }
+}

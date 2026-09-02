@@ -1,0 +1,517 @@
+{
+ "id": "e2-spoj",
+ "opis": "E2: kao E3, ali vjetar po pravilu spoj (smjer Split-3/Marjan/LDSP, brzina s otvorenih postaja), AZO na pravi sat",
+ "oznaka": {
+  "git": "ff00376",
+  "fizika": "dfbdd21f1f",
+  "postavke": "57be2963",
+  "oznaka": "ff00376-dfbdd21f1f-57be2963"
+ },
+ "nacin": "lanac",
+ "uzoraka": 6,
+ "pravilo": "spoj",
+ "azoKasni": false,
+ "h2sIzvor": "zavod-k1",
+ "postavke": {
+  "cestica": 10000,
+  "sirina": 200,
+  "punjenje": 160
+ },
+ "razdoblje": {
+  "od": "2024-08-29",
+  "do": "2026-09-03"
+ },
+ "pokrivenost": {
+  "poIzvoru": {
+   "split3+marjan": 10512,
+   "split3+era5": 854,
+   "split3+ldsp": 6071,
+   "marjan": 86,
+   "ldsp": 58,
+   "split3": 27
+  },
+  "bezVjetra": 32,
+  "ukupno": 17640
+ },
+ "trajanjeMin": 13.6,
+ "ocjene": [
+  {
+   "uloga": "sve",
+   "razdoblje": {
+    "od": "2024-08-29",
+    "do": "2026-09-03"
+   },
+   "h2s": {
+    "n": 11943,
+    "spearman": 0.0918,
+    "spearmanBezHoda": 0.0888,
+    "aucVrha": 0.5555,
+    "nultiPojasSpearman": {
+     "min": -0.0139,
+     "max": 0.0535,
+     "medijan": 0.0127
+    },
+    "nultiPojasAuc": {
+     "min": 0.508,
+     "max": 0.5411,
+     "medijan": 0.5268
+    },
+    "POD": 0.2567,
+    "FAR": 0.7433,
+    "CSI": 0.1472,
+    "nagib": 0.0183,
+    "nagib95": [
+     0.005,
+     0.0341
+    ],
+    "odsjecak": 1.4924,
+    "nultiModeli": {
+     "perzistencija": {
+      "n": 11572,
+      "spearman": 0.8742,
+      "aucVrha": 0.9285
+     },
+     "sektorski": {
+      "n": 11943,
+      "spearman": 0.0697,
+      "aucVrha": 0.5222
+     },
+     "zastoj": {
+      "n": 11943,
+      "spearman": 0.1084,
+      "aucVrha": 0.5433
+     }
+    },
+    "noc": {
+     "n": 4593,
+     "spearman": 0.1503,
+     "aucVrha": 0.5688
+    },
+    "dan": {
+     "n": 7350,
+     "spearman": 0.0661,
+     "aucVrha": 0.5482
+    },
+    "dojave": {
+     "n": 15,
+     "nSmrdi": 8,
+     "pogodci": 5,
+     "promasaji": 3,
+     "lazne": 5,
+     "tocneNegative": 2,
+     "POD": 0.625,
+     "FAR": 0.5,
+     "CSI": 0.3846,
+     "aucDojava": 0.4464
+    }
+   },
+   "merkaptani": {
+    "n": 10871,
+    "spearman": -0.0122,
+    "spearmanBezHoda": -0.0126,
+    "aucVrha": 0.5362,
+    "nultiPojasSpearman": {
+     "min": -0.0418,
+     "max": 0.0024,
+     "medijan": -0.0092
+    },
+    "nultiPojasAuc": {
+     "min": 0.5004,
+     "max": 0.526,
+     "medijan": 0.5141
+    },
+    "POD": 0.3049,
+    "FAR": 0.6951,
+    "CSI": 0.1799,
+    "nagib": -0.0098,
+    "nagib95": [
+     -0.031,
+     0.0146
+    ],
+    "odsjecak": 2.805,
+    "nultiModeli": {
+     "perzistencija": {
+      "n": 9548,
+      "spearman": 0.6888,
+      "aucVrha": 0.8927
+     },
+     "sektorski": {
+      "n": 10871,
+      "spearman": -0.0088,
+      "aucVrha": 0.5061
+     },
+     "zastoj": {
+      "n": 10871,
+      "spearman": 0.0008,
+      "aucVrha": 0.4985
+     }
+    },
+    "noc": {
+     "n": 3755,
+     "spearman": -0.0056,
+     "aucVrha": 0.5538
+    },
+    "dan": {
+     "n": 7116,
+     "spearman": -0.0151,
+     "aucVrha": 0.5257
+    },
+    "dojave": null
+   }
+  },
+  {
+   "uloga": "ugadjanje",
+   "razdoblje": {
+    "od": "2024-09-01",
+    "do": "2025-09-01"
+   },
+   "h2s": {
+    "n": 7078,
+    "spearman": 0.0555,
+    "spearmanBezHoda": 0.0494,
+    "aucVrha": 0.5603,
+    "nultiPojasSpearman": {
+     "min": -0.059,
+     "max": 0.0183,
+     "medijan": -0.0227
+    },
+    "nultiPojasAuc": {
+     "min": 0.4847,
+     "max": 0.5466,
+     "medijan": 0.5115
+    },
+    "POD": 0.1475,
+    "FAR": 0.8525,
+    "CSI": 0.0796,
+    "nagib": 0.0127,
+    "nagib95": [
+     0.0046,
+     0.0216
+    ],
+    "odsjecak": 1.2079,
+    "nultiModeli": {
+     "perzistencija": {
+      "n": 6849,
+      "spearman": 0.8508,
+      "aucVrha": 0.9212
+     },
+     "sektorski": {
+      "n": 7078,
+      "spearman": 0.0421,
+      "aucVrha": 0.5189
+     },
+     "zastoj": {
+      "n": 7078,
+      "spearman": 0.1324,
+      "aucVrha": 0.6051
+     }
+    },
+    "noc": {
+     "n": 2740,
+     "spearman": 0.084,
+     "aucVrha": 0.5598
+    },
+    "dan": {
+     "n": 4338,
+     "spearman": 0.0486,
+     "aucVrha": 0.555
+    },
+    "dojave": null
+   },
+   "merkaptani": {
+    "n": 5169,
+    "spearman": -0.0167,
+    "spearmanBezHoda": -0.0327,
+    "aucVrha": 0.4733,
+    "nultiPojasSpearman": {
+     "min": -0.0196,
+     "max": 0.0769,
+     "medijan": -0.0025
+    },
+    "nultiPojasAuc": {
+     "min": 0.4437,
+     "max": 0.5122,
+     "medijan": 0.4841
+    },
+    "POD": 0.0735,
+    "FAR": 0.9265,
+    "CSI": 0.0382,
+    "nagib": -0.0179,
+    "nagib95": [
+     -0.0334,
+     -0.0047
+    ],
+    "odsjecak": 1.3964,
+    "nultiModeli": {
+     "perzistencija": {
+      "n": 3994,
+      "spearman": 0.4792,
+      "aucVrha": 0.7238
+     },
+     "sektorski": {
+      "n": 5169,
+      "spearman": -0.0173,
+      "aucVrha": 0.4881
+     },
+     "zastoj": {
+      "n": 5169,
+      "spearman": -0.0064,
+      "aucVrha": 0.4899
+     }
+    },
+    "noc": {
+     "n": 1626,
+     "spearman": -0.0365,
+     "aucVrha": 0.5033
+    },
+    "dan": {
+     "n": 3543,
+     "spearman": -0.0199,
+     "aucVrha": 0.461
+    },
+    "dojave": null
+   }
+  },
+  {
+   "uloga": "provjera",
+   "razdoblje": {
+    "od": "2025-09-01",
+    "do": "2026-08-18"
+   },
+   "h2s": {
+    "n": 4504,
+    "spearman": 0.162,
+    "spearmanBezHoda": 0.1539,
+    "aucVrha": 0.5431,
+    "nultiPojasSpearman": {
+     "min": -0.0254,
+     "max": 0.1053,
+     "medijan": 0.0627
+    },
+    "nultiPojasAuc": {
+     "min": 0.4511,
+     "max": 0.562,
+     "medijan": 0.5058
+    },
+    "POD": 0.3878,
+    "FAR": 0.6122,
+    "CSI": 0.2405,
+    "nagib": 0.0283,
+    "nagib95": [
+     -0.0052,
+     0.0659
+    ],
+    "odsjecak": 1.8867,
+    "nultiModeli": {
+     "klimatologija": {
+      "n": 4504,
+      "spearman": 0.0937,
+      "aucVrha": 0.5689
+     },
+     "perzistencija": {
+      "n": 4363,
+      "spearman": 0.8647,
+      "aucVrha": 0.8883
+     },
+     "sektorski": {
+      "n": 4504,
+      "spearman": 0.093,
+      "aucVrha": 0.5093
+     },
+     "zastoj": {
+      "n": 4504,
+      "spearman": 0.1194,
+      "aucVrha": 0.5348
+     }
+    },
+    "noc": {
+     "n": 1713,
+     "spearman": 0.2748,
+     "aucVrha": 0.5706
+    },
+    "dan": {
+     "n": 2791,
+     "spearman": 0.1016,
+     "aucVrha": 0.5097
+    },
+    "dojave": null
+   },
+   "merkaptani": {
+    "n": 5700,
+    "spearman": 0.1305,
+    "spearmanBezHoda": 0.1047,
+    "aucVrha": 0.5429,
+    "nultiPojasSpearman": {
+     "min": 0.0688,
+     "max": 0.1188,
+     "medijan": 0.0886
+    },
+    "nultiPojasAuc": {
+     "min": 0.5208,
+     "max": 0.5534,
+     "medijan": 0.5384
+    },
+    "POD": 0.3383,
+    "FAR": 0.4454,
+    "CSI": 0.266,
+    "nagib": 0.0347,
+    "nagib95": [
+     0.0023,
+     0.0753
+    ],
+    "odsjecak": 4.0501,
+    "nultiModeli": {
+     "klimatologija": {
+      "n": 5700,
+      "spearman": 0.0443,
+      "aucVrha": 0.5528
+     },
+     "perzistencija": {
+      "n": 5551,
+      "spearman": 0.6192,
+      "aucVrha": 0.8703
+     },
+     "sektorski": {
+      "n": 5700,
+      "spearman": 0.0388,
+      "aucVrha": 0.5019
+     },
+     "zastoj": {
+      "n": 5700,
+      "spearman": 0.0897,
+      "aucVrha": 0.5067
+     }
+    },
+    "noc": {
+     "n": 2127,
+     "spearman": 0.1465,
+     "aucVrha": 0.5937
+    },
+    "dan": {
+     "n": 3573,
+     "spearman": 0.1167,
+     "aucVrha": 0.5202
+    },
+    "dojave": null
+   }
+  },
+  {
+   "uloga": "zadrzano",
+   "razdoblje": {
+    "od": "2026-08-18",
+    "do": "2026-09-03"
+   },
+   "h2s": {
+    "n": 359,
+    "spearman": -0.0931,
+    "spearmanBezHoda": -0.1002,
+    "aucVrha": 0.5455,
+    "nultiPojasSpearman": {
+     "min": -0.1134,
+     "max": 0.2889,
+     "medijan": 0.0578
+    },
+    "nultiPojasAuc": {
+     "min": 0.3333,
+     "max": 0.7724,
+     "medijan": 0.5314
+    },
+    "POD": 0.3627,
+    "FAR": 0.5132,
+    "CSI": 0.2624,
+    "nagib": 0.0209,
+    "nagib95": [
+     -0.0293,
+     0.0742
+    ],
+    "odsjecak": 2.144,
+    "nultiModeli": {
+     "klimatologija": {
+      "n": 359,
+      "spearman": 0.2393,
+      "aucVrha": 0.6973
+     },
+     "perzistencija": {
+      "n": 356,
+      "spearman": 0.8699,
+      "aucVrha": 0.8833
+     },
+     "sektorski": {
+      "n": 359,
+      "spearman": 0.1464,
+      "aucVrha": 0.5784
+     },
+     "zastoj": {
+      "n": 359,
+      "spearman": -0.1023,
+      "aucVrha": 0.4696
+     }
+    },
+    "noc": {
+     "n": 138,
+     "spearman": -0.1154,
+     "aucVrha": 0.4245
+    },
+    "dan": {
+     "n": 221,
+     "spearman": -0.0594,
+     "aucVrha": 0.6682
+    },
+    "dojave": {
+     "n": 15,
+     "nSmrdi": 8,
+     "pogodci": 4,
+     "promasaji": 4,
+     "lazne": 5,
+     "tocneNegative": 2,
+     "POD": 0.5,
+     "FAR": 0.5556,
+     "CSI": 0.3077,
+     "aucDojava": 0.4464
+    }
+   },
+   "merkaptani": null
+  }
+ ],
+ "epizode": [
+  "jak-miris-2024-09-07",
+  "bez-mirisa-2024-09-10",
+  "promjena-vjetra-2024-09-14",
+  "tisina-2024-10-24",
+  "bez-mirisa-2024-11-21",
+  "noc-inverzija-2024-12-30",
+  "jak-miris-2025-02-27",
+  "noc-inverzija-2025-03-05",
+  "tisina-2025-03-08",
+  "stalan-vjetar-2025-03-23",
+  "promjena-vjetra-2025-04-04",
+  "jak-miris-2025-04-06",
+  "dan-mijesanje-2025-07-10",
+  "jak-miris-2025-07-20",
+  "noc-inverzija-2025-09-01",
+  "noc-inverzija-2025-09-04",
+  "jak-miris-2026-01-06",
+  "promjena-vjetra-2026-01-12",
+  "bez-mirisa-2026-03-07",
+  "tisina-2026-04-07",
+  "stalan-vjetar-2026-04-14",
+  "promjena-vjetra-2026-05-02",
+  "jak-miris-2026-05-23",
+  "jak-miris-2026-05-24",
+  "jak-miris-2026-07-02",
+  "bez-mirisa-2026-07-24",
+  "tisina-2026-08-02",
+  "dan-mijesanje-2026-08-18",
+  "noc-inverzija-2026-08-19",
+  "stalan-vjetar-2026-08-21",
+  "jak-miris-2026-08-22",
+  "jak-miris-2026-08-24",
+  "jak-miris-2026-08-25",
+  "jak-miris-2026-08-26",
+  "dojave-2026-08",
+  "bez-mirisa-2026-08-27",
+  "tisina-2026-08-28",
+  "tisina-2026-08-29",
+  "bez-mirisa-2026-08-31"
+ ]
+}
