@@ -33,6 +33,7 @@
 import type { Map as MapaLibre, StyleSpecification } from "maplibre-gl";
 
 import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
+import { PRIJEDLOZI_POSTAJA } from "@/lib/sim/prijedlozi-postaja";
 import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
 
 /** Ploha je u sredini; okvir je onaj za koji je polje vjetra izračunato. */
@@ -56,10 +57,22 @@ export const NAJVECI_OBUHVAT: [number, number, number, number] = [
   SIM_POLJE.granice.sjever + 0.04,
 ];
 
-/** Početni pogled: cijeli okvir polja, s plohom u sredini. */
+/**
+ * Početni pogled: okvir polja, s plohom u sredini, proširen do svih prijedloga.
+ *
+ * Polje je ono što se gleda, ali predložene postaje smiju iskoračiti iz njega
+ * (kampus je 300 m zapadnije). Na širokom zaslonu one ionako upadnu u kadar,
+ * na uskom ne bi — a pribadača koju se ne vidi ne postoji.
+ */
 export const POCETNI_OBUHVAT: [[number, number], [number, number]] = [
-  [SIM_POLJE.granice.zapad, SIM_POLJE.granice.jug],
-  [SIM_POLJE.granice.istok, SIM_POLJE.granice.sjever],
+  [
+    Math.min(SIM_POLJE.granice.zapad, ...PRIJEDLOZI_POSTAJA.map((p) => p.lon)) - 0.002,
+    Math.min(SIM_POLJE.granice.jug, ...PRIJEDLOZI_POSTAJA.map((p) => p.lat)) - 0.002,
+  ],
+  [
+    Math.max(SIM_POLJE.granice.istok, ...PRIJEDLOZI_POSTAJA.map((p) => p.lon)) + 0.002,
+    Math.max(SIM_POLJE.granice.sjever, ...PRIJEDLOZI_POSTAJA.map((p) => p.lat)) + 0.002,
+  ],
 ];
 
 export type Podloga = "karta" | "ortofoto";

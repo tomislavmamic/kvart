@@ -112,6 +112,39 @@ export function stvoriPrijedloge(
     izvor?.setData(podrucjeKao(PRIJEDLOZI_POSTAJA.find((p) => p.id === id)));
   };
 
+  /**
+   * Dovodi područje u kadar ako je izvan njega.
+   *
+   * Isječci prema Solinu i kampusu veći su od pola zaslona i na uskom zaslonu
+   * lako ostanu izvan pogleda — kartica bi tada govorila o liku koji se ne
+   * vidi. Ako je već sve u kadru, karta se ne miče: pomak koji nije potreban
+   * gledatelju izgleda kao greška.
+   */
+  const dovediUKadar = (p: PrijedlogPostaje) => {
+    const prsten = obodPodrucja(p);
+    const lon = prsten.map((t) => t[0]);
+    const lat = prsten.map((t) => t[1]);
+    const okvir: [[number, number], [number, number]] = [
+      [Math.min(...lon), Math.min(...lat)],
+      [Math.max(...lon), Math.max(...lat)],
+    ];
+    const kadar = karta.getBounds?.();
+    const unutra =
+      kadar &&
+      okvir[0][0] >= kadar.getWest() &&
+      okvir[0][1] >= kadar.getSouth() &&
+      okvir[1][0] <= kadar.getEast() &&
+      okvir[1][1] <= kadar.getNorth();
+    if (unutra) return;
+    karta.fitBounds?.(okvir, {
+      // Kartica stoji gore lijevo, vremenska crta dolje: bez ovoga bi lik
+      // završio pod njima.
+      padding: { top: 180, bottom: 150, left: 24, right: 24 },
+      maxZoom: 14.5,
+      duration: 600,
+    });
+  };
+
   let vidljivi = true;
   let odabran: string | null = null;
 
@@ -126,6 +159,8 @@ export function stvoriPrijedloge(
       odabran = id;
       for (const o of oznake) o.el.classList.toggle("sim-prijedlog--odabran", o.id === id);
       postaviPodrucje(vidljivi ? id : null);
+      const p = PRIJEDLOZI_POSTAJA.find((x) => x.id === id);
+      if (p && vidljivi) dovediUKadar(p);
     },
     ukloni() {
       for (const o of oznake) o.marker.remove();

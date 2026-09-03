@@ -91,3 +91,16 @@ test("opis područja govori isto što karta crta", () => {
     }
   }
 });
+
+test("početni pogled simulatora obuhvaća svaku predloženu postaju", async () => {
+  const { POCETNI_OBUHVAT } = await import(
+    "@/components/karepovac/sim/sim-karta"
+  );
+  const [[zapad, jug], [istok, sjever]] = POCETNI_OBUHVAT;
+  for (const p of PRIJEDLOZI_POSTAJA) {
+    assert.ok(
+      p.lon > zapad && p.lon < istok && p.lat > jug && p.lat < sjever,
+      `${p.id} je izvan početnog kadra`,
+    );
+  }
+});
