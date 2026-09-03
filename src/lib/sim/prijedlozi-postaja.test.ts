@@ -15,7 +15,10 @@ test("svi prijedlozi leže u okviru simulatora i imaju jedinstvene oznake", () =
   const g = SIM_POLJE.granice;
   const ids = new Set<string>();
   for (const p of PRIJEDLOZI_POSTAJA) {
-    assert.ok(p.lat > g.jug && p.lat < g.sjever && p.lon > g.zapad && p.lon < g.istok, p.id);
+    // Zastavica mora odgovarati stvarnosti u oba smjera: neoznačena točka je
+    // u polju, označena je izvan njega. Inače kartica tvrdi nešto što nije.
+    const uPolju = p.lat > g.jug && p.lat < g.sjever && p.lon > g.zapad && p.lon < g.istok;
+    assert.equal(uPolju, !p.izvanPolja, p.id);
     assert.ok(!ids.has(p.id), `dvostruki id ${p.id}`);
     ids.add(p.id);
     assert.ok(p.cijena[0] <= p.cijena[1] && p.oprema.length > 0 && p.velicine.length > 0);
@@ -43,6 +46,15 @@ test("ime i mjesto stoje uz stvarnu adresu, a ne uz stranu svijeta", () => {
     // Ime mjesta, ne opis smjera: „Rub Solina” i slično više ne prolazi.
     assert.ok(!/^Rub /.test(p.naziv), p.id);
   }
+});
+
+test("sjeveroistok i najčešća os više nisu prazni", () => {
+  const ids = new Set(PRIJEDLOZI_POSTAJA.map((p) => p.id));
+  // Popis se dosad vodio za izmjerenom pogreškom, a sva su opažanja bila sa
+  // zapada; ove tri točke pokrivaju smjerove u kojima ništa nismo mjerili.
+  for (const id of ["mravince", "kucine", "kampus"]) assert.ok(ids.has(id), id);
+  const kampus = PRIJEDLOZI_POSTAJA.find((p) => p.id === "kampus");
+  assert.ok(kampus?.izvanPolja, "kampus je izvan polja i to mora pisati");
 });
 
 test("područje obuhvaća predloženu točku i zatvara prsten", () => {

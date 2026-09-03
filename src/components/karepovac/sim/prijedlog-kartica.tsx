@@ -87,7 +87,16 @@ export function PrijedlogKartica({
           <span className="text-zinc-500"> · cijela {FAZA[prijedlog.faza].split(" — ")[0]} {eur(fazaOd, fazaDo)}, bez montaže</span>
         </dd>
         <dt className="mt-1.5 font-semibold">Gdje smije stajati</dt>
-        <dd>{opisPodrucja(prijedlog)}. Osjenčano područje na karti pokazuje isto.</dd>
+        <dd>
+          {opisPodrucja(prijedlog)}. Osjenčano područje na karti pokazuje isto.
+          {prijedlog.izvanPolja ? (
+            <>
+              {" "}
+              <b>Izvan je polja koje simulator računa</b>, pa bi postaja mjerila,
+              ali usporedba s modelom traži šire polje.
+            </>
+          ) : null}
+        </dd>
         <dt className="mt-1.5 font-semibold">Zašto ovdje</dt>
         <dd>{prijedlog.zasto}</dd>
         <dt className="mt-1.5 font-semibold">Treba dogovoriti</dt>

@@ -9,6 +9,14 @@
  * Položaji su prijedlozi na stotinjak metara: točno mjesto ovisi o
  * dozvoli, napajanju i slobodnom horizontu, pa kartica to i kaže.
  * Cijene su okvirne, u eurima, za opremu bez montaže.
+ *
+ * ## Što je razmotreno i nije ušlo
+ *
+ * Stobreč (157°, 2,3 km) i Kamen (155°, 1,0 km): zrak s plohe ide u taj smjer
+ * 0,4 % odnosno 0,5 % sati u dvije godine ulaza (`ulazi-proizvodnja`, isječak
+ * ±15°). To je ujedno i slabost postojeće postaje k1 na 141° — 1,2 % sati —
+ * zbog koje ocjena modela stoji na krivoj strani plohe (K1 u `docs/STATUS.json`).
+ * Postaja ondje ne bi mjerila perjanicu nego pozadinu.
  */
 
 /**
@@ -44,6 +52,13 @@ export type PrijedlogPostaje = {
   readonly lon: number;
   /** Gdje sve smije stajati, a da i dalje mjeri isto. */
   readonly podrucje: Podrucje;
+  /**
+   * Točka leži izvan polja koje simulator računa (6,4 km oko plohe).
+   *
+   * Postaja bi ondje mjerila, ali usporedba s modelom traži šire polje, pa to
+   * kartica mora reći umjesto da šuti.
+   */
+  readonly izvanPolja?: true;
   /** Faza nabave: A prvo, B zatim, C po potrebi. */
   readonly faza: "A" | "B" | "C";
   /** Redni broj u #28, za vezu s tekstom. */
@@ -124,8 +139,8 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
   },
   {
     id: "dracevac-7b",
-    naziv: "Dračevac, kod broja 7B",
-    mjesto: "Ulica Dračevac kod kućnog broja 7B, naselje Dračevac, Grad Split",
+    naziv: "Dračevac — sjever naselja",
+    mjesto: "Ulica Dračevac kod broja 7B, sjeverni dio naselja Dračevac, Grad Split",
     lat: 43.5278,
     lon: 16.504,
     podrucje: { vrsta: "isjecak", odM: 750, doM: 1150, odAz: 309, doAz: 329 },
@@ -220,6 +235,75 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
     zasto:
       "Emisija je u modelu jedna brojka (95 %: pola do dvostruko). Metan je robustan tragač istog toka plina, pa daje dnevnu krivulju izvora — uz tlak i temperaturu pokrova s jarbola na plohi. Ograda jugoistočno je niz najčešći noćni vjetar.",
     uvjeti: "Dozvola upravitelja plohe; napajanje na ogradi.",
+  },
+  {
+    id: "mravince",
+    naziv: "Mravince",
+    mjesto: "naselje Mravince, Grad Solin",
+    lat: 43.533,
+    lon: 16.515,
+    podrucje: { vrsta: "isjecak", odM: 1050, doM: 1600, odAz: 2, doAz: 22 },
+    faza: "B",
+    stavka: 4,
+    mjeri: "H₂S sjeveroistočno od plohe",
+    velicine: ["H₂S na ppb razini, minutni zapis, satni prosjek"],
+    oprema: ["elektrokemijski H₂S senzor s kompenzacijom", "zapisivač"],
+    cijena: [600, 1500],
+    zasto:
+      "Prva točka sjeveroistočno od plohe. Zrak onamo ide 5,9 % sati, a u tišini ispod 2 m/s čak 9,7 % — otprilike kao prema Žnjanu, a odande nemamo nijedno mjerenje ni dojavu. Popis je dosad slijedio izmjerenu pogrešku modela, a sva su opažanja sa zapada i sjeverozapada, pa je sjeveroistok ostao slijep, a ne čist.",
+    uvjeti: "Dvorište ili balkon stanovnika; struja iz kuće. Mravince su u Gradu Solinu, kao i Priko vode i Kučine.",
+  },
+  {
+    id: "kucine",
+    naziv: "Kučine",
+    mjesto: "Put svetog Petra, naselje Kučine, Grad Solin",
+    lat: 43.5365,
+    lon: 16.5265,
+    podrucje: { vrsta: "isjecak", odM: 1750, doM: 2400, odAz: 26, doAz: 46 },
+    faza: "C",
+    stavka: 4,
+    mjeri: "H₂S sjeveroistočno (doseg)",
+    velicine: ["H₂S na ppb razini, minutni zapis, satni prosjek"],
+    oprema: ["elektrokemijski H₂S senzor s kompenzacijom", "zapisivač"],
+    cijena: [600, 1500],
+    zasto:
+      "Druga točka na sjeveroistočnoj osi, 2,1 km od plohe: s Mravincima daje pad s udaljenošću na strani na kojoj ga danas uopće ne mjerimo. Zrak onamo ide 5,5 % sati, u tišini 9,0 %.",
+    uvjeti: "Dvorište ili balkon stanovnika; struja iz kuće.",
+  },
+  {
+    id: "znjan",
+    naziv: "Žnjan — Pazdigrad",
+    mjesto: "Put Žnjana, Pazdigrad, gradski kotar Žnjan, Grad Split",
+    lat: 43.5045,
+    lon: 16.4908,
+    podrucje: { vrsta: "isjecak", odM: 2150, doM: 2950, odAz: 212, doAz: 232 },
+    faza: "C",
+    stavka: 4,
+    mjeri: "H₂S jugozapadno (doseg)",
+    velicine: ["H₂S na ppb razini, minutni zapis, satni prosjek"],
+    oprema: ["elektrokemijski H₂S senzor s kompenzacijom", "zapisivač"],
+    cijena: [600, 1500],
+    zasto:
+      "Jugozapadna os, 2,5 km od plohe: zrak onamo ide 7,4 % sati, ali samo 3,7 % tihih sati, pa je ovo najgušće naseljena strana s najmanjom vjerojatnošću da miris stigne. Postaja ondje najviše vrijedi kao provjera nulte razine u gradu.",
+    uvjeti: "Dvorište, balkon ili javna zgrada; struja iz objekta.",
+  },
+  {
+    id: "kampus",
+    naziv: "Sveučilišni kampus",
+    mjesto: "Ulica Ruđera Boškovića, Pisano Kame, gradski kotar Split 3, Grad Split",
+    lat: 43.511,
+    lon: 16.4682,
+    izvanPolja: true,
+    podrucje: { vrsta: "isjecak", odM: 3200, doM: 4300, odAz: 242, doAz: 262 },
+    faza: "C",
+    stavka: 4,
+    mjeri: "H₂S na kraju najčešće osi",
+    velicine: ["H₂S na ppb razini, minutni zapis, satni prosjek"],
+    oprema: ["elektrokemijski H₂S senzor s kompenzacijom", "zapisivač"],
+    cijena: [600, 1500],
+    zasto:
+      "Zrak ide prema kampusu 25,7 % sati i 24,3 % tihih — to je najčešća os od svih devet dosadašnjih točaka. Na 3,7 km odgovara na pitanje dokle miris uopće nosi, a sveučilište ima i tko će uređaj održavati. Točka je izvan polja koje simulator računa, pa bi za usporedbu s modelom trebalo proširiti polje.",
+    uvjeti: "Dogovor sa Sveučilištem u Splitu; struja i mreža iz zgrade.",
   },
 ];
 
