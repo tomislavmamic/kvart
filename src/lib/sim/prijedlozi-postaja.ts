@@ -11,11 +11,39 @@
  * Cijene su okvirne, u eurima, za opremu bez montaže.
  */
 
+/**
+ * Područje u kojem postaja i dalje mjeri ono zbog čega je predložena.
+ *
+ * `krug` je za postaje vezane uz jedno mjesto (plato plohe, referentni
+ * analizator): sve unutar polumjera daje isti podatak. `isjecak` je za postaje
+ * koje mjere pad s udaljenošću i širinu perjanice: njima je bitan smjer od
+ * plohe i udaljenost, a ne točka — dvorište sto metara dalje jednako služi
+ * dok je u istom isječku.
+ */
+import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
+
+export type Podrucje =
+  | { readonly vrsta: "krug"; readonly polumjerM: number }
+  | {
+      readonly vrsta: "isjecak";
+      /** Udaljenost od izvora na plohi, u metrima. */
+      readonly odM: number;
+      readonly doM: number;
+      /** Azimut od izvora, u stupnjevima od sjevera. */
+      readonly odAz: number;
+      readonly doAz: number;
+    };
+
 export type PrijedlogPostaje = {
   readonly id: string;
+  /** Ime po mjestu na kojem stoji, onako kako ga zove tko ondje živi. */
   readonly naziv: string;
+  /** Ulica, naselje i grad; provjereno na katastru, granicama naselja i OSM-u. */
+  readonly mjesto: string;
   readonly lat: number;
   readonly lon: number;
+  /** Gdje sve smije stajati, a da i dalje mjeri isto. */
+  readonly podrucje: Podrucje;
   /** Faza nabave: A prvo, B zatim, C po potrebi. */
   readonly faza: "A" | "B" | "C";
   /** Redni broj u #28, za vezu s tekstom. */
@@ -36,9 +64,11 @@ export type PrijedlogPostaje = {
 export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
   {
     id: "ploha-jarbol",
-    naziv: "Jarbol na plohi",
+    naziv: "Plato Karepovca — jarbol",
+    mjesto: "tijelo odlagališta, 205 m od najbližeg ruba; Kamen, Grad Split",
     lat: 43.5215,
     lon: 16.5105,
+    podrucje: { vrsta: "krug", polumjerM: 150 },
     faza: "A",
     stavka: 1,
     mjeri: "vjetar, inverzija, tlak",
@@ -60,9 +90,11 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
   },
   {
     id: "padina-sz",
-    naziv: "Padina prema Dračevcu",
+    naziv: "Padina iznad Dračevca",
+    mjesto: "uz Ulicu Dračevac, naselje Dračevac, Grad Split",
     lat: 43.5227,
     lon: 16.5058,
+    podrucje: { vrsta: "isjecak", odM: 350, doM: 650, odAz: 277, doAz: 297 },
     faza: "B",
     stavka: 2,
     mjeri: "otjecanje niz padinu",
@@ -70,14 +102,16 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
     oprema: ["jeftiniji ultrazvučni anemometar na stupu 3 m", "zapisivač, solarno napajanje"],
     cijena: [300, 600],
     zasto:
-      "Oko 400 m od težišta plohe prema 290°, na padini između plohe i Dračevca. Noćno otjecanje hladnog zraka niz padinu gradske postaje ne vide, a najvjerojatnije objašnjava večernje dojave s Dračevca uz jugozapadnjak na Split-3.",
+      "Oko 480 m od izvora na plohi prema 287°, na padini između plohe i Dračevca. Noćno otjecanje hladnog zraka niz padinu gradske postaje ne vide, a najvjerojatnije objašnjava večernje dojave s Dračevca uz jugozapadnjak na Split-3.",
     uvjeti: "Privatno dvorište ili javni stup uz put; dogovor s vlasnikom.",
   },
   {
     id: "dno-bilice",
-    naziv: "Dno udoline, Mostine/Bilice",
+    naziv: "Mostine — dno udoline",
+    mjesto: "između Ulice Zbora narodne garde i Ulice Bilice II, Mostine, Grad Split",
     lat: 43.5255,
     lon: 16.4895,
+    podrucje: { vrsta: "isjecak", odM: 1600, doM: 2100, odAz: 276, doAz: 292 },
     faza: "B",
     stavka: 2,
     mjeri: "otjecanje niz padinu (doseg)",
@@ -90,9 +124,11 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
   },
   {
     id: "dracevac-7b",
-    naziv: "Dračevac",
+    naziv: "Dračevac, kod broja 7B",
+    mjesto: "Ulica Dračevac kod kućnog broja 7B, naselje Dračevac, Grad Split",
     lat: 43.5278,
     lon: 16.504,
+    podrucje: { vrsta: "isjecak", odM: 750, doM: 1150, odAz: 309, doAz: 329 },
     faza: "A",
     stavka: 4,
     mjeri: "H₂S u naselju + temperatura za inverziju",
@@ -100,14 +136,16 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
     oprema: ["elektrokemijski H₂S senzor s temperaturnom kompenzacijom (Alphasense H2S-B4 u kućištu, Aeroqual 500 ili gotova ppb postaja)", "ventilirani termometar", "zapisivač"],
     cijena: [700, 1600],
     zasto:
-      "Sve dosadašnje ocjene modela dolaze s krive strane plohe (postaja u udolini na 140°). Dračevac je na 293°, 0,5–1 km od plohe, i odatle dolaze dojave. Tisuće sati odavde daju bazdarenje jačine i stopu lažnih uzbuna koje 15 dojava ne može.",
+      "Sve dosadašnje ocjene modela dolaze s krive strane plohe (postaja u udolini na 140°). Dračevac je na 319°, 0,9 km od izvora, i odatle dolaze dojave. Tisuće sati odavde daju bazdarenje jačine i stopu lažnih uzbuna koje 15 dojava ne može.",
     uvjeti: "Dvorište ili balkon stanovnika (dojavitelj s Dračevca 7B je prirodan domaćin); struja iz kuće.",
   },
   {
     id: "bilice",
-    naziv: "Bilice",
+    naziv: "Bilice II",
+    mjesto: "Ulica Bilice II, naselje Bilice, Grad Split",
     lat: 43.5261,
     lon: 16.4935,
+    podrucje: { vrsta: "isjecak", odM: 1300, doM: 1800, odAz: 279, doAz: 299 },
     faza: "A",
     stavka: 4,
     mjeri: "H₂S u naselju",
@@ -119,37 +157,43 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
   },
   {
     id: "kila-mostine",
-    naziv: "Kila / Mostine",
+    naziv: "Stoci (Mostine)",
+    mjesto: "Ulica Stoci, Mostine, Grad Split",
     lat: 43.5215,
     lon: 16.4915,
+    podrucje: { vrsta: "isjecak", odM: 1300, doM: 1900, odAz: 258, doAz: 282 },
     faza: "A",
     stavka: 4,
     mjeri: "H₂S u naselju (bočno)",
     velicine: ["H₂S na ppb razini, minutni zapis, satni prosjek"],
     oprema: ["elektrokemijski H₂S senzor s kompenzacijom", "zapisivač"],
     cijena: [600, 1500],
-    zasto: "Bočna točka, 2 km zapadno-jugozapadno: kad ovdje ne smrdi, a na Dračevcu da, širina perjanice je izmjerena, ne pretpostavljena.",
+    zasto: "Bočna točka, 1,6 km ravno zapadno: kad ovdje ne smrdi, a na Dračevcu da, širina perjanice je izmjerena, ne pretpostavljena.",
     uvjeti: "Dvorište ili balkon stanovnika; struja iz kuće.",
   },
   {
     id: "solin-rub",
-    naziv: "Rub Solina",
+    naziv: "Solin — Priko vode",
+    mjesto: "Ulica grada Vukovara, Kunćevi (MO Priko vode), Grad Solin; 1,2 km od središta Solina",
     lat: 43.535,
     lon: 16.493,
+    podrucje: { vrsta: "isjecak", odM: 1800, doM: 2600, odAz: 303, doAz: 327 },
     faza: "A",
     stavka: 4,
     mjeri: "H₂S u naselju (doseg)",
     velicine: ["H₂S na ppb razini, minutni zapis, satni prosjek"],
     oprema: ["elektrokemijski H₂S senzor s kompenzacijom", "zapisivač"],
     cijena: [600, 1500],
-    zasto: "Najdalja točka, 3 km na 300°: dokle miris uopće doseže. Dojave iz Solina već postoje (Matoševa).",
-    uvjeti: "Dvorište ili balkon stanovnika; struja iz kuće.",
+    zasto: "Najdalja točka, 2,1 km na 315°: dokle miris uopće doseže. Leži u gradu Solinu, a dojave odande već postoje (Matoševa).",
+    uvjeti: "Dvorište ili balkon stanovnika; struja iz kuće. Točka je unutar Grada Solina, pa je Grad Solin ovdje prirodan vlasnik i plaćatelj postaje.",
   },
   {
     id: "k1-umjeravanje",
     naziv: "Uz postaju Karepovac 1",
+    mjesto: "Put bunara, Kamen, Grad Split; 359 m izvan ruba plohe",
     lat: 43.51665,
     lon: 16.51691,
+    podrucje: { vrsta: "krug", polumjerM: 60 },
     faza: "A",
     stavka: 4,
     mjeri: "H₂S — umjeravanje jeftinih senzora",
@@ -162,9 +206,11 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
   },
   {
     id: "ograda-metan",
-    naziv: "Ograda niz vjetar",
+    naziv: "Jugoistočna ograda plohe",
+    mjesto: "17 m unutar ruba plohe, uz jugoistočnu ogradu; Kamen, Grad Split",
     lat: 43.5195,
     lon: 16.5135,
+    podrucje: { vrsta: "isjecak", odM: 200, doM: 350, odAz: 124, doAz: 164 },
     faza: "C",
     stavka: 5,
     mjeri: "metan kao tragač plina s plohe",
@@ -176,6 +222,69 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
     uvjeti: "Dozvola upravitelja plohe; napajanje na ogradi.",
   },
 ];
+
+/** Izvor perjanice na plohi; od njega se mjere isječci. */
+export const IZVOR_PLOHE = SIM_POLJE.izvor;
+
+/** Metara po stupnju zemljopisne širine, odnosno dužine na toj širini. */
+function mjerila(lat: number): [number, number] {
+  return [111_320 * Math.cos((lat * Math.PI) / 180), 110_540];
+}
+
+/** Točka na `dM` metara i azimutu `az` (stupnjevi od sjevera) od ishodišta. */
+function tocka(lon0: number, lat0: number, dM: number, az: number): [number, number] {
+  const [mLon, mLat] = mjerila(lat0);
+  const r = (az * Math.PI) / 180;
+  return [lon0 + (dM * Math.sin(r)) / mLon, lat0 + (dM * Math.cos(r)) / mLat];
+}
+
+/**
+ * Obod područja u kojem postaja i dalje mjeri isto, kao zatvoreni prsten.
+ *
+ * Krug se crta oko same točke, isječak oko izvora na plohi — jer je isječku
+ * smisao „isti smjer i ista udaljenost od plohe”, a ne blizina predloženom
+ * dvorištu.
+ */
+export function obodPodrucja(p: PrijedlogPostaje, korak = 2): [number, number][] {
+  if (p.podrucje.vrsta === "krug") {
+    const n = 48;
+    const prsten: [number, number][] = [];
+    for (let i = 0; i <= n; i += 1) {
+      prsten.push(tocka(p.lon, p.lat, p.podrucje.polumjerM, (360 * i) / n));
+    }
+    return prsten;
+  }
+  const { odM, doM, odAz, doAz } = p.podrucje;
+  const { lon, lat } = IZVOR_PLOHE;
+  const prsten: [number, number][] = [];
+  for (let a = odAz; a < doAz; a += korak) prsten.push(tocka(lon, lat, doM, a));
+  prsten.push(tocka(lon, lat, doM, doAz));
+  for (let a = doAz; a > odAz; a -= korak) prsten.push(tocka(lon, lat, odM, a));
+  prsten.push(tocka(lon, lat, odM, odAz));
+  prsten.push(prsten[0]);
+  return prsten;
+}
+
+/** Udaljenost u riječima: metri do kilometra, dalje kilometri s decimalom. */
+function duljina(m: number): string {
+  return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
+/** Raspon s jednom mjernom jedinicom: „350–650 m”, „1,3–1,8 km”. */
+function raspon(odM: number, doM: number): string {
+  if (doM < 1000) return `${odM}–${doM} m`;
+  const km = (v: number) => (v / 1000).toFixed(1).replace(".", ",");
+  return `${km(odM)}–${km(doM)} km`;
+}
+
+/** Rečenica koja opisuje isto što karta crta, da se to dvoje ne raziđe. */
+export function opisPodrucja(p: PrijedlogPostaje): string {
+  if (p.podrucje.vrsta === "krug") {
+    return `bilo gdje unutar ${duljina(p.podrucje.polumjerM)} od označene točke`;
+  }
+  const { odM, doM, odAz, doAz } = p.podrucje;
+  return `bilo gdje u osjenčanom isječku: ${raspon(odM, doM)} od plohe, u smjeru ${odAz}–${doAz}°`;
+}
 
 /** Okvirna cijena faze, € (od–do), za natpis. */
 export function cijenaFaze(faza: PrijedlogPostaje["faza"]): [number, number] {

@@ -1,6 +1,11 @@
 "use client";
 
-import { cijenaFaze, type PrijedlogPostaje, ZAHTJEV_URL } from "@/lib/sim/prijedlozi-postaja";
+import {
+  cijenaFaze,
+  opisPodrucja,
+  type PrijedlogPostaje,
+  ZAHTJEV_URL,
+} from "@/lib/sim/prijedlozi-postaja";
 
 /**
  * Kartica predložene mjerne postaje: što bi mjerila, čime, pošto i zašto baš
@@ -44,6 +49,7 @@ export function PrijedlogKartica({
             Predložena postaja · {FAZA[prijedlog.faza]}
           </div>
           <h2 className="mt-0.5 text-base font-bold leading-tight">{prijedlog.naziv}</h2>
+          <div className="text-[13px] text-zinc-600">{prijedlog.mjesto}</div>
           <div className="text-[13px] text-zinc-700">Mjerila bi: {prijedlog.mjeri}</div>
         </div>
         <button
@@ -80,6 +86,8 @@ export function PrijedlogKartica({
           <b>{eur(prijedlog.cijena[0], prijedlog.cijena[1])}</b>
           <span className="text-zinc-500"> · cijela {FAZA[prijedlog.faza].split(" — ")[0]} {eur(fazaOd, fazaDo)}, bez montaže</span>
         </dd>
+        <dt className="mt-1.5 font-semibold">Gdje smije stajati</dt>
+        <dd>{opisPodrucja(prijedlog)}. Osjenčano područje na karti pokazuje isto.</dd>
         <dt className="mt-1.5 font-semibold">Zašto ovdje</dt>
         <dd>{prijedlog.zasto}</dd>
         <dt className="mt-1.5 font-semibold">Treba dogovoriti</dt>
@@ -87,7 +95,7 @@ export function PrijedlogKartica({
       </dl>
 
       <div className="mt-2 flex items-center justify-between border-t border-zinc-200 px-3 py-2 text-[12px]">
-        <span className="text-zinc-500">Mjesto je prijedlog na stotinjak metara.</span>
+        <span className="text-zinc-500">Pribadača je prijedlog; vrijedi cijelo osjenčano područje.</span>
         <a
           href={ZAHTJEV_URL}
           target="_blank"
