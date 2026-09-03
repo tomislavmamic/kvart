@@ -146,8 +146,7 @@ def u_poligonu(t, prsten) -> bool:
 
 izohipse = list(znacajke("izohipse"))
 granice = {s["naziv"]: g for g, s in znacajke("granica")}
-ploha_znacajke = list(znacajke("karepovac"))
-ploha_geom = [g for g, s in ploha_znacajke if s.get("naziv") == "Karepovac"][0]
+ploha_geom = [g for g, s in znacajke("karepovac") if s.get("naziv") == "Karepovac"][0]
 ploha_prsten = ploha_geom["coordinates"][0]
 ploha_px = [projiciraj(p) for p in ploha_prsten]
 
@@ -159,9 +158,6 @@ PODLOGA = {
     "granicaDracevac": sloj([(granice["Dračevac"], {})], 0.4, True),
     "granicaBilice": sloj([(granice["Bilice"], {})], 0.4, True),
     "ploha": sloj([(ploha_geom, {})], 0.4, True),
-    "plohaManja": sloj(
-        [(g, s) for g, s in ploha_znacajke if s.get("naziv") != "Karepovac"], 0.4, True
-    ),
 }
 
 sx = sum(p[0] for p in ploha_px) / len(ploha_px)

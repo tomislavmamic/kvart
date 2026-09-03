@@ -235,13 +235,6 @@ function Ploha({ ispuna = true }: { ispuna?: boolean }) {
         strokeWidth={1.7}
         {...NESKALIRANO}
       />
-      <path
-        d={PODLOGA.plohaManja}
-        fill={ispuna ? "var(--color-kamen-rub)" : "none"}
-        stroke="var(--color-kamen-tekst)"
-        strokeWidth={1.3}
-        {...NESKALIRANO}
-      />
     </g>
   );
 }
