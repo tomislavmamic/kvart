@@ -845,6 +845,17 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           >
             Otvori pregled zraka
           </Link>
+          {/* Na simulator se sad dolazi klikom na „Karepovac” u zaglavlju, a
+              zaglavlja ovdje nema — bez ove poveznice preglednik bez WebGL-a
+              ostao bi bez puta do pregleda svega što pratimo. */}
+          <div className="mt-3">
+            <Link
+              href="/karepovac"
+              className="fokus -my-2 inline-flex min-h-11 items-center text-sm font-semibold text-zinc-700 underline underline-offset-2 hover:text-zinc-900"
+            >
+              Karepovac — sve što pratimo
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -864,9 +875,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           kontrole i ne javlja grešku — samo ne traži nijednu pločicu. */}
       <div ref={spremnik} className="h-full w-full" />
 
-      {/* Gore: kartica situacije lijevo, gumbi desno. Na uskom zaslonu
-          kartica uzima cijelu širinu, gumbi ostaju u kutu iznad nje. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-2 p-2 sm:p-3">
+      {/* Gore: kartica situacije lijevo, gumbi desno. Na uskom zaslonu red se
+          okreće u stupac pa kartica dobiva cijelu širinu, a gumbi stoje iznad
+          nje — dijelili su joj redak i na 390 px ju stiskali na trećinu. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col-reverse items-stretch gap-2 p-2 sm:flex-row sm:items-start sm:p-3">
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5 sm:max-w-[26rem]">
           {situacija && kadar ? (
             <SituacijaKartica
@@ -907,12 +919,14 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
         </div>
 
         {/* Gore desno: izlaz i otvaranje ploče. Ništa više — navigacija
-            stranice je na ovoj karti sakrivena (vidi BEZ_OKVIRA u site-chrome). */}
+            stranice je na ovoj karti sakrivena (vidi BEZ_OKVIRA u site-chrome).
+            Zato izlaz mora reći kamo vodi: „Karepovac” u zaglavlju vodi ovamo,
+            pa je ovo jedini put natrag na pregled svega što pratimo. */}
         {/* Postavke i izlaz nisu blizanci: postavke su pilula s riječju, izlaz
             stoji sam na desnom rubu s riječju. Dva ista kvadrata jedan do
             drugoga (jedan otvara ploču, drugi napušta stranicu) su u kritici
             od 2. 9. 2026. bila zamka u koju je i ocjenjivač upao. */}
-        <div className="pointer-events-auto z-30 flex shrink-0 items-center gap-3">
+        <div className="pointer-events-auto z-30 flex shrink-0 items-center justify-end gap-3">
           <button
             ref={postavkeGumbRef}
             type="button"
@@ -933,19 +947,21 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
             <span>Postavke</span>
           </button>
           <Link
-            href="/karepovac/zrak"
+            href="/karepovac"
+            aria-label="Karepovac — sve što pratimo"
             className="fokus flex min-h-11 items-center gap-1 rounded-full bg-white/85 px-3 text-sm font-semibold text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white"
           >
-            <span>Zatvori</span>
             <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
               <path
-                d="M5 5l10 10M15 5L5 15"
+                d="M12 4 6 10l6 6"
                 className="stroke-current"
                 strokeWidth="1.8"
                 strokeLinecap="round"
+                strokeLinejoin="round"
                 fill="none"
               />
             </svg>
+            <span>Karepovac</span>
           </Link>
         </div>
       </div>

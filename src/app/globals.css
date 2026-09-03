@@ -928,10 +928,13 @@ body {
   height: 44px;
 }
 
-/* Na uskom zaslonu pilule „Postavke” i „Zatvori” zauzimaju gornji desni kut,
-   pa MapLibreovi gumbi idu ispod njih umjesto pod njih. */
+/* Na uskom zaslonu gornji red simulatora lomi se u stupac: pilule „Postavke”
+   i „Karepovac” gore, ispod njih kartica preko cijele širine. Gornji desni kut
+   time je zauzet, pa MapLibreovi gumbi silaze uz desni rub iznad vremenske
+   crte — jedina traka koja ondje ostaje slobodna. */
 @media (max-width: 639px) {
   .maplibregl-map .maplibregl-ctrl-top-right {
-    top: 3.75rem;
+    top: auto;
+    bottom: 9rem;
   }
 }

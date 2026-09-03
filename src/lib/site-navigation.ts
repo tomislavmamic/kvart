@@ -47,9 +47,12 @@ export const PRIMARY_NAV_ITEMS: readonly SiteNavigationItem[] = [
   },
   {
     id: "karepovac",
-    href: "/karepovac",
+    // Vodi na simulator, a ne na pregled: tko klikne „Karepovac” prvo pita
+    // kamo miris ide sada, a tek onda što sve pratimo. S njega se u pregled
+    // ulazi poveznicom u kutu.
+    href: "/karepovac/sim",
     label: "Karepovac",
-    description: "Praćenje projekta",
+    description: "Kamo miris ide sada",
     activePrefixes: ["/karepovac"],
   },
   {
