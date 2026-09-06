@@ -89,3 +89,53 @@ export function uRasponu(
   if (trenutak.getTime() > sada.getTime() + 3_600_000) return false;
   return trenutak.getTime() >= sada.getTime() - danaUnatrag * 86_400_000;
 }
+
+/**
+ * Čita sat iz adrese (`?sat=2026-09-04T21:00Z`), kako ga šalje simulator.
+ *
+ * @param vrijednost Sirova vrijednost iz upita.
+ * @returns Trenutak u milisekundama, ili `null` kad nije datum.
+ */
+export function procitajSat(vrijednost: unknown): number | null {
+  if (typeof vrijednost !== "string" || !vrijednost) return null;
+  const ms = Date.parse(vrijednost);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export type OdabirVremena = { danas: boolean; sat: number; minuta: number };
+
+/**
+ * Prevodi trenutak iz adrese u ono što kotačići nude: danas ili jučer, sat i
+ * minutu (na pet), u mjesnom vremenu preglednika.
+ *
+ * Simulator pokriva zadnja 24 sata i tri sata prognoze, pa je sat iz njega
+ * ili danas, ili jučer, ili u budućnosti. Budućnost se stegne na sada —
+ * dojava za sat koji nije došao ne postoji. Stariji od jučer obrazac ne nudi,
+ * pa vraća `null` i pozivatelj kaže da je sat ostao na sada.
+ *
+ * @param ms Trenutak iz adrese.
+ * @param sada Trenutak od kojega se računa.
+ */
+export function odabirIzTrenutka(ms: number, sada: Date): OdabirVremena | null {
+  const t = new Date(Math.min(ms, sada.getTime()));
+  const jucer = new Date(sada);
+  jucer.setDate(jucer.getDate() - 1);
+  jucer.setHours(0, 0, 0, 0);
+  if (t.getTime() < jucer.getTime()) return null;
+  const danas = t.toDateString() === sada.toDateString();
+  return {
+    danas,
+    sat: t.getHours(),
+    minuta: Math.floor(t.getMinutes() / KORAK_MINUTA) * KORAK_MINUTA,
+  };
+}
+
+/**
+ * Početak sata u koji dojava pada, kao ISO 8601 u UTC-u — oblik koji
+ * simulator prima u `?sat=`.
+ *
+ * @param pocetak Stvarni početak dojave.
+ */
+export function satZaSimulator(pocetak: Date): string {
+  return new Date(Math.floor(pocetak.getTime() / 3_600_000) * 3_600_000).toISOString();
+}

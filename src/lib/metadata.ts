@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 
 import { SITE_DESCRIPTION, SITE_NAME } from "./constants";
 
-export const SITE_URL = new URL("https://kvart-sage.vercel.app");
+/**
+ * Javna adresa stranice: produkcijski alias na Vercelu. Stari alias
+ * `kvart-sage.vercel.app` više ne postoji (DEPLOYMENT_NOT_FOUND, 4. 9. 2026.),
+ * a odavde idu kanonske adrese i slike za dijeljenje — kriva adresa ovdje
+ * znači mrtvu poveznicu u svakom dijeljenom pregledu.
+ */
+export const SITE_URL = new URL("https://dracevac.vercel.app");
 export const SOCIAL_IMAGE_ALT =
   "Zračna snimka Dračevca i Bilica s nazivom Naš kvart";
 

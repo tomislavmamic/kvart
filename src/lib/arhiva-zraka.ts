@@ -169,16 +169,58 @@ export async function zapisiZrak(
   }
 }
 
+/** Ograda na učestalost upisa: jedan ključ po pozivatelju, razmak u ms. */
+export type OgradaUpisa = {
+  readonly kljuc: string;
+  readonly razmakMs: number;
+};
+
+/** Kad je koji pozivatelj zadnji put upisao; živi koliko i proces. */
+const zadnjiUpisi = new Map<string, number>();
+
+/**
+ * Smije li pozivatelj sada upisati, i ako smije, bilježi da jest.
+ *
+ * Otkako se stranice i `/api/karepovac/vjetar` slažu po zahtjevu, upis bi
+ * bez ograde išao za svakog posjetitelja, a simulator taj odgovor traži
+ * svakih pet minuta iz svake otvorene kartice. Ograda je u procesu: na
+ * Vercelu procesa može biti više, pa nije stroga gornja granica, ali
+ * jedinstveni ključ u bazi ionako dvostruki red preskoči — ovdje se štede
+ * pozivi, ne ispravnost.
+ *
+ * Args:
+ *   ograda: Ključ pozivatelja i najmanji razmak; bez ograde uvijek smije.
+ *   sadaMs: Trenutak, za provjere.
+ *   pamcenje: Gdje se pamte zadnji upisi; zadano zajedničko za proces.
+ *
+ * Returns:
+ *   Istina kad je od zadnjeg upisa pod tim ključem prošlo bar `razmakMs`.
+ */
+export function smijeUpisati(
+  ograda: OgradaUpisa | undefined,
+  sadaMs: number = Date.now(),
+  pamcenje: Map<string, number> = zadnjiUpisi,
+): boolean {
+  if (!ograda) return true;
+  const zadnji = pamcenje.get(ograda.kljuc);
+  if (zadnji !== undefined && sadaMs - zadnji < ograda.razmakMs) return false;
+  pamcenje.set(ograda.kljuc, sadaMs);
+  return true;
+}
+
 /**
  * Zapisuje u pozadini, iza odgovora, gdje Next to dopušta.
  *
  * `after` postoji samo unutar zahtjeva; izvan njega (provjere, skripte) upis
- * ide odmah i na njega se pričeka. Poziv nikad ne baca.
+ * ide odmah i na njega se pričeka. Poziv nikad ne baca. S ogradom se upis
+ * preskače dok od prethodnog pod istim ključem ne prođe zadani razmak.
  */
 export async function zapisiZrakPoslije(
   zrak: ZrakSada | null,
   vjetar: SatniVjetarISlojevi | null = null,
+  ograda?: OgradaUpisa,
 ): Promise<void> {
+  if (!smijeUpisati(ograda)) return;
   try {
     const { after } = await import("next/server");
     after(() => zapisiZrak(zrak, vjetar));

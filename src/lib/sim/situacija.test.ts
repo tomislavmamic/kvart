@@ -8,6 +8,7 @@ import {
   izvediSituaciju,
   kamoNosi,
   ocijeniPodrucja,
+  podnaslov,
   polozajGranice,
   razinaZaPolozaj,
   type Granice,
@@ -225,4 +226,48 @@ test("neizračunat ili nedostupan sat ne izgleda kao čist zrak", () => {
   assert.equal(rupa.pouzdanost, "niska");
   assert.deepEqual(rupa.podrucja, [], "nedostupan sat ne ocjenjuje područja ni kad slika postoji");
   assert.equal(rupa.trend, "nepoznato");
+});
+
+test("podnaslov kaže isti razlog kao razlozi iza „zašto?”, po slučaju", () => {
+  const nema = { razina: "nema" as const, pouzdanost: "niska" as const, izvorVjetra: "split3" as const };
+  const vjetar = { smjerOd: 120, brzina: 0.3, tisina: true, izvor: "vrboran" as const };
+
+  // Tišina na postaji koja jest javila: vjetar je izmjeren, sumnja je tišina.
+  const tisina = podnaslov({ ...nema, izvorVjetra: "vrboran" }, { vrsta: "sada", pomak: 0, vjetar });
+  assert.match(tisina!, /^Tišina/);
+  assert.doesNotMatch(tisina!, /nema pouzdan vjetar/);
+
+  const promjenjiv = podnaslov(nema, {
+    vrsta: "sada",
+    pomak: 0,
+    vjetar: { ...vjetar, brzina: 2, tisina: false, promjenjiv: true, izvor: "ldsp" },
+  });
+  assert.match(promjenjiv!, /promjenjiv smjer/);
+
+  const prognoza = podnaslov({ ...nema, izvorVjetra: "model" }, {
+    vrsta: "prognoza",
+    pomak: 3,
+    vjetar: { ...vjetar, brzina: 2, tisina: false, izvor: "model" },
+  });
+  assert.match(prognoza!, /^Prognoza 3 h unaprijed/);
+
+  const model = podnaslov({ ...nema, izvorVjetra: "model" }, {
+    vrsta: "izmjereno",
+    pomak: -5,
+    vjetar: { ...vjetar, brzina: 2, tisina: false, izvor: "model" },
+  });
+  assert.match(model!, /uzet iz modela/);
+
+  const zalet = podnaslov(nema, { vrsta: "izmjereno", pomak: -5, vjetar: { ...vjetar, brzina: 2, tisina: false, izvor: "split3" } });
+  assert.match(zalet!, /Zalet/);
+
+  // Svaki od njih završava istim upozorenjem: „ništa” nije „čisto”.
+  for (const p of [tisina, promjenjiv, prognoza, model, zalet]) assert.match(p!, /„ništa” ne znači „čisto”/);
+
+  // Pouzdan sat bez perjanice nad naseljima, i sat s mirisom.
+  assert.equal(
+    podnaslov({ ...nema, pouzdanost: "visoka" }, { vrsta: "izmjereno", pomak: -2, vjetar: { ...vjetar, brzina: 2, tisina: false } }),
+    "Perjanica ne dotiče nijedno naselje oko plohe.",
+  );
+  assert.equal(podnaslov({ ...nema, razina: "slabo" }, { vrsta: "sada", pomak: 0, vjetar }), null);
 });

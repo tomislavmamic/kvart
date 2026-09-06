@@ -1,7 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { KAREPOVAC_DATA_KINDS } from "@/lib/karepovac";
+import { formatDate } from "@/lib/format";
+import {
+  KAREPOVAC_DATA_KINDS,
+  KAREPOVAC_PHASES,
+  KAREPOVAC_PUBLIC_STATE,
+} from "@/lib/karepovac";
 
 export function PageIntro({
   title,
@@ -39,29 +44,62 @@ export function SectionHeading({
   );
 }
 
+/**
+ * Značka stanja projekta: iste boje kao status „U tijeku” u registru
+ * prijedloga (`STATUS_CLASSES` u `constants.ts`), jer je to jedina žuta koju
+ * sustav poznaje — 0,75 rem polumasno, kao svaka značka statusa.
+ */
+export function PreparationBadge() {
+  return (
+    <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800">
+      {KAREPOVAC_PUBLIC_STATE.status}
+    </span>
+  );
+}
+
+/** Prva rečenica opisa: obavijest kaže korak, a ne prepričava cijelu fazu. */
+function prvaRecenica(tekst: string): string {
+  return tekst.split(/(?<=\.)\s+/)[0] ?? tekst;
+}
+
+/**
+ * Obavijest o pripremi: koji je korak sada, a ne samo „u pripremi”.
+ *
+ * Korak se čita iz `KAREPOVAC_PHASES[0]`, da obavijest na svakoj stranici
+ * kaže isto što i plan na pregledu, i da se promijeni na jednom mjestu kad
+ * projekt krene dalje. Datum se ispisuje samo ako je netko upisao stvaran
+ * (`KAREPOVAC_PUBLIC_STATE.updatedOn`); bez njega se ne izmišlja.
+ *
+ * Bijela kartica sa značkom, ne žuta ploha: žuta ploha čita se kao
+ * upozorenje, a ovo je stanje.
+ */
 export function PreparationNotice({ compact = false }: { compact?: boolean }) {
+  const [sada] = KAREPOVAC_PHASES;
+  const datum = KAREPOVAC_PUBLIC_STATE.updatedOn;
+
   return (
     <div
-      className={`rounded-xl border border-amber-200 bg-amber-50 text-amber-950 ${
+      className={`rounded-xl border border-kamen-tlo bg-white ${
         compact ? "px-4 py-3" : "p-5 sm:p-6"
       }`}
     >
-      <div className="flex items-start gap-3">
-        <span
-          aria-hidden="true"
-          className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-amber-600"
-        />
-        <div>
-          <p className="font-bold">Projekt je u pripremi</p>
-          {!compact && (
-            <p className="mt-1 leading-7">
-              Još nismo postavili nijednu postaju pa nema ni naših mjerenja.
-              Ovdje ćemo objaviti rezultate tek kada provjerimo uređaje i način
-              mjerenja.
-            </p>
-          )}
-        </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <PreparationBadge />
+        <p className="text-base font-bold text-kamen-tinta">
+          {sada.status}: {sada.title}
+        </p>
       </div>
+      {!compact && (
+        <p className="mt-2 text-base leading-7 text-kamen-tekst">
+          {prvaRecenica(sada.description)} Kad to bude, otvaraju se prijave i
+          donacije. Postaja još nema, pa nema ni naših mjerenja.
+        </p>
+      )}
+      {datum && (
+        <p className="mt-2 text-base leading-7 text-kamen-drugi">
+          Zadnja promjena: {formatDate(new Date(datum))}
+        </p>
+      )}
     </div>
   );
 }

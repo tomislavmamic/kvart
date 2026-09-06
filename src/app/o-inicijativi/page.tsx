@@ -89,6 +89,17 @@ export default function AboutPage() {
               Prijavite problem ovdje.
             </Link>
           </li>
+          <li>
+            <strong>Zrak oko Karepovca</strong> — simulator mirisa po satima,
+            dojave susjeda i plan mjernih postaja.{" "}
+            <Link href="/karepovac/dojava" className="text-emerald-700 underline">
+              Javite kada je smrdjelo
+            </Link>{" "}
+            ili{" "}
+            <Link href="/karepovac/ukljuci-se" className="text-emerald-700 underline">
+              pomozite da postaje nastanu.
+            </Link>
+          </li>
         </ul>
       </div>
 

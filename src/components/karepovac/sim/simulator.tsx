@@ -11,7 +11,8 @@ import type { Tvar } from "@/lib/dim";
 import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
 import { primijeniVjetar } from "@/lib/sim/dohvat";
 import type { Crta } from "@/lib/sim/kadrovi";
-import { najbliziDostupan, zahvaceniSati } from "@/lib/sim/kadrovi";
+import { najbliziDostupan, planZamjene, pomakNakonZamjene, pomakZaSat } from "@/lib/sim/kadrovi";
+import { satMjesno, zastarjela } from "@/lib/sim/oznaka-sata";
 import { bojaZa, jacinaURasponu, SIDRO_SIMULATORA, ZADANA_BOJA } from "@/lib/sim/ljestvica";
 import { pokreniPogon, type Pogon, type StanjePogona } from "@/lib/sim/pogon";
 import { razloziOsnove, slozi, type Osnove } from "@/lib/sim/polje";
@@ -25,7 +26,7 @@ import {
   type Situacija,
   type SusjedniSat,
 } from "@/lib/sim/situacija";
-import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
+import { vrhSata, type SatniVjetar } from "@/lib/sim/vrijeme-satno";
 import type { Postaja, Vjetar } from "@/lib/vjetar";
 import { zapisiGustocu } from "@/lib/sim/zapis-gustoce";
 import {
@@ -38,11 +39,11 @@ import {
 } from "@/components/karepovac/sim/sim-karta";
 import type { PostavkePrikaza, Scena } from "@/components/karepovac/sim/sim-scena";
 import { stvoriOznake, type Oznake } from "@/components/karepovac/sim/oznake";
-import { SituacijaKartica } from "@/components/karepovac/sim/situacija-kartica";
+import { SituacijaKartica, type Osvjezavanje } from "@/components/karepovac/sim/situacija-kartica";
 import { TockaKartica } from "@/components/karepovac/sim/tocka-kartica";
 import { PrijedlogKartica } from "@/components/karepovac/sim/prijedlog-kartica";
 import { stvoriPrijedloge, type Prijedlozi } from "@/components/karepovac/sim/prijedlozi";
-import type { PrijedlogPostaje } from "@/lib/sim/prijedlozi-postaja";
+import { prijedlogIzAdrese, type PrijedlogPostaje } from "@/lib/sim/prijedlozi-postaja";
 import { izvediTocku, razinaUTocki, tockaIzAdrese, type Tocka } from "@/lib/sim/tocka";
 import { UpravljackaPloca, type PloceStanje } from "@/components/karepovac/sim/upravljacka-ploca";
 import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
@@ -96,7 +97,27 @@ import {
  * Nijedan od tih koraka nije uvjet za prethodni. Ako osnove ne stignu, karta
  * ostaje karta; ako radnici padnu, piše zašto; ako AZO šuti, satovi ostaju na
  * modelu i tako i piše uz njih.
+ *
+ * ## Svježina
+ *
+ * Crta sa poslužitelja vrijedi za sat u kojem je složena. Kartica koja ostane
+ * otvorena mora sama doći po novu: kad sat prijeđe na sljedeći, kad se vrati
+ * u prvi plan i svakih pet minuta dok je vidljiva (`/api/karepovac/crta`).
+ * Pri zamjeni se odabrani sat čuva po **apsolutnom** satu, ne po pomaku —
+ * tko gleda 18 h, i dalje gleda 18 h, samo mu kartica sad kaže „prije 6 h”
+ * umjesto „prije 5 h”. Sat koji je s crte ispao vodi na „sada”. Sve riječi
+ * o vremenu računaju se prema satu gledatelja (`sadaStvarno`), pa i crta
+ * koja se ne uspije osvježiti nikad ne piše „sada” uz prošli sat.
  */
+
+/** Koliko često se provjerava sat na zidu i je li vrijeme za osvježavanje. */
+const OTKUCAJ_MS = 30_000;
+
+/** Koliko najviše smije proći između dvaju osvježavanja vidljive kartice. */
+const OSVJEZI_SVAKIH_MS = 5 * 60_000;
+
+/** Najmanji razmak između dvaju pokušaja, da neuspjeh ne udara u petlji. */
+const NAJMANJI_RAZMAK_MS = 60_000;
 
 type Kadrovi = Map<
   string,
@@ -129,15 +150,32 @@ const ZADANO_STANJE: PloceStanje = {
 
 const PRAZNO = new Uint8Array(0);
 
-/** Čita postavke iz adrese, da se odabrani slučaj dade podijeliti. */
+/**
+ * Čita postavke iz adrese, da se odabrani slučaj dade podijeliti.
+ *
+ * Sat dolazi kao puni ISO zapis (`sat`); stare adrese nose cijeli pomak
+ * (`sat=-5`) i još se čitaju, ali se više ne pišu — podijeljena poveznica
+ * „pogledaj kako je bilo u 18 h” mora otvoriti 18 h i tri sata poslije.
+ */
 function izAdrese(zadano: PloceStanje): {
   stanje: PloceStanje;
   pomak: number | null;
+  /** Sat iz adrese kao ISO zapis; `null` kad ga nema ili je stari pomak. */
+  sat: string | null;
+  /** Predložena postaja čiju karticu treba otvoriti (`?prijedlog=<id>`). */
+  prijedlog: PrijedlogPostaje | null;
   scenarij: string | null;
   snimka: boolean;
 } {
-  if (typeof window === "undefined") return { stanje: zadano, pomak: null, scenarij: null, snimka: false };
+  if (typeof window === "undefined") {
+    return { stanje: zadano, pomak: null, sat: null, prijedlog: null, scenarij: null, snimka: false };
+  }
   const p = new URLSearchParams(window.location.search);
+  const sirovSat = p.get("sat");
+  const satIso = sirovSat && /^\d{4}-\d{2}-\d{2}/.test(sirovSat) ? sirovSat : null;
+  // Poveznica na baš tu postaju (s /financije, /ukljuci-se) otvara njezinu
+  // karticu; time su prijedlozi na karti nužno upaljeni, što god `pri` kaže.
+  const prijedlog = prijedlogIzAdrese(p.get("prijedlog"));
   // `Number(null)` je nula, a nula je ovdje smislena vrijednost (izvor koji
   // ne ispušta ništa). Bez provjere postojanja svaki bi posjet bez parametara
   // ispao kao „ploha ne ispušta ništa” — karta bi bila prazna, a izgledala bi
@@ -159,7 +197,9 @@ function izAdrese(zadano: PloceStanje): {
   const zastavica = (kljuc: string, zadana: boolean) =>
     p.get(kljuc) === null ? zadana : p.get(kljuc) === "1";
   return {
-    pomak: broj("sat"),
+    pomak: satIso ? null : broj("sat"),
+    sat: satIso,
+    prijedlog,
     scenarij: p.get("scenarij"),
     snimka: p.get("snimka") === "1",
     stanje: {
@@ -180,13 +220,13 @@ function izAdrese(zadano: PloceStanje): {
       reljef: zastavica("rel", zadano.reljef),
       zgrade: zastavica("zgr", zadano.zgrade),
       postaje: zastavica("pos", zadano.postaje),
-      prijedlozi: zastavica("pri", zadano.prijedlozi),
+      prijedlozi: prijedlog ? true : zastavica("pri", zadano.prijedlozi),
     },
   };
 }
 
 /** Piše postavke u adresu bez novog zapisa u povijesti pregledavanja. */
-function uAdresu(stanje: PloceStanje, pomak: number): void {
+function uAdresu(stanje: PloceStanje, sat: string | null, prijedlog: string | null): void {
   const staro = new URLSearchParams(window.location.search);
   const p = new URLSearchParams();
   // Prekidači za stroj ostaju kakvi jesu; njih ovdje nitko ne mijenja.
@@ -194,7 +234,11 @@ function uAdresu(stanje: PloceStanje, pomak: number): void {
     const v = staro.get(kljuc);
     if (v !== null) p.set(kljuc, v);
   }
-  p.set("sat", String(pomak));
+  // Otvorena kartica predložene postaje putuje s adresom, da se dade podijeliti.
+  if (prijedlog) p.set("prijedlog", prijedlog);
+  // Apsolutni sat, ne pomak: poveznica u WhatsAppu mora i sutra pokazivati
+  // isti sat. Bez sekunda i milisekunda, da adresa ostane čitljiva.
+  if (sat) p.set("sat", sat.replace(/:00\.000Z$/, "Z"));
   for (const [ime, kratica] of [["sumporovodik", "h"], ["merkaptani", "m"]] as const) {
     const t = stanje.prikaz.tvari[ime];
     p.set(`${kratica}v`, t.vidljiv ? "1" : "0");
@@ -215,6 +259,11 @@ function satoviZaRadnike(crta: Crta): SatSimulacije[] {
   return [...crta.zalet, ...crta.kadrovi]
     .filter((k) => k.stanje !== null)
     .map((k) => ({ sat: k.sat, stanje: k.stanje! }));
+}
+
+/** Satovi crte koje pogon prikazuje i broji. */
+function satiCrte(crta: Crta): string[] {
+  return crta.kadrovi.filter((k) => k.stanje !== null).map((k) => k.sat);
 }
 
 export function Simulator({ pocetna }: { pocetna: Crta }) {
@@ -244,6 +293,42 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   const [crta, postaviCrtu] = useState<Crta>(pocetna);
   const [pomak, postaviPomak] = useState<number>(0);
+  /** Crta kakva je sad, za učinke koji ne smiju čekati novi prolaz. */
+  const crtaRef = useRef<Crta>(pocetna);
+  crtaRef.current = crta;
+  /**
+   * Izmjereni vjetar koji je zadnji stigao s `/api/karepovac/vjetar`, da se
+   * pri zamjeni crte odmah ugradi u novu: nova crta stiže na modelu.
+   */
+  const izmjereniRef = useRef<ReadonlyMap<string, SatniVjetar>>(new Map());
+  /**
+   * Sat gledatelja; otkucava, da riječ „sada” ne ostane od otvaranja.
+   *
+   * Početna vrijednost je sat crte, ne `new Date()`: isti je na poslužitelju
+   * i u pregledniku, pa hidracija ne vidi razliku (telefon sa satom koji
+   * kasni, zahtjev na prijelazu sata). Pravi sat stiže u prvom otkucaju.
+   */
+  const [sadaStvarno, postaviSadaStvarno] = useState(() => new Date(pocetna.sada));
+  const [osvjezavanje, postaviOsvjezavanje] = useState<Osvjezavanje>("mirno");
+  /**
+   * Satovi čija se slika računa iznova, a stara još stoji na zaslonu.
+   *
+   * Brisati sliku pri svakom osvježavanju značilo bi da povratak u karticu
+   * pokazuje „Računam ovaj sat…” i praznu kartu umjesto odgovora; stara
+   * slika je slika vjetra od prije nekoliko minuta, ne pogrešna.
+   */
+  const [zastarjeli, postaviZastarjele] = useState<ReadonlySet<string>>(new Set());
+  const zastarjeliRef = useRef<Set<string>>(new Set());
+  /**
+   * Je li gledatelj sam odabrao sat (traka, strelice, poveznica). Tko nije,
+   * prati sadašnjost i pri prijelazu sata ide na novo „sada”; tko jest,
+   * ostaje na svom apsolutnom satu. Odabir „sada” vraća na praćenje.
+   */
+  const odabraoSatRef = useRef(false);
+  /** Jednokratna poruka na kartici, npr. o satu iz adrese koji je ispao. */
+  const [napomena, postaviNapomenu] = useState<string | null>(null);
+  const zadnjiPokusajRef = useRef(0);
+  const osvjezavaRef = useRef(false);
   /**
    * Mjesto na koje je gledatelj kliknuo — „a kod mene?”. Jedno, jer kartica
    * za dva mjesta više nije kartica nego tablica; drugi klik zamjenjuje prvi.
@@ -262,9 +347,18 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   const [izracunati, postaviIzracunate] = useState<ReadonlySet<string>>(new Set());
   const [napredak, postaviNapredak] = useState<StanjePogona>({
     gotovo: 0,
+    svjeze: 0,
     ukupno: pocetna.kadrovi.length,
     greska: null,
   });
+  /** Je li sastavnica još na zaslonu; za ručno osvježavanje izvan učinka. */
+  const montiranRef = useRef(true);
+  useEffect(() => {
+    montiranRef.current = true;
+    return () => {
+      montiranRef.current = false;
+    };
+  }, []);
   const [stanjeKarte, postaviStanjeKarte] = useState<"ucitavanje" | "spremna" | "bezWebgl">(
     "ucitavanje",
   );
@@ -309,7 +403,15 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   // Postavke iz adrese, scenarij, snimka i poštovanje želje za mirovanjem.
   useEffect(() => {
-    const { stanje: izAdr, pomak: satIzAdrese, scenarij, snimka: zaSnimku } = izAdrese(ZADANO_STANJE);
+    const {
+      stanje: izAdr,
+      pomak: pomakIzAdrese,
+      sat: satIzAdrese,
+      prijedlog: prijedlogIzAdr,
+      scenarij,
+      snimka: zaSnimku,
+    } = izAdrese(ZADANO_STANJE);
+    if (prijedlogIzAdr) postaviPrijedlog(prijedlogIzAdr);
     const mir = window.matchMedia("(prefers-reduced-motion: reduce)");
     snimkaRef.current = zaSnimku;
     postaviSnimku(zaSnimku);
@@ -328,9 +430,25 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
         postaviNapredak((s) => ({ ...s, ukupno: zadana.kadrovi.length }));
       }
     }
-    if (satIzAdrese !== null) {
-      const nadeni = najbliziDostupan(pocetnaCrta, satIzAdrese);
-      if (nadeni) postaviPomak(nadeni.pomak);
+    // Sat iz adrese: ISO zapis ima prednost, stari cijeli pomak se još čita.
+    const trazeni = satIzAdrese !== null ? pomakZaSat(pocetnaCrta, satIzAdrese) : pomakIzAdrese;
+    if (trazeni !== null) {
+      const nadeni = najbliziDostupan(pocetnaCrta, trazeni);
+      if (nadeni) {
+        postaviPomak(nadeni.pomak);
+        // Sat iz poveznice je odabir — osim kad je to upravo sadašnji sat,
+        // što adresa nosi i nakon običnog osvježavanja stranice.
+        odabraoSatRef.current = nadeni.pomak !== pocetnaCrta.pomakSada;
+        if (satIzAdrese !== null && Math.abs(nadeni.pomak - trazeni) >= 1) {
+          // Poveznica je stara: sat više nije na crti. To se kaže, a ne
+          // prešuti — inače bi primatelj gledao krivi sat s pravim riječima.
+          postaviNapomenu(
+            `Sat ${satMjesno(satIzAdrese)} iz poveznice više nije na crti; prikazujem ${
+              nadeni.pomak === 0 ? "sadašnji" : "najbliži"
+            }.`,
+          );
+        }
+      }
     }
 
     // Želja za mirovanjem se prati, ne samo pročita pri otvaranju. Tko je
@@ -456,8 +574,12 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           kartaSpremnaRef.current = true;
           // Pri manjem uvećanju pribadače postaja oko plohe se preklapaju u
           // nečitljivu hrpu; tada ostaje samo točka, a natpis se vraća s
-          // uvećanjem. Mjerna pribadača (H₂S) uvijek nosi natpis.
-          const poUvecanju = () => oznakeRef.current?.postaviUvecanje(karta.getZoom());
+          // uvećanjem. Mjerna pribadača (H₂S) uvijek nosi natpis. Predložene
+          // postaje pri istom pragu blijede, da ne budu glasnije od perjanice.
+          const poUvecanju = () => {
+            oznakeRef.current?.postaviUvecanje(karta.getZoom());
+            prijedloziRef.current?.postaviUvecanje(karta.getZoom());
+          };
           karta.on("zoom", poUvecanju);
           poUvecanju();
           dodajSloj();
@@ -510,6 +632,11 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
               visina,
             });
             postaviIzracunate(new Set(kadroviRef.current.keys()));
+            // Nova slika zamjenjuje staru u jednom potezu; oznaka
+            // „osvježavam” pada s tim satom.
+            if (zastarjeliRef.current.delete(sat)) {
+              postaviZastarjele(new Set(zastarjeliRef.current));
+            }
           },
           onStanje: (s) => {
             if (!otkazano) postaviNapredak(s);
@@ -549,66 +676,168 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
    * kadar računa iz svog zaleta (`ZALET_SATI`).
    */
   const preracunajPromijenjene = useCallback((stari: Crta, novi: Crta) => {
+    // Pogon još nije krenuo (osnove stižu): neka krene s najnovijom crtom.
+    pocetnaCrtaRef.current = novi;
     const pogon = pogonRef.current;
     if (!pogon) return;
-    const zaKadar = zahvaceniSati(stari, novi, ZALET_SATI);
-    if (!zaKadar.length) return;
-    for (const sat of zaKadar) kadroviRef.current.delete(sat);
-    postaviIzracunate(new Set(kadroviRef.current.keys()));
-    pogon.osvjezi(satoviZaRadnike(novi), zaKadar);
+    const plan = planZamjene(stari, novi, new Set(kadroviRef.current.keys()), ZALET_SATI);
+    // Slike sati koji su s crte ispali ne trebaju više nikome; slike sati
+    // koji se računaju iznova **ostaju** dok nova ne stigne (`planZamjene`).
+    for (const sat of plan.izbaciti) {
+      kadroviRef.current.delete(sat);
+      zastarjeliRef.current.delete(sat);
+    }
+    if (plan.izbaciti.length) postaviIzracunate(new Set(kadroviRef.current.keys()));
+    if (!plan.zaRacun.length && !plan.imaNovih) return;
+    let oznaceno = false;
+    for (const sat of plan.zaRacun) {
+      if (kadroviRef.current.has(sat) && !zastarjeliRef.current.has(sat)) {
+        zastarjeliRef.current.add(sat);
+        oznaceno = true;
+      }
+    }
+    if (oznaceno || plan.izbaciti.length) postaviZastarjele(new Set(zastarjeliRef.current));
+    // Popis satova ide s njima: novi sat (prijelaz sata, nova prognoza)
+    // inače ne bi nikad dobio sliku, jer ga stari popis ne poznaje.
+    pogon.osvjezi(satoviZaRadnike(novi), plan.zaRacun, satiCrte(novi));
     const gledani =
-      novi.kadrovi.find((k) => k.pomak === pomakRef.current)?.sat ?? zaKadar[0];
-    pogon.trazi(gledani);
+      novi.kadrovi.find((k) => k.pomak === pomakRef.current)?.sat ?? plan.zaRacun[0] ?? satiCrte(novi)[0];
+    if (gledani) pogon.trazi(gledani);
   }, []);
+
+  /**
+   * Dohvaća izmjereni vjetar i ugrađuje ga u crtu koja je tada na snazi.
+   *
+   * Scenarij je zatvoren prizor: izmjereni vjetar bi ga pretvorio u
+   * mješavinu izmišljenog i stvarnog, a to nije ni jedno ni drugo.
+   */
+  const dohvatiVjetar = useCallback(async (jeOtkazano: () => boolean) => {
+    if (scenarijRef.current) return;
+    try {
+      // Mimo predmemorije preglednika: odgovor nosi `max-age=60`, pa bi
+      // poziv nakon zamjene crte mogao vratiti stari sloj na novu crtu.
+      // Zajednička predmemorija na poslužitelju i dalje čuva AZO.
+      const odgovor = await fetch("/api/karepovac/vjetar", { cache: "no-store" });
+      if (!odgovor.ok) return;
+      const podatci: {
+        satovi?: SatniVjetar[];
+        sada?: Vjetar[];
+        serije?: Partial<Record<Postaja, SatniVjetar[]>>;
+      } = await odgovor.json();
+      if (jeOtkazano()) return;
+      if (podatci.sada?.length) postaviSada(podatci.sada);
+      if (podatci.serije) {
+        postaviSerije(
+          new Map(
+            Object.entries(podatci.serije).map(([postaja, niz]) => [
+              postaja as Postaja,
+              new Map((niz ?? []).map((v) => [v.sat, v])),
+            ]),
+          ),
+        );
+      }
+      if (!podatci.satovi?.length) return;
+      const izmjereno = new Map(podatci.satovi.map((v) => [v.sat, v]));
+      izmjereniRef.current = izmjereno;
+      postaviCrtu((stara) => {
+        const nova = primijeniVjetar(stara, izmjereno);
+        preracunajPromijenjene(stara, nova);
+        return nova;
+      });
+    } catch {
+      // Izmjereni vjetar je poboljšanje, ne uvjet: bez njega satovi ostaju
+      // na modelu i uz njih to i piše.
+    } finally {
+      // I kad padne: pokušali smo, pa postaja bez brojke doista šuti.
+      if (!jeOtkazano()) postaviVjetarStigao(true);
+    }
+  }, [preracunajPromijenjene]);
 
   // Izmjereni vjetar stiže naknadno i zamjenjuje modelski gdje ga ima.
   useEffect(() => {
     let otkazano = false;
-    void (async () => {
-      // Scenarij je zatvoren prizor: izmjereni vjetar bi ga pretvorio u
-      // mješavinu izmišljenog i stvarnog, a to nije ni jedno ni drugo.
-      if (scenarijRef.current) return;
-      try {
-        const odgovor = await fetch("/api/karepovac/vjetar");
-        if (!odgovor.ok) return;
-        const podatci: {
-          satovi?: SatniVjetar[];
-          sada?: Vjetar[];
-          serije?: Partial<Record<Postaja, SatniVjetar[]>>;
-        } = await odgovor.json();
-        if (otkazano) return;
-        if (podatci.sada?.length) postaviSada(podatci.sada);
-        if (podatci.serije) {
-          postaviSerije(
-            new Map(
-              Object.entries(podatci.serije).map(([postaja, niz]) => [
-                postaja as Postaja,
-                new Map((niz ?? []).map((v) => [v.sat, v])),
-              ]),
-            ),
-          );
-        }
-        if (!podatci.satovi?.length) return;
-        postaviCrtu((stara) => {
-          const nova = primijeniVjetar(
-            stara,
-            new Map(podatci.satovi!.map((v) => [v.sat, v])),
-          );
-          preracunajPromijenjene(stara, nova);
-          return nova;
-        });
-      } catch {
-        // Izmjereni vjetar je poboljšanje, ne uvjet: bez njega satovi ostaju
-        // na modelu i uz njih to i piše.
-      } finally {
-        // I kad padne: pokušali smo, pa postaja bez brojke doista šuti.
-        if (!otkazano) postaviVjetarStigao(true);
-      }
-    })();
+    void dohvatiVjetar(() => otkazano);
     return () => {
       otkazano = true;
     };
-  }, [preracunajPromijenjene]);
+  }, [dohvatiVjetar]);
+
+  /**
+   * Dovodi novu crtu s poslužitelja i zamjenjuje staru.
+   *
+   * Odabrani sat ostaje isti apsolutni sat (`pomakNakonZamjene`); izmjereni
+   * vjetar koji je već stigao ugrađuje se odmah, a svjež se traži poslije.
+   * Neuspjeh ne ruši ništa: kartica i dalje kaže od kada su podaci.
+   */
+  const osvjeziCrtu = useCallback(
+    async (jeOtkazano: () => boolean) => {
+      if (scenarijRef.current || snimkaRef.current || osvjezavaRef.current) return;
+      osvjezavaRef.current = true;
+      zadnjiPokusajRef.current = Date.now();
+      postaviOsvjezavanje("u tijeku");
+      try {
+        const odgovor = await fetch("/api/karepovac/crta", { cache: "no-store" });
+        if (!odgovor.ok) throw new Error(`crta: ${odgovor.status}`);
+        const svjeza: Crta = await odgovor.json();
+        if (jeOtkazano()) return;
+        if (!Array.isArray(svjeza.kadrovi) || !svjeza.kadrovi.length) throw new Error("crta: prazna");
+        const stara = crtaRef.current;
+        const nova = primijeniVjetar(svjeza, izmjereniRef.current);
+        const noviPomak = pomakNakonZamjene(stara, nova, pomakRef.current, !odabraoSatRef.current);
+        pomakRef.current = noviPomak;
+        postaviPomak(noviPomak);
+        postaviCrtu(nova);
+        preracunajPromijenjene(stara, nova);
+        postaviNapomenu(null);
+        postaviOsvjezavanje("mirno");
+        // Svjež izmjereni vjetar: tekući sat AZO najčešće javi naknadno.
+        void dohvatiVjetar(jeOtkazano);
+      } catch {
+        if (!jeOtkazano()) postaviOsvjezavanje("greska");
+      } finally {
+        osvjezavaRef.current = false;
+      }
+    },
+    [preracunajPromijenjene, dohvatiVjetar],
+  );
+
+  // Sat na zidu i svježina: otkucaj svakih pola minute, osvježavanje kad sat
+  // prijeđe, kad se kartica vrati u prvi plan i svakih pet minuta dok je
+  // vidljiva. Snimka i scenarij ne dišu: ondje se ništa ne smije micati.
+  useEffect(() => {
+    let otkazano = false;
+    const jeOtkazano = () => otkazano;
+    const zadnjeOsvjezenje = { t: Date.now() };
+    const provjeri = (razlog: "otkucaj" | "povratak") => {
+      const sad = new Date();
+      postaviSadaStvarno(sad);
+      if (scenarijRef.current || snimkaRef.current) return;
+      if (document.visibilityState !== "visible") return;
+      const proslo = sad.getTime() - zadnjiPokusajRef.current;
+      if (proslo < NAJMANJI_RAZMAK_MS) return;
+      const satPresao = vrhSata(sad).toISOString() !== crtaRef.current.sada;
+      const zastarjeloVrijeme = sad.getTime() - zadnjeOsvjezenje.t >= OSVJEZI_SVAKIH_MS;
+      if (satPresao || zastarjeloVrijeme || razlog === "povratak") {
+        zadnjeOsvjezenje.t = sad.getTime();
+        void osvjeziCrtu(jeOtkazano);
+      }
+    };
+    const otkucaj = window.setInterval(() => provjeri("otkucaj"), OTKUCAJ_MS);
+    const naVidljivost = () => {
+      if (document.visibilityState === "visible") provjeri("povratak");
+    };
+    document.addEventListener("visibilitychange", naVidljivost);
+    // Pravi sat gledatelja odmah nakon hidracije (početni je sat crte).
+    postaviSadaStvarno(new Date());
+    // Stranica je mogla stići stara i pri otvaranju (predmemorija na putu):
+    // ako je crta starija od sata, ne čeka se prvi otkucaj.
+    if (zastarjela(crtaRef.current.sada, new Date())) provjeri("povratak");
+    return () => {
+      otkazano = true;
+      window.clearInterval(otkucaj);
+      document.removeEventListener("visibilitychange", naVidljivost);
+    };
+  }, [osvjeziCrtu]);
 
   /**
    * Tvar o kojoj kartica govori: sumporovodik dok je vidljiv, inače
@@ -646,7 +875,16 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crta, izracunati, tvarKartice, jacinaKartice]);
 
-  const situacija = useMemo<Situacija | null>(() => {
+  /**
+   * Situacija koja se drži dok se slika sata računa iznova.
+   *
+   * Sažetak izlazi iz vjetra na crti, slika iz radnika; nakon osvježavanja
+   * bi naslov i pouzdanost stigli sekunde prije perjanice i kratko govorili
+   * o vjetru kojega slika još ne pokazuje. Dok je sat u `zastarjeli`, ostaje
+   * sažetak koji ide uz sliku na zaslonu; novi dolazi zajedno s novom slikom.
+   */
+  const drzanaRef = useRef<{ sat: string; situacija: Situacija } | null>(null);
+  const situacijaSvjeza = useMemo<Situacija | null>(() => {
     if (!kadar) return null;
     const slika = kadroviRef.current.get(kadar.sat);
     const susjed = (k: (typeof crta.kadrovi)[number]): SusjedniSat => ({
@@ -676,6 +914,17 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       poslije,
     });
   }, [kadar, crta, razinePoSatu, tvarKartice, jacinaKartice]);
+
+  const situacija = useMemo<Situacija | null>(() => {
+    if (!kadar || !situacijaSvjeza) {
+      drzanaRef.current = null;
+      return situacijaSvjeza;
+    }
+    const drzana = drzanaRef.current;
+    if (zastarjeli.has(kadar.sat) && drzana?.sat === kadar.sat) return drzana.situacija;
+    drzanaRef.current = { sat: kadar.sat, situacija: situacijaSvjeza };
+    return situacijaSvjeza;
+  }, [kadar, situacijaSvjeza, zastarjeli]);
 
   /** Razina u odabranoj točki po satu, za njezinu traku i za trend. */
   const razineTocke = useMemo(() => {
@@ -814,18 +1063,24 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   // Adresa pamti odabrani slučaj, da se dade podijeliti.
   useEffect(() => {
-    uAdresu(stanje, pomak);
+    uAdresu(stanje, kadar?.sat ?? null, prijedlog?.id ?? null);
     pomakRef.current = pomak;
-  }, [stanje, pomak]);
+  }, [stanje, pomak, kadar, prijedlog]);
 
   const naPomak = useCallback(
     (novi: number) => {
       postaviPomak(novi);
+      // Tko sam bira sat, pročitao je poruku o satu iz poveznice — i od tada
+      // ostaje na svom satu; tko se vrati na „sada”, opet prati sadašnjost.
+      postaviNapomenu(null);
+      odabraoSatRef.current = novi !== crta.pomakSada;
       const sat = crta.kadrovi.find((k) => k.pomak === novi)?.sat;
       if (sat) pogonRef.current?.trazi(sat);
     },
     [crta],
   );
+
+  const crtaStara = zastarjela(crta.sada, sadaStvarno);
 
   const spreman = kadar !== null && izracunati.has(kadar.sat);
 
@@ -864,9 +1119,11 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   return (
     <div
       className="fixed inset-0 overflow-hidden bg-zinc-100"
-      // Stroju koji snima: koliko je sati gotovo i koji se gleda.
+      // Stroju koji snima: koliko je sati gotovo, koji se gleda i za koji je
+      // sat crta složena (da nadzor vidi staru stranicu bez čitanja teksta).
       data-izracunato={`${napredak.gotovo}/${napredak.ukupno}`}
       data-sat={kadar?.sat ?? ""}
+      data-sada={crta.sada}
       data-spreman={spreman ? "1" : "0"}
     >
       {/* Visina se zadaje izravno, a ne kroz `inset-0`: MapLibre spremniku
@@ -878,7 +1135,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       {/* Gore: kartica situacije lijevo, gumbi desno. Na uskom zaslonu red se
           okreće u stupac pa kartica dobiva cijelu širinu, a gumbi stoje iznad
           nje — dijelili su joj redak i na 390 px ju stiskali na trećinu. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col-reverse items-stretch gap-2 p-2 sm:flex-row sm:items-start sm:p-3">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col-reverse items-stretch gap-2 p-1 sm:flex-row sm:items-start sm:p-3">
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5 sm:max-w-[26rem]">
           {situacija && kadar ? (
             <SituacijaKartica
@@ -887,6 +1144,19 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
               izracunat={spreman}
               ljestvica={ljestvicaKartice}
               prijedlozi={stanje.prijedlozi}
+              sadaStvarno={sadaStvarno}
+              crtaSada={crta.sada}
+              osvjezavanje={osvjezavanje}
+              sadaOcitanja={sadaOcitanja}
+              serije={serije}
+              napomena={napomena}
+              osvjezavaSat={zastarjeli.has(kadar.sat)}
+              sazeta={prijedlog !== null || tocka !== null}
+              naOsvjezi={() => {
+                // Ručni pokušaj ne čeka najmanji razmak: čovjek je pritisnuo.
+                zadnjiPokusajRef.current = 0;
+                void osvjeziCrtu(() => !montiranRef.current);
+              }}
               naVise={() => postaviPlocu((v) => !v)}
               plocaOtvorena={plocaOtvorena}
             />
@@ -907,15 +1177,13 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
                 vrsta: k.vrsta,
                 razina: razineTocke.get(k.sat) ?? null,
               }))}
+              stara={crtaStara}
               naZatvori={() => postaviTocku(null)}
-              naSat={(p) => postaviPomak(p)}
+              naSat={naPomak}
             />
           ) : null}
-          {napredak.greska || napredak.gotovo < napredak.ukupno ? (
-            <span className="pointer-events-auto rounded bg-zinc-900/80 px-2 py-1 text-[11px] font-medium text-white">
-              {napredak.greska ?? `Računam ${napredak.gotovo}/${napredak.ukupno} sati`}
-            </span>
-          ) : null}
+          {/* Brojka „Računam n/28” stoji na traci vremena, uz pločice o
+              kojima govori — gornji sklop ne smije rasti dok se računa. */}
         </div>
 
         {/* Gore desno: izlaz i otvaranje ploče. Ništa više — navigacija
@@ -926,7 +1194,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
             stoji sam na desnom rubu s riječju. Dva ista kvadrata jedan do
             drugoga (jedan otvara ploču, drugi napušta stranicu) su u kritici
             od 2. 9. 2026. bila zamka u koju je i ocjenjivač upao. */}
-        <div className="pointer-events-auto z-30 flex shrink-0 items-center justify-end gap-3">
+        {/* Na telefonu ove pilule ne postoje: postavke otvara kartica, a izlaz
+            „Karepovac” stoji u zaglavlju trake sati — gore je samo skupljena
+            kartica, da karta drži 80 % zaslona. */}
+        <div className="pointer-events-auto z-30 hidden shrink-0 items-center justify-end gap-3 sm:flex">
           <button
             ref={postavkeGumbRef}
             type="button"
@@ -975,7 +1246,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
             <button
               type="button"
               onClick={() => postaviPlocu(false)}
-              className="fokus rounded px-2 py-1 text-sm font-semibold text-zinc-600 hover:bg-zinc-100"
+              className="fokus -my-1 min-h-11 min-w-11 rounded px-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100"
             >
               Zatvori
             </button>
@@ -991,7 +1262,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 sm:p-3">
+      {/* Rub od 4 px na telefonu, ne 8: karta mora držati 80 % zaslona pri
+          dolasku, a dva prozirna ruba od 8 px bila su upravo onih 12 px viška
+          (izmjereno 5. 9. 2026., 390×716: 78,5 % → 80,2 %). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-1 sm:p-3">
         <div className="mx-auto max-w-3xl">
           <VremenskaCrta
             crta={crta}
@@ -1001,6 +1275,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
             ljestvica={ljestvicaKartice}
             reproducira={reproducira}
             mirovanje={stanje.prikaz.mirovanje}
+            sadaStvarno={sadaStvarno}
+            napredak={napredak}
             naReprodukciju={postaviReprodukciju}
             naPromjenu={naPomak}
           />

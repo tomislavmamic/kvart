@@ -5,6 +5,7 @@ import {
   redoviIzDubina,
   redoviIzOcitanja,
   redoviIzSerija,
+  smijeUpisati,
 } from "@/lib/arhiva-zraka";
 import type { Vjetar } from "@/lib/vjetar";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
@@ -70,4 +71,18 @@ test("prognozirana dubina ne ulazi dok joj sat ne prođe", () => {
     ],
   );
   assert.ok(redovi.every((r) => r.source === "openmeteo"));
+});
+
+test("ograda pušta prvi upis, drži sljedeće do isteka razmaka i ne miješa ključeve", () => {
+  const pamcenje = new Map<string, number>();
+  const ograda = { kljuc: "api-vjetar", razmakMs: 300_000 };
+  assert.equal(smijeUpisati(ograda, 1_000_000, pamcenje), true, "prvi upis prolazi");
+  assert.equal(smijeUpisati(ograda, 1_000_000 + 60_000, pamcenje), false, "minutu poslije ne");
+  assert.equal(smijeUpisati(ograda, 1_000_000 + 300_000, pamcenje), true, "istekom razmaka da");
+  assert.equal(
+    smijeUpisati({ kljuc: "karepovac-pregled", razmakMs: 300_000 }, 1_000_000 + 310_000, pamcenje),
+    true,
+    "drugi pozivatelj ima svoju ogradu",
+  );
+  assert.equal(smijeUpisati(undefined, 0, pamcenje), true, "bez ograde uvijek smije");
 });

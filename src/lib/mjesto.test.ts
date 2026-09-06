@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { OKVIR_DOJAVE, procitajMjesto, uOkviru, zaokruziMjesto } from "./mjesto";
+import { OKVIR_DOJAVE, OPIS_OKVIRA, procitajMjesto, uOkviru, zaokruziMjesto } from "./mjesto";
 
 /** Metri po stupnju na širini kvarta; za provjeru koliko zaokruživanje briše. */
 const M_PO_LAT = 111_130;
@@ -46,4 +46,13 @@ test("obrazac bez mjesta ne pada, a mjesto s greškom se odbacuje", () => {
     lat: 43.521,
     lng: 16.512,
   });
+});
+
+test("opis okvira govori ono što okvir radi: Kaštela i Stobreč su unutra, Omiš nije", () => {
+  assert.match(OPIS_OKVIRA, /Kaštel/);
+  assert.match(OPIS_OKVIRA, /Stobreč/);
+  assert.ok(uOkviru({ lat: 43.55, lng: 16.38 }), "Kaštel Sućurac");
+  assert.ok(uOkviru({ lat: 43.503, lng: 16.526 }), "Stobreč");
+  assert.ok(uOkviru({ lat: 43.54, lng: 16.49 }), "Solin");
+  assert.equal(uOkviru({ lat: 43.44, lng: 16.69 }), false, "Omiš je izvan");
 });

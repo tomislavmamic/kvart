@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { PRETPOSTAVLJENO, type ZrakSada } from "@/lib/vjetar";
 import { slozi } from "@/lib/zrak";
-import { PrikazPoljaDima } from "./karta-kartice";
+import { PrikazKarepovacKarte, PrikazPoljaDima } from "./karta-kartice";
 
 /** Stanje kakvo dođe kad oba izvora odgovore. */
 const JUGO: ZrakSada = {
@@ -52,17 +52,34 @@ function nacrtaj(zrak: ZrakSada): string {
   return renderToStaticMarkup(<PrikazPoljaDima {...slozi(zrak)} />);
 }
 
+/**
+ * Samo pogled „Sada”: od njegova gumba do gumba prvog godišnjeg sloja.
+ *
+ * Godišnji slojevi legitimno nose mjeru (µg/m³ na ljestvici godine računa);
+ * pravilo „prikaz uživo ne tvrdi količinu” vrijedi za ono što se vidi kao
+ * sadašnjost.
+ */
+function pogledSada(markup: string): string {
+  const pocetak = markup.indexOf('id="pogled-sada"');
+  const kraj = markup.indexOf('id="pogled-', pocetak + 1);
+  assert.ok(pocetak > 0, "pogled „Sada” mora postojati");
+  return kraj > pocetak ? markup.slice(pocetak, kraj) : markup.slice(pocetak);
+}
+
 test("perjanica se ne predstavlja kao mjerenje", () => {
   const markup = nacrtaj(JUGO);
 
+  // Rečenica „mjerenja još nisu počela” ovdje ne stoji — zrak se mjeri
+  // (Zavod uz plohu, vjetar s postaja) i kartice to i kažu; ona pripada
+  // ogledima na strani kvarta i provjerava se na pregledu, dolje.
   for (const izraz of [
     "Model, ne mjerenje",
-    "Mjerenja još nisu počela",
     "Jačina izvora",
-    "još ne znamo",
+    "bazdarena, ali široko",
   ]) {
     assert.match(markup, new RegExp(izraz), izraz);
   }
+  assert.doesNotMatch(markup, /mjerenja još nisu počela/i, "zrak se mjeri, pa se to ne poriče");
 
   // Ništa na prikazu ne smije nositi oznaku izmjerenog plina; jedino izmjereno
   // ovdje je vjetar, i to na zračnoj luci.
@@ -72,9 +89,9 @@ test("perjanica se ne predstavlja kao mjerenje", () => {
   assert.match(markup, /data-kind="missing"/);
 });
 
-test("prikaz nikad ne tvrdi koliko mirisa ima", () => {
+test("prikaz uživo nikad ne tvrdi koliko mirisa ima", () => {
   for (const zrak of [JUGO, TISINA, BEZ_IZVORA]) {
-    const markup = nacrtaj(zrak);
+    const markup = pogledSada(nacrtaj(zrak));
     for (const zabranjeno of [
       "µg",
       "ppb",
@@ -90,6 +107,22 @@ test("prikaz nikad ne tvrdi koliko mirisa ima", () => {
       );
     }
   }
+});
+
+test("godišnji slojevi smiju nositi mjeru, ali se ne predstavljaju kao mjerenje", () => {
+  const markup = nacrtaj(JUGO);
+  assert.match(markup, /µg/, "ljestvica godišnjeg sloja nosi jedinicu");
+  assert.doesNotMatch(markup, /data-kind="measurement"/);
+});
+
+test("pregled kaže što se mjeri, a što je ogledno — po imenu, ne paušalno", () => {
+  const markup = renderToStaticMarkup(<PrikazKarepovacKarte zrak={slozi(JUGO)} />);
+  assert.match(markup, /brojke o bunarima, tlu, kamionima i česticama nisu/, "ogledno je imenovano");
+  assert.match(markup, /Zrak se mjeri/, "mjerenje zraka se ne poriče");
+  assert.doesNotMatch(markup, /Vrijednosti na njima su ogledne jer mjerenja još nisu počela/);
+  // Iz pregleda se ulazi u simulator po satima, ne samo u projekt.
+  assert.match(markup, /href="\/karepovac\/sim"/);
+  assert.match(markup, /Otvori simulator po satima/);
 });
 
 test("tišina se vidi kao tišina, a ne kao perjanica prema kvartu", () => {

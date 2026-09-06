@@ -29,6 +29,13 @@ export const OKVIR_DOJAVE = {
   istok: 16.65,
 } as const;
 
+/**
+ * Što okvir doista obuhvaća, riječima za obrazac: od Kaštela do Stobreča i
+ * Solina, ne samo Dračevac i Bilice. Obrazac je nekad tvrdio da bilježi samo
+ * kvart, a odbijao je tek Zagreb — rečenica mora govoriti ono što kod radi.
+ */
+export const OPIS_OKVIRA = "Split s okolicom, od Kaštela do Stobreča";
+
 export type Mjesto = { lat: number; lng: number };
 
 /**

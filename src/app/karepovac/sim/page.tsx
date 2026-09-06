@@ -9,11 +9,21 @@ export const metadata = createPageMetadata({
 });
 
 /**
- * Pet minuta, koliko i Neverinove postaje: sat koji vodi kartu je Vrboranov,
- * a tko otvori stranicu i neverin.hr jedno uz drugo mora vidjeti isti vjetar.
- * Isti rok nosi i `/api/karepovac/vjetar`.
+ * Stranica se slaže pri svakom zahtjevu, a ne pregotovi.
+ *
+ * Do 4. 9. 2026. stajalo je `revalidate = 300`: stranica je bila ISR s
+ * `stale-while-revalidate`, pa je prvi posjetitelj nakon zatišja dobivao
+ * **prethodno** složenu stranicu — izmjereno 28 sati staru — s riječju „sada”
+ * uz sat koji je odavno prošao. Na stranici s malo prometa to nije rub nego
+ * pravilo. Nula ovdje znači: `new Date()` u `dohvatiCrtu` teče za svaki
+ * zahtjev, a dohvati prema izvorima (`next: { revalidate: 900 / 1800 }` u
+ * `dohvat.ts` i `vjetar-sat.ts`) **ostaju** u zajedničkoj predmemoriji
+ * podataka — `revalidate = 0` mijenja samo zadani rok dohvata bez roka, ne
+ * one s pozitivnim (vidi `caching-without-cache-components.md`). Tako AZO-ova
+ * ograda na brzinu i dalje pada na predmemoriju, ne na posjetitelja.
+ * `force-dynamic` bi, naprotiv, sve dohvate pretvorio u `no-store`.
  */
-export const revalidate = 300;
+export const revalidate = 0;
 
 export default async function SimulatorPage() {
   const crta = await dohvatiCrtu();

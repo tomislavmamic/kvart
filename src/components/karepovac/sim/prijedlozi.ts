@@ -21,6 +21,15 @@ const IZVOR_PODRUCJA = "prijedlog-podrucje";
 export type Prijedlozi = {
   vidljivost(vidljivo: boolean): void;
   /**
+   * Ispod praga uvećanja točke blijede.
+   *
+   * Pri dolasku (uvećanje ispod 13,4, isto kao za pribadače vjetra) trinaest
+   * crtkanih točaka bilo je najglasnije na karti, glasnije od perjanice o
+   * kojoj je stranica. Ne skrivaju se — donatorski put kreće odavde — nego
+   * se stišaju dok se karta ne približi.
+   */
+  postaviUvecanje(zoom: number): void;
+  /**
    * Ističe odabrani prijedlog i crta njegovo područje; `null` gasi oboje.
    *
    * Područje se vidi samo dok je kartica otvorena: devet isječaka odjednom
@@ -154,6 +163,11 @@ export function stvoriPrijedloge(
       for (const o of oznake) o.el.style.display = vidljivo ? "" : "none";
       // Ugašeni prijedlozi ne smiju ostaviti isječak na karti.
       postaviPodrucje(vidljivo ? odabran : null);
+    },
+    postaviUvecanje(zoom) {
+      // Isti prag kao za pribadače vjetra (`postaviUvecanje` u oznake.ts).
+      const daleko = zoom < 13.4;
+      for (const o of oznake) o.el.classList.toggle("sim-prijedlog--daleko", daleko);
     },
     istakni(id) {
       odabran = id;

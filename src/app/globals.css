@@ -938,3 +938,48 @@ body {
     bottom: 9rem;
   }
 }
+
+/* Statusni registar iz DESIGN.md (tinta na blijedoj podlozi), kao znakovi
+   (`text-status-poslano`, `bg-status-u-tijeku-ground`…). Do 4. 9. 2026.
+   simulator je za „prognoza” i za ogradu uzimao Tailwindove violet/amber
+   vrijednosti napamet; sad ih uzima iz registra, pa se promjena registra
+   vidi i na karti. Dodano na kraj, da @theme na vrhu ostane netaknut. */
+@theme {
+  --color-status-objavljeno: #005986;
+  --color-status-objavljeno-ground: #dff2fe;
+  --color-status-poslano: #5d0ec0;
+  --color-status-poslano-ground: #ede9fe;
+  --color-status-u-tijeku: #953d00;
+  --color-status-u-tijeku-ground: #fef3c6;
+  --color-status-rijeseno: #005f46;
+  --color-status-rijeseno-ground: #d0fae5;
+  --color-status-odbijeno: #a30037;
+  --color-status-odbijeno-ground: #ffe4e6;
+  --color-status-ceka: #3f3f46;
+  --color-status-ceka-ground: #e4e4e7;
+}
+
+/* Postaja koja vodi odabrani sat nosi natpis i pri manjem uvećanju: pri
+   dolasku su pribadače vjetra samo točke, pa bi jedino „kad” na karti ostalo
+   nevidljivo. Vidi `postavi` u oznake.ts. */
+.sim-oznaka--kratko.sim-oznaka--vodi .sim-oznaka__ploca {
+  display: flex;
+}
+
+/* Predložene postaje pri manjem uvećanju: blijede, da pri dolasku ne budu
+   glasnije od perjanice; s uvećanjem se vraćaju u punu boju. Odabrana ostaje
+   puna. Vidi `postaviUvecanje` u prijedlozi.ts. */
+.sim-prijedlog--daleko:not(.sim-prijedlog--odabran) .sim-prijedlog__tocka {
+  opacity: 0.5;
+}
+
+/* Traka projekta na uskom zaslonu (`project-nav.tsx`): pomiče se vodoravno,
+   a klizač se ne crta — da traka ide dalje kaže rub koji blijedi, a klizač
+   ispod pilula od 44 px bio bi drugi red koji ništa ne govori. */
+.traka-vodoravna {
+  scrollbar-width: none;
+  scroll-padding-inline: 1rem;
+}
+.traka-vodoravna::-webkit-scrollbar {
+  display: none;
+}

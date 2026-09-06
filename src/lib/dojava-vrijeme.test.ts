@@ -5,7 +5,10 @@ import {
   dvoznamenkasto,
   KORAK_MINUTA,
   minuteZaSat,
+  odabirIzTrenutka,
+  procitajSat,
   satiZaDan,
+  satZaSimulator,
   uRasponu,
   uTrenutak,
 } from "./dojava-vrijeme";
@@ -75,4 +78,32 @@ test("raspon prima zadnjih trideset dana, ali ne budućnost", () => {
     false,
     "prestaro ne",
   );
+});
+
+test("sat iz poveznice čita se samo kad je datum, a šalje se kao početak sata u UTC-u", () => {
+  assert.equal(procitajSat("2026-09-04T21:00:00.000Z"), Date.UTC(2026, 8, 4, 21));
+  assert.equal(procitajSat("nije datum"), null);
+  assert.equal(procitajSat(undefined), null);
+  assert.equal(procitajSat(""), null);
+
+  const pocetak = new Date(Date.UTC(2026, 8, 4, 21, 50));
+  assert.equal(satZaSimulator(pocetak), "2026-09-04T21:00:00.000Z", "21.50 pada u sat 21");
+});
+
+test("trenutak iz poveznice pretvara se u danas/jučer, sat i minutu na pet", () => {
+  const sada = new Date(2026, 8, 4, 23, 40);
+  const jucerNavecer = new Date(2026, 8, 3, 22, 17).getTime();
+  assert.deepEqual(odabirIzTrenutka(jucerNavecer, sada), { danas: false, sat: 22, minuta: 15 });
+
+  const danasUjutro = new Date(2026, 8, 4, 7, 0).getTime();
+  assert.deepEqual(odabirIzTrenutka(danasUjutro, sada), { danas: true, sat: 7, minuta: 0 });
+
+  // Prognoza sa simulatora: sat koji nije došao stegne se na sada.
+  const prognoza = new Date(2026, 8, 5, 1, 0).getTime();
+  assert.deepEqual(odabirIzTrenutka(prognoza, sada), { danas: true, sat: 23, minuta: 40 });
+
+  // Stariji od jučer obrazac ne nudi.
+  const prekjucer = new Date(2026, 8, 2, 23, 59).getTime();
+  assert.equal(odabirIzTrenutka(prekjucer, sada), null);
+  assert.equal(odabirIzTrenutka(new Date(2026, 8, 3, 0, 0).getTime(), sada)?.danas, false, "ponoć jučer još vrijedi");
 });

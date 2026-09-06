@@ -84,7 +84,9 @@ export function UpravljackaPloca({
           čestica, građen da pokaže kuda zrak ide — ne da pogodi koliko ga
           ima. Bazdareni model raspršenja na istim satima daje drukčiju sliku,
           pa bi prešutjeti razliku značilo prikaz predstaviti kao predviđanje. */}
-      <aside className="rounded-lg border-l-[3px] border-amber-500 bg-amber-50/70 px-3 py-2.5 text-xs leading-5 text-zinc-700">
+      {/* Boje iz statusnog registra („u tijeku”: jantarna tinta na blijedoj
+          podlozi), ne jantar napamet — jedan registar za cijelu stranicu. */}
+      <aside className="rounded-lg border-l-[3px] border-status-u-tijeku bg-status-u-tijeku-ground/70 px-3 py-2.5 text-xs leading-5 text-zinc-700">
         <b className="text-zinc-900">Ovo je prikaz, ne mjerenje.</b> Perjanicu
         crta model čestica: pokazuje kuda zrak ide, ali širina i doseg nisu
         provjereni mjerenjem. Bazdareni model raspršenja na istim satima daje

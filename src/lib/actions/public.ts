@@ -1,14 +1,19 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { db } from "@/lib/db";
-import { odourReports, submissions } from "@/lib/db/schema";
+import { helpPledges, odourReports, submissions } from "@/lib/db/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { storeFile } from "@/lib/upload";
 import { NEIGHBORHOODS, CATEGORIES, ODOUR_STRENGTHS } from "@/lib/constants";
 import type { Neighborhood, Category, OdourStrength } from "@/lib/constants";
+import { smijeUpisati, zapisiZrak } from "@/lib/arhiva-zraka";
 import { DOPUSTENE_MINUTE, krajEpizode } from "@/lib/dojava-trajanje";
 import { procitajMjesto } from "@/lib/mjesto";
+import { satniVjetar } from "@/lib/vjetar-sat";
+import { PRIJEDLOZI_POSTAJA } from "@/lib/sim/prijedlozi-postaja";
+import { OGRADA_PONUDE, provjeriPonudu } from "@/lib/ukljuci-se";
 
 export type SubmitResult = { ok: true } | { ok: false; error: string };
 
@@ -96,6 +101,40 @@ export async function submitProblem(formData: FormData): Promise<SubmitResult> {
 /** Koliko unatrag dojava smije ići; dalje od toga sat se više ne pamti točno. */
 const NAJSTARIJA_DOJAVA_DANA = 30;
 
+/**
+ * Koliko dojava na sat primamo: po pregledniku i, kao široka gornja granica,
+ * po adresi. Dvadeset po nosu pokriva i dojavitelja koji javlja svakih pet
+ * minuta kroz epizodu; šezdeset po adresi pokriva zgradu na istom NAT-u.
+ */
+const OGRADA_DOJAVA = { poDojavitelju: 20, poAdresi: 60 } as const;
+
+/**
+ * Razmak između dvaju upisa arhive vjetra koje pokrenu dojave; ista ograda
+ * kakvu drže `/api/karepovac/vjetar` i pregled (`arhiva-zraka.ts`).
+ */
+const OGRADA_ARHIVE = { kljuc: "dojava", razmakMs: 5 * 60_000 } as const;
+
+/**
+ * Dojava sama osigura vjetar za svoj sat.
+ *
+ * Arhivu vjetra (`wind_readings`) inače pune samo simulator i pregled; u
+ * tihom tjednu prođe i više od dana bez posjeta, AZO-ov prozor od 24 sata
+ * istekne i sat dojave ostane bez vjetra zauvijek — a stranica obećava da
+ * će stići. Zato se poslije spremljene dojave, iza odgovora (`after`),
+ * dohvati satni vjetar istim pravilom kao za simulator i zapiše. Ograda je
+ * ista kao drugdje, pa deset dojava u epizodi ne znači deset dohvata.
+ * Greška ovdje ne dira dojavu: ona je već spremljena.
+ */
+async function arhivirajVjetarZaDojavu(): Promise<void> {
+  if (!smijeUpisati(OGRADA_ARHIVE)) return;
+  try {
+    const vjetar = await satniVjetar(new Date());
+    await zapisiZrak(vjetar.sada, vjetar);
+  } catch (greska) {
+    console.error("dojava: arhiva vjetra nije upisana", greska);
+  }
+}
+
 export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   // Honeypot: real users never fill this hidden field.
   if (formData.get("website")) return { ok: true };
@@ -103,11 +142,30 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   const headerStore = await headers();
   const ip =
     headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!checkRateLimit(ip)) {
+  // Oznaka preglednika: nasumična, bez veze s identitetom (vidi
+  // `src/lib/dojavitelj.ts`). Prima se samo ako izgleda kao ono što taj
+  // modul piše — tuđi sadržaj u tom stupcu ne bi imao nikakvu svrhu.
+  const sirovaOznaka = String(formData.get("reporterId") ?? "");
+  const reporterId = /^[0-9a-f]{32}$/.test(sirovaOznaka) ? sirovaOznaka : null;
+
+  // Ograda ide po pregledniku, ne po adresi: susjedi na istom mobilnom
+  // operateru dijele jednu javnu adresu, a epizoda mirisa je baš trenutak
+  // kad ih javlja najviše. Adresa ostaje kao široka gornja granica protiv
+  // skripte koja bi oznaku mijenjala sa svakim pozivom.
+  if (!checkRateLimit(ip, { bucket: "dojava-adresa", max: OGRADA_DOJAVA.poAdresi })) {
     return {
       ok: false,
       error:
-        "Pet dojava na sat je najviše što primamo. Pokušajte ponovno kasnije.",
+        "S ove mreže smo u zadnjih sat vremena primili neobično mnogo dojava. Pokušajte za koju minutu.",
+    };
+  }
+  if (
+    reporterId &&
+    !checkRateLimit(reporterId, { bucket: "dojava", max: OGRADA_DOJAVA.poDojavitelju })
+  ) {
+    return {
+      ok: false,
+      error: `Iz ovog preglednika smo u zadnjih sat vremena primili ${OGRADA_DOJAVA.poDojavitelju} dojava — za jedan nos je to dosta. Pokušajte kasnije.`,
     };
   }
 
@@ -124,11 +182,6 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   const durationMin = DOPUSTENE_MINUTE.includes(sirovoTrajanje)
     ? sirovoTrajanje
     : null;
-  // Oznaka preglednika: nasumična, bez veze s identitetom (vidi
-  // `src/lib/dojavitelj.ts`). Prima se samo ako izgleda kao ono što taj
-  // modul piše — tuđi sadržaj u tom stupcu ne bi imao nikakvu svrhu.
-  const sirovaOznaka = String(formData.get("reporterId") ?? "");
-  const reporterId = /^[0-9a-f]{32}$/.test(sirovaOznaka) ? sirovaOznaka : null;
   const mjesto = procitajMjesto(formData.get("lat"), formData.get("lng"));
 
   if (smelled && !(strength in ODOUR_STRENGTHS)) {
@@ -168,13 +221,17 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
   // Kraj razdoblja izvodi se iz trajanja, a ne iz drugog odabira sata:
   // epizoda kraća od sata je jedan sat s mirisom, dulja se razlije na
   // onoliko sati koliko doista pokriva, jer se vjetar mogao okrenuti.
-  const endedAt = smelled ? krajEpizode(occurredAt, durationMin) : null;
+  // Vrijedi i za „nije smrdjelo”: tko je bio vani cijelu večer i ništa nije
+  // osjetio, opisao je više sati tišine, a `satiDojave` ih broji jednako.
+  const endedAt = krajEpizode(occurredAt, durationMin);
 
   try {
     await db.insert(odourReports).values({
       occurredAt,
       endedAt,
-      durationMin: smelled ? durationMin : null,
+      durationMin,
+      // „Još traje” ima smisla samo za miris; tišina koja „još traje” nije
+      // opažanje nego prognoza.
       ongoing: smelled && ongoing,
       smelled,
       // Kad se nije osjetilo, jačine nema — a ne „slabo”.
@@ -188,6 +245,84 @@ export async function prijaviMiris(formData: FormData): Promise<SubmitResult> {
     return {
       ok: false,
       error: "Dojava nije spremljena. Provjerite vezu i pokušajte ponovno.",
+    };
+  }
+  after(arhivirajVjetarZaDojavu);
+  return { ok: true };
+}
+
+export type PonudaRezultat =
+  | { ok: true }
+  | {
+      ok: false;
+      error: string;
+      /**
+       * Ponuda je bila valjana, ali nije zapisana — baza nije odgovorila.
+       * Obrazac tada nudi drugi put (grupa, popis #28), a ne samo „pokušajte
+       * ponovno”: tko je jednom rekao „mogu”, ne smije otići bez traga.
+       */
+      nijeZapisano?: true;
+    };
+
+/** Postaje koje obrazac smije navesti; sve ostalo je podmetnuto poveznicom. */
+const POZNATE_POSTAJE: ReadonlySet<string> = new Set(
+  PRIJEDLOZI_POSTAJA.map((p) => p.id),
+);
+
+/**
+ * Ponuda pomoći za mjerne postaje — bez uplate, bez obveze.
+ *
+ * Isti obrambeni red kao kod dojava: skriveno polje za robote, pet upisa na
+ * sat po IP-u, pa provjera koju obrazac već obavlja u pregledniku i koja se
+ * ovdje ponavlja jer preglednik nije naš. Tablica `help_pledges` možda još
+ * nije stvorena na poslužitelju (shema se gura rukom), pa upis ne smije
+ * srušiti stranicu: vraća se pošten odgovor i drugi put do ljudi.
+ */
+export async function ponudiPomoc(formData: FormData): Promise<PonudaRezultat> {
+  // Honeypot: real users never fill this hidden field.
+  if (formData.get("website")) return { ok: true };
+
+  const headerStore = await headers();
+  const ip =
+    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(ip, OGRADA_PONUDE)) {
+    return {
+      ok: false,
+      error: "Pet ponuda na sat je najviše što primamo. Pokušajte ponovno kasnije.",
+    };
+  }
+
+  const provjera = provjeriPonudu(
+    {
+      vrste: formData.getAll("vrsta").map(String),
+      postaja: String(formData.get("postaja") ?? ""),
+      podrucje: String(formData.get("podrucje") ?? ""),
+      kontakt: String(formData.get("kontakt") ?? ""),
+      poruka: String(formData.get("poruka") ?? ""),
+    },
+    POZNATE_POSTAJE,
+  );
+  if (!provjera.ok) return provjera;
+
+  const { ponuda } = provjera;
+  try {
+    await db.insert(helpPledges).values({
+      kinds: [...ponuda.vrste],
+      stationId: ponuda.postaja,
+      area: ponuda.podrucje,
+      contact: ponuda.kontakt,
+      message: ponuda.poruka,
+    });
+  } catch (e) {
+    // Tablica `help_pledges` nastaje tek s `npm run db:push`; ako je nema,
+    // svaki upis pada. Stanovnik dobiva pošten odgovor, ali i tko vodi
+    // poslužitelj mora vidjeti da ponude propadaju — inače nitko ne sazna.
+    console.error("help_pledges: upis ponude nije uspio", e);
+    return {
+      ok: false,
+      nijeZapisano: true,
+      error:
+        "Ponuda nije zapisana: baza trenutačno ne odgovara. Nije do vas — pokušajte za koji sat, ili se javite drugim putem.",
     };
   }
   return { ok: true };

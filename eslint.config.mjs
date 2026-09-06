@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Radne kopije koje Claude Code stvara uz repozitorij; nisu dio koda.
+    ".claude/**",
   ]),
 ]);
 

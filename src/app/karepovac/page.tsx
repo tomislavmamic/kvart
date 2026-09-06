@@ -8,11 +8,13 @@ export const metadata = createPageMetadata({
 });
 
 /**
- * Stranica se pregotovi i osvježava svakih 15 minuta: METAR se ionako
- * objavljuje na pola sata, a posjetitelj nikad ne čeka dohvat niti ga svojim
- * dolaskom pokreće.
+ * Stranica se slaže pri svakom zahtjevu; dohvati prema izvorima ostaju u
+ * predmemoriji podataka (`next: { revalidate }` u `vjetar.ts`), pa
+ * posjetitelj ni sada ne budi METAR ni AZO svojim dolaskom. Prije je stajalo
+ * `revalidate = 900` — ISR sa `stale-while-revalidate` — pa je „izmjereni u
+ * 23:30” na kartici znao biti od jučer (vidi `sim/page.tsx`).
  */
-export const revalidate = 900;
+export const revalidate = 0;
 
 /**
  * THESIS: kvart prvo mora vidjeti sve što s plohe silazi na njega, pa tek onda

@@ -212,6 +212,111 @@ export function najbliziDostupan(crta: Crta, pomak: number): Kadar | null {
 }
 
 /**
+ * Pomak na crti za zadani sat, i kad sat nije na crti.
+ *
+ * Adresa dijeli sat kao puni ISO zapis (ne kao pomak): „pogledaj kako je
+ * bilo u 18 h” otvoreno tri sata poslije mora pokazati 18 h, ne 21 h. Sat
+ * koji je s crte ispao (stariji od 24 h, ili dalje od prognoze) daje pomak
+ * izvan raspona; pozivatelj ga svede na najbliži dostupan i to kaže.
+ *
+ * Args:
+ *   crta: Crta na koju se sat odnosi.
+ *   sat: Puni ISO 8601, ili bilo koji zapis koji `Date.parse` čita.
+ *
+ * Returns:
+ *   Cijeli pomak od `crta.sada`, ili `null` kad zapis nije vrijeme.
+ */
+export function pomakZaSat(crta: Pick<Crta, "sada">, sat: string): number | null {
+  // Samo puni datum: `Date.parse("-5")` bi „-5” iz starih adresa pročitao
+  // kao godinu, pa bi stari pomak ispao kao sat prije dvije tisuće godina.
+  if (!/^\d{4}-\d{2}-\d{2}/.test(sat)) return null;
+  const t = Date.parse(sat);
+  if (Number.isNaN(t)) return null;
+  return Math.round((t - Date.parse(crta.sada)) / 3600000);
+}
+
+/**
+ * Pomak koji na novoj crti odgovara onome što se gledalo na staroj.
+ *
+ * Dva su slučaja i moraju se razlikovati:
+ *
+ * - Gledatelj **prati sadašnjost** (stoji na „sada” i nije sam birao sat):
+ *   nakon prijelaza sata ostaje na novom „sada”. Inače bi kartica koju nitko
+ *   nije dirao ujutro pokazivala sinoćnji sat s natpisom „prije 8 h”, a
+ *   „Javi” bi nosio krivi sat — točno u trenutku zbog kojega osvježavanje
+ *   i postoji.
+ * - Gledatelj je **odabrao sat** (traka, strelice, poveznica): ostaje na
+ *   istom apsolutnom satu; tko gleda 18 h, i dalje gleda 18 h, samo mu
+ *   kartica kaže „prije 6 h” umjesto „prije 5 h”. Sat koji je s crte ispao
+ *   vodi na „sada”.
+ *
+ * Args:
+ *   stara: Crta prije zamjene.
+ *   nova: Crta poslije zamjene.
+ *   pomak: Pomak koji se gledao na staroj.
+ *   pratiSada: Je li gledatelj na sadašnjem satu bez vlastitog odabira.
+ *
+ * Returns:
+ *   Pomak dostupnog kadra na novoj crti.
+ */
+export function pomakNakonZamjene(
+  stara: Crta,
+  nova: Crta,
+  pomak: number,
+  pratiSada: boolean,
+): number {
+  if (pratiSada && pomak === stara.pomakSada) {
+    return najbliziDostupan(nova, nova.pomakSada)?.pomak ?? nova.pomakSada;
+  }
+  const gledaniSat = stara.kadrovi.find((k) => k.pomak === pomak)?.sat;
+  const naNovoj = gledaniSat ? nova.kadrovi.some((k) => k.sat === gledaniSat) : false;
+  const trazeni = naNovoj && gledaniSat ? (pomakZaSat(nova, gledaniSat) ?? nova.pomakSada) : nova.pomakSada;
+  return najbliziDostupan(nova, trazeni)?.pomak ?? nova.pomakSada;
+}
+
+/** Što učiniti sa slikama pri zamjeni crte. */
+export type PlanZamjene = {
+  /** Satovi koje radnici moraju proći iznova (vjetar im se promijenio). */
+  readonly zaRacun: readonly string[];
+  /** Slike koje ostaju na zaslonu, uključujući one koje se računaju iznova. */
+  readonly zadrzati: ReadonlySet<string>;
+  /** Slike satova koji su s crte ispali; više ne trebaju nikome. */
+  readonly izbaciti: readonly string[];
+  /** Ima li na novoj crti sata kojega na staroj nije bilo. */
+  readonly imaNovih: boolean;
+};
+
+/**
+ * Plan zamjene crte: što se računa iznova, što ostaje, što se baca.
+ *
+ * Slika sata koji se računa iznova **ostaje** na zaslonu dok nova ne stigne
+ * (stara je za nekoliko minuta starijeg vjetra, ne pogrešna). Da se briše,
+ * svaki bi povratak u karticu na trenutak pokazao „Računam ovaj sat…” i
+ * praznu kartu umjesto odgovora — osvježavanje bi se čitalo kao
+ * nestabilnost. Baca se samo ono što je s crte ispalo.
+ *
+ * Args:
+ *   stara: Crta prije zamjene.
+ *   nova: Crta poslije zamjene.
+ *   slike: Satovi za koje trenutačno postoji slika.
+ *   zaletSati: Koliko sati zaleta kadar nosi (`ZALET_SATI`).
+ */
+export function planZamjene(
+  stara: Crta,
+  nova: Crta,
+  slike: ReadonlySet<string>,
+  zaletSati: number,
+): PlanZamjene {
+  const naNovoj = new Set(nova.kadrovi.filter((k) => k.stanje !== null).map((k) => k.sat));
+  const zaRacun = zahvaceniSati(stara, nova, zaletSati);
+  const izbaciti = [...slike].filter((sat) => !naNovoj.has(sat));
+  const zadrzati = new Set([...slike].filter((sat) => naNovoj.has(sat)));
+  const stariSati = new Set(stara.kadrovi.map((k) => k.sat));
+  const imaNovih = [...naNovoj].some((sat) => !stariSati.has(sat));
+  return { zaRacun, zadrzati, izbaciti, imaNovih };
+}
+
+/**
  * Satovi čije kadrove treba računati iznova nakon promjene vjetra.
  *
  * Promjena jednog sata ne mijenja samo njegov kadar: svaki se kadar računa

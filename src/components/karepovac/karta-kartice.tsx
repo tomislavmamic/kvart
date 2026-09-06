@@ -736,6 +736,8 @@ function Kartica({
   napomena,
   poveznica,
   poveznicaOznaka,
+  simulator,
+  simulatorOznaka,
   blizu = false,
   siroka = false,
   children,
@@ -747,6 +749,9 @@ function Kartica({
   napomena: string;
   poveznica?: string;
   poveznicaOznaka?: string;
+  /** Simulator po satima; stoji iznad ulaza u projekt, jer je to glavni ulaz. */
+  simulator?: string;
+  simulatorOznaka?: string;
   blizu?: boolean;
   siroka?: boolean;
   children?: ReactNode;
@@ -770,10 +775,20 @@ function Kartica({
           {naslov}
         </h3>
         <p className="max-w-[62ch] text-base leading-7 text-kamen-tekst">{opis}</p>
+        {simulator && simulatorOznaka && (
+          <Link
+            href={simulator}
+            className="fokus mt-1 inline-flex min-h-11 w-fit items-center rounded-md text-base font-semibold text-maslina underline decoration-maslina-rub decoration-2 underline-offset-4 hover:text-maslina-tamna"
+          >
+            {simulatorOznaka} →
+          </Link>
+        )}
         {poveznica && poveznicaOznaka && (
           <Link
             href={poveznica}
-            className="fokus mt-1 inline-flex w-fit rounded-md text-base font-semibold text-maslina underline decoration-maslina-rub decoration-2 underline-offset-4 hover:text-maslina-tamna"
+            className={`fokus inline-flex min-h-11 w-fit items-center rounded-md text-base font-semibold underline decoration-2 underline-offset-4 ${
+              simulator ? "-mt-1 text-kamen-tekst decoration-kamen-rub hover:text-kamen-tinta" : "mt-1 text-maslina decoration-maslina-rub hover:text-maslina-tamna"
+            }`}
           >
             {poveznicaOznaka} →
           </Link>
@@ -835,10 +850,16 @@ export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
 
       <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
         <span aria-hidden="true" className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-amber-600" />
+        {/* Što jest a što nije izmjereno, po imenu: zrak se mjeri (Zavod uz
+            plohu, vjetar s javnih postaja) i simulator to dva klika dalje
+            pokazuje, pa banner ne smije reći da mjerenja nisu počela. Ogledno
+            je ono na strani kvarta — bunari, tlo, kamioni, čestice. */}
         <p className="text-base leading-7">
-          <strong className="font-bold">Podloga je stvarna, brojke nisu.</strong> Karta,
-          izohipse, zgrade, ceste, granice kvarta i obris plohe izvučeni su iz podataka
-          koje već imamo. Vrijednosti na njima su ogledne jer mjerenja još nisu počela.
+          <strong className="font-bold">Podloga je stvarna, brojke o bunarima, tlu, kamionima i česticama nisu.</strong>{" "}
+          Karta, izohipse, zgrade, ceste, granice kvarta i obris plohe izvučeni su iz
+          podataka koje već imamo; vrijednosti na tim karticama su ogledne jer ta
+          mjerenja još nisu počela. Zrak se mjeri: Zavod objavljuje satne vrijednosti
+          uz plohu, a vjetar dolazi s javnih postaja.
         </p>
       </div>
 
@@ -863,6 +884,8 @@ export function PrikazKarepovacKarte({ zrak }: { zrak: ZrakZaKartu }) {
           napomena={`Polje vjetra izvedeno je iz LiDAR reljefa, a smjer i brzina s postaje ${zrak.zrak.vjetar ? `${POSTAJE[zrak.zrak.vjetar.postaja].oznaka} (${km(zrak.zrak.vjetar.postaja)} km)` : "koja ga trenutačno objavljuje"}${zrak.opis.kada ? `, izmjereni u ${zrak.opis.kada}` : ""}. Jačina izvora još je pretpostavka, pa prikaz govori kamo zrak ide, a ne koliko mirisa nosi.`}
           poveznica="/karepovac/zrak"
           poveznicaOznaka="Uđite u projekt praćenja zraka"
+          simulator="/karepovac/sim"
+          simulatorOznaka="Otvori simulator po satima"
         >
           <KartaDima
             polje={zrak.polje}

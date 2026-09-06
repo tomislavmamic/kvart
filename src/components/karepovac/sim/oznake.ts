@@ -315,7 +315,7 @@ export function stvoriOznake(
     pribadace.push(
       new MarkerRazred({ element: el, anchor: "left" }).setLngLat([m.lon, m.lat]).addTo(karta),
     );
-    return { ...m, ploca: el.querySelector("[data-v]") as HTMLElement };
+    return { ...m, el, ploca: el.querySelector("[data-v]") as HTMLElement };
   });
 
   return {
@@ -337,6 +337,13 @@ export function stvoriOznake(
 
       for (const m of vjetrovi) {
         const imena = m.postaje.map((k) => POSTAJE[k].oznaka).join(" · ");
+        // Postaja čiji vjetar vodi odabrani sat drži natpis i kad su ostale
+        // svedene na točku: to je jedino „kad” koje se pri dolasku vidi.
+        const vodi = kadar?.izvor ?? null;
+        m.el.classList.toggle(
+          "sim-oznaka--vodi",
+          vodi !== null && vodi !== "model" && m.postaje.includes(vodi),
+        );
         // Ako neka od postaja na ovoj točki ima satni niz, on ima prednost.
         const izNiza = kadar
           ? m.postaje.map((k) => serije.get(k)?.get(kadar.sat)).find(Boolean)

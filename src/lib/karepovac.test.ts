@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  BUDGET_ESTIMATE_LABEL,
   KAREPOVAC_BUDGET_CATEGORIES,
   KAREPOVAC_DATA_KINDS,
   KAREPOVAC_NAV,
@@ -62,5 +63,28 @@ test("the preparation record covers every delivery phase and cost family", () =>
       "contingency",
     ],
   );
+  // Potvrđeni iznos i dalje ne postoji ni za jednu skupinu; okvirna procjena
+  // opreme postoji samo za ono što popis predloženih postaja doista nabraja.
   assert.ok(KAREPOVAC_BUDGET_CATEGORIES.every(({ amount }) => amount === null));
+  assert.deepEqual(
+    KAREPOVAC_BUDGET_CATEGORIES.filter(({ estimate }) => estimate === "popis-postaja").map(({ id }) => id),
+    ["sensors", "controllers", "power"],
+  );
+  assert.deepEqual(
+    KAREPOVAC_BUDGET_CATEGORIES.filter(({ estimate }) => estimate === null).map(({ id }) => id),
+    ["calibration", "connectivity", "maintenance", "contingency"],
+  );
+  for (const kljuc of ["popis-postaja", "djelomicno", "nije"] as const) {
+    assert.ok(BUDGET_ESTIMATE_LABEL[kljuc].length > 0);
+    // Brojke po stavci nisu u #28 (ondje su samo grublji zbrojevi po fazama),
+    // pa im se #28 ne smije pripisati kao izvor.
+    assert.doesNotMatch(BUDGET_ESTIMATE_LABEL[kljuc], /#28/);
+  }
+});
+
+test("okvirna cijena opreme je priznata, a datum promjene se ne izmišlja", () => {
+  assert.equal(KAREPOVAC_PUBLIC_STATE.hasEquipmentEstimate, true);
+  assert.match(KAREPOVAC_PUBLIC_STATE.equipmentEstimateSource, /predložene postaje/);
+  // Dok se ništa nije promijenilo, datum je null — obavijest ga tada ne piše.
+  assert.equal(KAREPOVAC_PUBLIC_STATE.updatedOn, null);
 });

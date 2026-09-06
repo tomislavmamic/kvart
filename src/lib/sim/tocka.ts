@@ -114,10 +114,23 @@ export function izvediTocku(ulaz: Omit<UlazSituacije, "podrucja">, tocka: Tocka)
   return izvediSituaciju({ ...ulaz, podrucja: [tockaKaoPodrucje(tocka)] });
 }
 
-/** Adresa obrasca za dojavu s mjestom već upisanim. */
-export function adresaDojave(tocka: Tocka): string {
+/**
+ * Adresa obrasca za dojavu s mjestom već upisanim.
+ *
+ * Args:
+ *   tocka: Kliknuto mjesto.
+ *   sat: Sat koji gledatelj gleda, puni ISO 8601; obrazac ga smije uzeti
+ *     kao vrijeme dojave, jer dojava opisuje ono što je na karti.
+ */
+export function adresaDojave(tocka: Tocka, sat?: string): string {
   const z = (v: number) => (Math.round(v * 1e4) / 1e4).toString();
-  return `/karepovac/dojava?lat=${z(tocka.lat)}&lng=${z(tocka.lng)}`;
+  const osnova = `/karepovac/dojava?lat=${z(tocka.lat)}&lng=${z(tocka.lng)}`;
+  return sat ? `${osnova}&sat=${encodeURIComponent(sat)}` : osnova;
+}
+
+/** Adresa obrasca za dojavu bez mjesta, samo sa satom s karte. */
+export function adresaDojaveZaSat(sat: string): string {
+  return `/karepovac/dojava?sat=${encodeURIComponent(sat)}`;
 }
 
 /** Točka iz adrese (`t=lat,lng`), ili ništa. */

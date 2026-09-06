@@ -12,8 +12,14 @@ import { BAZDARENJE } from "@/generated/karepovac-bazdarenje";
 import { MJERENJA } from "@/generated/karepovac-mjerenja";
 import { KAREPOVAC_PHASES } from "@/lib/karepovac";
 
-/** Isti rok kao na pregledu, da dvije karte istoga kvarta ne pokazuju dva vjetra. */
-export const revalidate = 900;
+/**
+ * Kao na pregledu i simulatoru: stranica se slaže pri svakom zahtjevu, a
+ * dohvati prema izvorima drže vlastiti rok u predmemoriji podataka. ISR sa
+ * `stale-while-revalidate` davao je prvom posjetitelju nakon zatišja kartu
+ * s vjetrom od jučer i natpisom „izmjereni u…” — dvije karte istoga kvarta
+ * tada nisu pokazivale isti vjetar, nego jedna jučerašnji.
+ */
+export const revalidate = 0;
 
 const H2S_SATI = MJERENJA.postaje[0].tvari[0].sati;
 const MERKAPTANI_SATI =
@@ -36,13 +42,23 @@ export default function KarepovacPage() {
           </div>
 
           <div className="mt-7 sm:mt-10">
-            <div className="mb-4 flex items-center gap-3 text-sm font-semibold text-amber-100 sm:mb-5">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <div className="mb-4 flex items-center gap-3 text-sm font-semibold text-status-u-tijeku-ground sm:mb-5">
+              <span className="h-2.5 w-2.5 rounded-full bg-status-u-tijeku-ground" />
               Projekt je u pripremi
             </div>
-            <PrimaryLink href="/karepovac/ukljuci-se">
-              Kako se mogu uključiti
-            </PrimaryLink>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <PrimaryLink href="/karepovac/ukljuci-se">
+                Kako se mogu uključiti
+              </PrimaryLink>
+              {/* Karta pokraj je godišnji prosjek; tko pita „a sada?” treba
+                  sat po sat, a to je simulator. */}
+              <Link
+                href="/karepovac/sim"
+                className="fokus inline-flex min-h-11 items-center rounded-md font-semibold text-white underline decoration-white/50 decoration-2 underline-offset-4 hover:decoration-white"
+              >
+                Simulator po satima →
+              </Link>
+            </div>
           </div>
         </div>
         <PoljeDimaVeliko />
@@ -88,12 +104,22 @@ export default function KarepovacPage() {
               smrdjelo, nego samo koliko je ljudi stiglo javiti.
             </p>
           </div>
-          <Link
-            href="/karepovac/dojava"
-            className="fokus mt-4 inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-maslina px-6 py-3 font-semibold text-white hover:bg-maslina-tamna sm:mt-0"
-          >
-            Javite kada je smrdjelo
-          </Link>
+          <div className="mt-4 flex shrink-0 flex-col items-start gap-2 sm:mt-0 sm:items-end">
+            <Link
+              href="/karepovac/dojava"
+              className="fokus inline-flex min-h-11 items-center justify-center rounded-full bg-maslina px-6 py-3 font-semibold text-white hover:bg-maslina-tamna"
+            >
+              Javite kada je smrdjelo
+            </Link>
+            {/* Sat bez mirisa vrijedi koliko i sat s mirisom; bez posebnog
+                ulaza nitko ga ne javi. */}
+            <Link
+              href="/karepovac/dojava?smrdi=ne"
+              className="fokus inline-flex min-h-11 items-center rounded-md font-semibold text-maslina-tamna underline decoration-maslina-rub decoration-2 underline-offset-4"
+            >
+              … ili da nije smrdjelo
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -111,7 +137,7 @@ export default function KarepovacPage() {
             Zašto prvo provjeravamo senzore →
           </Link>
         </SectionHeading>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
+        <div className="rounded-xl border border-status-u-tijeku/20 bg-status-u-tijeku-ground p-6 text-kamen-tinta">
           <h2 className="text-xl font-bold">Provjera na mjerenjima</h2>
           <ul className="mt-5 space-y-4 leading-7">
             <Fact>
@@ -165,7 +191,7 @@ export default function KarepovacPage() {
               <span
                 className={
                   index === 0
-                    ? "w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900"
+                    ? "w-fit rounded-full bg-status-u-tijeku-ground px-3 py-1 text-xs font-bold text-status-u-tijeku"
                     : "w-fit rounded-full bg-kamen-plitko px-3 py-1 text-xs font-bold text-kamen-drugi"
                 }
               >
@@ -222,7 +248,7 @@ export default function KarepovacPage() {
 function Fact({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-1.5 h-4 w-4 shrink-0 text-amber-700">
+      <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-1.5 h-4 w-4 shrink-0 text-status-u-tijeku">
         <path d="m4 10 4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <span>{children}</span>

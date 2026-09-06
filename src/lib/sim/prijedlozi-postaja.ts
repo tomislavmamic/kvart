@@ -1,8 +1,10 @@
 /**
  * Predložene mjerne postaje oko plohe — što, gdje, čime i pošto.
  *
- * Popis je isti kao u GitHubovu zahtjevu #28, samo s koordinatama, da se
- * na karti vidi **gdje** bi što stajalo i zašto baš ondje. Poredak je po
+ * Popis je izrastao iz GitHubova zahtjeva #28 — prvih devet stavki su
+ * odande, s koordinatama; Mravince, Kučine, Žnjan, kampus i rub Solina
+ * dodani su poslije, po istom mjerilu — da se na karti vidi **gdje** bi što
+ * stajalo i zašto baš ondje. Poredak je po
  * tome koliko koja stavka skida izmjerene pogreške modela
  * (`docs/hindcast/IZVJESCE.md`, `docs/STATUS.json` → K1–K4), ne po cijeni.
  *
@@ -152,7 +154,9 @@ export const PRIJEDLOZI_POSTAJA: readonly PrijedlogPostaje[] = [
     cijena: [700, 1600],
     zasto:
       "Sve dosadašnje ocjene modela dolaze s krive strane plohe (postaja u udolini na 140°). Dračevac je na 319°, 0,9 km od izvora, i odatle dolaze dojave. Tisuće sati odavde daju bazdarenje jačine i stopu lažnih uzbuna koje 15 dojava ne može.",
-    uvjeti: "Dvorište ili balkon stanovnika (dojavitelj s Dračevca 7B je prirodan domaćin); struja iz kuće.",
+    // Bez upućivanja na to tko je odavde javljao miris: dojave su anonimne, a
+    // kućni broj uz riječ „dojavitelj” bi ih razotkrio.
+    uvjeti: "Dvorište ili balkon stanovnika u tom dijelu ulice; struja iz kuće.",
   },
   {
     id: "bilice",
@@ -379,3 +383,28 @@ export function cijenaFaze(faza: PrijedlogPostaje["faza"]): [number, number] {
 }
 
 export const ZAHTJEV_URL = "https://github.com/tomislavmamic/kvart/issues/28";
+
+/**
+ * Adresa stranice za uključivanje, s postajom o kojoj je riječ.
+ *
+ * Sidro vodi ravno na obrazac („Mogu pomoći”), da tko je na karti pročitao
+ * cijenu ne mora još jednom tražiti gdje se javlja.
+ */
+export function adresaPomoci(prijedlog: Pick<PrijedlogPostaje, "id">): string {
+  return `/karepovac/ukljuci-se?postaja=${encodeURIComponent(prijedlog.id)}#mogu-pomoci`;
+}
+
+/**
+ * Prijedlog iz adrese simulatora (`?prijedlog=<id>`), da /financije i
+ * /ukljuci-se mogu otvoriti karticu baš te postaje.
+ *
+ * Args:
+ *   vrijednost: Vrijednost parametra, ili ništa.
+ *
+ * Returns:
+ *   Prijedlog s tim `id`-om, ili `null` za nepoznat ili prazan.
+ */
+export function prijedlogIzAdrese(vrijednost: string | null): PrijedlogPostaje | null {
+  if (!vrijednost) return null;
+  return PRIJEDLOZI_POSTAJA.find((p) => p.id === vrijednost) ?? null;
+}

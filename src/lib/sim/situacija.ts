@@ -482,3 +482,45 @@ export function izvediSituaciju(ulaz: UlazSituacije): Situacija {
     izvorVjetra: kadar.izvor,
   };
 }
+
+/**
+ * Rečenica ispod naslova kad perjanica ne dotiče naselja.
+ *
+ * Kad je pouzdanost niska, naslov kaže „Ne znamo pouzdano”, a ova rečenica
+ * kaže **zašto** — i mora reći isti razlog koji stoji među razlozima iza
+ * „zašto?”. Do 4. 9. 2026. stajalo je jedno te isto („Model za ovaj sat nema
+ * pouzdan vjetar”) i za tišinu na postaji 1,1 km od kvarta, pa je kartica
+ * na jednom mjestu tvrdila da vjetar nije izmjeren, a na drugom da jest.
+ * Razlog se bira po istom redu po kojem `izvediSituaciju` spušta
+ * pouzdanost: tišina i promjenjiv smjer prije svega (oni je ruše na
+ * „nisku” bez obzira na izvor), pa prognoza, pa model, pa rupe u zaletu.
+ *
+ * Args:
+ *   situacija: Sažetak sata.
+ *   kadar: Kadar iz kojega je izveden; treba samo vrsta i vjetar.
+ *
+ * Returns:
+ *   Rečenica za razinu „nema”; `null` kad naselja jesu dotaknuta (tada
+ *   naslov nosi razinu i podnaslov ne treba).
+ */
+export function podnaslov(
+  situacija: Pick<Situacija, "razina" | "pouzdanost" | "izvorVjetra">,
+  kadar: Pick<KadarSituacije, "vrsta" | "vjetar" | "pomak">,
+): string | null {
+  if (situacija.razina !== "nema") return null;
+  if (situacija.pouzdanost !== "niska") return "Perjanica ne dotiče nijedno naselje oko plohe.";
+  const v = kadar.vjetar;
+  if (v?.tisina) {
+    return "Tišina: vjetar ispod 0,5 m/s ne nosi zrak nikamo određeno, pa „ništa” ne znači „čisto”.";
+  }
+  if (v?.promjenjiv) {
+    return "Postaja javlja promjenjiv smjer, pa se ne zna kamo zrak ide; „ništa” ne znači „čisto”.";
+  }
+  if (kadar.vrsta === "prognoza") {
+    return `Prognoza ${kadar.pomak} h unaprijed: vjetar je iz modela, ne s postaje, pa „ništa” ne znači „čisto”.`;
+  }
+  if (situacija.izvorVjetra === "model") {
+    return "Vjetar za ovaj sat nije izmjeren nego uzet iz modela, pa „ništa” ne znači „čisto”.";
+  }
+  return "Zalet ovog sata nije potpun, pa „ništa” ne znači „čisto”.";
+}

@@ -76,7 +76,7 @@ test("public proposal excerpts truncate on a Unicode-safe word boundary", () => 
 });
 
 test("share constants describe the production site", () => {
-  assert.equal(SITE_URL.href, "https://kvart-sage.vercel.app/");
+  assert.equal(SITE_URL.href, "https://dracevac.vercel.app/");
   assert.match(DEFAULT_SHARE_DESCRIPTION, /Razgovaraj sa susjedima/u);
   assert.equal(
     PROBLEMS_SHARE_DESCRIPTION,

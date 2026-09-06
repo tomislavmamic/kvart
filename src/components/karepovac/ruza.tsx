@@ -22,16 +22,21 @@ function uKrugu(sredina: number, polumjer: number, sektor: number) {
  * Krak nikad ne kreće od sredine nego od unutarnjeg kruga. Kad bi kretao od
  * sredine, površina kraka rasla bi s kvadratom vrijednosti i oko bi razliku
  * čitalo puno većom nego što jest — a ove su razlike male i moraju ostati male.
+ *
+ * Boja kraka je CSS vrijednost iz palete (`var(--color-…)` iz `globals.css`),
+ * ne heksadecimalni broj: ljubičasta je na ovoj stranici rezervirana za
+ * „poslano gradu”, a ruža nije status nego nalaz. Zadano je Maslina.
  */
 export function Ruza({
   vrijednosti,
-  boja,
+  boja = "var(--color-maslina)",
   opisZaCitac,
   opisi,
   biljeg,
 }: {
   vrijednosti: readonly number[];
-  boja: string;
+  /** Boja kraka; CSS vrijednost, najbolje `var(--color-…)` iz palete. */
+  boja?: string;
   opisZaCitac: string;
   /** Tekst koji se pokaže nad svakim krakom; po jedan za svaki sektor. */
   opisi?: readonly string[];
@@ -52,7 +57,7 @@ export function Ruza({
       role="img"
       aria-label={opisZaCitac}
     >
-      <circle cx={sredina} cy={sredina} r={izvana} fill="#fafafa" />
+      <circle cx={sredina} cy={sredina} r={izvana} style={{ fill: "var(--color-kamen-plitko)" }} />
       {[0.5, 1].map((u) => (
         <circle
           key={u}
@@ -60,7 +65,7 @@ export function Ruza({
           cy={sredina}
           r={unutra + (izvana - unutra) * u}
           fill="none"
-          stroke="#e4e4e7"
+          style={{ stroke: "var(--color-kamen-tlo)" }}
           strokeWidth="1"
         />
       ))}
@@ -72,8 +77,9 @@ export function Ruza({
           <g key={i} transform={`rotate(${(i * 360) / SEKTORA} ${sredina} ${sredina})`}>
             <path
               d={`M${sredina - sirina} ${sredina - unutra} L${sredina + sirina} ${sredina - unutra} L${sredina + sirina} ${sredina - duljina} Q${sredina} ${sredina - duljina - 4} ${sredina - sirina} ${sredina - duljina} Z`}
-              fill={boja}
-              fillOpacity={0.25 + 0.75 * udio}
+              // Kroz `style`, ne kroz atribut: `var()` u atributu `fill` ne
+              // razumije svaki preglednik.
+              style={{ fill: boja, fillOpacity: 0.25 + 0.75 * udio }}
               stroke="white"
               strokeWidth="2"
             >
@@ -92,7 +98,7 @@ export function Ruza({
             textAnchor="middle"
             fontSize="12"
             fontWeight="600"
-            fill="#71717b"
+            style={{ fill: "var(--color-kamen-drugi)" }}
           >
             {oznaka}
           </text>
@@ -105,7 +111,7 @@ export function Ruza({
             y1={uKrugu(sredina, izvana + 2, biljeg.sektor)[1]}
             x2={uKrugu(sredina, izvana + 22, biljeg.sektor)[0]}
             y2={uKrugu(sredina, izvana + 22, biljeg.sektor)[1]}
-            stroke="#18181b"
+            style={{ stroke: "var(--color-kamen-tinta)" }}
             strokeWidth="2"
           />
           <text
@@ -114,7 +120,7 @@ export function Ruza({
             textAnchor="middle"
             fontSize="12"
             fontWeight="700"
-            fill="#18181b"
+            style={{ fill: "var(--color-kamen-tinta)" }}
           >
             {biljeg.naziv}
           </text>

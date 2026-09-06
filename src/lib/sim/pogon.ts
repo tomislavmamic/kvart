@@ -25,8 +25,10 @@ const NAJVISE_RADNIKA = 4;
 export type Kadrovi = ReadonlyMap<string, Float32Array>;
 
 export type StanjePogona = {
-  /** Koliko je satova izračunato. */
+  /** Koliko satova ima sliku (i staru, dok se nova računa). */
   readonly gotovo: number;
+  /** Koliko satova ima **svježu** sliku; manje od `gotovo` dok se računa iznova. */
+  readonly svjeze: number;
   /** Koliko ih se ukupno traži. */
   readonly ukupno: number;
   readonly greska: string | null;
@@ -41,8 +43,12 @@ export type Pogon = {
    * Izmjereni vjetar stiže nakon što je crta izračunata na modelskom; sat
    * kojem se vjetar promijenio mora kroz radnike još jednom, inače karta
    * crta perjanicu vjetra kojega više nigdje ne piše.
+   *
+   * Kad crta dobije nove satove (prijelaz sata, osvježavanje otvorene
+   * kartice), `crta` zamjenjuje popis satova koje pogon prikazuje: bez toga
+   * bi novi sat ostao zauvijek „još se računa”, jer ga stari popis ne zna.
    */
-  osvjezi(svi: readonly SatSimulacije[], sati: readonly string[]): void;
+  osvjezi(svi: readonly SatSimulacije[], sati: readonly string[], crta?: readonly string[]): void;
   ugasi(): void;
 };
 
@@ -77,7 +83,12 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
   );
   const radnici: Worker[] = [];
   let svi = postavke.svi;
+  let crta = postavke.crta;
   const izracunati = new Set<string>();
+  // Satovi čija slika postoji, ali se računa iznova. Odvojeno od
+  // `izracunati`: brojka „n/28” inače pada na nulu pri svakom osvježavanju
+  // i kartica bi govorila „računam” dok slika stoji na zaslonu.
+  const zastarjeli = new Set<string>();
   // Zatraženo, ne izračunato: radnik posao obrađuje redom, pa bi ponovni
   // zahtjev za satom koji mu već stoji u redu značio da ga računa dvaput.
   const zatrazeni = new Set<string>();
@@ -86,8 +97,11 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
 
   function javiStanje(): void {
     postavke.onStanje({
-      gotovo: izracunati.size,
-      ukupno: postavke.crta.length,
+      // Broje se samo satovi koji su još na crti: sat koji je s nje ispao
+      // ne smije ni dizati ni spuštati brojku „n/28”.
+      gotovo: crta.filter((sat) => izracunati.has(sat)).length,
+      svjeze: crta.filter((sat) => izracunati.has(sat) && !zastarjeli.has(sat)).length,
+      ukupno: crta.length,
       greska,
     });
   }
@@ -102,6 +116,7 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
       const poruka = dogadaj.data;
       if (poruka.vrsta === "kadar") {
         izracunati.add(poruka.sat);
+        zastarjeli.delete(poruka.sat);
         postavke.onKadar(
           poruka.sat,
           poruka.sirina,
@@ -128,7 +143,7 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
 
   function trazi(odabrani: string): void {
     if (ugasen) return;
-    const preostali = redoslijed(postavke.crta, odabrani).filter(
+    const preostali = redoslijed(crta, odabrani).filter(
       (sat) => !zatrazeni.has(sat),
     );
     if (!preostali.length) {
@@ -160,11 +175,13 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
 
   return {
     trazi,
-    osvjezi: (noviSvi, sati) => {
+    osvjezi: (noviSvi, sati, novaCrta) => {
       if (ugasen) return;
       svi = noviSvi;
+      if (novaCrta) crta = novaCrta;
       for (const sat of sati) {
-        izracunati.delete(sat);
+        // Slika ostaje (`izracunati`), ali je zastarjela i sat se traži iznova.
+        if (izracunati.has(sat)) zastarjeli.add(sat);
         zatrazeni.delete(sat);
       }
       javiStanje();

@@ -46,7 +46,7 @@ const ISTEK_MS = 6000;
 
 // Bez dijakritike: zaglavlje HTTP-a nosi samo znakove do 255.
 const ZAGLAVLJA = {
-  "user-agent": "kvart (Karepovac air watch; +https://kvart-sage.vercel.app)",
+  "user-agent": "kvart (Karepovac air watch; +https://dracevac.vercel.app)",
 } as const;
 
 async function uzmi(

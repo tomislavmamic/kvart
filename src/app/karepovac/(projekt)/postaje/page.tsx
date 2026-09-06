@@ -10,14 +10,19 @@ import {
   VjetrokaziOkoKvarta,
 } from "@/components/karepovac/sluzbena-mjerenja";
 import { createPageMetadata } from "@/lib/metadata";
+import { PRIJEDLOZI_POSTAJA } from "@/lib/sim/prijedlozi-postaja";
+import { NAZIV_FAZE, trebaStanovnika } from "@/lib/ukljuci-se";
 
 export const metadata = createPageMetadata({
   title: "Postaje",
   description:
-    "Dvije službene postaje već stoje na Karepovcu i objavljuju satna mjerenja. Naših postaja još nema; ovdje piše kako biramo njihova mjesta i kako štitimo adresu stanovnika.",
+    "Dvije službene postaje već stoje na Karepovcu i objavljuju satna mjerenja. Naših postaja još nema; ovdje piše gdje ih predlažemo, kako biramo mjesta i kako štitimo adresu stanovnika.",
 });
 
 export default function PostajePage() {
+  const zaStanovnike = PRIJEDLOZI_POSTAJA.filter(trebaStanovnika);
+  const uFaziA = PRIJEDLOZI_POSTAJA.filter((s) => s.faza === "A").length;
+
   return (
     <div className="space-y-14">
       <PageIntro title="Dvije službene postaje već stoje na Karepovcu">
@@ -39,19 +44,52 @@ export default function PostajePage() {
         <VjetrokaziOkoKvarta />
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-kamen-rub bg-white lg:grid lg:grid-cols-[1.1fr_0.9fr]">
-        <StationField />
+      <section
+        aria-labelledby="nasih-postaja"
+        className="overflow-hidden rounded-2xl border border-kamen-rub bg-white lg:grid lg:grid-cols-[0.9fr_1.1fr]"
+      >
         <div className="flex flex-col justify-center bg-kamen-tinta p-6 text-white sm:p-9">
-          <p className="text-3xl font-bold tracking-[-0.025em]">Naših postaja: nijedna</p>
+          <p id="nasih-postaja" className="text-3xl font-bold tracking-[-0.025em]">
+            Naših postaja: nijedna
+          </p>
           <p className="mt-4 text-lg leading-8 text-zinc-300">
-            Obje službene postaje stoje na istoj točki, s druge strane odlagališta od kvarta. Zato i dalje trebamo vlastite uređaje — najmanje tri, raspoređena tako da mjere ondje gdje ljudi žive. Nećemo prikazivati izmišljene oznake samo da bi karta izgledala popunjeno.
+            Obje službene postaje stoje na istoj točki, s druge strane odlagališta
+            od kvarta. Zato i dalje trebamo vlastite uređaje — najmanje tri,
+            raspoređena tako da mjere ondje gdje ljudi žive. Predložili smo{" "}
+            {PRIJEDLOZI_POSTAJA.length} mjesta u tri faze; u prvoj ih je {uFaziA}.
+            Nećemo prikazivati izmišljene oznake samo da bi karta izgledala
+            popunjeno.
           </p>
           <Link
-            href="/karepovac/ukljuci-se"
+            href="/karepovac/sim?pri=1"
             className="fokus mt-7 inline-flex min-h-11 w-fit items-center justify-center rounded-lg border border-white/60 px-5 py-2.5 font-semibold text-white hover:bg-white/10"
           >
-            Što tražimo od lokacije
+            Predložena mjesta na karti →
           </Link>
+        </div>
+        <div className="p-6 sm:p-8">
+          <h3 className="text-xl font-bold text-kamen-tinta">Gdje tražimo mjesto</h3>
+          <p className="mt-2 text-base leading-7 text-kamen-tekst">
+            {zaStanovnike.length} od {PRIJEDLOZI_POSTAJA.length} predloženih postaja
+            traži dvorište, balkon ili krov stanovnika i struju iz kuće. Ostale
+            traže dogovor s ustanovom.
+          </p>
+          <ul className="mt-4 divide-y divide-kamen-tlo">
+            {zaStanovnike.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-4 py-3">
+                <span className="text-base leading-6">
+                  <span className="font-semibold text-kamen-tinta">{s.naziv}</span>
+                  <span className="block text-kamen-drugi">{NAZIV_FAZE[s.faza]}</span>
+                </span>
+                <Link
+                  href={`/karepovac/ukljuci-se?postaja=${s.id}#mogu-pomoci`}
+                  className="fokus inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-maslina px-4 font-semibold text-maslina-tamna hover:bg-maslina-vez"
+                >
+                  Ponudi mjesto
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -79,29 +117,6 @@ export default function PostajePage() {
           <p>Na karti ćemo prikazati samo približnu lokaciju. Ime, kontakt, kućna adresa, upute za pristup i točne koordinate bit će dostupni samo ljudima koji održavaju postaju.</p>
         </SectionHeading>
       </section>
-    </div>
-  );
-}
-
-function StationField() {
-  return (
-    <div className="relative min-h-[390px] overflow-hidden p-6 sm:p-8">
-      <svg aria-hidden="true" viewBox="0 0 560 390" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
-        <rect width="560" height="390" fill="#f4f4f5" />
-        <g fill="none" stroke="#d4d4d8" strokeWidth="1.5">
-          <path d="M0 78H560M0 156H560M0 234H560M0 312H560" />
-          <path d="M112 0V390M224 0V390M336 0V390M448 0V390" />
-        </g>
-        <circle cx="285" cy="190" r="58" fill="#ecfdf5" />
-        <circle cx="285" cy="190" r="23" fill="#007956" />
-        <path d="m285 247-15-43h30l-15 43Z" fill="#007956" />
-        <circle cx="285" cy="190" r="8" fill="white" />
-      </svg>
-      <div className="relative flex min-h-[326px] items-end justify-center">
-        <div className="rounded-full bg-white px-4 py-2 text-sm font-bold text-kamen-tinta shadow-[0_8px_20px_-8px_rgb(24_24_27/0.25)]">
-          Karepovac
-        </div>
-      </div>
     </div>
   );
 }

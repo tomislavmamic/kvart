@@ -11,6 +11,8 @@ const COPY_FILES = [
   "src/app/karepovac/(projekt)/layout.tsx",
   "src/app/karepovac/(projekt)/zrak/page.tsx",
   "src/app/karepovac/(projekt)/ukljuci-se/page.tsx",
+  "src/app/karepovac/(projekt)/ukljuci-se/obrazac.tsx",
+  "src/lib/ukljuci-se.ts",
   "src/app/karepovac/(projekt)/metodologija/page.tsx",
   "src/app/karepovac/(projekt)/podaci/page.tsx",
   "src/app/karepovac/(projekt)/financije/page.tsx",
@@ -156,6 +158,65 @@ test("model ne obećava kartu mirisa koju ne može potkrijepiti", () => {
   assert.match(zrak, /a ne koliko tada smrdi/);
   assert.match(karta, /najpouzdanije što model daje/);
   assert.match(karta, /model ne pogađa/);
+});
+
+test("uključivanje bilježi namjeru bez uplate i imenuje mjesta", () => {
+  const stranica = copyByPath["src/app/karepovac/(projekt)/ukljuci-se/page.tsx"];
+  const obrazac = copyByPath["src/app/karepovac/(projekt)/ukljuci-se/obrazac.tsx"];
+
+  // Prvi redak kaže što nije otvoreno i što se svejedno može.
+  assert.match(stranica, /Prijave i uplate nisu otvorene; namjeru možete javiti već sada/);
+  // Obrazac nije uplata; kontakt se ne objavljuje i piše zašto se traži.
+  assert.match(obrazac, /Ovo nije uplata ni obveza/);
+  assert.match(obrazac, /Kontakt nikad ne objavljujemo/);
+  assert.match(obrazac, /Zabilježeno\. Hvala\./);
+  // Onesposobljenih gumba više nema: ono što se ne može, piše se rečenicom.
+  assert.doesNotMatch(stranica, /disabled/);
+  assert.doesNotMatch(stranica, /Prijave još nisu otvorene/);
+  // Mjesta se imenuju iz popisa, ne prepisuju.
+  assert.match(stranica, /Gdje tražimo mjesto/);
+  assert.match(stranica, /Traže dogovor s ustanovom, ne stanovnika/);
+  assert.match(stranica, /\?postaja=\$\{s\.id\}/);
+  // Datuma nema: „što slijedi” to kaže umjesto da ga izmisli.
+  assert.match(stranica, /datuma za njega nemamo/);
+  // Popisi obećanja prije otvaranja ostaju od riječi do riječi — jednom,
+  // bez omotača koji su ih ponavljali (stranica je bila 11 zaslona).
+  assert.match(stranica, /Prije otvaranja prijava objavit ćemo/);
+  assert.match(stranica, /Prije otvaranja donacija objavit ćemo/);
+  assert.match(stranica, /račune i potvrde koje smijemo javno objaviti/);
+  assert.doesNotMatch(stranica, /Ponudite mjesto u vrtu ili na balkonu/);
+  assert.doesNotMatch(stranica, /Pomozite nam kupiti i održavati opremu/);
+  // Cijene se ne pripisuju #28 ni ovdje.
+  assert.doesNotMatch(stranica, /iz popisa #28/);
+});
+
+test("novac kaže obje istine: okvirna cijena opreme da, cilj i primatelj ne", () => {
+  const financije = copyByPath["src/app/karepovac/(projekt)/financije/page.tsx"];
+  assert.match(
+    financije,
+    /okvirna procjena opreme za\s+predložene postaje na karti simulatora, bez montaže; nije cilj\s+prikupljanja ni ponuda/,
+  );
+  // #28 je plan s grubljim zbrojevima po fazama, ne izvor brojki po stavci:
+  // brojke se ne pripisuju #28, i nema izmišljenih „kataloga”.
+  assert.doesNotMatch(financije, /iz popisa #28/);
+  assert.doesNotMatch(publicCopy, /katalo/i);
+  assert.match(financije, /A 3–6, B 1–2, C 2–10/);
+  assert.match(financije, /Ne pokrivaju montažu, umjeravanje, održavanje, vezu ni pričuvu/);
+  for (const stanje of ["Nije potvrđen", "Nije utvrđen", "Ne prati se"]) {
+    assert.match(financije, new RegExp(stanje), stanje);
+  }
+  // Pilula od 12 px koja nosi stanje stranice više ne postoji.
+  assert.doesNotMatch(financije, /Iznos nije potvrđen/);
+  assert.doesNotMatch(financije, /text-xs/);
+});
+
+test("postaje imenuju gdje se traži mjesto i ne crtaju ukras", () => {
+  const postaje = copyByPath["src/app/karepovac/(projekt)/postaje/page.tsx"];
+  assert.match(postaje, /Gdje tražimo mjesto/);
+  assert.match(postaje, /Ponudi mjesto/);
+  assert.doesNotMatch(postaje, /StationField/);
+  // Brojke dolaze iz popisa, ne iz rečenice.
+  assert.match(postaje, /PRIJEDLOZI_POSTAJA\.length/);
 });
 
 test("Karepovac paragraphs use at least one rem text", () => {

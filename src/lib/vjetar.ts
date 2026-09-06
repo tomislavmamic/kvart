@@ -202,7 +202,7 @@ const ISTEK_MS = 4000;
 // Bez dijakritike: zaglavlje HTTP-a nosi samo znakove do 255, pa bi „praćenje”
 // srušilo poziv prije nego što ode.
 const ZAGLAVLJA = {
-  "user-agent": "kvart (Karepovac air watch; +https://kvart-sage.vercel.app)",
+  "user-agent": "kvart (Karepovac air watch; +https://dracevac.vercel.app)",
 } as const;
 
 /**

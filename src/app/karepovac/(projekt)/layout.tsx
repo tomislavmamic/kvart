@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PreparationBadge } from "@/components/karepovac/project-components";
 import { KarepovacProjectNav } from "@/components/karepovac/project-nav";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -16,17 +17,31 @@ export const metadata = createPageMetadata({
  * FIRST VIEWPORT: status i objašnjenje lijevo, mirno polje s pinom Karepovca i dvije prazne evidencije desno.
  * FORM: javni zapisnik unutar postojećeg svijeta „Zemljovid i zapisnik”.
  * MJESTO: projekt praćenja zraka; u njega se ulazi s pregleda na /karepovac.
+ *
+ * Zaglavlje na mobitelu: povratak i značka u prvom redu, ime projekta u
+ * drugom, traka u trećem — tri niska reda umjesto jednog širokog, jer na
+ * 390 px povratak, značka i ime ne stanu jedno uz drugo, a povratak na
+ * pregled ne smije biti skriven na platformi na kojoj je primarni čitatelj.
  */
 export default function KarepovacLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="relative left-1/2 -ml-[50vw] -mt-8 w-screen bg-kamen-tlo pb-16">
-      <header className="border-b border-kamen-rub bg-white pt-7">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 pb-5">
+      <header className="border-b border-kamen-rub bg-white pt-2 sm:pt-7">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-3 sm:flex-nowrap sm:justify-between sm:pb-5">
+          <div className="order-1 flex w-full items-center justify-between gap-3 sm:order-2 sm:w-auto sm:justify-end">
+            <Link
+              href="/karepovac"
+              className="fokus inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-kamen-drugi underline decoration-kamen-rub decoration-2 underline-offset-4 hover:text-kamen-tinta"
+            >
+              ← Sve što pratimo
+            </Link>
+            <PreparationBadge />
+          </div>
           <Link
             href="/karepovac/zrak"
-            className="fokus flex items-center gap-3 rounded-lg"
+            className="fokus order-2 flex items-center gap-3 rounded-lg sm:order-1"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-maslina-vez text-maslina">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
@@ -43,22 +58,11 @@ export default function KarepovacLayout({
               <span className="block text-sm text-kamen-drugi">oko Karepovca</span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/karepovac"
-              className="fokus hidden rounded-md text-sm font-semibold text-kamen-drugi underline decoration-kamen-rub decoration-2 underline-offset-4 hover:text-kamen-tinta sm:inline-flex"
-            >
-              ← Sve što pratimo
-            </Link>
-            <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">
-              U pripremi
-            </span>
-          </div>
         </div>
         <KarepovacProjectNav />
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 pt-8 sm:pt-10">{children}</div>
+      <div className="mx-auto max-w-5xl px-4 pt-6 sm:pt-10">{children}</div>
     </div>
   );
 }

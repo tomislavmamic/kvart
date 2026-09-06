@@ -47,6 +47,22 @@ export function oznakaDojavitelja(): string | null {
   }
 }
 
+/**
+ * Vraća oznaku ako već postoji, a ne stvara novu.
+ *
+ * Za popis „vaše dojave”: sam posjet stranici ne smije preglednik obilježiti —
+ * oznaka nastaje tek kad netko nešto pošalje.
+ *
+ * @returns Postojeću oznaku, ili `null` kad je nema ili je nije moguće čitati.
+ */
+export function postojecaOznaka(): string | null {
+  try {
+    return localStorage.getItem(KLJUC);
+  } catch {
+    return null;
+  }
+}
+
 /** Briše oznaku; sljedeća dojava kreće kao nova osoba. */
 export function zaboraviDojavitelja(): void {
   try {

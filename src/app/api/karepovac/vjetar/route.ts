@@ -15,15 +15,31 @@
 import { zapisiZrakPoslije } from "@/lib/arhiva-zraka";
 import { satniVjetar } from "@/lib/vjetar-sat";
 
-/** Pet minuta, kao Neverinove postaje i stranica simulatora. */
-export const revalidate = 300;
+/**
+ * Odgovor se slaže pri svakom zahtjevu, kao i stranica simulatora: s
+ * `revalidate = 300` bio je ISR sa `stale-while-revalidate`, pa je prvi
+ * poziv nakon zatišja donosio jučerašnji „tekući sat”. Dohvati prema
+ * izvorima u `vjetar-sat.ts` nose svoj rok i ostaju u predmemoriji podataka.
+ */
+export const revalidate = 0;
+
+/**
+ * Koliko najmanje prolazi između dvaju upisa u arhivu iz ovog procesa.
+ *
+ * Simulator ovaj odgovor traži svakih pet minuta iz svake otvorene kartice,
+ * a odgovor se slaže po zahtjevu — bez ograde bi svaki posjetitelj pisao
+ * red u bazu. Pet minuta je rok kojim je arhiva i zamišljena (Neverinove
+ * postaje javljaju petominutno); kraće ne bi donijelo novo očitanje, jer
+ * ni predmemorija izvora nije kraća.
+ */
+const RAZMAK_UPISA_MS = 5 * 60_000;
 
 export async function GET(): Promise<Response> {
   const vjetar = await satniVjetar(new Date());
   const { vjetrovi, serije, sada } = vjetar;
   // Ovdje se izmjereni niz čeka do kraja, pa je ovo najbogatiji ulov za
   // arhivu: cijele serije po postaji, ne samo tekuće očitanje.
-  await zapisiZrakPoslije(sada, vjetar);
+  await zapisiZrakPoslije(sada, vjetar, { kljuc: "api-vjetar", razmakMs: RAZMAK_UPISA_MS });
 
   return Response.json(
     {

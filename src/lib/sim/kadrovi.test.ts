@@ -3,6 +3,9 @@ import test from "node:test";
 
 import {
   najbliziDostupan,
+  planZamjene,
+  pomakNakonZamjene,
+  pomakZaSat,
   SATI_UNAPRIJED,
   SATI_UNATRAG,
   SATI_ZALETA,
@@ -205,3 +208,83 @@ function satoviOko(vrh: string): string[] {
   }
   return sati;
 }
+
+test("stara crta i novi vrh sata: kadar s pomakom 0 na novoj crti je novi sat", () => {
+  // Kartica ostavljena otvorenom preko prijelaza sata: crta se slaže iznova
+  // za novi vrh, a sat koji je bio „sada” postaje „prije 1 h”.
+  const { vjetrovi, dubine } = puniNizovi();
+  const stara = slozCrtu(SADA, vjetrovi, dubine, new Map());
+  const noviVrh = new Date(SADA.getTime() + 3600000);
+  const noviSat = noviVrh.toISOString();
+  vjetrovi.set(noviSat, vjetar(noviSat, "split3"));
+  const nova = slozCrtu(noviVrh, vjetrovi, dubine, new Map());
+
+  assert.equal(nova.sada, noviSat);
+  assert.equal(nova.kadrovi.find((k) => k.pomak === 0)?.sat, noviSat);
+  assert.equal(nova.kadrovi.find((k) => k.pomak === 0)?.vrsta, "sada");
+  // Sat koji je bio „sada” sad je prošli i zadržava se po apsolutnom satu.
+  const bivsi = nova.kadrovi.find((k) => k.sat === stara.sada);
+  assert.equal(bivsi?.pomak, -1);
+  assert.equal(bivsi?.vrsta, "izmjereno");
+  assert.equal(pomakZaSat(nova, stara.sada), -1);
+});
+
+test("pomak iz ISO sata: na crti, izvan nje i za nečitljiv zapis", () => {
+  const { vjetrovi, dubine } = puniNizovi();
+  const crta = slozCrtu(SADA, vjetrovi, dubine, new Map());
+  assert.equal(pomakZaSat(crta, "2026-08-21T10:00:00.000Z"), -5);
+  assert.equal(pomakZaSat(crta, "2026-08-21T17:00:00.000Z"), 2);
+  // Ispao s crte: pomak je izvan raspona, pozivatelj ga svodi na najbliži.
+  assert.equal(pomakZaSat(crta, "2026-08-19T15:00:00.000Z"), -48);
+  assert.equal(najbliziDostupan(crta, -48)?.pomak, -SATI_UNATRAG);
+  assert.equal(pomakZaSat(crta, "-5"), null);
+  assert.equal(pomakZaSat(crta, "ne-vrijeme"), null);
+});
+
+test("nakon prijelaza sata tko prati „sada” ostaje na novom „sada”, tko je birao sat ostaje na svom satu", () => {
+  const { vjetrovi, dubine } = puniNizovi();
+  const stara = slozCrtu(SADA, vjetrovi, dubine, new Map());
+  const noviVrh = new Date(SADA.getTime() + 3600000);
+  const noviSat = noviVrh.toISOString();
+  vjetrovi.set(noviSat, vjetar(noviSat, "split3"));
+  const nova = slozCrtu(noviVrh, vjetrovi, dubine, new Map());
+
+  // Prati sadašnjost: „sada” je i dalje „sada”, ne „prije 1 h”.
+  assert.equal(pomakNakonZamjene(stara, nova, 0, true), 0);
+  // Odabrao je sadašnji sat sam (npr. poveznica): ostaje na tom satu.
+  assert.equal(pomakNakonZamjene(stara, nova, 0, false), -1);
+  // Odabrao je 5 h unatrag: isti apsolutni sat, sad 6 h unatrag.
+  assert.equal(pomakNakonZamjene(stara, nova, -5, true), -6);
+  assert.equal(pomakNakonZamjene(stara, nova, -5, false), -6);
+  // Sat koji je s crte ispao vodi na „sada”.
+  assert.equal(pomakNakonZamjene(stara, nova, -SATI_UNATRAG, false), 0);
+});
+
+test("plan zamjene zadržava slike satova koji se računaju iznova, a baca samo one koji su ispali", () => {
+  const { vjetrovi, dubine } = puniNizovi();
+  const stara = slozCrtu(SADA, vjetrovi, dubine, new Map());
+  // Nova crta sat poslije, s promijenjenim vjetrom u sadašnjem satu.
+  const noviVrh = new Date(SADA.getTime() + 3600000);
+  const noviSat = noviVrh.toISOString();
+  vjetrovi.set(noviSat, vjetar(noviSat, "split3"));
+  vjetrovi.set(SADA.toISOString(), { ...vjetar(SADA.toISOString()), smjerOd: 250 });
+  // Nova crta seže sat dalje u prognozu: taj sat na staroj nije postojao.
+  const noviPrognozirani = new Date(SADA.getTime() + 4 * 3600000).toISOString();
+  vjetrovi.set(noviPrognozirani, vjetar(noviPrognozirani, "model"));
+  dubine.set(noviPrognozirani, 80);
+  const nova = slozCrtu(noviVrh, vjetrovi, dubine, new Map());
+
+  const slike = new Set(stara.kadrovi.map((k) => k.sat));
+  const plan = planZamjene(stara, nova, slike, 3);
+  assert.ok(plan.zaRacun.includes(SADA.toISOString()), "promijenjeni sat ide na račun");
+  for (const sat of plan.zaRacun) assert.ok(plan.zadrzati.has(sat), `slika ${sat} ostaje dok nova ne stigne`);
+  assert.deepEqual(plan.izbaciti, [stara.kadrovi[0].sat], "ispao je samo najstariji sat");
+  assert.equal(plan.imaNovih, true, "sat +4 h je nov");
+  assert.ok(!plan.zadrzati.has(stara.kadrovi[0].sat));
+
+  // Ista crta, isti vjetar: ništa se ne računa i ništa ne baca.
+  const prazan = planZamjene(stara, stara, slike, 3);
+  assert.deepEqual(prazan.zaRacun, []);
+  assert.deepEqual(prazan.izbaciti, []);
+  assert.equal(prazan.imaNovih, false);
+});

@@ -4,11 +4,13 @@ import test from "node:test";
 import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
 
 import {
+  adresaPomoci,
   cijenaFaze,
   IZVOR_PLOHE,
   obodPodrucja,
   opisPodrucja,
   PRIJEDLOZI_POSTAJA,
+  prijedlogIzAdrese,
 } from "./prijedlozi-postaja";
 
 test("svi prijedlozi leže u okviru simulatora i imaju jedinstvene oznake", () => {
@@ -103,4 +105,13 @@ test("početni pogled simulatora obuhvaća svaku predloženu postaju", async () 
       `${p.id} je izvan početnog kadra`,
     );
   }
+});
+
+test("adresa pomoći vodi na obrazac za baš tu postaju, a prijedlog se čita iz adrese", () => {
+  const prvi = PRIJEDLOZI_POSTAJA[0];
+  assert.equal(adresaPomoci(prvi), `/karepovac/ukljuci-se?postaja=${prvi.id}#mogu-pomoci`);
+  assert.equal(prijedlogIzAdrese(prvi.id), prvi);
+  assert.equal(prijedlogIzAdrese("nepoznata-postaja"), null);
+  assert.equal(prijedlogIzAdrese(null), null);
+  assert.equal(prijedlogIzAdrese(""), null);
 });

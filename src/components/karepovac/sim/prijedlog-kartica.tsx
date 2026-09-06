@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 import {
+  adresaPomoci,
   cijenaFaze,
   opisPodrucja,
   type PrijedlogPostaje,
@@ -15,6 +18,12 @@ import {
  * od kartica situacije (obrub crtkan, kao i oznaka na karti): ništa na njoj
  * ne tvrdi da nešto već mjeri. Cijene su okvirne, za opremu bez montaže, i
  * tako i piše.
+ *
+ * Jedina radnja na kartici vodi **unutar** stranice, na `/karepovac/ukljuci-se`
+ * s oznakom postaje: tko je pročitao „2 500–4 000 €, faza A” i želi ustupiti
+ * dvorište ili platiti, ne smije završiti na GitHubu u novoj kartici bez puta
+ * natrag. Prvi plan (#28), iz kojega je popis izrastao, ostaje kao sporedna
+ * poveznica — popis je otad dulji od njega.
  */
 
 const FAZA: Readonly<Record<PrijedlogPostaje["faza"], string>> = {
@@ -41,14 +50,23 @@ export function PrijedlogKartica({
       aria-label="Predložena mjerna postaja"
       // Kartica je dugačka; iznad crte sati smije zauzeti najviše pola
       // zaslona, ostatak se lista unutar nje.
-      className="pointer-events-auto max-h-[52vh] w-full overflow-y-auto rounded-lg border border-dashed border-maslina/60 bg-white/92 text-zinc-900 shadow-sm backdrop-blur-sm"
+      // Zaglavlje i radnja ne klize: opis se lista između njih, pa „Mogu pomoći”
+      // stoji na telefonu vidljivo i kad je kartica dulja od pola zaslona.
+      // 45 vh: ispod nje ostaje traka sati, a iznad nje na telefonu stoji
+      // samo redak sa satom (kartica situacije se skupi dok je ova otvorena).
+      className="pointer-events-auto flex max-h-[45vh] w-full flex-col rounded-lg border border-dashed border-maslina/60 bg-white/92 text-zinc-900 shadow-sm backdrop-blur-sm"
     >
-      <div className="flex items-start gap-2 px-3 pt-2.5">
+      <div className="flex shrink-0 items-start gap-2 px-3 pt-2.5">
         <div className="min-w-0 flex-1">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-maslina-tamna">
             Predložena postaja · {FAZA[prijedlog.faza]}
           </div>
           <h2 className="mt-0.5 text-base font-bold leading-tight">{prijedlog.naziv}</h2>
+          {/* Cijena odmah pod naslovom: to je molba, i vidi se prije listanja. */}
+          <div className="text-[13px] text-zinc-800">
+            <b>{eur(prijedlog.cijena[0], prijedlog.cijena[1])}</b>
+            <span className="text-zinc-500"> oprema, bez montaže</span>
+          </div>
           <div className="text-[13px] text-zinc-600">{prijedlog.mjesto}</div>
           <div className="text-[13px] text-zinc-700">Mjerila bi: {prijedlog.mjeri}</div>
         </div>
@@ -64,7 +82,7 @@ export function PrijedlogKartica({
         </button>
       </div>
 
-      <dl className="px-3 pt-2 text-[12px] leading-5 text-zinc-800">
+      <dl className="min-h-0 overflow-y-auto px-3 pt-2 text-[12px] leading-5 text-zinc-800">
         <dt className="font-semibold">Što i kako</dt>
         <dd>
           <ul className="list-disc pl-4">
@@ -103,16 +121,27 @@ export function PrijedlogKartica({
         <dd>{prijedlog.uvjeti}</dd>
       </dl>
 
-      <div className="mt-2 flex items-center justify-between border-t border-zinc-200 px-3 py-2 text-[12px]">
+      {/* Radnja: mjesto, znanje ili novac za baš ovu postaju. Pilula je
+          maslina jer je to jedina radnja na kartici; prvi plan (#28) je za one koji
+          žele tehnički tekst. */}
+      <div className="mt-2 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-zinc-200 px-3 py-2 text-[12px]">
         <span className="text-zinc-500">Pribadača je prijedlog; vrijedi cijelo osjenčano područje.</span>
-        <a
-          href={ZAHTJEV_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="fokus -my-2 inline-flex min-h-11 items-center font-semibold text-maslina-tamna underline underline-offset-2 hover:text-maslina-noc"
-        >
-          Cijeli popis (#28)
-        </a>
+        <div className="flex w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
+          <a
+            href={ZAHTJEV_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="fokus -my-2 inline-flex min-h-11 items-center text-zinc-600 underline underline-offset-2 hover:text-zinc-900"
+          >
+            Prvi plan (#28)
+          </a>
+          <Link
+            href={adresaPomoci(prijedlog)}
+            className="fokus inline-flex min-h-11 items-center rounded-full bg-maslina px-3.5 text-sm font-semibold text-white hover:bg-maslina-tamna"
+          >
+            Mogu pomoći s ovom postajom
+          </Link>
+        </div>
       </div>
     </section>
   );

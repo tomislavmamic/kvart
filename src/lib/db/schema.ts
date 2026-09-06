@@ -282,6 +282,42 @@ export const mixingReadings = pgTable(
   ],
 );
 
+/**
+ * Ponuda pomoći za mjerne postaje: mjesto, znanje ili novac kad se otvori.
+ *
+ * Prijave i donacije nisu otvorene i ova tablica to ne mijenja: u njoj nema
+ * ni iznosa ni obveze, samo tko je rekao „mogu” i za što. Kad projekt dobije
+ * voditelja i primatelja, ovo je popis kome se prvo javiti — i jedini razlog
+ * zbog kojeg se namjera bilježi prije nego što se išta može platiti.
+ *
+ * Kontakt je unutarnji. Nikad se ne prikazuje, ne zbraja i ne izvozi javno;
+ * vidi ga samo tko vodi projekt, i to piše uz polje u obrascu. Prazan je
+ * dopušten: ponuda bez kontakta i dalje vrijedi kao znak da mjesto postoji,
+ * samo se toj osobi nemamo kako javiti.
+ *
+ * IP se ne pamti: ograničenje po IP-u (`checkRateLimit`) živi u memoriji, kao
+ * kod dojava mirisa, a podatak koji se ne prikupi ne može ni procuriti.
+ */
+export const helpPledges = pgTable(
+  "help_pledges",
+  {
+    id: serial("id").primaryKey(),
+    /** Vrste pomoći s popisa `VRSTE_POMOCI` (`src/lib/ukljuci-se.ts`); barem jedna. */
+    kinds: text("kinds").array().notNull().default([]),
+    /** `id` iz `PRIJEDLOZI_POSTAJA`, kad se ponuda odnosi na određenu postaju. */
+    stationId: text("station_id"),
+    /** Ulica ili dio naselja, kako ga je ponuditelj napisao; bez kućnog broja ako ne želi. */
+    area: text("area"),
+    /** E-pošta ili telefon; samo za onoga tko vodi projekt. */
+    contact: text("contact"),
+    message: text("message"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("help_pledges_station_idx").on(table.stationId)],
+);
+
 export const proposalsRelations = relations(proposals, ({ many }) => ({
   statusUpdates: many(statusUpdates),
   documents: many(documents),
@@ -308,3 +344,4 @@ export type DocumentRow = typeof documents.$inferSelect;
 export type OdourReport = typeof odourReports.$inferSelect;
 export type WindReading = typeof windReadings.$inferSelect;
 export type MixingReading = typeof mixingReadings.$inferSelect;
+export type HelpPledge = typeof helpPledges.$inferSelect;

@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
 
-import { adresaDojave, imeTocke, razinaUTocki, tockaIzAdrese, udaljenostM } from "./tocka";
+import { adresaDojave, adresaDojaveZaSat, imeTocke, razinaUTocki, tockaIzAdrese, udaljenostM } from "./tocka";
 
 const PLOHA = SIM_POLJE.izvor;
 
@@ -15,6 +15,12 @@ test("točka blizu naselja dobiva ime naselja, dalje smjer i udaljenost od plohe
 
 test("adresa dojave nosi mjesto zaokruženo na četiri decimale, i čita se natrag", () => {
   assert.equal(adresaDojave({ lat: 43.527789, lng: 16.50401 }), "/karepovac/dojava?lat=43.5278&lng=16.504");
+  // Sat koji se gleda putuje s mjestom: dojava opisuje ono što je na karti.
+  assert.equal(
+    adresaDojave({ lat: 43.527789, lng: 16.50401 }, "2026-09-04T21:00:00.000Z"),
+    "/karepovac/dojava?lat=43.5278&lng=16.504&sat=2026-09-04T21%3A00%3A00.000Z",
+  );
+  assert.equal(adresaDojaveZaSat("2026-09-04T21:00:00.000Z"), "/karepovac/dojava?sat=2026-09-04T21%3A00%3A00.000Z");
   assert.deepEqual(tockaIzAdrese("43.5278,16.504"), { lat: 43.5278, lng: 16.504 });
   assert.equal(tockaIzAdrese("x"), null);
 });

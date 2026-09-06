@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { beforeEach } from "node:test";
 
-import { oznakaDojavitelja, zaboraviDojavitelja } from "./dojavitelj";
+import { oznakaDojavitelja, postojecaOznaka, zaboraviDojavitelja } from "./dojavitelj";
 
 /** Najmanji `localStorage` koji provjerama treba. */
 function lazniSpremnik(pukni = false) {
@@ -48,4 +48,13 @@ test("preglednik bez spremnika šalje dojavu bez oznake, umjesto da pukne", () =
   (globalThis as { localStorage?: unknown }).localStorage = lazniSpremnik(true);
   assert.equal(oznakaDojavitelja(), null);
   assert.doesNotThrow(() => zaboraviDojavitelja());
+});
+
+test("čitanje oznake za „vaše dojave” ne stvara je — posjet ne obilježava preglednik", () => {
+  assert.equal(postojecaOznaka(), null, "prije prve dojave nema oznake");
+  assert.equal(postojecaOznaka(), null, "ni drugo čitanje je ne stvara");
+  const stvorena = oznakaDojavitelja();
+  assert.equal(postojecaOznaka(), stvorena, "poslije dojave čita istu");
+  zaboraviDojavitelja();
+  assert.equal(postojecaOznaka(), null, "poslije brisanja je opet nema");
 });

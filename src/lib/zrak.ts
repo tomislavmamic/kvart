@@ -127,7 +127,9 @@ export async function pripremiZrak(): Promise<ZrakZaKartu> {
     satniVjetar(sada, 1, 1, 3000).catch(() => null),
   ]);
   // Sve što je upravo dohvaćeno ide i u arhivu — iza odgovora, ne pred njim.
-  await zapisiZrakPoslije(zrak, vjetar);
+  // Stranica se slaže po zahtjevu, pa ograda drži upis na rok kojim je
+  // arhiva zamišljena (petnaest minuta, koliko i predmemorija izvora).
+  await zapisiZrakPoslije(zrak, vjetar, { kljuc: "karepovac-pregled", razmakMs: 15 * 60_000 });
   if (!vjetar) return slozi(zrak);
   const satni = vjetar.vjetrovi.get(vrhSata(sada).toISOString());
   const stanje: StanjeZraka = satni
