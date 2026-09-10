@@ -40,6 +40,8 @@ import * as THREE from "three";
 import { MIRISNI_RASPON, PRAG_NA_LJESTVICI, TVARI, type Tvar, ljestvicaBoja } from "@/lib/dim";
 import { bojaZa, SIDRO_SIMULATORA } from "@/lib/sim/ljestvica";
 import { PROZOR } from "@/lib/sim/zapis-gustoce";
+import { SIRINA_RUBA } from "@/lib/sim/rub-prikaza";
+import { stvoriOs, prosiriGranice } from "@/lib/sim/obuhvat";
 import type { Osnove } from "@/lib/sim/polje";
 import type { Podloga } from "@/components/karepovac/sim/sim-karta";
 import { stvoriTragove, type Tragovi } from "@/components/karepovac/sim/tragovi";
@@ -75,6 +77,7 @@ export type Scena = {
     sirina: number,
     visina: number,
     prijelazMs?: number,
+    obuhvat?: number,
   ): void;
   /**
    * Koliko je sat nagađanje: 0 za izmjeren ili sadašnji, do 1 za najdalju
@@ -82,7 +85,7 @@ export type Scena = {
    */
   postaviNesigurnost(nesigurnost: number): void;
   /** Postavlja polje vjetra za odabrani sat, u m/s po ćeliji. */
-  postaviVjetar(vx: Float32Array, vy: Float32Array, gw: number, gh: number): void;
+  postaviVjetar(vx: Float32Array, vy: Float32Array, gw: number, gh: number, pozadina?: readonly [number, number]): void;
   postaviPrikaz(postavke: PostavkePrikaza): void;
   /** Podloga ne mijenja ništa u računu, ali mijenja boju kojom se tragovi vide. */
   postaviPodlogu(podloga: Podloga): void;
@@ -113,9 +116,12 @@ export function pomakLjestvice(tvar: Tvar, jacina: number): number {
 }
 
 const VRHOVI = /* glsl */ `
+  attribute vec2 okvir;
+  varying vec2 vOkvir;
   varying vec2 vUv;
   void main() {
     vUv = uv;
+    vOkvir = okvir;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -123,6 +129,7 @@ const VRHOVI = /* glsl */ `
 const PIKSELI = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
+  varying vec2 vOkvir;
 
   uniform sampler2D uGustoca;
   uniform sampler2D uGustocaB;
@@ -185,8 +192,8 @@ const PIKSELI = /* glsl */ `
     // Rub okvira nije rub perjanice nego rub onoga što je izračunato. Oštar
     // rez ondje čita se kao „dalje je čisto”, što nije istina — zrak ide
     // dalje, samo ga polje više ne prati. Zato se pri rubu gasi postupno.
-    vec2 doRuba = min(vUv, 1.0 - vUv);
-    float rub = smoothstep(0.0, 0.045, min(doRuba.x, doRuba.y));
+    vec2 doRuba = min(vOkvir, 1.0 - vOkvir);
+    float rub = smoothstep(0.0, ${SIRINA_RUBA}, min(doRuba.x, doRuba.y));
 
     if (uNesigurnost > 0.0) {
       // Prognoza: sivlja i bljeđa, a pojas ispod praga prošaran kosim
@@ -233,16 +240,21 @@ function lutTekstura(kljuc: string, tvar: Tvar): THREE.DataTexture {
  * Returns:
  *   Geometrija s pravim položajem svakog vrha i teksturnim koordinatama.
  */
-function geometrijaPerjanice(granice: Osnove["granice"]): THREE.BufferGeometry {
-  const geo = new THREE.PlaneGeometry(1, 1, PODJELA, PODJELA);
+function geometrijaPerjanice(granice: Osnove["granice"], obuhvat?: number): THREE.BufferGeometry {
+  const os = obuhvat ? stvoriOs(obuhvat) : null;
+  const podjela = os ? 128 : PODJELA;
+  const geo = new THREE.PlaneGeometry(1, 1, podjela, podjela);
   const polozaji = geo.attributes.position as THREE.BufferAttribute;
   const uv = geo.attributes.uv as THREE.BufferAttribute;
+  const okvir = new THREE.Float32BufferAttribute(new Float32Array(uv.count * 2), 2);
+  geo.setAttribute("okvir", okvir);
   for (let i = 0; i < polozaji.count; i += 1) {
     const u = uv.getX(i);
     const v = uv.getY(i);
-    const lon = granice.zapad + u * (granice.istok - granice.zapad);
+    okvir.setXY(i, os ? 0.5 + (os.polozaj(u) - 0.5) / obuhvat! : u, os ? 0.5 + (os.polozaj(v) - 0.5) / obuhvat! : v);
+    const lon = granice.zapad + (os ? os.polozaj(u) : u) * (granice.istok - granice.zapad);
     // `v` raste prema vrhu pravokutnika, a redak 0 teksture je sjeverni rub.
-    const lat = granice.jug + v * (granice.sjever - granice.jug);
+    const lat = granice.jug + (os ? os.polozaj(v) : v) * (granice.sjever - granice.jug);
     const m = MercatorCoordinate.fromLngLat({ lng: lon, lat }, 0);
     polozaji.setXYZ(i, m.x, m.y, 0);
     uv.setXY(i, u, 1 - v);
@@ -345,9 +357,16 @@ export function stvoriSlojPerjanice(
   let nesigurnost = 0;
   /** Je li ikad postavljena prava slika; prvi sat nema iz čega pretapati. */
   let imaSliku = false;
+  let obuhvatPrikaza: number | undefined;
 
   const upravljac: Scena = {
-    postaviGustocu(bajtovi, bajtoviMerkaptana, sirina, visina, prijelazMs = 0) {
+    postaviGustocu(bajtovi, bajtoviMerkaptana, sirina, visina, prijelazMs = 0, obuhvat) {
+      if (obuhvat !== obuhvatPrikaza && sirina > 1) {
+        obuhvatPrikaza = obuhvat;
+        perjanica.geometry.dispose();
+        perjanica.geometry = geometrijaPerjanice(osnove.granice, obuhvat);
+        imaSliku = false;
+      }
       const staraA = uniforme.uGustoca.value as THREE.DataTexture;
       const staraB = uniforme.uGustocaB.value as THREE.DataTexture;
       (uniforme.uPrije.value as THREE.DataTexture).dispose();
@@ -382,10 +401,10 @@ export function stvoriSlojPerjanice(
       if (!prijelaz) uniforme.uNesigurnost.value = nesigurnost;
       karta?.triggerRepaint();
     },
-    postaviVjetar(vx, vy, gw, gh) {
+    postaviVjetar(vx, vy, gw, gh, pozadina) {
       // Pri mirovanju se roj ne miče sam od sebe, pa mu se novi sat mora
       // uvesti sjetvom — inače bi tragovi ostali oni iz prošloga.
-      tragovi.postaviPolje(vx, vy, gw, gh, mirovanje);
+      tragovi.postaviPolje(vx, vy, gw, gh, mirovanje, pozadina);
       karta?.triggerRepaint();
     },
     postaviPrikaz(postavke) {
@@ -474,19 +493,22 @@ export function stvoriSlojPerjanice(
       }
 
       if (tragovi.objekt.visible) {
+        const pogled = karta?.getBounds();
+        if (pogled) {
+          tragovi.postaviObuhvat(prosiriGranice(osnove.granice, obuhvatPrikaza ?? 3), {
+            zapad: pogled.getWest(), istok: pogled.getEast(), jug: pogled.getSouth(), sjever: pogled.getNorth(),
+          });
+        }
         // Debljina poteza mora ostati ista u pikselima, pa sloj svaku sliku
         // dobiva veličinu platna; iz nje se izvodi i koliko se čestica nosi.
         const platno = renderer.getContext().canvas;
-        // Broj čestica ide po tome koliko okvir polja zauzima zaslona, a ne
-        // koliko ga zauzima prozor: pri zadanom pogledu okvir je manji od
-        // trećine karte.
-        const sz = karta?.project([osnove.granice.zapad, osnove.granice.sjever]);
-        const ji = karta?.project([osnove.granice.istok, osnove.granice.jug]);
+        const omjer = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
         tragovi.postaviPogled(
           platno.width,
           platno.height,
-          typeof window === "undefined" ? 1 : window.devicePixelRatio || 1,
-          sz && ji ? Math.abs(ji.x - sz.x) * Math.abs(ji.y - sz.y) : 0,
+          omjer,
+          platno.width * platno.height / (omjer * omjer),
+          karta?.getZoom() ?? 12,
         );
         if (!mirovanje && dt > 0) {
           tragovi.korak(dt);

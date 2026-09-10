@@ -15,7 +15,7 @@
  */
 
 import { razloziOsnove, type Osnove } from "@/lib/sim/polje";
-import { odradiSatove, zaSat, type SatSimulacije } from "@/lib/sim/simulacija";
+import { odradiSatove, obuhvatZaSatove, POSTAVKE_SIMULATORA, zaSat, type SatSimulacije } from "@/lib/sim/simulacija";
 
 export type ZadatakRacunala = {
   readonly vrsta: "racunaj";
@@ -30,6 +30,7 @@ export type ZadatakRacunala = {
 export type OdgovorRacunala =
   | {
       readonly vrsta: "kadar";
+      readonly obuhvat: number;
       readonly sat: string;
       readonly sirina: number;
       readonly visina: number;
@@ -50,13 +51,15 @@ self.onmessage = (dogadaj: MessageEvent<ZadatakRacunala>) => {
   try {
     if (zadatak.osnove) osnove = razloziOsnove(zadatak.osnove);
     if (!osnove) throw new Error("Osnove polja nisu stigle");
+    const obuhvat = obuhvatZaSatove(zadatak.svi, osnove);
 
     for (const sat of zadatak.moji) {
       const satovi = zaSat(zadatak.svi, sat);
       if (!satovi.length) continue;
-      const slika = odradiSatove(satovi, osnove);
+      const slika = odradiSatove(satovi, osnove, { ...POSTAVKE_SIMULATORA, prosireniPrikaz: obuhvat });
       const odgovor: OdgovorRacunala = {
         vrsta: "kadar",
+        obuhvat,
         sat: slika.sat,
         sirina: slika.sirina,
         visina: slika.visina,

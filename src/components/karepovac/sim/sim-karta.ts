@@ -25,9 +25,6 @@
  * jednoga kvarta pa u to stane — ali kao zadana podloga za sve posjete ne bi
  * bila u redu.
  *
- * Zajedničko s `/karta` ostaje ono što i treba: iste adrese ortofota i
- * reljefa i isti navodi izvora, pa se dvije karte istoga kvarta ne mogu
- * razići u tome što pokazuju.
  */
 
 import type { Map as MapaLibre, StyleSpecification } from "maplibre-gl";
@@ -38,24 +35,6 @@ import { SIM_POSTAJE } from "@/lib/sim/postaje-satno";
 
 /** Ploha je u sredini; okvir je onaj za koji je polje vjetra izračunato. */
 export const SREDISTE: [number, number] = [SIM_POLJE.izvor.lon, SIM_POLJE.izvor.lat];
-
-/**
- * Dokle se karta smije odmaknuti.
- *
- * Šire od polja vjetra namjerno: gledatelj smije pogledati gdje je Split, ali
- * perjanica se ondje više ne crta i to se vidi jer prestaje na rubu okvira.
- * Bez granice bi se karta dala odvući na Jadran, pa bi „vrati na Karepovac”
- * bio jedini put natrag.
- */
-export const NAJVECI_OBUHVAT: [number, number, number, number] = [
-  // Dovoljno široko da se odzumiranjem vide i postaje vjetra: najdalja je
-  // zračna luka, 16 km zapadno. Perjanica se ondje više ne crta i to se vidi
-  // jer prestaje na rubu okvira — ali barem je vidljivo odakle vjetar dolazi.
-  16.24,
-  43.44,
-  SIM_POLJE.granice.istok + 0.05,
-  SIM_POLJE.granice.sjever + 0.04,
-];
 
 /**
  * Početni pogled: okvir polja, s plohom u sredini, proširen do svih prijedloga.
@@ -84,12 +63,10 @@ const NAVODI = {
   openfreemap: "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors",
   osm: "© OpenStreetMap contributors",
   dof: "DOF 2024 © Državna geodetska uprava (Otvorena dozvola)",
-  dmr: "DMR iz LiDAR-a © Državna geodetska uprava (Otvorena dozvola)",
-  grad: "Objekti © Grad Split (GIS izvoz)",
+  reljef: 'Reljef © Mapzen · <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Copernicus / EU-DEM, USGS, NOAA</a>',
 } as const;
 
-/** Sjenčani reljef postoji do z17; dalje se rasteže isti podatak. */
-const RELJEF_NAJVECI_Z = 17;
+const RELJEF_NAJVECI_Z = 15;
 
 /** Koliko se čeka na stil prije nego se posegne za rezervom. */
 const ISTEK_STILA_MS = 6000;
@@ -174,11 +151,12 @@ export function dodajSlojeveSimulatora(karta: MapaLibre): void {
     attribution: NAVODI.dof,
   });
   dodajIzvor("reljef", {
-    type: "raster",
-    tiles: ["/geo/reljef/{z}/{x}/{y}.png"],
+    type: "raster-dem",
+    tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+    encoding: "terrarium",
     tileSize: 256,
     maxzoom: RELJEF_NAJVECI_Z,
-    attribution: NAVODI.dmr,
+    attribution: NAVODI.reljef,
   });
   dodajIzvor("postaje", {
     type: "geojson",
@@ -202,12 +180,17 @@ export function dodajSlojeveSimulatora(karta: MapaLibre): void {
   dodajSloj({ id: "ortofoto", type: "raster", source: "ortofoto", layout: { visibility: "none" } });
   dodajSloj({
     id: "reljef",
-    type: "raster",
+    type: "hillshade",
     source: "reljef",
     layout: { visibility: "none" },
     // Reljef ide preko podloge kao sjena, da se ispod njega i dalje vide
     // ulice; pun bi ih prekrio i karta bi ostala bez imena.
-    paint: { "raster-opacity": 0.55 },
+    paint: {
+      "hillshade-exaggeration": 0.35,
+      "hillshade-shadow-color": "#52525c",
+      "hillshade-highlight-color": "#ffffff",
+      "hillshade-accent-color": "#71717b",
+    },
   });
   dodajSloj({
     id: "ploha-obris",
@@ -238,35 +221,25 @@ export const SLOJEVI_POSTAJA = [
   },
 ];
 
-/**
- * Zgrade se dodaju tek kad ih netko zatraži.
- *
- * Sloj je 2,3 MB obrisa za cijeli okvir. Dok je stajao u početnom stilu,
- * karta ga je čekala prije nego što javi da je spremna — a to znači da su i
- * perjanica i postaje čekale megabajte koje većina posjetitelja nikad ne
- * upali. Ovako se skidaju samo ako se traže, i ništa ne drže.
- *
- * Args:
- *   karta: Karta na koju se sloj dodaje.
- *
- * Returns:
- *   Ništa; ako sloj već postoji, ne radi se ništa.
- */
 export function dodajZgrade(karta: MapaLibre): void {
-  if (karta.getSource("zgrade")) return;
-  karta.addSource("zgrade", {
-    type: "geojson",
-    data: "/karepovac/sim-zgrade.geojson",
-    attribution: NAVODI.grad,
-  });
+  if (karta.getLayer("zgrade")) return;
+  const izvor = karta.getSource("openmaptiles") ? "openmaptiles" : "zgrade";
+  if (!karta.getSource(izvor)) {
+    karta.addSource(izvor, {
+      type: "vector",
+      url: "https://tiles.openfreemap.org/planet",
+      attribution: NAVODI.openfreemap,
+    });
+  }
   karta.addLayer(
     {
       id: "zgrade",
       type: "fill",
-      source: "zgrade",
+      source: izvor,
+      "source-layer": "building",
+      minzoom: 12,
       paint: { "fill-color": "#3f3a34", "fill-opacity": 0.35 },
     },
-    // Ispod obrisa plohe i perjanice, da zgrade ne prekriju ono što se gleda.
     karta.getLayer("ploha-obris") ? "ploha-obris" : undefined,
   );
 }

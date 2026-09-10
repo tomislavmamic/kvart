@@ -152,6 +152,7 @@ export function slozi(stanje: StanjeZraka, osnove: Osnove): SirovoPolje {
     vy: by,
     maska: osnove.maska,
     dubina: stanje.dubina,
+    pozadina: [cx, -cy],
     ...(osnove.drenaza ? { drenaza: osnove.drenaza } : {}),
   };
 }

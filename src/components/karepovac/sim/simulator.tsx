@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { SimIkona } from "./sim-ikona";
+import "./sim-ui.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Bez ovoga karta ostane siva ploha: MapLibre iz stilskog lista uzima veličinu
@@ -12,39 +14,30 @@ import { SIM_POLJE } from "@/generated/karepovac-sim-polje";
 import { primijeniVjetar } from "@/lib/sim/dohvat";
 import type { Crta } from "@/lib/sim/kadrovi";
 import { najbliziDostupan, planZamjene, pomakNakonZamjene, pomakZaSat } from "@/lib/sim/kadrovi";
-import { satMjesno, zastarjela } from "@/lib/sim/oznaka-sata";
-import { bojaZa, jacinaURasponu, SIDRO_SIMULATORA, ZADANA_BOJA } from "@/lib/sim/ljestvica";
+import { opisIzvoraSataKratko, satMjesno, zastarjela } from "@/lib/sim/oznaka-sata";
+import { jacinaURasponu, SIDRO_SIMULATORA, ZADANA_BOJA } from "@/lib/sim/ljestvica";
 import { pokreniPogon, type Pogon, type StanjePogona } from "@/lib/sim/pogon";
 import { razloziOsnove, slozi, type Osnove } from "@/lib/sim/polje";
 import { crtaScenarija, jeScenarij } from "@/lib/sim/scenariji";
 import { ZALET_SATI, type SatSimulacije } from "@/lib/sim/simulacija";
-import {
-  izvediSituaciju,
-  ocijeniPodrucja,
-  ukupnaRazina,
-  type Razina,
-  type Situacija,
-  type SusjedniSat,
-} from "@/lib/sim/situacija";
 import { vrhSata, type SatniVjetar } from "@/lib/sim/vrijeme-satno";
 import type { Postaja, Vjetar } from "@/lib/vjetar";
 import { zapisiGustocu } from "@/lib/sim/zapis-gustoce";
 import {
   dodajSlojeveSimulatora,
   dodajZgrade,
-  NAJVECI_OBUHVAT,
   POCETNI_OBUHVAT,
   PODLOGE,
   ucitajStil,
 } from "@/components/karepovac/sim/sim-karta";
 import type { PostavkePrikaza, Scena } from "@/components/karepovac/sim/sim-scena";
 import { stvoriOznake, type Oznake } from "@/components/karepovac/sim/oznake";
-import { SituacijaKartica, type Osvjezavanje } from "@/components/karepovac/sim/situacija-kartica";
-import { TockaKartica } from "@/components/karepovac/sim/tocka-kartica";
+import type { Osvjezavanje } from "@/components/karepovac/sim/situacija-kartica";
+import { LegendaTvari } from "@/components/karepovac/sim/legenda-tvari";
 import { PrijedlogKartica } from "@/components/karepovac/sim/prijedlog-kartica";
 import { stvoriPrijedloge, type Prijedlozi } from "@/components/karepovac/sim/prijedlozi";
 import { prijedlogIzAdrese, type PrijedlogPostaje } from "@/lib/sim/prijedlozi-postaja";
-import { izvediTocku, razinaUTocki, tockaIzAdrese, type Tocka } from "@/lib/sim/tocka";
+import { adresaDojave, imeTocke, tockaIzAdrese, type Tocka } from "@/lib/sim/tocka";
 import { UpravljackaPloca, type PloceStanje } from "@/components/karepovac/sim/upravljacka-ploca";
 import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
 import {
@@ -58,14 +51,6 @@ import {
  * Sastavlja tri stvari koje inače ne znaju jedna za drugu: kartu (MapLibre),
  * račun perjanice (radnici) i postavke prikaza. Sve troje ima svoj životni
  * vijek, pa se ovdje pazi samo na to da se ne prežive međusobno.
- *
- * ## Što se vidi prvo
- *
- * Kartica situacije gore i traka vremena dolje; karta između. Kartica
- * odgovara na „smrdi li kod mene, koliko, kamo ide, hoće li biti bolje i
- * koliko ste sigurni” (`situacija.ts`), traka pokazuje kad je bilo i kad će
- * biti loše. Postavke — boje, jačina izvora, podloge — stoje iza gumba
- * „Više”: to je ono što se traži, ne ono što se gleda.
  *
  * ## Redoslijed kojim se stvari pojavljuju
  *
@@ -123,6 +108,7 @@ type Kadrovi = Map<
   string,
   {
     bajtovi: Uint8Array;
+    obuhvat: number;
     /** Merkaptanska gustoća; drugi zapis jer izvor prati radne sate. */
     bajtoviMerkaptana: Uint8Array;
     sirina: number;
@@ -133,7 +119,7 @@ type Kadrovi = Map<
 const ZADANI_PRIKAZ: PostavkePrikaza = {
   tvari: {
     sumporovodik: { vidljiv: true, boja: ZADANA_BOJA.sumporovodik, jacina: 1 },
-    merkaptani: { vidljiv: false, boja: ZADANA_BOJA.merkaptani, jacina: 1 },
+    merkaptani: { vidljiv: true, boja: ZADANA_BOJA.merkaptani, jacina: 1 },
   },
   vjetar: true,
   mirovanje: false,
@@ -144,8 +130,8 @@ const ZADANO_STANJE: PloceStanje = {
   podloga: "karta",
   reljef: false,
   zgrade: false,
-  postaje: true,
-  prijedlozi: true,
+  postaje: false,
+  prijedlozi: false,
 };
 
 const PRAZNO = new Uint8Array(0);
@@ -362,14 +348,39 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
   const [stanjeKarte, postaviStanjeKarte] = useState<"ucitavanje" | "spremna" | "bezWebgl">(
     "ucitavanje",
   );
+  useEffect(() => {
+    const okvir = spremnik.current?.parentElement;
+    const navodi = spremnik.current?.querySelector<HTMLElement>(".maplibregl-ctrl-bottom-right");
+    const traka = okvir?.querySelector<HTMLElement>(".sim-ui-dock");
+    if (!okvir || !navodi || !traka) return;
+    const izmjeri = () => {
+      okvir.style.setProperty("--sim-attribution-height", `${navodi.getBoundingClientRect().height}px`);
+      okvir.style.setProperty("--sim-dock-height", `${traka.getBoundingClientRect().height}px`);
+    };
+    const promatrac = new ResizeObserver(izmjeri);
+    promatrac.observe(navodi);
+    promatrac.observe(traka);
+    izmjeri();
+    return () => {
+      promatrac.disconnect();
+      okvir.style.removeProperty("--sim-attribution-height");
+      okvir.style.removeProperty("--sim-dock-height");
+    };
+  }, [stanjeKarte]);
   // Ploča je zatvorena dok je netko ne zatraži: karta je ono što se gleda.
   const [plocaOtvorena, postaviPlocu] = useState(false);
   const postavkeGumbRef = useRef<HTMLButtonElement | null>(null);
+  const zatvoriPlocuRef = useRef<HTMLButtonElement | null>(null);
+  const zatvoriPlocu = () => {
+    postaviPlocu(false);
+    postavkeGumbRef.current?.focus();
+  };
 
   // Escape zatvara ploču i vraća fokus onome tko ju je otvorio; bez toga je
   // tipkovnica u ploči zarobljena, a Escape na karti ne radi ništa.
   useEffect(() => {
     if (!plocaOtvorena) return;
+    zatvoriPlocuRef.current?.focus();
     const naTipku = (d: KeyboardEvent) => {
       if (d.key !== "Escape") return;
       postaviPlocu(false);
@@ -511,10 +522,8 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           // Kartica gore i traka dolje pokrivaju rubove; bez odmaka bi ploha
           // završila ispod njih.
           fitBoundsOptions: { padding: { top: 150, bottom: 110, left: 16, right: 16 } },
-          maxBounds: NAJVECI_OBUHVAT,
           maxZoom: 17,
-          // Do 10 se vidi cijela mreža postaja vjetra, sve do zračne luke.
-          minZoom: 10,
+          minZoom: 5,
           // Pogled odozgo je zadan: iz njega se uspoređuje dokle perjanica
           // seže. Nagib ostaje moguć rukom, ali se ne nameće.
           pitch: 0,
@@ -623,9 +632,10 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           osnove: spremnikOsnova,
           svi: satoviZaRadnike(pocetnaCrta),
           crta: pocetnaCrta.kadrovi.filter((k) => k.stanje !== null).map((k) => k.sat),
-          onKadar: (sat, sirina, visina, gustoca, merkaptani) => {
+          onKadar: (sat, sirina, visina, gustoca, merkaptani, obuhvat) => {
             if (otkazano) return;
             kadroviRef.current.set(sat, {
+              obuhvat,
               bajtovi: zapisiGustocu(gustoca, SIDRO_SIMULATORA),
               bajtoviMerkaptana: zapisiGustocu(merkaptani, SIDRO_SIMULATORA),
               sirina,
@@ -839,140 +849,6 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
     };
   }, [osvjeziCrtu]);
 
-  /**
-   * Tvar o kojoj kartica govori: sumporovodik dok je vidljiv, inače
-   * merkaptani. Sažetak govori o jednoj tvari, jer dvije razine u jednoj
-   * rečenici nitko ne pročita u pet sekundi.
-   */
-  const tvarKartice: Tvar = stanje.prikaz.tvari.sumporovodik.vidljiv || !stanje.prikaz.tvari.merkaptani.vidljiv
-    ? "sumporovodik"
-    : "merkaptani";
-  const jacinaKartice = stanje.prikaz.tvari[tvarKartice].jacina;
-  const ljestvicaKartice = bojaZa(stanje.prikaz.tvari[tvarKartice].boja, tvarKartice).ljestvica;
-
-  /** Razina nad naseljima po satu, za traku i za susjede u sažetku. */
-  const razinePoSatu = useMemo(() => {
-    const izlaz = new Map<string, Razina>();
-    for (const k of crta.kadrovi) {
-      if (k.dostupnost === "nedostupno") continue;
-      const slika = kadroviRef.current.get(k.sat);
-      if (!slika) continue;
-      const bajtovi = tvarKartice === "merkaptani" ? slika.bajtoviMerkaptana : slika.bajtovi;
-      izlaz.set(
-        k.sat,
-        ukupnaRazina(
-          ocijeniPodrucja(
-            { bajtovi, sirina: slika.sirina, visina: slika.visina },
-            SIM_POLJE.granice,
-            tvarKartice,
-            jacinaKartice,
-          ),
-        ),
-      );
-    }
-    return izlaz;
-    // `izracunati` je okidač: slike žive u `ref`, a skup se mijenja kad stignu.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [crta, izracunati, tvarKartice, jacinaKartice]);
-
-  /**
-   * Situacija koja se drži dok se slika sata računa iznova.
-   *
-   * Sažetak izlazi iz vjetra na crti, slika iz radnika; nakon osvježavanja
-   * bi naslov i pouzdanost stigli sekunde prije perjanice i kratko govorili
-   * o vjetru kojega slika još ne pokazuje. Dok je sat u `zastarjeli`, ostaje
-   * sažetak koji ide uz sliku na zaslonu; novi dolazi zajedno s novom slikom.
-   */
-  const drzanaRef = useRef<{ sat: string; situacija: Situacija } | null>(null);
-  const situacijaSvjeza = useMemo<Situacija | null>(() => {
-    if (!kadar) return null;
-    const slika = kadroviRef.current.get(kadar.sat);
-    const susjed = (k: (typeof crta.kadrovi)[number]): SusjedniSat => ({
-      sat: k.sat,
-      pomak: k.pomak,
-      dostupnost: k.dostupnost,
-      razina: razinePoSatu.get(k.sat) ?? null,
-    });
-    const prije = crta.kadrovi
-      .filter((k) => k.pomak < kadar.pomak)
-      .sort((a, b) => b.pomak - a.pomak)
-      .map(susjed);
-    const poslije = crta.kadrovi.filter((k) => k.pomak > kadar.pomak).map(susjed);
-    return izvediSituaciju({
-      kadar,
-      slika: slika
-        ? {
-            bajtovi: tvarKartice === "merkaptani" ? slika.bajtoviMerkaptana : slika.bajtovi,
-            sirina: slika.sirina,
-            visina: slika.visina,
-          }
-        : null,
-      granice: SIM_POLJE.granice,
-      tvar: tvarKartice,
-      jacina: jacinaKartice,
-      prije,
-      poslije,
-    });
-  }, [kadar, crta, razinePoSatu, tvarKartice, jacinaKartice]);
-
-  const situacija = useMemo<Situacija | null>(() => {
-    if (!kadar || !situacijaSvjeza) {
-      drzanaRef.current = null;
-      return situacijaSvjeza;
-    }
-    const drzana = drzanaRef.current;
-    if (zastarjeli.has(kadar.sat) && drzana?.sat === kadar.sat) return drzana.situacija;
-    drzanaRef.current = { sat: kadar.sat, situacija: situacijaSvjeza };
-    return situacijaSvjeza;
-  }, [kadar, situacijaSvjeza, zastarjeli]);
-
-  /** Razina u odabranoj točki po satu, za njezinu traku i za trend. */
-  const razineTocke = useMemo(() => {
-    const izlaz = new Map<string, Razina>();
-    if (!tocka) return izlaz;
-    for (const k of crta.kadrovi) {
-      if (k.dostupnost === "nedostupno") continue;
-      const slika = kadroviRef.current.get(k.sat);
-      if (!slika) continue;
-      const bajtovi = tvarKartice === "merkaptani" ? slika.bajtoviMerkaptana : slika.bajtovi;
-      izlaz.set(
-        k.sat,
-        razinaUTocki({ bajtovi, sirina: slika.sirina, visina: slika.visina }, SIM_POLJE.granice, tvarKartice, jacinaKartice, tocka),
-      );
-    }
-    return izlaz;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [crta, izracunati, tvarKartice, jacinaKartice, tocka]);
-
-  const situacijaTocke = useMemo<Situacija | null>(() => {
-    if (!kadar || !tocka) return null;
-    const slika = kadroviRef.current.get(kadar.sat);
-    const susjed = (k: (typeof crta.kadrovi)[number]): SusjedniSat => ({
-      sat: k.sat,
-      pomak: k.pomak,
-      dostupnost: k.dostupnost,
-      razina: razineTocke.get(k.sat) ?? null,
-    });
-    return izvediTocku(
-      {
-        kadar,
-        slika: slika
-          ? {
-              bajtovi: tvarKartice === "merkaptani" ? slika.bajtoviMerkaptana : slika.bajtovi,
-              sirina: slika.sirina,
-              visina: slika.visina,
-            }
-          : null,
-        granice: SIM_POLJE.granice,
-        tvar: tvarKartice,
-        jacina: jacinaKartice,
-        prije: crta.kadrovi.filter((k) => k.pomak < kadar.pomak).sort((a, b) => b.pomak - a.pomak).map(susjed),
-        poslije: crta.kadrovi.filter((k) => k.pomak > kadar.pomak).map(susjed),
-      },
-      tocka,
-    );
-  }, [kadar, crta, razineTocke, tvarKartice, jacinaKartice, tocka]);
-
   // Odabrana točka → oznaka na karti i `t` u adresi.
   useEffect(() => {
     const karta = kartaRef.current;
@@ -1010,7 +886,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       const prijelaz = stanje.prikaz.mirovanje || snimka ? 0 : PRIJELAZ_MS;
       scena.postaviNesigurnost(nesigurnostKadra(kadar));
       if (slika) {
-        scena.postaviGustocu(slika.bajtovi, slika.bajtoviMerkaptana, slika.sirina, slika.visina, prijelaz);
+        scena.postaviGustocu(slika.bajtovi, slika.bajtoviMerkaptana, slika.sirina, slika.visina, prijelaz, slika.obuhvat);
       } else {
         // Sat koji još nije izračunat ne smije nositi tuđu perjanicu.
         scena.postaviGustocu(PRAZNO, PRAZNO, 1, 1, prijelaz);
@@ -1024,7 +900,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
         vx[i] = (polje.vx[i] / 255) * 2 * polje.skala - polje.skala;
         vy[i] = (polje.vy[i] / 255) * 2 * polje.skala - polje.skala;
       }
-      scena.postaviVjetar(vx, vy, polje.gw, polje.gh);
+      scena.postaviVjetar(vx, vy, polje.gw, polje.gh, polje.pozadina);
     }
   }, [kadar, izracunati, scenaSpremna, stanje.prikaz.mirovanje, snimka]);
 
@@ -1118,7 +994,7 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden bg-zinc-100"
+      className={`sim-minimal fixed inset-0 overflow-hidden bg-zinc-100 sim-ui-shell`}
       // Stroju koji snima: koliko je sati gotovo, koji se gleda i za koji je
       // sat crta složena (da nadzor vidi staru stranicu bez čitanja teksta).
       data-izracunato={`${napredak.gotovo}/${napredak.ukupno}`}
@@ -1132,123 +1008,67 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
           kontrole i ne javlja grešku — samo ne traži nijednu pločicu. */}
       <div ref={spremnik} className="h-full w-full" />
 
-      {/* Gore: kartica situacije lijevo, gumbi desno. Na uskom zaslonu red se
-          okreće u stupac pa kartica dobiva cijelu širinu, a gumbi stoje iznad
-          nje — dijelili su joj redak i na 390 px ju stiskali na trećinu. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col-reverse items-stretch gap-2 p-1 sm:flex-row sm:items-start sm:p-3">
-        <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5 sm:max-w-[26rem]">
-          {situacija && kadar ? (
-            <SituacijaKartica
-              situacija={situacija}
-              kadar={kadar}
-              izracunat={spreman}
-              ljestvica={ljestvicaKartice}
-              prijedlozi={stanje.prijedlozi}
-              sadaStvarno={sadaStvarno}
-              crtaSada={crta.sada}
-              osvjezavanje={osvjezavanje}
-              sadaOcitanja={sadaOcitanja}
-              serije={serije}
-              napomena={napomena}
-              osvjezavaSat={zastarjeli.has(kadar.sat)}
-              sazeta={prijedlog !== null || tocka !== null}
-              naOsvjezi={() => {
-                // Ručni pokušaj ne čeka najmanji razmak: čovjek je pritisnuo.
-                zadnjiPokusajRef.current = 0;
-                void osvjeziCrtu(() => !montiranRef.current);
-              }}
-              naVise={() => postaviPlocu((v) => !v)}
-              plocaOtvorena={plocaOtvorena}
-            />
-          ) : null}
-          {prijedlog ? (
-            <PrijedlogKartica prijedlog={prijedlog} naZatvori={() => postaviPrijedlog(null)} />
-          ) : null}
-          {tocka && situacijaTocke && kadar ? (
-            <TockaKartica
-              tocka={tocka}
-              situacija={situacijaTocke}
-              kadar={kadar}
-              izracunat={spreman}
-              ljestvica={ljestvicaKartice}
-              poSatu={crta.kadrovi.map((k) => ({
-                sat: k.sat,
-                pomak: k.pomak,
-                vrsta: k.vrsta,
-                razina: razineTocke.get(k.sat) ?? null,
-              }))}
-              stara={crtaStara}
-              naZatvori={() => postaviTocku(null)}
-              naSat={naPomak}
-            />
-          ) : null}
-          {/* Brojka „Računam n/28” stoji na traci vremena, uz pločice o
-              kojima govori — gornji sklop ne smije rasti dok se računa. */}
+      <header className="sim-ui-header">
+        <div className="sim-ui-brand">
+          <Link href="/karepovac" aria-label="Karepovac — sve što pratimo" className="fokus"><SimIkona ime="back" />Karepovac</Link>
+          <span className="text-zinc-400">/</span>
+          <span className="text-zinc-500">Simulacija</span>
         </div>
+        <button
+          ref={postavkeGumbRef}
+          type="button"
+          onClick={() => postaviPlocu((otvorena) => !otvorena)}
+          aria-expanded={plocaOtvorena}
+          aria-controls="sim-postavke"
+          className={`fokus sim-ui-button`}
+        >
+          <SimIkona ime="settings" />
+          Postavke
+        </button>
+      </header>
 
-        {/* Gore desno: izlaz i otvaranje ploče. Ništa više — navigacija
-            stranice je na ovoj karti sakrivena (vidi BEZ_OKVIRA u site-chrome).
-            Zato izlaz mora reći kamo vodi: „Karepovac” u zaglavlju vodi ovamo,
-            pa je ovo jedini put natrag na pregled svega što pratimo. */}
-        {/* Postavke i izlaz nisu blizanci: postavke su pilula s riječju, izlaz
-            stoji sam na desnom rubu s riječju. Dva ista kvadrata jedan do
-            drugoga (jedan otvara ploču, drugi napušta stranicu) su u kritici
-            od 2. 9. 2026. bila zamka u koju je i ocjenjivač upao. */}
-        {/* Na telefonu ove pilule ne postoje: postavke otvara kartica, a izlaz
-            „Karepovac” stoji u zaglavlju trake sati — gore je samo skupljena
-            kartica, da karta drži 80 % zaslona. */}
-        <div className="pointer-events-auto z-30 hidden shrink-0 items-center justify-end gap-3 sm:flex">
-          <button
-            ref={postavkeGumbRef}
-            type="button"
-            onClick={() => postaviPlocu((v) => !v)}
-            aria-expanded={plocaOtvorena}
-            aria-label={plocaOtvorena ? "Zatvori postavke" : "Otvori postavke"}
-            className="fokus flex min-h-11 items-center gap-1.5 rounded-full bg-white/85 px-3 text-sm font-semibold text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white"
-          >
-            <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">
-              <path
-                d="M3 6h14M3 10h14M3 14h14"
-                className="stroke-current"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-            <span>Postavke</span>
-          </button>
-          <Link
-            href="/karepovac"
-            aria-label="Karepovac — sve što pratimo"
-            className="fokus flex min-h-11 items-center gap-1 rounded-full bg-white/85 px-3 text-sm font-semibold text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-sm hover:bg-white"
-          >
-            <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
-              <path
-                d="M12 4 6 10l6 6"
-                className="stroke-current"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </svg>
-            <span>Karepovac</span>
-          </Link>
-        </div>
+      <div className="sim-ui-overlays">
+        <LegendaTvari
+          prikaz={stanje.prikaz}
+          naPromjenu={(tvar, vidljiv) => postaviStanje((prethodno) => ({
+            ...prethodno,
+            prikaz: {
+              ...prethodno.prikaz,
+              tvari: {
+                ...prethodno.prikaz.tvari,
+                [tvar]: { ...prethodno.prikaz.tvari[tvar], vidljiv },
+              },
+            },
+          }))}
+        />
+        {prijedlog ? (
+          <div className="w-full max-w-sm">
+            <PrijedlogKartica prijedlog={prijedlog} naZatvori={() => postaviPrijedlog(null)} />
+          </div>
+        ) : null}
+        {tocka && kadar ? (
+          <section aria-label="Odabrano mjesto" className="sim-ui-point">
+            <span className="mr-auto">{imeTocke(tocka, SIM_POLJE.izvor)}</span>
+            <Link href={adresaDojave(tocka, kadar.sat)} className={`fokus sim-ui-button`}>Javi miris</Link>
+            <button type="button" onClick={() => postaviTocku(null)} aria-label="Makni odabrano mjesto" className={`fokus sim-ui-iconButton`}><SimIkona ime="close" /></button>
+          </section>
+        ) : null}
       </div>
 
       {/* Ploča se otvara na zahtjev: sa strane na širokom zaslonu, kao list
           odozdo na uskom — da karta ostane vidljiva. */}
       {plocaOtvorena ? (
-        <div className="absolute inset-x-0 bottom-0 z-40 max-h-[75vh] overflow-y-auto rounded-t-2xl border-t border-black/5 bg-white/95 shadow-2xl backdrop-blur-md sm:inset-x-auto sm:bottom-24 sm:right-3 sm:top-16 sm:max-h-none sm:w-[19rem] sm:rounded-xl sm:border sm:shadow-lg">
-          <div className="flex items-center justify-between px-4 pt-3 sm:hidden">
-            <h2 className="text-sm font-bold text-zinc-900">Napredno</h2>
+        <section id="sim-postavke" aria-labelledby="sim-postavke-naslov" className="sim-ui-settings">
+          <div className="sim-ui-settingsHeader">
+            <h2 id="sim-postavke-naslov">Postavke</h2>
             <button
               type="button"
-              onClick={() => postaviPlocu(false)}
-              className="fokus -my-1 min-h-11 min-w-11 rounded px-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100"
+              ref={zatvoriPlocuRef}
+              onClick={zatvoriPlocu}
+              aria-label="Zatvori postavke"
+              className={`fokus sim-ui-iconButton`}
             >
-              Zatvori
+              <SimIkona ime="close" />
             </button>
           </div>
           <UpravljackaPloca
@@ -1256,31 +1076,52 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
             naPrikaz={(prikaz) => postaviStanje((s) => ({ ...s, prikaz }))}
             naStanje={(p) => postaviStanje((s) => ({ ...s, ...p }))}
             naSredinu={() =>
-              kartaRef.current?.fitBounds(POCETNI_OBUHVAT, { duration: 600, pitch: 0 })
+              kartaRef.current?.fitBounds(POCETNI_OBUHVAT, { duration: stanje.prikaz.mirovanje ? 0 : 600, pitch: 0 })
             }
           />
-        </div>
+        </section>
       ) : null}
 
-      {/* Rub od 4 px na telefonu, ne 8: karta mora držati 80 % zaslona pri
-          dolasku, a dva prozirna ruba od 8 px bila su upravo onih 12 px viška
-          (izmjereno 5. 9. 2026., 390×716: 78,5 % → 80,2 %). */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-1 sm:p-3">
-        <div className="mx-auto max-w-3xl">
-          <VremenskaCrta
-            crta={crta}
-            pomak={pomak}
-            izracunati={izracunati}
-            razine={razinePoSatu}
-            ljestvica={ljestvicaKartice}
-            reproducira={reproducira}
-            mirovanje={stanje.prikaz.mirovanje}
-            sadaStvarno={sadaStvarno}
-            napredak={napredak}
-            naReprodukciju={postaviReprodukciju}
-            naPromjenu={naPomak}
-          />
-        </div>
+      <div className="sim-ui-dock">
+        <VremenskaCrta
+          crta={crta}
+          pomak={pomak}
+          izracunati={izracunati}
+          reproducira={reproducira}
+          sadaStvarno={sadaStvarno}
+          napredak={napredak}
+          naReprodukciju={postaviReprodukciju}
+          naPromjenu={naPomak}
+          vjetar={kadar?.vjetar ? (
+            <details className="sim-ui-wind" onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.currentTarget.open = false;
+                event.currentTarget.querySelector("summary")?.focus();
+              }
+            }}>
+              <summary className="fokus" aria-label="Vjetar i izvor podataka">
+                {!kadar.vjetar.tisina ? <SimIkona ime="arrow" style={{ transform: `rotate(${kadar.vjetar.smjerOd + 180}deg)` }} /> : null}
+                <span>{kadar.vjetar.tisina ? "Tišina" : `${kadar.vjetar.brzina.toFixed(1).replace(".", ",")} m/s`}</span>
+                <SimIkona ime="chevron" />
+              </summary>
+              <div className="sim-ui-windInfo">
+                {opisIzvoraSataKratko(kadar, sadaOcitanja, serije)}
+                {!kadar.vjetar.tisina ? ` · iz ${Math.round(kadar.vjetar.smjerOd)}°` : ""}
+              </div>
+            </details>
+          ) : null}
+          status={(
+            <div className="sim-ui-status">
+              <span role="status">
+                {osvjezavanje === "greska" ? "Osvježavanje nije uspjelo" : crtaStara ? `Zadnji podaci: ${satMjesno(crta.sada)}` : kadar?.dostupnost === "nedostupno" ? "Nema podataka o vjetru" : !spreman && napredak.gotovo >= napredak.ukupno ? "Računam ovaj sat…" : zastarjeli.has(kadar?.sat ?? "") || osvjezavanje === "u tijeku" ? "Osvježavam…" : ""}
+              </span>
+              {crtaStara || osvjezavanje === "greska" ? (
+                <button type="button" onClick={() => { zadnjiPokusajRef.current = 0; void osvjeziCrtu(() => !montiranRef.current); }} className={`fokus sim-ui-button`}>Osvježi</button>
+              ) : null}
+              {napomena ? <span role="status">{napomena}</span> : null}
+            </div>
+          )}
+        />
       </div>
     </div>
   );

@@ -63,6 +63,7 @@ export type PogonPostavke = {
     visina: number,
     gustoca: Float32Array,
     merkaptani: Float32Array,
+    obuhvat: number,
   ): void;
   onStanje(stanje: StanjePogona): void;
 };
@@ -123,6 +124,7 @@ export function pokreniPogon(postavke: PogonPostavke): Pogon {
           poruka.visina,
           poruka.gustoca,
           poruka.merkaptani,
+          poruka.obuhvat,
         );
         javiStanje();
       } else if (poruka.vrsta === "greska") {

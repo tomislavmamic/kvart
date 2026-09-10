@@ -147,6 +147,8 @@ type Polje = {
   readonly gh: number;
 };
 
+import { udioLokalnogPolja } from "@/lib/sim/obuhvat";
+
 export type Roj = {
   /** Točke repova kao udjeli okvira, po česticama: `[u, v]` po točki. */
   readonly trag: Float32Array;
@@ -174,6 +176,7 @@ export type Roj = {
     gw: number,
     gh: number,
     preslozi?: boolean,
+    pozadina?: readonly [number, number],
   ): void;
   /** Postavlja koliko se čestica nosi; nove se odmah posiju. */
   postaviBroj(n: number): void;
@@ -256,6 +259,7 @@ export function stvoriRoj(
   const ocitanje = new Float64Array(2);
 
   let polje: Polje | null = null;
+  let pozadina: readonly [number, number] | undefined;
   let broj = 0;
   let ostatak = 0;
 
@@ -271,6 +275,11 @@ export function stvoriRoj(
     const fv = (v - pv0) / mjeriloV;
     ocitanje[0] = uzorak(polje.vx, polje.gw, polje.gh, fu, fv);
     ocitanje[1] = uzorak(polje.vy, polje.gw, polje.gh, fu, fv);
+    if (pozadina) {
+      const lokalno = udioLokalnogPolja(fu, fv);
+      ocitanje[0] = lokalno * ocitanje[0] + (1 - lokalno) * pozadina[0];
+      ocitanje[1] = lokalno * ocitanje[1] + (1 - lokalno) * pozadina[1];
+    }
   }
 
   function celija(u: number, v: number): number {
@@ -413,7 +422,8 @@ export function stvoriRoj(
       return broj;
     },
 
-    postaviPolje(vx, vy, gw, gh, preslozi = false) {
+    postaviPolje(vx, vy, gw, gh, preslozi = false, novaPozadina) {
+      pozadina = novaPozadina;
       const prvo = polje === null;
       polje = { vx, vy, gw, gh };
       // Roj se pri promjeni sata inače ne sije nanovo: repovi izvedeni u

@@ -28,6 +28,9 @@ import { MercatorCoordinate } from "maplibre-gl";
 import * as THREE from "three";
 
 import type { Osnove } from "@/lib/sim/polje";
+import { alfaRuba } from "@/lib/sim/rub-prikaza";
+import { brojTragova, NAJMANJE_TRAGOVA as NAJMANJE_CESTICA, NAJVISE_TRAGOVA as NAJVISE_CESTICA } from "@/lib/sim/gustoca-tragova";
+import type { Granice } from "@/lib/sim/obuhvat";
 import type { Podloga } from "@/components/karepovac/sim/sim-karta";
 import {
   PODJELA_TRAGA,
@@ -36,30 +39,6 @@ import {
   stvoriRoj,
   type Roj,
 } from "@/lib/sim/tragovi-vjetra";
-
-/**
- * Koliko čestica ide na kvadratni piksel **okvira polja**, ne platna.
- *
- * Okvir je 6,4 km i pri zadanom pogledu pokriva tek dio zaslona; gustoća
- * računata po platnu natrpala bi u njega dvostruko previše tragova, a ostatak
- * karte ostavila praznim. Pri zadanom pogledu ovo ispadne oko 250 tragova.
- */
-const GUSTOCA = 0.0007;
-
-const NAJMANJE_CESTICA = 150;
-const NAJVISE_CESTICA = 2400;
-
-/**
- * Koliko je okvir roja širi od polja vjetra, po svakoj osi.
- *
- * Polje pokriva 6,4 km, a zadani pogled na širokom zaslonu oko 9 km; s rojem
- * samo nad poljem tragovi su stajali u srednjoj trećini karte i rub polja
- * se čitao kao rub vjetra. Izvan polja roj uzima rubnu vrijednost polja
- * (vidi `OkvirPolja` u `tragovi-vjetra.ts`): vjetar na otvorenom, bez
- * reljefa kojega polje ondje nema. Dva puta pokriva cijeli zadani pogled i
- * još jedan korak odzumiranja.
- */
-const PROSIRENJE = 2;
 
 /** Debljina poteza u CSS pikselima. */
 const SIRINA_PX = 1.8;
@@ -133,14 +112,16 @@ export type Tragovi = {
     gw: number,
     gh: number,
     preslozi: boolean,
+    pozadina?: readonly [number, number],
   ): void;
+  postaviObuhvat(obuhvat: Granice, pogled: Granice): void;
   postaviPodlogu(podloga: Podloga): void;
   postaviVidljivost(vidljiv: boolean): void;
   /**
    * Javlja veličinu platna u pikselima crtanja (za debljinu poteza) i površinu
    * koju okvir polja zauzima na zaslonu u CSS pikselima (za broj čestica).
    */
-  postaviPogled(sirina: number, visina: number, omjer: number, okvirPx: number): void;
+  postaviPogled(sirina: number, visina: number, omjer: number, okvirPx: number, zoom: number): void;
   /** Pomiče roj i osvježava geometriju. */
   korak(dt: number): void;
   dispose(): void;
@@ -156,41 +137,28 @@ export type Tragovi = {
  *   Upravljač slojem; `objekt` se dodaje u scenu.
  */
 export function stvoriTragove(osnove: Osnove): Tragovi {
-  // Okvir roja: polje prošireno oko svog središta.
-  const polaSir = ((osnove.granice.istok - osnove.granice.zapad) * PROSIRENJE) / 2;
-  const polaVis = ((osnove.granice.sjever - osnove.granice.jug) * PROSIRENJE) / 2;
-  const sredLon = (osnove.granice.istok + osnove.granice.zapad) / 2;
-  const sredLat = (osnove.granice.sjever + osnove.granice.jug) / 2;
-  const granice = {
-    zapad: sredLon - polaSir,
-    istok: sredLon + polaSir,
-    jug: sredLat - polaVis,
-    sjever: sredLat + polaVis,
-  };
-  // Mercator razvlači po širini, pa udio okvira nije posve linearan u `y`.
-  // Nad 6,4 km ta je razlika ispod metra i ovdje se zanemaruje: čestice se
-  // siju nasumice, pa im podmetarski pomak ne znači ništa. Perjanica, kojoj
-  // znači, svoj pravokutnik i dalje dijeli na 24 dijela.
-  const sjeverozapad = MercatorCoordinate.fromLngLat(
-    { lng: granice.zapad, lat: granice.sjever },
-    0,
-  );
-  const jugoistok = MercatorCoordinate.fromLngLat(
-    { lng: granice.istok, lat: granice.jug },
-    0,
-  );
-  const x0 = sjeverozapad.x;
-  const y0 = sjeverozapad.y;
-  const sirX = jugoistok.x - x0;
-  const visY = jugoistok.y - y0;
-
-  const rubPolja = (PROSIRENJE - 1) / (2 * PROSIRENJE);
-  const roj: Roj = stvoriRoj(
-    osnove.sirinaM * PROSIRENJE,
-    osnove.visinaM * PROSIRENJE,
+  let granice = osnove.granice;
+  let domena = granice;
+  let zadnjePolje: { vx: Float32Array; vy: Float32Array; gw: number; gh: number; pozadina?: readonly [number, number] } | null = null;
+  let roj: Roj = stvoriRoj(
+    osnove.sirinaM,
+    osnove.visinaM,
     NAJVISE_CESTICA,
-    { od: [rubPolja, rubPolja], do: [1 - rubPolja, 1 - rubPolja] },
   );
+
+  function tocka(udioX: number, udioY: number, pomak: number): void {
+    const lon = granice.zapad + udioX * (granice.istok - granice.zapad);
+    const lat = granice.sjever - udioY * (granice.sjever - granice.jug);
+    const mercator = MercatorCoordinate.fromLngLat({ lng: lon, lat: Math.max(-85, Math.min(85, lat)) });
+    podatci[pomak] = mercator.x;
+    podatci[pomak + 1] = mercator.y;
+  }
+
+  function rub(udioX: number, udioY: number): number {
+    const lon = granice.zapad + udioX * (granice.istok - granice.zapad);
+    const lat = granice.sjever - udioY * (granice.sjever - granice.jug);
+    return alfaRuba((lon - domena.zapad) / (domena.istok - domena.zapad), (domena.sjever - lat) / (domena.sjever - domena.jug));
+  }
 
   // Šest brojeva po potezu: dva kraja i prozirnost na svakom od njih.
   const podatci = new Float32Array(NAJVISE_CESTICA * POTEZA_PO_TRAGU * 6);
@@ -270,12 +238,10 @@ export function stvoriTragove(osnove: Osnove): Tragovi {
         const a = ((g + 1 + stariji) % TRAG_TOCAKA) * 2 + baza;
         const b = ((g + 1 + k) % TRAG_TOCAKA) * 2 + baza;
         const o = i * 6;
-        podatci[o] = x0 + roj.trag[a] * sirX;
-        podatci[o + 1] = y0 + roj.trag[a + 1] * visY;
-        podatci[o + 2] = x0 + roj.trag[b] * sirX;
-        podatci[o + 3] = y0 + roj.trag[b + 1] * visY;
-        podatci[o + 4] = ((stariji - prva) / raspon) * zivot;
-        podatci[o + 5] = ((k - prva) / raspon) * zivot;
+        tocka(roj.trag[a], roj.trag[a + 1], o);
+        tocka(roj.trag[b], roj.trag[b + 1], o + 2);
+        podatci[o + 4] = ((stariji - prva) / raspon) * zivot * rub(roj.trag[a], roj.trag[a + 1]);
+        podatci[o + 5] = ((k - prva) / raspon) * zivot * rub(roj.trag[b], roj.trag[b + 1]);
         i += 1;
       }
     }
@@ -290,8 +256,44 @@ export function stvoriTragove(osnove: Osnove): Tragovi {
   return {
     objekt: mreza,
 
-    postaviPolje(vx, vy, gw, gh, preslozi) {
-      roj.postaviPolje(vx, vy, gw, gh, preslozi);
+    postaviPolje(vx, vy, gw, gh, preslozi, pozadina) {
+      zadnjePolje = { vx, vy, gw, gh, pozadina };
+      roj.postaviPolje(vx, vy, gw, gh, preslozi, pozadina);
+      osvjezi();
+    },
+
+    postaviObuhvat(obuhvat, pogled) {
+      const promjenaDomene = domena.zapad !== obuhvat.zapad || domena.istok !== obuhvat.istok || domena.jug !== obuhvat.jug || domena.sjever !== obuhvat.sjever;
+      domena = obuhvat;
+      const sirina = pogled.istok - pogled.zapad;
+      const visina = pogled.sjever - pogled.jug;
+      if (!(sirina > 0 && visina > 0)) return;
+      if (pogled.zapad >= granice.zapad && pogled.istok <= granice.istok &&
+          pogled.jug >= granice.jug && pogled.sjever <= granice.sjever &&
+          granice.istok - granice.zapad < sirina * 1.8) {
+        if (promjenaDomene) osvjezi();
+        return;
+      }
+      granice = {
+        zapad: pogled.zapad - sirina * 0.2, istok: pogled.istok + sirina * 0.2,
+        jug: pogled.jug - visina * 0.2, sjever: pogled.sjever + visina * 0.2,
+      };
+      const sirinaLon = granice.istok - granice.zapad;
+      const visinaLat = granice.sjever - granice.jug;
+      roj = stvoriRoj(
+        osnove.sirinaM * sirinaLon / (osnove.granice.istok - osnove.granice.zapad),
+        osnove.visinaM * visinaLat / (osnove.granice.sjever - osnove.granice.jug),
+        NAJVISE_CESTICA,
+        {
+          od: [(osnove.granice.zapad - granice.zapad) / sirinaLon, (granice.sjever - osnove.granice.sjever) / visinaLat],
+          do: [(osnove.granice.istok - granice.zapad) / sirinaLon, (granice.sjever - osnove.granice.jug) / visinaLat],
+        },
+      );
+      roj.postaviBroj(Math.max(NAJMANJE_CESTICA, zadnjiBroj));
+      if (zadnjePolje) {
+        const { vx, vy, gw, gh, pozadina } = zadnjePolje;
+        roj.postaviPolje(vx, vy, gw, gh, true, pozadina);
+      }
       osvjezi();
     },
 
@@ -303,20 +305,12 @@ export function stvoriTragove(osnove: Osnove): Tragovi {
       mreza.visible = vidljiv;
     },
 
-    postaviPogled(sirina, visina, omjer, okvirPx) {
+    postaviPogled(sirina, visina, omjer, okvirPx, zoom) {
       (uniforme.uRazlucivost.value as THREE.Vector2).set(sirina, visina);
       uniforme.uSirina.value = SIRINA_PX * omjer;
       // Broj se ne prepravlja na svaki piksel uvećanja: inače bi se pri svakom
       // pomaku karte sijale nove čestice i roj bi treperio.
-      // `okvirPx` je površina polja na zaslonu; roj pokriva PROSIRENJE² puta
-      // više, pa i čestica treba toliko puta više da gustoća ostane ista.
-      const broj = Math.min(
-        NAJVISE_CESTICA,
-        Math.max(
-          NAJMANJE_CESTICA,
-          Math.round((okvirPx * PROSIRENJE * PROSIRENJE * GUSTOCA) / 25) * 25,
-        ),
-      );
+      const broj = brojTragova(okvirPx, zoom);
       if (broj === zadnjiBroj) return;
       zadnjiBroj = broj;
       const prije = roj.broj;

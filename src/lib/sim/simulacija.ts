@@ -35,6 +35,7 @@
 
 import {
   stvoriDimSirovo,
+  najveciPutCestice,
   UBRZANJE,
   type Postavke,
   type Simulacija,
@@ -165,6 +166,25 @@ export type Slika = {
    */
   readonly merkaptani: Float32Array;
 };
+
+export function obuhvatZaSatove(satovi: readonly SatSimulacije[], osnove: Osnove): number {
+  let brzina = 0;
+  for (const sat of satovi) {
+    if (!Number.isFinite(sat.stanje.brzina) || !Number.isFinite(sat.stanje.smjerOd)) {
+      throw new Error("Neispravan vjetar za obuhvat simulatora");
+    }
+    const polje = slozi(sat.stanje, osnove);
+    brzina = Math.max(brzina, Math.abs(sat.stanje.brzina));
+    for (let indeks = 0; indeks < polje.vx.length; indeks += 1) {
+      brzina = Math.max(brzina, Math.hypot(
+        (polje.vx[indeks] / 255 * 2 - 1) * polje.skala,
+        (polje.vy[indeks] / 255 * 2 - 1) * polje.skala,
+      ));
+    }
+  }
+  const put = najveciPutCestice(brzina, KORAK.najmanji, POSTAVKE_SIMULATORA);
+  return Math.max(3, Math.ceil((1 + 2 * put / Math.min(osnove.sirinaM, osnove.visinaM)) * 1.3));
+}
 
 /**
  * Vrti simulaciju kroz zadane satove i vraća gustoću na kraju posljednjega.

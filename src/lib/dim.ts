@@ -31,6 +31,7 @@
  */
 
 import { mnoziteljRazreda, VRTLOZENJE_PO_RAZREDU } from "@/lib/sim/stabilnost";
+import { stvoriOs, udioLokalnogPolja, SIRINA_PROSIRENOG } from "@/lib/sim/obuhvat";
 
 /** Polje vjetra iz `npm run izvedi-polje-dima`. */
 export type PoljeDima = {
@@ -59,6 +60,7 @@ export type PoljeDima = {
  * ne postoji, pa bi put kroz base64 bio i suvišan i neprenosiv.
  */
 export type SirovoPolje = {
+  readonly pozadina?: readonly [number, number];
   readonly gw: number;
   readonly gh: number;
   readonly skala: number;
@@ -96,6 +98,7 @@ export const UBRZANJE = 60;
 export const OKVIR_M = { sirina: 2623, visina: 1294 } as const;
 
 export type Postavke = {
+  prosireniPrikaz?: number;
   /** Širina rešetke gustoće u ćelijama. */
   sirina?: number;
   /**
@@ -337,6 +340,19 @@ const ZADANO = {
   drenazaPrag: 2,
 } as const;
 
+export function najveciPutCestice(brzina: number, najmanjiKorak: number, postavke: Postavke = {}): number {
+  const par = { ...ZADANO, ...postavke };
+  const vijek = Math.max(par.vijek, par.vijekNajvise) + najmanjiKorak;
+  const sekundi = vijek * par.ubrzanje;
+  const gradijent = par.mjerilo * Math.hypot(1 + 0.52 * 2.17 + 0.27 * 4.1, 1.31 + 0.52 * 1.87 + 0.27 * 3.7);
+  const vrtlog = par.vrtlog * (0.22 + par.sirenje * Math.sqrt(vijek / par.rastVrtloga));
+  const turbulencija = gradijent * vrtlog * par.snaga * (1 + par.zastojnoSirenje);
+  const nosenje = brzina * Math.hypot(1, par.vijuganje * par.vrtlog);
+  const difuzija = Math.max(0, par.difuzija) * Math.max(...VRTLOZENJE_PO_RAZREDU);
+  const slucajniPut = Math.sqrt(-2 * Math.log(1e-12)) * Math.sqrt(2 * difuzija * najmanjiKorak * par.ubrzanje) * Math.ceil(vijek / najmanjiKorak);
+  return (nosenje + turbulencija) * sekundi + slucajniPut;
+}
+
 /**
  * Masa koju izvor ispusti u jednoj sekundi prikaza, u jedinicama `crtaj`.
  *
@@ -477,9 +493,11 @@ export function stvoriDimSirovo(
   let VX = polje.vx;
   let VY = polje.vy;
   let DREN = polje.drenaza;
+  let pozadina = polje.pozadina;
   const MK = polje.maska;
 
-  const W = par.sirina;
+  const os = postavke.prosireniPrikaz ? stvoriOs(postavke.prosireniPrikaz) : null;
+  const W = os ? SIRINA_PROSIRENOG : par.sirina;
   const H = Math.max(2, Math.round((W * gh) / gw));
   const N = par.cestica;
   // Gustoća je masa po ćeliji, pa bi na gušćoj rešetci ista perjanica ispala
@@ -488,7 +506,7 @@ export function stvoriDimSirovo(
   // slike tiho isprala boju. Zato se masa čestice mjeri prema zadanoj rešetci.
   const REF_W = ZADANO.sirina;
   const REF_H = Math.max(2, Math.round((REF_W * gh) / gw));
-  const povrsina = (W * H) / (REF_W * REF_H);
+  const povrsina = os ? 1 : (W * H) / (REF_W * REF_H);
 
   const slucaj = generator(1);
   const celije: number[] = [];
@@ -680,6 +698,11 @@ export function stvoriDimSirovo(
       const y = py[n];
       let vx = uzmi(VX, x, y);
       let vy = uzmi(VY, x, y);
+      if (os && pozadina) {
+        const lokalno = udioLokalnogPolja(x, y);
+        vx = vx * lokalno + pozadina[0] * (1 - lokalno);
+        vy = vy * lokalno + pozadina[1] * (1 - lokalno);
+      }
 
       // Atmosferska perjanica ne drži ravnu os: sporiji, veliki vrtlozi nose
       // cijeli njezin presjek čas na jednu, čas na drugu stranu. Ovaj pomak
@@ -724,10 +747,9 @@ export function stvoriDimSirovo(
         px[n] += (r * Math.cos(2 * Math.PI * u2)) / par.metaraX;
         py[n] += (r * Math.sin(2 * Math.PI * u2)) / par.metaraY;
       }
-      // Napisano obrnuto namjerno: ovako se gasi i čestica čiji je položaj
-      // ispao NaN, jer NaN ne zadovoljava nijednu usporedbu.
       if (
-        !(px[n] >= -0.02 && px[n] <= 1.02 && py[n] >= -0.02 && py[n] <= 1.02)
+        !Number.isFinite(px[n]) || !Number.isFinite(py[n]) ||
+        (!os && !(px[n] >= -0.02 && px[n] <= 1.02 && py[n] >= -0.02 && py[n] <= 1.02))
       ) {
         ugasi(n);
       }
@@ -773,8 +795,8 @@ export function stvoriDimSirovo(
         w *= profil[mjesniSat(rodjen)];
       }
       if (w <= 0.002) continue;
-      const i0 = (px[n] * W) | 0;
-      const j0 = (py[n] * H) | 0;
+      const i0 = os ? Math.floor(os.tekstura(px[n]) * W) : (px[n] * W) | 0;
+      const j0 = os ? Math.floor(os.tekstura(py[n]) * H) : (py[n] * H) | 0;
       for (let dj = -2; dj <= 2; dj += 1) {
         const jj = j0 + dj;
         if (jj < 0 || jj >= H) continue;
@@ -786,6 +808,13 @@ export function stvoriDimSirovo(
       }
     }
     zamuti(par.zamucenje);
+    if (os) {
+      for (let redak = 0; redak < H; redak += 1) {
+        for (let stupac = 0; stupac < W; stupac += 1) {
+          gust[redak * W + stupac] *= os.tezine[stupac] * os.tezine[redak];
+        }
+      }
+    }
     return gust;
   }
 
@@ -829,6 +858,7 @@ export function stvoriDimSirovo(
       VY = novo.vy;
       DREN = novo.drenaza;
       skala = novo.skala;
+      pozadina = novo.pozadina;
       dubina = novo.dubina;
       srednjaBrzina = izmjeriSrednju();
     },
