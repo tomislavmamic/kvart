@@ -3,7 +3,7 @@
 Selected direction: A, map-first.
 
 - Mercaptans and H₂S are both visible on a fresh visit. Existing shared URLs still override visibility, colors and source strengths.
-- Each persistent legend toggles its own plume and uses the same palette as the renderer. Hidden layers remain available, with a minus and crossed-out name.
+- Each persistent legend toggles its own plume and uses the same palette as the renderer. Visible switch tracks and thumb positions distinguish on/off; hidden layers keep their crossed-out name.
 - The timeline is neutral: it selects time and shows frame availability, not a derived neighborhood odor level. Forecast, missing-data, loading, error and stale-data states remain explicit.
 - Regional odor summaries, confidence/trend narratives and the selected-point prediction panel are removed from this page. Selecting a location still supports reporting an odor.
 - Station markers are off initially; measurement and proposed-station layers remain in Settings. Direct proposal links still reveal their station.
@@ -15,7 +15,9 @@ The initial UI redesign leaves calibration and measured data unchanged. The subs
 
 Applied the upstream Impeccable distill, polish and craft-floor guidance against this project's PRODUCT.md, DESIGN.md and the earlier simulator critique. The local Impeccable launcher is absent; context and design checks were performed directly, not via its detector.
 
-- One control dock replaces the separate wind/status card. Source details expand from the wind control; loading progress is not repeated.
+- The header is transparent, including pointer pass-through between controls. A fixed-height footer keeps time, model help, wind and status on one row; additional messages appear in disclosures rather than growing the footer.
+- The timeline is hidden initially and opens above the footer from the time button. Closing it stops playback. Model help opens a modal dialog with native Escape dismissal and focus restoration.
+- All seven layers are directly available in Settings; only advanced tuning is nested. Basemap switching is removed, and legacy ortho URLs resolve to the street map.
 - Desktop legends sit in the header; phone legends remain directly over the map. Their gradients still come from the actual plume palettes.
 - Shared, locally scoped styles use the project's Kamen/Maslina tokens, consistent SVG icons and 44 px primary interaction targets.
 - Settings use progressive disclosure, solid surfaces and focus return on close/Escape. They remain non-modal so the map is still usable.

@@ -11,7 +11,8 @@
 }
 
 .sim-ui-shell ::selection { background: var(--color-maslina-rub); color: var(--color-maslina-noc); }
-.sim-ui-header { position: absolute; inset: 0 0 auto; z-index: 30; display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 20px; background: var(--sim-paper); }
+.sim-ui-header { position: absolute; inset: 0 0 auto; z-index: 30; display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 20px; pointer-events: none; }
+.sim-ui-header > * { pointer-events: auto; text-shadow: 0 1px 3px white, 0 0 8px white; }
 .sim-ui-brand { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .sim-ui-brand a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; font-weight: 600; }
 .sim-ui-brand > span { color: var(--sim-secondary); }
@@ -58,7 +59,25 @@
 .sim-ui-track .sim-ui-range::-webkit-slider-runnable-track { background: transparent; }
 .sim-ui-track .sim-ui-range::-moz-range-track { background: transparent; }
 .sim-ui-ticks { display: flex; justify-content: space-between; margin-top: -6px; color: var(--sim-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
-.sim-ui-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0 12px; margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--sim-soft); color: var(--sim-secondary); font-size: 12px; }
+.sim-ui-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 48px; padding: 0 12px; border-radius: 12px; background: var(--sim-paper); box-shadow: var(--sim-elevation); color: var(--sim-secondary); font-size: 12px; pointer-events: auto; white-space: nowrap; }
+.sim-ui-timePanel { position: absolute; bottom: calc(100% + 12px); left: 0; right: 0; pointer-events: auto; }
+.sim-ui-timeClose { position: absolute; right: 4px; top: 0; }
+.sim-ui-timePanel .sim-ui-timeHeader { padding-right: 36px; }
+.sim-ui-timeToggle, .sim-ui-modelButton { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; cursor: pointer; }
+.sim-ui-timeToggle { font-variant-numeric: tabular-nums; color: var(--sim-ink); }
+.sim-ui-timeToggle svg { width: 12px; height: 12px; }
+.sim-ui-timeToggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.sim-ui-modelButton { text-decoration: underline; text-decoration-color: var(--sim-line); text-underline-offset: 3px; }
+.sim-ui-health > summary { width: 32px; justify-content: center; }
+.sim-ui-health > summary span { display: grid; place-items: center; width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; font-size: 11px; }
+.sim-ui-footer .sim-ui-windInfo { white-space: normal; line-height: 1.6; }
+.sim-ui-model { position: fixed; inset: 0; margin: auto; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 0; border-radius: 16px; padding: 0; background: var(--sim-paper); color: var(--sim-ink); box-shadow: var(--sim-elevation); pointer-events: auto; }
+.sim-ui-model::backdrop { background: rgb(20 25 20 / .3); }
+.sim-ui-modelContent > .sim-ui-help { padding: 16px 24px 24px; font-size: 14px; }
+.sim-ui-switch { display: flex; align-items: center; width: 28px; height: 18px; padding: 3px; border-radius: 12px; background: var(--sim-action); flex-shrink: 0; }
+.sim-ui-switch > span { width: 12px; height: 12px; border-radius: 50%; background: white; transform: translateX(10px); }
+.sim-ui-layer[aria-pressed="false"] .sim-ui-switch { background: var(--sim-secondary); }
+.sim-ui-layer[aria-pressed="false"] .sim-ui-switch > span { transform: none; }
 .sim-ui-wind { position: relative; }
 .sim-ui-wind summary { display: flex; align-items: center; gap: 6px; min-height: 36px; cursor: pointer; list-style: none; border-radius: 4px; }
 .sim-ui-wind summary::-webkit-details-marker { display: none; }
@@ -75,9 +94,6 @@
 .sim-ui-settingRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--sim-ink); font-size: 14px; cursor: pointer; }
 .sim-ui-settingRow input { order: 1; width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--sim-action); }
 .sim-ui-settingHeading { margin: 16px 0 8px; color: var(--sim-secondary); font-size: 12px; font-weight: 500; }
-.sim-ui-basemap { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--sim-soft); }
-.sim-ui-basemap button { flex: 1; padding: 0 8px; min-height: 44px; border-radius: 7px; color: var(--sim-secondary); font-size: 14px; cursor: pointer; }
-.sim-ui-basemap button[aria-pressed="true"] { background: var(--sim-paper); color: var(--sim-action); font-weight: 600; }
 .sim-ui-disclosure { border-top: 1px solid var(--sim-soft); margin-top: 8px; }
 .sim-ui-disclosure > summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; list-style: none; color: var(--sim-ink); font-size: 14px; cursor: pointer; border-radius: 4px; }
 .sim-ui-disclosure > summary::-webkit-details-marker { display: none; }
@@ -109,6 +125,9 @@
   .sim-ui-ticks { font-size: 12px; }
   .sim-ui-settings { inset: auto 0 0; width: auto; max-height: 70dvh; border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom); }
   .sim-ui-wind summary { min-height: 44px; }
+  .sim-ui-footer { gap: 4px; padding-inline: 8px; }
+  .sim-ui-footer .sim-ui-wind summary { gap: 3px; }
+  .sim-ui-footer .sim-ui-wind:not(.sim-ui-health) summary > svg:last-child { display: none; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

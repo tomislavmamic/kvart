@@ -39,7 +39,7 @@ import { stvoriPrijedloge, type Prijedlozi } from "@/components/karepovac/sim/pr
 import { prijedlogIzAdrese, type PrijedlogPostaje } from "@/lib/sim/prijedlozi-postaja";
 import { adresaDojave, imeTocke, tockaIzAdrese, type Tocka } from "@/lib/sim/tocka";
 import { UpravljackaPloca, type PloceStanje } from "@/components/karepovac/sim/upravljacka-ploca";
-import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
+import { SimPodnozje } from "@/components/karepovac/sim/sim-podnozje";
 import {
   nesigurnostKadra,
   PRIJELAZ_MS,
@@ -202,7 +202,7 @@ function izAdrese(zadano: PloceStanje): {
             : p.get("vje") === "1",
         mirovanje: zadano.prikaz.mirovanje,
       },
-      podloga: p.get("pod") === "ortofoto" ? "ortofoto" : "karta",
+      podloga: "karta",
       reljef: zastavica("rel", zadano.reljef),
       zgrade: zastavica("zgr", zadano.zgrade),
       postaje: zastavica("pos", zadano.postaje),
@@ -232,7 +232,7 @@ function uAdresu(stanje: PloceStanje, sat: string | null, prijedlog: string | nu
     p.set(`${kratica}j`, String(t.jacina));
   }
   p.set("vje", stanje.prikaz.vjetar ? "1" : "0");
-  p.set("pod", stanje.podloga);
+  p.delete("pod");
   p.set("rel", stanje.reljef ? "1" : "0");
   p.set("zgr", stanje.zgrade ? "1" : "0");
   p.set("pos", stanje.postaje ? "1" : "0");
@@ -1083,13 +1083,14 @@ export function Simulator({ pocetna }: { pocetna: Crta }) {
       ) : null}
 
       <div className="sim-ui-dock">
-        <VremenskaCrta
+        <SimPodnozje
           crta={crta}
           pomak={pomak}
           izracunati={izracunati}
           reproducira={reproducira}
           sadaStvarno={sadaStvarno}
           napredak={napredak}
+          upozorenje={Boolean(napomena) || osvjezavanje !== "mirno" || crtaStara || kadar?.dostupnost === "nedostupno" || !spreman || zastarjeli.has(kadar?.sat ?? "")}
           naReprodukciju={postaviReprodukciju}
           naPromjenu={naPomak}
           vjetar={kadar?.vjetar ? (

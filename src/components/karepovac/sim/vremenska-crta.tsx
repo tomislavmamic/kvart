@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 
 import { SimIkona } from "./sim-ikona";
 
 import { najbliziDostupan, type Crta, type Kadar } from "@/lib/sim/kadrovi";
 import { danMjesno, oznakaSata, satMjesno, zastarjela } from "@/lib/sim/oznaka-sata";
-import type { StanjePogona } from "@/lib/sim/pogon";
 import { KORAK_REPRODUKCIJE_MS, sljedeciZaReprodukciju } from "@/components/karepovac/sim/vremenska-crta-logika";
 
 export { danMjesno, satMjesno };
@@ -20,7 +19,7 @@ export function opisKadra(kadar: Kadar, sadaStvarno?: Date): string {
 }
 
 export function VremenskaCrta({
-  crta, pomak, izracunati, reproducira, sadaStvarno, napredak, vjetar, status,
+  crta, pomak, izracunati, reproducira, sadaStvarno,
   naReprodukciju, naPromjenu,
 }: {
   crta: Crta;
@@ -28,9 +27,6 @@ export function VremenskaCrta({
   izracunati: ReadonlySet<string>;
   reproducira: boolean;
   sadaStvarno: Date;
-  napredak?: StanjePogona;
-  vjetar?: ReactNode;
-  status?: ReactNode;
   naReprodukciju: (vrijednost: boolean) => void;
   naPromjenu: (pomak: number) => void;
 }) {
@@ -121,14 +117,6 @@ export function VremenskaCrta({
           {stara ? "Zadnje" : "Sada"}
         </button>
       </div>
-      <div className="sim-ui-footer">
-        <span>Model, ne mjerenje</span>
-        {vjetar}
-      </div>
-      <div role="status" className="sim-ui-status">
-        {napredak?.greska ? napredak.greska : napredak && napredak.gotovo < napredak.ukupno ? `Računam ${napredak.gotovo}/${napredak.ukupno}` : null}
-      </div>
-      {status}
     </section>
   );
 }

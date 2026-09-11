@@ -3,7 +3,6 @@
 import { TVARI, type Tvar } from "@/lib/dim";
 import { bojaZa, uGradijent } from "@/lib/sim/ljestvica";
 import type { PostavkePrikaza } from "@/components/karepovac/sim/sim-scena";
-import { SimIkona } from "./sim-ikona";
 
 const TVARI_REDOM: readonly Tvar[] = ["merkaptani", "sumporovodik"];
 
@@ -24,7 +23,7 @@ export function LegendaTvari({ prikaz, naPromjenu }: {
             onClick={() => naPromjenu(tvar, !postavke.vidljiv)}
             className={`fokus sim-ui-layer`}
           >
-            <SimIkona ime={postavke.vidljiv ? "check" : "minus"} />
+            <span className="sim-ui-switch" aria-hidden="true"><span /></span>
             <span className={postavke.vidljiv ? "" : "text-zinc-500 line-through"}>{tvar === "merkaptani" ? "Merkaptani" : "H₂S"}</span>
             <span aria-hidden="true" className="sim-ui-ramp" style={{ background: uGradijent(bojaZa(postavke.boja, tvar).ljestvica) }} />
             <span className="sr-only">Ljestvica prikaza od manje prema više; nije mjerenje.</span>

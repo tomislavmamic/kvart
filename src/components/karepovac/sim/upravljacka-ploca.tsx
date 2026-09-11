@@ -47,25 +47,15 @@ export function UpravljackaPloca({ stanje, naPrikaz, naStanje, naSredinu }: {
 
   return (
     <div className="sim-ui-settingsBody">
+      {TVARI_REDOM.map((tvar) => (
+        <Prekidac key={tvar} ukljucen={stanje.prikaz.tvari[tvar].vidljiv} naPromjenu={(vidljiv) => postaviTvar(tvar, { vidljiv })}>{TVARI[tvar].naziv}</Prekidac>
+      ))}
       <Prekidac ukljucen={stanje.prikaz.vjetar} naPromjenu={(vjetar) => naPrikaz({ ...stanje.prikaz, vjetar })}>Tragovi vjetra</Prekidac>
       <Prekidac ukljucen={stanje.postaje} naPromjenu={(postaje) => naStanje({ postaje })}>Mjerne postaje</Prekidac>
 
-      <h3 className="sim-ui-settingHeading">Podloga</h3>
-      <div className="sim-ui-basemap" role="group" aria-label="Podloga karte">
-        {(["karta", "ortofoto"] as const).map((podloga) => (
-          <button key={podloga} type="button" aria-pressed={stanje.podloga === podloga} onClick={() => naStanje({ podloga })} className="fokus">
-            {podloga === "karta" ? "Ulična karta" : "Ortofoto"}
-          </button>
-        ))}
-      </div>
-
-      <details className="sim-ui-disclosure">
-        <summary className="fokus">Slojevi karte<SimIkona ime="chevron" /></summary>
         <Prekidac ukljucen={stanje.reljef} naPromjenu={(reljef) => naStanje({ reljef })}>Sjenčani reljef</Prekidac>
         <Prekidac ukljucen={stanje.zgrade} naPromjenu={(zgrade) => naStanje({ zgrade })}>Zgrade</Prekidac>
         <Prekidac ukljucen={stanje.prijedlozi} naPromjenu={(prijedlozi) => naStanje({ prijedlozi })}>Predložene postaje</Prekidac>
-      </details>
-
       <details className="sim-ui-disclosure">
         <summary className="fokus">Napredno<SimIkona ime="chevron" /></summary>
         {TVARI_REDOM.map((tvar) => {

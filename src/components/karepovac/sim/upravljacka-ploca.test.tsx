@@ -32,6 +32,15 @@ function nacrtaj(stanje: PloceStanje = STANJE) {
   );
 }
 
+test("svih sedam slojeva je dostupno bez otvaranja dodatnih odjeljaka", () => {
+  const html = nacrtaj();
+  const slojevi = html.split("<details")[0];
+  assert.equal(slojevi.match(/type="checkbox"/g)?.length, 7);
+  assert.match(slojevi, /Merkaptani/);
+  assert.match(slojevi, /Sumporovodik/);
+  assert.doesNotMatch(html, /Ortofoto|Podloga karte|Slojevi karte/);
+});
+
 test("prikaz se ne predstavlja kao mjerenje", () => {
   const html = nacrtaj();
   assert.match(html, /Ovo je prikaz, ne mjerenje/, "ograda mora stajati u ploči");

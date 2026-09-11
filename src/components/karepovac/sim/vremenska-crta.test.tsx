@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
 
 import { VremenskaCrta } from "@/components/karepovac/sim/vremenska-crta";
+import { SimPodnozje } from "./sim-podnozje";
 import { SATI_UNAPRIJED, SATI_UNATRAG, SATI_ZALETA, slozCrtu } from "@/lib/sim/kadrovi";
 import type { SatniVjetar } from "@/lib/sim/vrijeme-satno";
 
@@ -20,7 +21,7 @@ function crta() {
   return slozCrtu(SADA, vjetrovi, dubine, new Map());
 }
 
-function nacrtaj(pomak = 0, gotovo = 0, promjene: Partial<ComponentProps<typeof VremenskaCrta>> = {}) {
+function nacrtaj(pomak = 0, promjene: Partial<ComponentProps<typeof VremenskaCrta>> = {}) {
   return renderToStaticMarkup(
     <VremenskaCrta
       crta={crta()}
@@ -28,7 +29,6 @@ function nacrtaj(pomak = 0, gotovo = 0, promjene: Partial<ComponentProps<typeof 
       izracunati={new Set()}
       reproducira={false}
       sadaStvarno={new Date("2026-09-05T12:20:00.000Z")}
-      napredak={{ gotovo, svjeze: gotovo, ukupno: 28, greska: null }}
       naReprodukciju={() => {}}
       naPromjenu={() => {}}
       {...promjene}
@@ -40,7 +40,7 @@ test("traka nosi sat i napredak bez izvedenih razina mirisa", () => {
   const html = nacrtaj();
   assert.match(html, /type="range"/);
   assert.match(html, /aria-valuetext="14:00, sub, 05\. 09\., sada"/);
-  assert.match(html, /Računam 0\/28/);
+  assert.doesNotMatch(html, /Računam|Model, ne mjerenje|sim-ui-footer/);
   assert.doesNotMatch(html, /miris u naseljima|background-color|href=/);
 });
 
@@ -54,20 +54,20 @@ test("traka ostaje neutralna i ima dostupne kontrole", () => {
 });
 
 test("brojka nestaje kad je sve izračunato", () => {
-  const html = nacrtaj(-3, 28);
+  const html = nacrtaj(-3);
   assert.doesNotMatch(html, /Računam|28\/28/);
   assert.match(html, /11:00/);
 });
 
 test("stara crta nudi zadnje podatke, ne tvrdi da su sadašnji", () => {
-  const html = nacrtaj(0, 28, { sadaStvarno: new Date("2026-09-06T12:20:00.000Z") });
+  const html = nacrtaj(0, { sadaStvarno: new Date("2026-09-06T12:20:00.000Z") });
   assert.match(html, />Zadnje<\/button>/);
   assert.doesNotMatch(html, />Sada<\/button>/);
 });
 
 test("bez dostupnog sata reprodukcija i odabir su onemogućeni", () => {
   const pocetna = crta();
-  const html = nacrtaj(0, 0, {
+  const html = nacrtaj(0, {
     crta: { ...pocetna, kadrovi: pocetna.kadrovi.map((kadar) => ({ ...kadar, dostupnost: "nedostupno" as const })) },
   });
   assert.equal(html.match(/disabled=""/g)?.length, 3);
@@ -76,8 +76,13 @@ test("bez dostupnog sata reprodukcija i odabir su onemogućeni", () => {
 });
 
 test("greška je vidljiva, a model nije prikazan kao mjerenje", () => {
-  const html = nacrtaj(0, 0, { napredak: { gotovo: 0, svjeze: 0, ukupno: 28, greska: "Izračun nije uspio" } });
+  const html = renderToStaticMarkup(<SimPodnozje crta={crta()} pomak={0} izracunati={new Set()} reproducira={false} sadaStvarno={SADA} napredak={{ gotovo: 0, svjeze: 0, ukupno: 28, greska: "Izračun nije uspio" }} upozorenje={false} naReprodukciju={() => {}} naPromjenu={() => {}} />);
   assert.match(html, /Izračun nije uspio/);
   assert.doesNotMatch(html, /Računam 0/);
   assert.match(html, /Model, ne mjerenje/);
+  assert.match(html, /aria-label="Greška izračuna — pojedinosti"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.doesNotMatch(html, /type="range"/);
+  assert.match(html, /<dialog/);
+  assert.doesNotMatch(html, /<dialog[^>]* open/);
 });
