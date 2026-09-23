@@ -42,14 +42,23 @@ export const POCETNE_GUP_POSTAVKE: GupPostavke = {
 };
 
 /**
- * Stanja nose statusne boje (dataviz, svijetla podloga) i uvijek natpis u
- * legendi i skočnom prozoru, nikad samo boju.
+ * Kako se stanje čestice crta. Boja ispune je UVIJEK boja namjene iz
+ * legende plana (pretežita klasa čestice); stanje nose prozirnost i rub:
+ *  - iskorištena po planu: puna boja;
+ *  - neiskorištena: poluprozirna;
+ *  - iskorištena protivno planu: crveni rub (iscrtkan kad je protivan samo
+ *    dio iskorištenog).
+ * Tako se i izdaleka vidi i ČIJA je čestica (namjena) i što je s njom.
  */
-export const STANJA: Record<StanjeCestice, { naziv: string; boja: string; ispuna: number }> = {
-  slobodna: { naziv: "slobodna (iskorišteno ispod 5 %)", boja: "#9f9fa9", ispuna: 0.08 },
-  "u-skladu": { naziv: "iskorištena u skladu s planom", boja: "#0ca30c", ispuna: 0.4 },
-  "djelomicno-protivno": { naziv: "dijelom protivno planu", boja: "#ec835a", ispuna: 0.55 },
-  protivno: { naziv: "protivno planu", boja: "#d03b3b", ispuna: 0.6 },
+const CRVENA = "#d03b3b";
+export const STANJA: Record<
+  StanjeCestice,
+  { naziv: string; ispuna: number; rub: string; debljina: number; crtkano?: string }
+> = {
+  "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85, rub: "#18181b", debljina: 0.6 },
+  slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.35, rub: "#52525c", debljina: 0.4 },
+  protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, rub: CRVENA, debljina: 3 },
+  "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, rub: CRVENA, debljina: 2, crtkano: "5 3" },
 };
 
 const VRSTE: Record<VrstaKoristenja, string> = {
@@ -255,16 +264,12 @@ function stil(s: SudCestice, p: GupPostavke): LeafletNS.PathOptions {
     };
   }
   const st = STANJA[s.stanje];
-  // Rub nosi stanje, ispuna koliko je čestice iskorišteno: kuća na velikoj
-  // okućnici ne smije izgledati isto kao zgrada od međe do međe, a 20 m²
-  // protivno planu na praznoj čestici od 4 000 m² ne smije je zacrveniti.
-  const udio = s.m2 > 0 ? Math.min(1, s.iskoristeno / s.m2) : 0;
-  if (s.stanje === "slobodna") return { color: "#71717b", weight: 0.5, fillColor: st.boja, fillOpacity: st.ispuna };
   return {
-    color: st.boja,
-    weight: s.stanje === "u-skladu" ? 1 : 2,
-    fillColor: st.boja,
-    fillOpacity: 0.12 + 0.5 * udio,
+    color: st.rub,
+    weight: st.debljina,
+    dashArray: st.crtkano,
+    fillColor: s.pretezita?.bojaPlana ?? "#ffffff",
+    fillOpacity: s.pretezita ? st.ispuna : 0,
   };
 }
 
@@ -282,7 +287,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
     `<b>k.č. ${esc(p.kc)}, k.o. ${esc(p.ko)}</b><br>` +
     `<span style="${sivo}">${m2(p.a)} u katastru · GUP ${post.godina}. · brojanje: ${esc(inacica.naziv)}</span>` +
     `<div style="margin:6px 0;display:flex;align-items:center;gap:6px">` +
-    `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${st.boja}"></span>` +
+    `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${s.pretezita?.bojaPlana ?? "#fff"};opacity:${st.ispuna < 0.5 ? 0.45 : 1};outline:${st.debljina >= 2 ? `2px ${st.crtkano ? "dashed" : "solid"} ${CRVENA}` : "1px solid #52525c"}"></span>` +
     `<b>${esc(st.naziv)}</b></div>`;
   if (!s.komadi.length) {
     return h + `<span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
@@ -372,15 +377,32 @@ export function GupProvjeraPloca(props: {
       )}
 
       <ul className="space-y-1" aria-label="Legenda">
-        {p.prikaz === "stanje"
-          ? (Object.keys(STANJA) as StanjeCestice[]).map((k) => (
+        {p.prikaz === "stanje" &&
+          (Object.keys(STANJA) as StanjeCestice[]).map((k) => {
+            const st = STANJA[k];
+            return (
               <li key={k} className="flex items-center gap-2">
-                <span className="inline-block size-3.5 shrink-0 rounded-sm border" style={{ background: STANJA[k].boja, borderColor: STANJA[k].boja, opacity: k === "slobodna" ? 0.5 : 1 }} aria-hidden />
-                <span className="flex-1">{STANJA[k].naziv}</span>
+                <span className="relative inline-block size-4 shrink-0 bg-white" aria-hidden>
+                  <span
+                    className="absolute inset-0 rounded-sm"
+                    style={{
+                      background: `rgba(224,160,0,${st.ispuna})`,
+                      border: `${Math.max(1, st.debljina * 0.75)}px ${st.crtkano ? "dashed" : "solid"} ${st.rub}`,
+                    }}
+                  />
+                </span>
+                <span className="flex-1">{st.naziv}</span>
                 {info.uOknu && <span className="tabular-nums text-zinc-500">{info.uOknu[k].toLocaleString("hr-HR")}</span>}
               </li>
-            ))
-          : KLASE.filter((k) => k.kod !== "P").map((k) => (
+            );
+          })}
+        {p.prikaz === "stanje" && (
+          <li className="pt-1 text-xs text-zinc-500">
+            Boja je namjena iz plana (pretežita na čestici), prozirnost i rub su stanje. Uzorci su u boji mješovite namjene.
+          </li>
+        )}
+        {(p.prikaz === "namjena" || p.prikaz === "stanje") &&
+          KLASE.filter((k) => k.kod !== "P").map((k) => (
               <li key={k.kod} className="flex items-center gap-2">
                 <span className="inline-block size-3.5 shrink-0 rounded-sm border border-zinc-500" style={{ background: k.bojaPlana }} aria-hidden />
                 <span className="font-mono text-xs text-zinc-500">{k.kod}</span>
@@ -391,11 +413,7 @@ export function GupProvjeraPloca(props: {
           <li className="text-xs text-zinc-500">Iscrtkan rub: čestica je u više namjena; boja je pretežita.</li>
         )}
       </ul>
-      {p.prikaz === "stanje" && (
-        <p className="text-xs text-zinc-500">
-          Rub kaže stanje, gustoća ispune koliki je dio čestice iskorišten.{info.uOknu && " Brojke desno: čestice u oknu."}
-        </p>
-      )}
+      {p.prikaz === "stanje" && info.uOknu && <p className="text-xs text-zinc-500">Brojke uz stanja: čestice u oknu.</p>}
 
       <div className="space-y-1">
         <label className="meta flex items-center gap-2">
