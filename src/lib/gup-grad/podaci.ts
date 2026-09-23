@@ -8,7 +8,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 
 import { GODINE, type Godina } from "./model";
-import { izracunajGodinu, type Komad, type RezultatKlase } from "./izracun";
+import { izracunajGodinu, ostaciGodine, type Komad, type RezultatKlase, type Susjedi, type UlazGodine } from "./izracun";
 import type { Pravila } from "./pravila";
 
 export interface PlanGodine {
@@ -22,7 +22,7 @@ export interface SirovaMjerenja {
   piksel_m2: number;
   komad_polja: string[];
   planovi: PlanGodine[];
-  cestice: { ko_imena: string[]; ko: number[]; broj: string[]; povrsina: number[] };
+  cestice: { ko_imena: string[]; ko: number[]; broj: string[]; povrsina: number[]; susjedi: Susjedi };
   godine: Record<string, { id: string; klase_px: Record<string, number>; komadi: number[] }>;
   izvori: Record<string, string>;
 }
@@ -44,20 +44,39 @@ export function ucitajMjerenja(): Promise<SirovaMjerenja> {
 }
 
 /** Komadi jedne godine iz ravnog niza (9 brojeva po komadu). */
-export function* komadiGodine(d: SirovaMjerenja, godina: Godina): Generator<Komad> {
+export function komadiGodine(d: SirovaMjerenja, godina: Godina): Komad[] {
   const a = d.godine[String(godina)]?.komadi ?? [];
+  const out: Komad[] = [];
   for (let i = 0; i + 8 < a.length; i += 9) {
-    yield { klasa: a[i + 1], n: a[i + 2], zk: a[i + 3], z25: a[i + 4], pr: a[i + 5], os: a[i + 6], ze: a[i + 7], g: a[i + 8] };
+    out.push({
+      cestica: a[i],
+      klasa: a[i + 1],
+      n: a[i + 2],
+      zk: a[i + 3],
+      z25: a[i + 4],
+      pr: a[i + 5],
+      os: a[i + 6],
+      ze: a[i + 7],
+      g: a[i + 8],
+    });
   }
+  return out;
+}
+
+export function ulazGodine(d: SirovaMjerenja, g: Godina): UlazGodine {
+  const klasePx = Object.fromEntries(
+    Object.entries(d.godine[String(g)]?.klase_px ?? {}).map(([k, v]) => [Number(k), v]),
+  );
+  return { klasePx, komadi: komadiGodine(d, g), pikselM2: d.piksel_m2, susjedi: d.cestice.susjedi };
 }
 
 export function izracunaj(d: SirovaMjerenja, p: Pravila): Record<Godina, RezultatKlase[]> {
   const out = {} as Record<Godina, RezultatKlase[]>;
-  for (const g of GODINE) {
-    const klasePx = Object.fromEntries(
-      Object.entries(d.godine[String(g)]?.klase_px ?? {}).map(([k, v]) => [Number(k), v]),
-    );
-    out[g] = izracunajGodinu({ klasePx, komadi: komadiGodine(d, g), pikselM2: d.piksel_m2 }, p);
-  }
+  for (const g of GODINE) out[g] = izracunajGodinu(ulazGodine(d, g), p);
   return out;
+}
+
+/** Ostaci godine za kartu provjere: [čestica, klasa]. */
+export function ostaci(d: SirovaMjerenja, g: Godina, p: Pravila): [number, number][] {
+  return ostaciGodine(ulazGodine(d, g), p);
 }

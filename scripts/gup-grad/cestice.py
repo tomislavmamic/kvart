@@ -22,9 +22,11 @@ samo izmjeri, za svaki komad čestice koji pada u jednu klasu namjene:
   zk     pikseli pod zgradom iz katastra (KO_*_objekti)
   z25    pikseli pod zgradom iz gradskog 3D modela (sloj Objekti_Split_2025,
          isti tlocrti kao Zgrade_3D/ST_3D_2024; datum snimanja izvoz ne kaže)
-  pr     pikseli pod prometnom površinom (os ceste ± pola profila,
-         nogostupi, parkirališta)
-  os     pikseli pod ostalim uređenim: groblja, športski objekti
+  pr     pikseli pod ulicom: os ceste ± pola profila (Ceste,
+         NerazvrstaneCeste, državne ceste) i nogostupi. Pravila ih mogu
+         izuzeti iz namjene zone (ulica u stambenoj zoni nije stanovanje).
+  os     pikseli pod ostalim uređenim: groblja, športski objekti,
+         parkirališta — to JEST korištenje zone, pa ne ide s ulicama
   ze     pikseli pod održavanim javnim zelenilom (Parkovi i nasadi)
   g      pretežita skupina katastarskih zgrada u komadu (0 = nema):
          1 stambene (1xx), 2 gospodarske i poslovne (2xx), 3 javne (3xx),
@@ -147,14 +149,13 @@ def main() -> None:
     nog = citaj(os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "Nogostupi.shp"), columns=["Sirina_nog"])
     sir = nog.Sirina_nog.fillna(1.5).clip(lower=1.0, upper=6.0).values
     ceste.extend(shapely.buffer(nog.geometry.values, sir / 2.0, cap_style="flat"))
-    park = citaj(os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "JavnaParkiralista.shp"), columns=[])
-    ceste.extend(park.geometry.values)
     pr = rasteriziraj(ceste).astype(bool)
 
     ostalo = []
     for put in [
         os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "Groblja.shp"),
         os.path.join(BAZA, "GRADSKE_NEKRETNINE", "Sportski_objekti_p.shp"),
+        os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "JavnaParkiralista.shp"),
     ]:
         ostalo.extend(citaj(put, columns=[]).geometry.values)
     os_ = rasteriziraj(ostalo).astype(bool)
@@ -221,6 +222,7 @@ def main() -> None:
         "klase": mreza["klase"],
         "planovi": mreza["planovi"],
         "cestice": {
+            "susjedi": susjedi(c),
             "ko_imena": ko_imena,
             "ko": [ko_idx[k] for k in c.KO_NAZIV.fillna("")],
             "broj": c.KC_BROJ.fillna("").tolist(),
@@ -231,8 +233,8 @@ def main() -> None:
             "cestice": "Grad Split, GIS izvoz: KATASTAR/CADASTRAL_PARCELS_2024_P",
             "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
             "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025 (tlocrti gradskog 3D modela, isti kao Zgrade_3D/ST_3D_2024)",
-            "promet": "Ceste, NerazvrstaneCeste, drzavna_cesta_1 (os ± pola profila), Nogostupi, JavnaParkiralista",
-            "ostalo": "Groblja, Sportski_objekti_p",
+            "promet": "Ceste, NerazvrstaneCeste, drzavna_cesta_1 (os ± pola profila), Nogostupi",
+            "ostalo": "Groblja, Sportski_objekti_p, JavnaParkiralista",
             "zelenilo": "JavneZelenePovrsine_poligoni (Parkovi i nasadi)",
             "obuhvat": "OBUHVAT_PP/OBUHVATI_PP — Generalni urbanistički plan Splita",
         },
@@ -245,6 +247,26 @@ def main() -> None:
     zapisi_plocice(c, godine_out, out["cestice"])
     zapisi_zgrade(zg, z25g[z25g.geometry.intersects(obuhvat)])
     zapisi_slike(mreza)
+
+
+def susjedi(c) -> dict:
+    """Koje se čestice dodiruju, kao CSR: susjedi i-te su lista[od[i]:od[i+1]].
+
+    Treba pravilu o ostacima (pravila.ts): premala slobodna čestica je
+    neiskoristiva samo ako nema slobodnog susjeda s kojim bi se mogla
+    spojiti. Međe iz katastra nisu savršeno zatvorene, pa se dodir traži s
+    razmakom od 0,3 m.
+    """
+    geo = c.geometry.values
+    stablo = shapely.STRtree(geo)
+    a, b = stablo.query(shapely.buffer(geo, 0.3), predicate="intersects")
+    parovi = sorted({(int(i), int(j)) for i, j in zip(a, b) if i != j})
+    od = [0] * (len(geo) + 1)
+    for i, _ in parovi:
+        od[i + 1] += 1
+    for i in range(len(geo)):
+        od[i + 1] += od[i]
+    return {"od": od, "lista": [j for _, j in parovi]}
 
 
 KARTA = os.path.join(ROOT, "public", "geo", "gup-grad")

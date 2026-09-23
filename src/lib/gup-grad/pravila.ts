@@ -22,8 +22,8 @@ export type VrstaKoristenja =
   | "pomocna" // 4xx — garaže, spremišta
   | "ostala" // 6xx–9xx — nadstrešnice, trafostanice, objekti uz ceste
   | "neevidentirana" // zgrada iz gradskog 3D modela koje nema u katastru
-  | "promet" // ceste, nogostupi, parkirališta
-  | "uredjeno" // groblja, športski objekti
+  | "promet" // ulice i nogostupi (u namjeni P; u ostalim zonama se izuzimaju, vidi `ulice`)
+  | "uredjeno" // groblja, športski objekti, parkirališta
   | "zelenilo"; // javno zelenilo koje održavaju Parkovi i nasadi
 
 export type NacinBrojanja =
@@ -62,6 +62,39 @@ export interface Pravila {
     promet: boolean;
     uredjeno: boolean;
     zelenilo: boolean;
+  };
+  /**
+   * Ulice unutar obojene zone. GUP boji namjenom cijele blokove, a crta
+   * samo glavne prometnice; nerazvrstane ceste, ulice i nogostupi unutar
+   * stambene zone nisu stanovanje ni slobodno zemljište te zone. Kad je
+   * `izuzmi`, površina ulice oduzima se od zone i pribraja „Ulicama i
+   * infrastrukturi” (P).
+   */
+  ulice: {
+    izuzmi: boolean;
+    /**
+     * Komad čestice pokriven ulicom barem ovolikim udjelom je sama ulica
+     * (katastarska čestica puta) i izuzima se cijeli, ne samo traka od 7 m
+     * oko osi ceste.
+     */
+    pragUlicneCestice: number;
+  };
+  /**
+   * Premali ostaci. Slobodan dio čestice manji od najmanje površine koja
+   * može služiti namjeni zone ne broji se kao slobodan — osim ako se
+   * dodiruje sa slobodnom česticom iste namjene i zajedno dosežu tu
+   * površinu (mogu se spojiti u građevnu česticu). Takav dio je „ostatak”:
+   * ni iskorišten ni slobodan.
+   */
+  ostaci: {
+    ukljuci: boolean;
+    /** Najmanja površina (m²) koja može služiti namjeni; 0 = bez najmanje. */
+    najmanjaPovrsina: Record<KodKlase, number>;
+    /**
+     * Čestica je „slobodna” (pa može spasiti susjedni ostatak) ako je na
+     * njoj iskorišteno manje od ovog udjela.
+     */
+    slobodnaUdio: number;
   };
   /**
    * Koje vrste korištenja plan u pojedinoj klasi dopušta. Kombinirane
@@ -112,6 +145,32 @@ export const ZADANA_PRAVILA: Pravila = {
   najmanjiTrag: 0.03,
   zgrade: "oba",
   racunaj: { zgrade: true, promet: true, uredjeno: true, zelenilo: false },
+  ulice: { izuzmi: true, pragUlicneCestice: 0.6 },
+  ostaci: {
+    ukljuci: true,
+    // Pretpostavke, ne prepisane odredbe: 300 m² je red veličine najmanje
+    // građevne čestice za obiteljsku kuću, a gospodarske i javne građevine
+    // traže više. Zelenilo, rekreacija i plaže nemaju najmanju površinu —
+    // tamo je i mala neizgrađena čestica upravo ono što plan hoće.
+    najmanjaPovrsina: {
+      S: 300,
+      "M/K5": 300,
+      D: 500,
+      "I/K": 1000,
+      T: 1000,
+      L: 500,
+      R1: 1000,
+      R2: 0,
+      R3: 0,
+      R4: 0,
+      R5: 0,
+      Z1: 0,
+      Z5: 0,
+      N: 0,
+      P: 0,
+    },
+    slobodnaUdio: 0.05,
+  },
   dopusteno: {
     S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "javna"],
     // kombinirana: M1 pretežito stambena, M2 stambena i poslovna, M3

@@ -91,6 +91,18 @@ export default async function GupPage() {
           za sve tri godine — mjeri se današnje stanje prema namjeni iz svake inačice plana.
         </p>
         <p className="mt-2">
+          Ulice unutar obojene zone ne broje se u zonu. Plan boji namjenom cijele blokove i ucrtava samo glavne ceste, pa
+          bi nerazvrstane ceste, ulice i nogostupi unutar stambene zone inače ispali „iskorišteno stanovanje”. Njihova
+          površina (os ceste ± pola profila, i nogostupi) oduzima se od zone i pribraja „Ulicama i infrastrukturi”; komad
+          čestice koji je barem 60 % ulica izuzima se cijeli. Parkirališta ostaju u zoni kao njezino korištenje.
+        </p>
+        <p className="mt-2">
+          Premali ostaci ne broje se kao slobodni. Slobodan dio čestice manji od najmanje površine koja može služiti
+          namjeni zone (pretpostavljeno 300 m² za stanovanje i mješovitu, 500 m² za javnu, 1 000 m² za gospodarsku,
+          turističku i športski centar; zelenilo, rekreacija i plaže nemaju najmanju) je ostatak — osim ako se dodiruje
+          sa slobodnom česticom iste namjene i zajedno dosežu tu površinu, jer se tada mogu spojiti.
+        </p>
+        <p className="mt-2">
           Koliko čestice je „potrošeno” pitanje je dogovora, pa grafikon nudi tri načina brojanja: samo pokriveni dio,
           cijela čestica pokrivena barem 20 %, i svaka čestica na kojoj išta stoji.
         </p>

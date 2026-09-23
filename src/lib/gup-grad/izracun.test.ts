@@ -29,10 +29,63 @@ test("cijela: krhotina ispod najmanjeg traga ne pretvara česticu u iskorištenu
   assert.equal(procijeniKomad(komad({ zk: 5, g: 1 }), "M/K5", cijela).iskoristeno, 100);
 });
 
-test("kuća u zaštitnom zelenilu je u suprotnosti, cesta kroz njega nije", () => {
+test("kuća u zaštitnom zelenilu je u suprotnosti; ulica kroz njega se izuzima iz zone", () => {
   const r = procijeniKomad(komad({ zk: 20, pr: 30, g: 1 }), "Z5", udio);
   assert.equal(r.uSuprotnosti, 20);
-  assert.equal(r.uSkladu, 30);
+  assert.equal(r.uSkladu, 0);
+  assert.equal(r.ulica, 30);
+  assert.equal(r.n, 70);
+  // bez izuzimanja ulica je korištenje zone, i to po planu
+  const bez = procijeniKomad(komad({ zk: 20, pr: 30, g: 1 }), "Z5", { ...udio, ulice: { izuzmi: false, pragUlicneCestice: 0.6 } });
+  assert.equal(bez.uSkladu, 30);
+  assert.equal(bez.ulica, 0);
+});
+
+test("komad koji je većinom ulica izuzima se cijeli; u P ulica ostaje", () => {
+  const r = procijeniKomad(komad({ pr: 70 }), "M/K5", udio);
+  assert.equal(r.ulica, 100);
+  assert.equal(r.n, 0);
+  assert.equal(r.iskoristeno, 0);
+  const p = procijeniKomad(komad({ klasa: 15, pr: 70 }), "P", udio);
+  assert.equal(p.ulica, 0);
+  assert.equal(p.iskoristeno, 70);
+});
+
+test("izracunajGodinu seli izuzete ulice iz zone u P", () => {
+  const r = izracunajGodinu(
+    { klasePx: { 2: 1000, 15: 200 }, komadi: [komad({ pr: 30, zk: 20, g: 1 })], pikselM2: 4 },
+    udio,
+  );
+  const m = r.find((x) => x.kod === "M/K5")!;
+  const p = r.find((x) => x.kod === "P")!;
+  assert.equal(m.ukupnoM2, (1000 - 30) * 4);
+  assert.equal(m.uliceM2, 120);
+  assert.equal(p.ukupnoM2, (200 + 30) * 4);
+  assert.equal(p.iskoristenoM2, 120);
+});
+
+test("premali ostatak: sam je ostatak, uz slobodnog susjeda nije, uz iskorištenog jest", () => {
+  // tri čestice u M/K5 (najmanje 300 m² = 75 px): 0 i 1 se dodiruju, 1 i 2 se dodiruju
+  const susjedi = { od: [0, 1, 3, 4], lista: [1, 0, 2, 1] };
+  const kom = (cestica: number, n: number, zk = 0) => ({ ...komad({ n, zk, g: zk ? 1 : 0 }), cestica });
+  const ulaz = (komadi: ReturnType<typeof kom>[]) => ({ klasePx: { 2: 10_000 }, komadi, pikselM2: 4, susjedi });
+  // 0: prazna 40 px, 1: kuća (iskorištena), vrt 30 px, 2: prazna 50 px
+  let r = izracunajGodinu(ulaz([kom(0, 40), kom(1, 100, 70), kom(2, 50)]), udio);
+  // 0 i 1 nisu spojive u građevnu (1 je iskorištena, ali 0 je slobodna pa se vrt pridružuje: 40+30 < 75);
+  // 2 je slobodna i dira 1: 50+30 = 80 ≥ 75 → i 0 se preko 1 spaja: sve jedna skupina od 120 px
+  assert.equal(r.find((x) => x.kod === "M/K5")!.ostatakM2, 0);
+  // bez treće čestice skupina 0+1 ima 70 px < 75 → oboje ostatak
+  r = izracunajGodinu(ulaz([kom(0, 40), kom(1, 100, 70)]), udio);
+  assert.equal(r.find((x) => x.kod === "M/K5")!.ostatakM2, (40 + 30) * 4);
+  // dva vrta uz dvije kuće se ne spajaju, iako zajedno imaju dosta
+  const dvijeKuce = izracunajGodinu(ulaz([kom(0, 100, 50), kom(1, 100, 50)]), udio);
+  assert.equal(dvijeKuce.find((x) => x.kod === "M/K5")!.ostatakM2, (50 + 50) * 4);
+  // zelenilo nema najmanju površinu
+  const z = izracunajGodinu(
+    { klasePx: { 11: 1000 }, komadi: [{ ...komad({ klasa: 11, n: 10 }), cestica: 0 }], pikselM2: 4, susjedi },
+    udio,
+  );
+  assert.equal(z.find((x) => x.kod === "Z5")!.ostatakM2, 0);
 });
 
 test("kombinirana namjena M/K5 dopušta i stanovanje i poslovanje", () => {

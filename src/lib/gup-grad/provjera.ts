@@ -25,7 +25,15 @@ export interface SvojstvaCestice {
   k: Partial<Record<`${Godina}`, SirovKomad[]>>;
 }
 
-export type StanjeCestice = "slobodna" | "u-skladu" | "djelomicno-protivno" | "protivno";
+export type StanjeCestice =
+  | "slobodna"
+  | "u-skladu"
+  | "djelomicno-protivno"
+  | "protivno"
+  /** slobodna, ali premala za namjenu i bez slobodnog susjeda */
+  | "ostatak"
+  /** ulica unutar zone, izuzeta iz nje (pravila.ulice) */
+  | "ulica";
 
 /**
  * Pragovi za imenovanje stanja na karti. Ne ulaze u zbrojeve /gup (ondje se
@@ -45,7 +53,12 @@ export const PRAGOVI_STANJA = {
 
 export interface KomadSuda {
   klasa: Klasa;
+  /** Površina komada koja pripada zoni (bez izuzete ulice). */
   m2: number;
+  /** Ulica izuzeta iz zone. */
+  ulica: number;
+  /** Slobodni dio koji je premali ostatak (0 = nije). */
+  ostatak: number;
   /** Izmjereno, u m²: zgrade iz katastra i iz 3D modela, promet, uređeno, zelenilo. */
   mjereno: { zk: number; z25: number; pr: number; os: number; ze: number };
   /** Pretežita skupina katastarske zgrade (0 = nema). */
@@ -61,6 +74,8 @@ export interface KomadSuda {
 export interface SudCestice {
   komadi: KomadSuda[];
   m2: number;
+  ulica: number;
+  ostatak: number;
   iskoristeno: number;
   uSkladu: number;
   uSuprotnosti: number;
@@ -69,11 +84,16 @@ export interface SudCestice {
   pretezita: Klasa | null;
 }
 
+/**
+ * `ostaci` su klase komada ove čestice koje je pravilo o ostacima proglasilo
+ * premalima (računa se za cijeli grad odjednom, vidi /api/gup-ostaci).
+ */
 export function sudCestice(
   s: Pick<SvojstvaCestice, "k">,
   godina: Godina,
   p: Pravila,
   pikselM2 = 4,
+  ostaci: ReadonlySet<number> = new Set(),
 ): SudCestice {
   const komadi: KomadSuda[] = [];
   for (const [klasa, n, zk, z25, pr, os, ze, g] of s.k[`${godina}`] ?? []) {
@@ -84,12 +104,15 @@ export function sudCestice(
     const m = (v: number) => v * pikselM2;
     komadi.push({
       klasa: kl,
-      m2: m(n),
+      m2: m(pro.n),
+      ulica: m(pro.ulica),
+      ostatak: ostaci.has(klasa) ? m(Math.max(0, pro.n - pro.iskoristeno)) : 0,
       mjereno: { zk: m(zk), z25: m(z25), pr: m(pr), os: m(os), ze: m(ze) },
       g,
-      pokriveno: pokrivenost(k, p).map(([v, px]) => [v, m(px)]),
+      pokriveno: pokrivenost(k, p, pro.ulica).map(([v, px]) => [v, m(px)]),
       procjena: {
         n: m(pro.n),
+        ulica: m(pro.ulica),
         iskoristeno: m(pro.iskoristeno),
         uSkladu: m(pro.uSkladu),
         uSuprotnosti: m(pro.uSuprotnosti),
@@ -102,18 +125,43 @@ export function sudCestice(
   }
   const zbroj = (f: (k: KomadSuda) => number) => komadi.reduce((a, k) => a + f(k), 0);
   const m2 = zbroj((k) => k.m2);
+  const ulica = zbroj((k) => k.ulica);
+  const ostatak = zbroj((k) => k.ostatak);
   const iskoristeno = zbroj((k) => k.procjena.iskoristeno);
   const uSkladu = zbroj((k) => k.procjena.uSkladu);
   const uSuprotnosti = zbroj((k) => k.procjena.uSuprotnosti);
-  const pretezita = komadi.reduce<KomadSuda | null>((a, k) => (!a || k.m2 > a.m2 ? k : a), null)?.klasa ?? null;
-  return { komadi, m2, iskoristeno, uSkladu, uSuprotnosti, stanje: stanje(m2, iskoristeno, uSuprotnosti), pretezita };
+  const pretezita =
+    komadi.reduce<KomadSuda | null>((a, k) => (!a || k.m2 + k.ulica > a.m2 + a.ulica ? k : a), null)?.klasa ?? null;
+  return {
+    komadi,
+    m2,
+    ulica,
+    ostatak,
+    iskoristeno,
+    uSkladu,
+    uSuprotnosti,
+    stanje: stanje(m2, iskoristeno, uSuprotnosti, ulica, ostatak),
+    pretezita,
+  };
 }
 
-export function stanje(m2: number, iskoristeno: number, uSuprotnosti: number): StanjeCestice {
+export function stanje(
+  m2: number,
+  iskoristeno: number,
+  uSuprotnosti: number,
+  ulica = 0,
+  ostatak = 0,
+): StanjeCestice {
   const P = PRAGOVI_STANJA;
   if (uSuprotnosti >= P.protivnoM2) {
     return uSuprotnosti >= P.protivnoUdio * iskoristeno ? "protivno" : "djelomicno-protivno";
   }
-  if (m2 <= 0 || iskoristeno < P.slobodnaUdio * m2) return "slobodna";
+  // Čestica koja je gotovo cijela ulica nije ni slobodna ni iskorištena zona.
+  if (ulica > 0 && m2 < P.slobodnaUdio * (m2 + ulica)) return "ulica";
+  if (m2 <= 0) return "slobodna";
+  if (iskoristeno < P.slobodnaUdio * m2) {
+    // slobodni dio je (gotovo) sav ostatak → ne prikazuje se kao slobodna
+    return ostatak >= 0.95 * (m2 - iskoristeno) && ostatak > 0 ? "ostatak" : "slobodna";
+  }
   return "u-skladu";
 }
