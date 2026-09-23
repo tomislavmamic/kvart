@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BASE_LAYERS, MAP_MAX_BOUNDS } from "../src/lib/map-views";
+import { BASE_LAYERS, SIRI_OBUHVAT_KARTE } from "../src/lib/map-views";
 import {
   adresaIzvora,
   okvir3857,
@@ -90,9 +90,9 @@ test("obuhvat propušta kvart, a odbija ostatak svijeta", () => {
   }
 });
 
-test("obuhvat prati MAP_MAX_BOUNDS, ne izmišljenu granicu", () => {
+test("obuhvat prati SIRI_OBUHVAT_KARTE (kvart ∪ GUP), ne izmišljenu granicu", () => {
   // Na z18 je pločica ~150 m, dovoljno sitno da se rub testira precizno.
-  const [[jug, zapad], [sjever, istok]] = MAP_MAX_BOUNDS;
+  const [[jug, zapad], [sjever, istok]] = SIRI_OBUHVAT_KARTE;
   const uSredini = (a: number, b: number) => (a + b) / 2;
   const nadi = (lon: number, lat: number, z = 18) => {
     const n = 2 ** z;
@@ -109,6 +109,11 @@ test("obuhvat prati MAP_MAX_BOUNDS, ne izmišljenu granicu", () => {
   assert.equal(uObuhvatu(...nadi(istok + 0.05, uSredini(jug, sjever))), false);
   assert.equal(uObuhvatu(...nadi(uSredini(zapad, istok), jug - 0.05)), false);
   assert.equal(uObuhvatu(...nadi(uSredini(zapad, istok), sjever + 0.05)), false);
+  // Marjan i Žnjan su u obuhvatu GUP-a, dakle i u ogradi; Solin i Omiš nisu.
+  assert.ok(uObuhvatu(...nadi(16.405, 43.51)), "Marjan");
+  assert.ok(uObuhvatu(...nadi(16.49, 43.505)), "Žnjan");
+  assert.equal(uObuhvatu(...nadi(16.47, 43.56)), false, "Solin");
+  assert.equal(uObuhvatu(...nadi(16.69, 43.44)), false, "Omiš");
 });
 
 test("poslužuju se samo WMS podloge iz registra", () => {

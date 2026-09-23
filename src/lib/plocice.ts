@@ -14,7 +14,7 @@
  * Ovdje je samo račun — bez `fetch`, bez Next-a — da se granice i pretvorbe
  * mogu ispitati bez mreže (vidi tests/plocice.test.ts).
  */
-import { BASE_LAYERS, MAP_MAX_BOUNDS, type BaseLayer } from "./map-views";
+import { BASE_LAYERS, SIRI_OBUHVAT_KARTE, type BaseLayer } from "./map-views";
 
 /** Polumjer Zemlje u Web Mercatoru (EPSG:3857). */
 const R = 6_378_137;
@@ -110,11 +110,12 @@ export function uMrezi(z: number, x: number, y: number): boolean {
  *
  * Ovo je ograda, ne optimizacija: bez nje bi ruta posluživala DGU-ove
  * podloge za bilo koju točku na svijetu, dakle bila bi otvoreni posrednik
- * prema tuđem servisu, na naš račun i pod našim imenom.
+ * prema tuđem servisu, na naš račun i pod našim imenom. Ograda je kvart ∪
+ * obuhvat GUP-a, jer pogled „Provjera GUP-a” vodi kartu po cijelom gradu.
  */
 export function uObuhvatu(z: number, x: number, y: number): boolean {
   const o = okvir4326(z, x, y);
-  const [[jug, zapad], [sjever, istok]] = MAP_MAX_BOUNDS;
+  const [[jug, zapad], [sjever, istok]] = SIRI_OBUHVAT_KARTE;
   return !(o.istok < zapad || o.zapad > istok || o.sjever < jug || o.jug > sjever);
 }
 

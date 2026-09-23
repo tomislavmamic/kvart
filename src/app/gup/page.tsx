@@ -48,6 +48,13 @@ export default async function GupPage() {
       <div className="mt-6">
         <GupInfografika podaci={podaci} />
       </div>
+      <p className="mt-3 text-sm text-zinc-600">
+        Kako je razvrstana svaka pojedina čestica — namjena, što na njoj stoji i je li to po planu — vidi se na{" "}
+        <Link href="/karta?pogled=gup-provjera" className="fokus font-semibold text-emerald-700 underline">
+          karti provjere
+        </Link>
+        .
+      </p>
 
       <section className="mt-12 max-w-3xl text-sm leading-relaxed text-zinc-700">
         <h2 className="border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">Kako je izračunato</h2>
@@ -80,7 +87,7 @@ export default async function GupPage() {
           Iskorištenost se mjeri po katastarskim česticama (katastarski plan iz GIS izvoza Grada Splita). Na svakoj
           čestici, i posebno na svakom njezinom dijelu koji pada u drugu zonu, izmjereno je koliko je pokriveno zgradom,
           cestom, nogostupom ili parkiralištem, grobljem ili športskim objektom. Zgrade dolaze iz dva izvora: katastra,
-          koji zna vrstu zgrade, i snimke Grada iz 2025., koja vidi i zgrade kojih u katastru nema. Iskorištenost je ista
+          koji zna vrstu zgrade, i gradskog 3D modela zgrada (sloj „Objekti_Split_2025” iz istog izvoza), koji vidi i zgrade kojih u katastru nema. Izvoz ne kaže kada je model snimljen; tlocrti su isti kao u sloju „ST_3D_2024”. Iskorištenost je ista
           za sve tri godine — mjeri se današnje stanje prema namjeni iz svake inačice plana.
         </p>
         <p className="mt-2">
@@ -101,7 +108,12 @@ export default async function GupPage() {
         <p className="mt-1">
           Pravila brojanja su u <code className="font-mono text-xs">src/lib/gup-grad/pravila.ts</code>, izračun u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/izracun.ts</code>, a mjerenja po česticama izvode skripte
-          u <code className="font-mono text-xs">scripts/gup-grad/</code>. Za kvart, s pročitanim oznakama namjene, vidi{" "}
+          u <code className="font-mono text-xs">scripts/gup-grad/</code>. Kako je razvrstana pojedina čestica vidi se na
+          karti:{" "}
+          <Link href="/karta?pogled=gup-provjera" className="fokus font-semibold text-emerald-700 underline">
+            Provjera GUP-a
+          </Link>
+          . Za kvart, s pročitanim oznakama namjene, vidi{" "}
           <Link href="/plan" className="fokus font-semibold text-emerald-700 underline">
             što nacrt GUP-a mijenja u Dračevcu i Bilicama
           </Link>

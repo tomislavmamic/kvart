@@ -16,7 +16,7 @@ export interface Komad {
   n: number;
   /** pod zgradom iz katastra */
   zk: number;
-  /** pod zgradom sa snimke 2025. */
+  /** pod zgradom iz gradskog 3D modela (Objekti_Split_2025) */
   z25: number;
   /** pod prometnom površinom */
   pr: number;
@@ -58,8 +58,8 @@ export function pokrivenost(k: Komad, p: Pravila): [VrstaKoristenja, number][] {
   };
 
   if (p.racunaj.zgrade) {
-    // Katastar zna vrstu zgrade, snimka zna koliko je stvarno sagrađeno.
-    const upisano = p.zgrade === "snimka" ? Math.min(k.zk, k.z25) : k.zk;
+    // Katastar zna vrstu zgrade, 3D model zna koliko je stvarno sagrađeno.
+    const upisano = p.zgrade === "model3d" ? Math.min(k.zk, k.z25) : k.zk;
     const neupisano = p.zgrade === "katastar" ? 0 : Math.max(0, k.z25 - k.zk);
     // Katastarska zgrada bez pretežite skupine ne postoji (g > 0 kad je
     // zk > 0), ali krhotina na rubu može imati zk > 0 i g = 0.
