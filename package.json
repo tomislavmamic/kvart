@@ -39,6 +39,8 @@
     "stranica-slobodno": "/opt/homebrew/bin/python3 scripts/stranica-slobodno.py",
     "provjeri-vedre-noci": "/opt/homebrew/bin/python3 scripts/provjeri-vedre-noci.py",
     "izvedi-presjek": "/opt/homebrew/bin/python3 scripts/izvedi-presjek.py",
+    "gup-grad:namjena": "/opt/homebrew/bin/python3 scripts/gup-grad/rasteriziraj.py",
+    "gup-grad:cestice": "/opt/homebrew/bin/python3 scripts/gup-grad/cestice.py",
     "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
     "hindcast": "tsx scripts/hindcast/pokreni.ts",
     "hindcast:ulazi": "tsx scripts/hindcast/ulazi.ts",
@@ -49,6 +51,8 @@
   "dependencies": {
     "@turf/turf": "^7.3.5",
     "@vercel/blob": "^2.5.0",
+    "d3-hierarchy": "^3.1.2",
+    "d3-voronoi-treemap": "^1.1.2",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.3",
     "leaflet": "^1.9.4",
@@ -62,6 +66,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/proj4": "^2.5.6",
