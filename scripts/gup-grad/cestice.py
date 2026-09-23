@@ -9,6 +9,8 @@ Izlaz:
   data/gup-grad/cestice.json         ulaz za src/lib/gup-grad/ (TypeScript)
   public/geo/gup-grad/cestice/*.json čestice s mjerenjima, u pločicama od
                                      1 km, za pogled „Provjera GUP-a” na /karta
+  public/geo/gup-grad/zgrade/*.json  zgrade iz katastra i iz 3D modela, iste
+                                     pločice, da se na karti vidi što je izmjereno
   public/geo/gup-grad/namjena-*.png  rešetka namjene po godini, preprojicirana
                                      u Web Mercator, za usporedbu s listom
 
@@ -241,6 +243,7 @@ def main() -> None:
     print("zapisano", OUT, round(os.path.getsize(OUT) / 1e6, 2), "MB")
 
     zapisi_plocice(c, godine_out, out["cestice"])
+    zapisi_zgrade(zg, z25g[z25g.geometry.intersects(obuhvat)])
     zapisi_slike(mreza)
 
 
@@ -308,6 +311,48 @@ def zapisi_plocice(c, godine_out, cestice) -> None:
         json.dump({"opis": "Izvedeno skriptom scripts/gup-grad/cestice.py.", "plocice": indeks}, f, separators=(",", ":"))
     ukupno = sum(os.path.getsize(os.path.join(izlaz, n)) for n in os.listdir(izlaz))
     print("pločica:", len(indeks), "čestica:", len(idx), "MB:", round(ukupno / 1e6, 1))
+
+
+def zapisi_zgrade(zg, z25g) -> None:
+    """Zgrade oba izvora u pločicama od 1 km, za kartu provjere.
+
+    Katastarske nose skupinu (`g`, kao u cestice.json) i šifru vrste (`v`);
+    tlocrti 3D modela nemaju atributa. Na karti se crtaju zajedno, pa se
+    vidi gdje se izvori razilaze — zgrada upisana u katastar koje na tlu
+    nema, ili tlocrt koji katastar ne poznaje.
+    """
+    import shutil
+
+    izlaz = os.path.join(KARTA, "zgrade")
+    if os.path.isdir(izlaz):
+        shutil.rmtree(izlaz)
+    os.makedirs(izlaz)
+    plocice: dict[str, list] = {}
+    for izvor, df in (("k", zg), ("m", z25g)):
+        tocke = df.geometry.representative_point()
+        tx = np.floor((tocke.x.values - PLOCICA_ISHODISTE[0]) / PLOCICA_M).astype(int)
+        ty = np.floor((tocke.y.values - PLOCICA_ISHODISTE[1]) / PLOCICA_M).astype(int)
+        geo = df.geometry.simplify(0.2).to_crs(4326)
+        for j in range(len(df)):
+            g = shapely.set_precision(geo.iloc[j], 1e-6)
+            if g.is_empty:
+                continue
+            svojstva = {"s": izvor}
+            if izvor == "k":
+                svojstva |= {"g": int(df.sk.iloc[j]), "v": int(df.VRSTA.iloc[j])}
+            plocice.setdefault(f"{tx[j]}_{ty[j]}", []).append((g, svojstva))
+    indeks = []
+    for kljuc, clanovi in sorted(plocice.items()):
+        feats = [{"type": "Feature", "geometry": json.loads(shapely.to_geojson(g)), "properties": p}
+                 for g, p in clanovi]
+        with open(os.path.join(izlaz, f"{kljuc}.json"), "w") as f:
+            json.dump({"type": "FeatureCollection", "features": feats}, f, separators=(",", ":"))
+        x0, y0, x1, y1 = shapely.total_bounds([g for g, _ in clanovi])
+        indeks.append({"id": kljuc, "n": len(feats), "granice": [[round(y0, 5), round(x0, 5)], [round(y1, 5), round(x1, 5)]]})
+    with open(os.path.join(KARTA, "zgrade-indeks.json"), "w") as f:
+        json.dump({"opis": "Izvedeno skriptom scripts/gup-grad/cestice.py.", "plocice": indeks}, f, separators=(",", ":"))
+    ukupno = sum(os.path.getsize(os.path.join(izlaz, n)) for n in os.listdir(izlaz))
+    print("zgrade: pločica", len(indeks), "katastar", len(zg), "3D", len(z25g), "MB:", round(ukupno / 1e6, 1))
 
 
 def zapisi_slike(mreza) -> None:
