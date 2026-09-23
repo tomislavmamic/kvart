@@ -24,6 +24,8 @@ import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice }
 
 export const GUP_POGLED = "gup-provjera";
 const MIN_ZUM = 15;
+/** Zgrade su gušće od čestica (~60 000 tlocrta), pa tek od zuma 16. */
+const MIN_ZUM_ZGRADA = 16;
 
 export interface GupPostavke {
   godina: Godina;
@@ -31,6 +33,7 @@ export interface GupPostavke {
   inacica: string;
   slika: boolean;
   cestice: boolean;
+  zgrade: boolean;
 }
 
 export const POCETNE_GUP_POSTAVKE: GupPostavke = {
@@ -39,27 +42,74 @@ export const POCETNE_GUP_POSTAVKE: GupPostavke = {
   inacica: INACICE[0].id,
   slika: true,
   cestice: true,
+  zgrade: true,
 };
 
 /**
  * Kako se stanje čestice crta. Boja ispune je UVIJEK boja namjene iz
- * legende plana (pretežita klasa čestice); stanje nose prozirnost i rub:
+ * legende plana (pretežita klasa čestice), a rub je običan; stanje nose
+ * prozirnost i šrafura:
  *  - iskorištena po planu: puna boja;
  *  - neiskorištena: poluprozirna;
- *  - iskorištena protivno planu: crveni rub (iscrtkan kad je protivan samo
- *    dio iskorištenog).
+ *  - iskorištena protivno planu: crvene kose pruge preko boje namjene
+ *    (rjeđe i tanje kad je protivan samo dio iskorištenog).
  * Tako se i izdaleka vidi i ČIJA je čestica (namjena) i što je s njom.
  */
 const CRVENA = "#d03b3b";
 export const STANJA: Record<
   StanjeCestice,
-  { naziv: string; ispuna: number; rub: string; debljina: number; crtkano?: string }
+  { naziv: string; ispuna: number; pruge?: { razmak: number; debljina: number } }
 > = {
-  "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85, rub: "#18181b", debljina: 0.6 },
-  slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.35, rub: "#52525c", debljina: 0.4 },
-  protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, rub: CRVENA, debljina: 3 },
-  "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, rub: CRVENA, debljina: 2, crtkano: "5 3" },
+  "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85 },
+  slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.35 },
+  protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, pruge: { razmak: 8, debljina: 2.6 } },
+  "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, pruge: { razmak: 13, debljina: 1.6 } },
 };
+
+/**
+ * Šrafura kao ispuna platna: Leafletov Canvas samo prepiše `fillColor` u
+ * `ctx.fillStyle`, a fillStyle smije biti i CanvasPattern. Uzorak (boja
+ * namjene + crvene pruge „/”) pravi se jednom po boji i gustoći.
+ */
+const uzorci = new Map<string, CanvasPattern>();
+function srafura(boja: string, pruge: { razmak: number; debljina: number }): CanvasPattern | string {
+  if (typeof document === "undefined") return boja;
+  const kljuc = `${boja}|${pruge.razmak}`;
+  const gotov = uzorci.get(kljuc);
+  if (gotov) return gotov;
+  const n = pruge.razmak;
+  const c = document.createElement("canvas");
+  c.width = c.height = n;
+  const x = c.getContext("2d");
+  if (!x) return boja;
+  x.fillStyle = boja;
+  x.fillRect(0, 0, n, n);
+  x.strokeStyle = CRVENA;
+  x.lineWidth = pruge.debljina;
+  x.beginPath();
+  // glavna dijagonala i dva ugla, da se pločice uzorka spoje bez šava
+  for (const [x0, y0, x1, y1] of [
+    [0, n, n, 0],
+    [-n / 2, n / 2, n / 2, -n / 2],
+    [n / 2, n * 1.5, n * 1.5, n / 2],
+  ]) {
+    x.moveTo(x0, y0);
+    x.lineTo(x1, y1);
+  }
+  x.stroke();
+  const u = x.createPattern(c, "repeat");
+  if (!u) return boja;
+  uzorci.set(kljuc, u);
+  return u;
+}
+
+/** Ista šrafura u CSS-u, za legendu i skočni prozor. */
+function srafuraCss(boja: string, pruge?: { razmak: number; debljina: number }): string {
+  if (!pruge) return boja;
+  const d = Math.max(1.5, pruge.debljina * 0.8);
+  const r = Math.max(4, pruge.razmak * 0.55);
+  return `repeating-linear-gradient(135deg, ${CRVENA} 0 ${d}px, ${boja} ${d}px ${r}px)`;
+}
 
 const VRSTE: Record<VrstaKoristenja, string> = {
   stambena: "stambena zgrada",
@@ -90,6 +140,52 @@ export interface GupInfo {
 
 type CesticaFeature = Feature<Geometry, SvojstvaCestice>;
 
+/** Zgrada u public/geo/gup-grad/zgrade/*.json: izvor k = katastar, m = 3D model. */
+interface SvojstvaZgrade {
+  s: "k" | "m";
+  /** skupina katastarske zgrade, kao `g` u komadima */
+  g?: number;
+  /** šifra VRSTA iz katastra */
+  v?: number;
+}
+
+/**
+ * Dohvaćač pločica jednog sloja: indeks se čita jednom, pločica jednom, a
+ * ona koja nije stigla smije se tražiti ponovno.
+ */
+function plocnik<P>(indeksUrl: string, mapa: string, dodaj: (fc: FeatureCollection<Geometry, P>) => void) {
+  let indeks: Plocica[] | null = null;
+  const ucitane = new Set<string>();
+  return async (L: typeof LeafletNS, okno: LeafletNS.LatLngBounds, prije: () => void) => {
+    indeks ??= ((await (await fetch(indeksUrl)).json()) as { plocice: Plocica[] }).plocice;
+    const trebaju = indeks.filter((p) => !ucitane.has(p.id) && okno.intersects(L.latLngBounds(p.granice)));
+    if (trebaju.length) prije();
+    await Promise.all(
+      trebaju.map(async (p) => {
+        ucitane.add(p.id);
+        const r = await fetch(`${mapa}/${p.id}.json`);
+        if (!r.ok) {
+          ucitane.delete(p.id);
+          throw new Error(`pločica ${p.id}: ${r.status}`);
+        }
+        dodaj((await r.json()) as FeatureCollection<Geometry, P>);
+      }),
+    );
+  };
+}
+
+/**
+ * Zgrade preko čestica: tlocrt 3D modela kao tamna ploha (ono što stoji na
+ * tlu), katastarska zgrada kao bijeli obrub (ono što je upisano). Gdje se
+ * poklapaju, vidi se tamna ploha s bijelim rubom; upisana zgrada koje nema
+ * ostaje prazan bijeli obris, a neupisana tamna ploha bez obrisa.
+ */
+function stilZgrade(z: SvojstvaZgrade): LeafletNS.PathOptions {
+  return z.s === "m"
+    ? { stroke: false, fillColor: "#18181b", fillOpacity: 0.55 }
+    : { color: "#ffffff", weight: 1.6, opacity: 0.95, fill: false };
+}
+
 export function useGupProvjera(opts: {
   mapRef: { current: LeafletNS.Map | null };
   LRef: { current: typeof LeafletNS | null };
@@ -104,9 +200,7 @@ export function useGupProvjera(opts: {
   const postavkeRef = useRef(postavke);
   const slojRef = useRef<LeafletNS.GeoJSON | null>(null);
   const slikaRef = useRef<LeafletNS.ImageOverlay | null>(null);
-  const indeksRef = useRef<Plocica[] | null>(null);
   const slikeRef = useRef<{ granice: [[number, number], [number, number]]; slike: { godina: number; url: string }[] } | null>(null);
-  const ucitaneRef = useRef<Set<string>>(new Set());
   const osvjeziRef = useRef<() => void>(() => {});
   const prozirnostRef = useRef<() => void>(() => {});
 
@@ -137,6 +231,26 @@ export function useGupProvjera(opts: {
     });
     slojRef.current = sloj;
 
+    // Zgrade u vlastitom oknu i na vlastitom platnu, iznad čestica bez
+    // obzira na to koja pločica prva stigne, i bez klika — klik ide čestici
+    // ispod, koja zna reći što je izmjereno.
+    if (!map.getPane("gup-zgrade")) {
+      const okno = map.createPane("gup-zgrade");
+      okno.style.zIndex = "420";
+      okno.style.pointerEvents = "none";
+    }
+    const zgrade = L.geoJSON(undefined, {
+      renderer: L.canvas({ pane: "gup-zgrade" }),
+      interactive: false,
+      style: (f) => stilZgrade((f as Feature<Geometry, SvojstvaZgrade>).properties),
+    } as LeafletNS.GeoJSONOptions);
+    const ucitajCestice = plocnik<SvojstvaCestice>("/geo/gup-grad/cestice-indeks.json", "/geo/gup-grad/cestice", (fc) => {
+      if (ziv) sloj.addData(fc);
+    });
+    const ucitajZgrade = plocnik<SvojstvaZgrade>("/geo/gup-grad/zgrade-indeks.json", "/geo/gup-grad/zgrade", (fc) => {
+      if (ziv) zgrade.addData(fc);
+    });
+
     // Slika namjene je za pogled izdaleka i za usporedbu s listom. Ispod
     // obojenih čestica u načinu „iskorištenost” miješala bi boje plana sa
     // statusnim bojama, pa se ondje skriva; uz „namjenu” ostaje blijeda.
@@ -163,33 +277,19 @@ export function useGupProvjera(opts: {
     const ucitaj = async () => {
       const zum = map.getZoom();
       const vidljivo = zum >= MIN_ZUM && postavkeRef.current.cestice;
+      const vidljiveZgrade = zum >= MIN_ZUM_ZGRADA && postavkeRef.current.zgrade;
       prozirnostSlike(vidljivo);
       if (vidljivo && !map.hasLayer(sloj)) sloj.addTo(map);
       if (!vidljivo && map.hasLayer(sloj)) sloj.remove();
-      if (!vidljivo) {
-        prebroji();
-        return;
-      }
+      if (vidljiveZgrade && !map.hasLayer(zgrade)) zgrade.addTo(map);
+      if (!vidljiveZgrade && map.hasLayer(zgrade)) zgrade.remove();
+      const okno = map.getBounds().pad(0.2);
+      const ucitava = () => setInfo((i) => ({ ...i, stanje: "ucitava" }));
       try {
-        indeksRef.current ??= ((await (await fetch("/geo/gup-grad/cestice-indeks.json")).json()) as { plocice: Plocica[] })
-          .plocice;
-        const okno = map.getBounds().pad(0.2);
-        const trebaju = indeksRef.current.filter(
-          (p) => !ucitaneRef.current.has(p.id) && okno.intersects(L.latLngBounds(p.granice)),
-        );
-        if (trebaju.length) setInfo((i) => ({ ...i, stanje: "ucitava" }));
-        await Promise.all(
-          trebaju.map(async (p) => {
-            ucitaneRef.current.add(p.id);
-            const r = await fetch(`/geo/gup-grad/cestice/${p.id}.json`);
-            if (!r.ok) {
-              ucitaneRef.current.delete(p.id);
-              throw new Error(`pločica ${p.id}: ${r.status}`);
-            }
-            const fc = (await r.json()) as FeatureCollection<Geometry, SvojstvaCestice>;
-            if (ziv) sloj.addData(fc);
-          }),
-        );
+        await Promise.all([
+          vidljivo ? ucitajCestice(L, okno, ucitava) : null,
+          vidljiveZgrade ? ucitajZgrade(L, okno, ucitava) : null,
+        ]);
         if (ziv) setInfo((i) => ({ ...i, stanje: null }));
       } catch {
         if (ziv) setInfo((i) => ({ ...i, stanje: "greska" }));
@@ -208,8 +308,8 @@ export function useGupProvjera(opts: {
       map.off("moveend", ucitaj);
       map.closePopup();
       sloj.remove();
+      zgrade.remove();
       slojRef.current = null;
-      ucitaneRef.current = new Set();
       osvjeziRef.current = () => {};
       prozirnostRef.current = () => {};
     };
@@ -264,11 +364,12 @@ function stil(s: SudCestice, p: GupPostavke): LeafletNS.PathOptions {
     };
   }
   const st = STANJA[s.stanje];
+  const boja = s.pretezita?.bojaPlana ?? "#ffffff";
   return {
-    color: st.rub,
-    weight: st.debljina,
-    dashArray: st.crtkano,
-    fillColor: s.pretezita?.bojaPlana ?? "#ffffff",
+    color: s.stanje === "slobodna" ? "#52525c" : "#18181b",
+    weight: s.stanje === "slobodna" ? 0.4 : 0.6,
+    // CanvasPattern kroz polje koje tipovi Leafleta opisuju kao niz znakova
+    fillColor: (st.pruge ? srafura(boja, st.pruge) : boja) as unknown as string,
     fillOpacity: s.pretezita ? st.ispuna : 0,
   };
 }
@@ -287,7 +388,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
     `<b>k.č. ${esc(p.kc)}, k.o. ${esc(p.ko)}</b><br>` +
     `<span style="${sivo}">${m2(p.a)} u katastru · GUP ${post.godina}. · brojanje: ${esc(inacica.naziv)}</span>` +
     `<div style="margin:6px 0;display:flex;align-items:center;gap:6px">` +
-    `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${s.pretezita?.bojaPlana ?? "#fff"};opacity:${st.ispuna < 0.5 ? 0.45 : 1};outline:${st.debljina >= 2 ? `2px ${st.crtkano ? "dashed" : "solid"} ${CRVENA}` : "1px solid #52525c"}"></span>` +
+    `<span style="display:inline-block;width:14px;height:14px;border-radius:2px;border:1px solid #52525c;background:${srafuraCss(s.pretezita?.bojaPlana ?? "#fff", st.pruge)};opacity:${st.ispuna < 0.5 ? 0.45 : 1}"></span>` +
     `<b>${esc(st.naziv)}</b></div>`;
   if (!s.komadi.length) {
     return h + `<span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
@@ -382,13 +483,10 @@ export function GupProvjeraPloca(props: {
             const st = STANJA[k];
             return (
               <li key={k} className="flex items-center gap-2">
-                <span className="relative inline-block size-4 shrink-0 bg-white" aria-hidden>
+                <span className="relative inline-block size-4 shrink-0 rounded-sm border border-zinc-600 bg-white" aria-hidden>
                   <span
-                    className="absolute inset-0 rounded-sm"
-                    style={{
-                      background: `rgba(224,160,0,${st.ispuna})`,
-                      border: `${Math.max(1, st.debljina * 0.75)}px ${st.crtkano ? "dashed" : "solid"} ${st.rub}`,
-                    }}
+                    className="absolute inset-0"
+                    style={{ background: srafuraCss("#e0a000", st.pruge), opacity: st.ispuna }}
                   />
                 </span>
                 <span className="flex-1">{st.naziv}</span>
@@ -398,7 +496,7 @@ export function GupProvjeraPloca(props: {
           })}
         {p.prikaz === "stanje" && (
           <li className="pt-1 text-xs text-zinc-500">
-            Boja je namjena iz plana (pretežita na čestici), prozirnost i rub su stanje. Uzorci su u boji mješovite namjene.
+            Boja je namjena iz plana (pretežita na čestici); prozirnost i crvene pruge su stanje. Uzorci su u boji mješovite namjene.
           </li>
         )}
         {(p.prikaz === "namjena" || p.prikaz === "stanje") &&
@@ -420,6 +518,22 @@ export function GupProvjeraPloca(props: {
           <input type="checkbox" checked={p.cestice} onChange={(e) => postavi({ cestice: e.target.checked })} />
           Čestice (od zuma {MIN_ZUM})
         </label>
+        <label className="meta flex items-center gap-2">
+          <input type="checkbox" checked={p.zgrade} onChange={(e) => postavi({ zgrade: e.target.checked })} />
+          Zgrade (od zuma {MIN_ZUM_ZGRADA})
+        </label>
+        {p.zgrade && (
+          <ul className="ml-6 space-y-1 text-xs text-zinc-600">
+            <li className="flex items-center gap-2">
+              <span className="inline-block h-3 w-4 shrink-0 rounded-[1px]" style={{ background: "rgba(24,24,27,0.55)" }} aria-hidden />
+              tlocrt iz gradskog 3D modela (što stoji)
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="inline-block h-3 w-4 shrink-0 rounded-[1px] border-2 border-white bg-zinc-400" aria-hidden />
+              zgrada upisana u katastar (bijeli obris)
+            </li>
+          </ul>
+        )}
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
           Naše razvrstavanje lista plana (boje legende)
