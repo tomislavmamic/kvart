@@ -66,6 +66,27 @@ export const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 /**
+ * Obuhvat GUP-a Splita (ISPU sloj namjene, s ~300 m rezerve), `[[jug, zapad],
+ * [sjever, istok]]`. Samo pogled „Provjera GUP-a” pušta kartu do njega:
+ * ostatak karte je o kvartu, a ovaj pogled provjerava gradsku infografiku
+ * (/gup), pa mora doseći svaku česticu koju ona broji.
+ */
+export const GUP_GRAD_BOUNDS: [[number, number], [number, number]] = [
+  [43.487, 16.376],
+  [43.54, 16.551],
+];
+
+/**
+ * Najširi okvir za koji karta uopće traži podloge: kvart ∪ obuhvat GUP-a.
+ * Koliko se smije pomicati kaže `MapView.granice`; ovo je samo ograda
+ * pločicama, i ista je ograda našem posredniku podloga (src/lib/plocice.ts).
+ */
+export const SIRI_OBUHVAT_KARTE: [[number, number], [number, number]] = [
+  [Math.min(MAP_MAX_BOUNDS[0][0], GUP_GRAD_BOUNDS[0][0]), Math.min(MAP_MAX_BOUNDS[0][1], GUP_GRAD_BOUNDS[0][1])],
+  [Math.max(MAP_MAX_BOUNDS[1][0], GUP_GRAD_BOUNDS[1][0]), Math.max(MAP_MAX_BOUNDS[1][1], GUP_GRAD_BOUNDS[1][1])],
+];
+
+/**
  * A narrow dossier is modal and leaves only the top 28% of the map visible.
  * Releasing the bounds while it is open lets Leaflet place the selected
  * parcel in that strip even near an edge; closing the dossier restores them.
@@ -331,6 +352,11 @@ export interface MapView {
    * usporedba nije ni jedno ni drugo.
    */
   usporedbe?: boolean;
+  /**
+   * Koliko se karta smije pomicati u ovom pogledu, ako ne samo po kvartu.
+   * Izostavljeno = `MAP_MAX_BOUNDS`.
+   */
+  granice?: [[number, number], [number, number]];
 }
 
 export const BASE_LAYERS: BaseLayer[] = [
@@ -1680,6 +1706,18 @@ const POGLEDI: MapView[] = [
       "s već raspoloživim sanitiziranim zapisom; za ostale se izričito kaže " +
       "da podataka nema.",
     layerIds: ["gup-2024-planirane-ceste", "cestice-planiranih-cesta"],
+  },
+  {
+    id: "gup-provjera",
+    label: "Provjera GUP-a (cijeli grad)",
+    razina: "nacin",
+    description:
+      "Kako je infografika „Split po GUP-u” razvrstala svaku katastarsku " +
+      "česticu: u koju namjenu pada, što na njoj stoji i je li to po planu. " +
+      "Karta ide do ruba obuhvata GUP-a; čestice se crtaju od zuma 15, a " +
+      "ispod toga se vidi naše razvrstavanje lista plana po bojama.",
+    layerIds: [],
+    granice: GUP_GRAD_BOUNDS,
   },
   {
     id: "okolis-rizici",

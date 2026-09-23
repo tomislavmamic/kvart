@@ -21,7 +21,7 @@ export type VrstaKoristenja =
   | "javna" // 3xx — škole, bolnice, crkve, uprava
   | "pomocna" // 4xx — garaže, spremišta
   | "ostala" // 6xx–9xx — nadstrešnice, trafostanice, objekti uz ceste
-  | "neevidentirana" // zgrada sa snimke 2025. koje nema u katastru
+  | "neevidentirana" // zgrada iz gradskog 3D modela koje nema u katastru
   | "promet" // ceste, nogostupi, parkirališta
   | "uredjeno" // groblja, športski objekti
   | "zelenilo"; // javno zelenilo koje održavaju Parkovi i nasadi
@@ -37,8 +37,11 @@ export type NacinBrojanja =
 export type IzvorZgrada =
   /** Samo zgrade upisane u katastar (KO_*_objekti). */
   | "katastar"
-  /** Samo zgrade sa snimke 2025. — vide i neupisane, ali bez vrste. */
-  | "snimka"
+  /**
+   * Samo zgrade iz gradskog 3D modela (sloj Objekti_Split_2025, isti tlocrti
+   * kao Zgrade_3D/ST_3D_2024) — vidi i neupisane, ali bez vrste.
+   */
+  | "model3d"
   /** Veće od to dvoje po komadu; vrstu daje katastar gdje je ima. */
   | "oba";
 

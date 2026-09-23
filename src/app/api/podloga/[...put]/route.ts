@@ -26,7 +26,7 @@ import {
  * OGRADE — ovo ne smije postati otvoreni posrednik prema DGU-u:
  *   1. `id` mora biti WMS podloga iz registra; ništa drugo se ne poslužuje.
  *   2. `z/x/y` moraju biti cijeli brojevi unutar mreže i unutar z11–18.
- *   3. Pločica mora dodirivati obuhvat karte (MAP_MAX_BOUNDS).
+ *   3. Pločica mora dodirivati obuhvat karte (SIRI_OBUHVAT_KARTE: kvart ∪ GUP).
  * Bez treće bi ruta posluživala cijelu državu, tuđim servisom a pod našim
  * imenom i na naš račun.
  */

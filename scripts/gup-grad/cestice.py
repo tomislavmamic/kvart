@@ -7,6 +7,10 @@ Ulaz:
 
 Izlaz:
   data/gup-grad/cestice.json         ulaz za src/lib/gup-grad/ (TypeScript)
+  public/geo/gup-grad/cestice/*.json čestice s mjerenjima, u pločicama od
+                                     1 km, za pogled „Provjera GUP-a” na /karta
+  public/geo/gup-grad/namjena-*.png  rešetka namjene po godini, preprojicirana
+                                     u Web Mercator, za usporedbu s listom
 
 Ovdje se NE odlučuje što je „iskorišteno” ni što je „u skladu s planom” —
 to su pravila koja se žele mijenjati (src/lib/gup-grad/pravila.ts). Skripta
@@ -14,7 +18,8 @@ samo izmjeri, za svaki komad čestice koji pada u jednu klasu namjene:
 
   n      površina komada (pikseli od 4 m²)
   zk     pikseli pod zgradom iz katastra (KO_*_objekti)
-  z25    pikseli pod zgradom sa snimke 2025. (Objekti_Split_2025)
+  z25    pikseli pod zgradom iz gradskog 3D modela (sloj Objekti_Split_2025,
+         isti tlocrti kao Zgrade_3D/ST_3D_2024; datum snimanja izvoz ne kaže)
   pr     pikseli pod prometnom površinom (os ceste ± pola profila,
          nogostupi, parkirališta)
   os     pikseli pod ostalim uređenim: groblja, športski objekti
@@ -223,7 +228,7 @@ def main() -> None:
         "izvori": {
             "cestice": "Grad Split, GIS izvoz: KATASTAR/CADASTRAL_PARCELS_2024_P",
             "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
-            "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025",
+            "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025 (tlocrti gradskog 3D modela, isti kao Zgrade_3D/ST_3D_2024)",
             "promet": "Ceste, NerazvrstaneCeste, drzavna_cesta_1 (os ± pola profila), Nogostupi, JavnaParkiralista",
             "ostalo": "Groblja, Sportski_objekti_p",
             "zelenilo": "JavneZelenePovrsine_poligoni (Parkovi i nasadi)",
@@ -234,6 +239,130 @@ def main() -> None:
     with open(OUT, "w") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print("zapisano", OUT, round(os.path.getsize(OUT) / 1e6, 2), "MB")
+
+    zapisi_plocice(c, godine_out, out["cestice"])
+    zapisi_slike(mreza)
+
+
+KARTA = os.path.join(ROOT, "public", "geo", "gup-grad")
+PLOCICA_M = 1000.0
+PLOCICA_ISHODISTE = (490000.0, 4816000.0)
+
+
+def zapisi_plocice(c, godine_out, cestice) -> None:
+    """Čestice s mjerenjima po komadima, u pločicama od 1 km (EPSG:4326).
+
+    Karta ih učitava samo za ono što je u oknu: cijeli grad je ~41 000
+    čestica, što kao jedan GeoJSON telefon ne probavi. Pločica je određena
+    točkom unutar čestice, pa je svaka čestica u točno jednoj pločici, a
+    okvir pločice u indeksu je okvir njezinih čestica (smije viriti preko
+    rešetke).
+    """
+    import shutil
+
+    po_cestici: dict[int, dict[str, list[list[int]]]] = {}
+    for god, g in godine_out.items():
+        a = g["komadi"]
+        for i in range(0, len(a), 9):
+            po_cestici.setdefault(a[i], {}).setdefault(god, []).append(a[i + 1:i + 9])
+
+    idx = sorted(po_cestici)
+    sub = c.iloc[idx]
+    tocke = sub.geometry.representative_point()
+    tx = np.floor((tocke.x.values - PLOCICA_ISHODISTE[0]) / PLOCICA_M).astype(int)
+    ty = np.floor((tocke.y.values - PLOCICA_ISHODISTE[1]) / PLOCICA_M).astype(int)
+    geo = sub.geometry.simplify(0.2).to_crs(4326)
+
+    def zaokruzi(g):
+        return shapely.set_precision(g, 1e-6)
+
+    izlaz = os.path.join(KARTA, "cestice")
+    if os.path.isdir(izlaz):
+        shutil.rmtree(izlaz)
+    os.makedirs(izlaz)
+    plocice: dict[str, list] = {}
+    for j, ci in enumerate(idx):
+        plocice.setdefault(f"{tx[j]}_{ty[j]}", []).append((ci, geo.iloc[j]))
+    indeks = []
+    for kljuc, clanovi in sorted(plocice.items()):
+        feats = []
+        for ci, g in clanovi:
+            g = zaokruzi(g)
+            feats.append({
+                "type": "Feature",
+                "geometry": json.loads(shapely.to_geojson(g)),
+                "properties": {
+                    "i": ci,
+                    "ko": cestice["ko_imena"][cestice["ko"][ci]],
+                    "kc": cestice["broj"][ci],
+                    "a": cestice["povrsina"][ci],
+                    "k": po_cestici[ci],
+                },
+            })
+        put = os.path.join(izlaz, f"{kljuc}.json")
+        with open(put, "w") as f:
+            json.dump({"type": "FeatureCollection", "features": feats}, f, ensure_ascii=False, separators=(",", ":"))
+        x0, y0, x1, y1 = shapely.total_bounds([g for _, g in clanovi])
+        indeks.append({"id": kljuc, "n": len(feats), "granice": [[round(y0, 5), round(x0, 5)], [round(y1, 5), round(x1, 5)]]})
+    with open(os.path.join(KARTA, "cestice-indeks.json"), "w") as f:
+        json.dump({"opis": "Izvedeno skriptom scripts/gup-grad/cestice.py.", "plocice": indeks}, f, separators=(",", ":"))
+    ukupno = sum(os.path.getsize(os.path.join(izlaz, n)) for n in os.listdir(izlaz))
+    print("pločica:", len(indeks), "čestica:", len(idx), "MB:", round(ukupno / 1e6, 1))
+
+
+def zapisi_slike(mreza) -> None:
+    """Rešetka namjene po godini, preprojicirana u Web Mercator, kao PNG.
+
+    Boje su boje LEGENDE PLANA, ne infografike: sloj služi da se naše
+    razvrstavanje usporedi sa službenim listom (ISPU) i ortofotom, a to se
+    radi okom po istim bojama. Neobojeno unutar obuhvata (ulice, pruga…)
+    ostaje prozirno, da se vidi što je ispod.
+    """
+    from PIL import Image
+    from pyproj import Transformer
+
+    u_3765 = Transformer.from_crs(3857, 3765, always_xy=True)
+    u_4326 = Transformer.from_crs(3765, 4326, always_xy=True)
+    u_3857 = Transformer.from_crs(3765, 3857, always_xy=True)
+    x0, y0, x1, y1 = R.MREZA_BBOX
+    xs, ys = u_3857.transform([x0, x1, x0, x1], [y0, y0, y1, y1])
+    mx0, mx1, my0, my1 = min(xs), max(xs), min(ys), max(ys)
+    korak = 3.0  # m Web Mercatora (~2,2 m na tlu na 43,5° S)
+    w = int((mx1 - mx0) / korak)
+    h = int((my1 - my0) / korak)
+    paleta = np.zeros((256, 4), np.uint8)
+    for k in mreza["klase"]:
+        if k["kod"] == "P":
+            continue
+        b = k["boja"]
+        paleta[k["i"]] = [int(b[1:3], 16), int(b[3:5], 16), int(b[5:7], 16), 255]
+    lon, lat = u_4326.transform([x0, x1, x0, x1], [y0, y0, y1, y1])
+    # rubovi slike u 4326 — iz rubova u 3857, ne iz rubova rešetke
+    to4326 = Transformer.from_crs(3857, 4326, always_xy=True)
+    lon0, lat0 = to4326.transform(mx0, my0)
+    lon1, lat1 = to4326.transform(mx1, my1)
+    granice = [[round(lat0, 6), round(lon0, 6)], [round(lat1, 6), round(lon1, 6)]]
+    opis = []
+    for gid, god in GODINE:
+        kl = np.load(os.path.join(R.OUT, f"klase-{gid}.npy"))
+        slika = np.zeros((h, w, 4), np.uint8)
+        stupci = mx0 + (np.arange(w) + 0.5) * korak
+        for r0 in range(0, h, 256):
+            redovi = my1 - (np.arange(r0, min(h, r0 + 256)) + 0.5) * korak
+            MX, MY = np.meshgrid(stupci, redovi)
+            X, Y = u_3765.transform(MX, MY)
+            c_ = np.floor((X - x0) / R.KORAK).astype(np.int64)
+            r_ = np.floor((y1 - Y) / R.KORAK).astype(np.int64)
+            ok = (c_ >= 0) & (r_ >= 0) & (c_ < kl.shape[1]) & (r_ < kl.shape[0])
+            v = np.zeros(MX.shape, np.uint8)
+            v[ok] = kl[r_[ok], c_[ok]]
+            slika[r0:r0 + v.shape[0]] = paleta[v]
+        put = os.path.join(KARTA, f"namjena-{god}.png")
+        Image.fromarray(slika, "RGBA").save(put, optimize=True)
+        opis.append({"godina": god, "url": f"/geo/gup-grad/namjena-{god}.png"})
+        print("slika", put, w, "×", h, round(os.path.getsize(put) / 1e6, 2), "MB")
+    with open(os.path.join(KARTA, "namjena-slike.json"), "w") as f:
+        json.dump({"granice": granice, "slike": opis}, f)
 
 
 if __name__ == "__main__":

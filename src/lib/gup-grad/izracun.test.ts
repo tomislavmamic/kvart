@@ -42,7 +42,7 @@ test("kombinirana namjena M/K5 dopušta i stanovanje i poslovanje", () => {
   assert.equal(procijeniKomad(komad({ zk: 20, g: 1 }), "I/K", udio).uSuprotnosti, 20);
 });
 
-test("zgrada sa snimke koje nema u katastru: suprotna u zelenilu, dopuštena u gospodarskoj", () => {
+test("zgrada iz 3D modela koje nema u katastru: suprotna u zelenilu, dopuštena u gospodarskoj", () => {
   const k = komad({ zk: 0, z25: 25 });
   assert.equal(procijeniKomad(k, "Z1", udio).uSuprotnosti, 25);
   assert.equal(procijeniKomad(k, "I/K", udio).uSuprotnosti, 0);

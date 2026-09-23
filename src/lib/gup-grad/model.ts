@@ -41,41 +41,50 @@ export interface Klasa {
   naziv: string;
   /** Kratko, za oznaku na ćeliji grafikona. */
   kratko: string;
+  /**
+   * Boja iz legende lista GUP-a (kako je razvrstava rasteriziraj.py). Samo
+   * za kartu provjere, gdje se naše razvrstavanje uspoređuje sa službenim
+   * listom po istim bojama; infografika boji skupine (SKUPINE).
+   */
+  bojaPlana: string;
   /** Kombinirana namjena — dopušta više vrsta gradnje. */
   kombinirana?: boolean;
 }
 
 export const KLASE: readonly Klasa[] = [
-  { kod: "S", indeks: 1, skupina: "stanovanje", naziv: "Stambena namjena", kratko: "Stambena" },
+  { kod: "S", bojaPlana: "#ffff00", indeks: 1, skupina: "stanovanje", naziv: "Stambena namjena", kratko: "Stambena" },
   {
     kod: "M/K5",
+    bojaPlana: "#e0a000",
     indeks: 2,
     skupina: "stanovanje",
     naziv: "Mješovita (M1–M3) i poslovna sa stanovanjem (K5)",
     kratko: "Mješovita: stanovanje + poslovanje",
     kombinirana: true,
   },
-  { kod: "D", indeks: 3, skupina: "javno", naziv: "Javna i društvena namjena (škole, vrtići, zdravstvo, kultura…)", kratko: "Javna i društvena" },
+  { kod: "D", bojaPlana: "#f46040", indeks: 3, skupina: "javno", naziv: "Javna i društvena namjena (škole, vrtići, zdravstvo, kultura…)", kratko: "Javna i društvena" },
   {
     kod: "I/K",
+    bojaPlana: "#a02080",
     indeks: 4,
     skupina: "gospodarstvo",
     naziv: "Gospodarska proizvodna (I) i poslovna (K1–K4)",
     kratko: "Gospodarska i poslovna",
     kombinirana: true,
   },
-  { kod: "T", indeks: 5, skupina: "gospodarstvo", naziv: "Ugostiteljsko-turistička (hoteli, kampovi)", kratko: "Turistička" },
-  { kod: "L", indeks: 6, skupina: "gospodarstvo", naziv: "Luke posebne namjene (nautička, športska)", kratko: "Luke" },
-  { kod: "R1", indeks: 7, skupina: "sport", naziv: "Športski centar", kratko: "Športski centar" },
-  { kod: "R2", indeks: 8, skupina: "sport", naziv: "Rekreacija", kratko: "Rekreacija" },
-  { kod: "R3", indeks: 9, skupina: "sport", naziv: "Uređena plaža, kupalište", kratko: "Kupalište" },
-  { kod: "R4", indeks: 13, skupina: "sport", naziv: "Prirodna plaža (novo 2025.)", kratko: "Prirodna plaža" },
-  { kod: "R5", indeks: 14, skupina: "sport", naziv: "Golf, izdvojeno građevinsko područje (novo 2025.)", kratko: "Golf" },
-  { kod: "Z1", indeks: 10, skupina: "zelenilo", naziv: "Javne zelene površine, park-šuma Marjan", kratko: "Parkovi i park-šuma" },
-  { kod: "Z5", indeks: 11, skupina: "zelenilo", naziv: "Zaštitno i pejsažno zelenilo", kratko: "Zaštitno zelenilo" },
-  { kod: "N", indeks: 12, skupina: "ostalo", naziv: "Posebna namjena (vojska)", kratko: "Posebna" },
+  { kod: "T", bojaPlana: "#c02000", indeks: 5, skupina: "gospodarstvo", naziv: "Ugostiteljsko-turistička (hoteli, kampovi)", kratko: "Turistička" },
+  { kod: "L", bojaPlana: "#20a0c0", indeks: 6, skupina: "gospodarstvo", naziv: "Luke posebne namjene (nautička, športska)", kratko: "Luke" },
+  { kod: "R1", bojaPlana: "#006000", indeks: 7, skupina: "sport", naziv: "Športski centar", kratko: "Športski centar" },
+  { kod: "R2", bojaPlana: "#c0e080", indeks: 8, skupina: "sport", naziv: "Rekreacija", kratko: "Rekreacija" },
+  { kod: "R3", bojaPlana: "#40c0c0", indeks: 9, skupina: "sport", naziv: "Uređena plaža, kupalište", kratko: "Kupalište" },
+  { kod: "R4", bojaPlana: "#3ec09b", indeks: 13, skupina: "sport", naziv: "Prirodna plaža (novo 2025.)", kratko: "Prirodna plaža" },
+  { kod: "R5", bojaPlana: "#7fff9f", indeks: 14, skupina: "sport", naziv: "Golf, izdvojeno građevinsko područje (novo 2025.)", kratko: "Golf" },
+  { kod: "Z1", bojaPlana: "#40c040", indeks: 10, skupina: "zelenilo", naziv: "Javne zelene površine, park-šuma Marjan", kratko: "Parkovi i park-šuma" },
+  { kod: "Z5", bojaPlana: "#80e000", indeks: 11, skupina: "zelenilo", naziv: "Zaštitno i pejsažno zelenilo", kratko: "Zaštitno zelenilo" },
+  { kod: "N", bojaPlana: "#a000c0", indeks: 12, skupina: "ostalo", naziv: "Posebna namjena (vojska)", kratko: "Posebna" },
   {
     kod: "P",
+    bojaPlana: "#c8c8c8",
     indeks: 15,
     skupina: "ostalo",
     naziv: "Ulice, pruga, groblja i infrastruktura — plan ih ne boji namjenom",
