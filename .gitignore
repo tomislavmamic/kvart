@@ -112,3 +112,6 @@ data/dojave.json
 
 # MapLibreov radnik se kopira iz node_modules pri gradnji (vidi kopiraj:maplibre-radnik)
 /public/karepovac/maplibre/
+
+# gradska infografika GUP-a: međurezultati rasterizacije listova (scripts/gup-grad)
+/.cache/gup-grad/
