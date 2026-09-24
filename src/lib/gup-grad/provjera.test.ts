@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { izracunajGodinu, komadIzNiza } from "@/lib/gup-grad/izracun";
 import { ZADANA_PRAVILA } from "@/lib/gup-grad/pravila";
-import { sklad, sudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
+import { sklad, sudCestice, uZoniKrhotina, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 // kuća (stambena, katastar) na česti u M/K5 i komad u zaštitnom zelenilu s garažom i kućom
 const cestica: SvojstvaCestice = {
@@ -90,4 +90,14 @@ test("karta: uski pojas je ostatak, a posuđena okućnica iskorištena kao kod /
   assert.equal(Math.round(v.uSuprotnosti), 40);
   // vrt se uzima prvo od uskog pojasa
   assert.equal(v.komadi[0].usko, 120);
+});
+
+test("čestica kojoj je u zoni tek krhotina (more, luka) crta se samo obrisom", () => {
+  // k.č. 15991 k.o. Split: 591 ha mora, u zonama ~0,3 ha
+  assert.equal(uZoniKrhotina({ m2: 3000, ulica: 400 }, 5_908_888), true);
+  // obična čestica sva u zoni, i ona uz rub obuhvata s pola u zoni
+  assert.equal(uZoniKrhotina(sudCestice(cestica, 2025, ZADANA_PRAVILA), cestica.a), false);
+  assert.equal(uZoniKrhotina({ m2: 400, ulica: 0 }, 800), false);
+  // bez površine iz katastra nema suda
+  assert.equal(uZoniKrhotina({ m2: 0, ulica: 0 }, 0), false);
 });

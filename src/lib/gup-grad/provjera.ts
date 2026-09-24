@@ -66,7 +66,21 @@ export const PRAGOVI = {
    */
   slobodnoUdio: 0.05,
   zaGradnjuUdio: 0.05,
+  /**
+   * Čestica kojoj je u zonama plana (s ulicom) manje od ovog udjela katastarske
+   * površine crta se samo obrisom — more i lučko područje, npr. k.č. 15991
+   * k.o. Split: 591 ha, od toga ~0,3 ha u zoni.
+   */
+  krhotinaZone: 0.05,
 } as const;
+
+/**
+ * U zoni je tek krhotina čestice: boja zone preko cijele plohe lagala bi o
+ * ostatku, koji plan ne boji (more, luka). `a` je površina iz katastra.
+ */
+export function uZoniKrhotina(s: Pick<SudCestice, "m2" | "ulica">, a: number): boolean {
+  return a > 0 && s.m2 + s.ulica < PRAGOVI.krhotinaZone * a;
+}
 
 export interface KomadSuda {
   klasa: Klasa;
