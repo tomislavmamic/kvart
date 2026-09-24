@@ -42,38 +42,30 @@ export interface SvojstvaCestice {
   r?: RucnaVrsta;
 }
 
-export type StanjeCestice =
-  | "slobodna"
-  | "u-skladu"
-  | "djelomicno-protivno"
-  | "protivno"
-  /** iskorištena, ali s velikim slobodnim dijelom na koji stane nova čestica */
-  | "djelomicno-slobodna"
-  /**
-   * neiskorištena, ali nije za gradnju: premala za namjenu i bez slobodnog
-   * susjeda, ili odredbe ondje ne dopuštaju novu gradnju, ili je teren
-   * neizgradiv
-   */
-  | "ostatak"
-  /** ulica unutar zone, izuzeta iz nje (pravila.ulice) */
-  | "ulica";
+/**
+ * Sklad s planom: sudi se samo iskorišteni dio čestice (zgrade, okućnice,
+ * parkirališta…). Neiskorištena čestica nema suda.
+ */
+export type Sklad = "nema" | "po-planu" | "djelomicno" | "protivno";
 
 /**
- * Pragovi za imenovanje stanja na karti. Ne ulaze u zbrojeve /gup (ondje se
- * zbrajaju metri, ne stanja) — samo odlučuju kojom bojom obojiti česticu.
+ * Karta čestice razdvaja tri osi — namjenu, iskorištenost i sklad s planom —
+ * i ne miješa ih u jedno „stanje”. Pragovi ispod samo imenuju sklad i
+ * prepoznaju ulicu; ne ulaze u zbrojeve /gup (ondje se zbrajaju metri).
  */
-export const PRAGOVI_STANJA = {
-  /**
-   * Ispod ovog udjela iskorištenosti čestica je „slobodna”. Samo udio, bez
-   * praga u m²: maslinik od 5 000 m² s rubom ceste od 100 m² je slobodan.
-   */
-  slobodnaUdio: 0.05,
+export const PRAGOVI = {
   /** Manje od ovoga protivno planu je krhotina ruba, ne gradnja. */
   protivnoM2: 10,
   /** Od ovog udjela iskorištenog nadalje čestica je „protivna”, ne „djelomično”. */
   protivnoUdio: 0.5,
-  /** Iskorištena čestica s barem ovolikim udjelom slobodnog (za gradnju) je „djelomično slobodna”. */
-  djelomicnoSlobodnaUdio: 0.25,
+  /** Čestica kojoj je ulica barem ovoliki udio je ulica (namjena „Ulice”). */
+  ulicaUdio: 0.95,
+  /**
+   * Slobodni dio je „nije za gradnju” kad je barem ovoliki udio čestice, a
+   * od njega za gradnju ostaje najviše `zaGradnjuUdio`.
+   */
+  slobodnoUdio: 0.05,
+  zaGradnjuUdio: 0.05,
 } as const;
 
 export interface KomadSuda {
@@ -111,9 +103,18 @@ export interface SudCestice {
   iskoristeno: number;
   uSkladu: number;
   uSuprotnosti: number;
-  stanje: StanjeCestice;
   /** Klasa s najviše površine — za bojanje po namjeni. */
   pretezita: Klasa | null;
+  /** Os 1 — namjena: čestica je (gotovo) sva ulica, pa joj je namjena „Ulice”. */
+  jeUlica: boolean;
+  /** Os 2 — iskorištenost: iskorišteno / površina u zoni, 0–1; null bez zone. */
+  iskoristenost: number | null;
+  /** Neiskorišteno po razlogu, u m²: za gradnju i ono što nije za gradnju. */
+  slobodno: { zaGradnju: number; usko: number; premalo: number; zabranjeno: number; neizgradivo: number };
+  /** Neiskorišteni dio je vrijedan spomena, a gotovo ništa od njega nije za gradnju. */
+  slobodnoNijeZaGradnju: boolean;
+  /** Os 3 — sklad s planom iskorištenog dijela. */
+  sklad: Sklad;
 }
 
 /**
@@ -190,6 +191,15 @@ export function sudCestice(
   const iskoristeno = zbroj((k) => k.procjena.iskoristeno);
   const uSkladu = zbroj((k) => k.procjena.uSkladu);
   const uSuprotnosti = zbroj((k) => k.procjena.uSuprotnosti);
+  const usko = zbroj((k) => k.usko);
+  const neiskoristeno = Math.max(0, m2 - iskoristeno);
+  const slobodno = {
+    zaGradnju: Math.max(0, neiskoristeno - ostatak - nijeZaGradnju),
+    usko,
+    premalo: Math.max(0, ostatak - usko),
+    zabranjeno: zbroj((k) => k.procjena.zabranjeno),
+    neizgradivo: zbroj((k) => k.procjena.neizgradivo),
+  };
   const pretezita =
     komadi.reduce<KomadSuda | null>((a, k) => (!a || k.m2 + k.ulica > a.m2 + a.ulica ? k : a), null)?.klasa ?? null;
   return {
@@ -201,32 +211,20 @@ export function sudCestice(
     iskoristeno,
     uSkladu,
     uSuprotnosti,
-    stanje: stanje(m2, iskoristeno, uSuprotnosti, ulica, ostatak, nijeZaGradnju),
     pretezita,
+    jeUlica: ulica > 0 && m2 < (1 - PRAGOVI.ulicaUdio) * (m2 + ulica),
+    iskoristenost: m2 > 0 ? Math.min(1, iskoristeno / m2) : null,
+    slobodno,
+    slobodnoNijeZaGradnju:
+      m2 > 0 && neiskoristeno >= PRAGOVI.slobodnoUdio * m2 && slobodno.zaGradnju <= PRAGOVI.zaGradnjuUdio * neiskoristeno,
+    sklad: sklad(iskoristeno, uSuprotnosti),
   };
 }
 
-export function stanje(
-  m2: number,
-  iskoristeno: number,
-  uSuprotnosti: number,
-  ulica = 0,
-  ostatak = 0,
-  nijeZaGradnju = 0,
-): StanjeCestice {
-  const P = PRAGOVI_STANJA;
-  if (uSuprotnosti >= P.protivnoM2) {
-    return uSuprotnosti >= P.protivnoUdio * iskoristeno ? "protivno" : "djelomicno-protivno";
+/** Sklad s planom iz iskorištenog i protivnog dijela čestice (m²). */
+export function sklad(iskoristeno: number, uSuprotnosti: number): Sklad {
+  if (uSuprotnosti >= PRAGOVI.protivnoM2) {
+    return uSuprotnosti >= PRAGOVI.protivnoUdio * iskoristeno ? "protivno" : "djelomicno";
   }
-  // Čestica koja je gotovo cijela ulica nije ni slobodna ni iskorištena zona.
-  if (ulica > 0 && m2 < P.slobodnaUdio * (m2 + ulica)) return "ulica";
-  if (m2 <= 0) return "slobodna";
-  const neiskoristeno = m2 - iskoristeno;
-  const zaGradnju = neiskoristeno - ostatak - nijeZaGradnju;
-  if (iskoristeno < P.slobodnaUdio * m2) {
-    // slobodni dio koji je (gotovo) sav ostatak ili zabrana ne prikazuje se kao slobodan
-    if (zaGradnju <= 0.05 * neiskoristeno) return "ostatak";
-    return "slobodna";
-  }
-  return zaGradnju >= P.djelomicnoSlobodnaUdio * m2 ? "djelomicno-slobodna" : "u-skladu";
+  return iskoristeno > 0 ? "po-planu" : "nema";
 }

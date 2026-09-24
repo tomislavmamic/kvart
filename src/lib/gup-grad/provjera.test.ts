@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { izracunajGodinu, komadIzNiza } from "@/lib/gup-grad/izracun";
 import { ZADANA_PRAVILA } from "@/lib/gup-grad/pravila";
-import { stanje, sudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
+import { sklad, sudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 // kuća (stambena, katastar) na česti u M/K5 i komad u zaštitnom zelenilu s garažom i kućom
 const cestica: SvojstvaCestice = {
@@ -41,29 +41,39 @@ test("sud čestice zbraja komade istim pravilima kao /gup", () => {
   assert.deepEqual(s.komadi[0].protivneVrste, []);
 });
 
-test("stanja: slobodna, u skladu, djelomično i protivno", () => {
-  assert.equal(stanje(1000, 10, 0), "slobodna");
-  // velika čestica s trakom ceste uz rub ostaje slobodna
-  assert.equal(stanje(5000, 100, 0), "slobodna");
-  assert.equal(stanje(1000, 800, 0), "u-skladu");
-  // iskorištena, a četvrtina i više slobodno za gradnju
-  assert.equal(stanje(1000, 300, 0), "djelomicno-slobodna");
-  assert.equal(stanje(1000, 300, 50), "djelomicno-protivno");
-  assert.equal(stanje(1000, 300, 200), "protivno");
+test("sklad s planom sudi samo iskorišteno", () => {
+  assert.equal(sklad(0, 0), "nema");
+  assert.equal(sklad(800, 0), "po-planu");
   // krhotina ispod 10 m² ne čini česticu protivnom
-  assert.equal(stanje(1000, 800, 8), "u-skladu");
-  // slobodni dio sav ostatak → ostatak; gotovo sve ulica → ulica
-  assert.equal(stanje(200, 0, 0, 0, 200), "ostatak");
-  // slobodno, ali odredbe ne dopuštaju gradnju
-  assert.equal(stanje(2000, 0, 0, 0, 0, 2000), "ostatak");
-  assert.equal(stanje(1000, 300, 0, 0, 0, 700), "u-skladu");
-  assert.equal(stanje(10, 0, 0, 990, 0), "ulica");
+  assert.equal(sklad(800, 8), "po-planu");
+  assert.equal(sklad(300, 50), "djelomicno");
+  assert.equal(sklad(300, 200), "protivno");
+});
+
+test("tri osi čestice: namjena, iskorištenost kao broj, sklad; slobodno po razlogu", () => {
+  // prazna čestica u M/K5 (100 px), od toga 40 px širokog slobodnog
+  const prazna: SvojstvaCestice = { i: 0, ko: "SPLIT", kc: "2/1", a: 400, k: { "2025": [[2, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 40]] } };
+  const s = sudCestice(prazna, 2025, ZADANA_PRAVILA);
+  assert.equal(s.pretezita?.kod, "M/K5");
+  assert.equal(s.iskoristenost, 0);
+  assert.equal(s.sklad, "nema");
+  assert.equal(s.slobodno.usko, 240);
+  assert.equal(s.slobodno.zaGradnju, 160);
+  assert.equal(s.slobodnoNijeZaGradnju, false);
+  // sva uska: slobodno, ali nije za gradnju
+  const uska = sudCestice({ ...prazna, k: { "2025": [[2, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] } }, 2025, ZADANA_PRAVILA);
+  assert.equal(uska.slobodnoNijeZaGradnju, true);
+  // gotovo sva ulica: namjena „Ulice”
+  const ulica = sudCestice({ ...prazna, k: { "2025": [[2, 100, 0, 0, 0, 98, 0, 0, 0, 0, 0, 0, 0, 0]] } }, 2025, ZADANA_PRAVILA);
+  assert.equal(ulica.jeUlica, true);
+  assert.equal(ulica.iskoristenost, null);
 });
 
 test("godina bez komada daje praznu, slobodnu česticu", () => {
   const s = sudCestice(cestica, 2006, ZADANA_PRAVILA);
   assert.equal(s.komadi.length, 0);
-  assert.equal(s.stanje, "slobodna");
+  assert.equal(s.iskoristenost, null);
+  assert.equal(s.sklad, "nema");
   assert.equal(s.pretezita, null);
 });
 
