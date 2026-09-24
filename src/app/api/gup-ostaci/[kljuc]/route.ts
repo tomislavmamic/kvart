@@ -1,13 +1,18 @@
 /**
  * Premali ostaci za kartu provjere GUP-a, po načinu brojanja i godini:
- * `/api/gup-ostaci/<inačica>-<godina>` → { ostaci: [[čestica, klasa], …] }.
+ * `/api/gup-ostaci/<inačica>-<godina>` →
+ *   { ostaci: [[čestica, klasa], …],
+ *     ppmin: { <kod pravila>: { stanovanje?, gospodarska?, javna?, izvor, citat } } }
  *
  * Ostatak ovisi o susjednim česticama po cijelom gradu, a karta učitava
  * čestice po pločicama — pa ga ne može izračunati sama. Računa ga isti
  * izracun.ts kao /gup, pri gradnji (sve kombinacije su poznate unaprijed).
+ * `ppmin` je najmanja građevna čestica iz odredbi po području urbanog
+ * pravila i vrsti, izabrana po istim pravilima — za skočni prozor.
  */
-import { GODINE, type Godina } from "@/lib/gup-grad/model";
-import { ostaci, ucitajMjerenja } from "@/lib/gup-grad/podaci";
+import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
+import { najmanjaCestica, VRSTA_ZA_KLASU, type NajmanjaCestica } from "@/lib/gup-grad/odredbe";
+import { ostaci, ucitajMjerenja, ucitajPpmin } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
 
 export const dynamic = "force-static";
@@ -25,6 +30,15 @@ export async function GET(_req: Request, ctx: { params: Promise<{ kljuc: string 
   if (!inacica || !GODINE.includes(godina)) {
     return Response.json({ error: "Nepoznata inačica ili godina." }, { status: 404 });
   }
-  const d = await ucitajMjerenja();
-  return Response.json({ ostaci: ostaci(d, godina, inacica.pravila) });
+  const [d, tab] = await Promise.all([ucitajMjerenja(), ucitajPpmin()]);
+  const ppmin: Record<string, Partial<Record<string, NajmanjaCestica>>> = {};
+  for (const kod of Object.keys(tab.godine[String(godina)] ?? {})) {
+    for (const kl of KLASE) {
+      const vrsta = VRSTA_ZA_KLASU[kl.kod];
+      if (!vrsta) continue;
+      const n = najmanjaCestica(tab, godina, kod, kl.kod, inacica.pravila);
+      if (n) (ppmin[kod] ??= {})[vrsta] = n;
+    }
+  }
+  return Response.json({ ostaci: ostaci(d, godina, inacica.pravila, tab), ppmin });
 }

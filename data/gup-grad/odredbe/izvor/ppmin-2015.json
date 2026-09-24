@@ -1,0 +1,582 @@
+{
+  "godina": 2015,
+  "izvor": "Odredbe za provođenje GUP-a Splita, pročišćeni tekst, Sl. gl. Grada Splita 55/14",
+  "napomena_sheme": "Uz ključeve slobodnostojeca/dvojna/interpolacija/niz/po_namjeni koriste se i: 'opcenito' (Ppmin bez navedenog tipa građevine) i 'varijante' (dodatni Ppmin uz uvjet, npr. veća čestica za višu građevinu). U po_namjeni i opca_pravila može postojati 'uvjet'; 'm2': null znači da pravilo nije apsolutna vrijednost. Citati: verbatim fragmenti spojeni s '…'.",
+  "urbana_pravila": [
+    {
+      "kod": "1.1",
+      "naziv": "Zaštita i revitalizacija povijesne baštine - povijesna jezgra Splita",
+      "odjeljak": "8.3.1.1. Zaštita i revitalizacija povijesne baštine - povijesna jezgra Splita (čl. 50)",
+      "stranica_glasnika": 35,
+      "ppmin": {},
+      "citat": "sve intervencije na ovom prostoru moguće isključivo na temelju provedbenog dokumenta prostornog uređenja",
+      "napomena": "Ppmin nije propisan; svi zahvati isključivo temeljem provedbenog dokumenta prostornog uređenja (DPU/UPU) uz posebne uvjete i suglasnost službe zaštite."
+    },
+    {
+      "kod": "1.2",
+      "naziv": "Zaštita, uređivanje i dogradnja povijesne baštine",
+      "odjeljak": "8.3.1.2. Zaštita, uređivanje i dogradnja povijesne baštine (čl. 51)",
+      "stranica_glasnika": 35,
+      "ppmin": {},
+      "citat": "površina ulične građevne čestice je postojeća",
+      "napomena": "Ppmin nije propisan: za M1/M2 površina ulične građevne čestice je postojeća; kig, E, kis i ostali parametri određuju se posebnim uvjetima službe zaštite. Pojedinačni zahvati P1 (Svačićeva, DPU) i P4 (Bačvarija, DPU) zadani ukupnim BRPN-om, bez Ppmin. Javna i društvena namjena: bez Ppmin."
+    },
+    {
+      "kod": "1.3",
+      "naziv": "Zaštita, uređivanje i dogradnja zaštićenih dijelova niske gradnje",
+      "odjeljak": "8.3.1.3. Zaštita, uređivanje i dogradnja zaštićenih dijelova niske gradnje (čl. 52)",
+      "stranica_glasnika": 36,
+      "ppmin": {
+        "slobodnostojeca": 500,
+        "dvojna": 250,
+        "interpolacija": 300,
+        "varijante": [
+          {
+            "tip": "slobodnostojeca",
+            "m2": 800,
+            "uvjet": "za područja gdje lokalni uvjeti to dopuštaju (prosječna visina u uličnom potezu); E=Po+P+3, obvezni ravni krov"
+          }
+        ]
+      },
+      "citat": "za novu izgradnju slobodno stojećih građevina Ppmin=500 m2 … između dvije izgrađene čestice Ppmin=300 m2 … Ppmin=800 m2 … za novu izgradnju dvojnih građevina Ppmin=250 m2",
+      "napomena": "Posebna pravila za M1 i stambenu namjenu. Slobodnostojeća 500 m² (E=Po+P+2, šmin=14 m); 800 m² za Po+P+3 gdje lokalni uvjeti dopuštaju. Interpolacija 300 m² samo ako se nova (jedna) građevna čestica formira između dvije izgrađene čestice. Dvojna 250 m². Iznimka: hotel na križanju Tršćanske (bez Ppmin). Javna i društvena namjena: bez Ppmin."
+    },
+    {
+      "kod": "1.4",
+      "naziv": "Zaštita, uređivanje i dogradnja zaštićene blokovske izgradnje XIX i XX stoljeća",
+      "odjeljak": "8.3.1.4. Zaštita, uređivanje i dogradnja zaštićene blokovske izgradnje XIX. i XX. stoljeća (čl. 53)",
+      "stranica_glasnika": 37,
+      "ppmin": {
+        "varijante": [
+          {
+            "tip": "nije navedeno",
+            "m2": 800,
+            "uvjet": "M1/M2: nova izgradnja i zamjena na mikrolokacijama gdje postojeća struktura nema obilježja bloka te gdje izgradnja blokovskog tipa nije moguća"
+          }
+        ]
+      },
+      "citat": "kod nove izgradnje i zamjene građevina na mikrolokacijama gdje postojeća struktura nema obilježja bloka … minimalna površina građevne čestice Ppmin=800 m2",
+      "napomena": "Za blokovsku gradnju Ppmin nije propisan (kig, E, kisN usklađeni s lokalnim stanjem bloka, uz posebne uvjete službe zaštite); nema nove gradnje u unutrašnjosti blokova osim zamjene legalnih građevina. Ppmin=800 m² samo za mikrolokacije bez obilježja bloka. Pojedinačni zahvati P3, P5, P6 i poslovna garažna građevina zadani BRPN-om/pokazateljima, bez Ppmin."
+    },
+    {
+      "kod": "1.5",
+      "naziv": "Zaštita, uređivanje i dogradnja vrijedne niske izgradnje u obalnom području - prostori: Bačvice i Meje",
+      "odjeljak": "8.3.1.5. Zaštita, uređivanje i dogradnja vrijedne niske izgradnje u obalnom području (čl. 54)",
+      "stranica_glasnika": 38,
+      "ppmin": {
+        "slobodnostojeca": 600,
+        "dvojna": 250,
+        "interpolacija": 300,
+        "varijante": [
+          {
+            "tip": "slobodnostojeca",
+            "m2": 800,
+            "uvjet": "za područja gdje lokalni uvjeti to dopuštaju (prosječna visina u uličnom potezu); E=Po+P+3"
+          }
+        ]
+      },
+      "citat": "za novu izgradnju slobodno stojećih građevina Ppmin=600 m2 … između dvije izgrađene čestice Ppmin=300 m2 … Ppmin=800 m2 … dvojnih građevina Ppmin=250 m2",
+      "napomena": "Posebna pravila za M1 i stambenu namjenu. Interpolacija 300 m² samo ako se nova (jedna) građevna čestica formira između dvije izgrađene čestice. Zabranjena prenamjena velikih vrtova i okućnica u građevne parcele. Iznimka uz park Lazarica: jedna građevina po uvjetima za građevine u nizu (opće pravilo, Ppmin 180 m²). T1 i javna/društvena namjena: bez Ppmin."
+    },
+    {
+      "kod": "1.6",
+      "naziv": "Vrijedno priobalno područje Bačvice - stroga zaštita, prenamjena u javne sadržaje",
+      "odjeljak": "8.3.1.6. Vrijedno priobalno područje Bačvice - stroga zaštita, prenamjena u javne sadržaje (čl. 55)",
+      "stranica_glasnika": 39,
+      "ppmin": {},
+      "citat": "moguća zamjena legalnih građevina (u okviru postojećih pokazatelja izgrađenosti)",
+      "napomena": "Nema nove stambene gradnje: stroga zaštita, rekonstrukcija u postojećim gabaritima ili zamjena u okviru postojećih pokazatelja, prenamjena u javne sadržaje; Ppmin nije propisan."
+    },
+    {
+      "kod": "1.7",
+      "naziv": "Park šuma Marjan - zaštita i održavanje",
+      "odjeljak": "8.3.1.7. Park šuma Marjan (dio) - zaštita i održavanje (čl. 56)",
+      "stranica_glasnika": 39,
+      "ppmin": {},
+      "citat": "postojeće stambene građevine … mogu se održavati i rekonstruirati samo u postojećim gabaritima",
+      "napomena": "Nema nove gradnje (osim manjih građevina higijensko-sanitarnog standarda park šume); uređenje temeljem PPPPO-a; Ppmin nije propisan."
+    },
+    {
+      "kod": "1.7a",
+      "naziv": "Parkovi Zvončac, Sustipan, Strossmayerov i Vidovića park",
+      "odjeljak": "8.3.1.7.a Parkovi Zvončac, Sustipan, Strossmayerov i Vidovića park (čl. 57)",
+      "stranica_glasnika": 40,
+      "ppmin": {},
+      "citat": "onemogućavanje gradnje ispod parkovnih površina osim istočno od pristupnog puta Sustipanu",
+      "napomena": "Parkovi – nema građevne gradnje (osim podzemne garaže istočno od puta Sustipanu); Ppmin nije propisan."
+    },
+    {
+      "kod": "1.7b",
+      "naziv": "Park šuma s postojećim građevinama južno od Šetališta I. Meštrovića",
+      "odjeljak": "8.3.1.7b. Park šuma s postojećim građevinama južno od Šetališta I. Meštrovića (čl. 58)",
+      "stranica_glasnika": 40,
+      "ppmin": {},
+      "citat": "postojeće legalne građevine koje nisu zaštićene mogu se rekonstruirati u postojećim gabaritima",
+      "napomena": "Nema nove gradnje; rekonstrukcija u postojećim gabaritima (iznimno atelje Meštrović, BRPN 800 m²); Ppmin nije propisan."
+    },
+    {
+      "kod": "1.7c",
+      "naziv": "Park šuma s mogućom rekonstrukcijom postojećih građevina za javne sadržaje i ekskluzivni turizam - Vila Dalmacija",
+      "odjeljak": "8.3.1.7c. Park šuma s mogućom rekonstrukcijom postojećih građevina za javne sadržaje i ekskluzivni turizam - Vila Dalmacija (čl. 59)",
+      "stranica_glasnika": 40,
+      "ppmin": {},
+      "citat": "održavanje i rekonstrukcija postojećih građevina, koje se mogu namijeniti javnim sadržajima i ekskluzivnom turizmu",
+      "napomena": "Samo održavanje i rekonstrukcija postojećih građevina, kroz izradu ili nakon izrade PPPPO-a; Ppmin nije propisan."
+    },
+    {
+      "kod": "1.7d",
+      "naziv": "Park šuma s mogućom rekonstrukcijom i dogradnjom postojećih sadržaja",
+      "odjeljak": "8.3.1.7d. Park šuma s mogućom rekonstrukcijom i dogradnjom postojećih sadržaja (čl. 59, bez zasebnog članka)",
+      "stranica_glasnika": 40,
+      "ppmin": {},
+      "citat": "Omogućava se zaštita zamjena i rekonstrukcija, održavanje i uređenje područja i postojećih sadržaja",
+      "napomena": "Zamjena i rekonstrukcija postojećih sadržaja (ZOO, meteorološka postaja, muzej…) uz suglasnost službe zaštite; Ppmin nije propisan."
+    },
+    {
+      "kod": "1.8",
+      "naziv": "Dovršeni kompleksi jedne, pretežito javne namjene - posebno vrijedni - zaštita namjene, uređivanje i moguća dopuna potrebnim sadržajima",
+      "odjeljak": "8.3.1.8. Dovršeni kompleksi jedne, pretežito javne namjene - posebno vrijedni (čl. 60)",
+      "stranica_glasnika": 41,
+      "ppmin": {},
+      "citat": "zaštita namjene, uređivanje i iznimno dopuna potrebnim građevinama i sadržajima",
+      "napomena": "Ppmin nije propisan; dopune pojedinih kompleksa (Oceanografski institut, gimnazija V. Nazor, Arheološki muzej, sjemenište…) zadane max. BRP-om i natječajem."
+    },
+    {
+      "kod": "1.9",
+      "naziv": "Prirodne plaže u zaštićenim i vrijednim područjima, zaštita namjene i uređenje",
+      "odjeljak": "8.3.1.9. Prirodne plaže u zaštićenim i vrijednim područjima, zaštita namjene i uređenje (čl. 61)",
+      "stranica_glasnika": 41,
+      "ppmin": {},
+      "citat": "uređenje manjih platoa s tuševima i montažnim svlačionicama",
+      "napomena": "Nema građevne gradnje; Ppmin nije propisan."
+    },
+    {
+      "kod": "1.9a",
+      "naziv": "Uređene plaže u zaštićenim i vrijednim područjima",
+      "odjeljak": "8.3.1.9.a. Uređene plaže u zaštićenim i vrijednim područjima (čl. 62)",
+      "stranica_glasnika": 41,
+      "ppmin": {},
+      "citat": "ukupne BRPN-e do maksimalno 200 m2",
+      "napomena": "Samo prateći sadržaji plaža (Bene: do 200 m² BRPN; Stobreč: do 300 m² građevina); Ppmin nije propisan."
+    },
+    {
+      "kod": "2.1",
+      "naziv": "Zaštita i uređivanje dovršenih naselja",
+      "odjeljak": "8.4.2.1. Zaštita i uređivanje dovršenih naselja (čl. 63)",
+      "stranica_glasnika": 42,
+      "ppmin": {
+        "po_namjeni": [
+          {
+            "namjena": "mješovita M1 i M2",
+            "m2": 1500
+          },
+          {
+            "namjena": "poslovna",
+            "m2": 1500
+          }
+        ]
+      },
+      "citat": "minimalna površina građevne čestice Ppmin=1500m2 za mješovitu namjenu M1 i M2, minimalna površina građevne čestice Ppmin=1500 m2 za poslovnu namjenu",
+      "napomena": "Vrijedi za novu izgradnju, rekonstrukciju i zamjenu (M1, M2, poslovna). Pojedinačni zahvati P8 i P10 zadani BRPN-om, bez Ppmin. Javna i društvena namjena: bez Ppmin."
+    },
+    {
+      "kod": "2.1a",
+      "naziv": "Zaštita i uređivanje dovršenih naselja u kontaktnoj zoni Marjana",
+      "odjeljak": "8.4.2.1.a. Zaštita i uređivanje dovršenih naselja u kontaktnoj zoni Marjana (čl. 64)",
+      "stranica_glasnika": 42,
+      "ppmin": {
+        "opcenito": 400,
+        "dvojna": 250
+      },
+      "citat": "kod nove izgradnje i zamjene postojećih građevina utvrđuju se slijedeći uvjeti: Ppmin=400 m2 … za novu izgradnju dvojnih građevina Ppmin=250 m2",
+      "napomena": "Ppmin=400 m² bez navedenog tipa građevine (nova izgradnja i zamjena, max BRPN 750 m², E=Po+P+2), iako isto pravilo kaže da je 'moguća isključivo zamjena postojećih građevina koje nisu zaštićene te rekonstrukcija'. Dvojna 250 m² na str. 43."
+    },
+    {
+      "kod": "2.2",
+      "naziv": "Zaštita i uređivanje novijih prostora visoke gradnje",
+      "odjeljak": "8.4.2.2. Zaštita i uređivanje novijih prostora visoke gradnje (čl. 65)",
+      "stranica_glasnika": 43,
+      "ppmin": {
+        "po_namjeni": [
+          {
+            "namjena": "mješovita M1 i poslovna (niske i srednje građevine nestambene namjene)",
+            "m2": 1500
+          },
+          {
+            "namjena": "mješovita M2 (niske i srednje stambeno poslovne građevine)",
+            "m2": 1400
+          }
+        ]
+      },
+      "citat": "a maksimalno za građevnu česticu minimalne površine 1500 m2 … za građevnu česticu minimalne površine 1400 m2",
+      "napomena": "Iskazano kao 'građevna čestica minimalne površine' uz koju vrijede maksimalni pokazatelji (M1/poslovna: kig 0,30, kisN 1,50; M2: kig 0,70, kisN 3,5), ne izrazom Ppmin. U M1 nova gradnja samo nestambenih građevina. Stambena jedinica Pujanke: samo rekonstrukcija. Pojedinačni zahvati P9, P11, P12, P13, P14 bez Ppmin."
+    },
+    {
+      "kod": "2.3",
+      "naziv": "Zaštita i uređivanje pretežito dovršenih prostora mješovite gradnje",
+      "odjeljak": "8.4.2.3. Zaštita i uređivanje pretežito dovršenih prostora mješovite gradnje (čl. 66)",
+      "stranica_glasnika": 44,
+      "ppmin": {
+        "opcenito": 500,
+        "dvojna": 300,
+        "interpolacija": 300,
+        "varijante": [
+          {
+            "tip": "nije navedeno",
+            "m2": 800,
+            "uvjet": "E=Po+P+3, kisN=1,20"
+          },
+          {
+            "tip": "nije navedeno",
+            "m2": 1200,
+            "uvjet": "E=Po+P+4, kisN=1,50"
+          }
+        ],
+        "po_namjeni": [
+          {
+            "namjena": "poslovna (samo križanje Poljičke i Dubrovačke, nakon natječaja)",
+            "m2": 4500
+          }
+        ]
+      },
+      "citat": "na minimalnoj površini građevne čestice Ppmin=500 m2 … Ppmin=800 m2 … Ppmin=1200 m2 … između dvije izgrađene čestice Ppmin=300 m2 … dvojnih građevina Ppmin=300 m2 … Ppmin=4500 m2",
+      "napomena": "Mješovita i stambena namjena: stupnjevi 500/800/1200 m² bez navedenog tipa građevine (veća čestica = veća visina). Interpolacija 300 m² samo ako se nova (jedna) čestica formira između dvije izgrađene. Poslovna 4500 m² samo za lokaciju na križanju Poljičke i Dubrovačke. P15, P28 bez Ppmin. Zaštitno zelenilo s postojećim stanovanjem: bez nove gradnje."
+    },
+    {
+      "kod": "2.4",
+      "naziv": "Zaštita, uređivanje i dogradnja planiranih naselja niske gradnje na bivšoj i novijoj periferiji",
+      "odjeljak": "8.4.2.4. Zaštita, uređivanje i dogradnja planiranih naselja niske gradnje na bivšoj i novijoj periferiji (čl. 67)",
+      "stranica_glasnika": 45,
+      "ppmin": {
+        "slobodnostojeca": 500,
+        "dvojna": 300,
+        "interpolacija": 300
+      },
+      "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2 … formira između dvije izgrađene parcele Ppmin=300 m2 … za novu izgradnju dvojnih građevina Ppmin=300 m2",
+      "napomena": "Posebna pravila za M1 i stambenu namjenu. Interpolacija 300 m² samo ako se nova (jedna) parcela formira između dvije izgrađene. Uz Ulicu Matice hrvatske iznimno građevine u nizu (kig 0,60) – Ppmin tu nije naveden. T1 (Stobreč) i poslovna (samo rekonstrukcija) bez Ppmin."
+    },
+    {
+      "kod": "2.5",
+      "naziv": "Uređivanje i urbana obnova pretežito izgrađenih prostora mješovite gradnje",
+      "odjeljak": "8.4.2.5. Uređivanje i urbana obnova prostora mješovite gradnje (čl. 68)",
+      "stranica_glasnika": 46,
+      "ppmin": {
+        "slobodnostojeca": 500,
+        "dvojna": 400,
+        "interpolacija": 300,
+        "varijante": [
+          {
+            "tip": "nije navedeno",
+            "m2": 1200,
+            "uvjet": "građevna čestica veličine preko 1200 m² gdje lokalni uvjeti to omogućuju: E=Po+P+4, kisN=1,50"
+          }
+        ],
+        "po_namjeni": [
+          {
+            "namjena": "poslovna",
+            "m2": 1500
+          }
+        ]
+      },
+      "citat": "slobodnostojećih građevina Ppmin=500 m2 … između dvije izgrađene parcele Ppmin=300 m2 … dvojnih građevina Ppmin=400 m2 … građevnu česticu minimalne površine 1500 m2",
+      "napomena": "M1: interpolacija 300 m² samo ako se nova (jedna) parcela formira između dvije izgrađene. Za čestice >1200 m² veći pokazatelji ('preko 1200 m2', ne izraz Ppmin). Poslovna: 'građevna čestica minimalne površine 1500 m2' uz max pokazatelje. Rekonstrukcija postojećih građevina na česticama manjim od minimalne dopuštena do kisN za minimalne čestice. P16, P17, HEP Visoka i zona uz Poljičku/ZNG bez Ppmin."
+    },
+    {
+      "kod": "2.6",
+      "naziv": "Zaštita i uređivanje pretežito dovršenih cjelovitih kompleksa jedne namjene",
+      "odjeljak": "8.4.2.6. Zaštita i uređivanje pretežito dovršenih cjelovitih kompleksa jedne namjene (čl. 69)",
+      "stranica_glasnika": 47,
+      "ppmin": {},
+      "citat": "omogućava se gradnja novih građevina temeljem važećih provedbenih dokumenata prostornog uređenja",
+      "napomena": "Ppmin nije propisan; nova gradnja temeljem važećih/novih provedbenih dokumenata, uz povećanje BRPN-a u zoni do 10%. Sportski centar Gripe (P7): BRP 60000 m², DPU."
+    },
+    {
+      "kod": "2.7",
+      "naziv": "Uređivanje, urbana obnova i dogradnja kompleksa jedne namjene",
+      "odjeljak": "8.4.2.7. Uređivanje, urbana obnova i dogradnja kompleksa jedne namjene (čl. 70)",
+      "stranica_glasnika": 49,
+      "ppmin": {
+        "po_namjeni": [
+          {
+            "namjena": "zona TTTS (do donošenja provedbenog dokumenta)",
+            "m2": 1500
+          }
+        ]
+      },
+      "citat": "Pokazatelji izgradnje: ▪ minimalna veličina građevne čestice 1500 m2",
+      "napomena": "Ppmin iskazan samo za zonu TTTS (do donošenja provedbenog dokumenta prostornog uređenja). Ostali kompleksi (Firule, Brodogradilište, P22, Institut, SC Stobreč, Diokom, groblje Lovrinac, Kampus, HT Mejaši, Vrboran, Sjeverna luka) zadani BRPN/ha, kig, kis ili UPU-om, bez Ppmin."
+    },
+    {
+      "kod": "2.8",
+      "naziv": "Zaštita, formiranje, održavanje i njegovanje parkova",
+      "odjeljak": "8.4.2.8. Zaštita, formiranje, održavanje i njegovanje parkova (čl. 71)",
+      "stranica_glasnika": 49,
+      "ppmin": {},
+      "citat": "površina tih građevina ne može biti veća od 100 m2 BRPN/ha parka",
+      "napomena": "Parkovi – samo manje prateće građevine (do 100 m² BRPN/ha); Ppmin nije propisan."
+    },
+    {
+      "kod": "2.9",
+      "naziv": "Umjetne plaže – nasute, uređivanje, pošumljavanje",
+      "odjeljak": "8.4.2.9. Umjetna kupališta – nasuta, uređivanje i pošumljavanje (čl. 72)",
+      "stranica_glasnika": 49,
+      "ppmin": {},
+      "citat": "uređenje i nova izgradnja se omogućavaju na temelju provedbenog dokumenta prostornog uređenja",
+      "napomena": "Samo prateći sadržaji kupališta, temeljem provedbenog dokumenta i natječaja; Ppmin nije propisan."
+    },
+    {
+      "kod": "3.1",
+      "naziv": "Sanacija, uređivanje i urbana obnova djelomično izgrađenih prostora mješovite izgradnje",
+      "odjeljak": "8.5.3.1. Sanacija, uređivanje i urbana obnova djelomično izgrađenih prostora mješovite izgradnje (čl. 73)",
+      "stranica_glasnika": 50,
+      "ppmin": {
+        "slobodnostojeca": 500,
+        "dvojna": 400,
+        "interpolacija": 300,
+        "varijante": [
+          {
+            "tip": "slobodnostojeca",
+            "m2": 700,
+            "uvjet": "E=Po+P+3, kisN=1,2"
+          },
+          {
+            "tip": "slobodnostojeca",
+            "m2": 1500,
+            "uvjet": "srednja/visoka izgradnja mješovite namjene uz važnije ulice (npr. Vukovarska, Kamen sjever), kroz provedbeni dokument; širina čestice na regulacijskom pravcu 40–80 m; manje čestice moguće ako je nužno zbog lokalnih uvjeta"
+          }
+        ],
+        "po_namjeni": [
+          {
+            "namjena": "poslovna K",
+            "m2": 600,
+            "uvjet": "V=10 m, E=Po+P+2"
+          },
+          {
+            "namjena": "poslovna K",
+            "m2": 1000,
+            "uvjet": "V=12 m, E=Po+P+3"
+          },
+          {
+            "namjena": "poslovna K – rubna izgradnja uz Kralja Držislava, Put Supavla, Vukovarsku, Domovinskog rata i Hercegovačku",
+            "m2": 1500
+          },
+          {
+            "namjena": "proizvodna namjena (tekst: 'građevnu česticu poslovne namjene')",
+            "m2": 1000
+          }
+        ]
+      },
+      "citat": "slobodnostojećih građevina Ppmin=500 m2 … između dvije izgrađene parcele Ppmin=300 m2 … na Ppmin=700 m2 … dvojnih građevina Ppmin=400 m2 … Ppmin=1500 m2 … Ppmin=600 m2 … Ppmin=1000 m2",
+      "napomena": "M1: slobodnostojeća 500 m² (Po+P+2), 700 m² (Po+P+3); interpolacija 300 m² samo ako se nova (jedna) parcela formira između dvije izgrađene. Opće pravilo za NK područja: Ppmin može biti do 40% manji u izgrađenim dijelovima (vidi opca_pravila). K5: primjenjuju se pravila za M1 i K. Str. 50 (M1, 1500) i 51 (K, proizvodna). T1, javna/društvena, P19, P20, P26, SC Streljana: bez Ppmin."
+    },
+    {
+      "kod": "3.2",
+      "naziv": "Nova regulacija na pretežito neizgrađenom prostoru",
+      "odjeljak": "8.5.3.2. Nova regulacija na pretežito neizgrađenom prostoru (čl. 74)",
+      "stranica_glasnika": 53,
+      "ppmin": {
+        "slobodnostojeca": 600,
+        "dvojna": 400,
+        "varijante": [
+          {
+            "tip": "slobodnostojeca",
+            "m2": 800,
+            "uvjet": "E=Po+P+3, kisN=1,2"
+          },
+          {
+            "tip": "slobodnostojeca (visoka)",
+            "m2": 1500,
+            "uvjet": "srednja/visoka izgradnja kroz provedbeni dokument na do 30% (M1) odnosno 60% (M2) površine građevnih čestica zone"
+          }
+        ],
+        "po_namjeni": [
+          {
+            "namjena": "proizvodna ili poslovna (u zoni proizvodne namjene)",
+            "m2": 1000,
+            "uvjet": "min. 30% ukupne površine svih čestica moraju biti čestice veće od 2000 m²"
+          },
+          {
+            "namjena": "poslovna",
+            "m2": 1500,
+            "uvjet": "kroz provedbeni dokument; i do njegova donošenja 'minimalna veličina građevne čestice 1500 m2'"
+          }
+        ]
+      },
+      "citat": "parcele Ppmin=600 m2 … na Ppmin=800 m2 … dvojnih građevina Ppmin=400 m2 … visokih slobodnostojećih građevina Ppmin=1500 m2 … poslovne namjene Ppmin=1000 m2 … poslovne namjene je 1500 m2",
+      "napomena": "M1 i M2, nova izgradnja uz izradu provedbenog dokumenta. Interpolacija nije propisana. Proizvodna/poslovna 1000 m² i poslovna 1500 m² na str. 54. T1 (Trstenik, Orišac, Stobreč), P21, P23, P23a, P24, P27, P29: bez Ppmin (BRPN/ha, kig, kis)."
+    },
+    {
+      "kod": "3.3",
+      "naziv": "Djelomično izgrađeni prostori - postojeća regulacija na temelju usvojenih planova",
+      "odjeljak": "8.5.3.3. Djelomično izgrađeni prostori - postojeća regulacija na temelju usvojenih planova (čl. 75)",
+      "stranica_glasnika": 57,
+      "ppmin": {},
+      "citat": "Budućim planiranjem i izgradnjom maksimalno respektirati izvorno rješenje kroz okrupnjavanje parcela",
+      "napomena": "Ppmin nije propisan; gradnja prema usvojenim/važećim planovima (DPU Žnjan, Duilovo…), pokazatelji BRPN/ha, kig, kis."
+    },
+    {
+      "kod": "3.4",
+      "naziv": "Zaštitne i vrijedne pejzažne površine",
+      "odjeljak": "8.5.3.4. Zaštitne i vrijedne pejzažne površine (čl. 76)",
+      "stranica_glasnika": 57,
+      "ppmin": {},
+      "citat": "zabrana izgradnje (osim uz posebne uvjete i suglasnost nadležne službe zaštite)",
+      "napomena": "Nema nove gradnje (Žrnovnica bez nove izgradnje; Orišac do 3 ugostiteljske građevine po 100 m² BRP kroz provedbeni dokument); Ppmin nije propisan."
+    },
+    {
+      "kod": "3.5",
+      "naziv": "Vrijedne pejzažne površine s rekreacijskim i turističkim sadržajima",
+      "odjeljak": "8.5.3.5. Vrijedne pejzažne površine s rekreacijskim ili turističkim sadržajima (čl. 77)",
+      "stranica_glasnika": 58,
+      "ppmin": {},
+      "citat": "izgradnja manjih pratećih građevina … do 50 m2 BRP/ha uređene sportsko rekreacijske površine",
+      "napomena": "Samo prateće građevine (R2 do 50 m² BRP/ha, Z3 do 300 m²/ha, T3 do 400 m² BRP/ha) kroz provedbeni dokument; Ppmin nije propisan."
+    },
+    {
+      "kod": "GP 1",
+      "naziv": "Gradska luka – zapadna obala",
+      "odjeljak": "8.6.1. Gradska luka – zapadna obala (čl. 79)",
+      "stranica_glasnika": 59,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78). Iznimka: dogradnja hotela Marjan na parceli 'veličine oko 2.600 m2' – zadana lokacija, nije Ppmin."
+    },
+    {
+      "kod": "GP 2",
+      "naziv": "Gradska luka – istočna obala",
+      "odjeljak": "8.6.2. Gradska luka – istočna obala (čl. 80)",
+      "stranica_glasnika": 59,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 3",
+      "naziv": "Gradski projekt Poljud",
+      "odjeljak": "8.6.3. Gradski projekt Poljud (čl. 81)",
+      "stranica_glasnika": 60,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 4",
+      "naziv": "Gradski projekt Stari Hajdukov plac",
+      "odjeljak": "8.6.4. Gradski projekt Stari Hajdukov plac (čl. 82)",
+      "stranica_glasnika": 60,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 5",
+      "naziv": "Gradski projekt Brodarica",
+      "odjeljak": "8.6.5. Gradski projekt Brodarica (čl. 83)",
+      "stranica_glasnika": 60,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 6",
+      "naziv": "Gradski projekt Kopilica",
+      "odjeljak": "8.6.6. Gradski projekt Kopilica (čl. 84)",
+      "stranica_glasnika": 60,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78). Kopilica zona a: 'P25 Konzum Stinice na površini cca 32.000 m2' – zadani obuhvat, nije Ppmin."
+    },
+    {
+      "kod": "GP 7",
+      "naziv": "Gradski projekt Duilovo",
+      "odjeljak": "8.6.7. Gradski projekt Duilovo (čl. 85)",
+      "stranica_glasnika": 61,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 8",
+      "naziv": "Gradski projekt Karepovac",
+      "odjeljak": "8.6.8. Gradski projekt Karepovac (čl. 86)",
+      "stranica_glasnika": 61,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 9",
+      "naziv": "Gradski projekt Meje",
+      "odjeljak": "8.6.9. Gradski projekt Meje (čl. 87)",
+      "stranica_glasnika": 62,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 10",
+      "naziv": "Gradski projekt Dračevac",
+      "odjeljak": "8.6.10. Gradski projekt Dračevac (čl. 88)",
+      "stranica_glasnika": 62,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    },
+    {
+      "kod": "GP 11",
+      "naziv": "Gradski projekt Sportski centar istok",
+      "odjeljak": "8.6.11. Gradski projekt Sportski centar istok (čl. 89)",
+      "stranica_glasnika": 62,
+      "ppmin": {},
+      "citat": "izrada provedbenog dokumenta prostornog uređenja temeljem natječajnog rješenja",
+      "napomena": "Gradski projekt (oznaka po rednom broju iz 8.6.x; tekst ih spominje kao 'gradski projekti 1 i 2'). Ppmin nije propisan; program zadan max. BRPN-om obuhvata, a detaljni uvjeti utvrđuju se natječajem i provedbenim dokumentom (čl. 78)."
+    }
+  ],
+  "opca_pravila": [
+    {
+      "opis": "Građevine u nizu (opće pravilo urbanih pravila, 'Osnovni tipovi građevina')",
+      "m2": 180,
+      "uvjet": "u obuhvatu propisanih UPU-a i u zonama niske i srednje izgradnje; min. širina čestice 6 m, max. Po+P+1, kig 0,40, kigP 0,60, krajnje građevine niza 4 m od bočne međe; niz = najmanje tri prislonjene građevine",
+      "stranica_glasnika": 32,
+      "citat": "Građevine u nizu mogu se graditi u obuhvatu propisanih urbanističkih planova uređenja i u zonama niske i srednje izgradnje … minimalna površina građevne čestice 180 m2"
+    },
+    {
+      "opis": "Nisko konsolidirana područja – uvjeti za izgrađene dijelove: umanjenje Ppmin",
+      "m2": null,
+      "umanjenje_posto": 40,
+      "uvjet": "stambene, stambeno poslovne i gospodarske građevine u NK područjima, u zonama M1 i M2, zoni I (Mejaši, zapadni dio, sjeverno od Težačkog puta a istočno od ZNG) i zonama K, unutar izgrađenog dijela građevinskog područja naselja (PPUG), uz usklađenje s posebnim propisima, kroz propisani provedbeni dokument ili na drugi način utvrđen Odlukom; uz to E=Po+P+3, V=13 m, 1 m od međe",
+      "stranica_glasnika": 33,
+      "citat": "minimalna površina građevne čestice je do 40% manja od propisane za odgovarajuće zone"
+    },
+    {
+      "opis": "Definicija interpolacije (za tumačenje vrijednosti 'interpolacija')",
+      "m2": null,
+      "uvjet": "urbana pravila Ppmin za interpolaciju vežu uz slučaj kad se 'nova (jedna) građevna čestica formira između dvije izgrađene čestice'",
+      "stranica_glasnika": 32,
+      "citat": "Interpolacijom u smislu ovog Plana se smatra gradnja na građevnoj čestici koja se nalazi u izgrađenom uličnom potezu odnosno pretežito dovršenom području."
+    }
+  ],
+  "po_namjeni_izvan_urbanih_pravila": [
+    {
+      "namjena": "niske stambene građevine – vile (5.1 Uvjeti gradnje stambenih građevina, čl. 26)",
+      "m2": 700,
+      "uvjet": "vile ukupne neto površine veće od 400 m², u zonama stambene S i mješovite M1 namjene; kig 0,30, E=Po+P+2, kisN 0,80, šmin 14 m",
+      "stranica_glasnika": 12,
+      "citat": "Niske stambene građevine – vile, ukupne neto površine veće od 400 m2, mogu se graditi … prema slijedećim uvjetima: Ppmin=700m2"
+    },
+    {
+      "namjena": "poslovna namjena K – prateći stambeni prostor (1.2.4 Gospodarska namjena, čl. 13)",
+      "m2": 2000,
+      "uvjet": "nije opći Ppmin: prag veličine čestice u zoni K iznad kojeg se dopušta stambeni prostor max. BRP 200 m² kao prateći poslovnim sadržajima",
+      "stranica_glasnika": 5,
+      "citat": "Na građevnim česticama minimalne površine 2000 m2 omogućava se izgradnja stambenog prostora maksimalne BRP 200 m2"
+    },
+    {
+      "namjena": "proizvodne i poslovne građevine prije donošenja provedbenih dokumenata (čl. 105)",
+      "m2": 3000,
+      "uvjet": "prijelazno: lokacijska dozvola temeljem GUP-a do donošenja provedbenih dokumenata, lokacija u zoni proizvodne ili poslovne namjene, urbanistički definirana prometnicama i infrastrukturom, obvezan natječaj",
+      "stranica_glasnika": 80,
+      "citat": "minimalna površina građevne čestice je 3000 m2"
+    }
+  ]
+}

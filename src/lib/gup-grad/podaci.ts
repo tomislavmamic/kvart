@@ -10,6 +10,8 @@ import path from "path";
 import { GODINE, type Godina } from "./model";
 import { izracunajGodinu, ostaciGodine, type Komad, type RezultatKlase, type Susjedi, type UlazGodine } from "./izracun";
 import type { Pravila } from "./pravila";
+import { najmanjaCestica, type TablicaPpmin } from "./odredbe";
+import { KLASA_PO_INDEKSU } from "./model";
 
 export interface PlanGodine {
   id: string;
@@ -23,11 +25,17 @@ export interface SirovaMjerenja {
   komad_polja: string[];
   planovi: PlanGodine[];
   cestice: { ko_imena: string[]; ko: number[]; broj: string[]; povrsina: number[]; susjedi: Susjedi };
-  godine: Record<string, { id: string; klase_px: Record<string, number>; komadi: number[] }>;
+  godine: Record<
+    string,
+    { id: string; klase_px: Record<string, number>; komadi: number[]; urbano_pravilo: number[] }
+  >;
+  /** Kodovi urbanih pravila; `urbano_pravilo[i]` je 1-based indeks ovdje (0 = nema). */
+  urbana_pravila_kodovi: string[];
   izvori: Record<string, string>;
 }
 
 const PUT = path.join(process.cwd(), "data", "gup-grad", "cestice.json");
+const PUT_PPMIN = path.join(process.cwd(), "data", "gup-grad", "odredbe", "ppmin.json");
 const POLJA = ["cestica", "klasa", "n", "zk", "z25", "pr", "os", "ze", "g"];
 
 let predmemorija: Promise<SirovaMjerenja> | null = null;
@@ -63,20 +71,39 @@ export function komadiGodine(d: SirovaMjerenja, godina: Godina): Komad[] {
   return out;
 }
 
-export function ulazGodine(d: SirovaMjerenja, g: Godina): UlazGodine {
+let predmemorijaPpmin: Promise<TablicaPpmin> | null = null;
+
+/** Tablica najmanjih građevnih čestica iz odredbi (scripts/gup-grad/odredbe.py). */
+export function ucitajPpmin(): Promise<TablicaPpmin> {
+  predmemorijaPpmin ??= readFile(PUT_PPMIN, "utf8").then((t) => JSON.parse(t) as TablicaPpmin);
+  return predmemorijaPpmin;
+}
+
+/** Kod urbanog pravila čestice u godini plana, ili null. */
+export function kodPravila(d: SirovaMjerenja, g: Godina, cestica: number): string | null {
+  const i = d.godine[String(g)]?.urbano_pravilo?.[cestica] ?? 0;
+  return i > 0 ? d.urbana_pravila_kodovi[i - 1] : null;
+}
+
+export function ulazGodine(d: SirovaMjerenja, g: Godina, p: Pravila, ppmin: TablicaPpmin): UlazGodine {
   const klasePx = Object.fromEntries(
     Object.entries(d.godine[String(g)]?.klase_px ?? {}).map(([k, v]) => [Number(k), v]),
   );
-  return { klasePx, komadi: komadiGodine(d, g), pikselM2: d.piksel_m2, susjedi: d.cestice.susjedi };
+  const najmanjaM2 = (k: Komad) => {
+    const kl = KLASA_PO_INDEKSU.get(k.klasa);
+    if (!kl || k.cestica === undefined) return 0;
+    return najmanjaCestica(ppmin, g, kodPravila(d, g, k.cestica), kl.kod, p)?.m2 ?? 0;
+  };
+  return { klasePx, komadi: komadiGodine(d, g), pikselM2: d.piksel_m2, susjedi: d.cestice.susjedi, najmanjaM2 };
 }
 
-export function izracunaj(d: SirovaMjerenja, p: Pravila): Record<Godina, RezultatKlase[]> {
+export function izracunaj(d: SirovaMjerenja, p: Pravila, ppmin: TablicaPpmin): Record<Godina, RezultatKlase[]> {
   const out = {} as Record<Godina, RezultatKlase[]>;
-  for (const g of GODINE) out[g] = izracunajGodinu(ulazGodine(d, g), p);
+  for (const g of GODINE) out[g] = izracunajGodinu(ulazGodine(d, g, p, ppmin), p);
   return out;
 }
 
 /** Ostaci godine za kartu provjere: [čestica, klasa]. */
-export function ostaci(d: SirovaMjerenja, g: Godina, p: Pravila): [number, number][] {
-  return ostaciGodine(ulazGodine(d, g), p);
+export function ostaci(d: SirovaMjerenja, g: Godina, p: Pravila, ppmin: TablicaPpmin): [number, number][] {
+  return ostaciGodine(ulazGodine(d, g, p, ppmin), p);
 }

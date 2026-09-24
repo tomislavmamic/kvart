@@ -1,0 +1,1557 @@
+{
+  "izvori": {
+    "2006": "Odluka o donošenju GUP-a Splita, Službeni glasnik Grada Splita 1/2006 (odredbe/3181.txt), s izmjenama iz Sl. gl. 3/2008 (odredbe/3183.txt; bitne izmjene za namjene navedene u 'uvjeti'). Stranice = stranice glasnika 1/06 (3/08 gdje je naznačeno).",
+    "2015": "Pročišćeni tekst Odredbi za provođenje GUP-a Splita, Službeni glasnik Grada Splita 55/2014 (28. 11. 2014.; uključuje 1/06, 15/07, 3/08, 3/12, 32/13, 52/13, 41/14) (odredbe/6130.txt). Stranice = stranice glasnika 55/14.",
+    "2025": "ID GUP Split – Prijedlog za ponovnu javnu raspravu, travanj 2025. (odredbe/2025.txt). To je tekst IZMJENA: članci koje ne mijenja vrijede kako su u pročišćenom tekstu (moguće i s izmjenama nakon 2014. kojih nema u ulaznim datotekama). Stranice = 'Stranica N od 149'. Brojevi članaka u 'clanci' su članci Odredbi koje se mijenjaju/dodaju.",
+    "napomena_citati": "Citati su doslovni, uz ispravak artefakata ekstrakcije ('ñ'→'đ' u 2006, ligatura 'Ɵ'→'ti' u 2025)."
+  },
+  "vrste": {
+    "stambena": "stambena zgrada",
+    "gospodarska": "gospodarska (poslovna, trgovačka, ugostiteljsko-turistička, proizvodna, skladišna) zgrada",
+    "javna": "javna i društvena zgrada",
+    "pomocna": "pomoćna zgrada (garaža, spremište)",
+    "ostala": "ostale građevine, nadstrešnice, trafostanice",
+    "promet": "ceste, putovi",
+    "uredjeno": "groblja, sportski tereni, parkirališta",
+    "zelenilo": "održavano zelenilo"
+  },
+  "polja": {
+    "dopusteno": "vrste koje tekst dopušta (unija podklasa; uvjetne su i u 'ograniceno')",
+    "ograniceno": "za vrstu u 'dopusteno' – pod kojim uvjetom / u kojoj podklasi",
+    "nije_dopusteno": "samo ono što tekst izričito isključuje za cijelu klasu",
+    "neodredjeno": "vrste koje tekst za klasu niti dopušta niti zabranjuje",
+    "postojece_tolerirano": "postojeće zgrade protivne namjeni koje tekst izričito tolerira (održavanje/rekonstrukcija), a ne čini ih usklađenima",
+    "stranica": "glavna stranica citata",
+    "dodatni_citati": "dodatni doslovni citati sa stranicom"
+  },
+  "opca_pravila": {
+    "svim_namjenama_cl8": {
+      "2006": {
+        "stranica": 4,
+        "citat": "Na površinama svih namjena grade se nove te održavaju i po potrebi rekonstruiraju postojeće ulice i trgovi, javna parkirališta te komunalni objekti i uređaji.",
+        "znaci": "promet, uredjeno (javna parkirališta) i ostala (komunalne građevine) su dopušteni u svakoj klasi"
+      },
+      "2015": {
+        "stranica": 3,
+        "citat": "Na površinama svih namjena grade se nove te održavaju i po potrebi rekonstruiraju postojeće ulice i trgovi, javna parkirališta te komunalne građevine i uređaji.",
+        "znaci": "isto"
+      },
+      "2025": {
+        "stranica": 8,
+        "citat": "Na površinama svih namjena grade se nove te održavaju i po potrebi rekonstruiraju postojeće ulice i trgovi, javna parkirališta, nadzemne i podzemne garaže te ostale infrastrukturne i manje komunalne građevine i uređaji",
+        "znaci": "isto + garaže; ALI javne garaže/parkirališta u javnim i zaštitnim zelenim površinama samo gdje ih Plan proziva; st. 4: javne i zaštitne zelene površine moguće u svim namjenama (zelenilo svugdje dopušteno); st. 5: gradski vrtovi privremeno na neizgrađenim površinama svih namjena"
+      }
+    },
+    "manje_infrastrukturne_cl18": {
+      "2015": {
+        "stranica": 7,
+        "citat": "Manje infrastrukturne građevine mogu se graditi u zonama drugih namjena, temeljem ovog Plana ili provedbenih dokumenata prostornog uređenja, u skladu s tehnološkim potrebama i propisima"
+      }
+    },
+    "pomocne_zgrade_cl28": "Pomoćne građevine (garaže, spremišta, nadstrešnice) plan uređuje samo kao dio čestice stambene ili stambeno-poslovne niske zgrade (2006 str. 13, 2015 str. 12, 2025 str. 27). Samostalna pomoćna zgrada bez glavne zgrade nije predviđena ni u jednoj klasi; u parkovima su dopuštene samo 'manje pomoćne građevine u funkciji korištenja' parka (čl. 71).",
+    "protivno_namjeni_cl108": {
+      "2006": {
+        "stranica": 67,
+        "sazetak": "Legalne zgrade protivne namjeni smiju se rekonstruirati radi poboljšanja uvjeta života i rada (sanacija, sanitarije do 12 m2, adaptacija tavana…), osim u Park-šumi Marjan i zaštićenim krajobrazima gdje samo bez promjene gabarita."
+      },
+      "2015": {
+        "stranica": 82,
+        "citat": "Dopuštena je rekonstrukcija građevine (legalno izgrađene) u smislu poboljšanja uvjeta života i rada, čija je namjena protivna namjeni utvrđenoj ovim planom"
+      },
+      "2025": {
+        "stranica": 148,
+        "citat": "Postojeće građevine (…) koje su po svojoj namjeni protivne planiranoj namjeni prostora (…), mogu se održavati i rekonstruirati isključivo u postojećim gabaritima. Prenamjena je moguća isključivo u skladu s planiranom namjenom prostora."
+      }
+    },
+    "kiosci": {
+      "2015": {
+        "stranica": 31,
+        "citat": "Kiosci se postavljaju na javno prometnim površinama na način da ne ugrožavaju kolni promet i promet pješaka."
+      }
+    },
+    "nisu_u_modelu": "IS (infrastrukturni sustavi) i groblje nisu klase u modelu. IS: komunalne i prometne građevine + poslovne zgrade vezane uz osnovnu djelatnost (čl. 18); groblje: ukopna mjesta, crkve, kapele, obredne dvorane, mrtvačnice, cvjećarne (čl. 19)."
+  },
+  "klase": [
+    {
+      "klasa": "S",
+      "podklase": [
+        "S"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "samo prateći sadržaji: prodavaonice dnevne potrošnje (u zgradi do 150 m2 BRP; na zasebnoj čestici do 1000 m2), osobne i intelektualne usluge, uredi, ugostiteljsko-turistički (hoteli/aparthoteli/pansioni do 40 postelja na zasebnoj čestici); u stambenoj zgradi max 100 m2 BRP (niska) odnosno 10% BRPN ili 100 m2 (srednja). Proizvodnja, skladišta, servisi koji ometaju stanovanje NE (postojeći se mogu zadržati s tendencijom prenamjene).",
+            "javna": "vrtići, jaslice, škole, zdravstvo, socijalna skrb; javni i društveni sadržaji na zasebnoj čestici",
+            "pomocna": "čl. 28: na česticama niskih građevina garaže, spremišta, pomoćne prostorije, iznimno nadstrešnice (max 25 m2 u 2015); pomoćna građevina max jedna etaža; na česticama stambenih zgrada prizemni garažni nizovi",
+            "uredjeno": "manji športsko-rekreacijski sadržaji, igrališta, javna parkirališta i garaže",
+            "ostala": "komunalne građevine i uređaji, manje komunalne građevine"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "Pretežno stambene građevine; ostalo samo kao prateći sadržaji. Pomoćne građevine po čl. 28 (str. 13). Postojeći parkirni kapaciteti i garaže ne smiju se smanjivati.",
+          "stranica": 4,
+          "citat": "Na površinama stambene namjene ne mogu se graditi građevine za proizvodnju, skladišta, servisi i drugi sadržaji koji utjecajima na okoliša iznad dopuštenih vrijednosti ometaju stanovanje.",
+          "clanci": [
+            "čl. 8 (1.2.1.)",
+            "čl. 28"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 4,
+              "citat": "parkove i dječja igrališta, javna parkirališta i garaže, ulice i trgove, komunalne objekte i uređaje."
+            },
+            {
+              "stranica": 13,
+              "citat": "Na građevnim česticama niskih građevina, mogu se, osim građevine za stanovanje ili stambeno-poslovne građevine, graditi pomoćne građevine s prostorima za rad, garaže, spremišta ogrjeva"
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "samo prateći sadržaji: prodavaonice dnevne potrošnje (u zgradi do 150 m2 BRP; na zasebnoj čestici do 1000 m2), osobne i intelektualne usluge, uredi, ugostiteljsko-turistički (hoteli/aparthoteli/pansioni do 40 postelja na zasebnoj čestici); u stambenoj zgradi max 100 m2 BRP (niska) odnosno 10% BRPN ili 100 m2 (srednja). Proizvodnja, skladišta, servisi koji ometaju stanovanje NE (postojeći se mogu zadržati s tendencijom prenamjene).",
+            "javna": "vrtići, jaslice, škole, zdravstvo, socijalna skrb; javni i društveni sadržaji na zasebnoj čestici",
+            "pomocna": "čl. 28: na česticama niskih građevina garaže, spremišta, pomoćne prostorije, iznimno nadstrešnice (max 25 m2 u 2015); pomoćna građevina max jedna etaža; na česticama stambenih zgrada prizemni garažni nizovi",
+            "uredjeno": "manji športsko-rekreacijski sadržaji, igrališta, javna parkirališta i garaže",
+            "ostala": "komunalne građevine i uređaji, manje komunalne građevine"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "Isto kao 2006. Pomoćne građevine po čl. 28 (str. 12): garaže, spremišta, pomoćne prostorije, nadstrešnica do 25 m2.",
+          "stranica": 3,
+          "citat": "Na površinama stambene namjene ne mogu se graditi građevine za proizvodnju, skladišta, servisi i drugi sadržaji koji utjecajima na okoliša iznad dopuštenih vrijednosti ometaju stanovanje.",
+          "clanci": [
+            "čl. 8 (1.2.1.)",
+            "čl. 28"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 3,
+              "citat": "Površine stambene namjene su površine na kojima su pretežno izgrađene građevine stambene namjene i na kojima se planiraju građevine stambene namjene."
+            },
+            {
+              "stranica": 12,
+              "citat": "Pomoćna građevina je visine najviše jedne etaže uz mogućnost gradnje podruma i krovišta bez nadozida."
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "u stambeno-poslovnoj zgradi: prodavaonice dnevne potrošnje (max 150 m2 GBP), zanatske osobne i intelektualne usluge, ugostiteljski sadržaji (bez smještaja), ukupno max 100 m2 GBP (niska) / 10% GBPN ili 100 m2 (srednja); na zasebnoj čestici prodavaonica (čestica do 1000 m2) i hoteli/aparthoteli/pansioni do 40 postelja. Proizvodnja, zanatstvo (osim osobnih usluga), skladišta, servisi i sadržaji s intenzivnim prometom NE.",
+            "javna": "na zasebnoj čestici: vrtići, škole, zdravstvo, socijalna skrb",
+            "pomocna": "čl. 28 (novi): garaže, drvarnice, spremišta, kotlovnice, sjenice, nadstrešnice, ljetne kuhinje, konobe, bazeni za vlastite potrebe…; ne smiju sadržavati stambeni ni smještajni prostor; max 50 m2 GBP, nadstrešnice max 30 m2, visina 3,5 m",
+            "uredjeno": "sportsko-rekreacijske površine i igrališta na otvorenom, parkirališta i garaže u javnom korištenju",
+            "ostala": "manje komunalne i infrastrukturne građevine"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "Novi čl. 8.a: dozvoljena gradnja stambenih i stambeno-poslovnih zgrada; prateći sadržaji u zgradi ili na zasebnoj čestici. Čl. 8 st. 4: javne i zaštitne zelene površine moguće u svim namjenama.",
+          "stranica": 8,
+          "citat": "Na površinama stambene namjene S dozvoljena je gradnja građevina stambene i stambeno-poslovne namjene.",
+          "clanci": [
+            "čl. 8",
+            "čl. 8.a",
+            "čl. 28"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 9,
+              "citat": "Na površinama stambene namjene ne mogu se graditi građevine proizvodne i zanatske djelatnosti (osim osobnih usluga), skladišta, servisi, kao ni poslovni i drugi sadržaji koji zahtijevaju intenzivan promet"
+            },
+            {
+              "stranica": 27,
+              "citat": "Pomoćne građevine ne mogu sadržavati stambeni niti drugi smještajni prostor."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "M/K5",
+      "podklase": [
+        "M1",
+        "M2",
+        "M3",
+        "K5"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "M1: samo sadržaji koji ne ometaju stanovanje (trgovina, tihi obrt, usluge, servisi i praonice osobnih automobila, uredi, ugostiteljstvo, hoteli, pansioni); proizvodni i zanatski pogoni (osim osobnih usluga), skladišta i sadržaji s intenzivnim prometom NE (postojeći se zadržavaju bez širenja i zamjene). M2: tržnice, manje robne kuće, poslovne zgrade; u zonama B/C bez opskrbnih centara s otvorenim parkiralištem i skladišta kao osnovne namjene. K5: sve što je dopušteno u K.",
+            "stambena": "M2: nova gradnja/zamjena samo stambeno-poslovna (min. 25% nestambeno, nestambeno prizemlje); K5: udio stanovanja ograničen na 50% zone",
+            "javna": "M1: na zasebnim česticama do 1,0 ha (vrtići, škole, socijalne, vjerske); M2, M3, K5: javne i društvene zgrade dopuštene",
+            "pomocna": "čl. 28 – na česticama niskih stambenih/stambeno-poslovnih zgrada",
+            "uredjeno": "športsko-rekreacijska igrališta, manje dvorane, javne garaže, javna parkirališta"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "M1 (str. 4–5): pretežito stambene zgrade; poslovni sadržaji samo ako ne ometaju stanovanje (buka, prašina, teški transport); trgovački sadržaji do 400 m2 BRP (ograničenje brisano 3/08). M2 (str. 5): nova gradnja i zamjena su stambeno-poslovne i poslovne zgrade s min. 25% BRPN nestambene namjene i obvezno nestambenim prizemljem; mogu i jednonamjenske javne i poslovne zgrade — čisto stambena NOVA zgrada nije predviđena. M3 (str. 5): stambene, ugostiteljsko-turističke, stambeno-poslovne/turističke, zabavne, rekreacijske, uslužne, javne; min. 10% turizma. K5 (str. 6): poslovne, stambeno-poslovne i stambene zgrade te sve što je dopušteno u K (i skladišta, zanatski sadržaji); u neizgrađenim dijelovima min. 50% površine za poslovne i nestambene sadržaje (3/08: stanovanje najviše 50% BRP zone). Pomoćne građevine po čl. 28 na česticama niskih stambenih/stambeno-poslovnih zgrada.",
+          "stranica": 4,
+          "citat": "Na površinama mješovite - pretežito stambene namjene ne mogu se graditi građevine za gospodarske proizvodne i zanatske djelatnosti (osim osobnih usluga), skladišta i ostali sadržaji koji zahtijevaju intenzivan promet…",
+          "clanci": [
+            "čl. 9",
+            "čl. 10",
+            "čl. 11",
+            "čl. 13 (K5)",
+            "čl. 28"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 5,
+              "citat": "Na površinama mješovite namjene M2, planirane građevine (nova izgradnja i zamjena postojećih) su stambeno-poslovne i poslovne namjene, uz obvezni minimalni udio poslovne (nestambene) namjene od 25% BRPN"
+            },
+            {
+              "stranica": 6,
+              "citat": "planira se izgradnja građevina poslovne, stambeno poslovne i stambene namjene te građevina ostalih namjena dopuštenih u zonama poslovne namjene K."
+            },
+            {
+              "stranica": 2,
+              "citat": "(3/08, čl. 7) Udio stanovanja unutar ove zone može biti najviše 50% ukupnog BRP-a zone."
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "M1: samo sadržaji koji ne ometaju stanovanje (trgovina, tihi obrt, usluge, servisi i praonice osobnih automobila, uredi, ugostiteljstvo, hoteli, pansioni); proizvodni i zanatski pogoni (osim osobnih usluga), skladišta i sadržaji s intenzivnim prometom NE (postojeći se zadržavaju bez širenja i zamjene). M2: tržnice, manje robne kuće, poslovne zgrade; u zonama B/C bez opskrbnih centara s otvorenim parkiralištem i skladišta kao osnovne namjene. K5: sve što je dopušteno u K.",
+            "stambena": "M2: nova gradnja/zamjena samo stambeno-poslovna (min. 25% nestambeno, nestambeno prizemlje); K5: udio stanovanja ograničen na 50% zone",
+            "javna": "M1: na zasebnim česticama do 1,0 ha (vrtići, škole, socijalne, vjerske); M2, M3, K5: javne i društvene zgrade dopuštene",
+            "pomocna": "čl. 28 – na česticama niskih stambenih/stambeno-poslovnih zgrada",
+            "uredjeno": "športsko-rekreacijska igrališta, manje dvorane, javne garaže, javna parkirališta"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "M1 (str. 4): pretežito stambene zgrade; poslovni sadržaji samo ako ne ometaju stanovanje (buka, prašina, teški transport); trgovački sadržaji bez ograničenja površine. M2 (str. 4): nova gradnja i zamjena su stambeno-poslovne i poslovne zgrade s min. 25% BRPN nestambene namjene i obvezno nestambenim prizemljem; mogu i jednonamjenske javne i poslovne zgrade — čisto stambena NOVA zgrada nije predviđena. M3 (str. 4): stambene, ugostiteljsko-turističke, stambeno-poslovne/turističke, zabavne, rekreacijske, uslužne, javne; min. 10% turizma. K5 (str. 5): poslovne, stambeno-poslovne i stambene zgrade te sve što je dopušteno u K (i skladišta, zanatski sadržaji); udio stanovanja do 50% ukupnog BRP-a zone. Pomoćne građevine po čl. 28 na česticama niskih stambenih/stambeno-poslovnih zgrada.",
+          "stranica": 4,
+          "citat": "Na površinama mješovite - pretežito stambene namjene ne mogu se graditi građevine za gospodarske proizvodne i zanatske djelatnosti (osim osobnih usluga), skladišta i ostali sadržaji koji zahtijevaju intenzivan promet…",
+          "clanci": [
+            "čl. 9",
+            "čl. 10",
+            "čl. 11",
+            "čl. 13 (K5)",
+            "čl. 28"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 4,
+              "citat": "Na površinama mješovite namjene M2, planirane građevine (nova izgradnja i zamjena postojećih) su stambeno-poslovne i poslovne namjene, uz obvezni minimalni udio poslovne (nestambene) namjene od 25% BRPN"
+            },
+            {
+              "stranica": 5,
+              "citat": "planira se izgradnja građevina poslovne, stambeno poslovne i stambene namjene (…) Udio stanovanja unutar ove zone može bit 50% ukupnog BRP-a zone."
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "M1: u stambeno-poslovnoj zgradi trgovina, osobne usluge, tihi obrt, uredi, pošte/banke, ugostiteljski sadržaji; na zasebnim česticama do 1,0 ha uredi i hoteli; proizvodnja, zanatstvo (osim osobnih usluga i tihih obrta), skladišta i intenzivan promet NE. M2: poslovne zgrade, tržnice, manje robne kuće, hoteli na zasebnoj čestici; u zonama B i C ne trgovački centri s otvorenim parkiralištem ni skladišta kao osnovna namjena. M3: hoteli, stambeno-turističke. K5: sve dopušteno u K (min. 50% poslovnog GBP-a zone).",
+            "stambena": "M1, M3: stambene zgrade dozvoljene. M2: tekst navodi samo poslovne i stambeno-poslovne zgrade (min. 25% GBPN poslovno + nestambeno prizemlje). K5: stanovanje max 50% GBP zone (ili zgrade kod pojedinačnog zahvata).",
+            "javna": "M1: na zasebnim česticama do 1,0 ha (vrtići, škole, zdravstvo, socijalna skrb, vjerske); M2: javne i društvene zgrade; M3: kao prateći sadržaji stanovanja",
+            "pomocna": "čl. 28 (novi) – na česticama niskih zgrada; bez stambenog prostora, max 50 m2 GBP",
+            "uredjeno": "sportsko-rekreacijske površine i igrališta, dvorane bez gledališta (M1), sportske građevine (M2), parkirališta i garaže u javnom korištenju",
+            "ostala": "manje komunalne i infrastrukturne građevine"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "Novi čl. 9.a, 10, 11 i 13 st. 8. M1 (str. 9): stambene i stambeno-poslovne zgrade + prateći sadržaji. M2 (str. 10): poslovne i stambeno-poslovne zgrade. M3 (str. 10): stambene, hoteli, stambeno-poslovne i stambeno-turističke. K5 (str. 12): posredna provedba kroz plan užeg područja koji dijeli zonu na M1 i K; pojedinačna zgrada max 50% stambenog GBP-a.",
+          "stranica": 9,
+          "citat": "Na površinama mješovite - pretežito stambene namjene M1 dozvoljena je gradnja građevina stambene i stambeno-poslovne namjene.",
+          "clanci": [
+            "čl. 8",
+            "čl. 9.a",
+            "čl. 10",
+            "čl. 11",
+            "čl. 13 st. 8",
+            "čl. 28"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 10,
+              "citat": "Na površinama mješovite - poslovne i stambene namjene M2, dozvoljena je gradnja građevina poslovne i stambeno-poslovne namjene, uz obvezni minimalni udio poslovne (nestambene) namjene"
+            },
+            {
+              "stranica": 12,
+              "citat": "Udio stanovanja unutar ove zone može bit maksimalno 50% ukupnog GBP-a zone, a urbanim pravilima je moguće propisati i manji postotak."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "I/K",
+      "podklase": [
+        "I",
+        "K",
+        "K1",
+        "K2",
+        "K3",
+        "K4"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "gospodarska",
+            "javna",
+            "stambena",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "gospodarska": "I: industrijski i zanatski pogoni bez nepovoljnih utjecaja iznad graničnih vrijednosti, poslovni (uslužni, trgovački), skladišni, ugostiteljsko-turistički; K: uslužni, trgovački, zanatski, skladišni, uredski, ugostiteljsko-turistički, zabavni; K3: komunalni pogoni, spremišta autobusa i kamiona; K4: poslovni, trgovački, uslužni, skladišni + rasadnik",
+            "javna": "samo u K (\"upravne… javne i društvene građevine\"); za I tekst javne ne navodi",
+            "stambena": "samo u K: stambeni prostor max 200 m2 BRP kao prateći poslovnim sadržajima, na čestici min. 2000 m2",
+            "pomocna": "tumačenje: spremišta/garaže kao skladišni prostori (I, K, K4) i \"prateći skladišni i slični prostori i građevine\" (K3); pomoćne građevine za ovu namjenu nisu posebno uređene",
+            "ostala": "K3: crpne stanice, vodospreme, trafostanice; čl. 8 komunalne građevine",
+            "uredjeno": "I: sportski i rekreacijski sadržaji; K: sportske i rekreacijske građevine; K3 spremišta autobusa; javna parkirališta (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "zelenilo"
+          ],
+          "uvjeti": "Gospodarska namjena. Stanovanje samo kao mali prateći stan u K (200 m2 BRP na čestici ≥ 2000 m2). U I unutar zaštićenog obalnog područja samo proizvodnja funkcionalno vezana uz more. K: sklonište za životinje sjeverno od Puta Mostina.",
+          "stranica": 6,
+          "citat": "Na građevnim česticama minimalne površine 2000 m2 omogućava se izgradnja stambenog prostora maksimalne BRP 200 m2 kao prateći poslovnim sadržajima.",
+          "clanci": [
+            "čl. 13"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 6,
+              "citat": "moguće je graditi i uređivati prostore za uslužne i trgovačke sadržaje, zanatske sadržaje, skladišne prostore, upravne, uredske, ugostiteljsko turističke, sportske i rekreacijske, zabavne te javne i društvene građevine"
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "gospodarska",
+            "javna",
+            "stambena",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "gospodarska": "I: industrijski i zanatski pogoni bez nepovoljnih utjecaja iznad graničnih vrijednosti, poslovni (uslužni, trgovački), skladišni, ugostiteljsko-turistički; K: uslužni, trgovački, zanatski, skladišni, uredski, ugostiteljsko-turistički, zabavni; K3: komunalni pogoni, spremišta autobusa i kamiona; K4: poslovni, trgovački, uslužni, skladišni + rasadnik",
+            "javna": "samo u K (\"upravne… javne i društvene građevine\"); za I tekst javne ne navodi",
+            "stambena": "samo u K: stambeni prostor max 200 m2 BRP kao prateći poslovnim sadržajima, na čestici min. 2000 m2",
+            "pomocna": "tumačenje: spremišta/garaže kao skladišni prostori (I, K, K4) i \"prateći skladišni i slični prostori i građevine\" (K3); pomoćne građevine za ovu namjenu nisu posebno uređene",
+            "ostala": "K3: crpne stanice, vodospreme, trafostanice; čl. 8 komunalne građevine",
+            "uredjeno": "I: sportski i rekreacijski sadržaji; K: sportske i rekreacijske građevine; K3 spremišta autobusa; javna parkirališta (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "zelenilo"
+          ],
+          "uvjeti": "Isto kao 2006 (u I dodano \"sportske i rekreacijske građevine\").",
+          "stranica": 5,
+          "citat": "Na građevnim česticama minimalne površine 2000 m2 omogućava se izgradnja stambenog prostora maksimalne BRP 200 m2 kao prateći poslovnim sadržajima.",
+          "clanci": [
+            "čl. 13"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 5,
+              "citat": "Na površinama proizvodne namjene I moguće je graditi i uređivati prostore za industrijske i zanatske pogone bez nepovoljnih utjecaja na okoliš iznad propisima utvrđenih graničnih vrijednosti"
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "I: industrijski i zanatski pogoni, poslovni, skladišni, komunalno-servisni, ugostiteljski (BEZ smještaja – hoteli više ne); K: uslužni, trgovački, zanatski, skladišni, uredski, ugostiteljski (bez smještaja), zabavni; komunalno-servisne i skloništa za životinje samo gdje urbana pravila prozivaju; K3, K4 kao prije",
+            "javna": "I: samo školske i predškolske; K: javne i društvene građevine, a u dijelu poslovne zgrade upravne, zdravstvene, predškolske i kulturne",
+            "pomocna": "tumačenje: skladišni i \"prateći skladišni i slični prostori i građevine\" (K3); pomoćne građevine za ovu namjenu nisu posebno uređene",
+            "ostala": "K3: vodospreme, crpne stanice, trafostanice; manje infrastrukturne građevine (čl. 8)",
+            "uredjeno": "rekreacijske građevine i sadržaji (sportske se više ne navode); parkirališta i garaže (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena"
+          ],
+          "uvjeti": "Čl. 13 potpuno zamijenjen: odredba o pratećem stanu do 200 m2 u K je IZOSTAVLJENA (stambena se više ne navodi); ugostiteljsko-turistički (smještaj) zamijenjen ugostiteljskim sadržajima; u I javne samo škole i vrtići.",
+          "stranica": 11,
+          "citat": "poslovne namjene K moguće je graditi i uređivati prostore za uslužne i trgovačke sadržaje, zanatske sadržaje, skladišne prostore, upravne, uredske, ugostiteljske, rekreacijske, zabavne te javne i društvene građevine",
+          "clanci": [
+            "čl. 8",
+            "čl. 13 st. 1–7"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 11,
+              "citat": "ugostiteljske sadržaje, rekreacijske te javne i društvene (isključivo školske i predškolske) građevine i sadržaje."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "D",
+      "podklase": [
+        "D",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "javna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "uredjeno": "športski/rekreacijski sadržaji koji upotpunjuju osnovnu djelatnost; javna parkirališta (čl. 8)",
+            "javna": "D1 upravne, D2 socijalne (domovi), D3 zdravstvene, D4 predškolske, D5 školske, D6 visoko učilište/znanost, D7 kultura, D8 vjerske (crkve, samostani, župni dvor); D = sve javne (HTV, financijske institucije, političke organizacije…); dogradnja drugim javnim sadržajem dopuštena"
+          },
+          "nije_dopusteno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "neodredjeno": [
+            "pomocna",
+            "zelenilo"
+          ],
+          "uvjeti": "Iznimke za poslovne: zona D na Trgu Hrvatske bratske zajednice (poslovni sadržaji), križanje Poljičke i B. Bušića (tržnica), te druge zone prema urbanim pravilima i karti 1; 3/08 dodaje potez poslovnih sadržaja između dviju bolnica južno od Poljičke. Postojeće legalne stambene zgrade u zoni D istočno od KB Firule (UP 2.7) mogu se nadograditi do Po+P+2 (čl. 108 t. 5, str. 67). Pomoćne građevine tekst ne spominje (prateći prostori samo \"u građevinama\").",
+          "stranica": 5,
+          "citat": "Na površinama i građevnim česticama za javnu i društvenu namjenu ne mogu se graditi stambene i poslovne građevine.",
+          "clanci": [
+            "čl. 12",
+            "čl. 108 t. 5"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 5,
+              "citat": "U svim građevinama javne i društvene namjene mogu se uređivati prostori koji upotpunjuju i služe osnovnoj djelatnosti koja se obavlja u tim građevinama, npr. športski ili rekreacijski sadržaji."
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "javna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "uredjeno": "športski/rekreacijski sadržaji koji upotpunjuju osnovnu djelatnost; javna parkirališta (čl. 8)",
+            "javna": "D1–D8 i D (sve javne i društvene); dogradnja drugim javnim sadržajem dopuštena"
+          },
+          "nije_dopusteno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "neodredjeno": [
+            "pomocna",
+            "zelenilo"
+          ],
+          "uvjeti": "Iznimke za poslovne: Trg Hrvatske bratske zajednice, tržnica Poljička/B. Bušića, potez poslovnih sadržaja između dviju bolnica južno od Poljičke, te zone prema urbanim pravilima i karti 1. Postojeće legalne stambene zgrade istočno od KB Firule (UP 2.7) smiju se nadograditi do Po+P+2 (čl. 108 t. 5, str. 82).",
+          "stranica": 5,
+          "citat": "Na površinama i građevnim česticama za javnu i društvenu namjenu ne mogu se graditi stambene i poslovne građevine.",
+          "clanci": [
+            "čl. 12",
+            "čl. 108 t. 5"
+          ],
+          "postojece_tolerirano": {
+            "stambena": "postojeće legalne stambene zgrade u zoni D istočno od KB Firule (UP 2.7)"
+          },
+          "dodatni_citati": [
+            {
+              "stranica": 82,
+              "citat": "Postojeće legalne stambene građevine u obuhvatu zone javne i društvene namjene istočno od Kliničke bolnice Firule (urbano pravilo 2.7) mogu se rekonstruirati (nadograditi)"
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "uredjeno": "sportske dvorane i igrališta kao sadržaji koji služe osnovnoj djelatnosti; parkirališta i garaže (čl. 8)",
+            "pomocna": "samo građevine koje upotpunjuju i služe osnovnoj djelatnosti (sada dopuštene i kao zasebne građevine na površini)",
+            "javna": "osnovna vrsta + drugi javni sadržaji do 15% GBP zone (škole i vrtići bez ograničenja)"
+          },
+          "nije_dopusteno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "neodredjeno": [],
+          "uvjeti": "Zabrana proširena i na ugostiteljsko-turističke zgrade. Iznimke: poslovni sadržaji na Trgu HBZ, tržnica Poljička/B. Bušića, a južno od Poljičke između dviju bolnica rekonstrukcija postojećih legalnih stambenih zgrada po UP 2.7 (potez poslovnih sadržaja između bolnica više se ne navodi).",
+          "stranica": 11,
+          "citat": "Na površinama i građevnim česticama za javnu i društvenu namjenu ne mogu se graditi stambene, poslovne i ugostiteljsko-turističke građevine.",
+          "clanci": [
+            "čl. 8",
+            "čl. 12 st. 1, 3, 4"
+          ],
+          "postojece_tolerirano": {
+            "stambena": "postojeće legalne stambene zgrade u zoni D između dviju bolnica (UP 2.7) – rekonstrukcija"
+          },
+          "dodatni_citati": [
+            {
+              "stranica": 11,
+              "citat": "U svim građevinama i na površinama javne i društvene namjene mogu se uređivati prostori i graditi građevine koji upotpunjuju i služe osnovnoj djelatnosti"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "T",
+      "podklase": [
+        "T1",
+        "T3"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "gospodarska",
+            "javna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "T1: hoteli (sve smještajne jedinice u sustavu hotela), ugostiteljski, zabavni, trgovački, uslužni sadržaji; T3 kamp (ušće Žrnovnice): uslužni i opskrbni sadržaji",
+            "javna": "samo \"kulturni sadržaji\" u T1",
+            "uredjeno": "rekreacijski i športski otvoreni i zatvoreni sadržaji; T3 otvoreni sportski tereni",
+            "zelenilo": "parkovi",
+            "ostala": "T3: sanitarni čvorovi i slični prostori; čl. 8 komunalne građevine"
+          },
+          "nije_dopusteno": [
+            "stambena"
+          ],
+          "neodredjeno": [
+            "pomocna"
+          ],
+          "uvjeti": "T3 kamp: ukupno max 400 m2 BRPN/ha. Pomoćne građevine tekst ne spominje.",
+          "stranica": 6,
+          "citat": "U ovim zonama se ne dozvoljava izgradnja stambenih sadržaja namijenjenih za stalno ili povremeno stanovanje.",
+          "clanci": [
+            "čl. 13"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 6,
+              "citat": "omogućava se gradnja hotela, ugostiteljskih, zabavnih, kulturnih, trgovačkih i uslužnih sadržaja, rekreacijskih i športskih otvorenih i zatvorenih sadržaja, parkova i sličnih prostora i građevina."
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "gospodarska",
+            "javna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "T1: hoteli (sve smještajne jedinice u sustavu hotela), ugostiteljski, zabavni, trgovački, uslužni sadržaji; T3 kamp (ušće Žrnovnice): uslužni i opskrbni sadržaji",
+            "javna": "samo \"kulturni sadržaji\" u T1",
+            "uredjeno": "rekreacijski i športski otvoreni i zatvoreni sadržaji; T3 otvoreni sportski tereni",
+            "zelenilo": "parkovi",
+            "ostala": "T3: sanitarni čvorovi i slični prostori; čl. 8 komunalne građevine"
+          },
+          "nije_dopusteno": [
+            "stambena"
+          ],
+          "neodredjeno": [
+            "pomocna"
+          ],
+          "uvjeti": "Isto kao 2006. T3 kamp: ukupno max 400 m2 BRPN/ha.",
+          "stranica": 5,
+          "citat": "U ovim zonama se ne dozvoljava izgradnja stambenih sadržaja namijenjenih za stalno ili povremeno stanovanje.",
+          "clanci": [
+            "čl. 13"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 5,
+              "citat": "Sve smještajne jedinice moraju biti u sustavu hotela kao jedinstvene uporabne cjeline u smislu funkcioniranja, upravljanja i održavanja."
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "gospodarska",
+            "javna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "T: ISKLJUČIVO hoteli (hotel, aparthotel, hotel baština, pansion, lječilišne vrste, hotel posebnog standarda) + ugostiteljski, zabavni, trgovački, uslužni prateći sadržaji; T3 kamp: uslužni i opskrbni sadržaji",
+            "javna": "samo \"kulturni sadržaji\" u T1",
+            "uredjeno": "rekreacijski i športski otvoreni i zatvoreni sadržaji; T3 otvoreni sportski tereni",
+            "zelenilo": "parkovi",
+            "ostala": "T3: sanitarni čvorovi i slični prostori; čl. 8 komunalne građevine"
+          },
+          "nije_dopusteno": [
+            "stambena"
+          ],
+          "neodredjeno": [
+            "pomocna"
+          ],
+          "uvjeti": "T1 preimenovan u T (i simbol). Smještajne jedinice ne mogu se razdvajati na samostalne uporabne cjeline (npr. etažirani apartmani). T3 bez ograničenja 400 m2/ha u ovom članku.",
+          "stranica": 12,
+          "citat": "U ovim zonama se ne dozvoljava izgradnja stambenih sadržaja namijenjenih za stalno ili povremeno stanovanje.",
+          "clanci": [
+            "čl. 8",
+            "čl. 13 st. 9–12"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 12,
+              "citat": "Na površinama ugostiteljsko-turističke namjene – T dozvoljena je isključivo gradnja hotela razvrstanih u jednu od sljedećih vrsta"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "L",
+      "podklase": [
+        "LN",
+        "LS"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "gospodarska": "LN: luka i prateći sadržaji, ugostiteljsko-turistički BEZ smještajnih kapaciteta, restorani, poslovni sadržaji, skladišta – sve u funkciji osnovne namjene",
+            "pomocna": "tumačenje: \"skladišta i slične građevine u funkciji osnovne namjene\" (LN)",
+            "ostala": "lučke građevine; komunalne građevine (čl. 8)",
+            "uredjeno": "javna parkirališta (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna",
+            "zelenilo"
+          ],
+          "uvjeti": "LS (sportske luke, str. 7): popis luka; Poljud (Split, Spinut) te Labud i Mornar bez povećanja akvatorija i bez ugostiteljsko-turističkih smještajnih kapaciteta; Jadran-Zvončac bez proširenja. Stambenu namjenu tekst ne spominje.",
+          "stranica": 6,
+          "citat": "Luka posebne namjene – LN, je prostor za gradnju luke i pratećih sadržaja, ugostiteljsko turističkih sadržaja bez smještajnih kapaciteta, restorana, poslovnih sadržaja, skladišta i sličnih građevina",
+          "clanci": [
+            "čl. 13 (LN)",
+            "čl. 14 (LS)"
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "gospodarska": "LN: luka i prateći sadržaji, ugostiteljsko-turistički BEZ smještajnih kapaciteta, restorani, poslovni sadržaji, skladišta – sve u funkciji osnovne namjene",
+            "pomocna": "tumačenje: \"skladišta i slične građevine u funkciji osnovne namjene\" (LN)",
+            "ostala": "lučke građevine; komunalne građevine (čl. 8)",
+            "uredjeno": "javna parkirališta (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna",
+            "zelenilo"
+          ],
+          "uvjeti": "Isto kao 2006 (LS na str. 6).",
+          "stranica": 5,
+          "citat": "Luka posebne namjene – LN, je prostor za gradnju luke i pratećih sadržaja, ugostiteljsko turističkih sadržaja bez smještajnih kapaciteta, restorana, poslovnih sadržaja, skladišta i sličnih građevina",
+          "clanci": [
+            "čl. 13 (LN)",
+            "čl. 14 (LS)"
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "gospodarska": "LN: luka i prateći sadržaji, ugostiteljsko-turistički BEZ smještajnih kapaciteta, restorani, poslovni sadržaji, skladišta – sve u funkciji osnovne namjene",
+            "pomocna": "LN: skladišta i slične građevine u funkciji osnovne namjene; LS: odlaganje sportskih plovila i opreme na kopnu, održavanje plovila",
+            "ostala": "lučke građevine; komunalne građevine (čl. 8)",
+            "uredjeno": "javna parkirališta (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna"
+          ],
+          "uvjeti": "Novi čl. 19.a (luke posebne namjene LV, LB, LN, LU, LS, LO). LS: usluge prihvata plovila za sport i razonodu, održavanje plovila, odlaganje plovila i opreme na kopnu; u Park-šumi Marjan ograničenja po Zakonu o zaštiti prirode.",
+          "stranica": 15,
+          "citat": "Luka nautičkog turizma – LN, je prostor za gradnju luke i pratećih sadržaja, ugostiteljskih sadržaja (bez smještajnih kapaciteta), restorana, poslovnih sadržaja, skladišta i sličnih građevina",
+          "clanci": [
+            "čl. 8",
+            "čl. 19.a"
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "R1",
+      "podklase": [
+        "R1"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "uredjeno",
+            "javna",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "uredjeno": "osnovna namjena: športske dvorane, stadioni, bazeni, zatvorene i otvorene športske građevine (sa ili bez gledališta); podzemne garaže; uz obalu kupališta",
+            "javna": "ako izvor podataka sportske dvorane/stadione vodi kao javne zgrade – to je osnovna namjena; ostali javni i društveni sadržaji samo kao prateći (max 30% BRP osnovne namjene) i ako urbana pravila omogućuju",
+            "gospodarska": "samo prateći poslovni i ugostiteljsko-turistički sadržaji, ukupno max 30% BRP osnovne namjene (osim stadiona), i ako urbana pravila omogućuju",
+            "pomocna": "tumačenje: \"drugi prostori što upotpunjuju i služe osnovnoj djelatnosti\""
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "zelenilo"
+          ],
+          "uvjeti": "Manje zone R1 (Trstenik, Duilovo…): kig 0,50, visina 12 m. Kod prenamjene športskih objekata osigurati zamjenski objekt. Stanovanje tekst ne spominje.",
+          "stranica": 6,
+          "citat": "uključujući i poslovne, ugostiteljsko turističke i javne i društvene sadržaje ukoliko je to omogućeno urbanim pravilima. Omogućava se i izgradnja podzemnih garaža.",
+          "clanci": [
+            "čl. 14"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 6,
+              "citat": "Na tim se površinama mogu graditi športske dvorane i stadioni, bazeni i druge zatvorene i otvorene športske građevine, sa ili bez gledališta"
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "uredjeno",
+            "javna",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "uredjeno": "osnovna namjena: športske dvorane, stadioni, bazeni, zatvorene i otvorene športske građevine (sa ili bez gledališta); podzemne garaže; uz obalu kupališta",
+            "javna": "ako izvor podataka sportske dvorane/stadione vodi kao javne zgrade – to je osnovna namjena; ostali javni i društveni sadržaji samo kao prateći (max 30% BRP osnovne namjene) i ako urbana pravila omogućuju",
+            "gospodarska": "samo prateći poslovni i ugostiteljsko-turistički sadržaji, ukupno max 30% BRP osnovne namjene (osim stadiona), i ako urbana pravila omogućuju",
+            "pomocna": "tumačenje: \"drugi prostori što upotpunjuju i služe osnovnoj djelatnosti\""
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "zelenilo"
+          ],
+          "uvjeti": "Isto kao 2006.",
+          "stranica": 6,
+          "citat": "uključujući i poslovne, ugostiteljsko turističke i javne i društvene sadržaje ukoliko je to omogućeno urbanim pravilima. Omogućava se i izgradnja podzemnih garaža.",
+          "clanci": [
+            "čl. 14"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 6,
+              "citat": "Ukupna najveća površina prostora koji upotpunjuju osnovnu namjenu iznosi 30% izgrađene ukupne BRP-e osnovne namjene, osim kod stadiona, gdje udio može biti i veći."
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "uredjeno",
+            "javna",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "uredjeno": "osnovna namjena: športske dvorane, stadioni, bazeni, zatvorene i otvorene športske građevine (sa ili bez gledališta); podzemne garaže; uz obalu kupališta",
+            "javna": "ako izvor podataka sportske dvorane/stadione vodi kao javne zgrade – to je osnovna namjena; ostali javni i društveni sadržaji samo kao prateći (max 30% BRP osnovne namjene) i ako urbana pravila omogućuju",
+            "gospodarska": "samo prateći poslovni i ugostiteljsko-turistički sadržaji, ukupno max 30% BRP osnovne namjene (osim stadiona), i ako urbana pravila omogućuju",
+            "pomocna": "tumačenje: \"drugi prostori što upotpunjuju i služe osnovnoj djelatnosti\""
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena"
+          ],
+          "uvjeti": "Stavak o R1 zadržan (BRP → GBP); nova definicija: sportska namjena = gradnja sportskih građevina. Manje zone R1 po urbanim pravilima (čl. 49.j st. 5, str. 64: kig 0,50, visina 14 m, min. 20% zelenih površina). Kod prenamjene – nova sportska građevina istog kapaciteta u istom kotaru.",
+          "stranica": 12,
+          "citat": "U smislu odredbi ovog Plana sportska namjena podrazumijeva gradnju sportskih građevina, a rekreacijska namjena uređenje sportsko-rekreacijskih igrališta na otvorenom",
+          "clanci": [
+            "čl. 8",
+            "čl. 14 (izmjene čl. 16 Odluke)",
+            "čl. 49.j st. 5"
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "R2",
+      "podklase": [
+        "R2"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "uredjeno",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "uredjeno": "otvorena igrališta (osnovna namjena); podzemne garaže",
+            "gospodarska": "samo manji ugostiteljski sadržaji koji služe osnovnoj djelatnosti, u okviru ukupnog limita pratećih građevina",
+            "pomocna": "garderobe, sanitarije kao prateće građevine (spremišta tekst ne navodi)",
+            "ostala": "garderobe, sanitarije; komunalne građevine (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna",
+            "zelenilo"
+          ],
+          "uvjeti": "Prateće građevine ukupno do 150 m2 BRP/ha cjelovite uređene rekreacijske površine; ušće Žrnovnice 50 m2/ha; nasip Žnjanske plaže 500 m2/ha (3/08 dodaje R2 Plokite: 150 m2 BRP po čestici + privremene tende/baloni). Stanovanje i javne zgrade tekst ne spominje.",
+          "stranica": 6,
+          "citat": "Moguća je gradnja građevina što upotpunjuju i služe osnovnoj djelatnosti (garderobe, sanitarije, manji ugostiteljski sadržaji), ukupne do 150 m2 BRP/ha cjelovite uređene rekreacijske površine",
+          "clanci": [
+            "čl. 14"
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "uredjeno",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "uredjeno": "otvorena igrališta (osnovna namjena); podzemne garaže",
+            "gospodarska": "samo manji ugostiteljski sadržaji koji služe osnovnoj djelatnosti, u okviru ukupnog limita pratećih građevina",
+            "pomocna": "garderobe, sanitarije kao prateće građevine (spremišta tekst ne navodi)",
+            "ostala": "garderobe, sanitarije; komunalne građevine (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna",
+            "zelenilo"
+          ],
+          "uvjeti": "Do 150 m2 BRP/ha; Žrnovnica 50 m2/ha; nasip Žnjan 500 m2/ha; Plokite 150 m2 BRP po čestici + privremene zaštitne tende ili baloni. Prateći sadržaji istovremeno ili nakon uređenja igrališta.",
+          "stranica": 6,
+          "citat": "Moguća je gradnja građevina što upotpunjuju i služe osnovnoj djelatnosti (garderobe, sanitarije, manji ugostiteljski sadržaji), ukupne do 150 m2 BRP/ha cjelovite uređene rekreacijske površine",
+          "clanci": [
+            "čl. 14"
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "uredjeno",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "uredjeno": "otvorena igrališta (osnovna namjena); podzemne garaže",
+            "gospodarska": "samo manji ugostiteljski sadržaji koji služe osnovnoj djelatnosti, u okviru ukupnog limita pratećih građevina",
+            "pomocna": "garderobe, sanitarije kao prateće građevine (spremišta tekst ne navodi)",
+            "ostala": "garderobe, sanitarije; komunalne građevine (čl. 8)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna"
+          ],
+          "uvjeti": "Limiti preseljeni u urbana pravila: čl. 49.j st. 6 (str. 64–65) max 150 m2 GBP/ha, min. 20% zelenih upojnih površina; nasip Žnjanske plaže 500 m2 GBP/ha + garaže (čl. 72 st. 4, str. 90).",
+          "stranica": 13,
+          "citat": "Moguća je gradnja građevina što upotpunjuju i služe osnovnoj djelatnosti (garderobe, sanitarije, manji ugostiteljski sadržaji), sukladno urbanim pravilima.",
+          "clanci": [
+            "čl. 8",
+            "čl. 14 st. 6 (izmjene čl. 16 Odluke)",
+            "čl. 49.j st. 6",
+            "čl. 72 st. 4"
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "R3",
+      "podklase": [
+        "R3"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "uredjeno",
+            "zelenilo",
+            "promet"
+          ],
+          "ograniceno": {
+            "gospodarska": "samo manji ugostiteljski sadržaji (bez smještaja), ukupno s ostalim pratećim građevinama max 200 m2 BRP/ha",
+            "pomocna": "spremišta rekvizita; strehe za odlaganje opreme (čl. 72)",
+            "ostala": "garderobe, sanitarije, tuševi, kabine, montažne lake konstrukcije (sjenila); na Žnjanu klupske prostorije vodenih sportova (čl. 72)",
+            "uredjeno": "uređene plaže, sunčališta, rekreacijske površine",
+            "zelenilo": "obvezna sadnja visokog zelenila"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna"
+          ],
+          "uvjeti": "Na poluotoku Marjanu i Duilovo–Orišac–Stobreč obala se zadržava u prirodnom stanju. Umjetna (nasuta) kupališta: čl. 72 (str. 44). Stanovanje tekst ne spominje.",
+          "stranica": 7,
+          "citat": "Na uređenim plažama moguća je gradnja građevina što upotpunjuju i služe osnovnoj djelatnosti (garderobe, sanitarije, manji ugostiteljski sadržaji, spremišta rekvizita)",
+          "clanci": [
+            "čl. 14",
+            "čl. 72"
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "uredjeno",
+            "zelenilo",
+            "promet"
+          ],
+          "ograniceno": {
+            "gospodarska": "samo manji ugostiteljski sadržaji (bez smještaja), ukupno s ostalim pratećim građevinama max 200 m2 BRP/ha",
+            "pomocna": "spremišta rekvizita; strehe za odlaganje opreme (čl. 72)",
+            "ostala": "garderobe, sanitarije, tuševi, kabine, montažne lake konstrukcije (sjenila); na Žnjanu klupske prostorije vodenih sportova (čl. 72)",
+            "uredjeno": "uređene plaže, sunčališta, rekreacijske površine",
+            "zelenilo": "obvezna sadnja visokog zelenila"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna"
+          ],
+          "uvjeti": "Isto kao 2006; čl. 72 na str. 49–50 (ugostiteljski bez smještaja, montažne konstrukcije, visina P+N).",
+          "stranica": 6,
+          "citat": "Na uređenim plažama moguća je gradnja građevina što upotpunjuju i služe osnovnoj djelatnosti (garderobe, sanitarije, manji ugostiteljski sadržaji, spremišta rekvizita)",
+          "clanci": [
+            "čl. 14",
+            "čl. 72"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 49,
+              "citat": "omogućava se izgradnja pratećih ugostiteljskih (bez smještajnih) i rekreacijskih sadržaja i montažnih (lakih) konstrukcija (sjenila, strehe za odlaganje opreme, plažni rekviziti"
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "uredjeno",
+            "zelenilo",
+            "promet"
+          ],
+          "ograniceno": {
+            "gospodarska": "Zenta–Orišac: prateći ugostiteljski (bez smještaja) do 200 m2 GBP/ha, E=1+Uk; Marjan (Kašjuni, Kaštelet/Ježinac): po jedan ugostiteljski objekt max 100 m2 GBP; plaža Prva voda: ugostiteljski NIJE dozvoljen (samo sanitarije do 40 m2)",
+            "pomocna": "spremišta rekvizita; strehe za odlaganje opreme (čl. 72)",
+            "ostala": "garderobe, sanitarije, tuševi, kabine, montažne lake konstrukcije (sjenila); na Žnjanu klupske prostorije vodenih sportova (čl. 72)",
+            "uredjeno": "uređene plaže, sunčališta, rekreacijske površine",
+            "zelenilo": "obvezna sadnja visokog zelenila"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna"
+          ],
+          "uvjeti": "Kupalište preimenovano u \"uređene plaže\"; prirodna obala prebačena u novu klasu R4. Limiti u čl. 72 (str. 89–90). Na Prvoj vodi izričito zabranjeni prateći ugostiteljski objekti.",
+          "stranica": 13,
+          "citat": "Na uređenim plažama moguća je gradnja građevina što upotpunjuju i služe osnovnoj djelatnosti (garderobe, sanitarije, manji ugostiteljski sadržaji, spremišta rekvizita), sukladno urbanim pravilima.",
+          "clanci": [
+            "čl. 8",
+            "čl. 14 st. 8 (izmjene čl. 16 Odluke)",
+            "čl. 72"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 90,
+              "citat": "jedan objekt maksimalnog GBP-a 40 m2, maksimalni broj etaža E=1, visina 4,0 m, nije dozvoljena izgradnja pratećih ugostiteljskih objekata."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "R4",
+      "podklase": [
+        "R4"
+      ],
+      "napomena": "Klasa postoji samo u prijedlogu 2025 (prirodne plaže izvan građevinskog područja); prije je prirodna obala bila dio R3.",
+      "po_godini": {
+        "2006": null,
+        "2015": null,
+        "2025": {
+          "dopusteno": [
+            "promet",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "promet": "samo prema općem čl. 8 (ulice/putovi na svim namjenama, \"ako ovim odredbama nije određeno drugačije\")"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "gospodarska",
+            "javna",
+            "pomocna",
+            "ostala",
+            "uredjeno"
+          ],
+          "uvjeti": "Prirodne plaže izvan građevinskog područja, infrastrukturno neopremljene, potpuno očuvanog prirodnog obilježja (Marjan, Stobreč). Tekst ne predviđa nikakve građevine; izričite zabrane gradnje nema, ali opis (neopremljene, obala u prirodnom stanju) isključuje izgradnju.",
+          "stranica": 15,
+          "citat": "Rekreacijska namjena – prirodne plaže – R4 - obuhvaćaju kupališni obalni pojas s potpuno očuvanim, zatečenim prirodnim obilježjima, infrastrukturno su neopremljene.",
+          "clanci": [
+            "čl. 14 st. 9 (izmjene čl. 16 Odluke)",
+            "čl. 19.c st. 1"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 13,
+              "citat": "Na tim površinama se zadržava obala u prirodnom stanju (na poluotoku Marjan i području Stobreča)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "R5",
+      "podklase": [
+        "R5"
+      ],
+      "napomena": "Klasa postoji samo u prijedlogu 2025 (golf, izdvojeno građevinsko područje izvan naselja).",
+      "po_godini": {
+        "2006": null,
+        "2015": null,
+        "2025": {
+          "dopusteno": [
+            "uredjeno",
+            "gospodarska",
+            "pomocna",
+            "ostala",
+            "promet",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "uredjeno": "golf igralište s 18 polja (osnovna namjena)",
+            "gospodarska": "klupska kuća bez smještajnih kapaciteta",
+            "pomocna": "spremišta alata, strojeva za održavanje, električnih vozila",
+            "ostala": "servisne zgrade, infrastrukturna postrojenja"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "javna"
+          ],
+          "uvjeti": "Prateći sadržaji bez smještajnih kapaciteta; kig max 0,02, kisN 0,05, jedna etaža, V 4,0 m, 10 m od međa (čl. 77.a, str. 103). Obvezan plan užeg područja. Stanovanje tekst ne spominje (smještaj isključen).",
+          "stranica": 15,
+          "citat": "Unutar obuhvata izdvojenog građevinskog područja izvan naselja sportske namjene, golf - R5 planira se golf igralište s 18 polja i prateći sadržaji bez smještajnih kapaciteta.",
+          "clanci": [
+            "čl. 19.b",
+            "čl. 77.a"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 103,
+              "citat": "mogu se graditi prateći sadržaji: klupska kuća bez smještajnih kapaciteta, pomoćne i servisne zgrade (spremište alata, strojeva za održavanje igrališta, električnih vozila, infrastrukturnih postrojenja i sl.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "Z1",
+      "podklase": [
+        "Z1",
+        "Z3",
+        "Z4",
+        "PŠ (park-šuma Marjan)",
+        "Z7 (2025)"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "zelenilo",
+            "promet",
+            "uredjeno",
+            "ostala",
+            "pomocna",
+            "javna"
+          ],
+          "ograniceno": {
+            "zelenilo": "osnovna namjena (park, park-šuma, odmorište, spomen park)",
+            "promet": "staze i putovi; ulice po čl. 8",
+            "uredjeno": "otvorena igrališta u javnom parku; u PŠ parkiralište sjeverno od Vile Dalmacije (max 200 vozila); ispod parkova samo planirane javne garaže",
+            "ostala": "javni zahodi, paviljoni, nadstrešnice za sklanjanje, manje komunalne građevine i TS – u parku ukupno max 100 m2 BRPN/ha, tek nakon uređenja parka (čl. 71); u PŠ higijensko-sanitarne građevine, komunalne instalacije, TS (čl. 56)",
+            "pomocna": "\"manje pomoćne građevine u funkciji korištenja određenih površina\" parka (u limitu 100 m2 BRPN/ha, čl. 71) – NE privatne pomoćne zgrade; u PŠ se postojeće pomoćne građevine i poljske kućice ne mogu ni održavati po iznimci za postojeće stambene",
+            "javna": "u novim parkovima manje prizemne javne građevine, paviljoni (ukupno max 5% parka); u PŠ ZOO vrt, meteorološka postaja, prirodoslovni muzej (rekonstrukcija/proširenje)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "uvjeti": "Z1 javni park: javni neizgrađeni prostor; gradnja samo prema urbanim pravilima i nakon realizacije parka. Z3 odmorište: \"bez gradnje građevina\" ako urbana pravila ne određuju drukčije. Z4 Sustipan: neizgrađeni spomen park. PŠ Marjan: samo sadržaji rekreativne funkcije. Postojeće stambene zgrade u PŠ (s dozvolom ili prije 1968.) samo održavanje/rekonstrukcija u postojećim gabaritima DO PRENAMJENE ILI UKLANJANJA – dakle protivne planu, ali tolerirane. Gospodarske građevine, pomoćne i poljske kućice u PŠ nisu obuhvaćene ni tom tolerancijom. Ugostiteljstvo (kafići) i kiosci u parkovima tekst NE spominje; kiosci se postavljaju na javno prometnim površinama. Stranice: čl. 15 str. 7; Marjan čl. 56 str. 35; parkovi čl. 71 str. 43–44; nove zelene površine str. 55.",
+          "stranica": 7,
+          "citat": "Javni park – Z1 je javni neizgrađeni prostor oblikovan planski raspoređenom vegetacijom i sadržajima temeljno ekoloških obilježja, namijenjen šetnji i odmoru građana.",
+          "clanci": [
+            "čl. 15",
+            "čl. 56",
+            "čl. 71"
+          ],
+          "postojece_tolerirano": {
+            "stambena": "PŠ Marjan: postojeće zakonite (dozvola ili prije 1968.) – samo održavanje u postojećim gabaritima do prenamjene ili uklanjanja"
+          },
+          "dodatni_citati": [
+            {
+              "stranica": 35,
+              "citat": "postojeće stambene građevine (s građevnom dozvolom ili građene prije 1968.) unutar Park šume mogu se održavati i rekonstruirati samo u postojećim gabaritima do prenamjene ili uklanjanja"
+            },
+            {
+              "stranica": 43,
+              "citat": "manje komunalne građevine i TS, manje pomoćne građevine u funkciji korištenja određenih površina), s tim da površina tih građevina ne može biti veća od 100 m2 BRPN/ha parka."
+            },
+            {
+              "stranica": 7,
+              "citat": "Sadržaji i oprema uvjetovana je realizacijom planirane zone uređenog zelenila u cjelini i bez gradnje građevina, ukoliko nije drugačije određeno urbanim pravilima."
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "zelenilo",
+            "promet",
+            "uredjeno",
+            "ostala",
+            "pomocna",
+            "javna"
+          ],
+          "ograniceno": {
+            "zelenilo": "osnovna namjena (park, park-šuma, odmorište, spomen park)",
+            "promet": "staze i putovi; ulice po čl. 8",
+            "uredjeno": "otvorena igrališta u javnom parku; u PŠ parkiralište sjeverno od Vile Dalmacije (max 200 vozila); ispod parkova samo planirane javne garaže",
+            "ostala": "javni zahodi, paviljoni, nadstrešnice za sklanjanje, manje komunalne građevine i TS – u parku ukupno max 100 m2 BRPN/ha, tek nakon uređenja parka (čl. 71); u PŠ higijensko-sanitarne građevine, komunalne instalacije, TS (čl. 56)",
+            "pomocna": "\"manje pomoćne građevine u funkciji korištenja određenih površina\" parka (u limitu 100 m2 BRPN/ha, čl. 71) – NE privatne pomoćne zgrade; u PŠ se postojeće pomoćne građevine i poljske kućice ne mogu ni održavati po iznimci za postojeće stambene",
+            "javna": "u novim parkovima manje prizemne javne građevine, paviljoni (ukupno max 5% parka); u PŠ ZOO vrt, meteorološka postaja, prirodoslovni muzej (rekonstrukcija/proširenje)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "uvjeti": "Z1 javni park: javni neizgrađeni prostor; gradnja samo prema urbanim pravilima i nakon realizacije parka. Z3 odmorište: \"bez gradnje građevina\" ako urbana pravila ne određuju drukčije. Z4 Sustipan: neizgrađeni spomen park. PŠ Marjan: samo sadržaji rekreativne funkcije. Postojeće stambene zgrade u PŠ (s dozvolom ili prije 1968.) samo održavanje/rekonstrukcija u postojećim gabaritima DO PRENAMJENE ILI UKLANJANJA – dakle protivne planu, ali tolerirane. Gospodarske građevine, pomoćne i poljske kućice u PŠ nisu obuhvaćene ni tom tolerancijom. Ugostiteljstvo (kafići) i kiosci u parkovima tekst NE spominje; kiosci se postavljaju na javno prometnim površinama. Stranice: čl. 15 str. 6–7; Marjan čl. 56 str. 39–40; parkovi čl. 71 str. 49; nove zelene površine str. 65; kiosci str. 31.",
+          "stranica": 6,
+          "citat": "Javni park – Z1 je javni neizgrađeni prostor oblikovan planski raspoređenom vegetacijom i sadržajima temeljno ekoloških obilježja, namijenjen šetnji i odmoru građana.",
+          "clanci": [
+            "čl. 15",
+            "čl. 56",
+            "čl. 71"
+          ],
+          "postojece_tolerirano": {
+            "stambena": "PŠ Marjan: postojeće zakonite (dozvola ili prije 1968.) – samo održavanje u postojećim gabaritima do prenamjene ili uklanjanja"
+          },
+          "dodatni_citati": [
+            {
+              "stranica": 40,
+              "citat": "postojeće stambene građevine (s građevnom dozvolom ili građene prije 1968.) unutar Park šume mogu se održavati i rekonstruirati samo u postojećim gabaritima do prenamjene ili uklanjanja"
+            },
+            {
+              "stranica": 40,
+              "citat": "što ne obuhvaća pomoćne građevine, poljske kućice i gospodarske građevine."
+            },
+            {
+              "stranica": 49,
+              "citat": "manje komunalne građevine i TS, manje pomoćne građevine u funkciji korištenja određenih površina), s tim da površina tih građevina ne može biti veća od 100 m2 BRPN/ha parka."
+            },
+            {
+              "stranica": 65,
+              "citat": "Pored toga moguće je graditi manje prizemne javne građevine, paviljone, sanitarne čvorove, fontane, postavljati spomen obilježja tako da njihova ukupna površina ne prelazi 5%"
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "zelenilo",
+            "promet",
+            "uredjeno",
+            "ostala",
+            "pomocna",
+            "javna"
+          ],
+          "ograniceno": {
+            "zelenilo": "osnovna namjena",
+            "promet": "staze, trim staze, vidikovci, odmorišta",
+            "uredjeno": "otvorena dječja igrališta; javne garaže i parkirališta u javnim zelenim površinama SAMO u zonama koje Plan izričito proziva (čl. 8 st. 1)",
+            "ostala": "paviljoni, sanitarni čvorovi, fontane, spomen obilježja (Z1, max 5% parka); u Marjanu protupožarne i komunalne građevine, TS; čl. 71 i dalje dopušta WC, paviljone, TS do 100 m2 GBPN i BPO/ha",
+            "pomocna": "\"manje pomoćne građevine u funkciji korištenja\" parka (čl. 71, zadržano)",
+            "javna": "Z1: manje prizemne javne građevine (u limitu 5% površine parka)"
+          },
+          "nije_dopusteno": [
+            "stambena"
+          ],
+          "neodredjeno": [
+            "gospodarska"
+          ],
+          "uvjeti": "Z1 više nije definiran kao \"neizgrađeni\" prostor. Z3: bez gradnje građevina, uz dječja igrališta i staze. Z4 postaje spomen groblje Sustipan. PŠ ukinuta kao klasa → Z7 urbana zaštićena šuma (izvan građevinskog područja; samo rekreativna oprema). Marjan: arboretum bez novih građevina; mozaične kultivirane površine bez poljskih kućica, nezakonite građevine se uklanjaju; postojeće građevine izvan GP samo rekonstrukcija u postojećim gabaritima (čl. 108 st. 3). Park Zvončac: bez novih građevina osim WC-a. Ugostiteljstvo i kiosci u parkovima i dalje se ne spominju.",
+          "stranica": 49,
+          "citat": "U granicama Park šume Marjan ne dopušta se gradnja stambenih građevina;",
+          "clanci": [
+            "čl. 8",
+            "čl. 15 (izmjene)",
+            "čl. 19.c st. 2",
+            "čl. 47",
+            "čl. 49.j st. 8",
+            "čl. 56",
+            "čl. 71",
+            "čl. 108 st. 3"
+          ],
+          "postojece_tolerirano": {
+            "sve_vrste": "postojeće građevine u Park-šumi Marjan (izvan GP) – rekonstrukcija samo unutar postojećih gabarita (čl. 108 st. 3, str. 149)"
+          },
+          "dodatni_citati": [
+            {
+              "stranica": 13,
+              "citat": "U javnom parku se omogućava uređenje otvorenih dječjih igrališta, staza i odmorišta, te gradnja manjih prizemnih javnih građevina, paviljona, sanitarnih čvorova, fontana, postavljanje spomen obilježja"
+            },
+            {
+              "stranica": 49,
+              "citat": "mogu se koristiti samo za otvorene nasade (bez plastenika i staklenika) bez mogućnosti građenja poljskih kućica. Nezakonito izgrađene građevine moraju se uklanjati."
+            },
+            {
+              "stranica": 8,
+              "citat": "Iznimno, smještaj javnih garaža i parkirališta unutar javnih i zaštitnih zelenih površina dopušta se isključivo u zonama koje su prozvane Planom."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "Z5",
+      "podklase": [
+        "Z5",
+        "Z6"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "zelenilo",
+            "javna",
+            "gospodarska",
+            "uredjeno",
+            "stambena",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "zelenilo": "osnovna namjena (zaštitno i pejsažno zelenilo)",
+            "javna": "samo manje građevine javne i društvene namjene, i to kad ih određuju urbana pravila ili detaljniji plan",
+            "gospodarska": "samo manje ugostiteljske građevine, kad ih određuju urbana pravila ili detaljniji plan",
+            "uredjeno": "manje rekreacijske građevine kad ih određuju urbana pravila; javna parkirališta (čl. 8)",
+            "stambena": "samo Z6 (Meje, Bačvice): postojeće stambene zgrade (dio su spomenici kulture) – rekonstrukcija po uvjetima Plana; nova stambena gradnja nije predviđena",
+            "ostala": "Z6: uređaj za pročišćavanje Katalinića brig i crpna stanica isključivo podzemno; prateće i infrastrukturne građevine"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "pomocna"
+          ],
+          "uvjeti": "Z5 je pretežno neizgrađen prostor radi zaštite okoliša (nestabilne padine, buka, Dioklecijanov vodovod…). Pomoćne građevine tekst za Z5 ne spominje (za Z6 samo \"prateće građevine\" po uvjetima Plana).",
+          "stranica": 7,
+          "citat": "Unutar zona zaštitnog i pejsažnog zelenila mogu se graditi i manje građevine javne i društvene namjene, ugostiteljske i rekreacijske namjene kada je to određeno urbanim pravilima",
+          "clanci": [
+            "čl. 16"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 7,
+              "citat": "Dio stambenih građevina zaštićen je kao spomenici kulture. Uz građevine čuvaju se i pripadajući perivoji te neizgrađene površine."
+            }
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "zelenilo",
+            "javna",
+            "gospodarska",
+            "uredjeno",
+            "stambena",
+            "pomocna",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "zelenilo": "osnovna namjena (zaštitno i pejsažno zelenilo)",
+            "javna": "samo manje građevine javne i društvene namjene, i to kad ih određuju urbana pravila ili detaljniji plan",
+            "gospodarska": "samo manje ugostiteljske građevine, kad ih određuju urbana pravila ili detaljniji plan",
+            "uredjeno": "manje rekreacijske građevine kad ih određuju urbana pravila; javna parkirališta (čl. 8)",
+            "stambena": "samo Z6 (Meje, Bačvice): postojeće stambene zgrade (dio su spomenici kulture) – rekonstrukcija po uvjetima Plana; nova stambena gradnja nije predviđena",
+            "ostala": "Z6: uređaj za pročišćavanje Katalinića brig i crpna stanica isključivo podzemno; prateće i infrastrukturne građevine",
+            "pomocna": "samo Z6: uz zgrade čija je rekonstrukcija/prenamjena dopuštena – pomoćni prostori, sanitarije, smještaj čuvara/domara (dodano 3/08)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [],
+          "uvjeti": "Kao 2006; 3/08 dodaje prateće sadržaje u Z6.",
+          "stranica": 7,
+          "citat": "Unutar zona zaštitnog i pejsažnog zelenila mogu se graditi i manje građevine javne i društvene namjene, ugostiteljske i rekreacijske namjene kada je to određeno urbanim pravilima",
+          "clanci": [
+            "čl. 16"
+          ],
+          "dodatni_citati": [
+            {
+              "stranica": 7,
+              "citat": "moguće je, uz sadržaje osnovne namjene realizirati i prateće sadržaje (pomoćni prostori, sanitarije, smještajni dio za potrebe čuvara, domara i sl.)."
+            }
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "zelenilo",
+            "javna",
+            "gospodarska",
+            "uredjeno",
+            "stambena",
+            "ostala",
+            "promet"
+          ],
+          "ograniceno": {
+            "zelenilo": "osnovna namjena; staze, urbana oprema, arheološki parkovi",
+            "javna": "samo unutar građevinskog područja, manje građevine, kad ih određuju urbana pravila",
+            "gospodarska": "samo unutar GP, manje ugostiteljske građevine, kad ih određuju urbana pravila",
+            "uredjeno": "samo unutar GP, manje rekreacijske građevine; parkirališta/garaže samo gdje ih Plan proziva (čl. 8 st. 1)",
+            "stambena": "samo Z6 (Bačvice, Manuš, vile Plevna, Tončić, Antičević): postojeće zgrade, zahvati prema urbanim pravilima",
+            "ostala": "Z6: uređaj za pročišćavanje Katalinića brig i crpna stanica (više ne mora biti podzemno)"
+          },
+          "nije_dopusteno": [],
+          "neodredjeno": [
+            "pomocna"
+          ],
+          "uvjeti": "Z5 IZVAN građevinskog područja: nije dozvoljena gradnja građevina (čl. 19.c st. 3, str. 16); postojeće građevine tamo samo rekonstrukcija u postojećim gabaritima (čl. 108 st. 3). Pomoćni prostori u Z6 se više izričito ne navode (zahvati po urbanim pravilima).",
+          "stranica": 14,
+          "citat": "isključivo unutar građevinskog područja mogu se graditi i manje građevine javne i društvene namjene, ugostiteljske i rekreacijske namjene kada je to određeno urbanim pravilima.",
+          "clanci": [
+            "čl. 8",
+            "čl. 16 (izmjena)",
+            "čl. 19.c st. 3",
+            "čl. 108 st. 3"
+          ],
+          "postojece_tolerirano": {
+            "sve_vrste": "postojeće građevine na Z5 izvan GP – rekonstrukcija samo unutar postojećih gabarita (čl. 108 st. 3, str. 149)"
+          },
+          "dodatni_citati": [
+            {
+              "stranica": 16,
+              "citat": "zaštitno i pejsažno zelenilo – Z5 je pretežno neizgrađeni prostor oblikovan radi potrebe zaštite okoliša (…) unutar kojeg nije dozvoljena gradnja građevina."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "klasa": "N",
+      "podklase": [
+        "N"
+      ],
+      "po_godini": {
+        "2006": {
+          "dopusteno": [
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "javna": "samo za potrebe obrane (vojni kompleksi)",
+            "pomocna": "samo za potrebe obrane (vojni kompleksi)",
+            "ostala": "samo za potrebe obrane (vojni kompleksi)",
+            "promet": "samo za potrebe obrane (vojni kompleksi)",
+            "uredjeno": "samo za potrebe obrane (vojni kompleksi)"
+          },
+          "nije_dopusteno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "neodredjeno": [
+            "zelenilo"
+          ],
+          "uvjeti": "Zona isključivo za obranu (vojarna Sveti Nikola – Lora, Rt Marjan); gradi se po posebnim uvjetima tijela obrane – vrsta zgrade je sporedna ako služi obrani. Civilne stambene/gospodarske zgrade isključene riječju \"isključivo\". Površine se mogu prenamijeniti uz suglasnost MORH-a/Vlade.",
+          "stranica": 8,
+          "citat": "Zone posebne namjene određene su isključivo za potrebe obrane Republike Hrvatske i uređuju se prema posebnim propisima i urbanim pravilom broj 2.6.",
+          "clanci": [
+            "čl. 17"
+          ]
+        },
+        "2015": {
+          "dopusteno": [
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno"
+          ],
+          "ograniceno": {
+            "javna": "samo za potrebe obrane (vojni kompleksi)",
+            "pomocna": "samo za potrebe obrane (vojni kompleksi)",
+            "ostala": "samo za potrebe obrane (vojni kompleksi)",
+            "promet": "samo za potrebe obrane (vojni kompleksi)",
+            "uredjeno": "samo za potrebe obrane (vojni kompleksi)"
+          },
+          "nije_dopusteno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "neodredjeno": [
+            "zelenilo"
+          ],
+          "uvjeti": "Isto kao 2006.",
+          "stranica": 7,
+          "citat": "Zone posebne namjene određene su isključivo za potrebe obrane Republike Hrvatske i uređuju se prema posebnim propisima i urbanim pravilom broj 2.6.",
+          "clanci": [
+            "čl. 17"
+          ]
+        },
+        "2025": {
+          "dopusteno": [
+            "javna",
+            "pomocna",
+            "ostala",
+            "promet",
+            "uredjeno",
+            "zelenilo"
+          ],
+          "ograniceno": {
+            "javna": "samo za potrebe obrane (vojni kompleksi)",
+            "pomocna": "samo za potrebe obrane (vojni kompleksi)",
+            "ostala": "samo za potrebe obrane (vojni kompleksi)",
+            "promet": "samo za potrebe obrane (vojni kompleksi)",
+            "uredjeno": "samo za potrebe obrane (vojni kompleksi)"
+          },
+          "nije_dopusteno": [
+            "stambena",
+            "gospodarska"
+          ],
+          "neodredjeno": [],
+          "uvjeti": "Isto; kompleksi: vojarna Admiral flote Sveto Letica-Barba, Rt Marjan (u Park-šumi), Zavod za pomorsku medicinu u sklopu KBC-a; N i unutar i izvan građevinskog područja.",
+          "stranica": 14,
+          "citat": "Zone posebne namjene planiraju se unutar građevinskog područja naselja i izvan građevinskog područja.",
+          "clanci": [
+            "čl. 17 (izmjene)"
+          ]
+        }
+      }
+    }
+  ],
+  "razlike_medju_godinama": "S: 2025 (čl. 8.a) dopušta stambene i stambeno-poslovne zgrade; u zgradi samo ugostiteljski (bez smještaja), hoteli do 40 postelja samo na zasebnoj čestici; pomoćne zgrade do 50 m2 i bez stambenog prostora. M/K5: 2006 M1 trgovina do 400 m2 (brisano 3/08); K5 2006 min. 50% neizgrađenog dijela nestambeno → od 3/08 stanovanje max 50% BRP zone → 2025 K5 se provodi planom koji dijeli zonu na M1 i K, pojedinačna zgrada max 50% stambeno. M2 u svim godinama za novu gradnju traži stambeno-poslovne ili poslovne zgrade (min. 25% nestambeno), 2025 više ne spominje ni 'jednonamjenske javne i poslovne' ni stambene. I/K: 2025 briše prateći stan do 200 m2 u K (stambena više nije dopuštena); I i K gube ugostiteljsko-turističke (smještaj) sadržaje; javne u I samo škole/vrtići. D: 3/08 dodaje poslovni potez između bolnica; 2025 zabranjuje i ugostiteljsko-turističke, dopušta zasebne prateće zgrade (sportske dvorane), iznimka postaje rekonstrukcija postojećih stambenih zgrada između bolnica (UP 2.7). T: 2025 T1→T, isključivo hoteli navedenih vrsta, jedinice se ne smiju etažirati; zabrana stanovanja u svim godinama. R2: 3/08 dodaje Plokite; 2025 limiti u urbanim pravilima (150 m2 GBP/ha, 20% zelenila). R3→R3 uređene plaže + nova R4 prirodne plaže (2025); 2025 Prva voda bez ugostiteljstva, Marjanske plaže po jedan objekt do 100 m2. Nove klase 2025: R4, R5 (golf, klupska kuća bez smještaja + pomoćne/servisne zgrade). Z1: 2025 PŠ → Z7 izvan GP; izričita zabrana stambene gradnje u Park-šumi; ukinut popis ZOO/muzej/higijenskih građevina na Marjanu (ostaju protupožarne i komunalne); Z1 dobiva izričitu listu (igrališta, paviljoni, WC, prizemne javne zgrade, 5%); tolerancija postojećih stambenih zgrada u PŠ prelazi u opće pravilo čl. 108 st. 3 (samo postojeći gabariti, bez izuzimanja pomoćnih/gospodarskih). Z5: 2025 gradnja manjih javnih/ugostiteljskih/rekreacijskih zgrada samo unutar GP; izvan GP gradnja zabranjena. Z6: 3/08 dodaje pomoćne prostore i stan čuvara; 2025 Z6 = Bačvice/Manuš/pojedinačne vile, zahvati po urbanim pravilima. Opće: 2025 čl. 8 dodaje garaže u sve namjene ali ograničava parkirališta/garaže u zelenim površinama, i dopušta zelene površine u svim namjenama; čl. 108 u 2025 za zgrade protivne namjeni dopušta samo održavanje i rekonstrukciju u postojećim gabaritima (prije: 'poboljšanje uvjeta života i rada' s manjim dogradnjama)."
+}

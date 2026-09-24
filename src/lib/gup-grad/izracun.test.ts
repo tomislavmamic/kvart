@@ -68,7 +68,9 @@ test("premali ostatak: sam je ostatak, uz slobodnog susjeda nije, uz iskorišten
   // tri čestice u M/K5 (najmanje 300 m² = 75 px): 0 i 1 se dodiruju, 1 i 2 se dodiruju
   const susjedi = { od: [0, 1, 3, 4], lista: [1, 0, 2, 1] };
   const kom = (cestica: number, n: number, zk = 0) => ({ ...komad({ n, zk, g: zk ? 1 : 0 }), cestica });
-  const ulaz = (komadi: ReturnType<typeof kom>[]) => ({ klasePx: { 2: 10_000 }, komadi, pikselM2: 4, susjedi });
+  // najmanja čestica iz odredbi: 300 m² za mješovitu (npr. interpolacija u 2.5), zelenilo bez
+  const najmanjaM2 = (k: { klasa: number }) => (k.klasa === 2 ? 300 : 0);
+  const ulaz = (komadi: ReturnType<typeof kom>[]) => ({ klasePx: { 2: 10_000 }, komadi, pikselM2: 4, susjedi, najmanjaM2 });
   // 0: prazna 40 px, 1: kuća (iskorištena), vrt 30 px, 2: prazna 50 px
   let r = izracunajGodinu(ulaz([kom(0, 40), kom(1, 100, 70), kom(2, 50)]), udio);
   // 0 i 1 nisu spojive u građevnu (1 je iskorištena, ali 0 je slobodna pa se vrt pridružuje: 40+30 < 75);
@@ -82,7 +84,7 @@ test("premali ostatak: sam je ostatak, uz slobodnog susjeda nije, uz iskorišten
   assert.equal(dvijeKuce.find((x) => x.kod === "M/K5")!.ostatakM2, (50 + 50) * 4);
   // zelenilo nema najmanju površinu
   const z = izracunajGodinu(
-    { klasePx: { 11: 1000 }, komadi: [{ ...komad({ klasa: 11, n: 10 }), cestica: 0 }], pikselM2: 4, susjedi },
+    { klasePx: { 11: 1000 }, komadi: [{ ...komad({ klasa: 11, n: 10 }), cestica: 0 }], pikselM2: 4, susjedi, najmanjaM2 },
     udio,
   );
   assert.equal(z.find((x) => x.kod === "Z5")!.ostatakM2, 0);

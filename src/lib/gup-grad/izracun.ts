@@ -127,7 +127,8 @@ export interface Susjedi {
 /**
  * Premali ostaci: komadi čiji slobodni dio ne može služiti namjeni.
  *
- * Slobodni dio komada manji od `najmanjaPovrsina` svoje namjene je ostatak,
+ * Slobodni dio komada manji od najmanje građevne čestice koju odredbe
+ * propisuju za njegovo područje i namjenu (`najmanjaM2`, odredbe.ts) je ostatak,
  * osim ako se preko slobodne čestice iste namjene (iskorišteno ispod
  * `slobodnaUdio`) spaja s drugim slobodnim komadima i zajedno dosežu tu
  * površinu. Vrt uz kuću i vrt uz susjednu kuću se ne spajaju — obje su
@@ -141,6 +142,8 @@ export function ostaci(
   susjedi: Susjedi,
   p: Pravila,
   pikselM2: number,
+  /** Najmanja građevna čestica za komad, m²; 0 = odredbe je ne propisuju. */
+  najmanjaM2: (k: Komad) => number,
 ): Map<number, number> {
   const out = new Map<number, number>();
   if (!p.ostaci.ukljuci) return out;
@@ -188,8 +191,7 @@ export function ostaci(
 
   komadi.forEach((k, i) => {
     if (slobodno[i] <= 0) return;
-    const kl = KLASA_PO_INDEKSU.get(k.klasa);
-    const najmanje = kl ? p.ostaci.najmanjaPovrsina[kl.kod] / pikselM2 : 0;
+    const najmanje = najmanjaM2(k) / pikselM2;
     if (najmanje > 0 && (zbroj.get(korijen(i)) ?? 0) < najmanje) out.set(i, slobodno[i]);
   });
   return out;
@@ -218,6 +220,8 @@ export interface UlazGodine {
   pikselM2: number;
   /** Bez susjeda nema pravila o ostacima. */
   susjedi?: Susjedi;
+  /** Najmanja građevna čestica za komad iz odredbi (m²); bez nje nema ostataka. */
+  najmanjaM2?: (k: Komad) => number;
 }
 
 /** Procjene svih komada godine i ostaci među njima. */
@@ -226,13 +230,14 @@ export function procijeniGodinu(ulaz: UlazGodine, p: Pravila) {
     const kl = KLASA_PO_INDEKSU.get(k.klasa);
     return kl ? procijeniKomad(k, kl.kod, p) : null;
   });
-  const ost = ulaz.susjedi
+  const ost = ulaz.susjedi && ulaz.najmanjaM2
     ? ostaci(
         ulaz.komadi,
         procjene.map((r) => r ?? { n: 0, ulica: 0, iskoristeno: 0, uSkladu: 0, uSuprotnosti: 0, poVrsti: {} }),
         ulaz.susjedi,
         p,
         ulaz.pikselM2,
+        ulaz.najmanjaM2,
       )
     : new Map<number, number>();
   return { procjene, ostaci: ost };

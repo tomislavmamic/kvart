@@ -23,6 +23,8 @@ export interface SvojstvaCestice {
   /** Površina iz geometrije katastra, m². */
   a: number;
   k: Partial<Record<`${Godina}`, SirovKomad[]>>;
+  /** Područje urbanog pravila po godini (list „Urbana pravila”). */
+  u?: Partial<Record<`${Godina}`, string>>;
 }
 
 export type StanjeCestice =

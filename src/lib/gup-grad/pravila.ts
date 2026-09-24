@@ -80,16 +80,30 @@ export interface Pravila {
     pragUlicneCestice: number;
   };
   /**
-   * Premali ostaci. Slobodan dio čestice manji od najmanje površine koja
-   * može služiti namjeni zone ne broji se kao slobodan — osim ako se
+   * Premali ostaci. Slobodan dio čestice manji od najmanje građevne čestice
+   * koju odredbe GUP-a propisuju za njegovo područje urbanog pravila i
+   * namjenu (Ppmin, odredbe.ts) ne broji se kao slobodan — osim ako se
    * dodiruje sa slobodnom česticom iste namjene i zajedno dosežu tu
    * površinu (mogu se spojiti u građevnu česticu). Takav dio je „ostatak”:
-   * ni iskorišten ni slobodan.
+   * ni iskorišten ni slobodan. Gdje odredbe Ppmin ne propisuju, pravila
+   * nema.
    */
   ostaci: {
     ukljuci: boolean;
-    /** Najmanja površina (m²) koja može služiti namjeni; 0 = bez najmanje. */
-    najmanjaPovrsina: Record<KodKlase, number>;
+    /**
+     * Koje vrste gradnje iz odredbi određuju najmanju česticu za
+     * stanovanje. Uzima se najmanja od uključenih; interpolacija (nova
+     * čestica između dvije izgrađene) je upravo slučaj praznine u
+     * izgrađenom nizu, a niz (180 m²) odredbe dopuštaju samo kroz UPU.
+     */
+    tipovi: {
+      slobodnostojeca: boolean;
+      dvojna: boolean;
+      interpolacija: boolean;
+      /** Ppmin bez navedene vrste građevine (npr. 2.3: 500 m²). */
+      opcenito: boolean;
+      niz: boolean;
+    };
     /**
      * Čestica je „slobodna” (pa može spasiti susjedni ostatak) ako je na
      * njoj iskorišteno manje od ovog udjela.
@@ -123,9 +137,13 @@ const UVIJEK: readonly VrstaKoristenja[] = ["promet", "ostala", "zelenilo"];
 /**
  * Zadana pravila.
  *
- * `dopusteno` slijedi odredbe GUP-a na razini skupine namjene, ne pojedine
- * odredbe: stanovanje u M i S, gospodarstvo u I/K i M, javne zgrade u D i
- * mješovitim zonama. Za zgradu koje nema u katastru (`neevidentirana`) ne
+ * `dopusteno` slijedi odredbe za provođenje (izvadak s citatima:
+ * data/gup-grad/odredbe/izvor/dopusteno.json; str. = Sl. gl. 55/14). U
+ * skladu je ono što odredbe dopuštaju OPĆENITO; ono što dopuštaju samo pod
+ * posebnim uvjetom koji zgrada iz katastra ne može pokazati (stan uz
+ * poslovni prostor u K na čestici od 2000 m², postojeće kuće u Z6) broji se
+ * kao protivno. Čl. 8: ulice, javna parkirališta i komunalne građevine
+ * grade se na površinama svih namjena. Za zgradu koje nema u katastru (`neevidentirana`) ne
  * znamo čemu služi, pa je u suprotnosti samo ondje gdje plan ne predviđa
  * nikakvu zgradu (zelenilo, rekreacija, plaže); u građevnim zonama je
  * dopuštena. Da se broji kao kuća, industrijske hale Sjeverne luke koje
@@ -148,47 +166,42 @@ export const ZADANA_PRAVILA: Pravila = {
   ulice: { izuzmi: true, pragUlicneCestice: 0.6 },
   ostaci: {
     ukljuci: true,
-    // Pretpostavke, ne prepisane odredbe: 300 m² je red veličine najmanje
-    // građevne čestice za obiteljsku kuću, a gospodarske i javne građevine
-    // traže više. Zelenilo, rekreacija i plaže nemaju najmanju površinu —
-    // tamo je i mala neizgrađena čestica upravo ono što plan hoće.
-    najmanjaPovrsina: {
-      S: 300,
-      "M/K5": 300,
-      D: 500,
-      "I/K": 1000,
-      T: 1000,
-      L: 500,
-      R1: 1000,
-      R2: 0,
-      R3: 0,
-      R4: 0,
-      R5: 0,
-      Z1: 0,
-      Z5: 0,
-      N: 0,
-      P: 0,
-    },
+    tipovi: { slobodnostojeca: true, dvojna: true, interpolacija: true, opcenito: true, niz: false },
     slobodnaUdio: 0.05,
   },
   dopusteno: {
-    S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "javna"],
+    // str. 3: stanovanje, uz njega javni i poslovni sadržaji (trgovine na
+    // zasebnoj čestici do 1000 m²); pomoćne samo uz stambenu građevinu
+    S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "javna", "gospodarska"],
     // kombinirana: M1 pretežito stambena, M2 stambena i poslovna, M3
     // stanovanje i turizam, K5 poslovna sa stanovanjem — list ih boji istom
     // bojom, pa dopušta i stanovanje i poslovanje
     "M/K5": [...UVIJEK, "stambena", "gospodarska", "javna", "pomocna", "neevidentirana", "uredjeno"],
+    // str. 5: u D se ne grade stambene ni poslovne građevine
     D: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
-    "I/K": [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
-    T: [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
+    // str. 5: I/K gospodarske i prateće javne; stan samo uz posao na ≥2000 m²
+    "I/K": [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana"],
+    // str. 5: u T nije dopušteno stanovanje (ni povremeno); 2025. samo hoteli
+    T: [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana"],
     L: [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
     R1: [...UVIJEK, "uredjeno", "javna", "pomocna", "gospodarska", "neevidentirana"],
-    R2: [...UVIJEK, "uredjeno", "pomocna"],
-    R3: [...UVIJEK, "uredjeno", "pomocna"],
+    // str. 6: rekreacija i kupališta — manji ugostiteljski i pomoćni sadržaji
+    R2: [...UVIJEK, "uredjeno", "pomocna", "gospodarska"],
+    R3: [...UVIJEK, "uredjeno", "pomocna", "gospodarska"],
+    // 2025.: prirodne plaže — odredbe ne predviđaju gradnju
     R4: [...UVIJEK, "uredjeno"],
     R5: [...UVIJEK, "uredjeno", "pomocna"],
-    Z1: [...UVIJEK, "uredjeno"],
-    Z5: [...UVIJEK, "pomocna"],
-    N: SVE,
+    // str. 6 (čl. 71): u parku manje pomoćne građevine u funkciji parka,
+    // paviljoni, sanitarni čvorovi; stambene i poslovne ne (kuće na Marjanu
+    // su do 2025. tolerirane „do prenamjene ili uklanjanja”, ne u skladu)
+    Z1: [...UVIJEK, "uredjeno", "pomocna", "javna"],
+    // str. 7: zaštitno zelenilo — javne i rekreacijske građevine samo gdje
+    // pravila područja to kažu; privatne garaže i spremišta ne. Z6 (Meje,
+    // Bačvice) čuva postojeće kuće, ali je na listu iste boje kao Z5, pa se
+    // tamošnje kuće ovdje broje kao protivne — poznato ograničenje.
+    Z5: [...UVIJEK],
+    // str. 7: posebna namjena — ne stambene ni poslovne
+    N: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
     P: SVE,
   },
 };

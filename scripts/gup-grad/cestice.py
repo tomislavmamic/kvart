@@ -200,18 +200,37 @@ def main() -> None:
             komadi.extend([ci - 1, klasa, v, n_zk.get(k, 0), n_z25.get(k, 0),
                            n_pr.get(k, 0), n_os.get(k, 0), n_ze.get(k, 0),
                            sk.get(k, (0, 0))[0]])
+        # pretežito područje urbanog pravila po čestici (urbana-pravila.py);
+        # iz njega odredbe daju najmanju građevnu česticu
+        up_put = os.path.join(R.OUT, f"up-{gid}.npy")
+        up = [0] * len(c)
+        if os.path.exists(up_put):
+            upg = np.load(up_put)
+            mu = (ids > 0) & (upg > 0)
+            k2 = ids[mu].astype(np.int64) * 64 + upg[mu]
+            uu, nn = np.unique(k2, return_counts=True)
+            najvise = np.zeros(n_c, np.int64)
+            for kk, vv in zip(uu.tolist(), nn.tolist()):
+                ci = kk // 64
+                if vv > najvise[ci]:
+                    najvise[ci] = vv
+                    up[ci - 1] = kk % 64
         # površina obuhvata po klasi (za infografiku bez katastra)
         u, cnt = np.unique(kl[(kl > 0) & maska_obuhvata], return_counts=True)
         godine_out[str(god)] = {
             "id": gid,
             "klase_px": {int(a): int(b) for a, b in zip(u, cnt)},
             "komadi": komadi,
+            "urbano_pravilo": up,
         }
         print(god, "komada:", len(komadi) // 9, "obuhvat ha:", round(cnt.sum() * 4 / 1e4, 1))
         del kl, m, kljuc
 
     with open(os.path.join(R.OUT, "mreza.json")) as f:
         mreza = json.load(f)
+
+    up_json = os.path.join(R.OUT, "up.json")
+    up_kodovi = json.load(open(up_json))["kodovi"] if os.path.exists(up_json) else []
 
     ko_imena = sorted(c.KO_NAZIV.fillna("").unique().tolist())
     ko_idx = {k: i for i, k in enumerate(ko_imena)}
@@ -229,6 +248,7 @@ def main() -> None:
             "povrsina": [round(float(a)) for a in c.geometry.area],
         },
         "godine": godine_out,
+        "urbana_pravila_kodovi": up_kodovi,
         "izvori": {
             "cestice": "Grad Split, GIS izvoz: KATASTAR/CADASTRAL_PARCELS_2024_P",
             "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
@@ -237,6 +257,7 @@ def main() -> None:
             "ostalo": "Groblja, Sportski_objekti_p, JavnaParkiralista",
             "zelenilo": "JavneZelenePovrsine_poligoni (Parkovi i nasadi)",
             "obuhvat": "OBUHVAT_PP/OBUHVATI_PP — Generalni urbanistički plan Splita",
+            "urbana_pravila": "listovi 4.b/4.c Urbana pravila (2012., 2015., 2025.), scripts/gup-grad/urbana-pravila.py",
         },
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -244,7 +265,7 @@ def main() -> None:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print("zapisano", OUT, round(os.path.getsize(OUT) / 1e6, 2), "MB")
 
-    zapisi_plocice(c, godine_out, out["cestice"])
+    zapisi_plocice(c, godine_out, out["cestice"], up_kodovi)
     zapisi_zgrade(zg, z25g[z25g.geometry.intersects(obuhvat)])
     zapisi_slike(mreza)
 
@@ -274,7 +295,7 @@ PLOCICA_M = 1000.0
 PLOCICA_ISHODISTE = (490000.0, 4816000.0)
 
 
-def zapisi_plocice(c, godine_out, cestice) -> None:
+def zapisi_plocice(c, godine_out, cestice, up_kodovi) -> None:
     """Čestice s mjerenjima po komadima, u pločicama od 1 km (EPSG:4326).
 
     Karta ih učitava samo za ono što je u oknu: cijeli grad je ~41 000
@@ -322,6 +343,9 @@ def zapisi_plocice(c, godine_out, cestice) -> None:
                     "kc": cestice["broj"][ci],
                     "a": cestice["povrsina"][ci],
                     "k": po_cestici[ci],
+                    # područje urbanog pravila po godini (za skočni prozor)
+                    "u": {god: up_kodovi[g["urbano_pravilo"][ci] - 1]
+                          for god, g in godine_out.items() if g["urbano_pravilo"][ci] > 0},
                 },
             })
         put = os.path.join(izlaz, f"{kljuc}.json")

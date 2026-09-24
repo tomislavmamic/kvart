@@ -20,6 +20,7 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 
 import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
 import { INACICE, type VrstaKoristenja } from "@/lib/gup-grad/pravila";
+import { VRSTA_ZA_KLASU, type NajmanjaCestica, type VrstaOdredbe } from "@/lib/gup-grad/odredbe";
 import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 export const GUP_POGLED = "gup-provjera";
@@ -135,6 +136,14 @@ const VRSTE: Record<VrstaKoristenja, string> = {
 
 const SKUPINA_ZGRADE = ["", "stambena", "gospodarska", "javna", "pomoćna", "ostala"];
 
+const TIP_GRADNJE: Record<string, string> = {
+  slobodnostojeca: "slobodnostojeća",
+  dvojna: "dvojna",
+  interpolacija: "interpolacija između dvije izgrađene čestice",
+  opcenito: "bez navedene vrste građevine",
+  niz: "građevine u nizu",
+};
+
 interface Plocica {
   id: string;
   n: number;
@@ -150,28 +159,38 @@ export interface GupInfo {
 
 type CesticaFeature = Feature<Geometry, SvojstvaCestice>;
 
+/** Najmanja građevna čestica iz odredbi po kodu urbanog pravila i vrsti. */
+type Ppmin = Record<string, Partial<Record<VrstaOdredbe, NajmanjaCestica>>>;
+
+interface Ostaci {
+  /** čestica → klase njezinih komada koji su premali ostatak */
+  poCestici: Map<number, Set<number>>;
+  ppmin: Ppmin;
+}
+const PRAZNO: Ostaci = { poCestici: new Map(), ppmin: {} };
+
 /**
- * Ostaci po načinu brojanja i godini, iz /api/gup-ostaci: čestica → klase
- * njezinih komada koji su premali ostatak. Dohvaća se jednom po ključu.
+ * Ostaci i najmanje čestice po načinu brojanja i godini, iz
+ * /api/gup-ostaci (statično, isti izracun.ts kao /gup). Jednom po ključu.
  */
-const ostaciPoKljucu = new Map<string, Promise<Map<number, Set<number>>>>();
-function ucitajOstatke(inacica: string, godina: number): Promise<Map<number, Set<number>>> {
+const ostaciPoKljucu = new Map<string, Promise<Ostaci>>();
+function ucitajOstatke(inacica: string, godina: number): Promise<Ostaci> {
   const kljuc = `${inacica}-${godina}`;
   let p = ostaciPoKljucu.get(kljuc);
   if (!p) {
     p = fetch(`/api/gup-ostaci/${kljuc}`)
-      .then((r) => (r.ok ? r.json() : { ostaci: [] }))
-      .then((d: { ostaci: [number, number][] }) => {
+      .then((r) => (r.ok ? r.json() : { ostaci: [], ppmin: {} }))
+      .then((d: { ostaci: [number, number][]; ppmin: Ppmin }) => {
         const m = new Map<number, Set<number>>();
         for (const [c, k] of d.ostaci) {
           if (!m.has(c)) m.set(c, new Set());
           m.get(c)!.add(k);
         }
-        return m;
+        return { poCestici: m, ppmin: d.ppmin ?? {} };
       })
       .catch(() => {
         ostaciPoKljucu.delete(kljuc);
-        return new Map<number, Set<number>>();
+        return PRAZNO;
       });
     ostaciPoKljucu.set(kljuc, p);
   }
@@ -242,7 +261,7 @@ export function useGupProvjera(opts: {
   const slikeRef = useRef<{ granice: [[number, number], [number, number]]; slike: { godina: number; url: string }[] } | null>(null);
   const osvjeziRef = useRef<() => void>(() => {});
   const prozirnostRef = useRef<() => void>(() => {});
-  const ostaciRef = useRef<Map<number, Set<number>>>(new Map());
+  const ostaciRef = useRef<Ostaci>(PRAZNO);
 
   // Sloj čestica i njegovi rukovatelji žive dok je pogled aktivan.
   useEffect(() => {
@@ -252,7 +271,7 @@ export function useGupProvjera(opts: {
     let ziv = true;
     const pravila = () => INACICE.find((i) => i.id === postavkeRef.current.inacica)?.pravila ?? INACICE[0].pravila;
     const sud = (p: SvojstvaCestice) =>
-      sudCestice(p, postavkeRef.current.godina, pravila(), 4, ostaciRef.current.get(p.i) ?? NEMA);
+      sudCestice(p, postavkeRef.current.godina, pravila(), 4, ostaciRef.current.poCestici.get(p.i) ?? NEMA);
 
     // Platno dolazi od karte (preferCanvas) — 5 000+ čestica u oknu kao SVG
     // bi zagušilo DOM.
@@ -265,7 +284,7 @@ export function useGupProvjera(opts: {
           const s = postavkeRef.current;
           L.popup({ maxWidth: 340, className: "gup-provjera-popup" })
             .setLatLng(e.latlng)
-            .setContent(popup(p, sud(p), s))
+            .setContent(popup(p, sud(p), s, ostaciRef.current.ppmin))
             .openOn(map);
         });
       },
@@ -397,7 +416,7 @@ export function useGupProvjera(opts: {
     // Ostaci ovise o načinu brojanja i godini; stari se ne smiju zadržati
     // pod novom godinom, pa se do dolaska novih crta bez njih.
     let aktualno = true;
-    ostaciRef.current = new Map();
+    ostaciRef.current = PRAZNO;
     void ucitajOstatke(postavke.inacica, postavke.godina).then((m) => {
       if (!aktualno) return;
       ostaciRef.current = m;
@@ -443,9 +462,9 @@ function esc(v: unknown): string {
 
 const m2 = (v: number) => `${Math.round(v).toLocaleString("hr-HR")} m²`;
 
-function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
+function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, ppmin: Ppmin): string {
   const inacica = INACICE.find((i) => i.id === post.inacica) ?? INACICE[0];
-  const pravila = inacica.pravila;
+  const kodPravila = p.u?.[`${post.godina}`];
   const st = STANJA[s.stanje];
   const sivo = "color:#71717b";
   let h =
@@ -462,7 +481,10 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
     (s.ulica > 0 ? `; ulica izuzeta iz zone ${m2(s.ulica)}` : "") +
     (s.ostatak > 0 ? `; premali ostatak ${m2(s.ostatak)}` : "") +
-    `</span>`;
+    `</span>` +
+    (kodPravila
+      ? `<br><span style="${sivo}">područje urbanog pravila <b>${esc(kodPravila)}</b> (list „Urbana pravila” ${post.godina}.)</span>`
+      : "");
   for (const k of s.komadi) {
     h +=
       `<div style="margin-top:8px;padding-top:6px;border-top:1px solid #e4e4e7">` +
@@ -489,10 +511,17 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
           .join(", ");
       h += `<br><span style="${sivo}">iskorišteno ${m2(k.procjena.iskoristeno)} · u skladu ${m2(k.procjena.uSkladu)} · protivno ${m2(k.procjena.uSuprotnosti)}</span>`;
     }
+    const vrsta = VRSTA_ZA_KLASU[k.klasa.kod];
+    const najmanja = vrsta && kodPravila ? ppmin[kodPravila]?.[vrsta] : undefined;
+    if (najmanja) {
+      h +=
+        `<br><span style="${sivo}">najmanja građevna čestica prema odredbama: <b>${m2(najmanja.m2)}</b> ` +
+        `(${esc(TIP_GRADNJE[najmanja.tip] ?? najmanja.tip)}) — ${esc(najmanja.izvor)}</span>`;
+    }
     if (k.ostatak > 0) {
       h +=
-        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak)} je premali ostatak: namjena traži najmanje ` +
-        `${m2(pravila.ostaci.najmanjaPovrsina[k.klasa.kod])}, a nema slobodnog susjeda iste namjene s kojim bi to doseglo — ne broji se kao slobodno.</span>`;
+        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak)} je premali ostatak: manje od ${najmanja ? m2(najmanja.m2) : "najmanje čestice"}, ` +
+        `a nema slobodnog susjeda iste namjene s kojim bi to doseglo — ne broji se kao slobodno.</span>`;
     }
     h += `</div>`;
   }
