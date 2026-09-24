@@ -69,8 +69,19 @@ export function GupKarta(props: {
   const [spremno, setSpremno] = useState(false);
   const [podloga, setPodloga] = useState<Podloga>("dof");
   const [sluzbeni, setSluzbeni] = useState(false);
-  const [lijeva, setLijeva] = useState(false);
-  const [desna, setDesna] = useState(false);
+  const [lijeva, setLijevaStanje] = useState(false);
+  const [desna, setDesnaStanje] = useState(false);
+  // Na uskom zaslonu ploča zauzima gotovo cijelu širinu, pa je otvorena samo
+  // jedna: otvaranje jedne zatvara drugu.
+  const usko = () => typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches;
+  const setLijeva = (v: boolean) => {
+    setLijevaStanje(v);
+    if (v && usko()) setDesnaStanje(false);
+  };
+  const setDesna = (v: boolean) => {
+    setDesnaStanje(v);
+    if (v && usko()) setLijevaStanje(false);
+  };
 
   // Karta je cijeli prozor: stranica ispod ne smije se listati.
   useEffect(() => {
@@ -161,7 +172,7 @@ export function GupKarta(props: {
   const plutajuci = "fokus rounded-full border border-kamen-tlo bg-white px-4 py-2 text-sm font-semibold shadow-lg hover:bg-zinc-50";
   // lijeva ploča staje iznad gumba za zum (dolje lijevo)
   const ploca =
-    "absolute top-[4.25rem] z-[1010] flex w-[min(20rem,calc(100%-1.5rem))] flex-col rounded-xl border border-zinc-200 bg-white shadow-xl";
+    "absolute top-[4.25rem] z-[1020] flex w-[min(20rem,calc(100%-1.5rem))] flex-col rounded-xl border border-zinc-200 bg-white shadow-xl";
   const zaglavlje = (naslov: string, zatvori: () => void) => (
     <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2">
       <h2 className="text-sm font-bold">{naslov}</h2>

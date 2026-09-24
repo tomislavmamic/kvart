@@ -19,12 +19,19 @@ slobodne čestice gledaju i na snimci. Tri koraka:
           „nije slobodno” iz prvog i nasumični uzorak „slobodno”, bez uvida u
           prvi sud; njegov sud vrijedi)
   3. python3 scripts/gup-grad/pregled.py rucno
-       → data/gup-grad/pregled/rucno.json, koji čita cestice.py
+       → data/gup-grad/pregled/rucno.json, koji čita cestice.py. Novi sudovi
+       dodaju se postojećima (i pregaze sud iste čestice); ništa se ne briše.
+
+Drugi krug umjesto koraka 2 (python3 scripts/gup-grad/pregled.py krug2):
+čestice sa 500–1000 m² slobodnog, čestice s ≥ 1000 m² bez primijenjenog
+suda (niska sigurnost u prvom krugu) i naselja višestambenih zgrada
+(urbano pravilo 2.2) s ≥ 300 m² slobodnog — sve koje još nisu u rucno.json.
 
 2026-09: pregledano 614 čestica (≥ 1000 m² slobodnog, 125 ha). Prvi prolaz
 Claude Haiku, drugi Claude Sonnet; drugi je vratio u „slobodno” 111 od 259
 Haikuovih „iskorišteno” (većinom prirodna vegetacija proglašena parkom), a
-od 40 nasumičnih Haikuovih „slobodno” potvrdio 36.
+od 40 nasumičnih Haikuovih „slobodno” potvrdio 36. Zato drugi krug ide
+jednim prolazom Claude Sonneta (drugi-rez-*.jsonl).
 """
 from __future__ import annotations
 
@@ -52,12 +59,25 @@ VRSTE = {"slobodno", "parkiraliste", "zelenilo", "uredjeno", "javna", "gradilist
 KORISTENJE = VRSTE - {"slobodno", "neizgradivo"}
 
 
-def isjecci(prag: float) -> None:
+def krug2() -> list[dict]:
+    """Čestice za drugi krug: 500–1000 m², ≥ 1000 m² bez suda, 2.2 od 300 m²."""
+    d = json.load(open(os.path.join(R.ROOT, "data", "gup-grad", "cestice.json")))["cestice"]
+    vec = {(x["ko"], x["kc"]) for x in json.load(open(RUCNO))["cestice"]} if os.path.exists(RUCNO) else set()
+    out = []
+    for x in json.load(open(os.path.join(R.OUT, "slobodne.json"))):
+        if (d["ko_imena"][d["ko"][x["c"]]], d["broj"][x["c"]]) in vec:
+            continue
+        if x["m2"] >= 500 or (x.get("pravilo") == "2.2" and x["m2"] >= 300):
+            out.append(x)
+    return out
+
+
+def isjecci(prag: float | None = None, odabir: list[dict] | None = None) -> None:
     import cestice as C
     import shapely
     from PIL import Image, ImageDraw
 
-    slob = [x for x in json.load(open(os.path.join(R.OUT, "slobodne.json"))) if x["m2"] >= prag]
+    slob = odabir if odabir is not None else [x for x in json.load(open(os.path.join(R.OUT, "slobodne.json"))) if x["m2"] >= prag]
     ob = C.obuhvat_gupa()
     cc = C.citaj_cestice()
     cc = cc[cc.geometry.intersects(ob)].reset_index(drop=True)  # isti redoslijed kao cestice.py
@@ -145,6 +165,9 @@ def rucno() -> None:
     drugi = ucitaj("drugi-rez-*.jsonl", popis)
     slaganje = collections.Counter()
     konacno = {}
+    for n, x in drugi.items():
+        if n not in prvi:  # drugi krug: samo jedan prolaz, i to Sonnetov
+            konacno[n] = x
     for n, x in prvi.items():
         if n in drugi:
             slaganje[(x.get("kategorija") == "slobodno", drugi[n].get("kategorija") == "slobodno")] += 1
@@ -162,22 +185,30 @@ def rucno() -> None:
         m2[k] += p["slobodno_m2"]
         out.append({"ko": p["ko"], "kc": p["kc"], "vrsta": k, "opis": x.get("opis", ""),
                     "sigurnost": x.get("sigurnost", ""), "udio": x.get("udio"), "slobodno_prije_m2": p["slobodno_m2"]})
+    # sudovi prijašnjih krugova ostaju; novi sud iste čestice ih pregazi
+    prije = json.load(open(RUCNO)) if os.path.exists(RUCNO) else {"cestice": [], "pregledano": 0}
+    novi = {(x["ko"], x["kc"]) for x in out}
+    out = [x for x in prije["cestice"] if (x["ko"], x["kc"]) not in novi] + out
     os.makedirs(os.path.dirname(RUCNO), exist_ok=True)
     json.dump({
-        "opis": "Ručni pregled najvećih slobodnih čestica u stambenim i mješovitim zonama na ortofotu DGU 2023 "
+        "opis": "Ručni pregled slobodnih čestica u stambenim i mješovitim zonama na ortofotu DGU 2023 "
                 "(scripts/gup-grad/pregled.py, upute u pregled-upute.md). Vrsta vrijedi za neiskorišteni dio cijele "
-                "čestice (RucnaVrsta u src/lib/gup-grad/izracun.ts). Svaku sliku pregledao je Claude Haiku; svako "
-                "„iskorišteno” i nasumičnih 40 „slobodno” ponovno, bez uvida u prvi sud, Claude Sonnet, čiji sud vrijedi.",
-        "pregledano": len(prvi),
+                "čestice (RucnaVrsta u src/lib/gup-grad/izracun.ts). Prvi krug (≥ 1000 m² slobodnog): svaku sliku "
+                "pregledao je Claude Haiku, a svako „iskorišteno” i nasumičnih 40 „slobodno” ponovno, bez uvida u prvi "
+                "sud, Claude Sonnet, čiji sud vrijedi. Drugi krug (500–1000 m², neriješeni ≥ 1000 m², naselja 2.2 od "
+                "300 m²): jedan prolaz Claude Sonneta.",
+        "pregledano": prije.get("pregledano", 0) + len(set(prvi) | set(drugi)),
         "cestice": out,
     }, open(RUCNO, "w"), ensure_ascii=False, indent=1)
     print("prvi/drugi prolaz (slobodno?, slobodno?):", dict(slaganje))
-    print("pregledano", len(prvi), "od", len(popis), dict(stat))
+    print("pregledano", len(set(prvi) | set(drugi)), "od", len(popis), dict(stat))
     print({k: round(v / 1e4, 1) for k, v in m2.items()}, "ha")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "isjecci":
+    if len(sys.argv) > 1 and sys.argv[1] == "krug2":
+        isjecci(odabir=krug2())
+    elif len(sys.argv) > 1 and sys.argv[1] == "isjecci":
         isjecci(float(sys.argv[2]) if len(sys.argv) > 2 else 1000)
     elif len(sys.argv) > 1 and sys.argv[1] == "rucno":
         rucno()

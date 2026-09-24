@@ -302,3 +302,18 @@ test("izracunajGodinu: čeka plan i slobodno pod planom na snazi zbrajaju se odv
   assert.equal(r.poPlanuM2, 50 * 4);
   assert.equal(r.ukupnoM2 - r.iskoristenoM2 - r.cekaPlanM2 - r.ostatakM2, 80 * 4);
 });
+
+test("gradevna: kuća protivna planu u zoni bez kig-a ne uzima cijeli komad, nego koliko bi trebala u stambenoj", () => {
+  // kuća 100 m² (25 px) u zaštitnom zelenilu (Z5, bez kig-a) na 2 000 m² (500 px)
+  const k = komad({ klasa: 11, n: 500, zk: 25, g: 1 });
+  const u: UvjetiKomada = { najmanjaPx: 0, kig: null, novaGradnja: true, pikselM2: 4 };
+  const r = procijeniKomad(k, "Z5", gradevna, u);
+  // tlocrt / 0,3 = 83,3 px (333 m²) ≥ 300 m² → okućnica 58,3 px, ostatak zelenila neiskorišten
+  assert.equal(Math.round(r.iskoristeno * 10) / 10, 83.3);
+  assert.equal(Math.round(r.uSuprotnosti * 10) / 10, 83.3);
+  // bez pravila o protivnoj zgradi — cijeli komad
+  const bez: Pravila = { ...gradevna, gradevna: { ...gradevna.gradevna, protivna: null } };
+  assert.equal(procijeniKomad(k, "Z5", bez, u).iskoristeno, 500);
+  // kuća po planu u zoni bez kig-a (npr. 1.2) i dalje nosi cijeli komad
+  assert.equal(procijeniKomad(komad({ n: 500, zk: 25, g: 1 }), "M/K5", gradevna, u).iskoristeno, 500);
+});

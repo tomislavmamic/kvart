@@ -12,6 +12,22 @@ import { MergeForm } from "./merge-form";
 import { StatusBadge } from "@/components/status-badge";
 import { NEIGHBORHOODS, CATEGORIES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { eq, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { gupIspravci } from "@/lib/db/schema";
+
+/** Koliko prijedloga ispravka karte GUP-a čeka pregled (0 ako tablice nema). */
+async function noviIspravciGup(): Promise<number> {
+  try {
+    const [r] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(gupIspravci)
+      .where(eq(gupIspravci.status, "novo"));
+    return r?.n ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +36,10 @@ export const metadata: Metadata = { title: "Moderacija" };
 export default async function AdminPage() {
   if (!(await isModerator())) redirect("/admin/login");
 
-  const [pending, allProposals] = await Promise.all([
+  const [pending, allProposals, ispravciGup] = await Promise.all([
     getPendingSubmissions(),
     getAllProposals(),
+    noviIspravciGup(),
   ]);
 
   return (
@@ -35,6 +52,11 @@ export default async function AdminPage() {
           </Link>
           <Link href="/admin/gup" className="text-emerald-700 underline">
             Ispravci GUP-a
+            {ispravciGup > 0 && (
+              <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white no-underline">
+                {ispravciGup}
+              </span>
+            )}
           </Link>
           <form action={logout}>
             <button className="text-zinc-500 hover:text-zinc-800">
