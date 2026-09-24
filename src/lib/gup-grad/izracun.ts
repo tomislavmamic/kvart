@@ -9,7 +9,7 @@
 import { KLASE, KLASA_PO_INDEKSU, type Godina, type KodKlase } from "./model";
 import { VRSTA_ZA_KLASU } from "./odredbe";
 import type { Pravila, VrstaKoristenja } from "./pravila";
-import type { PlanskiRezim } from "./rezim";
+import { rezimVrijedi, type PlanskiRezim } from "./rezim";
 
 /** Što je ručni pregled ortofotom rekao o čestici (data/gup-grad/pregled/rucno.json). */
 export type RucnaVrsta =
@@ -314,7 +314,7 @@ export function procijeniKomad(k: Komad, kod: KodKlase, p: Pravila, u?: UvjetiKo
   if (slobodno > 0) {
     if (p.racunaj.rucniPregled && k.rucno === "neizgradivo") out.neizgradivo = slobodno;
     else if (p.postujZabraneGradnje && u && !u.novaGradnja) out.zabranjeno = slobodno;
-    else if (p.postujObvezuPlana && u?.rezim === "ceka") out.cekaPlan = slobodno;
+    else if (p.postujObvezuPlana && u?.rezim === "ceka" && rezimVrijedi(kod)) out.cekaPlan = slobodno;
   }
   return out;
 }
@@ -568,7 +568,7 @@ export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
     r.zabranjenoM2 += pr.zabranjeno * m2;
     r.neizgradivoM2 += pr.neizgradivo * m2;
     r.cekaPlanM2 += (pr.cekaPlan ?? 0) * m2;
-    if (uvjeti[i]?.rezim === "vazeci") r.poPlanuM2 += Math.max(0, slobodnoKomada(pr) - (ost.get(i) ?? 0)) * m2;
+    if (uvjeti[i]?.rezim === "vazeci" && rezimVrijedi(kl.kod)) r.poPlanuM2 += Math.max(0, slobodnoKomada(pr) - (ost.get(i) ?? 0)) * m2;
     for (const [vrsta, v] of Object.entries(pr.poVrsti) as [VrstaKoristenja, number][]) {
       r.poVrstiM2[vrsta] = (r.poVrstiM2[vrsta] ?? 0) + v * m2;
       const protivno = vrsta === "okucnica" ? (pr.okucnicaProtivno ?? 0) : p.dopusteno[kl.kod].includes(vrsta) ? 0 : v;

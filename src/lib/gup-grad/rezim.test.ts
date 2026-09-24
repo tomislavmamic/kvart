@@ -28,3 +28,11 @@ test("oznake 2025. ne vrijede za stariji plan i obrnuto", () => {
   assert.equal(planskiRezim(REZIM.MARJAN, 2025, null).rezim, "neposredno");
   assert.equal(planskiRezim(REZIM.MARJAN, 2015, null).rezim, "ceka");
 });
+
+test("režim mijenja slobodno samo u građevnim zonama", async () => {
+  const { rezimVrijedi } = await import("@/lib/gup-grad/rezim");
+  assert.equal(rezimVrijedi("M/K5"), true);
+  assert.equal(rezimVrijedi("I/K"), true);
+  assert.equal(rezimVrijedi("Z1"), false);
+  assert.equal(rezimVrijedi("R2"), false);
+});

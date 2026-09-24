@@ -18,7 +18,7 @@
  *
  * Bitovi dolaze s listova 4.c/4.d (scripts/gup-grad/planski-rezim.py).
  */
-import type { Godina } from "./model";
+import type { Godina, KodKlase } from "./model";
 
 /** Bitovi s lista, isti kao u scripts/gup-grad/planski-rezim.py. */
 export const REZIM = {
@@ -43,6 +43,14 @@ export interface Rezim {
   /** Kratko objašnjenje za kartu: zašto baš taj režim. */
   razlog: string;
 }
+
+/**
+ * Zone u kojima slobodno zemljište znači mjesto za novu zgradu, pa režim
+ * mijenja koliko ga je za gradnju. U zelenilu, športu i ulicama slobodno je
+ * slobodno bez obzira na planove užeg područja.
+ */
+const GRADEVNE: readonly KodKlase[] = ["S", "M/K5", "I/K", "D", "T"];
+export const rezimVrijedi = (kod: KodKlase) => GRADEVNE.includes(kod);
 
 const NEPOSREDNO: Rezim = { rezim: "neposredno", razlog: "neposredna provedba GUP-a" };
 

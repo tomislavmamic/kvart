@@ -21,6 +21,7 @@ import {
 } from "./izracun";
 import { KLASA_PO_INDEKSU, type Godina, type Klasa } from "./model";
 import type { Pravila, VrstaKoristenja } from "./pravila";
+import { planskiRezim, type Rezim } from "./rezim";
 
 /** Komad kako ga zapisuje cestice.py: POLJA_KOMADA bez `cestica` (klasa, n, zk, z25, kat, pr, pa, jv, os, inf, ze, gr, g, us). */
 export type SirovKomad = number[];
@@ -40,6 +41,8 @@ export interface SvojstvaCestice {
   u?: Partial<Record<`${Godina}`, string>>;
   /** Ispravak iz ručnog pregleda ortofotom. */
   r?: RucnaVrsta;
+  /** Bitovi planskog režima po godini (rezim.ts, listovi 4.c/4.d). */
+  p?: Partial<Record<`${Godina}`, number>>;
 }
 
 /**
@@ -96,6 +99,8 @@ export interface KomadSuda {
   vrtSusjeda: number;
   /** Slobodni dio na kojem odredbe ne dopuštaju novu gradnju ili je teren neizgradiv. */
   nijeZaGradnju: number;
+  /** Slobodni dio koji čeka propisani plan užeg područja. */
+  cekaPlan: number;
   /** Izmjereno, u m²: zgrade iz katastra i iz 3D modela, promet, parkirališta, javne ustanove, uređeno, infrastruktura, zelenilo, gradilište. */
   mjereno: { zk: number; z25: number; pr: number; pa: number; jv: number; os: number; inf: number; ze: number; gr: number };
   /** Pretežita skupina katastarske zgrade (0 = nema). */
@@ -124,11 +129,16 @@ export interface SudCestice {
   /** Os 2 — iskorištenost: iskorišteno / površina u zoni, 0–1; null bez zone. */
   iskoristenost: number | null;
   /** Neiskorišteno po razlogu, u m²: za gradnju i ono što nije za gradnju. */
-  slobodno: { zaGradnju: number; usko: number; premalo: number; zabranjeno: number; neizgradivo: number };
+  slobodno: { zaGradnju: number; usko: number; premalo: number; zabranjeno: number; neizgradivo: number; cekaPlan: number };
   /** Neiskorišteni dio je vrijedan spomena, a gotovo ništa od njega nije za gradnju. */
   slobodnoNijeZaGradnju: boolean;
   /** Os 3 — sklad s planom iskorištenog dijela. */
   sklad: Sklad;
+  /**
+   * Os 4 — planski režim: gradi li se po GUP-u, po planu užeg područja na
+   * snazi, ili nova gradnja čeka propisani plan (rezim.ts). null za ulicu.
+   */
+  rezim: Rezim | null;
 }
 
 /**
@@ -140,7 +150,7 @@ export interface SudCestice {
  * li se ondje graditi novo) — iste koje /gup dobiva iz podaci.ts.
  */
 export function sudCestice(
-  s: Pick<SvojstvaCestice, "k" | "r">,
+  s: Pick<SvojstvaCestice, "k" | "r" | "u" | "p">,
   godina: Godina,
   p: Pravila,
   pikselM2 = 4,
@@ -149,13 +159,19 @@ export function sudCestice(
   posudjeno?: ReadonlyMap<number, readonly [number, number]>,
 ): SudCestice {
   const komadi: KomadSuda[] = [];
+  const rezim = planskiRezim(s.p?.[`${godina}`] ?? 0, godina, s.u?.[`${godina}`] ?? null);
+  // režim ide u uvjete komada kao na /gup (podaci.ts); bez odredbi vrijede zadane vrijednosti
+  const uvjetiRezima = (kl: Klasa): UvjetiKomada => ({
+    ...(uvjeti?.(kl) ?? { najmanjaPx: 0, kig: null, novaGradnja: true, pikselM2 }),
+    rezim: rezim.rezim,
+  });
   for (const sirov of s.k[`${godina}`] ?? []) {
     if (sirov.length < DULJINA_KOMADA) continue;
     const k = komadIzNiza(sirov, 0, true);
     if (s.r) k.rucno = s.r;
     const kl = KLASA_PO_INDEKSU.get(k.klasa);
     if (!kl) continue;
-    const pro = procijeniKomad(k, kl.kod, p, uvjeti?.(kl));
+    const pro = procijeniKomad(k, kl.kod, p, uvjetiRezima(kl));
     const vrt = posudjeno?.get(k.klasa);
     if (vrt && vrt[0] > 0) dodajOkucnicu(pro, vrt[0], 1 - vrt[1] / vrt[0]);
     const m = (v: number) => v * pikselM2;
@@ -168,6 +184,7 @@ export function sudCestice(
       usko: m(slobodnoKomada(pro) - sirokoKomada(k, pro, p)),
       vrtSusjeda: m(vrt?.[0] ?? 0),
       nijeZaGradnju: m(pro.zabranjeno + pro.neizgradivo),
+      cekaPlan: m(pro.cekaPlan ?? 0),
       mjereno: {
         zk: m(k.zk),
         z25: m(k.z25),
@@ -202,17 +219,19 @@ export function sudCestice(
   const ulica = zbroj((k) => k.ulica);
   const ostatak = zbroj((k) => k.ostatak);
   const nijeZaGradnju = zbroj((k) => k.nijeZaGradnju);
+  const cekaPlan = zbroj((k) => k.cekaPlan);
   const iskoristeno = zbroj((k) => k.procjena.iskoristeno);
   const uSkladu = zbroj((k) => k.procjena.uSkladu);
   const uSuprotnosti = zbroj((k) => k.procjena.uSuprotnosti);
   const usko = zbroj((k) => k.usko);
   const neiskoristeno = Math.max(0, m2 - iskoristeno);
   const slobodno = {
-    zaGradnju: Math.max(0, neiskoristeno - ostatak - nijeZaGradnju),
+    zaGradnju: Math.max(0, neiskoristeno - ostatak - nijeZaGradnju - cekaPlan),
     usko,
     premalo: Math.max(0, ostatak - usko),
     zabranjeno: zbroj((k) => k.procjena.zabranjeno),
     neizgradivo: zbroj((k) => k.procjena.neizgradivo),
+    cekaPlan,
   };
   const pretezita =
     komadi.reduce<KomadSuda | null>((a, k) => (!a || k.m2 + k.ulica > a.m2 + a.ulica ? k : a), null)?.klasa ?? null;
@@ -232,6 +251,7 @@ export function sudCestice(
     slobodnoNijeZaGradnju:
       m2 > 0 && neiskoristeno >= PRAGOVI.slobodnoUdio * m2 && slobodno.zaGradnju <= PRAGOVI.zaGradnjuUdio * neiskoristeno,
     sklad: sklad(iskoristeno, uSuprotnosti),
+    rezim: m2 > 0 && !(ulica > 0 && m2 < (1 - PRAGOVI.ulicaUdio) * (m2 + ulica)) ? rezim : null,
   };
 }
 

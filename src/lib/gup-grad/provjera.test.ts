@@ -4,6 +4,7 @@ import test from "node:test";
 import { izracunajGodinu, komadIzNiza } from "@/lib/gup-grad/izracun";
 import { ZADANA_PRAVILA } from "@/lib/gup-grad/pravila";
 import { sklad, sudCestice, uZoniKrhotina, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
+import { REZIM } from "@/lib/gup-grad/rezim";
 
 // kuća (stambena, katastar) na česti u M/K5 i komad u zaštitnom zelenilu s garažom i kućom
 const cestica: SvojstvaCestice = {
@@ -100,4 +101,23 @@ test("čestica kojoj je u zoni tek krhotina (more, luka) crta se samo obrisom", 
   assert.equal(uZoniKrhotina({ m2: 400, ulica: 0 }, 800), false);
   // bez površine iz katastra nema suda
   assert.equal(uZoniKrhotina({ m2: 0, ulica: 0 }, 0), false);
+});
+
+test("planski režim: čestica u području sanacije 2025. — slobodno čeka plan i nije za gradnju", () => {
+  // prazna čestica u M/K5: 200 px (800 m²), bez ičega
+  const prazna: SvojstvaCestice = { i: 1, ko: "SPLIT", kc: "2/1", a: 800, k: { "2025": [[2, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] } };
+  const slobodna = sudCestice(prazna, 2025, ZADANA_PRAVILA);
+  assert.equal(slobodna.rezim?.rezim, "neposredno");
+  assert.equal(slobodna.slobodno.cekaPlan, 0);
+  assert.ok(slobodna.slobodno.zaGradnju > 0);
+
+  const ceka = sudCestice({ ...prazna, p: { "2025": REZIM.SANACIJA | REZIM.OBVEZA } }, 2025, ZADANA_PRAVILA);
+  assert.equal(ceka.rezim?.rezim, "ceka");
+  assert.equal(ceka.slobodno.cekaPlan, 800);
+  assert.equal(ceka.slobodno.zaGradnju, 0);
+
+  // ista obveza 2015. u konsolidiranom području (2.5) ne zamrzava, u nisko konsolidiranom (3.1) da
+  const k2015 = { ...prazna, k: { "2015": prazna.k["2025"]! }, p: { "2015": REZIM.OBVEZA } };
+  assert.equal(sudCestice({ ...k2015, u: { "2015": "2.5" } }, 2015, ZADANA_PRAVILA).rezim?.rezim, "neposredno");
+  assert.equal(sudCestice({ ...k2015, u: { "2015": "3.1" } }, 2015, ZADANA_PRAVILA).rezim?.rezim, "ceka");
 });

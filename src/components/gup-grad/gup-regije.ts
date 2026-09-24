@@ -39,7 +39,8 @@ export const REGIJE = {
 
 /** Vrijede li dijelovi čestice za ove postavke. */
 export function regijeVrijede(p: GupPostavke): boolean {
-  return p.dijelovi && p.cestice && p.prikaz !== "namjena";
+  // pikseli dijelova ne nose planski režim, pa ga pokazuju samo čestice
+  return p.dijelovi && p.cestice && p.prikaz !== "namjena" && p.prikaz !== "rezim";
 }
 
 type Rgba = [number, number, number, number];
