@@ -22,6 +22,8 @@ import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
 import { INACICE, type VrstaKoristenja } from "@/lib/gup-grad/pravila";
 import { VRSTA_ZA_KLASU, type NajmanjaCestica, type VrstaOdredbe } from "@/lib/gup-grad/odredbe";
 import type { UvjetiKomada } from "@/lib/gup-grad/izracun";
+import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
+import { predloziIspravak } from "@/lib/actions/gup";
 import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 export const GUP_POGLED = "gup-provjera";
@@ -435,10 +437,42 @@ export function useGupProvjera(opts: {
       sloj.setStyle((f) => stil(sud((f as CesticaFeature).properties), postavkeRef.current));
       void ucitaj();
     };
+    // Prijedlog ispravka iz skočnog prozora (obrazacIspravka)
+    const naOtvaranje = (e: LeafletNS.PopupEvent) => {
+      const f = e.popup.getElement()?.querySelector<HTMLFormElement>("form[data-ispravak]");
+      if (!f) return;
+      f.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const poruka = f.querySelector<HTMLElement>("[data-poruka]")!;
+        const gumb = f.querySelector<HTMLButtonElement>("button[type=submit]")!;
+        const fd = new FormData(f);
+        const ll = e.popup.getLatLng();
+        if (ll) {
+          fd.set("lat", String(ll.lat));
+          fd.set("lng", String(ll.lng));
+        }
+        gumb.disabled = true;
+        poruka.style.color = "#52525c";
+        poruka.textContent = "Šaljem…";
+        try {
+          const r = await predloziIspravak(fd);
+          poruka.style.color = r.ok ? "#047857" : "#b91c1c";
+          poruka.textContent = r.ok ? "Hvala! Prijedlog je zapisan i čeka pregled." : r.error;
+          if (r.ok) f.querySelectorAll("select, textarea").forEach((x) => ((x as HTMLInputElement).disabled = true));
+          else gumb.disabled = false;
+        } catch {
+          poruka.style.color = "#b91c1c";
+          poruka.textContent = "Slanje nije uspjelo. Provjerite vezu i pokušajte ponovno.";
+          gumb.disabled = false;
+        }
+      });
+    };
+    map.on("popupopen", naOtvaranje);
     map.on("moveend", ucitaj);
     void ucitaj();
     return () => {
       ziv = false;
+      map.off("popupopen", naOtvaranje);
       map.off("moveend", ucitaj);
       map.closePopup();
       sloj.remove();
@@ -627,7 +661,40 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   h +=
     `<div style="margin-top:8px;${sivo}">Površine komada izmjerene su na rešetki od 2 m, pa se zbroj može razlikovati od katastarske. ` +
     `<a href="/gup" style="color:#047857">Kako se broji ↗</a></div>`;
-  return h;
+  return h + obrazacIspravka(p, s, post);
+}
+
+/**
+ * Prijedlog ispravka: posjetitelj kaže što na čestici stvarno jest. Obrazac
+ * je HTML u skočnom prozoru Leafleta; slanje hvata `popupopen` u
+ * GupProvjera i zove poslužiteljsku akciju predloziIspravak.
+ */
+function obrazacIspravka(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
+  const skriveno = (ime: string, v: unknown) => `<input type="hidden" name="${ime}" value="${esc(v ?? "")}">`;
+  const polje = "width:100%;margin-top:4px;border:1px solid #d4d4d8;border-radius:6px;padding:4px 6px;font-size:12px";
+  return (
+    `<details style="margin-top:8px;border-top:1px solid #e4e4e7;padding-top:6px">` +
+    `<summary style="cursor:pointer;font-weight:600;color:#047857">Krivo svrstano? Predloži ispravak</summary>` +
+    `<form data-ispravak style="margin-top:6px">` +
+    skriveno("ko", p.ko) +
+    skriveno("kc", p.kc) +
+    skriveno("godina", post.godina) +
+    skriveno("stanje", s.stanje) +
+    skriveno("namjena", s.pretezita?.kod) +
+    `<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">` +
+    `<label style="display:block;font-size:12px">Što je na čestici stvarno?` +
+    `<select name="vrsta" required style="${polje}"><option value="">— odaberi —</option>` +
+    Object.entries(VRSTE_ISPRAVKA)
+      .map(([v, naziv]) => `<option value="${v}">${esc(naziv)}</option>`)
+      .join("") +
+    `</select></label>` +
+    `<label style="display:block;font-size:12px;margin-top:6px">Napomena (neobavezno)` +
+    `<textarea name="napomena" rows="2" maxlength="${NAJDULJA_NAPOMENA}" style="${polje}" placeholder="npr. parkiralište trgovine iza zgrade"></textarea></label>` +
+    `<button type="submit" style="margin-top:6px;border-radius:9999px;background:#047857;color:#fff;font-weight:600;font-size:12px;padding:4px 12px">Pošalji prijedlog</button>` +
+    `<p data-poruka role="status" style="margin-top:4px;font-size:12px"></p>` +
+    `<p style="margin-top:2px;font-size:11px;color:#71717a">Prijedlozi se pregledaju prije nego uđu u izračun.</p>` +
+    `</form></details>`
+  );
 }
 
 export function GupProvjeraPloca(props: {

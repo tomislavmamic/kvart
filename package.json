@@ -47,6 +47,7 @@
     "gup-grad:cestice": "/opt/homebrew/bin/python3 scripts/gup-grad/cestice.py",
     "gup-grad:slobodne": "tsx scripts/gup-grad/slobodne.ts",
     "gup-grad:pregled": "/opt/homebrew/bin/python3 scripts/gup-grad/pregled.py",
+    "gup-grad:ispravci": "tsx --env-file=.env.local scripts/gup-grad/ispravci.ts",
     "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
     "hindcast": "tsx scripts/hindcast/pokreni.ts",
     "hindcast:ulazi": "tsx scripts/hindcast/ulazi.ts",

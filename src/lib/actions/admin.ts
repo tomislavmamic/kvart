@@ -9,6 +9,7 @@ import {
   statusUpdates,
   submissions,
   documents,
+  gupIspravci,
 } from "@/lib/db/schema";
 import {
   createSession,
@@ -20,6 +21,7 @@ import { slugify } from "@/lib/slug";
 import { storeFile } from "@/lib/upload";
 import { NEIGHBORHOODS, CATEGORIES, STATUSES } from "@/lib/constants";
 import type { Neighborhood, Category, Status } from "@/lib/constants";
+import { STATUSI_ISPRAVKA, type StatusIspravka } from "@/lib/gup-grad/ispravci";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -211,4 +213,17 @@ export async function deleteDocument(formData: FormData): Promise<void> {
   await db.delete(documents).where(eq(documents.id, id));
   revalidatePath("/dokumenti");
   revalidatePath("/admin/dokumenti");
+}
+
+/** Prihvaća ili odbija prijedlog ispravka karte provjere GUP-a (ili ga vraća u „novo”). */
+export async function oznaciIspravak(formData: FormData): Promise<void> {
+  await requireModerator();
+  const id = Number(formData.get("id"));
+  const status = String(formData.get("status")) as StatusIspravka;
+  if (!Number.isInteger(id) || !STATUSI_ISPRAVKA.includes(status)) return;
+  await db
+    .update(gupIspravci)
+    .set({ status, reviewedAt: status === "novo" ? null : new Date() })
+    .where(eq(gupIspravci.id, id));
+  revalidatePath("/admin/gup");
 }

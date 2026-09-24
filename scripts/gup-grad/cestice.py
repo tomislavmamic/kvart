@@ -209,25 +209,32 @@ def osm_poligoni() -> dict[str, list]:
 
 
 RUCNO_PUT = os.path.join(ROOT, "data", "gup-grad", "pregled", "rucno.json")
+ISPRAVCI_PUT = os.path.join(ROOT, "data", "gup-grad", "pregled", "ispravci.json")  # scripts/gup-grad/ispravci.ts
 # Što ručni pregled smije reći o čestici; značenje u src/lib/gup-grad/pravila.ts.
 RUCNO_VRSTE = ["parkiraliste", "javna", "uredjeno", "zelenilo", "gradiliste", "izgradjeno", "promet",
                "infrastruktura", "neizgradivo", "slobodno"]
 
 
 def rucno_po_cestici(c) -> list[int]:
-    """Ispravci iz ručnog pregleda, po čestici (0 = nema)."""
+    """Ispravci iz ručnog pregleda, po čestici (0 = nema).
+
+    Prvo pregled ortofotom (rucno.json), pa preko njega prihvaćeni
+    prijedlozi s karte (ispravci.json, scripts/gup-grad/ispravci.ts).
+    """
     out = [0] * len(c)
-    if not os.path.exists(RUCNO_PUT):
-        return out
     kljuc = {(k, b): i for i, (k, b) in enumerate(zip(c.KO_NAZIV.fillna(""), c.KC_BROJ.fillna("")))}
-    nema = []
-    for z in json.load(open(RUCNO_PUT))["cestice"]:
-        i = kljuc.get((z["ko"], z["kc"]))
-        if i is None:
-            nema.append(f"{z['ko']} {z['kc']}")
+    for put in (RUCNO_PUT, ISPRAVCI_PUT):
+        if not os.path.exists(put):
             continue
-        out[i] = RUCNO_VRSTE.index(z["vrsta"]) + 1
-    print("ručno pregledanih:", sum(1 for x in out if x), "nepoznatih:", nema[:10])
+        nema, n = [], 0
+        for z in json.load(open(put))["cestice"]:
+            i = kljuc.get((z["ko"], z["kc"]))
+            if i is None or z["vrsta"] not in RUCNO_VRSTE:
+                nema.append(f"{z['ko']} {z['kc']}")
+                continue
+            out[i] = RUCNO_VRSTE.index(z["vrsta"]) + 1
+            n += 1
+        print(os.path.basename(put), "primijenjeno:", n, "nepoznatih:", nema[:10])
     return out
 
 

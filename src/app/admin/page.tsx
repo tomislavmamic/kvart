@@ -33,6 +33,9 @@ export default async function AdminPage() {
           <Link href="/admin/dokumenti" className="text-emerald-700 underline">
             Dokumenti
           </Link>
+          <Link href="/admin/gup" className="text-emerald-700 underline">
+            Ispravci GUP-a
+          </Link>
           <form action={logout}>
             <button className="text-zinc-500 hover:text-zinc-800">
               Odjava
