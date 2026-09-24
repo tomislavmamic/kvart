@@ -449,6 +449,25 @@ def main() -> None:
                 if vv > najvise[ci]:
                     najvise[ci] = vv
                     up[ci - 1] = kk % 64
+        # planski režim po čestici (planski-rezim.py): bit se pripisuje čestici
+        # kad pokriva barem pola njezinih piksela; što znači, odlučuje rezim.ts
+        pr_put = os.path.join(R.OUT, f"pr-{gid}.npy")
+        rezim = [0] * len(c)
+        if os.path.exists(pr_put):
+            prg = np.load(pr_put)
+            mc = ids > 0
+            svi = np.bincount(ids[mc], minlength=n_c)
+            bit_cestice = np.zeros(n_c, np.int64)
+            for bit in (1, 2, 4, 8, 16, 32):
+                mb = mc & ((prg & bit) > 0)
+                if not mb.any():
+                    continue
+                pod = np.bincount(ids[mb], minlength=n_c)
+                bit_cestice[(pod * 2 >= svi) & (svi > 0)] |= bit
+            rezim = bit_cestice[1:].tolist()
+            del prg
+        else:
+            print("NEMA", pr_put, "— pokreni scripts/gup-grad/planski-rezim.py; planski režim prazan")
         # površina obuhvata po klasi (za infografiku bez katastra)
         u, cnt = np.unique(kl[(kl > 0) & maska_obuhvata], return_counts=True)
         godine_out[str(god)] = {
@@ -456,6 +475,7 @@ def main() -> None:
             "klase_px": {int(a): int(b) for a, b in zip(u, cnt)},
             "komadi": komadi,
             "urbano_pravilo": up,
+            "planski_rezim": rezim,
         }
         print(god, "komada:", len(komadi) // len(POLJA), "obuhvat ha:", round(cnt.sum() * 4 / 1e4, 1))
         del kl, m, kljuc
@@ -511,6 +531,7 @@ def main() -> None:
             "osm": osm_stanje(),
             "obuhvat": "OBUHVAT_PP/OBUHVATI_PP — Generalni urbanistički plan Splita",
             "urbana_pravila": "listovi 4.b/4.c Urbana pravila (2012., 2015., 2025.), scripts/gup-grad/urbana-pravila.py",
+            "planski_rezim": "listovi 4.c Obuhvat detaljnijih planova i 4.d Važeći planovi (2008., 2014.) i 4.d Područja i dijelovi primjene planskih mjera zaštite (prijedlog 2025.), scripts/gup-grad/planski-rezim.py",
         },
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -615,6 +636,9 @@ def zapisi_plocice(c, godine_out, cestice, up_kodovi) -> None:
                     # područje urbanog pravila po godini (za skočni prozor)
                     "u": {god: up_kodovi[g["urbano_pravilo"][ci] - 1]
                           for god, g in godine_out.items() if g["urbano_pravilo"][ci] > 0},
+                    # bitovi planskog režima po godini (src/lib/gup-grad/rezim.ts)
+                    "p": {god: g["planski_rezim"][ci] for god, g in godine_out.items()
+                          if g.get("planski_rezim") and g["planski_rezim"][ci] > 0},
                 },
             })
         put = os.path.join(izlaz, f"{kljuc}.json")

@@ -115,6 +115,14 @@ export interface Pravila {
    */
   postujZabraneGradnje: boolean;
   /**
+   * Slobodno zemljište gdje GUP propisuje plan užeg područja koji nije
+   * donesen, a nova gradnja do njega nije dopuštena (rezim.ts: nisko
+   * konsolidirana područja 2006./2015., sanacija, preobrazba i neuređeno
+   * 2025.), nije slobodno za gradnju danas. Broji se odvojeno, kao „čeka
+   * plan užeg područja”.
+   */
+  postujObvezuPlana: boolean;
+  /**
    * Ulice unutar obojene zone. GUP boji namjenom cijele blokove, a crta
    * samo glavne prometnice; nerazvrstane ceste, ulice i nogostupi unutar
    * stambene zone nisu stanovanje ni slobodno zemljište te zone. Kad je
@@ -251,6 +259,7 @@ export const ZADANA_PRAVILA: Pravila = {
   },
   gradevna: { zadaniKig: null, najmanjaZgradaM2: 20, prekoMede: true },
   postujZabraneGradnje: true,
+  postujObvezuPlana: true,
   ulice: { izuzmi: true, pragUlicneCestice: 0.6, pragUskeUlicneCestice: 0.25 },
   ostaci: {
     ukljuci: true,

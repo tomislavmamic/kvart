@@ -22,6 +22,7 @@ import {
 import type { Pravila } from "./pravila";
 import { najmanjaCestica, uvjetiGradnje, type TablicaGradnje, type TablicaPpmin } from "./odredbe";
 import { KLASA_PO_INDEKSU } from "./model";
+import { planskiRezim, type Rezim } from "./rezim";
 
 export interface PlanGodine {
   id: string;
@@ -46,7 +47,14 @@ export interface SirovaMjerenja {
   rucno_vrste?: RucnaVrsta[];
   godine: Record<
     string,
-    { id: string; klase_px: Record<string, number>; komadi: number[]; urbano_pravilo: number[] }
+    {
+      id: string;
+      klase_px: Record<string, number>;
+      komadi: number[];
+      urbano_pravilo: number[];
+      /** Bitovi planskog režima po čestici (rezim.ts, REZIM); nema u starijim izvozima. */
+      planski_rezim?: number[];
+    }
   >;
   /** Kodovi urbanih pravila; `urbano_pravilo[i]` je 1-based indeks ovdje (0 = nema). */
   urbana_pravila_kodovi: string[];
@@ -110,6 +118,12 @@ export async function ucitajOdredbe(): Promise<Odredbe> {
   return { ppmin, gradnja };
 }
 
+/** Planski režim čestice u godini plana (rezim.ts). */
+export function rezimCestice(d: SirovaMjerenja, g: Godina, cestica: number): Rezim {
+  const bitovi = d.godine[String(g)]?.planski_rezim?.[cestica] ?? 0;
+  return planskiRezim(bitovi, g, kodPravila(d, g, cestica));
+}
+
 /** Kod urbanog pravila čestice u godini plana, ili null. */
 export function kodPravila(d: SirovaMjerenja, g: Godina, cestica: number): string | null {
   const i = d.godine[String(g)]?.urbano_pravilo?.[cestica] ?? 0;
@@ -131,6 +145,7 @@ export function ulazGodine(d: SirovaMjerenja, g: Godina, p: Pravila, o: Odredbe)
       kig: ug.kig,
       kis: ug.kis,
       novaGradnja: ug.novaGradnja,
+      rezim: rezimCestice(d, g, k.cestica).rezim,
       pikselM2,
     };
   };
