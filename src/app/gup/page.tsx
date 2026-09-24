@@ -84,7 +84,7 @@ export default async function GupPage() {
 
         <h3 className="mt-5 font-bold text-zinc-900">Što je „iskorišteno”</h3>
         <p className="mt-1">
-          Iskorištenost se mjeri po katastarskim česticama (katastarski plan iz GIS izvoza Grada Splita). Na svakoj
+          Iskorištenost se mjeri po katastarskim česticama (katastar Državne geodetske uprave, rujan 2026.). Na svakoj
           čestici, i posebno na svakom njezinom dijelu koji pada u drugu zonu, izmjereno je što na njoj stoji: zgrade (iz
           katastra, koji zna vrstu zgrade, i iz gradskog 3D modela, koji vidi i zgrade kojih u katastru nema, i visinu
           svake), ceste i nogostupi, parkirališta, okoliš škola, vrtića, bolnica i crkava, igrališta, športski tereni,

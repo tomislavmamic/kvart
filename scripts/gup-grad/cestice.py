@@ -263,7 +263,8 @@ def citaj(put: str, **kw):
 
 def citaj_cestice():
     """Katastarske čestice iz spremišta DGU-a (gradski izvoz ih ima iz 2024.)."""
-    return citaj(katastar.cestice(), layer="cestice", columns=["KO_NAZIV", "KC_BROJ"])
+    c = citaj(katastar.cestice(), layer="cestice", columns=["KO_NAZIV", "KC_BROJ"])
+    return c.set_geometry(katastar.jednodijelne(c.geometry.values), crs=c.crs)
 
 
 def izvor_cestica() -> str:
