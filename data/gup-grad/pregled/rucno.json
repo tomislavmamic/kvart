@@ -1,6 +1,6 @@
 {
- "opis": "Ručni pregled slobodnih čestica u stambenim i mješovitim zonama na ortofotu DGU 2023 (scripts/gup-grad/pregled.py, upute u pregled-upute.md). Vrsta vrijedi za neiskorišteni dio cijele čestice (RucnaVrsta u src/lib/gup-grad/izracun.ts). Prvi krug (≥ 1000 m² slobodnog): svaku sliku pregledao je Claude Haiku, a svako „iskorišteno” i nasumičnih 40 „slobodno” ponovno, bez uvida u prvi sud, Claude Sonnet, čiji sud vrijedi. Drugi krug (500–1000 m², neriješeni ≥ 1000 m², naselja 2.2 od 300 m²): jedan prolaz Claude Sonneta.",
- "pregledano": 1355,
+ "opis": "Ručni pregled slobodnih čestica u stambenim i mješovitim zonama na ortofotu DGU 2023 (scripts/gup-grad/pregled.py, upute u pregled-upute.md). Vrsta vrijedi za neiskorišteni dio cijele čestice (RucnaVrsta u src/lib/gup-grad/izracun.ts). Prvi krug (≥ 1000 m² slobodnog): svaku sliku pregledao je Claude Haiku, a svako „iskorišteno” i nasumičnih 40 „slobodno” ponovno, bez uvida u prvi sud, Claude Sonnet, čiji sud vrijedi. Drugi krug (500–1000 m², neriješeni ≥ 1000 m², naselja 2.2 od 300 m²) i treći (nove i promijenjene čestice nakon osvježavanja katastra s DGU-a, rujan 2026.): jedan prolaz Claude Sonneta.",
+ "pregledano": 1502,
  "cestice": [
   {
    "ko": "SPLIT",
@@ -19,15 +19,6 @@
    "sigurnost": "visoka",
    "udio": 0.8,
    "slobodno_prije_m2": 10652
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "7900/1",
-   "vrsta": "parkiraliste",
-   "opis": "prostor između stambenih zgrada - parkirališta, prilazne ceste, nešto zelenila",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 10464
   },
   {
    "ko": "KAMEN",
@@ -49,39 +40,12 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "13649/12",
-   "vrsta": "promet",
-   "opis": "uska traka uz glavnu prometnicu kroz grad",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 8632
-  },
-  {
-   "ko": "SPLIT",
    "kc": "13669/1",
    "vrsta": "promet",
    "opis": "obris prati veliku prometnicu (cestovni koridor) kroz gusto naselje",
    "sigurnost": "visoka",
    "udio": 0.9,
    "slobodno_prije_m2": 8200
-  },
-  {
-   "ko": "STOBREČ",
-   "kc": "2528/1",
-   "vrsta": "promet",
-   "opis": "postojeća cesta/prometnica duž gusto izgrađenog obalnog područja",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 7880
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "2408/1",
-   "vrsta": "parkiraliste",
-   "opis": "veliko parkiralište oko kompleksa zgrada, zelenilo uz staze",
-   "sigurnost": "visoka",
-   "udio": 0.6,
-   "slobodno_prije_m2": 7724
   },
   {
    "ko": "STOBREČ",
@@ -118,15 +82,6 @@
    "sigurnost": "srednja",
    "udio": 0.6,
    "slobodno_prije_m2": 6640
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "972/1",
-   "vrsta": "slobodno",
-   "opis": "Šuma s jednom malom građevinom",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 6528
   },
   {
    "ko": "SPLIT",
@@ -181,15 +136,6 @@
    "sigurnost": "visoka",
    "udio": 0.75,
    "slobodno_prije_m2": 5520
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "8895/1",
-   "vrsta": "slobodno",
-   "opis": "prirodna šuma i makija, malo otvorenih mjesta",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 5480
   },
   {
    "ko": "SPLIT",
@@ -274,15 +220,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "6320/1",
-   "vrsta": "zelenilo",
-   "opis": "drveće i staze između stambenih zgrada u naselju",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 4608
-  },
-  {
-   "ko": "SPLIT",
    "kc": "13667/47",
    "vrsta": "javna",
    "opis": "okoliš institucijske zgrade (škola/bolnica) sa zelenilom i stazama",
@@ -298,15 +235,6 @@
    "sigurnost": "srednja",
    "udio": 0.85,
    "slobodno_prije_m2": 4460
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "13961/7",
-   "vrsta": "promet",
-   "opis": "dionica autoceste s prilaznim rampama i zelenim pojasom",
-   "sigurnost": "visoka",
-   "udio": 0.7,
-   "slobodno_prije_m2": 4380
   },
   {
    "ko": "KAMEN",
@@ -361,42 +289,6 @@
    "sigurnost": "srednja",
    "udio": 0.7,
    "slobodno_prije_m2": 4016
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "2384/5",
-   "vrsta": "slobodno",
-   "opis": "Poljoprivredne povrsine sa zelenilom",
-   "sigurnost": "visoka",
-   "udio": 0.85,
-   "slobodno_prije_m2": 3972
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "13654/9",
-   "vrsta": "promet",
-   "opis": "obris prati veliku raskrižje/petlju autoceste",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 3912
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "3684/1",
-   "vrsta": "parkiraliste",
-   "opis": "parkirališta i prilazne ceste između stambenih zgrada naselja",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 3780
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "2310/1",
-   "vrsta": "parkiraliste",
-   "opis": "parkiralište i zelene površine oko kompleksa zgrada",
-   "sigurnost": "srednja",
-   "udio": 0.55,
-   "slobodno_prije_m2": 3744
   },
   {
    "ko": "SPLIT",
@@ -571,15 +463,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "1147/14",
-   "vrsta": "slobodno",
-   "opis": "neizgrađeno zemljište s čemprima i vegetacijom",
-   "sigurnost": "visoka",
-   "udio": 0.8,
-   "slobodno_prije_m2": 3158
-  },
-  {
-   "ko": "SPLIT",
    "kc": "7312/1",
    "vrsta": "slobodno",
    "opis": "clearing with vegetation patches and agricultural structures",
@@ -613,15 +496,6 @@
    "sigurnost": "visoka",
    "udio": 0.9,
    "slobodno_prije_m2": 3116
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "7605/1",
-   "vrsta": "slobodno",
-   "opis": "Vegetation i makija s jednom građevinom",
-   "sigurnost": "visoka",
-   "udio": 0.85,
-   "slobodno_prije_m2": 3104
   },
   {
    "ko": "SPLIT",
@@ -732,15 +606,6 @@
    "slobodno_prije_m2": 2824
   },
   {
-   "ko": "SPLIT",
-   "kc": "7031/2",
-   "vrsta": "parkiraliste",
-   "opis": "veliko parkiralište s automobilima uz skladište",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 2800
-  },
-  {
    "ko": "KAMEN",
    "kc": "1277/1",
    "vrsta": "slobodno",
@@ -796,15 +661,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "3306/10",
-   "vrsta": "promet",
-   "opis": "okretište/cesta u obliku slova U između stambenih zgrada",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 2708
-  },
-  {
-   "ko": "SPLIT",
    "kc": "399",
    "vrsta": "slobodno",
    "opis": "makija i šuma s malo građevina",
@@ -838,15 +694,6 @@
    "sigurnost": "srednja",
    "udio": 0.7,
    "slobodno_prije_m2": 2648
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "2685/9",
-   "vrsta": "slobodno",
-   "opis": "vegetacija i zapusteno zemljiste bez većih zgrada",
-   "sigurnost": "visoka",
-   "udio": 0.85,
-   "slobodno_prije_m2": 2632
   },
   {
    "ko": "SPLIT",
@@ -894,15 +741,6 @@
    "slobodno_prije_m2": 2588
   },
   {
-   "ko": "SPLIT",
-   "kc": "13654/54",
-   "vrsta": "promet",
-   "opis": "uski koridor uz veliku prometnicu kroz naselje",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 2588
-  },
-  {
    "ko": "KAMEN",
    "kc": "1340",
    "vrsta": "slobodno",
@@ -928,15 +766,6 @@
    "sigurnost": "srednja",
    "udio": 0.75,
    "slobodno_prije_m2": 2517
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "509/1",
-   "vrsta": "slobodno",
-   "opis": "vinogradi i poljoprivredne kulture redovima",
-   "sigurnost": "visoka",
-   "udio": 0.8,
-   "slobodno_prije_m2": 2464
   },
   {
    "ko": "SPLIT",
@@ -973,15 +802,6 @@
    "sigurnost": "srednja",
    "udio": 0.5,
    "slobodno_prije_m2": 2452
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "1099/1",
-   "vrsta": "parkiraliste",
-   "opis": "popločana/parkirna površina oko dviju zgrada, rub sa zapuštenim raslinjem",
-   "sigurnost": "srednja",
-   "udio": 0.6,
-   "slobodno_prije_m2": 2448
   },
   {
    "ko": "SPLIT",
@@ -1083,15 +903,6 @@
    "slobodno_prije_m2": 2368
   },
   {
-   "ko": "SPLIT",
-   "kc": "4630/1",
-   "vrsta": "parkiraliste",
-   "opis": "asfaltirana parkirna površina s vozilima između zgrada",
-   "sigurnost": "srednja",
-   "udio": 0.6,
-   "slobodno_prije_m2": 2344
-  },
-  {
    "ko": "STOBREČ",
    "kc": "2425",
    "vrsta": "slobodno",
@@ -1144,15 +955,6 @@
    "sigurnost": "visoka",
    "udio": 0.9,
    "slobodno_prije_m2": 2332
-  },
-  {
-   "ko": "STOBREČ",
-   "kc": "283/1",
-   "vrsta": "slobodno",
-   "opis": "poljoprivredno/prirodno tlo s bujnom vegetacijom",
-   "sigurnost": "srednja",
-   "udio": 0.8,
-   "slobodno_prije_m2": 2320
   },
   {
    "ko": "SPLIT",
@@ -1327,15 +1129,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "3698/3",
-   "vrsta": "slobodno",
-   "opis": "uska traka makije/šikare uz maslinik, bez izgradnje",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 2100
-  },
-  {
-   "ko": "SPLIT",
    "kc": "658/1",
    "vrsta": "gradiliste",
    "opis": "gola razrovana zemlja s materijalima, blizu gradilišta s bagerom",
@@ -1387,15 +1180,6 @@
    "sigurnost": "srednja",
    "udio": 0.85,
    "slobodno_prije_m2": 2072
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "7235",
-   "vrsta": "slobodno",
-   "opis": "golo/zapušteno zemljište bez građevina uz cestu",
-   "sigurnost": "srednja",
-   "udio": 0.9,
-   "slobodno_prije_m2": 2040
   },
   {
    "ko": "STOBREČ",
@@ -1543,29 +1327,11 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "9827/2",
-   "vrsta": "slobodno",
-   "opis": "forest area with cleared patches throughout",
-   "sigurnost": "srednja",
-   "udio": 0.75,
-   "slobodno_prije_m2": 1956
-  },
-  {
-   "ko": "SPLIT",
    "kc": "10353",
    "vrsta": "slobodno",
    "opis": "šumska i prirodna vegetacija, malo prometne infrastrukture",
    "sigurnost": "visoka",
    "udio": 0.85,
-   "slobodno_prije_m2": 1952
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "3327/1",
-   "vrsta": "slobodno",
-   "opis": "poljoprivredna parcela sa zelenilom",
-   "sigurnost": "visoka",
-   "udio": 0.75,
    "slobodno_prije_m2": 1952
   },
   {
@@ -1596,15 +1362,6 @@
    "slobodno_prije_m2": 1940
   },
   {
-   "ko": "SPLIT",
-   "kc": "1672/2",
-   "vrsta": "slobodno",
-   "opis": "zapušteno zemljište i cesta",
-   "sigurnost": "srednja",
-   "udio": 0.7,
-   "slobodno_prije_m2": 1936
-  },
-  {
    "ko": "KAMEN",
    "kc": "1010",
    "vrsta": "slobodno",
@@ -1621,15 +1378,6 @@
    "sigurnost": "srednja",
    "udio": 0.8,
    "slobodno_prije_m2": 1936
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "13473/8",
-   "vrsta": "slobodno",
-   "opis": "izdužena parcela s drvećem uz cestu, parkiralište na jednom kraju",
-   "sigurnost": "srednja",
-   "udio": 0.6,
-   "slobodno_prije_m2": 1924
   },
   {
    "ko": "KAMEN",
@@ -1723,15 +1471,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "2625/1",
-   "vrsta": "parkiraliste",
-   "opis": "veliko parkiralište s automobilima, teniski teren uz rub",
-   "sigurnost": "visoka",
-   "udio": 0.7,
-   "slobodno_prije_m2": 1892
-  },
-  {
-   "ko": "SPLIT",
    "kc": "2655",
    "vrsta": "slobodno",
    "opis": "Zelenilo sa malim objektima",
@@ -1792,15 +1531,6 @@
    "sigurnost": "visoka",
    "udio": 0.75,
    "slobodno_prije_m2": 1848
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "3641/16",
-   "vrsta": "parkiraliste",
-   "opis": "parkiralište i zelena površina oko kompleksa zgrada",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 1844
   },
   {
    "ko": "SPLIT",
@@ -1984,15 +1714,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "10311/1",
-   "vrsta": "slobodno",
-   "opis": "oranica sa dva mala objekta, najvećim dijelom poljoprivredno",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 1740
-  },
-  {
-   "ko": "SPLIT",
    "kc": "8909/1",
    "vrsta": "zelenilo",
    "opis": "drveće uz cestu i oko zgrada u naselju",
@@ -2056,15 +1777,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "8257/92",
-   "vrsta": "parkiraliste",
-   "opis": "parkiralište s vozilima između zgrada, drveće po rubovima",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 1687
-  },
-  {
-   "ko": "SPLIT",
    "kc": "2742/1",
    "vrsta": "slobodno",
    "opis": "poljoprivredne površine i travnjaci",
@@ -2107,15 +1819,6 @@
    "sigurnost": "srednja",
    "udio": 0.75,
    "slobodno_prije_m2": 1665
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "4384/1",
-   "vrsta": "parkiraliste",
-   "opis": "parkiralište s automobilima i zelenilo oko zgrade",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 1664
   },
   {
    "ko": "SPLIT",
@@ -2404,15 +2107,6 @@
    "sigurnost": "visoka",
    "udio": 0.85,
    "slobodno_prije_m2": 1576
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "419/1",
-   "vrsta": "parkiraliste",
-   "opis": "parkiralište s kružnim tokom, malo sportsko igralište uz rub",
-   "sigurnost": "srednja",
-   "udio": 0.6,
-   "slobodno_prije_m2": 1572
   },
   {
    "ko": "SPLIT",
@@ -2731,15 +2425,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "5490/1",
-   "vrsta": "slobodno",
-   "opis": "gusta šuma, prirodna vegetacija bez zgrada",
-   "sigurnost": "visoka",
-   "udio": 0.95,
-   "slobodno_prije_m2": 1488
-  },
-  {
-   "ko": "SPLIT",
    "kc": "2379",
    "vrsta": "slobodno",
    "opis": "gusta prirodna vegetacija",
@@ -2790,15 +2475,6 @@
    "opis": "travnato/zapušteno polje uz staklenike",
    "sigurnost": "srednja",
    "udio": 0.9,
-   "slobodno_prije_m2": 1468
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "8717/1",
-   "vrsta": "parkiraliste",
-   "opis": "veliko parkiralište s automobilima uz zgrade",
-   "sigurnost": "visoka",
-   "udio": 0.85,
    "slobodno_prije_m2": 1468
   },
   {
@@ -3061,15 +2737,6 @@
    "sigurnost": "visoka",
    "udio": 0.85,
    "slobodno_prije_m2": 1396
-  },
-  {
-   "ko": "STOBREČ",
-   "kc": "214",
-   "vrsta": "slobodno",
-   "opis": "prirodna vegetacija i šuma s minimalnom gradnjom",
-   "sigurnost": "srednja",
-   "udio": 0.85,
-   "slobodno_prije_m2": 1393
   },
   {
    "ko": "KAMEN",
@@ -3513,15 +3180,6 @@
    "slobodno_prije_m2": 1266
   },
   {
-   "ko": "STOBREČ",
-   "kc": "465/1",
-   "vrsta": "slobodno",
-   "opis": "arable s razbacanim strukturama, većinom poljoprivredno",
-   "sigurnost": "visoka",
-   "udio": 0.85,
-   "slobodno_prije_m2": 1264
-  },
-  {
    "ko": "SPLIT",
    "kc": "10334",
    "vrsta": "slobodno",
@@ -3781,15 +3439,6 @@
    "sigurnost": "visoka",
    "udio": 0.9,
    "slobodno_prije_m2": 1208
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "4700/1",
-   "vrsta": "parkiraliste",
-   "opis": "parkirna/pješačka površina s automobilima i zelenilom između zgrada",
-   "sigurnost": "srednja",
-   "udio": 0.5,
-   "slobodno_prije_m2": 1204
   },
   {
    "ko": "SPLIT",
@@ -4935,15 +4584,6 @@
    "slobodno_prije_m2": 1668
   },
   {
-   "ko": "SPLIT",
-   "kc": "3290/1",
-   "vrsta": "slobodno",
-   "opis": "golo tlo, šljunak i gusto grmlje/drveće pri dnu, bez zgrada u obrisu",
-   "sigurnost": "srednja",
-   "udio": 0.55,
-   "slobodno_prije_m2": 1612
-  },
-  {
    "ko": "ŽRNOVNICA",
    "kc": "6051",
    "vrsta": "slobodno",
@@ -4969,15 +4609,6 @@
    "sigurnost": "srednja",
    "udio": 0.65,
    "slobodno_prije_m2": 1520
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "3290/2",
-   "vrsta": "slobodno",
-   "opis": "zapušteno zemljište, gola zemlja i trava, staza kroz sredinu",
-   "sigurnost": "visoka",
-   "udio": 0.85,
-   "slobodno_prije_m2": 1500
   },
   {
    "ko": "SPLIT",
@@ -5709,15 +5340,6 @@
    "slobodno_prije_m2": 925
   },
   {
-   "ko": "KAMEN",
-   "kc": "2071/3",
-   "vrsta": "slobodno",
-   "opis": "vrtne gredice/redovi nasada, dio šljunčanog/popločanog prostora uz zgradu",
-   "sigurnost": "srednja",
-   "udio": 0.7,
-   "slobodno_prije_m2": 924
-  },
-  {
    "ko": "STOBREČ",
    "kc": "2199/2",
    "vrsta": "slobodno",
@@ -5848,15 +5470,6 @@
    "kc": "2189",
    "vrsta": "slobodno",
    "opis": "uska traka zapuštene trave/vegetacije između kuća",
-   "sigurnost": "srednja",
-   "udio": 0.9,
-   "slobodno_prije_m2": 892
-  },
-  {
-   "ko": "STOBREČ",
-   "kc": "2273",
-   "vrsta": "slobodno",
-   "opis": "golo zemljano/šljunčano tlo uz cestu, prazna parcela",
    "sigurnost": "srednja",
    "udio": 0.9,
    "slobodno_prije_m2": 892
@@ -6223,15 +5836,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "7578/4",
-   "vrsta": "slobodno",
-   "opis": "uska traka zapuštenog travnatog zemljišta, neizgrađeno",
-   "sigurnost": "visoka",
-   "udio": 0.9,
-   "slobodno_prije_m2": 828
-  },
-  {
-   "ko": "SPLIT",
    "kc": "2762",
    "vrsta": "slobodno",
    "opis": "suho tlo i rijetka vegetacija, prazna neizgrađena parcela",
@@ -6489,15 +6093,6 @@
    "opis": "popločano dvorište između stambenih zgrada s parkiranim autima",
    "sigurnost": "srednja",
    "udio": 0.65,
-   "slobodno_prije_m2": 800
-  },
-  {
-   "ko": "SPLIT",
-   "kc": "509/2",
-   "vrsta": "slobodno",
-   "opis": "trokutasta čestica pod redovima maslina",
-   "sigurnost": "visoka",
-   "udio": 1.0,
    "slobodno_prije_m2": 800
   },
   {
@@ -7645,15 +7240,6 @@
   },
   {
    "ko": "SPLIT",
-   "kc": "10231/1",
-   "vrsta": "slobodno",
-   "opis": "suha trava, prazna neizgrađena parcela uz cestu",
-   "sigurnost": "visoka",
-   "udio": 1.0,
-   "slobodno_prije_m2": 688
-  },
-  {
-   "ko": "SPLIT",
    "kc": "3149/1",
    "vrsta": "slobodno",
    "opis": "Golo šljunčano/prašnjavo dvorište, nalik korištenom radnom prostoru",
@@ -8491,15 +8077,6 @@
   },
   {
    "ko": "STOBREČ",
-   "kc": "1953",
-   "vrsta": "slobodno",
-   "opis": "golo tlo s grupom drveća, zapuštena parcela",
-   "sigurnost": "srednja",
-   "udio": 0.75,
-   "slobodno_prije_m2": 616
-  },
-  {
-   "ko": "STOBREČ",
    "kc": "39",
    "vrsta": "slobodno",
    "opis": "gusta makija/šikara, neizgrađeno",
@@ -8973,15 +8550,6 @@
    "opis": "travnato zapušteno zemljište",
    "sigurnost": "visoka",
    "udio": 0.9,
-   "slobodno_prije_m2": 580
-  },
-  {
-   "ko": "KAMEN",
-   "kc": "1429/3",
-   "vrsta": "slobodno",
-   "opis": "gusto zasjenjeno drveće, neizgrađena uska parcela",
-   "sigurnost": "visoka",
-   "udio": 1.0,
    "slobodno_prije_m2": 580
   },
   {
@@ -10287,6 +9855,987 @@
    "opis": "golo, zemljano tlo, prazna neizgrađena parcela uz cestu",
    "sigurnost": "visoka",
    "udio": 0.95,
+   "slobodno_prije_m2": 500
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2873/1",
+   "vrsta": "slobodno",
+   "opis": "veliko golo/zapušteno zemljište, u dnu parkiralište i pristupni put",
+   "sigurnost": "srednja",
+   "udio": 0.7,
+   "slobodno_prije_m2": 8056
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "2528/1",
+   "vrsta": "promet",
+   "opis": "cijela čestica je prometnica/cesta uz obalu",
+   "sigurnost": "visoka",
+   "udio": 1.0,
+   "slobodno_prije_m2": 5076
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7235",
+   "vrsta": "slobodno",
+   "opis": "raščišćeno golo zemljište uz autocestu, bez objekata",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 3660
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13961/7",
+   "vrsta": "promet",
+   "opis": "autocesta s čvorom, uz rub uređeni zeleni pojas",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 3176
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "6331/119",
+   "vrsta": "parkiraliste",
+   "opis": "veliko parkiralište između redova stambenih zgrada",
+   "sigurnost": "visoka",
+   "udio": 0.6,
+   "slobodno_prije_m2": 2968
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10311/1",
+   "vrsta": "slobodno",
+   "opis": "travnata/zapuštena površina s makadamskim prilazom kroz sredinu",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 2880
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "3/3",
+   "vrsta": "slobodno",
+   "opis": "zapušteno zemljište, trava i nisko grmlje",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 2764
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "972/1",
+   "vrsta": "javna",
+   "opis": "dvorište kompleksa (škola/ustanova) sa zelenilom i parkiralištem",
+   "sigurnost": "srednja",
+   "udio": 0.55,
+   "slobodno_prije_m2": 2752
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3278/1",
+   "vrsta": "slobodno",
+   "opis": "prazna neizgrađena parcela, golo tlo uz cestu",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 2712
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2408/1",
+   "vrsta": "uredjeno",
+   "opis": "popločani prostor i pristupi između stambenih zgrada, parkiralište uz rub",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 2576
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13654/9",
+   "vrsta": "promet",
+   "opis": "veliki cestovni čvor/autocesta, cijela čestica je prometnica",
+   "sigurnost": "visoka",
+   "udio": 1.0,
+   "slobodno_prije_m2": 2492
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7900/1",
+   "vrsta": "parkiraliste",
+   "opis": "ceste i parkirališta između stambenih zgrada s pokojim zelenilom",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 2240
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "2425/1",
+   "vrsta": "slobodno",
+   "opis": "zapušteno zemljište obraslo travom, ostaci gredica u vrtu",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 2136
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "1147/14",
+   "vrsta": "parkiraliste",
+   "opis": "veliko parkiralište uz zgrade, rub sa zelenilom",
+   "sigurnost": "visoka",
+   "udio": 0.6,
+   "slobodno_prije_m2": 2120
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "2162/2",
+   "vrsta": "slobodno",
+   "opis": "zapuštena livada/vrt s voćkama i makadamskim putem",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 2108
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7031/2",
+   "vrsta": "parkiraliste",
+   "opis": "asfaltirano parkiralište puno parkiranih automobila",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 2060
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13649/23",
+   "vrsta": "slobodno",
+   "opis": "travnati pojas uz rub autoceste",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 2008
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "6320/1",
+   "vrsta": "javna",
+   "opis": "dvorište institucionalnog kompleksa (bolnica/škola) sa zelenilom i stazama",
+   "sigurnost": "srednja",
+   "udio": 0.6,
+   "slobodno_prije_m2": 1992
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13649/24",
+   "vrsta": "promet",
+   "opis": "trak uz glavnu prometnicu/čvorište",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1940
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "2365/2",
+   "vrsta": "slobodno",
+   "opis": "oranica/zapušteno zemljište sa šupom u kutu",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1932
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "972/8",
+   "vrsta": "slobodno",
+   "opis": "obraslo zemljište s manjom neupisanom građevinom i stazama",
+   "sigurnost": "srednja",
+   "udio": 0.7,
+   "slobodno_prije_m2": 1924
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "509/2",
+   "vrsta": "slobodno",
+   "opis": "maslinik/voćnjak, redovi stabala, neizgrađeno",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1872
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "1099/1",
+   "vrsta": "zelenilo",
+   "opis": "uređeni travnjak oko stambenih zgrada, s prilaznim putem",
+   "sigurnost": "srednja",
+   "udio": 0.6,
+   "slobodno_prije_m2": 1756
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7605/1",
+   "vrsta": "slobodno",
+   "opis": "livada s grmljem i pojedinačnim stablima, neizgrađeno",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1724
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2384/5",
+   "vrsta": "parkiraliste",
+   "opis": "parkiralište i popločane površine oko zgrada, sportski teren",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 1704
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7427/1",
+   "vrsta": "zelenilo",
+   "opis": "travnata površina uz manju neupisanu zgradu",
+   "sigurnost": "srednja",
+   "udio": 0.7,
+   "slobodno_prije_m2": 1661
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10335/1",
+   "vrsta": "promet",
+   "opis": "veliko asfaltno/betonsko dvorište bez vidljivih parkiranih vozila",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1596
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3278/3",
+   "vrsta": "slobodno",
+   "opis": "zapušteno/golo zemljište s betonskom stazom",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 1568
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "8895/1",
+   "vrsta": "parkiraliste",
+   "opis": "ceste i parkirališta između stambenih zgrada uz obalu",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 1552
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "1672/2",
+   "vrsta": "promet",
+   "opis": "kružni prilazni put/okretište s travnatim otokom",
+   "sigurnost": "srednja",
+   "udio": 0.7,
+   "slobodno_prije_m2": 1548
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3162/2",
+   "vrsta": "slobodno",
+   "opis": "dio vinograd, dio dvorište i prilaz kućama",
+   "sigurnost": "srednja",
+   "udio": 0.55,
+   "slobodno_prije_m2": 1519
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "283/1",
+   "vrsta": "slobodno",
+   "opis": "šuma/makija s pokojim stablom, mala građevina u sredini",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1504
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10231/1",
+   "vrsta": "slobodno",
+   "opis": "uska zapuštena travnata traka između parkirališta",
+   "sigurnost": "srednja",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1496
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3684/1",
+   "vrsta": "parkiraliste",
+   "opis": "veliko parkiralište unutar stambenog kompleksa",
+   "sigurnost": "visoka",
+   "udio": 0.6,
+   "slobodno_prije_m2": 1488
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "1132/24",
+   "vrsta": "slobodno",
+   "opis": "neuređeno golo zemljište, dio korišten za parkiranje",
+   "sigurnost": "srednja",
+   "udio": 0.7,
+   "slobodno_prije_m2": 1420
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "409/4",
+   "vrsta": "slobodno",
+   "opis": "prazna parcela, trava i golo tlo između kuća",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1420
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2685/24",
+   "vrsta": "slobodno",
+   "opis": "zapušteno zemljište s makadamskim prilazom",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1412
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7605/3",
+   "vrsta": "slobodno",
+   "opis": "golo/zapušteno zemljište s rijetkim raslinjem uz amfiteatar",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1388
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10260/59",
+   "vrsta": "parkiraliste",
+   "opis": "parkiralište s automobilima i grmljem",
+   "sigurnost": "visoka",
+   "udio": 0.6,
+   "slobodno_prije_m2": 1384
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "2273",
+   "vrsta": "slobodno",
+   "opis": "golo/kamenito zemljište uz cestu, hrpa materijala",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1380
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2625/1",
+   "vrsta": "parkiraliste",
+   "opis": "veliko asfaltirano parkiralište s mnogo automobila",
+   "sigurnost": "visoka",
+   "udio": 0.95,
+   "slobodno_prije_m2": 1376
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13473/8",
+   "vrsta": "slobodno",
+   "opis": "neuređeno golo zemljište uz cestu, tragovi kolotraga",
+   "sigurnost": "srednja",
+   "udio": 0.75,
+   "slobodno_prije_m2": 1344
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3327/10",
+   "vrsta": "slobodno",
+   "opis": "obrađena zemlja/vrt, redovi usjeva ili trave",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1324
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2310/1",
+   "vrsta": "zelenilo",
+   "opis": "zeleno dvorište sa stablima između zgrada, parkiralište uz rub",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 1320
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "4630/1",
+   "vrsta": "parkiraliste",
+   "opis": "parkiralište s automobilima između zgrada",
+   "sigurnost": "visoka",
+   "udio": 0.8,
+   "slobodno_prije_m2": 1292
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10336/1",
+   "vrsta": "slobodno",
+   "opis": "obrađeno poljoprivredno zemljište, mladi nasad",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1288
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2894/4",
+   "vrsta": "slobodno",
+   "opis": "travnato/zapušteno zemljište uz staklenik",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 1284
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7379/8",
+   "vrsta": "slobodno",
+   "opis": "poljoprivredno zemljište, redovi nasada (vinograd/maslinik)",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1260
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10317/1",
+   "vrsta": "slobodno",
+   "opis": "obrađeno poljoprivredno zemljište",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1240
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "8257/92",
+   "vrsta": "parkiraliste",
+   "opis": "parkiralište i pristupne staze između zgrada",
+   "sigurnost": "visoka",
+   "udio": 0.55,
+   "slobodno_prije_m2": 1220
+  },
+  {
+   "ko": "KAMEN",
+   "kc": "1858/1",
+   "vrsta": "slobodno",
+   "opis": "gusto raslinje/makija, potpuno neizgrađeno",
+   "sigurnost": "visoka",
+   "udio": 0.95,
+   "slobodno_prije_m2": 1216
+  },
+  {
+   "ko": "KAMEN",
+   "kc": "2091/2",
+   "vrsta": "slobodno",
+   "opis": "prazna šljunčana/zapuštena parcela uz cestu",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1188
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "9827/2",
+   "vrsta": "zelenilo",
+   "opis": "uređeno zelenilo/dvorište sa stablima između kuća",
+   "sigurnost": "srednja",
+   "udio": 0.65,
+   "slobodno_prije_m2": 1188
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10260/57",
+   "vrsta": "slobodno",
+   "opis": "zapušten vrt s maslinama i raslinjem",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 1172
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2685/9",
+   "vrsta": "slobodno",
+   "opis": "travnato/zapušteno zemljište s pokojim stablom i putem",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 1168
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "298/1",
+   "vrsta": "slobodno",
+   "opis": "zarasla makija/šikara",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1108
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3290/1",
+   "vrsta": "slobodno",
+   "opis": "golo/šljunčano zemljište uz parkiralište i kanal",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 1096
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "8883/16",
+   "vrsta": "slobodno",
+   "opis": "zapušteno zemljište oko manjih zgrada, trava i grmlje",
+   "sigurnost": "visoka",
+   "udio": 0.7,
+   "slobodno_prije_m2": 1096
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "509/1",
+   "vrsta": "slobodno",
+   "opis": "maslinik u redovima",
+   "sigurnost": "visoka",
+   "udio": 0.95,
+   "slobodno_prije_m2": 1092
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "5490/1",
+   "vrsta": "slobodno",
+   "opis": "gusta šuma/raslinje, potpuno neizgrađeno",
+   "sigurnost": "visoka",
+   "udio": 0.95,
+   "slobodno_prije_m2": 1088
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13669/67",
+   "vrsta": "promet",
+   "opis": "traka uz cestu s drvoredom, cijela čestica je prometnica",
+   "sigurnost": "visoka",
+   "udio": 1.0,
+   "slobodno_prije_m2": 1056
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13654/54",
+   "vrsta": "promet",
+   "opis": "koridor ceste kroz gusto izgrađeno područje",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1052
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3306/10",
+   "vrsta": "promet",
+   "opis": "asfaltirani prilazni put s okretištem",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 1024
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3698/3",
+   "vrsta": "parkiraliste",
+   "opis": "veliko parkiralište uz red zgrada",
+   "sigurnost": "visoka",
+   "udio": 0.6,
+   "slobodno_prije_m2": 1012
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "214",
+   "vrsta": "slobodno",
+   "opis": "travnata neuređena površina s rijetkim stablima",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 984
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "316/3",
+   "vrsta": "slobodno",
+   "opis": "zapušteno zemljište, trava i grmlje",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 976
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "1953",
+   "vrsta": "slobodno",
+   "opis": "malo golo/zapušteno zemljište uz prilaz",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 952
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "465/1",
+   "vrsta": "slobodno",
+   "opis": "vrt/oranica s redovima nasada",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 948
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "412/3",
+   "vrsta": "slobodno",
+   "opis": "maslinik/voćnjak i dvorište kuće s bazenom",
+   "sigurnost": "srednja",
+   "udio": 0.55,
+   "slobodno_prije_m2": 945
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3164/3",
+   "vrsta": "slobodno",
+   "opis": "vinograd i raslinje oko kuće",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 933
+  },
+  {
+   "ko": "KAMEN",
+   "kc": "1429/3",
+   "vrsta": "slobodno",
+   "opis": "gusto raslinje/stabla na uskoj parceli",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 924
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "4384/1",
+   "vrsta": "parkiraliste",
+   "opis": "parkiralište oko poslovne zgrade",
+   "sigurnost": "visoka",
+   "udio": 0.7,
+   "slobodno_prije_m2": 916
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3290/2",
+   "vrsta": "slobodno",
+   "opis": "uska zapuštena/gola parcela uz put",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 912
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "4413/6",
+   "vrsta": "zelenilo",
+   "opis": "travnato dvorište oko neupisane kuće",
+   "sigurnost": "srednja",
+   "udio": 0.6,
+   "slobodno_prije_m2": 893
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7215/4",
+   "vrsta": "slobodno",
+   "opis": "gusta šuma, potpuno neizgrađeno",
+   "sigurnost": "visoka",
+   "udio": 0.95,
+   "slobodno_prije_m2": 872
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "8717/1",
+   "vrsta": "parkiraliste",
+   "opis": "uska parkirna površina uz zgradu",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 852
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "4700/1",
+   "vrsta": "parkiraliste",
+   "opis": "popločano dvorište i prilazi između zgrada",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 800
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "283/5",
+   "vrsta": "slobodno",
+   "opis": "obradiva zemlja s redovima nasada",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 792
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13649/12",
+   "vrsta": "promet",
+   "opis": "gradska prometnica s više traka",
+   "sigurnost": "visoka",
+   "udio": 0.95,
+   "slobodno_prije_m2": 780
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "375/5",
+   "vrsta": "slobodno",
+   "opis": "gusto zapušteno raslinje/grmlje",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 768
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7227/2",
+   "vrsta": "slobodno",
+   "opis": "vrt/oranica u redovima uz sportski teren",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 744
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7294/7",
+   "vrsta": "slobodno",
+   "opis": "zapušteno/obrađeno zemljište s grmljem i vrtnim gredicama",
+   "sigurnost": "visoka",
+   "udio": 0.8,
+   "slobodno_prije_m2": 732
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3641/16",
+   "vrsta": "javna",
+   "opis": "dvorište ustanove (bolnica/škola) s parkiralištem i zelenilom",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 728
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "3/1",
+   "vrsta": "slobodno",
+   "opis": "golo/šljunčano prazno zemljište uz zgrade",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 728
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "280",
+   "vrsta": "slobodno",
+   "opis": "prazna parcela s automobilom, trava i golo tlo",
+   "sigurnost": "srednja",
+   "udio": 0.75,
+   "slobodno_prije_m2": 720
+  },
+  {
+   "ko": "KAMEN",
+   "kc": "2071/3",
+   "vrsta": "slobodno",
+   "opis": "vrt s redovima nasada",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 704
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7578/4",
+   "vrsta": "slobodno",
+   "opis": "uska traka golog zemljišta uz zgrade",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 636
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "2508/6",
+   "vrsta": "slobodno",
+   "opis": "zarasla vegetacija s golom mrljom u sredini",
+   "sigurnost": "srednja",
+   "udio": 0.75,
+   "slobodno_prije_m2": 612
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "13649/29",
+   "vrsta": "promet",
+   "opis": "traka uz cestu, cijela čestica je pločnik/prometnica",
+   "sigurnost": "visoka",
+   "udio": 1.0,
+   "slobodno_prije_m2": 596
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3327/1",
+   "vrsta": "slobodno",
+   "opis": "uska parcela obrasla drvećem/grmljem, neizgrađeno",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 596
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "880/4",
+   "vrsta": "slobodno",
+   "opis": "zapuštena trava/zemlja uz kuće",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 596
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "799/2",
+   "vrsta": "slobodno",
+   "opis": "neuređena travnata površina, suha trava",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 588
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "419/1",
+   "vrsta": "parkiraliste",
+   "opis": "veliko parkiralište sa sportskim terenom u sredini",
+   "sigurnost": "visoka",
+   "udio": 0.65,
+   "slobodno_prije_m2": 580
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7555/20",
+   "vrsta": "slobodno",
+   "opis": "golo/zapušteno zemljište uz manju građevinu",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 575
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "1044/3",
+   "vrsta": "slobodno",
+   "opis": "gusta zarasla vegetacija uz kuće",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 556
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7653/22",
+   "vrsta": "slobodno",
+   "opis": "travnato zapušteno zemljište s manjom građevinom na rubu",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 553
+  },
+  {
+   "ko": "KAMEN",
+   "kc": "1662/1",
+   "vrsta": "slobodno",
+   "opis": "gusto raslinje, neizgrađena uska parcela",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 544
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "22/4",
+   "vrsta": "slobodno",
+   "opis": "šuma/makija s golom mrljom",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 544
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3382/3",
+   "vrsta": "slobodno",
+   "opis": "golo/travnato prazno zemljište bez građevina",
+   "sigurnost": "visoka",
+   "udio": 0.9,
+   "slobodno_prije_m2": 540
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "390/1",
+   "vrsta": "slobodno",
+   "opis": "trava i golo tlo, neizgrađena parcela između kuća",
+   "sigurnost": "visoka",
+   "udio": 0.85,
+   "slobodno_prije_m2": 536
+  },
+  {
+   "ko": "KAMEN",
+   "kc": "2097/1",
+   "vrsta": "slobodno",
+   "opis": "zarasla vegetacija uz prilaz i zgradu",
+   "sigurnost": "srednja",
+   "udio": 0.8,
+   "slobodno_prije_m2": 528
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "7280/1",
+   "vrsta": "parkiraliste",
+   "opis": "kuća s dvorištem, dio korišten za parkiranje automobila",
+   "sigurnost": "srednja",
+   "udio": 0.5,
+   "slobodno_prije_m2": 527
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "8946/1",
+   "vrsta": "izgradjeno",
+   "opis": "kuća bez cijan obrisa, dvorište i prilaz",
+   "sigurnost": "visoka",
+   "udio": 0.5,
+   "slobodno_prije_m2": 524
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10220/7",
+   "vrsta": "slobodno",
+   "opis": "malo golo/zapušteno zemljište između kuća",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 520
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "3921/128",
+   "vrsta": "promet",
+   "opis": "prilazna cesta/pločnik s dijelom parkinga uz krivinu",
+   "sigurnost": "srednja",
+   "udio": 0.7,
+   "slobodno_prije_m2": 516
+  },
+  {
+   "ko": "STOBREČ",
+   "kc": "162/4",
+   "vrsta": "slobodno",
+   "opis": "zapušteno zemljište s grupama stabala uz cestu",
+   "sigurnost": "visoka",
+   "udio": 0.8,
+   "slobodno_prije_m2": 516
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "1105/5",
+   "vrsta": "slobodno",
+   "opis": "travnata neuređena površina uz cestu",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 512
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "10181/9",
+   "vrsta": "slobodno",
+   "opis": "travnato/zapušteno zemljište malog obujma",
+   "sigurnost": "srednja",
+   "udio": 0.85,
+   "slobodno_prije_m2": 508
+  },
+  {
+   "ko": "SPLIT",
+   "kc": "2895/2",
+   "vrsta": "izgradjeno",
+   "opis": "veća gospodarska zgrada bez cijan obrisa i prilazni put",
+   "sigurnost": "srednja",
+   "udio": 0.5,
    "slobodno_prije_m2": 500
   }
  ]

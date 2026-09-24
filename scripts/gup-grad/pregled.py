@@ -217,7 +217,8 @@ def rucno() -> None:
                 "čestice (RucnaVrsta u src/lib/gup-grad/izracun.ts). Prvi krug (≥ 1000 m² slobodnog): svaku sliku "
                 "pregledao je Claude Haiku, a svako „iskorišteno” i nasumičnih 40 „slobodno” ponovno, bez uvida u prvi "
                 "sud, Claude Sonnet, čiji sud vrijedi. Drugi krug (500–1000 m², neriješeni ≥ 1000 m², naselja 2.2 od "
-                "300 m²): jedan prolaz Claude Sonneta.",
+                "300 m²) i treći (nove i promijenjene čestice nakon osvježavanja katastra s DGU-a, rujan 2026.): jedan prolaz "
+                "Claude Sonneta.",
         "pregledano": prije.get("pregledano", 0) + len(set(prvi) | set(drugi)),
         "cestice": out,
     }, open(RUCNO, "w"), ensure_ascii=False, indent=1)
