@@ -50,8 +50,8 @@ export default async function GupPage() {
         <GupPrikaz podaci={podaci} />
       </div>
       <p className="mt-3 text-sm text-zinc-600">
-        Na „Karti čestica” vidi se kako je razvrstana svaka pojedina čestica — namjena, što na njoj stoji i je li to po
-        planu. Klik na česticu kaže zašto; ako je krivo svrstana, ondje se može predložiti ispravak.
+        Na karti se vidi kako je razvrstana svaka pojedina čestica — namjena, što na njoj stoji i je li to po planu.
+        Klik na česticu kaže zašto; ako je krivo svrstana, ondje se može predložiti ispravak.
       </p>
 
       <section className="mt-12 max-w-3xl text-sm leading-relaxed text-zinc-700">
@@ -158,8 +158,8 @@ export default async function GupPage() {
           <code className="font-mono text-xs">src/lib/gup-grad/izracun.ts</code>, a mjerenja po česticama izvode skripte
           u <code className="font-mono text-xs">scripts/gup-grad/</code>. Podaci OpenStreetMapa © OpenStreetMap
           contributors, ODbL. Kako je razvrstana pojedina čestica vidi se na{" "}
-          <a href="/gup?prikaz=karta" className="fokus font-semibold text-emerald-700 underline">
-            karti čestica
+          <a href="/gup" className="fokus font-semibold text-emerald-700 underline">
+            karti
           </a>
           . Za kvart, s pročitanim oznakama namjene, vidi{" "}
           <Link href="/plan" className="fokus font-semibold text-emerald-700 underline">
