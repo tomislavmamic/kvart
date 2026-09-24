@@ -270,9 +270,11 @@ test("prijemnici dojava: jedno mjesto, jedan prijemnik; skrivene ne stvaraju mje
     lon: 16.50401,
     opis: "Dračevac 7B",
   });
-  // Isto i iz satnih opažanja, koja nose samo ime prijemnika (mjesta iz
-  // `data/dojave.json`).
-  const izSati = prijemniciDojava(dojaveUSate(DOJAVE)).map((x) => x.ime);
+  // Isto i iz satnih opažanja, koja nose samo ime prijemnika. Mjesta se
+  // zadano traže u `data/dojave.json`, koji nije u repozitoriju (osobni
+  // podaci), pa ih test daje sam — inače prolazi samo na stroju s izvozom.
+  const poznati = () => new Map(p.map((x) => [x.ime, x]));
+  const izSati = prijemniciDojava(dojaveUSate(DOJAVE), poznati).map((x) => x.ime);
   assert.ok(izSati.includes("dracevac-7b"));
   assert.equal(slug("Matoševa ulica 59, Solin"), "matoseva-ulica-59-solin");
   assert.equal(slug("Đurđevac"), "durdevac");

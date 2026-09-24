@@ -270,8 +270,9 @@ test("profil merkaptana ima srednju 1, pa sidra ljestvica ostaju valjana", () =>
   assert.ok(raspon > 1.5 && raspon < 2.5, `raspon je ${raspon.toFixed(1)}×`);
 
   // Vrh mora pasti u radne sate, a dno u noć — to je ono što se mjeri.
-  const vrh = PROFIL_MERKAPTANA.indexOf(Math.max(...PROFIL_MERKAPTANA));
-  const dno = PROFIL_MERKAPTANA.indexOf(Math.min(...PROFIL_MERKAPTANA));
+  const profil: readonly number[] = PROFIL_MERKAPTANA;
+  const vrh = profil.indexOf(Math.max(...profil));
+  const dno = profil.indexOf(Math.min(...profil));
   assert.ok(vrh >= 8 && vrh <= 17, `vrh je u ${vrh} h, izvan radnih sati`);
   assert.ok(dno >= 21 || dno <= 5, `dno je u ${dno} h, a noć je drugdje`);
 });
