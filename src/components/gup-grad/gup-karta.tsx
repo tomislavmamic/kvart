@@ -97,7 +97,10 @@ export function GupKarta(props: {
         preferCanvas: true,
         zoomControl: false,
       });
-      L.control.zoom({ position: "bottomright" }).addTo(map);
+      // dolje lijevo: dolje desno je plutajući gumb razgovora, gore su ploče
+      L.control.zoom({ position: "bottomleft" }).addTo(map);
+      // bez mjesta u adresi: cijeli obuhvat GUP-a
+      if (!adr.sredina) map.fitBounds(GUP_GRAD_BOUNDS);
       // središte i zum u adresu, bez novog zapisa u povijesti
       map.on("moveend", () => {
         const c = map.getCenter();
@@ -154,8 +157,9 @@ export function GupKarta(props: {
       aktivan ? "border-maslina bg-maslina text-white" : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
     }`;
   const plutajuci = "fokus rounded-full border border-kamen-tlo bg-white px-4 py-2 text-sm font-semibold shadow-lg hover:bg-zinc-50";
+  // lijeva ploča staje iznad gumba za zum (dolje lijevo)
   const ploca =
-    "absolute top-[4.25rem] z-[1010] flex max-h-[calc(100%-5.5rem)] w-[min(20rem,calc(100%-1.5rem))] flex-col rounded-xl border border-zinc-200 bg-white shadow-xl";
+    "absolute top-[4.25rem] z-[1010] flex w-[min(20rem,calc(100%-1.5rem))] flex-col rounded-xl border border-zinc-200 bg-white shadow-xl";
   const zaglavlje = (naslov: string, zatvori: () => void) => (
     <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2">
       <h2 className="text-sm font-bold">{naslov}</h2>
@@ -172,7 +176,7 @@ export function GupKarta(props: {
       <div className="absolute right-3 top-3 z-[1010] rounded-lg shadow-lg">{props.prekidac}</div>
 
       {lijeva ? (
-        <aside id="gup-postavke" className={`${ploca} left-3`} aria-label="Postavke karte">
+        <aside id="gup-postavke" className={`${ploca} left-3 max-h-[calc(100%-10rem)]`} aria-label="Postavke karte">
           {zaglavlje("Postavke", () => setLijeva(false))}
           <div className="overflow-y-auto px-4 py-3">
             <GupProvjeraPostavke postavke={props.postavke} onPostavke={props.onPostavke}>
@@ -202,7 +206,7 @@ export function GupKarta(props: {
       )}
 
       {desna ? (
-        <aside id="gup-legenda" className={`${ploca} right-3`} aria-label="Legenda karte">
+        <aside id="gup-legenda" className={`${ploca} right-3 max-h-[calc(100%-5.5rem)]`} aria-label="Legenda karte">
           {zaglavlje("Legenda", () => setDesna(false))}
           <div className="overflow-y-auto px-4 py-3">
             <GupProvjeraLegenda postavke={props.postavke} info={info} />
