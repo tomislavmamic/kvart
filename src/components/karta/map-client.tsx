@@ -33,14 +33,6 @@ import {
 } from "@/lib/map-views";
 import { postaviKlizac } from "@/lib/karta-klizac";
 import {
-  GUP_POGLED,
-  GupProvjeraPloca,
-  POCETNE_GUP_POSTAVKE,
-  useGupProvjera,
-  type GupInfo,
-  type GupPostavke,
-} from "@/components/karta/gup-provjera";
-import {
   izAdrese as vremeplovIzAdrese,
   natpisPodloge,
   postaviStranu,
@@ -422,21 +414,6 @@ export function MapClient() {
   // razlikuje „pogodio sam nešto” od „pogodio sam prazno”, pa dosje ne
   // iskoči preko skočnog prozora koji je upravo otvoren.
   const pogodakSloja = useRef(0);
-  // Pogled „Provjera GUP-a” vodi kartu po cijelom gradu, gdje dosje (koji
-  // zna samo za kvart) nema što reći — klik na kartu ondje ga ne otvara.
-  const pogledRef = useRef(viewId);
-  useEffect(() => {
-    pogledRef.current = viewId;
-  }, [viewId]);
-  const [gupPostavke, setGupPostavke] = useState<GupPostavke>(POCETNE_GUP_POSTAVKE);
-  const gupInfo = useGupProvjera({
-    mapRef,
-    LRef,
-    spremno: ready,
-    aktivno: viewId === GUP_POGLED,
-    postavke: gupPostavke,
-    pogodakSloja,
-  });
 
   // Trenutačno istaknuta čestica — drži se da je se može vratiti u izvorni
   // stil kad se odabere druga ili kad se ploča zatvori.
@@ -575,8 +552,9 @@ export function MapClient() {
       });
       // Ograniči pomicanje na kvart + ~700 m rezerve — karta je o Dračevcu
       // i Bilicama, ne o cijelom Splitu. Iznimka je pogled koji sam kaže
-      // svoje granice (Provjera GUP-a); već ovdje, da duboka poveznica na
-      // Marjan ne bude vraćena u kvart prije nego što pogled stigne.
+      // svoje granice; već ovdje, da duboka poveznica ne bude vraćena u
+      // kvart prije nego što pogled stigne. (Karta provjere GUP-a po cijelom
+      // gradu živi na /gup.)
       map.setMaxBounds(
         MAP_VIEWS.find((v) => v.id === adr.viewId)?.granice ?? MAP_MAX_BOUNDS,
       );
@@ -614,7 +592,6 @@ export function MapClient() {
       // `pogodakSloja` pa njihov klik ovdje ne odjekne dvaput.
       map.on("click", (e) => {
         if (Date.now() - pogodakSloja.current < 60) return;
-        if (pogledRef.current === GUP_POGLED) return;
         if (solarHandler.current) return; // solarni način ima svoj klik
         otvoriDosje.current(e.latlng.lat, e.latlng.lng);
       });
@@ -1210,9 +1187,6 @@ export function MapClient() {
           onOtvoriCesticu={(lat, lng, selectedParcelId) =>
             otvoriDosje.current(lat, lng, undefined, selectedParcelId)
           }
-          gupPostavke={gupPostavke}
-          onGupPostavke={setGupPostavke}
-          gupInfo={gupInfo}
           open={panelOpen}
           onOpen={otvoriTraku}
           usko={usko}
@@ -1418,9 +1392,6 @@ function Sidebar(props: {
   onFiltriPlaniranihCesta: (filters: PlannedRoadParcelFilters) => void;
   onPonoviCesticePlaniranihCesta: () => void;
   onOtvoriCesticu: (lat: number, lng: number, parcelId?: string) => void;
-  gupPostavke: GupPostavke;
-  onGupPostavke: (p: GupPostavke) => void;
-  gupInfo: GupInfo;
   open: boolean;
   onOpen: (v: boolean) => void;
   usko: boolean;
@@ -1596,14 +1567,6 @@ function Sidebar(props: {
           currentView.id !== "javno-evidentirano" &&
           currentView.id !== "cestice-planiranih-cesta" && (
           <Opis view={currentView} />
-        )}
-
-        {currentView?.id === GUP_POGLED && (
-          <GupProvjeraPloca
-            postavke={props.gupPostavke}
-            onPostavke={props.onGupPostavke}
-            info={props.gupInfo}
-          />
         )}
 
         {currentView?.id === "cestice-planiranih-cesta" && (

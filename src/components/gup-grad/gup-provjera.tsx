@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Pogled „Provjera GUP-a” na /karta: kako je infografika /gup razvrstala
- * svaku katastarsku česticu.
+ * Karta provjere na /gup (prikaz „Karta”, gup-karta.tsx): kako je
+ * infografika razvrstala svaku katastarsku česticu.
  *
  * Dva sloja, oba izvedena skriptom scripts/gup-grad/cestice.py:
  *  - slika namjene po godini (naše razvrstavanje lista, u bojama legende
@@ -26,7 +26,6 @@ import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
 import { predloziIspravak } from "@/lib/actions/gup";
 import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
-export const GUP_POGLED = "gup-provjera";
 const MIN_ZUM = 15;
 /** Zgrade su gušće od čestica (~60 000 tlocrta), pa tek od zuma 16. */
 const MIN_ZUM_ZGRADA = 16;
@@ -660,7 +659,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   }
   h +=
     `<div style="margin-top:8px;${sivo}">Površine komada izmjerene su na rešetki od 2 m, pa se zbroj može razlikovati od katastarske. ` +
-    `<a href="/gup" style="color:#047857">Kako se broji ↗</a></div>`;
+    `<a href="/gup#kako-je-izracunato" style="color:#047857">Kako se broji ↓</a></div>`;
   return h + obrazacIspravka(p, s, post);
 }
 
@@ -820,8 +819,8 @@ export function GupProvjeraPloca(props: {
       {info.stanje === "ucitava" && <p className="text-xs text-zinc-500">Učitavam čestice…</p>}
       {info.stanje === "greska" && <p className="text-xs text-rose-700">Dio podataka se nije učitao; pomakni kartu za novi pokušaj.</p>}
       <p className="text-xs text-zinc-500">
-        Klik na česticu pokazuje komade po namjeni, što je izmjereno i kako je presuđeno. Službeni list za usporedbu: „ISPU
-        raster” u biralu namjene. Zbrojevi i pravila: <a href="/gup" className="fokus font-semibold text-maslina underline">Split po GUP-u</a>.
+        Klik na česticu pokazuje komade po namjeni, što je izmjereno i kako je presuđeno. Službeni list za usporedbu:
+        „Službeni list GUP-a” pod podlogom.
       </p>
     </div>
   );

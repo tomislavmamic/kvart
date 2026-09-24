@@ -18,6 +18,7 @@ import type { PublicParcelProperties } from "../src/lib/public-parcels";
 import type { TargetedOwnershipProperties } from "../src/lib/targeted-ownership";
 import {
   dossierMapBounds,
+  GUP_GRAD_BOUNDS,
   MAP_MAX_BOUNDS,
   MAP_VIEWS,
   OVERLAY_LAYERS,
@@ -86,14 +87,13 @@ test("a narrow dossier releases map bounds so its parcel can remain visible", ()
   // zaostao za izvorom (sloj cijelih tokova proširio je okvir na zapad i
   // sjever), pa je test padao na promjeni koja s dosjeom nema veze.
   assert.deepEqual(dossierMapBounds(false), MAP_MAX_BOUNDS);
-  // pogled sa svojim granicama (Provjera GUP-a) zadržava ih
-  const grad = MAP_VIEWS.find((v) => v.id === "gup-provjera")?.granice;
-  assert.ok(grad);
+  // pogled sa svojim granicama (npr. cijeli obuhvat GUP-a) zadržava ih
+  const grad = GUP_GRAD_BOUNDS;
   assert.deepEqual(dossierMapBounds(false, grad), grad);
 });
 
 test("dossier layout keeps the active view's bounds when nothing is selected", () => {
-  const grad = MAP_VIEWS.find((v) => v.id === "gup-provjera")!.granice!;
+  const grad = GUP_GRAD_BOUNDS;
   const bounds: unknown[] = [];
   const map = {
     invalidateSize: () => undefined,

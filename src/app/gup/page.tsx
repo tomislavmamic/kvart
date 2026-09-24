@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { GupInfografika, type PodaciInfografike } from "@/components/gup-grad/infografika";
+import { GupPrikaz } from "@/components/gup-grad/gup-prikaz";
+import type { PodaciInfografike } from "@/components/gup-grad/infografika";
 import { GODINE, type Godina } from "@/lib/gup-grad/model";
 import { izracunaj, ucitajMjerenja, ucitajOdredbe } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
@@ -46,18 +47,17 @@ export default async function GupPage() {
       </p>
 
       <div className="mt-6">
-        <GupInfografika podaci={podaci} />
+        <GupPrikaz podaci={podaci} />
       </div>
       <p className="mt-3 text-sm text-zinc-600">
-        Kako je razvrstana svaka pojedina čestica — namjena, što na njoj stoji i je li to po planu — vidi se na{" "}
-        <Link href="/karta?pogled=gup-provjera" className="fokus font-semibold text-emerald-700 underline">
-          karti provjere
-        </Link>
-        .
+        Na „Karti čestica” vidi se kako je razvrstana svaka pojedina čestica — namjena, što na njoj stoji i je li to po
+        planu. Klik na česticu kaže zašto; ako je krivo svrstana, ondje se može predložiti ispravak.
       </p>
 
       <section className="mt-12 max-w-3xl text-sm leading-relaxed text-zinc-700">
-        <h2 className="border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">Kako je izračunato</h2>
+        <h2 id="kako-je-izracunato" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
+          Kako je izračunato
+        </h2>
 
         <h3 className="mt-5 font-bold text-zinc-900">Namjena</h3>
         <p className="mt-1">
@@ -157,11 +157,10 @@ export default async function GupPage() {
           <code className="font-mono text-xs">src/lib/gup-grad/pravila.ts</code>, izračun u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/izracun.ts</code>, a mjerenja po česticama izvode skripte
           u <code className="font-mono text-xs">scripts/gup-grad/</code>. Podaci OpenStreetMapa © OpenStreetMap
-          contributors, ODbL. Kako je razvrstana pojedina čestica vidi se na
-          karti:{" "}
-          <Link href="/karta?pogled=gup-provjera" className="fokus font-semibold text-emerald-700 underline">
-            Provjera GUP-a
-          </Link>
+          contributors, ODbL. Kako je razvrstana pojedina čestica vidi se na{" "}
+          <a href="/gup?prikaz=karta" className="fokus font-semibold text-emerald-700 underline">
+            karti čestica
+          </a>
           . Za kvart, s pročitanim oznakama namjene, vidi{" "}
           <Link href="/plan" className="fokus font-semibold text-emerald-700 underline">
             što nacrt GUP-a mijenja u Dračevcu i Bilicama

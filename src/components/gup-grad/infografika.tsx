@@ -59,7 +59,7 @@ function posto(dio: number, cijelo: number): string {
 const put = (p: readonly Tocka[]) => (p.length ? `M${p.map(([x, y]) => `${x},${y}`).join("L")}Z` : "");
 const sigurniId = (kod: string) => kod.replace(/[^A-Za-z0-9]/g, "");
 
-function Prekidac<T extends string>({
+export function Prekidac<T extends string>({
   oznaka,
   opcije,
   vrijednost,
@@ -89,11 +89,26 @@ function Prekidac<T extends string>({
   );
 }
 
-export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
-  const [godina, setGodina] = useState<Godina>(2025);
+/**
+ * Godinu i način brojanja smije voditi roditelj (/gup ih dijeli s kartom
+ * provjere, pa prelazak s grafikona na kartu ne vraća izbor na zadano).
+ */
+export function GupInfografika(props: {
+  podaci: PodaciInfografike;
+  godina?: Godina;
+  onGodina?: (g: Godina) => void;
+  inacica?: string;
+  onInacica?: (id: string) => void;
+}) {
+  const { podaci } = props;
+  const [vlastitaGodina, setVlastitaGodina] = useState<Godina>(2025);
+  const [vlastitaInacica, setVlastitaInacica] = useState(podaci.inacice[0].id);
+  const godina = props.godina ?? vlastitaGodina;
+  const setGodina = props.onGodina ?? setVlastitaGodina;
+  const inacica = props.inacica ?? vlastitaInacica;
+  const setInacica = props.onInacica ?? setVlastitaInacica;
   const [pogled, setPogled] = useState<Pogled>("namjena");
   const [oblik, setOblik] = useState<Oblik>("voronoi");
-  const [inacica, setInacica] = useState(podaci.inacice[0].id);
   const [odabrana, setOdabrana] = useState<KodKlase | null>(null);
   const uid = useId().replace(/:/g, "");
   // Natpisi se mjere u pikselima zaslona, ne u jedinicama viewBoxa — inače

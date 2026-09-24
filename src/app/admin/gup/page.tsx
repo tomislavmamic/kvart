@@ -45,7 +45,7 @@ export default async function AdminGupPage({ searchParams }: { searchParams: Pro
         </Link>
         <h1 className="mt-2 text-2xl font-bold">Ispravci karte provjere GUP-a</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          Prijedlozi posjetitelja s <Link href="/karta?pogled=gup-provjera" className="underline">karte</Link>.
+          Prijedlozi posjetitelja s <Link href="/gup?prikaz=karta" className="underline">karte čestica na /gup</Link>.
           Prihvaćene izvozi <code className="font-mono text-xs">npm run gup-grad:ispravci</code> u
           ručni pregled; tek tada ulaze u izračun.
         </p>
@@ -93,7 +93,7 @@ export default async function AdminGupPage({ searchParams }: { searchParams: Pro
             <div className="flex flex-wrap items-center gap-2">
               {r.lat !== null && r.lng !== null && (
                 <Link
-                  href={`/karta?pogled=gup-provjera&c=${r.lat.toFixed(5)},${r.lng.toFixed(5)}&z=19`}
+                  href={`/gup?prikaz=karta&c=${r.lat.toFixed(5)},${r.lng.toFixed(5)}&z=19`}
                   className="text-emerald-700 underline"
                   target="_blank"
                 >
