@@ -22,8 +22,8 @@ export type VrstaKoristenja =
   | "pomocna" // 4xx — garaže, spremišta
   | "ostala" // 6xx–9xx — nadstrešnice, trafostanice, objekti uz ceste
   | "neevidentirana" // zgrada iz gradskog 3D modela koje nema u katastru
-  | "promet" // ceste, nogostupi, parkirališta
-  | "uredjeno" // groblja, športski objekti
+  | "promet" // ulice i nogostupi (u namjeni P; u ostalim zonama se izuzimaju, vidi `ulice`)
+  | "uredjeno" // groblja, športski objekti, parkirališta
   | "zelenilo"; // javno zelenilo koje održavaju Parkovi i nasadi
 
 export type NacinBrojanja =
@@ -64,6 +64,53 @@ export interface Pravila {
     zelenilo: boolean;
   };
   /**
+   * Ulice unutar obojene zone. GUP boji namjenom cijele blokove, a crta
+   * samo glavne prometnice; nerazvrstane ceste, ulice i nogostupi unutar
+   * stambene zone nisu stanovanje ni slobodno zemljište te zone. Kad je
+   * `izuzmi`, površina ulice oduzima se od zone i pribraja „Ulicama i
+   * infrastrukturi” (P).
+   */
+  ulice: {
+    izuzmi: boolean;
+    /**
+     * Komad čestice pokriven ulicom barem ovolikim udjelom je sama ulica
+     * (katastarska čestica puta) i izuzima se cijeli, ne samo traka od 7 m
+     * oko osi ceste.
+     */
+    pragUlicneCestice: number;
+  };
+  /**
+   * Premali ostaci. Slobodan dio čestice manji od najmanje građevne čestice
+   * koju odredbe GUP-a propisuju za njegovo područje urbanog pravila i
+   * namjenu (Ppmin, odredbe.ts) ne broji se kao slobodan — osim ako se
+   * dodiruje sa slobodnom česticom iste namjene i zajedno dosežu tu
+   * površinu (mogu se spojiti u građevnu česticu). Takav dio je „ostatak”:
+   * ni iskorišten ni slobodan. Gdje odredbe Ppmin ne propisuju, pravila
+   * nema.
+   */
+  ostaci: {
+    ukljuci: boolean;
+    /**
+     * Koje vrste gradnje iz odredbi određuju najmanju česticu za
+     * stanovanje. Uzima se najmanja od uključenih; interpolacija (nova
+     * čestica između dvije izgrađene) je upravo slučaj praznine u
+     * izgrađenom nizu, a niz (180 m²) odredbe dopuštaju samo kroz UPU.
+     */
+    tipovi: {
+      slobodnostojeca: boolean;
+      dvojna: boolean;
+      interpolacija: boolean;
+      /** Ppmin bez navedene vrste građevine (npr. 2.3: 500 m²). */
+      opcenito: boolean;
+      niz: boolean;
+    };
+    /**
+     * Čestica je „slobodna” (pa može spasiti susjedni ostatak) ako je na
+     * njoj iskorišteno manje od ovog udjela.
+     */
+    slobodnaUdio: number;
+  };
+  /**
    * Koje vrste korištenja plan u pojedinoj klasi dopušta. Kombinirane
    * namjene (M1–M3 mješovita, K5 poslovna sa stanovanjem) dopuštaju više
    * vrsta odjednom. Kad je komad prema `prag`/`cijela` iskorišten, a
@@ -90,9 +137,13 @@ const UVIJEK: readonly VrstaKoristenja[] = ["promet", "ostala", "zelenilo"];
 /**
  * Zadana pravila.
  *
- * `dopusteno` slijedi odredbe GUP-a na razini skupine namjene, ne pojedine
- * odredbe: stanovanje u M i S, gospodarstvo u I/K i M, javne zgrade u D i
- * mješovitim zonama. Za zgradu koje nema u katastru (`neevidentirana`) ne
+ * `dopusteno` slijedi odredbe za provođenje (izvadak s citatima:
+ * data/gup-grad/odredbe/izvor/dopusteno.json; str. = Sl. gl. 55/14). U
+ * skladu je ono što odredbe dopuštaju OPĆENITO; ono što dopuštaju samo pod
+ * posebnim uvjetom koji zgrada iz katastra ne može pokazati (stan uz
+ * poslovni prostor u K na čestici od 2000 m², postojeće kuće u Z6) broji se
+ * kao protivno. Čl. 8: ulice, javna parkirališta i komunalne građevine
+ * grade se na površinama svih namjena. Za zgradu koje nema u katastru (`neevidentirana`) ne
  * znamo čemu služi, pa je u suprotnosti samo ondje gdje plan ne predviđa
  * nikakvu zgradu (zelenilo, rekreacija, plaže); u građevnim zonama je
  * dopuštena. Da se broji kao kuća, industrijske hale Sjeverne luke koje
@@ -112,24 +163,45 @@ export const ZADANA_PRAVILA: Pravila = {
   najmanjiTrag: 0.03,
   zgrade: "oba",
   racunaj: { zgrade: true, promet: true, uredjeno: true, zelenilo: false },
+  ulice: { izuzmi: true, pragUlicneCestice: 0.6 },
+  ostaci: {
+    ukljuci: true,
+    tipovi: { slobodnostojeca: true, dvojna: true, interpolacija: true, opcenito: true, niz: false },
+    slobodnaUdio: 0.05,
+  },
   dopusteno: {
-    S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "javna"],
+    // str. 3: stanovanje, uz njega javni i poslovni sadržaji (trgovine na
+    // zasebnoj čestici do 1000 m²); pomoćne samo uz stambenu građevinu
+    S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "javna", "gospodarska"],
     // kombinirana: M1 pretežito stambena, M2 stambena i poslovna, M3
     // stanovanje i turizam, K5 poslovna sa stanovanjem — list ih boji istom
     // bojom, pa dopušta i stanovanje i poslovanje
     "M/K5": [...UVIJEK, "stambena", "gospodarska", "javna", "pomocna", "neevidentirana", "uredjeno"],
+    // str. 5: u D se ne grade stambene ni poslovne građevine
     D: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
-    "I/K": [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
-    T: [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
+    // str. 5: I/K gospodarske i prateće javne; stan samo uz posao na ≥2000 m²
+    "I/K": [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana"],
+    // str. 5: u T nije dopušteno stanovanje (ni povremeno); 2025. samo hoteli
+    T: [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana"],
     L: [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
     R1: [...UVIJEK, "uredjeno", "javna", "pomocna", "gospodarska", "neevidentirana"],
-    R2: [...UVIJEK, "uredjeno", "pomocna"],
-    R3: [...UVIJEK, "uredjeno", "pomocna"],
+    // str. 6: rekreacija i kupališta — manji ugostiteljski i pomoćni sadržaji
+    R2: [...UVIJEK, "uredjeno", "pomocna", "gospodarska"],
+    R3: [...UVIJEK, "uredjeno", "pomocna", "gospodarska"],
+    // 2025.: prirodne plaže — odredbe ne predviđaju gradnju
     R4: [...UVIJEK, "uredjeno"],
     R5: [...UVIJEK, "uredjeno", "pomocna"],
-    Z1: [...UVIJEK, "uredjeno"],
-    Z5: [...UVIJEK, "pomocna"],
-    N: SVE,
+    // str. 6 (čl. 71): u parku manje pomoćne građevine u funkciji parka,
+    // paviljoni, sanitarni čvorovi; stambene i poslovne ne (kuće na Marjanu
+    // su do 2025. tolerirane „do prenamjene ili uklanjanja”, ne u skladu)
+    Z1: [...UVIJEK, "uredjeno", "pomocna", "javna"],
+    // str. 7: zaštitno zelenilo — javne i rekreacijske građevine samo gdje
+    // pravila područja to kažu; privatne garaže i spremišta ne. Z6 (Meje,
+    // Bačvice) čuva postojeće kuće, ali je na listu iste boje kao Z5, pa se
+    // tamošnje kuće ovdje broje kao protivne — poznato ograničenje.
+    Z5: [...UVIJEK],
+    // str. 7: posebna namjena — ne stambene ni poslovne
+    N: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
     P: SVE,
   },
 };

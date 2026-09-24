@@ -128,7 +128,7 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
   // Visine punjenja po ćeliji: iskorišteno se nasipa odozdo, a u pogledu
   // „u skladu” najprije dio u skladu, pa iznad njega dio u suprotnosti.
   const razine = useMemo(() => {
-    const m = new Map<KodKlase, { dno: number; iskoristeno: number; uSkladu: number }>();
+    const m = new Map<KodKlase, { dno: number; iskoristeno: number; uSkladu: number; ostatak: number }>();
     for (const c of raspored.celije) {
       const r = poKodu.get(c.kod);
       if (!r || r.ukupnoM2 <= 0) continue;
@@ -137,6 +137,8 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
         dno,
         iskoristeno: razinaZaUdio(c.poligon, r.iskoristenoM2 / r.ukupnoM2),
         uSkladu: razinaZaUdio(c.poligon, r.uSkladuM2 / r.ukupnoM2),
+        // premali ostaci leže odmah iznad iskorištenog
+        ostatak: razinaZaUdio(c.poligon, Math.min(1, (r.iskoristenoM2 + r.ostatakM2) / r.ukupnoM2)),
       });
     }
     return m;
@@ -214,6 +216,13 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
             onPointerLeave={(e) => e.pointerType === "mouse" && setOdabrana(null)}
           >
             <defs>
+              {SKUPINE.map((s) => (
+                <pattern key={s.kod} id={`${uid}-ostatak-${s.kod}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                  <rect width="10" height="10" fill={s.svijetla} />
+                  <circle cx="2.5" cy="2.5" r="1.7" fill={s.boja} />
+                  <circle cx="7.5" cy="7.5" r="1.7" fill={s.boja} />
+                </pattern>
+              ))}
               <pattern id={`${uid}-srafura`} width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="9" height="9" fill="rgba(255,255,255,0.18)" />
                 <line x1="0" y1="0" x2="0" y2="9" stroke="#18181b" strokeWidth="3.2" strokeOpacity="0.75" />
@@ -241,6 +250,15 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
                   <path d={put(c.poligon)} fill={pun ? s.boja : s.svijetla} style={{ transition: "fill 300ms" }} />
                   {!pun && rz && (
                     <>
+                      {/* premali ostaci: točkasti pojas iznad iskorištenog, ispod slobodnog */}
+                      <rect
+                        x={-10}
+                        y={0}
+                        width={raspored.sirina + 20}
+                        height={raspored.visina + 20}
+                        fill={`url(#${uid}-ostatak-${s.kod})`}
+                        style={{ transform: `translateY(${rz.ostatak}px)`, transition: "transform 500ms ease" }}
+                      />
                       {/* sav iskorišteni dio; u pogledu „sklad” gornji pojas dobije šrafuru */}
                       <rect
                         x={-10}
@@ -341,6 +359,14 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
                 <span className="inline-block size-3.5 rounded-sm bg-zinc-300" aria-hidden />
                 svijetlo: još slobodno
               </span>
+              <span className="inline-flex items-center gap-1.5">
+                <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>
+                  <rect width="14" height="14" fill="#e4e4e7" />
+                  <circle cx="3.5" cy="3.5" r="2" fill="#71717b" />
+                  <circle cx="10.5" cy="10.5" r="2" fill="#71717b" />
+                </svg>
+                točkasto: premali ostaci (ne broje se kao slobodni)
+              </span>
               {pogled === "sklad" && (
                 <span className="inline-flex items-center gap-1.5">
                   <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>
@@ -421,7 +447,21 @@ function Detalji({ r, prethodno }: { r: RezultatKlase; prethodno: { godina: numb
       <p className="mt-1 tabular-nums text-zinc-800">
         Iskorišteno <strong>{ha(r.iskoristenoM2, 1)} ha</strong> ({posto(r.iskoristenoM2, r.ukupnoM2)}), od toga u skladu s
         planom {ha(r.uSkladuM2, 1)} ha, protivno planu <strong>{ha(r.uSuprotnostiM2, 1)} ha</strong>.
+        {r.ostatakM2 >= 500 && (
+          <>
+            {" "}
+            Premalih ostataka {ha(r.ostatakM2, 1)} ha; slobodno{" "}
+            {ha(Math.max(0, r.ukupnoM2 - r.iskoristenoM2 - r.ostatakM2), 1)} ha.
+          </>
+        )}
       </p>
+      {r.uliceM2 >= 500 && (
+        <p className="mt-1 tabular-nums text-zinc-600">
+          {r.kod === "P"
+            ? `Uključuje ${ha(r.uliceM2, 1)} ha ulica iz drugih zona.`
+            : `Bez ${ha(r.uliceM2, 1)} ha ulica koje plan ucrtava u ovu zonu — pribrojene su „Ulicama i infrastrukturi”.`}
+        </p>
+      )}
       {vrste.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
           {vrste.map(([v, m2]) => (
@@ -454,7 +494,8 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
                 </th>
               ))}
               <th className="py-2 pr-3 text-right font-semibold">Iskorišteno {godina}.</th>
-              <th className="py-2 text-right font-semibold">Protivno planu</th>
+              <th className="py-2 pr-3 text-right font-semibold">Protivno planu</th>
+              <th className="py-2 text-right font-semibold">Premali ostaci</th>
             </tr>
           </thead>
           <tbody>
@@ -474,7 +515,8 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
                   <td className="py-1.5 pr-3 text-right">
                     {ovaj ? `${ha(ovaj.iskoristenoM2, 1)} (${posto(ovaj.iskoristenoM2, ovaj.ukupnoM2)})` : "—"}
                   </td>
-                  <td className="py-1.5 text-right">{ovaj ? ha(ovaj.uSuprotnostiM2, 1) : "—"}</td>
+                  <td className="py-1.5 pr-3 text-right">{ovaj ? ha(ovaj.uSuprotnostiM2, 1) : "—"}</td>
+                  <td className="py-1.5 text-right">{ovaj ? ha(ovaj.ostatakM2, 1) : "—"}</td>
                 </tr>
               );
             })}

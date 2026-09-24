@@ -20,6 +20,7 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 
 import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
 import { INACICE, type VrstaKoristenja } from "@/lib/gup-grad/pravila";
+import { VRSTA_ZA_KLASU, type NajmanjaCestica, type VrstaOdredbe } from "@/lib/gup-grad/odredbe";
 import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 export const GUP_POGLED = "gup-provjera";
@@ -58,10 +59,20 @@ export const POCETNE_GUP_POSTAVKE: GupPostavke = {
 const CRVENA = "#d03b3b";
 export const STANJA: Record<
   StanjeCestice,
-  { naziv: string; ispuna: number; pruge?: { razmak: number; debljina: number } }
+  {
+    naziv: string;
+    ispuna: number;
+    pruge?: { razmak: number; debljina: number };
+    /** Isprekidan sivi rub, bez boje namjene u legendi. */
+    crtkano?: boolean;
+    /** Ispuna nije boja namjene nego ova (ulica). */
+    boja?: string;
+  }
 > = {
   "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85 },
   slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.35 },
+  ostatak: { naziv: "premali ostatak — ne broji se kao slobodno", ispuna: 0.1, crtkano: true },
+  ulica: { naziv: "ulica u zoni — izuzeta iz zone", ispuna: 0.55, boja: "#a1a1aa" },
   protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, pruge: { razmak: 8, debljina: 2.6 } },
   "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, pruge: { razmak: 13, debljina: 1.6 } },
 };
@@ -125,6 +136,14 @@ const VRSTE: Record<VrstaKoristenja, string> = {
 
 const SKUPINA_ZGRADE = ["", "stambena", "gospodarska", "javna", "pomoćna", "ostala"];
 
+const TIP_GRADNJE: Record<string, string> = {
+  slobodnostojeca: "slobodnostojeća",
+  dvojna: "dvojna",
+  interpolacija: "interpolacija između dvije izgrađene čestice",
+  opcenito: "bez navedene vrste građevine",
+  niz: "građevine u nizu",
+};
+
 interface Plocica {
   id: string;
   n: number;
@@ -139,6 +158,45 @@ export interface GupInfo {
 }
 
 type CesticaFeature = Feature<Geometry, SvojstvaCestice>;
+
+/** Najmanja građevna čestica iz odredbi po kodu urbanog pravila i vrsti. */
+type Ppmin = Record<string, Partial<Record<VrstaOdredbe, NajmanjaCestica>>>;
+
+interface Ostaci {
+  /** čestica → klase njezinih komada koji su premali ostatak */
+  poCestici: Map<number, Set<number>>;
+  ppmin: Ppmin;
+}
+const PRAZNO: Ostaci = { poCestici: new Map(), ppmin: {} };
+
+/**
+ * Ostaci i najmanje čestice po načinu brojanja i godini, iz
+ * /api/gup-ostaci (statično, isti izracun.ts kao /gup). Jednom po ključu.
+ */
+const ostaciPoKljucu = new Map<string, Promise<Ostaci>>();
+function ucitajOstatke(inacica: string, godina: number): Promise<Ostaci> {
+  const kljuc = `${inacica}-${godina}`;
+  let p = ostaciPoKljucu.get(kljuc);
+  if (!p) {
+    p = fetch(`/api/gup-ostaci/${kljuc}`)
+      .then((r) => (r.ok ? r.json() : { ostaci: [], ppmin: {} }))
+      .then((d: { ostaci: [number, number][]; ppmin: Ppmin }) => {
+        const m = new Map<number, Set<number>>();
+        for (const [c, k] of d.ostaci) {
+          if (!m.has(c)) m.set(c, new Set());
+          m.get(c)!.add(k);
+        }
+        return { poCestici: m, ppmin: d.ppmin ?? {} };
+      })
+      .catch(() => {
+        ostaciPoKljucu.delete(kljuc);
+        return PRAZNO;
+      });
+    ostaciPoKljucu.set(kljuc, p);
+  }
+  return p;
+}
+const NEMA = new Set<number>();
 
 /** Zgrada u public/geo/gup-grad/zgrade/*.json: izvor k = katastar, m = 3D model. */
 interface SvojstvaZgrade {
@@ -203,6 +261,7 @@ export function useGupProvjera(opts: {
   const slikeRef = useRef<{ granice: [[number, number], [number, number]]; slike: { godina: number; url: string }[] } | null>(null);
   const osvjeziRef = useRef<() => void>(() => {});
   const prozirnostRef = useRef<() => void>(() => {});
+  const ostaciRef = useRef<Ostaci>(PRAZNO);
 
   // Sloj čestica i njegovi rukovatelji žive dok je pogled aktivan.
   useEffect(() => {
@@ -211,7 +270,8 @@ export function useGupProvjera(opts: {
     if (!spremno || !map || !L || !aktivno) return;
     let ziv = true;
     const pravila = () => INACICE.find((i) => i.id === postavkeRef.current.inacica)?.pravila ?? INACICE[0].pravila;
-    const sud = (p: SvojstvaCestice) => sudCestice(p, postavkeRef.current.godina, pravila());
+    const sud = (p: SvojstvaCestice) =>
+      sudCestice(p, postavkeRef.current.godina, pravila(), 4, ostaciRef.current.poCestici.get(p.i) ?? NEMA);
 
     // Platno dolazi od karte (preferCanvas) — 5 000+ čestica u oknu kao SVG
     // bi zagušilo DOM.
@@ -224,7 +284,7 @@ export function useGupProvjera(opts: {
           const s = postavkeRef.current;
           L.popup({ maxWidth: 340, className: "gup-provjera-popup" })
             .setLatLng(e.latlng)
-            .setContent(popup(p, sud(p), s))
+            .setContent(popup(p, sud(p), s, ostaciRef.current.ppmin))
             .openOn(map);
         });
       },
@@ -266,7 +326,14 @@ export function useGupProvjera(opts: {
         return;
       }
       const okno = map.getBounds();
-      const n: Record<StanjeCestice, number> = { slobodna: 0, "u-skladu": 0, "djelomicno-protivno": 0, protivno: 0 };
+      const n: Record<StanjeCestice, number> = {
+        slobodna: 0,
+        "u-skladu": 0,
+        "djelomicno-protivno": 0,
+        protivno: 0,
+        ostatak: 0,
+        ulica: 0,
+      };
       sloj.eachLayer((l) => {
         const pl = l as LeafletNS.Polygon & { feature?: CesticaFeature };
         if (pl.feature && okno.intersects(pl.getBounds())) n[sud(pl.feature.properties).stanje]++;
@@ -346,7 +413,19 @@ export function useGupProvjera(opts: {
   // Promjena godine, prikaza ili načina brojanja samo prebojava.
   useEffect(() => {
     postavkeRef.current = postavke;
+    // Ostaci ovise o načinu brojanja i godini; stari se ne smiju zadržati
+    // pod novom godinom, pa se do dolaska novih crta bez njih.
+    let aktualno = true;
+    ostaciRef.current = PRAZNO;
+    void ucitajOstatke(postavke.inacica, postavke.godina).then((m) => {
+      if (!aktualno) return;
+      ostaciRef.current = m;
+      osvjeziRef.current();
+    });
     osvjeziRef.current();
+    return () => {
+      aktualno = false;
+    };
   }, [postavke]);
 
   return info;
@@ -364,10 +443,13 @@ function stil(s: SudCestice, p: GupPostavke): LeafletNS.PathOptions {
     };
   }
   const st = STANJA[s.stanje];
-  const boja = s.pretezita?.bojaPlana ?? "#ffffff";
+  const boja = st.boja ?? s.pretezita?.bojaPlana ?? "#ffffff";
+  if (st.crtkano) {
+    return { color: "#71717b", weight: 0.8, dashArray: "3 3", fillColor: boja, fillOpacity: st.ispuna };
+  }
   return {
-    color: s.stanje === "slobodna" ? "#52525c" : "#18181b",
-    weight: s.stanje === "slobodna" ? 0.4 : 0.6,
+    color: s.stanje === "slobodna" || s.stanje === "ulica" ? "#52525c" : "#18181b",
+    weight: s.stanje === "slobodna" || s.stanje === "ulica" ? 0.4 : 0.6,
     // CanvasPattern kroz polje koje tipovi Leafleta opisuju kao niz znakova
     fillColor: (st.pruge ? srafura(boja, st.pruge) : boja) as unknown as string,
     fillOpacity: s.pretezita ? st.ispuna : 0,
@@ -380,28 +462,37 @@ function esc(v: unknown): string {
 
 const m2 = (v: number) => `${Math.round(v).toLocaleString("hr-HR")} m²`;
 
-function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
+function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, ppmin: Ppmin): string {
   const inacica = INACICE.find((i) => i.id === post.inacica) ?? INACICE[0];
+  const kodPravila = p.u?.[`${post.godina}`];
   const st = STANJA[s.stanje];
   const sivo = "color:#71717b";
   let h =
     `<b>k.č. ${esc(p.kc)}, k.o. ${esc(p.ko)}</b><br>` +
     `<span style="${sivo}">${m2(p.a)} u katastru · GUP ${post.godina}. · brojanje: ${esc(inacica.naziv)}</span>` +
     `<div style="margin:6px 0;display:flex;align-items:center;gap:6px">` +
-    `<span style="display:inline-block;width:14px;height:14px;border-radius:2px;border:1px solid #52525c;background:${srafuraCss(s.pretezita?.bojaPlana ?? "#fff", st.pruge)};opacity:${st.ispuna < 0.5 ? 0.45 : 1}"></span>` +
+    `<span style="display:inline-block;width:14px;height:14px;border-radius:2px;border:1px solid #52525c;background:${srafuraCss(st.boja ?? s.pretezita?.bojaPlana ?? "#fff", st.pruge)};opacity:${st.ispuna < 0.5 ? 0.45 : 1}${st.crtkano ? ";border-style:dashed" : ""}"></span>` +
     `<b>${esc(st.naziv)}</b></div>`;
   if (!s.komadi.length) {
     return h + `<span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
   }
   h +=
-    `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)}` +
+    `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)} u zoni` +
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
-    `</span>`;
+    (s.ulica > 0 ? `; ulica izuzeta iz zone ${m2(s.ulica)}` : "") +
+    (s.ostatak > 0 ? `; premali ostatak ${m2(s.ostatak)}` : "") +
+    `</span>` +
+    (kodPravila
+      ? `<br><span style="${sivo}">područje urbanog pravila <b>${esc(kodPravila)}</b> (list „Urbana pravila” ${post.godina}.)</span>`
+      : "");
   for (const k of s.komadi) {
     h +=
       `<div style="margin-top:8px;padding-top:6px;border-top:1px solid #e4e4e7">` +
       `<span style="display:inline-block;width:10px;height:10px;border:1px solid #52525c;background:${k.klasa.bojaPlana};margin-right:4px"></span>` +
       `<b>${esc(k.klasa.kod)}</b> ${esc(k.klasa.naziv)} — ${m2(k.m2)}` +
+      (k.ulica > 0
+        ? ` <span style="${sivo}">(+ ${m2(k.ulica)} ulice, izuzeto iz zone${k.m2 === 0 ? " — cijeli komad je ulica" : ""})</span>`
+        : "") +
       `<br><span style="${sivo}">izmjereno: zgrada u katastru ${m2(k.mjereno.zk)}` +
       (k.g ? ` (${SKUPINA_ZGRADE[k.g]})` : "") +
       `, zgrada u 3D modelu ${m2(k.mjereno.z25)}, promet ${m2(k.mjereno.pr)}` +
@@ -419,6 +510,18 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
           })
           .join(", ");
       h += `<br><span style="${sivo}">iskorišteno ${m2(k.procjena.iskoristeno)} · u skladu ${m2(k.procjena.uSkladu)} · protivno ${m2(k.procjena.uSuprotnosti)}</span>`;
+    }
+    const vrsta = VRSTA_ZA_KLASU[k.klasa.kod];
+    const najmanja = vrsta && kodPravila ? ppmin[kodPravila]?.[vrsta] : undefined;
+    if (najmanja) {
+      h +=
+        `<br><span style="${sivo}">najmanja građevna čestica prema odredbama: <b>${m2(najmanja.m2)}</b> ` +
+        `(${esc(TIP_GRADNJE[najmanja.tip] ?? najmanja.tip)}) — ${esc(najmanja.izvor)}</span>`;
+    }
+    if (k.ostatak > 0) {
+      h +=
+        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak)} je premali ostatak: manje od ${najmanja ? m2(najmanja.m2) : "najmanje čestice"}, ` +
+        `a nema slobodnog susjeda iste namjene s kojim bi to doseglo — ne broji se kao slobodno.</span>`;
     }
     h += `</div>`;
   }
@@ -486,7 +589,12 @@ export function GupProvjeraPloca(props: {
                 <span className="relative inline-block size-4 shrink-0 rounded-sm border border-zinc-600 bg-white" aria-hidden>
                   <span
                     className="absolute inset-0"
-                    style={{ background: srafuraCss("#e0a000", st.pruge), opacity: st.ispuna }}
+                    style={{
+                      background: srafuraCss(st.boja ?? "#e0a000", st.pruge),
+                      opacity: st.crtkano ? 0.25 : st.ispuna,
+                      outline: st.crtkano ? "1.5px dashed #71717b" : undefined,
+                      outlineOffset: -1.5,
+                    }}
                   />
                 </span>
                 <span className="flex-1">{st.naziv}</span>

@@ -40,6 +40,8 @@
     "provjeri-vedre-noci": "/opt/homebrew/bin/python3 scripts/provjeri-vedre-noci.py",
     "izvedi-presjek": "/opt/homebrew/bin/python3 scripts/izvedi-presjek.py",
     "gup-grad:namjena": "/opt/homebrew/bin/python3 scripts/gup-grad/rasteriziraj.py",
+    "gup-grad:urbana-pravila": "/opt/homebrew/bin/python3 scripts/gup-grad/urbana-pravila.py",
+    "gup-grad:odredbe": "/opt/homebrew/bin/python3 scripts/gup-grad/odredbe.py",
     "gup-grad:cestice": "/opt/homebrew/bin/python3 scripts/gup-grad/cestice.py",
     "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
     "hindcast": "tsx scripts/hindcast/pokreni.ts",

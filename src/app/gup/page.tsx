@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { GupInfografika, type PodaciInfografike } from "@/components/gup-grad/infografika";
 import { GODINE, type Godina } from "@/lib/gup-grad/model";
-import { izracunaj, ucitajMjerenja } from "@/lib/gup-grad/podaci";
+import { izracunaj, ucitajMjerenja, ucitajPpmin } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
 import { pravokutnici, voronoi } from "@/lib/gup-grad/raspored";
 import { createPageMetadata } from "@/lib/metadata";
@@ -14,8 +14,8 @@ export const metadata = createPageMetadata({
 });
 
 async function pripremi(): Promise<PodaciInfografike> {
-  const d = await ucitajMjerenja();
-  const rezultati = Object.fromEntries(INACICE.map((i) => [i.id, izracunaj(d, i.pravila)]));
+  const [d, ppmin] = await Promise.all([ucitajMjerenja(), ucitajPpmin()]);
+  const rezultati = Object.fromEntries(INACICE.map((i) => [i.id, izracunaj(d, i.pravila, ppmin)]));
   const prvi = rezultati[INACICE[0].id];
   const rasporedi = {} as PodaciInfografike["rasporedi"];
   const planovi = {} as PodaciInfografike["planovi"];
@@ -91,14 +91,32 @@ export default async function GupPage() {
           za sve tri godine — mjeri se današnje stanje prema namjeni iz svake inačice plana.
         </p>
         <p className="mt-2">
+          Ulice unutar obojene zone ne broje se u zonu. Plan boji namjenom cijele blokove i ucrtava samo glavne ceste, pa
+          bi nerazvrstane ceste, ulice i nogostupi unutar stambene zone inače ispali „iskorišteno stanovanje”. Njihova
+          površina (os ceste ± pola profila, i nogostupi) oduzima se od zone i pribraja „Ulicama i infrastrukturi”; komad
+          čestice koji je barem 60 % ulica izuzima se cijeli. Parkirališta ostaju u zoni kao njezino korištenje.
+        </p>
+        <p className="mt-2">
+          Premali ostaci ne broje se kao slobodni. Najmanju građevnu česticu (Ppmin) odredbe za provođenje GUP-a ne
+          vežu uz namjenu nego uz područje urbanog pravila (list „Urbana pravila”) i vrstu građevine — npr. u području
+          2.5 slobodnostojeća 500 m², dvojna 400 m², nova čestica između dvije izgrađene 300 m². Za svaku česticu
+          uzeli smo područje s lista iste godine plana i najmanju vrijednost koju odredbe te godine ondje propisuju za
+          stanovanje, gospodarsku ili javnu namjenu (Sl. gl. 1/06 s izmjenama 3/08; pročišćeni tekst 55/14; prijedlog
+          2025.). Slobodan dio čestice manji od toga je ostatak — osim ako se dodiruje sa slobodnom česticom iste
+          namjene i zajedno dosežu tu površinu. Gdje odredbe Ppmin ne propisuju (parkovi, plaže, gradski projekti,
+          područja koja čekaju detaljni plan), ostataka nema.
+        </p>
+        <p className="mt-2">
           Koliko čestice je „potrošeno” pitanje je dogovora, pa grafikon nudi tri načina brojanja: samo pokriveni dio,
           cijela čestica pokrivena barem 20 %, i svaka čestica na kojoj išta stoji.
         </p>
 
         <h3 className="mt-5 font-bold text-zinc-900">Što je „protivno planu”</h3>
         <p className="mt-1">
-          Svaka vrsta korištenja uspoređena je s onim što namjena dopušta: stambena zgrada u mješovitoj zoni je u skladu,
-          u zaštitnom zelenilu nije. Ceste i infrastruktura su dopuštene svugdje. Zgrada kojoj ne znamo vrstu jer je nema
+          Svaka vrsta korištenja uspoređena je s onim što odredbe za tu namjenu dopuštaju: stambena zgrada u mješovitoj
+          zoni je u skladu, u zaštitnom zelenilu, turističkoj ili javnoj zoni nije; manja pomoćna građevina u parku i
+          ugostiteljski sadržaj na kupalištu jesu. Ono što odredbe dopuštaju samo pod posebnim uvjetom (stan uz posao u
+          poslovnoj zoni, postojeće kuće u zelenilu Z6) broji se kao protivno, jer se uvjet iz katastra ne vidi. Ceste i infrastruktura su dopuštene svugdje. Zgrada kojoj ne znamo vrstu jer je nema
           u katastru protivna je samo tamo gdje plan ne predviđa nikakvu zgradu (zelenilo, rekreacija, plaže). Ovo je
           gruba provjera po skupinama namjene, a ne provjera pojedine građevinske dozvole — zgrada može biti starija od
           plana ili legalizirana.
@@ -106,7 +124,9 @@ export default async function GupPage() {
 
         <h3 className="mt-5 font-bold text-zinc-900">Za one koji žele promijeniti pravila</h3>
         <p className="mt-1">
-          Pravila brojanja su u <code className="font-mono text-xs">src/lib/gup-grad/pravila.ts</code>, izračun u{" "}
+          Izvadci odredbi s citatima i stranicama su u{" "}
+          <code className="font-mono text-xs">data/gup-grad/odredbe/izvor/</code>. Pravila brojanja su u{" "}
+          <code className="font-mono text-xs">src/lib/gup-grad/pravila.ts</code>, izračun u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/izracun.ts</code>, a mjerenja po česticama izvode skripte
           u <code className="font-mono text-xs">scripts/gup-grad/</code>. Kako je razvrstana pojedina čestica vidi se na
           karti:{" "}

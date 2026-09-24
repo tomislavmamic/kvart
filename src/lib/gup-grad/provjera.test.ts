@@ -16,7 +16,9 @@ const cestica: SvojstvaCestice = {
 
 test("sud čestice zbraja komade istim pravilima kao /gup", () => {
   const s = sudCestice(cestica, 2025, ZADANA_PRAVILA);
-  assert.equal(s.m2, 800);
+  // 5 px ulice (20 m²) izuzeto iz zone
+  assert.equal(s.m2, 780);
+  assert.equal(s.ulica, 20);
   assert.equal(s.komadi.length, 2);
   assert.equal(s.pretezita?.kod, "M/K5");
   // isto što izracunajGodinu pripisuje tim komadima
@@ -28,7 +30,9 @@ test("sud čestice zbraja komade istim pravilima kao /gup", () => {
     },
     ZADANA_PRAVILA,
   );
-  const zbroj = r.reduce((a, x) => a + x.iskoristenoM2, 0);
+  // ulica izuzeta iz zone ide u P; čestica je broji kao `ulica`, ne kao iskorišteno
+  const zbroj = r.filter((x) => x.kod !== "P").reduce((a, x) => a + x.iskoristenoM2, 0);
+  assert.equal(r.find((x) => x.kod === "P")?.uliceM2, s.ulica);
   assert.equal(s.iskoristeno, zbroj);
   assert.equal(s.uSuprotnosti, 40);
   assert.deepEqual(s.komadi[1].protivneVrste, ["stambena"]);
@@ -43,6 +47,9 @@ test("stanja: slobodna, u skladu, djelomično i protivno", () => {
   assert.equal(stanje(1000, 300, 200), "protivno");
   // krhotina ispod 10 m² ne čini česticu protivnom
   assert.equal(stanje(1000, 300, 8), "u-skladu");
+  // slobodni dio sav ostatak → ostatak; gotovo sve ulica → ulica
+  assert.equal(stanje(200, 0, 0, 0, 200), "ostatak");
+  assert.equal(stanje(10, 0, 0, 990, 0), "ulica");
 });
 
 test("godina bez komada daje praznu, slobodnu česticu", () => {
