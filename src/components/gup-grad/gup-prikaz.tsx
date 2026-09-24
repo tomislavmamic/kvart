@@ -55,7 +55,9 @@ export function GupPrikaz({ podaci }: { podaci: PodaciInfografike }) {
 
   return (
     <div>
-      <Prekidac oznaka="Prikaz" opcije={PRIKAZI} vrijednost={prikaz} promijeni={promijeni} />
+      <div className="flex">
+        <Prekidac oznaka="Prikaz" opcije={PRIKAZI} vrijednost={prikaz} promijeni={promijeni} />
+      </div>
       <div className="mt-4">
         {/* Grafikon ostaje u stablu i dok se gleda karta, da ne izgubi svoje izbore. */}
         <div hidden={prikaz !== "grafikon"}>
