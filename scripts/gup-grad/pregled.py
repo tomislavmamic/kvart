@@ -22,10 +22,12 @@ slobodne čestice gledaju i na snimci. Tri koraka:
        → data/gup-grad/pregled/rucno.json, koji čita cestice.py. Novi sudovi
        dodaju se postojećima (i pregaze sud iste čestice); ništa se ne briše.
 
-Drugi krug umjesto koraka 2 (python3 scripts/gup-grad/pregled.py krug2):
-čestice sa 500–1000 m² slobodnog, čestice s ≥ 1000 m² bez primijenjenog
-suda (niska sigurnost u prvom krugu) i naselja višestambenih zgrada
-(urbano pravilo 2.2) s ≥ 300 m² slobodnog — sve koje još nisu u rucno.json.
+Svaki sljedeći krug umjesto koraka 2 (python3 scripts/gup-grad/pregled.py krug):
+čestice s ≥ 500 m² slobodnog i naselja višestambenih zgrada (urbano pravilo
+2.2) s ≥ 300 m² koje još nisu pregledane, ili im se slobodno od pregleda
+promijenilo za više od petine (katastar se osvježava). Prije novog kruga
+popis.json i drugi-rez-*.jsonl prošloga premjeste se u pregled/krugN/, da
+ostane zapis što je već gledano.
 
 2026-09: pregledano 614 čestica (≥ 1000 m² slobodnog, 125 ha). Prvi prolaz
 Claude Haiku, drugi Claude Sonnet; drugi je vratio u „slobodno” 111 od 259
@@ -59,15 +61,34 @@ VRSTE = {"slobodno", "parkiraliste", "zelenilo", "uredjeno", "javna", "gradilist
 KORISTENJE = VRSTE - {"slobodno", "neizgradivo"}
 
 
-def krug2() -> list[dict]:
-    """Čestice za drugi krug: 500–1000 m², ≥ 1000 m² bez suda, 2.2 od 300 m²."""
+def pregledane() -> dict[tuple[str, str], float]:
+    """(ko, kc) → slobodno_m2 u trenutku pregleda, za svaku već pregledanu česticu.
+
+    rucno.json ima samo primijenjene sudove; popisi prošlih krugova
+    (pregled/krug*/popis.json) i one sa sudom niske sigurnosti.
+    """
+    out = {}
+    for put in sorted(glob.glob(os.path.join(MAPA, "krug*", "popis.json"))):
+        for x in json.load(open(put)):
+            out[(x["ko"], x["kc"])] = x["slobodno_m2"]
+    if os.path.exists(RUCNO):
+        for x in json.load(open(RUCNO))["cestice"]:
+            out[(x["ko"], x["kc"])] = x["slobodno_prije_m2"]
+    return out
+
+
+def krug() -> list[dict]:
+    """Čestice za novi krug: 500 m² slobodnog i više (naselja 2.2 od 300 m²),
+    koje nisu pregledane — ili jesu, ali im se slobodno od pregleda promijenilo
+    za više od petine (nova izmjera, dioba, spajanje u katastru)."""
     d = json.load(open(os.path.join(R.ROOT, "data", "gup-grad", "cestice.json")))["cestice"]
-    vec = {(x["ko"], x["kc"]) for x in json.load(open(RUCNO))["cestice"]} if os.path.exists(RUCNO) else set()
+    vec = pregledane()
     out = []
     for x in json.load(open(os.path.join(R.OUT, "slobodne.json"))):
-        if (d["ko_imena"][d["ko"][x["c"]]], d["broj"][x["c"]]) in vec:
+        if not (x["m2"] >= 500 or (x.get("pravilo") == "2.2" and x["m2"] >= 300)):
             continue
-        if x["m2"] >= 500 or (x.get("pravilo") == "2.2" and x["m2"] >= 300):
+        prije = vec.get((d["ko_imena"][d["ko"][x["c"]]], d["broj"][x["c"]]))
+        if prije is None or abs(x["m2"] - prije) > 0.2 * max(prije, 1):
             out.append(x)
     return out
 
@@ -206,8 +227,8 @@ def rucno() -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "krug2":
-        isjecci(odabir=krug2())
+    if len(sys.argv) > 1 and sys.argv[1] in ("krug", "krug2"):
+        isjecci(odabir=krug())
     elif len(sys.argv) > 1 and sys.argv[1] == "isjecci":
         isjecci(float(sys.argv[2]) if len(sys.argv) > 2 else 1000)
     elif len(sys.argv) > 1 and sys.argv[1] == "rucno":
