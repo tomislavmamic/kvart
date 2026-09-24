@@ -480,12 +480,16 @@ function prijemniciPoImenu(): Map<string, Prijemnik> {
  * potonja nose samo ime prijemnika, pa se koordinate traže među mjestima iz
  * `data/dojave.json`.
  */
-export function prijemniciDojava(dojave: readonly (RedDojave | DojavaSat)[]): Prijemnik[] {
+export function prijemniciDojava(
+  dojave: readonly (RedDojave | DojavaSat)[],
+  /** Poznata mjesta po imenu, za satna opažanja; zadano iz `data/dojave.json`. */
+  poznati: () => Map<string, Prijemnik> = prijemniciPoImenu,
+): Prijemnik[] {
   const poImenu = new Map<string, Prijemnik>();
   for (const d of dojave) {
     let p: Prijemnik | null | undefined;
     if ("prijemnik" in d) {
-      p = prijemniciPoImenu().get(d.prijemnik);
+      p = poznati().get(d.prijemnik);
     } else {
       if (d.hidden) continue;
       p = prijemnikDojave(d);
