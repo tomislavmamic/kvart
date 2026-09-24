@@ -107,6 +107,8 @@ export function bojaSlobodnog(udioSlobodnog: number): string {
 /** Brojke u legendi: čestice u oknu po svakoj osi — svaka se os zbraja na `n`. */
 export interface BrojUOknu {
   n: number;
+  /** Čestice koje su (gotovo) cijele ulica izuzeta iz zone — nisu ni slobodne ni iskorištene. */
+  ulice: number;
   namjena: Partial<Record<string, number>>;
   iskoristenost: number[];
   nijeZaGradnju: number;
@@ -428,6 +430,7 @@ export function useGupProvjera(opts: {
       const okno = map.getBounds();
       const n: BrojUOknu = {
         n: 0,
+        ulice: 0,
         namjena: {},
         iskoristenost: RAZREDI_ISKORISTENOSTI.map(() => 0),
         nijeZaGradnju: 0,
@@ -441,7 +444,10 @@ export function useGupProvjera(opts: {
         n.n++;
         const kod = s.jeUlica ? "P" : s.pretezita!.kod;
         n.namjena[kod] = (n.namjena[kod] ?? 0) + 1;
-        if (s.jeUlica) return; // ulica nije ni slobodna ni iskorištena zona
+        if (s.jeUlica) {
+          n.ulice++; // ulica nije ni slobodna ni iskorištena zona
+          return;
+        }
         if (s.iskoristenost !== null) n.iskoristenost[razred(s.iskoristenost)]++;
         if (s.slobodnoNijeZaGradnju) n.nijeZaGradnju++;
         n.sklad[s.sklad]++;
@@ -918,8 +924,12 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
   const b = info.uOknu;
   const [sveNamjene, setSveNamjene] = useState(false);
   const sve = p.prikaz === "sve";
-  const namjene = KLASE.filter((k) => k.kod !== "P").filter((k) => sveNamjene || !b || (b.namjena[k.kod] ?? 0) > 0);
-  const skrivenih = KLASE.filter((k) => k.kod !== "P").length - namjene.length;
+  // P („Ulice i infrastruktura”) broji i ulice izuzete iz drugih zona, pa je uvijek zadnja
+  const namjene = [...KLASE.filter((k) => k.kod !== "P"), ...KLASE.filter((k) => k.kod === "P")].filter(
+    (k) => sveNamjene || !b || (b.namjena[k.kod] ?? 0) > 0,
+  );
+  const skrivenih = KLASE.length - namjene.length;
+  const bezUlica = b && b.ulice > 0 ? ` ${b.ulice.toLocaleString("hr-HR")} ulica izuzetih iz zona ovdje se ne broji.` : "";
   const osNaslov = (broj: number, naziv: string, kanal: string) => (
     <p className={`${naslov} flex justify-between`}>
       <span>
@@ -943,9 +953,18 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
           {osNaslov(1, "Namjena", "nijansa")}
           <ul className="mt-1 space-y-1">
             {namjene.map((k) => (
-              <RedLegende key={k.kod} uzorak={{ background: k.bojaPlana }} naziv={<>{k.kratko} <span className="font-mono text-xs text-zinc-500">{k.kod}</span></>} broj={b?.namjena[k.kod]} />
+              <RedLegende
+                key={k.kod}
+                uzorak={{ background: k.kod === "P" ? ULICA : k.bojaPlana }}
+                naziv={
+                  <>
+                    {k.kratko} <span className="font-mono text-xs text-zinc-500">{k.kod}</span>
+                    {k.kod === "P" && <span className="block text-xs text-zinc-500">i ulice izuzete iz drugih zona</span>}
+                  </>
+                }
+                broj={b?.namjena[k.kod]}
+              />
             ))}
-            <RedLegende uzorak={{ background: ULICA }} naziv="Ulice (izuzete iz zona)" broj={b?.namjena.P} />
           </ul>
           {b && (skrivenih > 0 || sveNamjene) && (
             <button type="button" onClick={() => setSveNamjene((v) => !v)} className="fokus mt-1 text-xs font-semibold text-maslina underline">
@@ -985,7 +1004,8 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
             Iskorišteno uključuje i okućnicu — zemljište koje zgrada treba po odredbama — pa 100 % znači „nema mjesta za novu česticu”.
-            {sve ? " Na karti u boji namjene čestice." : " Ulice su sive i ne broje se."}
+            {sve ? " Na karti u boji namjene čestice." : " Ulice su sive."}
+            {bezUlica}
           </p>
         </div>
       )}
@@ -1007,6 +1027,7 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
             Sudi se samo iskorišteni dio čestice{sve && b ? `; ${b.sklad.nema.toLocaleString("hr-HR")} neiskorištenih nema suda` : ""}.
+            {bezUlica}
           </p>
         </div>
       )}
