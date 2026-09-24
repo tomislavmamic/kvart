@@ -8,6 +8,11 @@ provođenje po području urbanog pravila, s citatom i stranicom:
   2025: prijedlog ID GUP-a za ponovnu javnu raspravu (travanj 2025.)
 Svaki citat je provjeren doslovno prema tekstu izvornika.
 
+Drugi ulaz: data/gup-grad/odredbe/izvor/gradnja-<godina>.json — za svako
+područje urbanog pravila dopušta li se nova stambena gradnja (da,
+interpolacija, kroz UPU, samo rekonstrukcija, ne, gradski projekt) i
+najveći kig i kis, s citatom i stranicom. Izlaz: data/gup-grad/odredbe/gradnja.json.
+
 Izlaz: data/gup-grad/odredbe/ppmin.json — za svaku godinu i kod pravila
 popis vrijednosti po vrsti korištenja:
   stanovanje   slobodnostojeća, dvojna, interpolacija, općenito, niz i
@@ -89,6 +94,41 @@ def main() -> None:
         s = {k: sum(1 for x in tab.values() if x[k]) for k in ("stanovanje", "gospodarska", "javna")}
         print(god, len(tab), "područja; s Ppmin:", s)
     with open(os.path.join(MAPA, "ppmin.json"), "w") as f:
+        json.dump(out, f, ensure_ascii=False, indent=1)
+    gradnja()
+
+
+def gradnja() -> None:
+    """Nova stambena gradnja i kig po području urbanog pravila → gradnja.json."""
+    out = {"opis": "Izvedeno skriptom scripts/gup-grad/odredbe.py iz data/gup-grad/odredbe/izvor/gradnja-*.json.",
+           "godine": {}, "opca": {}}
+    for god, dok in ((2006, "Sl. gl. 1/06 i 3/08"), (2015, "Sl. gl. 55/14"), (2025, "prijedlog ID GUP-a, 2025.")):
+        d = json.load(open(os.path.join(MAPA, "izvor", f"gradnja-{god}.json")))
+        tab = {}
+        for e in d["urbana_pravila"]:
+            kod = re.sub(r"\s+", "", e["kod"])
+            if kod.startswith("GP"):
+                # gradski projekti su na listu jedno područje „GP”; svaki ima
+                # vlastitu kvotu GBP-a, pa je slobodno ondje slobodno
+                tab.setdefault("GP", {"nova_stambena": "gp", "kig": None, "izvor": f"{dok}, gradski projekti",
+                                      "citat": "", "napomena": "Gradski projekti GP1–GP11: ukupna kvota GBP-a po projektu."})
+                continue
+            kig = {k: v for k, v in (e.get("kig") or {}).items() if isinstance(v, (int, float))} or None
+            kis = {k: v for k, v in (e.get("kis") or {}).items() if isinstance(v, (int, float))} or None
+            str_ = e.get("stranica")
+            tab[kod] = {
+                "nova_stambena": e["nova_stambena"],
+                "kig": kig,
+                "kis": kis,
+                "izvor": f"{dok}" + (f" ({e['dokument']})" if e.get("dokument") else "") + (f", str. {str_}" if str_ else ""),
+                "citat": e.get("nova_stambena_citat", ""),
+                "napomena": e.get("napomena", ""),
+            }
+        out["godine"][str(god)] = tab
+        out["opca"][str(god)] = d.get("opca", [])
+        bez = [k for k, v in tab.items() if v["nova_stambena"] in ("rekonstrukcija", "ne")]
+        print(god, "bez nove stambene gradnje:", bez)
+    with open(os.path.join(MAPA, "gradnja.json"), "w") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
 
 

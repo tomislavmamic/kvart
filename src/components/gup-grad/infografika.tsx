@@ -13,7 +13,6 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { RezultatKlase } from "@/lib/gup-grad/izracun";
 import { GODINE, KLASE, SKUPINE, type Godina, type KodKlase } from "@/lib/gup-grad/model";
 import { razinaZaUdio, sirinaNaVisini, visinaNaSirini, type Tocka } from "@/lib/gup-grad/poligon";
-import type { VrstaKoristenja } from "@/lib/gup-grad/pravila";
 import type { Oblik, Raspored } from "@/lib/gup-grad/raspored";
 
 export interface PodaciInfografike {
@@ -36,17 +35,11 @@ const OBLICI: { id: Oblik; naziv: string }[] = [
   { id: "pravokutnici", naziv: "Pravokutnici" },
 ];
 
-const VRSTE: Record<VrstaKoristenja, string> = {
-  stambena: "stambene zgrade",
-  gospodarska: "gospodarske i poslovne zgrade",
-  javna: "javne zgrade",
-  pomocna: "pomoćne zgrade",
-  ostala: "ostale građevine",
-  neevidentirana: "zgrade kojih nema u katastru",
-  promet: "ceste, nogostupi i parkirališta",
-  uredjeno: "groblja i športski objekti",
-  zelenilo: "održavano javno zelenilo",
-};
+/** Slobodno, ali ne za gradnju: premali ostaci, zabrana iz odredbi, neizgradiv teren. */
+const nijeZaGradnju = (r: RezultatKlase) => r.ostatakM2 + r.zabranjenoM2 + r.neizgradivoM2;
+const zaGradnju = (r: RezultatKlase) => Math.max(0, r.ukupnoM2 - r.iskoristenoM2 - nijeZaGradnju(r));
+/** Zone u kojima plan predviđa stanovanje — za njih je pitanje „ima li još mjesta”. */
+const STAMBENE: readonly KodKlase[] = ["S", "M/K5"];
 
 const KLASA = new Map(KLASE.map((k) => [k.kod, k]));
 const SKUPINA = new Map(SKUPINE.map((s) => [s.kod, s]));
@@ -119,8 +112,10 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
           ukupno: s.ukupno + r.ukupnoM2,
           iskoristeno: s.iskoristeno + r.iskoristenoM2,
           suprotno: s.suprotno + r.uSuprotnostiM2,
+          stambeno: s.stambeno + (STAMBENE.includes(r.kod) ? r.ukupnoM2 : 0),
+          stambenoSlobodno: s.stambenoSlobodno + (STAMBENE.includes(r.kod) ? zaGradnju(r) : 0),
         }),
-        { ukupno: 0, iskoristeno: 0, suprotno: 0 },
+        { ukupno: 0, iskoristeno: 0, suprotno: 0, stambeno: 0, stambenoSlobodno: 0 },
       ),
     [rezultati],
   );
@@ -137,8 +132,8 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
         dno,
         iskoristeno: razinaZaUdio(c.poligon, r.iskoristenoM2 / r.ukupnoM2),
         uSkladu: razinaZaUdio(c.poligon, r.uSkladuM2 / r.ukupnoM2),
-        // premali ostaci leže odmah iznad iskorištenog
-        ostatak: razinaZaUdio(c.poligon, Math.min(1, (r.iskoristenoM2 + r.ostatakM2) / r.ukupnoM2)),
+        // slobodno, ali ne za gradnju, leži odmah iznad iskorištenog
+        ostatak: razinaZaUdio(c.poligon, Math.min(1, (r.iskoristenoM2 + nijeZaGradnju(r)) / r.ukupnoM2)),
       });
     }
     return m;
@@ -183,7 +178,7 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
         </div>
       )}
 
-      <dl className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+      <dl className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         <div className="rounded-lg border border-zinc-200 bg-white p-2.5 sm:p-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Obuhvat</dt>
           <dd className="mt-1 whitespace-nowrap text-xl font-bold tabular-nums sm:text-2xl">
@@ -203,6 +198,15 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
             {ha(zbroj.suprotno)} <span className="text-sm font-semibold text-zinc-500 sm:text-base">ha</span>
           </dd>
           <dd className="text-xs tabular-nums text-zinc-600 sm:text-sm">{posto(zbroj.suprotno, zbroj.iskoristeno)} iskorištenog</dd>
+        </div>
+        <div className="rounded-lg border border-zinc-200 bg-white p-2.5 sm:p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Slobodno za stanovanje</dt>
+          <dd className="mt-1 whitespace-nowrap text-xl font-bold tabular-nums sm:text-2xl">
+            {ha(zbroj.stambenoSlobodno)} <span className="text-sm font-semibold text-zinc-500 sm:text-base">ha</span>
+          </dd>
+          <dd className="text-xs tabular-nums text-zinc-600 sm:text-sm">
+            {posto(zbroj.stambenoSlobodno, zbroj.stambeno)} stambenih i mješovitih zona
+          </dd>
         </div>
       </dl>
 
@@ -365,7 +369,7 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
                   <circle cx="3.5" cy="3.5" r="2" fill="#71717b" />
                   <circle cx="10.5" cy="10.5" r="2" fill="#71717b" />
                 </svg>
-                točkasto: premali ostaci (ne broje se kao slobodni)
+                točkasto: neiskorišteno, ali nije za gradnju (premalo ili plan ne dopušta)
               </span>
               {pogled === "sklad" && (
                 <span className="inline-flex items-center gap-1.5">
@@ -392,7 +396,7 @@ export function GupInfografika({ podaci }: { podaci: PodaciInfografike }) {
           />
         ) : (
           <p className="text-sm text-zinc-500">
-            Dodirni ili pređi mišem preko polja za pojedinosti: koliko ga ima, koliko je iskorišteno i čime.
+            Dodirni ili pređi mišem preko polja za pojedinosti: koliko ga ima, koliko je iskorišteno, a koliko još slobodno za gradnju.
           </p>
         )}
       </div>
@@ -429,9 +433,6 @@ function natpis(
 
 function Detalji({ r, prethodno }: { r: RezultatKlase; prethodno: { godina: number; m2: number }[] }) {
   const kl = KLASA.get(r.kod)!;
-  const vrste = (Object.entries(r.poVrstiM2) as [VrstaKoristenja, number][])
-    .filter(([, v]) => v >= 500)
-    .sort((a, b) => b[1] - a[1]);
   return (
     <div className="text-sm">
       <p className="font-bold text-zinc-900">
@@ -447,13 +448,24 @@ function Detalji({ r, prethodno }: { r: RezultatKlase; prethodno: { godina: numb
       <p className="mt-1 tabular-nums text-zinc-800">
         Iskorišteno <strong>{ha(r.iskoristenoM2, 1)} ha</strong> ({posto(r.iskoristenoM2, r.ukupnoM2)}), od toga u skladu s
         planom {ha(r.uSkladuM2, 1)} ha, protivno planu <strong>{ha(r.uSuprotnostiM2, 1)} ha</strong>.
-        {r.ostatakM2 >= 500 && (
+      </p>
+      <p className="mt-1 tabular-nums text-zinc-800">
+        Slobodno za gradnju <strong>{ha(zaGradnju(r), 1)} ha</strong> ({posto(zaGradnju(r), r.ukupnoM2)})
+        {nijeZaGradnju(r) >= 500 && (
           <>
-            {" "}
-            Premalih ostataka {ha(r.ostatakM2, 1)} ha; slobodno{" "}
-            {ha(Math.max(0, r.ukupnoM2 - r.iskoristenoM2 - r.ostatakM2), 1)} ha.
+            ; neiskorišteno, ali nije za gradnju {ha(nijeZaGradnju(r), 1)} ha
+            {" ("}
+            {[
+              r.zabranjenoM2 >= 500 && `plan ondje ne dopušta novu gradnju ${ha(r.zabranjenoM2, 1)} ha`,
+              r.ostatakM2 >= 500 && `premali ostaci ${ha(r.ostatakM2, 1)} ha`,
+              r.neizgradivoM2 >= 500 && `neizgradiv teren ${ha(r.neizgradivoM2, 1)} ha`,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+            {")"}
           </>
         )}
+        .
       </p>
       {r.uliceM2 >= 500 && (
         <p className="mt-1 tabular-nums text-zinc-600">
@@ -461,16 +473,6 @@ function Detalji({ r, prethodno }: { r: RezultatKlase; prethodno: { godina: numb
             ? `Uključuje ${ha(r.uliceM2, 1)} ha ulica iz drugih zona.`
             : `Bez ${ha(r.uliceM2, 1)} ha ulica koje plan ucrtava u ovu zonu — pribrojene su „Ulicama i infrastrukturi”.`}
         </p>
-      )}
-      {vrste.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
-          {vrste.map(([v, m2]) => (
-            <li key={v} className="tabular-nums">
-              {VRSTE[v]}: {ha(m2, 1)} ha
-              {(r.suprotnoPoVrstiM2[v] ?? 0) > 0 && " · protivno"}
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );
@@ -495,7 +497,8 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
               ))}
               <th className="py-2 pr-3 text-right font-semibold">Iskorišteno {godina}.</th>
               <th className="py-2 pr-3 text-right font-semibold">Protivno planu</th>
-              <th className="py-2 text-right font-semibold">Premali ostaci</th>
+              <th className="py-2 pr-3 text-right font-semibold">Nije za gradnju</th>
+              <th className="py-2 text-right font-semibold">Slobodno za gradnju</th>
             </tr>
           </thead>
           <tbody>
@@ -516,7 +519,8 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
                     {ovaj ? `${ha(ovaj.iskoristenoM2, 1)} (${posto(ovaj.iskoristenoM2, ovaj.ukupnoM2)})` : "—"}
                   </td>
                   <td className="py-1.5 pr-3 text-right">{ovaj ? ha(ovaj.uSuprotnostiM2, 1) : "—"}</td>
-                  <td className="py-1.5 text-right">{ovaj ? ha(ovaj.ostatakM2, 1) : "—"}</td>
+                  <td className="py-1.5 pr-3 text-right">{ovaj ? ha(nijeZaGradnju(ovaj), 1) : "—"}</td>
+                  <td className="py-1.5 text-right">{ovaj ? ha(zaGradnju(ovaj), 1) : "—"}</td>
                 </tr>
               );
             })}

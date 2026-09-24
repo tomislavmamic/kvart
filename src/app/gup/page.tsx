@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { GupInfografika, type PodaciInfografike } from "@/components/gup-grad/infografika";
 import { GODINE, type Godina } from "@/lib/gup-grad/model";
-import { izracunaj, ucitajMjerenja, ucitajPpmin } from "@/lib/gup-grad/podaci";
+import { izracunaj, ucitajMjerenja, ucitajOdredbe } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
 import { pravokutnici, voronoi } from "@/lib/gup-grad/raspored";
 import { createPageMetadata } from "@/lib/metadata";
@@ -14,8 +14,8 @@ export const metadata = createPageMetadata({
 });
 
 async function pripremi(): Promise<PodaciInfografike> {
-  const [d, ppmin] = await Promise.all([ucitajMjerenja(), ucitajPpmin()]);
-  const rezultati = Object.fromEntries(INACICE.map((i) => [i.id, izracunaj(d, i.pravila, ppmin)]));
+  const [d, odredbe] = await Promise.all([ucitajMjerenja(), ucitajOdredbe()]);
+  const rezultati = Object.fromEntries(INACICE.map((i) => [i.id, izracunaj(d, i.pravila, odredbe)]));
   const prvi = rezultati[INACICE[0].id];
   const rasporedi = {} as PodaciInfografike["rasporedi"];
   const planovi = {} as PodaciInfografike["planovi"];
@@ -85,30 +85,47 @@ export default async function GupPage() {
         <h3 className="mt-5 font-bold text-zinc-900">Što je „iskorišteno”</h3>
         <p className="mt-1">
           Iskorištenost se mjeri po katastarskim česticama (katastarski plan iz GIS izvoza Grada Splita). Na svakoj
-          čestici, i posebno na svakom njezinom dijelu koji pada u drugu zonu, izmjereno je koliko je pokriveno zgradom,
-          cestom, nogostupom ili parkiralištem, grobljem ili športskim objektom. Zgrade dolaze iz dva izvora: katastra,
-          koji zna vrstu zgrade, i gradskog 3D modela zgrada (sloj „Objekti_Split_2025” iz istog izvoza), koji vidi i zgrade kojih u katastru nema. Izvoz ne kaže kada je model snimljen; tlocrti su isti kao u sloju „ST_3D_2024”. Iskorištenost je ista
-          za sve tri godine — mjeri se današnje stanje prema namjeni iz svake inačice plana.
+          čestici, i posebno na svakom njezinom dijelu koji pada u drugu zonu, izmjereno je što na njoj stoji: zgrade (iz
+          katastra, koji zna vrstu zgrade, i iz gradskog 3D modela, koji vidi i zgrade kojih u katastru nema, i visinu
+          svake), ceste i nogostupi, parkirališta, okoliš škola, vrtića, bolnica i crkava, igrališta, športski tereni,
+          groblja i trgovi, trafostanice i vodospreme, parkovi i zelenilo koje održavaju Parkovi i nasadi, i
+          gradilišta. Na parkiralištu, školskom dvorištu ili u parku ne gradi se stan, pa je i to iskorišteno zemljište.
+          Javna parkirališta i zelenilo su iz izvoza Grada, a parkirališta trgovina i zgrada, okoliš ustanova, igrališta i
+          gradilišta iz OpenStreetMapa. Iskorištenost je ista za sve tri godine — mjeri se današnje stanje prema namjeni
+          iz svake inačice plana.
+        </p>
+        <p className="mt-2">
+          Kuća ne troši samo svoj tlocrt. Odredbe za provođenje za svako područje urbanog pravila (list „Urbana
+          pravila”) propisuju najveći koeficijent izgrađenosti (kig — tlocrt prema čestici), najveći koeficijent
+          iskorištenosti (kis — bruto površina prema čestici) i najmanju građevnu česticu (Ppmin). Zato se zgradi
+          pripisuje onoliko čestice koliko joj po tim odredbama treba: tlocrt / kig, bruto površina / kis (etaže iz
+          visine zgrade u 3D modelu) i ne manje od Ppmin. Neboder u naselju iz sedamdesetih tako troši i parkiralište
+          i zelenilo oko sebe, a kuća od 150 m² na čestici od 3 000 m² ostavlja slobodan vrt — ali samo ako je taj vrt
+          sam dovoljno velik za novu građevnu česticu. Od više vrijednosti (slobodnostojeća, dvojna…) uzima se ona koja
+          zgradi pripisuje najmanje zemljišta, da se slobodno ne proglasi iskorištenim.
+        </p>
+        <p className="mt-2">
+          Gdje odredbe ne dopuštaju novu stambenu gradnju — dovršena naselja u kojima je moguća samo rekonstrukcija
+          postojećih zgrada, zaštićene cjeline, parkovi — slobodno zemljište stambene i mješovite zone ne broji se kao
+          slobodno za stanovanje. Isto vrijedi za premale ostatke: slobodan dio čestice manji od Ppmin koji se ne
+          dodiruje sa slobodnom česticom iste namjene (s kojom bi zajedno dosegao Ppmin). Na grafikonu je to točkasti
+          pojas „nije za gradnju”. Izvadci odredbi (Sl. gl. 1/06 s izmjenama 3/08; pročišćeni tekst 55/14; prijedlog
+          2025.) s citatima i stranicama su u <code className="font-mono text-xs">data/gup-grad/odredbe/izvor/</code>.
         </p>
         <p className="mt-2">
           Ulice unutar obojene zone ne broje se u zonu. Plan boji namjenom cijele blokove i ucrtava samo glavne ceste, pa
           bi nerazvrstane ceste, ulice i nogostupi unutar stambene zone inače ispali „iskorišteno stanovanje”. Njihova
           površina (os ceste ± pola profila, i nogostupi) oduzima se od zone i pribraja „Ulicama i infrastrukturi”; komad
-          čestice koji je barem 60 % ulica izuzima se cijeli. Parkirališta ostaju u zoni kao njezino korištenje.
+          čestice koji je barem 60 % ulica izuzima se cijeli.
         </p>
         <p className="mt-2">
-          Premali ostaci ne broje se kao slobodni. Najmanju građevnu česticu (Ppmin) odredbe za provođenje GUP-a ne
-          vežu uz namjenu nego uz područje urbanog pravila (list „Urbana pravila”) i vrstu građevine — npr. u području
-          2.5 slobodnostojeća 500 m², dvojna 400 m², nova čestica između dvije izgrađene 300 m². Za svaku česticu
-          uzeli smo područje s lista iste godine plana i najmanju vrijednost koju odredbe te godine ondje propisuju za
-          stanovanje, gospodarsku ili javnu namjenu (Sl. gl. 1/06 s izmjenama 3/08; pročišćeni tekst 55/14; prijedlog
-          2025.). Slobodan dio čestice manji od toga je ostatak — osim ako se dodiruje sa slobodnom česticom iste
-          namjene i zajedno dosežu tu površinu. Gdje odredbe Ppmin ne propisuju (parkovi, plaže, gradski projekti,
-          područja koja čekaju detaljni plan), ostataka nema.
+          Najveće slobodne čestice u stambenim i mješovitim zonama pregledane su i na ortofotu (DGU, 2023.); gdje se
+          na snimci vidi parkiralište, igralište, park, gradilište ili zgrada koje nema u podacima, ili teren na kojem
+          se ne može graditi, čestica je ispravljena (<code className="font-mono text-xs">data/gup-grad/pregled/rucno.json</code>).
         </p>
         <p className="mt-2">
-          Koliko čestice je „potrošeno” pitanje je dogovora, pa grafikon nudi tri načina brojanja: samo pokriveni dio,
-          cijela čestica pokrivena barem 20 %, i svaka čestica na kojoj išta stoji.
+          Grafikon nudi i dva druga načina brojanja za usporedbu: samo stvarno pokriveni dio (svako dvorište je
+          slobodno) i svaka čestica na kojoj išta stoji.
         </p>
 
         <h3 className="mt-5 font-bold text-zinc-900">Što je „protivno planu”</h3>
@@ -130,7 +147,8 @@ export default async function GupPage() {
           <code className="font-mono text-xs">data/gup-grad/odredbe/izvor/</code>. Pravila brojanja su u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/pravila.ts</code>, izračun u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/izracun.ts</code>, a mjerenja po česticama izvode skripte
-          u <code className="font-mono text-xs">scripts/gup-grad/</code>. Kako je razvrstana pojedina čestica vidi se na
+          u <code className="font-mono text-xs">scripts/gup-grad/</code>. Podaci OpenStreetMapa © OpenStreetMap
+          contributors, ODbL. Kako je razvrstana pojedina čestica vidi se na
           karti:{" "}
           <Link href="/karta?pogled=gup-provjera" className="fokus font-semibold text-emerald-700 underline">
             Provjera GUP-a

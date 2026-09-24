@@ -88,3 +88,77 @@ export function najmanjaCestica(
   const min = izbor.reduce((a, v) => (v.m2 < a.m2 ? v : a));
   return { m2: min.m2, tip: min.tip, kodPravila, izvor: pod.izvor, citat: pod.citat };
 }
+
+/**
+ * Što odredbe dopuštaju graditi u području urbanog pravila (izvadak s
+ * citatima: data/gup-grad/odredbe/izvor/gradnja-<godina>.json, sažetak
+ * data/gup-grad/odredbe/gradnja.json iz scripts/gup-grad/odredbe.py).
+ */
+export type NovaStambena =
+  /** nove stambene zgrade dopuštene */
+  | "da"
+  /** samo nova čestica između dvije izgrađene */
+  | "interpolacija"
+  /** samo kroz propisani UPU/DPU — zemljište je planirano za gradnju */
+  | "upu"
+  /** samo rekonstrukcija i zamjena postojećih — nema nove stambene zgrade */
+  | "rekonstrukcija"
+  /** nikakva stambena gradnja (parkovi, plaže, zaštićeni krajolik) */
+  | "ne"
+  /** gradski projekt s ukupnom kvotom GBP-a */
+  | "gp";
+
+export interface PravilaGradnje {
+  nova_stambena: NovaStambena;
+  /** Najveći kig nove stambene gradnje po vrsti građevine; null = ne propisuje. */
+  kig: Partial<Record<string, number>> | null;
+  /** Najveći kis (nadzemni gdje ga odredbe razlikuju) po vrsti građevine; null = ne propisuje. */
+  kis?: Partial<Record<string, number>> | null;
+  izvor: string;
+  citat: string;
+  napomena: string;
+}
+
+export interface TablicaGradnje {
+  godine: Record<string, Record<string, PravilaGradnje>>;
+}
+
+/** Vrste stambene gradnje koje ne dopuštaju novu zgradu na slobodnom zemljištu. */
+const BEZ_NOVE: readonly NovaStambena[] = ["rekonstrukcija", "ne"];
+
+/**
+ * Dopuštaju li odredbe novu gradnju namjene komada na slobodnom zemljištu,
+ * i najveći kig. Zabrana se odnosi samo na stambenu gradnju u stambenim i
+ * mješovitim zonama — to je ono što urbana pravila razlikuju; za ostale
+ * namjene gradnja se ne ograničava.
+ *
+ * Od više kig-ova i kis-ova (slobodnostojeća, dvojna…) uzima se NAJVEĆI uključeni:
+ * postojeća zgrada tako zauzima najmanje zemljišta, pa se slobodno ne
+ * precjenjuje kao iskorišteno.
+ */
+export function uvjetiGradnje(
+  tab: TablicaGradnje,
+  godina: Godina,
+  kodPravila: string | null | undefined,
+  klasa: KodKlase,
+  p: Pravila,
+): { novaGradnja: boolean; kig: number | null; kis: number | null; pravilo: PravilaGradnje | null } {
+  if (VRSTA_ZA_KLASU[klasa] !== "stanovanje" || !kodPravila) return { novaGradnja: true, kig: null, kis: null, pravilo: null };
+  const pr = tab.godine[String(godina)]?.[kodPravila];
+  if (!pr) return { novaGradnja: true, kig: null, kis: null, pravilo: null };
+  const najveci = (o: Partial<Record<string, number>> | null | undefined) => {
+    const v = Object.entries(o ?? {})
+      .filter(([tip, x]) =>
+        typeof x === "number" &&
+        (!(OSNOVNI_TIPOVI as readonly string[]).includes(tip) || p.ostaci.tipovi[tip as (typeof OSNOVNI_TIPOVI)[number]]),
+      )
+      .map(([, x]) => x as number);
+    return v.length ? Math.max(...v) : null;
+  };
+  return {
+    novaGradnja: !BEZ_NOVE.includes(pr.nova_stambena),
+    kig: najveci(pr.kig),
+    kis: najveci(pr.kis),
+    pravilo: pr,
+  };
+}

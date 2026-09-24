@@ -22,12 +22,28 @@ samo izmjeri, za svaki komad čestice koji pada u jednu klasu namjene:
   zk     pikseli pod zgradom iz katastra (KO_*_objekti)
   z25    pikseli pod zgradom iz gradskog 3D modela (sloj Objekti_Split_2025,
          isti tlocrti kao Zgrade_3D/ST_3D_2024; datum snimanja izvoz ne kaže)
+  kat    bruto površina zgrada iz 3D modela u pikselima: svaki piksel pod
+         zgradom broji se onoliko puta koliko zgrada ima etaža — visina
+         krova iznad tla (Korisna_povrsina_Split_2025, h_objekt) / 3 m,
+         najmanje 1. Odredbe uz kig propisuju i kis (bruto površina /
+         čestica), pa neboder troši više čestice od prizemnice istog tlocrta.
   pr     pikseli pod ulicom: os ceste ± pola profila (Ceste,
          NerazvrstaneCeste, državne ceste) i nogostupi. Pravila ih mogu
          izuzeti iz namjene zone (ulica u stambenoj zoni nije stanovanje).
-  os     pikseli pod ostalim uređenim: groblja, športski objekti,
-         parkirališta — to JEST korištenje zone, pa ne ide s ulicama
-  ze     pikseli pod održavanim javnim zelenilom (Parkovi i nasadi)
+  pa     pikseli pod parkiralištem ili garažama: javna parkirališta
+         Grada i sva iz OSM-a (trgovine, zgrade, tvrtke)
+  jv     pikseli pod okolišem javne ustanove: škole, vrtići, fakulteti,
+         bolnice, crkve (OSM)
+  os     pikseli pod ostalim uređenim: groblja, športski objekti i
+         igrališta, trgovi i pješačke površine
+  inf    pikseli pod infrastrukturom: trafostanice, vodospreme,
+         benzinske postaje, pruga (OSM)
+  ze     pikseli pod održavanim javnim zelenilom (Parkovi i nasadi:
+         parkovi, travnjaci, zelene površine, živice)
+  gr     pikseli pod gradilištem (OSM landuse=construction)
+  Sve to JEST korištenje zemljišta: na parkiralištu, školskom dvorištu ili
+  u parku se ne gradi stan. Kojim se redom prekrivanja broje i što je u
+  kojoj zoni u skladu s planom, odlučuje pravila.ts.
   g      pretežita skupina katastarskih zgrada u komadu (0 = nema):
          1 stambene (1xx), 2 gospodarske i poslovne (2xx), 3 javne (3xx),
          4 pomoćne (4xx), 5 ostale građevine (6xx–9xx)
@@ -80,8 +96,106 @@ POLA_CESTE = 3.5
 POLA_DRZAVNE = 6.0
 
 
+# Polja komada u cestice.json, redom (vidi opis gore).
+POLJA = ["cestica", "klasa", "n", "zk", "z25", "kat", "pr", "pa", "jv", "os", "inf", "ze", "gr", "g"]
+VISINA_ETAZE = 3.0  # m
+
+OSM_PUT = os.path.join(R.OUT, "osm.json")  # scripts/gup-grad/osm.py
+
+
+def osm_kategorija(t: dict) -> str | None:
+    a, le, lu = t.get("amenity"), t.get("leisure"), t.get("landuse")
+    if a == "parking" and t.get("parking") != "underground" or lu == "garages":
+        return "pa"
+    if a in ("school", "kindergarten", "college", "university", "hospital", "clinic", "place_of_worship") \
+            or lu in ("education", "religious"):
+        return "jv"
+    if le in ("pitch", "playground", "sports_centre", "stadium", "track", "dog_park") \
+            or a in ("grave_yard", "marketplace") or lu == "cemetery" \
+            or t.get("place") == "square" or (t.get("highway") and t.get("area") == "yes"):
+        return "os"
+    if t.get("power") in ("substation", "plant") or a == "fuel" or lu == "railway" \
+            or t.get("man_made") in ("reservoir_covered", "water_tower", "wastewater_plant"):
+        return "inf"
+    if le == "park" or lu == "village_green":
+        return "ze"
+    if lu == "construction":
+        return "gr"
+    return None
+
+
+def osm_poligoni() -> dict[str, list]:
+    """Poligoni iz OSM-a (scripts/gup-grad/osm.py) po kategoriji, u EPSG:3765."""
+    from pyproj import Transformer
+
+    out: dict[str, list] = {k: [] for k in ("pa", "jv", "os", "inf", "ze", "gr")}
+    if not os.path.exists(OSM_PUT):
+        print("NEMA", OSM_PUT, "— pokreni scripts/gup-grad/osm.py; OSM slojevi prazni")
+        return out
+    u = Transformer.from_crs(4326, 3765, always_xy=True)
+
+    def prsten(geom):
+        x, y = u.transform([p["lon"] for p in geom], [p["lat"] for p in geom])
+        return list(zip(x, y))
+
+    for e in json.load(open(OSM_PUT))["elements"]:
+        k = osm_kategorija(e.get("tags", {}))
+        if not k:
+            continue
+        g = None
+        if e["type"] == "way" and len(e.get("geometry", [])) >= 4 and e["geometry"][0] == e["geometry"][-1]:
+            g = shapely.Polygon(prsten(e["geometry"]))
+        elif e["type"] == "relation":
+            vanjski = [shapely.LineString(prsten(m["geometry"])) for m in e.get("members", [])
+                       if m.get("type") == "way" and m.get("role") in ("outer", "") and len(m.get("geometry", [])) >= 2]
+            unutarnji = [shapely.LineString(prsten(m["geometry"])) for m in e.get("members", [])
+                         if m.get("type") == "way" and m.get("role") == "inner" and len(m.get("geometry", [])) >= 2]
+            if vanjski:
+                g = shapely.union_all(list(shapely.polygonize(vanjski).geoms))
+                if unutarnji:
+                    g = g.difference(shapely.union_all(list(shapely.polygonize(unutarnji).geoms)))
+        if g is not None and not g.is_empty:
+            out[k].append(shapely.make_valid(g))
+    print("OSM poligona:", {k: len(v) for k, v in out.items()})
+    return out
+
+
+RUCNO_PUT = os.path.join(ROOT, "data", "gup-grad", "pregled", "rucno.json")
+# Što ručni pregled smije reći o čestici; značenje u src/lib/gup-grad/pravila.ts.
+RUCNO_VRSTE = ["parkiraliste", "javna", "uredjeno", "zelenilo", "gradiliste", "izgradjeno", "promet",
+               "infrastruktura", "neizgradivo", "slobodno"]
+
+
+def rucno_po_cestici(c) -> list[int]:
+    """Ispravci iz ručnog pregleda, po čestici (0 = nema)."""
+    out = [0] * len(c)
+    if not os.path.exists(RUCNO_PUT):
+        return out
+    kljuc = {(k, b): i for i, (k, b) in enumerate(zip(c.KO_NAZIV.fillna(""), c.KC_BROJ.fillna("")))}
+    nema = []
+    for z in json.load(open(RUCNO_PUT))["cestice"]:
+        i = kljuc.get((z["ko"], z["kc"]))
+        if i is None:
+            nema.append(f"{z['ko']} {z['kc']}")
+            continue
+        out[i] = RUCNO_VRSTE.index(z["vrsta"]) + 1
+    print("ručno pregledanih:", sum(1 for x in out if x), "nepoznatih:", nema[:10])
+    return out
+
+
+def osm_stanje() -> str:
+    if not os.path.exists(OSM_PUT):
+        return ""
+    t = json.load(open(OSM_PUT)).get("osm3s", {}).get("timestamp_osm_base", "")
+    return f"© OpenStreetMap contributors (ODbL), stanje {t[:10]}"
+
+
 def citaj(put: str, **kw):
-    return pyogrio.read_dataframe(put, encoding="utf-8", **kw)
+    d = pyogrio.read_dataframe(put, encoding="utf-8", **kw)
+    # dio slojeva portala je u Web Mercatoru; sve se mjeri u HTRS96/TM
+    if d.crs is not None and d.crs.to_epsg() != 3765:
+        d = d.to_crs(3765)
+    return d
 
 
 def rasteriziraj(geomi, vrijednosti=None, dtype="uint8") -> np.ndarray:
@@ -137,6 +251,12 @@ def main() -> None:
     z25g = citaj(os.path.join(PORTAL, "Objekti_Split_2025_Objekti_Split_2025.shp"), columns=[])
     z25 = rasteriziraj(z25g.geometry.values).astype(bool)
     print("zgrada 2025:", len(z25g))
+    # etaže iz visine krovnih ploha 3D modela; niže plohe prve, više preko njih
+    kr = citaj(os.path.join(PORTAL, "Korisna_povrsina_Split_2025_Korisna_povrsina_Split_2025.shp"), columns=["h_objekt"])
+    kr = kr[kr.h_objekt.notna() & (kr.h_objekt > 0)].sort_values("h_objekt")
+    etaze = np.clip(np.round(kr.h_objekt.values / VISINA_ETAZE), 1, 60).astype("uint8")
+    kat = np.where(z25, np.maximum(rasteriziraj(kr.geometry.values, etaze), 1), 0).astype("uint16")
+    print("bruto površina zgrada 3D modela, ha:", round(float(kat.sum()) * R.KORAK * R.KORAK / 1e4, 1))
 
     ceste = []
     for put, pola in [
@@ -151,16 +271,27 @@ def main() -> None:
     ceste.extend(shapely.buffer(nog.geometry.values, sir / 2.0, cap_style="flat"))
     pr = rasteriziraj(ceste).astype(bool)
 
-    ostalo = []
-    for put in [
-        os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "Groblja.shp"),
-        os.path.join(BAZA, "GRADSKE_NEKRETNINE", "Sportski_objekti_p.shp"),
-        os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "JavnaParkiralista.shp"),
-    ]:
-        ostalo.extend(citaj(put, columns=[]).geometry.values)
-    os_ = rasteriziraj(ostalo).astype(bool)
-
-    ze = rasteriziraj(citaj(os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "JavneZelenePovrsine_poligoni.shp"), columns=[]).geometry.values).astype(bool)
+    osm = osm_poligoni()
+    grad = lambda *put: list(citaj(os.path.join(*put), columns=[]).geometry.values)  # noqa: E731
+    pa = rasteriziraj(
+        grad(BAZA, "KOMUNALNA_INFRASTRUKTURA", "JavnaParkiralista.shp")
+        + grad(PORTAL, "ST_PARKING_I_NADZOR_Parkiralista.shp")
+        + osm["pa"]
+    ).astype(bool)
+    jv = rasteriziraj(osm["jv"]).astype(bool)
+    os_ = rasteriziraj(
+        grad(BAZA, "KOMUNALNA_INFRASTRUKTURA", "Groblja.shp")
+        + grad(BAZA, "GRADSKE_NEKRETNINE", "Sportski_objekti_p.shp")
+        + osm["os"]
+    ).astype(bool)
+    inf = rasteriziraj(osm["inf"]).astype(bool)
+    # Parkovi i nasadi: sve što Grad održava (218 ha); JavneZelenePovrsine
+    # je samo 18 ha travnjaka i živica iz istog izvora
+    ze = rasteriziraj(grad(PORTAL, "Parkovi_i_nasadi_poligoni_Parkovi_i_nasadi_poligoni.shp") + osm["ze"]).astype(bool)
+    gr = rasteriziraj(osm["gr"]).astype(bool)
+    for ime, m_ in (("parkirališta", pa), ("javne ustanove", jv), ("uređeno", os_), ("infrastruktura", inf),
+                    ("zelenilo", ze), ("gradilišta", gr)):
+        print(f"{ime}: {m_.sum() * R.KORAK * R.KORAK / 1e4:.1f} ha")
 
     # ---- po godinama -----------------------------------------------------
     n_c = len(c) + 1
@@ -179,9 +310,11 @@ def main() -> None:
         n = zbroj()
         n_zk = zbroj(zk > 0)
         n_z25 = zbroj(z25)
+        # zbroj etaža po komadu (težinski), ne broj piksela
+        u_k, inv = np.unique(kljuc, return_inverse=True)
+        n_kat = dict(zip(u_k.tolist(), np.bincount(inv, weights=kat[m]).astype(np.int64).tolist()))
         n_pr = zbroj(pr)
-        n_os = zbroj(os_)
-        n_ze = zbroj(ze)
+        n_mj = [zbroj(x) for x in (pa, jv, os_, inf, ze, gr)]
         # pretežita skupina zgrada po komadu
         sk = {}
         for s in range(1, 6):
@@ -197,9 +330,8 @@ def main() -> None:
             ci, klasa = k // 64, k % 64
             if v < NAJMANJI_UDIO_KOMADA * po_cestici[ci] and v < 25:
                 continue
-            komadi.extend([ci - 1, klasa, v, n_zk.get(k, 0), n_z25.get(k, 0),
-                           n_pr.get(k, 0), n_os.get(k, 0), n_ze.get(k, 0),
-                           sk.get(k, (0, 0))[0]])
+            komadi.extend([ci - 1, klasa, v, n_zk.get(k, 0), n_z25.get(k, 0), n_kat.get(k, 0), n_pr.get(k, 0),
+                           *(x.get(k, 0) for x in n_mj), sk.get(k, (0, 0))[0]])
         # pretežito područje urbanog pravila po čestici (urbana-pravila.py);
         # iz njega odredbe daju najmanju građevnu česticu
         up_put = os.path.join(R.OUT, f"up-{gid}.npy")
@@ -223,7 +355,7 @@ def main() -> None:
             "komadi": komadi,
             "urbano_pravilo": up,
         }
-        print(god, "komada:", len(komadi) // 9, "obuhvat ha:", round(cnt.sum() * 4 / 1e4, 1))
+        print(god, "komada:", len(komadi) // len(POLJA), "obuhvat ha:", round(cnt.sum() * 4 / 1e4, 1))
         del kl, m, kljuc
 
     with open(os.path.join(R.OUT, "mreza.json")) as f:
@@ -237,7 +369,7 @@ def main() -> None:
     out = {
         "opis": "Izvedeno skriptom scripts/gup-grad/cestice.py — ne uređivati ručno.",
         "piksel_m2": R.KORAK * R.KORAK,
-        "komad_polja": ["cestica", "klasa", "n", "zk", "z25", "pr", "os", "ze", "g"],
+        "komad_polja": POLJA,
         "klase": mreza["klase"],
         "planovi": mreza["planovi"],
         "cestice": {
@@ -246,16 +378,26 @@ def main() -> None:
             "ko": [ko_idx[k] for k in c.KO_NAZIV.fillna("")],
             "broj": c.KC_BROJ.fillna("").tolist(),
             "povrsina": [round(float(a)) for a in c.geometry.area],
+            # ručni pregled ortofotom (data/gup-grad/pregled/rucno.json):
+            # indeks u `rucno_vrste` + 1, 0 = nije pregledana ili nema ispravka
+            "rucno": rucno_po_cestici(c),
         },
+        "rucno_vrste": RUCNO_VRSTE,
         "godine": godine_out,
         "urbana_pravila_kodovi": up_kodovi,
         "izvori": {
             "cestice": "Grad Split, GIS izvoz: KATASTAR/CADASTRAL_PARCELS_2024_P",
             "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
             "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025 (tlocrti gradskog 3D modela, isti kao Zgrade_3D/ST_3D_2024)",
+            "etaze": "Grad Split, GIS izvoz: Korisna_povrsina_Split_2025 (visina krovnih ploha 3D modela, h_objekt / 3 m)",
             "promet": "Ceste, NerazvrstaneCeste, drzavna_cesta_1 (os ± pola profila), Nogostupi",
-            "ostalo": "Groblja, Sportski_objekti_p, JavnaParkiralista",
-            "zelenilo": "JavneZelenePovrsine_poligoni (Parkovi i nasadi)",
+            "parkiralista": "JavnaParkiralista, ST_PARKING_I_NADZOR_Parkiralista; OSM amenity=parking, landuse=garages",
+            "javne_ustanove": "OSM amenity=school/kindergarten/college/university/hospital/clinic/place_of_worship, landuse=education/religious",
+            "ostalo": "Groblja, Sportski_objekti_p; OSM leisure=pitch/playground/sports_centre/stadium/track, trgovi i pješačke površine",
+            "infrastruktura": "OSM power=substation, man_made=reservoir_covered/water_tower/wastewater_plant, amenity=fuel, landuse=railway",
+            "zelenilo": "Parkovi_i_nasadi_poligoni (Parkovi i nasadi); OSM leisure=park, landuse=village_green",
+            "gradilista": "OSM landuse=construction",
+            "osm": osm_stanje(),
             "obuhvat": "OBUHVAT_PP/OBUHVATI_PP — Generalni urbanistički plan Splita",
             "urbana_pravila": "listovi 4.b/4.c Urbana pravila (2012., 2015., 2025.), scripts/gup-grad/urbana-pravila.py",
         },
@@ -309,8 +451,9 @@ def zapisi_plocice(c, godine_out, cestice, up_kodovi) -> None:
     po_cestici: dict[int, dict[str, list[list[int]]]] = {}
     for god, g in godine_out.items():
         a = g["komadi"]
-        for i in range(0, len(a), 9):
-            po_cestici.setdefault(a[i], {}).setdefault(god, []).append(a[i + 1:i + 9])
+        w = len(POLJA)
+        for i in range(0, len(a), w):
+            po_cestici.setdefault(a[i], {}).setdefault(god, []).append(a[i + 1:i + w])
 
     idx = sorted(po_cestici)
     sub = c.iloc[idx]
@@ -342,6 +485,7 @@ def zapisi_plocice(c, godine_out, cestice, up_kodovi) -> None:
                     "ko": cestice["ko_imena"][cestice["ko"][ci]],
                     "kc": cestice["broj"][ci],
                     "a": cestice["povrsina"][ci],
+                    **({"r": RUCNO_VRSTE[cestice["rucno"][ci] - 1]} if cestice["rucno"][ci] else {}),
                     "k": po_cestici[ci],
                     # područje urbanog pravila po godini (za skočni prozor)
                     "u": {god: up_kodovi[g["urbano_pravilo"][ci] - 1]

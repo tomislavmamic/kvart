@@ -1,0 +1,1079 @@
+{
+ "opis": "Izvedeno skriptom scripts/gup-grad/odredbe.py iz data/gup-grad/odredbe/izvor/gradnja-*.json.",
+ "godine": {
+  "2006": {
+   "1.1": {
+    "nova_stambena": "upu",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (3/08), str. 14",
+    "citat": "U članku 50. u alineji 7. iza riječi: „isključivo“ dodaju se riječi: „na temelju detaljnijeg plana i“.",
+    "napomena": "Povijesna jezgra – štiti se postojeće stanovanje, ali čl. 50. ne propisuje Ppmin ni kig za novu stambenu izgradnju. Izvorno (1/06) sve intervencije moguće su isključivo uz posebne uvjete i suglasnost službe zaštite; 3/08 dodaje uvjet da su moguće isključivo na temelju detaljnijeg plana."
+   },
+   "1.2": {
+    "nova_stambena": "interpolacija",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (3/08), str. 14",
+    "citat": "gradnja grañevina u nizu, dvojnih ili slobodnostojećih; - površina ulične grañevne čestice je postojeća; - grañevni pravac ulične grañevine je postojeći, osim kad se zadržava postojeće kvalitetno zelenilo",
+    "napomena": "3/08 u potpunosti zamjenjuje posebna pravila za M1/M2: dopušta gradnju niza, dvojnih ili slobodnostojećih građevina, ali isključivo na postojećoj uličnoj građevnoj čestici (bez stvaranja novih parcela na neizgrađenom zemljištu), uz kig/E/kis određene posebnim uvjetima i suglasnošću konzervatorske službe za svaki slučaj posebno."
+   },
+   "1.3": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.0,
+     "dvojna": 0.75,
+     "interpolacija": 0.75
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 32",
+    "citat": "za novu izgradnju slobodno stojećih grañevina Ppmin=500 m2; kig=0,25, E=Po+P+2, kis=1,75, kisN =0,75",
+    "napomena": "Dopuštena je nova slobodnostojeća/dvojna gradnja i interpolacija (nova čestica između dvije izgrađene), ali gradnja u dvorištima/unutrašnjosti otvorenog bloka nije moguća – tamo je dopušteno samo uklanjanje postojećih pomoćnih građevina. 3/08 briše samo odredbe o udaljenostima V/2; Ppmin i kig nepromijenjeni."
+   },
+   "1.4": {
+    "nova_stambena": "interpolacija",
+    "kig": {
+     "interpolacija": 0.35
+    },
+    "kis": {
+     "interpolacija": 1.4
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 33",
+    "citat": "kod nove izgradnje i zamjene grañevina na mikrolokacijama gdje postojeća struktura nema obilježja bloka te gdje izgradnja blokovskog tipa nije moguća minimalna površina grañevne čestice Ppmin=800 m2",
+    "napomena": "Unutar bloka nova gradnja nije moguća (samo zamjena postojećih legalnih građevina); izvan bloka, na mikrolokacijama bez obilježja bloka gdje blokovska izgradnja nije moguća, dopuštena je nova gradnja tipa interpolacije uz Ppmin=800 m2. 3/08 dodaje da mikrolokacije bez predvrta mogu imati kigP=1,0."
+   },
+   "1.5": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.0,
+     "dvojna": 0.75,
+     "interpolacija": 0.75
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 34",
+    "citat": "za novu izgradnju slobodno stojećih grañevina Ppmin=600 m2; kig=0,25 (nadzemni), E=Po+P+2, kis=1,50, kisN=0,75",
+    "napomena": "Kao i kod 1.3, nova slobodnostojeća/dvojna gradnja i interpolacija su dopuštene, ali ne i gradnja u vrtovima/dvorištima unutar otvorenog bloka. Opće pravilo zabranjuje prenamjenu velikih vrtova i zelenih okućnica u građevne parcele; nema propisanog postotka zelenila za M1/stambenu namjenu (30% je propisano samo za T1)."
+   },
+   "1.6": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 34",
+    "citat": "otkupljivanje neizgrañenih površina i prenamjena u javne parkovne i rekreacijske površine",
+    "napomena": "Zona stroge zaštite priobalja s prenamjenom u javne sadržaje; nova stambena gradnja nije predviđena, dopuštena je samo rekonstrukcija nezaštićenih objekata u postojećim gabaritima do promjene namjene."
+   },
+   "1.7": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 35",
+    "citat": "postojeće stambene grañevine (s grañevnom dozvolom ili grañene prije 1968.) unutar Park šume mogu se održavati i rekonstruirati samo u postojećim gabaritima do prenamjene ili uklanjanja",
+    "napomena": "Park-šuma Marjan – nema nove stambene izgradnje; postojeće stambene građevine samo se održavaju/rekonstruiraju u postojećim gabaritima do promjene namjene ili uklanjanja."
+   },
+   "1.7a": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 35",
+    "citat": "onemogućavanje gradnje ispod parkovnih površina osim istočno od pristupnog puta Sustipanu",
+    "napomena": "Parkovi – nema gradnje osim podzemne garaže istočno od pristupa Sustipanu; stambena gradnja nije predviđena."
+   },
+   "1.7b": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 35",
+    "citat": "postojeće legalne grañevine koje nisu zaštićene mogu se rekonstruirati u postojećim gabaritima do promjene namjene (prenamjena moguća u javne kulturne sadržaje, rekreacijske i ugostiteljske sadržaje bez smještaja) ili uklanjanja",
+    "napomena": "Nema nove stambene gradnje; 3/08 dodaje mogućnost rekonstrukcije/zamjene bivšeg ateljea Meštrović za galeriju (BRPN 800 m2), i dalje nestambeno."
+   },
+   "1.7c": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 36",
+    "citat": "održavanje i rekonstrukcija postojećih grañevina, koje se mogu namijeniti javnim sadržajima i ekskluzivnom turizmu",
+    "napomena": "Vila Dalmacija – samo održavanje/rekonstrukcija postojećih građevina za javne sadržaje i ekskluzivni turizam, bez nove stambene gradnje."
+   },
+   "1.7d": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 36",
+    "citat": "Omogućava se zaštita, dogradnja, održavanje i ureñenje područja i postojećih sadržaja ovog dijela Park šume Marjan (zoološki vrt, meteorološka postaja, muzej, manji ugostiteljski sadržaji bez smještajnih kapaciteta, postava spomenika, skulptura, ureñene platoa, staza i sl.)",
+    "napomena": "Dogradnja postojećih javnih sadržaja (ZOO, meteorološka postaja, muzej); nema stambene namjene. 3/08 dodaje mogućnost zamjene uz suglasnost službe zaštite."
+   },
+   "1.8": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 36",
+    "citat": "omogućava se rekonstrukcija (nadogradnja, dogradnja) postojećih, gradnja zamjenskih grañevina i ureñenje kompleksa temeljem ovog Plana uz posebne uvjete (konzervatorska studija) i suglasnost nadležne službe zaštite",
+    "napomena": "Dovršeni kompleksi pretežito javne namjene (Galerija Meštrović, Oceanografski institut, Gimnazija Vladimir Nazor, Arheološki muzej, Nadbiskupsko sjemenište, Poljud, Gripe); dopuštena je samo rekonstrukcija/dogradnja/zamjena u funkciji osnovne (nestambene) namjene, uz BRP limite po kompleksu."
+   },
+   "1.9": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 36",
+    "citat": "ureñenje manjih platoa s tuševima i montažnim svlačionicama",
+    "napomena": "Prirodne plaže – dopuštene su samo staze, platoi i montažne svlačionice; nema stambene gradnje."
+   },
+   "1.9a": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 37",
+    "citat": "prije donošenja PPPPO-a, a na temelju UPU-a propisanog ovim Planom, omogućava se ureñenje i dogradnja rekreacijskog centra (otvoreni sadržaji) s pratećim prizemnim ugostiteljskim i zabavnim sadržajima bez smještajnih kapaciteta",
+    "napomena": "Uređene plaže – samo prateći ugostiteljski/rekreacijski sadržaji bez smještaja; nema stambene namjene."
+   },
+   "2.1": {
+    "nova_stambena": "da",
+    "kig": {
+     "opcenito": 0.25
+    },
+    "kis": {
+     "opcenito": 1.75
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 37",
+    "citat": "minimalna površina grañevne čestice Ppmin=3000 m2 za mješovitu namjenu M1 i M2, minimalna površina grañevne čestice Ppmin=1500 m2 za poslovnu namjenu",
+    "napomena": "Nova izgradnja M1/M2 dopuštena uz Ppmin (3/08 smanjuje s 3000 na 1500 m2 za M1/M2; poslovna ostaje 1500 m2); pokazatelji su jedinstveni (bez razlike po tipu građevine). Opća pravila zabranjuju gradnju parkirališta na uređenim zelenim/parkovnim površinama naselja."
+   },
+   "2.1a": {
+    "nova_stambena": "da",
+    "kig": {
+     "opcenito": 0.25,
+     "dvojna": 0.25
+    },
+    "kis": {
+     "opcenito": 0.75,
+     "dvojna": 0.75
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 38",
+    "citat": "kod nove izgradnje i zamjene postojećih grañevina utvrñuju se slijedeći uvjeti: Ppmin=400 m2, kig=0,25, kigP=0,50, kis=1,50, kisN=0,75, maksimalni BRPN=750 m2, E=Po+P+2",
+    "napomena": "Tekst je unutarnje proturječan: jedna alineja kaže da je 'moguća je isključivo zamjena postojećih grañevina koje nisu zaštićene te rekonstrukcija u postojećim gabaritima', dok sljedeća propisuje pokazatelje 'kod nove izgradnje'; tumačeno je da nova gradnja ostaje moguća uz navedene Ppmin/kig."
+   },
+   "2.2": {
+    "nova_stambena": "da",
+    "kig": {
+     "m1_poslovna": 0.3,
+     "m2": 0.7
+    },
+    "kis": {
+     "m1_poslovna": 1.5,
+     "m2": 3.5
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 38",
+    "citat": "Omogućava se nova izgradnja niskih i srednjih grañevina te ureñenje javnih i drugih prostora temeljem ovog Plana uz slijedeće uvjete: za novu gradnju kig, E, kisN, usklañeno s prosječnim obilježjima urbanističke cjeline kojoj područje obuhvata pripada, a za grañevnu česticu minimalne površine 1500 m2 maksimalni kig=0,60, kigP=0,6, kis=4,00, kisN =3,00",
+    "napomena": "M1/poslovna dio dopušta samo nestambenu gradnju ('nove niske i srednje nestambene grañevine'); stambena je moguća kroz mješovitu namjenu M2, gdje 3/08 mijenja Ppmin 1500→1400 m2 i kig 0,6→0,7."
+   },
+   "2.3": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.3,
+     "dvojna": 0.3,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.5,
+     "dvojna": 0.9,
+     "interpolacija": 0.75
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 39",
+    "citat": "na minimalnoj površini grañevne čestice Ppmin=500 m2, kig=0,30, kigP=0,6, kis=2,00, kisN=0,90, E=Po+P+2",
+    "napomena": "Nova visoka stambena i mješovita gradnja (interpolacija) dopuštena je i na posebno označenim prostorima na kartografskom prikazu uz čuvanje uređenih zelenih površina; opće pravilo dopušta i slobodnostojeću/dvojnu gradnju uz stupnjevane Ppmin (500/800/1200 m2)."
+   },
+   "2.4": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.35,
+     "dvojna": 0.35,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.2,
+     "dvojna": 1.2,
+     "interpolacija": 0.9
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 40",
+    "citat": "za novu izgradnju slobodnostojećih grañevina Ppmin=500 m2; kig=0,35, maksimalni kigP=0,6, E=Po+P+3, kis=1,80, kisN=1,2",
+    "napomena": "Niska/srednja stambena gradnja dopuštena slobodnostojeće, dvojno, interpolacijom te iznimno u nizu uz Ulicu Matice hrvatske (kig=0,60, E=Po+P+2)."
+   },
+   "2.5": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.35,
+     "dvojna": 0.35,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.5,
+     "dvojna": 1.2,
+     "interpolacija": 0.9
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 41",
+    "citat": "za novu izgradnju slobodnostojećih grañevina Ppmin=500 m2; kig=0,35, maksimalni kigP=0,6, E=Po+P+3, kis=1,80, kisN=1,2",
+    "napomena": "Postojeće građevine na česticama manjim od minimalne mogu se rekonstruirati do kisN za minimalnu česticu; 3/08 dodaje iznimku za Bol (kig=0,4, kigP=0,7) i HEP Visoku."
+   },
+   "2.6": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 42",
+    "citat": "omogućava se gradnja novih grañevina temeljem važećih detaljnijih planova i njihovih izmjena i dopuna te kroz izradu novih, propisanih ovim Planom, uz povećanje BRPN-a u zoni do 10%",
+    "napomena": "Kompleksi pretežito javne namjene bez rezidencijalne zone; nova gradnja moguća samo kroz detaljnije planove uz BRPN bonus do 10%, bez propisane stambene namjene."
+   },
+   "2.7": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 42",
+    "citat": "Ureñivanje, urbana obnova i dogradnja kompleksa jedne namjene",
+    "napomena": "Popis pojedinačnih nestambenih kompleksa (Zdravstvo Firule, brodogradilište, Institut za jadranske kulture, sportski centar Stobreč, Diokom, TTTS, groblje Lovrinac, kampus, HT Mejaši, Vrboran, HEP Visoka, Sjeverna luka); stambena namjena nije propisana ni za jedan od njih (TTTS ima jedini Ppmin=1500 m2, kig=0,4, nestambeno)."
+   },
+   "2.8": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 43",
+    "citat": "onemogućavanje gradnje ispod parkovnih površina (osim javnih garažnih kapaciteta planiranih ovim Planom)",
+    "napomena": "Parkovi – dopuštene su samo manje građevine do 100 m2 BRPN/ha parka (sanitarni čvorovi, paviljoni i sl.); nema stambene gradnje."
+   },
+   "2.9": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 44",
+    "citat": "ureñenje i nova izgradnja se omogućavaju na temelju UPU-a čije su granice propisane ovim Planom",
+    "napomena": "Umjetna kupališta – dopušteni su samo prateći ugostiteljski/rekreacijski sadržaji i klupski prostori vodenih sportova, bez stambene namjene."
+   },
+   "3.1": {
+    "nova_stambena": "upu",
+    "kig": {
+     "slobodnostojeca": 0.3,
+     "dvojna": 0.3,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.7,
+     "dvojna": 0.9,
+     "interpolacija": 0.9
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 44",
+    "citat": "Omogućava se nova izgradnja, zamjena postojećih grañevina i rekonstrukcija postojećih grañevina te ureñenje javnih prostora uz izradu UPU-a (u granicama obuhvata utvrñenim ovim Planom)",
+    "napomena": "Nova stambena/mješovita gradnja M1 uvjetovana je izradom UPU-a (3/08: detaljnijeg plana, ukoliko je propisana obveza njegove izrade); za izgrađene dijelove niskokonsolidiranih područja vrijedi opće umanjenje Ppmin do 40%."
+   },
+   "3.2": {
+    "nova_stambena": "upu",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.2,
+     "dvojna": 0.75
+    },
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 46",
+    "citat": "Omogućava se izgradnja ulične mreže, komunalno opremanje i nova izgradnja uz izradu UPU-a u granicama obuhvata utvrñenim ovim Planom",
+    "napomena": "Nova regulacija na pretežito neizgrađenom prostoru – gradnja M1/M2 (i drugih namjena) izričito je uvjetovana izradom UPU-a; interpolacija ovdje nije posebno navedena kao zaseban tip."
+   },
+   "3.3": {
+    "nova_stambena": "upu",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 26",
+    "citat": "U obuhvatu važećih detaljnijih planova primjenjuju se odredbe tih planova prema kartografskom prikazu 4.d Područja i dijelovi primjene planskih mjera zaštite, Važeći planovi, mjerilo 1:10.000",
+    "napomena": "Gradnja se odvija prema postojećim (ili njima izmijenjenim) detaljnijim planovima (Žnjan, Lazarica, M3, T1); GUP izravno ne propisuje Ppmin/kig za stambenu namjenu M1 u ovoj zoni, već upućuje na te planove. 3/08 dodaje posebna pravila za Duilovo (kig=0,35, minimalno 30% zelene, vodopropusne površine) i Lazaricu."
+   },
+   "3.4": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 49",
+    "citat": "čuvanje vrijedne prirodne ili kulturne baštine i prirodnog krajobraza uz sudjelovanje nadležnih službi, zabrana izgradnje (osim uz posebne uvjete i suglasnost nadležne službe zaštite) i postupno uklanjanje postojećih bespravnih grañevina",
+    "napomena": "Zaštitne i vrijedne pejzažne površine – gradnja je zabranjena (Žrnovnica bez nove izgradnje); dopušteni su samo plastenici u Kamenu/Kili i do 3 ugostiteljske građevine bez smještaja u Orišcu, sve nestambeno."
+   },
+   "3.5": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 1/06 i 3/08 (1/06), str. 49",
+    "citat": "omogućava se izgradnja manjih pratećih grañevina koje služe osnovnoj rekreacijskoj djelatnosti (sanitarije, garderobe i manji ugostiteljski sadržaji) do 50 m2 BRP/ha ureñene sportsko rekreacijske površine",
+    "napomena": "Rekreacijske/turističke pejzažne površine (R2, Z3, T3) – dopušteni su samo manji prateći sadržaji bez smještaja/stanovanja, uz obveznu izradu UPU-a (3/08: detaljnijeg plana)."
+   },
+   "GP": {
+    "nova_stambena": "gp",
+    "kig": null,
+    "izvor": "Sl. gl. 1/06 i 3/08, gradski projekti",
+    "citat": "",
+    "napomena": "Gradski projekti GP1–GP11: ukupna kvota GBP-a po projektu."
+   }
+  },
+  "2015": {
+   "1.1": {
+    "nova_stambena": "upu",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 35",
+    "citat": "sve intervencije na ovom prostoru moguće isključivo na temelju provedbenog dokumenta prostornog uređenja i uz posebne uvjete i suglasnost nadležne službe zaštite.",
+    "napomena": "Cijela povijesna jezgra: bilo kakva izgradnja, uključujući eventualnu stambenu, moguća je isključivo kroz izradu provedbenog dokumenta (DPU/UPU) uz suglasnost službe zaštite; kig i minimalni zeleni udio nisu propisani ovim urbanim pravilom (dopušta se čak i manja procjedna površina od općeg minimuma 30%, v. opca_pravila)."
+   },
+   "1.2": {
+    "nova_stambena": "da",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 35",
+    "citat": "gradnja građevina u nizu, dvojnih ili slobodnostojećih; - površina ulične građevne čestice je postojeća;",
+    "napomena": "Nova izgradnja, rekonstrukcija ili zamjena M1/M2 dopuštena je na postojećoj uličnoj građevnoj čestici (parcelacija se ne mijenja), uz kig/E/kis određene posebnim uvjetima službe zaštite (nije fiksni broj). Neizgrađene zelene dvorišne površine se moraju sačuvati, što u praksi ograničava gradnju u unutrašnjosti dvorišta/bloka. Pojedinačni zahvati P1 (Svačićeva) i P4 (Bačvarija) zadani su ukupnim BRPN-om kroz DPU."
+   },
+   "1.3": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.0,
+     "dvojna": 0.75,
+     "interpolacija": 0.75
+    },
+    "izvor": "Sl. gl. 55/14, str. 36",
+    "citat": "za novu izgradnju slobodno stojećih građevina Ppmin=500 m2; kig=0,25, E=Po+P+2, kis=1,75, kisN =0,75",
+    "napomena": "Dopuštena je nova izgradnja slobodnostojećih (500 m², iznimno 800 m² Po+P+3), dvojnih (250 m²) i interpolacijskih (300 m², između dvije izgrađene čestice) građevina M1/stambene namjene, svih uz isti kig=0,25. Istovremeno je gradnja u dvorištima/unutrašnjosti otvorenog bloka zabranjena - moguće je samo uklanjanje postojećih pomoćnih građevina."
+   },
+   "1.4": {
+    "nova_stambena": "interpolacija",
+    "kig": {
+     "interpolacija": 0.35
+    },
+    "kis": {
+     "interpolacija": 1.4
+    },
+    "izvor": "Sl. gl. 55/14, str. 37",
+    "citat": "kod nove izgradnje i zamjene građevina na mikrolokacijama gdje postojeća struktura nema obilježja bloka te gdje izgradnja blokovskog tipa nije moguća minimalna površina građevne čestice Ppmin=800 m2",
+    "napomena": "Zatvoreni/poluzatvoreni blokovi se čuvaju bez nove gradnje u unutrašnjosti bloka (samo zamjena postojećih legalnih građevina, uz zabranu povećanja izgrađenosti bez UPU/DPU). Prava 'nova' gradnja izvan bloka moguća je samo na mikrolokacijama koje nemaju obilježja bloka (blokovski tip gradnje ondje nije moguć), uz Ppmin=800 m² i kig=0,35 - u praksi interpolacija na rubnim/atipičnim parcelama, a ne slobodna nova gradnja."
+   },
+   "1.5": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.0,
+     "dvojna": 0.75,
+     "interpolacija": 0.75
+    },
+    "izvor": "Sl. gl. 55/14, str. 38",
+    "citat": "za novu izgradnju slobodno stojećih građevina Ppmin=600 m2; kig=0,25 (nadzemni), E=Po+P+2, kis=1,50, kisN=0,75",
+    "napomena": "Slobodnostojeća (600 m², iznimno 800 m² Po+P+3), dvojna (250 m²) i interpolacijska (300 m²) nova gradnja M1/stambene dopuštena je uz kig=0,25. Nikakva nadzemna gradnja u vrtovima/dvorištima (unutrašnjost otvorenog bloka) nije moguća - samo uklanjanje pomoćnih građevina. Za stambenu namjenu nije propisan poseban minimalni udio zelenila (samo za T1 je propisano 30%); vrijedi opća zabrana pretvaranja velikih vrtova/okućnica u parcele (v. opca_pravila)."
+   },
+   "1.6": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 39",
+    "citat": "moguća zamjena legalnih građevina (u okviru postojećih pokazatelja izgrađenosti) ili prenamjene u javne kulturne, rekreacijske ili ugostiteljske sadržaje (bez smještajnih kapaciteta),",
+    "napomena": "Stroga zaštita; za zaštićene građevine samo održavanje, za nezaštićene rekonstrukcija u postojećim gabaritima ili zamjena unutar postojeće izgrađenosti, s prenamjenom u javne/kulturne/rekreacijske/ugostiteljske sadržaje. Nema nove stambene gradnje niti propisanog kig-a."
+   },
+   "1.7": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 40",
+    "citat": "postojeće stambene građevine (s građevnom dozvolom ili građene prije 1968.) unutar Park šume mogu se održavati i rekonstruirati samo u postojećim gabaritima do prenamjene ili uklanjanja",
+    "napomena": "Samo održavanje i rekonstrukcija postojećih (legalnih, pretežno prijeratnih) stambenih građevina u postojećim gabaritima; nova stambena gradnja nije moguća. Dopuštene su samo manje građevine higijensko-sanitarnog standarda parka."
+   },
+   "1.7a": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 40",
+    "citat": "onemogućavanje gradnje ispod parkovnih površina osim istočno od pristupnog puta Sustipanu,",
+    "napomena": "Parkovi - gradnja ispod parkovnih površina zabranjena osim podzemne garaže istočno od pristupnog puta Sustipanu; nema nove stambene gradnje."
+   },
+   "1.7b": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 40",
+    "citat": "postojeće legalne građevine koje nisu zaštićene mogu se rekonstruirati u postojećim gabaritima do promjene namjene",
+    "napomena": "Samo održavanje/rekonstrukcija postojećih (zaštićenih ili nezaštićenih legalnih) građevina u postojećim gabaritima, eventualno uz prenamjenu u javne/kulturne sadržaje; iznimka je rekonstrukcija/zamjena bivšeg ateljea Meštrović za galeriju (BRPN 800 m²). Nema nove stambene gradnje."
+   },
+   "1.7c": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 40",
+    "citat": "održavanje i rekonstrukcija postojećih građevina, koje se mogu namijeniti javnim sadržajima i ekskluzivnom turizmu.",
+    "napomena": "Samo održavanje i rekonstrukcija postojećih građevina (mogu se namijeniti javnim sadržajima/ekskluzivnom turizmu), kroz izradu ili nakon izrade PPPPO-a. Nema nove stambene gradnje."
+   },
+   "1.7d": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 40",
+    "citat": "Omogućava se zaštita zamjena i rekonstrukcija, održavanje i uređenje područja i postojećih sadržaja",
+    "napomena": "Samo zamjena, rekonstrukcija, održavanje i uređenje postojećih sadržaja (ZOO, meteo postaja, muzej i sl.) uz suglasnost službe zaštite. Nema nove stambene gradnje."
+   },
+   "1.8": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 41",
+    "citat": "zaštita namjene, uređivanje i iznimno dopuna potrebnim građevinama i sadržajima,",
+    "napomena": "Dovršeni javni kompleksi (Oceanografski institut, gimnazija V. Nazor, Arheološki muzej, sjemenište, SC Gripe...): samo zaštita namjene, uređivanje i iznimne dopune javnim sadržajima, zadane max. BRP-om kroz natječaj. Nema stambene gradnje."
+   },
+   "1.9": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 41",
+    "citat": "uređenje manjih platoa s tuševima i montažnim svlačionicama,",
+    "napomena": "Samo uređenje prirodnih plaža (staze, manji platoi s tuševima/svlačionicama); nema građevne gradnje niti stambene namjene."
+   },
+   "1.9a": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 41",
+    "citat": "ukupne BRPN-e do maksimalno 200 m2 uz očuvanje postojećeg drveća i vegetacije",
+    "napomena": "Samo prateći sadržaji uređenih plaža (Bene: do 200 m² BRPN; Stobreč: do 300 m² građevina za vodene sportove); nema stambene gradnje."
+   },
+   "2.1": {
+    "nova_stambena": "da",
+    "kig": {
+     "opcenito": 0.25
+    },
+    "kis": {
+     "opcenito": 1.75
+    },
+    "izvor": "Sl. gl. 55/14, str. 42",
+    "citat": "minimalna površina građevne čestice Ppmin=1500m2 za mješovitu namjenu M1 i M2",
+    "napomena": "Nova gradnja, rekonstrukcija i zamjena M1/M2/poslovne na Ppmin=1500 m², kig=0,25. Za novu gradnju >8000 m² BRP obvezno je 30% čestice urediti kao park/dječje igralište u javnoj upotrebi. Gradnja parkirališta na uređenim zelenim/parkovnim površinama naselja izričito nije moguća."
+   },
+   "2.1a": {
+    "nova_stambena": "da",
+    "kig": {
+     "opcenito": 0.25,
+     "dvojna": 0.25
+    },
+    "kis": {
+     "opcenito": 0.75,
+     "dvojna": 0.75
+    },
+    "izvor": "Sl. gl. 55/14, str. 42",
+    "citat": "kod nove izgradnje i zamjene postojećih građevina utvrđuju se slijedeći uvjeti: Ppmin=400 m2, kig=0,25, kigP=0,50, kis=1,50, kisN=0,75, maksimalni BRPN=750 m2, E=Po+P+2,",
+    "napomena": "Tekst je proturječan: opća pravila kažu 'moguća je isključivo zamjena postojećih građevina koje nisu zaštićene te rekonstrukcija u postojećim gabaritima', a odmah zatim posebna pravila propisuju Ppmin=400 m² i kig=0,25 izrijekom 'kod nove izgradnje'. Zbog eksplicitnog Ppmin/kig za novu gradnju klasificirano je kao 'da', uz napomenu o proturječju. Zelenilo za ovo pravilo nije posebno propisano."
+   },
+   "2.2": {
+    "nova_stambena": "da",
+    "kig": {
+     "M1_nestambeno": 0.3,
+     "M2_stambeno_poslovno": 0.7
+    },
+    "kis": {
+     "M1_nestambeno": 1.5,
+     "M2_stambeno_poslovno": 3.5
+    },
+    "izvor": "Sl. gl. 55/14, str. 43",
+    "citat": "Omogućava se nova izgradnja, rekonstrukcija ili zamjena postojećih niskih i srednjih stambeno poslovnih građevina te uređenje javnih i drugih prostora temeljem ovog Plana",
+    "napomena": "U M1 dijelu ove zone nova gradnja je dopuštena samo za NESTAMBENE niske/srednje građevine ('nova izgradnja niskih i srednjih građevina nestambene namjene'), kig=0,30 na min. čestici 1500 m². U M2 dijelu je nova stambeno-poslovna gradnja izrijekom dopuštena, kig=0,70 na min. čestici 1400 m². Stambena jedinica Pujanke: samo rekonstrukcija u postojećim gabaritima."
+   },
+   "2.3": {
+    "nova_stambena": "interpolacija",
+    "kig": {
+     "opcenito": 0.3,
+     "dvojna": 0.3,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "opcenito": 1.5,
+     "dvojna": 0.9,
+     "interpolacija": 0.75
+    },
+    "izvor": "Sl. gl. 55/14, str. 44",
+    "citat": "nova visoka stambena i mješovita gradnja (interpolacija) je moguć uz poštivanje vrijednih elemenata urbane matrice, čuvanje uređenih zelenih površina i osiguranje smještaja vozila u mirovanju.",
+    "napomena": "Opća pravila ovog urbanog pravila sami novu visoku stambenu/mješovitu gradnju nazivaju 'interpolacijom', uz stupnjevanu Ppmin (500/800/1200 m²) i kig=0,30 (za interpolaciju između dvije izgrađene čestice kig=0,25). Zaštitno zelenilo s postojećim stanovanjem u ovoj zoni: bez nove gradnje."
+   },
+   "2.4": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.35,
+     "dvojna": 0.35,
+     "interpolacija": 0.3,
+     "niz": 0.6
+    },
+    "kis": {
+     "slobodnostojeca": 1.2,
+     "dvojna": 1.2,
+     "interpolacija": 0.9
+    },
+    "izvor": "Sl. gl. 55/14, str. 45",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,35, maksimalni kigP=0,6, E=Po+P+3, kis=1,80, kisN=1,2,",
+    "napomena": "Slobodnostojeća (500 m², kig 0,35), dvojna (300 m², kig 0,35) i interpolacijska (300 m², kig 0,30) nova gradnja M1/stambene dopuštena; uz Ulicu Matice hrvatske iznimno niz (kig 0,60)."
+   },
+   "2.5": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.35,
+     "dvojna": 0.35,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.5,
+     "dvojna": 1.2,
+     "interpolacija": 0.9
+    },
+    "izvor": "Sl. gl. 55/14, str. 46",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,35, maksimalni kigP=0,6, E=Po+P+3, kis=1,80, kisN=1,2,",
+    "napomena": "M1: slobodnostojeća (500 m², kig 0,35), dvojna (400 m², kig 0,35), interpolacijska (300 m², kig 0,30); za čestice >1200 m² dopušteni veći pokazatelji (kig 0,30, E=Po+P+4). Rekonstrukcija na manjim od minimalnih čestica dopuštena do kisN za minimalne čestice."
+   },
+   "2.6": {
+    "nova_stambena": "upu",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 47",
+    "citat": "omogućava se gradnja novih građevina temeljem važećih provedbenih dokumenata prostornog uređenja i njihovih izmjena i dopuna te kroz izradu novih, propisanih ovim Planom, uz povećanje BRPN-a u zoni do 10%,",
+    "napomena": "Nova gradnja u ovim kompleksima (uglavnom nestambeni javni/sportski kompleksi poput SC Gripe) moguća je isključivo temeljem važećih ili novoizrađenih provedbenih dokumenata, uz povećanje BRPN-a u zoni do 10%. Ppmin nije propisan."
+   },
+   "2.7": {
+    "nova_stambena": "upu",
+    "kig": {
+     "TTTS": 0.4
+    },
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 49",
+    "citat": "TTTS – Propisuje se izrada provedbenog dokumenta prostornog uređenja za cjelinu zone.",
+    "napomena": "Ovo pravilo obuhvaća niz jednonamjenskih (pretežno nestambenih) kompleksa; jedino za zonu TTTS je do donošenja provedbenog dokumenta propisan izravni Ppmin=1500 m²/kig=0,4. Ostali kompleksi (Firule, Brodogradilište, Institut, SC Stobreč, Diokom, groblje Lovrinac, Kampus, HT Mejaši, Vrboran, Sjeverna luka) zadani su BRPN/ha, kig-om ili UPU-om, bez opće mogućnosti nove stambene gradnje."
+   },
+   "2.8": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 49",
+    "citat": "površina tih građevina ne može biti veća od 100 m2 BRPN/ha parka.",
+    "napomena": "Parkovi - dopuštene su samo manje prateće građevine higijensko-sanitarnog standarda (do 100 m² BRPN/ha parka); gradnja ispod parkovnih površina zabranjena osim planiranih javnih garaža. Nema stambene gradnje."
+   },
+   "2.9": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 49",
+    "citat": "uređenje i nova izgradnja se omogućavaju na temelju provedbenog dokumenta prostornog uređenja čije su granice propisane ovim Planom",
+    "napomena": "Samo prateći sadržaji umjetnih kupališta (ugostiteljski bez smještaja, klupski prostori vodenih sportova), kroz provedbeni dokument i natječaj. Nema stambene gradnje."
+   },
+   "3.1": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.3,
+     "dvojna": 0.3,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.7,
+     "dvojna": 0.9,
+     "interpolacija": 0.9
+    },
+    "izvor": "Sl. gl. 55/14, str. 50",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,3, kigP=0,6, E=Po+P+2, kis=1,5, kisN=0,9",
+    "napomena": "M1: slobodnostojeća (500 m², kig 0,3; iznimno 700 m² Po+P+3), interpolacijska (300 m², kig 0,3) i dvojna (400 m², kig 0,3) nova gradnja. Uz važnije ulice (Vukovarska, Kamen sjever) kroz provedbeni dokument moguća srednja/visoka izgradnja na Ppmin=1500 m². Za NK dijelove vrijedi opće umanjenje Ppmin do 40% (v. opca_pravila)."
+   },
+   "3.2": {
+    "nova_stambena": "upu",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.2,
+     "dvojna": 0.75
+    },
+    "izvor": "Sl. gl. 55/14, str. 53",
+    "citat": "Omogućava se izgradnja ulične mreže, komunalno opremanje i nova izgradnja uz izradu provedbenog dokumenta prostornog uređenja u granicama obuhvata utvrđenim ovim Planom:",
+    "napomena": "Za M1/M2 nova gradnja (uključujući stambenu) na pretežito neizgrađenom prostoru je uvjetovana izradom provedbenog dokumenta prostornog uređenja; unutar njega propisani su Ppmin/kig (slobodnostojeća 600/800 m², dvojna 400 m², kig 0,25-0,30). Interpolacija nije zasebno propisana za ovo pravilo."
+   },
+   "3.3": {
+    "nova_stambena": "upu",
+    "kig": {
+     "Duilovo": 0.35
+    },
+    "kis": {
+     "Duilovo": 2.5
+    },
+    "izvor": "Sl. gl. 55/14, str. 57",
+    "citat": "Budućim planiranjem i izgradnjom maksimalno respektirati izvorno rješenje kroz okrupnjavanje parcela i formiranje uličnih poteza.",
+    "napomena": "Djelomično izgrađene zone (Žnjan, Lazarica, Duilovo) grade se prema postojećoj/usvojenoj regulaciji (važeći DPU-ovi), s okrupnjavanjem parcela; samo za Duilovo (čestice 6a/6b) navedeni su izravni maksimalni kig i minimalni zeleni udio. M3 dio propisuje min. 20-25% čestica za promet/zelenilo bez izravnog kig-a za pojedinačnu građevinu."
+   },
+   "3.4": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 57",
+    "citat": "zabrana izgradnje (osim uz posebne uvjete i suglasnost nadležne službe zaštite) i postupno uklanjanje postojećih bespravnih građevina",
+    "napomena": "Opće pravilo: zabrana izgradnje. Žrnovnica: bez nove izgradnje, samo očuvanje kultiviranog krajobraza; Orišac: uz provedbeni dokument dopušteno je do 3 ugostiteljske građevine bez smještaja (100 m² BRP svaka). Nema stambene gradnje."
+   },
+   "3.5": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "Sl. gl. 55/14, str. 58",
+    "citat": "izgradnja manjih pratećih građevina koje služe osnovnoj rekreacijskoj djelatnosti (sanitarije, garderobe i manji ugostiteljski sadržaji) do 50 m2 BRP/ ha uređene sportsko rekreacijske površine;",
+    "napomena": "R2 (Žrnovničko blato): rekreacijski/sportski sadržaji na otvorenom uz zadržavanje min. 50% prirodnog terena, prateće građevine do 50 m² BRP/ha (zabranjena gradnja u pojasu 100 m od zapadnog ruba rijeke Žrnovnice); Z3: prateće građevine do 300 m²/ha; T3 (kamp Stobreč): do 400 m² BRP/ha. Nema stambene gradnje nigdje u ovom pravilu."
+   },
+   "GP": {
+    "nova_stambena": "gp",
+    "kig": null,
+    "izvor": "Sl. gl. 55/14, gradski projekti",
+    "citat": "",
+    "napomena": "Gradski projekti GP1–GP11: ukupna kvota GBP-a po projektu."
+   }
+  },
+  "2025": {
+   "1.1": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 65",
+    "citat": "čuvanje primarne namjene, zaštita stanovanja (nije moguća prenamjena kvalitetnog stambenog prostora u neku drugu namjenu osim u prizemljima građevina ili ukoliko se istim zahvatom planiraju novi stambeni prostori iste površine)",
+    "napomena": "Zona A kulturno-povijesne cjeline; sve intervencije isključivo prema posebnim uvjetima i suglasnosti konzervatora. Dopušteno je samo zadržavanje/zamjena postojećeg stambenog prostora iste površine; nema propisanog Ppmin ni kig-a za novu gradnju, niti se spominje mogućnost nove samostalne stambene građevine."
+   },
+   "1.2": {
+    "nova_stambena": "da",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 66",
+    "citat": "Omogućava se nova izgradnja i rekonstrukcija postojećih građevina te uređenje javnih i drugih prostora temeljem ovog Plana, u skladu s posebnim uvjetima i uz suglasnost nadležnog konzervatorskog odjela, uz sljedeće uvjete",
+    "napomena": "U zaštićenim kulturnim dobrima (M1/M2) nova izgradnja je moguća, ali kig/E/kis i drugi parametri određuju se posebnim uvjetima konzervatora (nema Ppmin). Izvan zaštićenih cjelina, u ruralnoj jezgri Kamen, nova stambena gradnja moguća je samo kao interpolacija jedne građevine (GBPN max 200 m2) bez okrupnjivanja čestica."
+   },
+   "1.3": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.0,
+     "dvojna": 0.75,
+     "interpolacija": 0.75
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 67",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,25, Emax=Po+3+Pk/Uk, kis=1,75, kisN+kisO=0,75",
+    "napomena": "M1 i stambena namjena; slobodnostojeća 500 m2, interpolacija 300 m2 (kig 0,25), poluugrađena 250 m2 (kig 0,25), sve na kig=0,25. Nova gradnja u unutrašnjosti (dvorištu) otvorenog bloka nije moguća, dopušteno je samo uklanjanje postojećih pomoćnih građevina."
+   },
+   "1.4": {
+    "nova_stambena": "da",
+    "kig": {
+     "opcenito": 0.35
+    },
+    "kis": {
+     "opcenito": 1.4
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 68",
+    "citat": "Omogućava se nova izgradnja i rekonstrukcija postojećih građevina te uređenje javnih i drugih prostora temeljem ovog Plana uz sljedeće uvjete",
+    "napomena": "Blokovska gradnja (u sklopu izgrađenog ruba bloka): kig/E/kisN usklađeni s blokom i susjedima, bez fiksnog Ppmin. Kig=0,35 vrijedi samo za novu gradnju na mikrolokacijama bez obilježja bloka (Ppmin 800 m2). U unutrašnjosti (dvorištu) postojećih blokova nova gradnja nije moguća, izgrađenost se ne smije povećati."
+   },
+   "1.5": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.0,
+     "dvojna": 0.75,
+     "interpolacija": 0.75
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 70",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=600 m2; kig=0,25, Emax=Po+3+Pk/Uk, kis=1,50, kisN+kisO=0,75",
+    "napomena": "M1 i stambena namjena; slobodnostojeća 600 m2, interpolacija 300 m2, poluugrađena 250 m2, sve kig=0,25. Zabranjena je prenamjena velikih vrtova i zelenih okućnica postojećih građevina u građevne čestice, a nadzemna gradnja u vrtovima/dvorištima (unutrašnjost otvorenog bloka) nije moguća."
+   },
+   "1.6": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 71",
+    "citat": "za građevine koje nisu zaštićene moguća rekonstrukcija u postojećim gabaritima do promjene namjene ili uklanjanja",
+    "napomena": "Stroga zaštita; zamjenska gradnja nije dozvoljena, dopuštena je samo rekonstrukcija nezaštićenih građevina u postojećim gabaritima do prenamjene ili uklanjanja, s ciljem prenamjene u javne parkovne/rekreacijske površine. Nema nove stambene gradnje."
+   },
+   "1.7": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 72",
+    "citat": "postojeće građevine mogu se održavati i rekonstruirati sukladno članku 108. stavku 3. ovih Odredbi",
+    "napomena": "Nema nove gradnje osim protupožarnih i komunalnih građevina/instalacija; postojeće se građevine samo održavaju i rekonstruiraju. Nema stambene namjene."
+   },
+   "1.7a": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 72",
+    "citat": "u parku Zvončac omogućava se gradnja sanitarnog čvora (jedan objekt maksimalnog GBP-a 50 m2, maksimalni broj etaža E=1, visina 4,0 m)",
+    "napomena": "Parkovi; jedina dopuštena gradnja je sanitarni čvor u parku Zvončac (GBP max 50 m2). Nema stambene namjene."
+   },
+   "1.7b": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 73",
+    "citat": "postojeće građevine mogu se rekonstruirati isključivo u postojećim gabaritima, ako nisu u suprotnosti s mjerama očuvanja i zaštite krajobraznih i prirodnih vrijednosti i kulturnih dobara, bez mogućnosti promjene namjene",
+    "napomena": "Park šuma Marjan; postojeće građevine (npr. Vila Dalmacija okolica) samo se rekonstruiraju u postojećim gabaritima, bez promjene namjene. Nema nove stambene gradnje."
+   },
+   "1.7c": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 73",
+    "citat": "održavanje i rekonstrukcija u postojećim gabaritima postojećih građevina, koje se mogu namijeniti javnim sadržajima i ekskluzivnom turizmu",
+    "napomena": "Samo održavanje/rekonstrukcija postojećih građevina (Vila Dalmacija) u postojećim gabaritima, uz moguću prenamjenu u javne/turističke sadržaje. Nema nove stambene gradnje."
+   },
+   "1.7d": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 74",
+    "citat": "Omogućava se zaštita, rekonstrukcija, održavanje i uređenje područja i postojećih sadržaja ovog dijela Park-šume Marjan (nekadašnji zoološki vrt, koji se prenamjenjuje u edukacijski centar s tradicijskim i izvornim pasminama domaćih životinja",
+    "napomena": "Novo urbano pravilo (čl. 59.a). Samo rekonstrukcija postojećih sadržaja (bivši zoo i dr.) prema posebnom programu i idejnom projektu. Nema stambene namjene."
+   },
+   "1.8": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 74",
+    "citat": "Rekonstrukcija u postojećim gabaritima.",
+    "napomena": "Tablica od 13 posebno vrijednih javnih/društvenih/sportskih kompleksa (Galerija Meštrović, Arheološki muzej, Tvrđava Gripe, Stadion Poljud i dr.) - svaki s vlastitim uvjetima: uglavnom rekonstrukcija u gabaritima, dio dozvoljava novu gradnju do zadanog GBP-a (npr. 400-1200 m2). Nijedan kompleks nije stambene namjene."
+   },
+   "1.9": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 75",
+    "citat": "Uređenje plaža iz stavaka 1., 2. i 3. ovog članka moguće je isključivo prema posebnim uvjetima i uz suglasnost Konzervatorskog odjela u Splitu",
+    "napomena": "Prirodne plaže (Sjeverna i Južna obala Marjana, Duilovo-Orišac-Stobreč); dopušteno je samo uređenje/održavanje obalnog ruba, bez gradnje građevina. Nema stambene namjene."
+   },
+   "1.9a": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 76",
+    "citat": "Omogućava se zaštita, održavanje i uređenje  područja plaže Bene unutar Park šume Marjan, postavljanje kabina za presvlačenje i tuševa, te rekonstrukcija postojećih građevina u postojećim gabaritima",
+    "napomena": "Uređene plaže (Bene, Bačvice, Ovčice, Firule, Stobreč); dopušteni su tek manji prateći sadržaji (kabine, tuševi, do 300 m2 na Stobreču) i rekonstrukcija postojećih građevina u gabaritima. Nema stambene namjene."
+   },
+   "2.1": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 77",
+    "citat": "minimalna površina građevne čestice Ppmin=1500m2, na građevnim česticama manje površine rekonstrukcija je moguća jedino u postojećim gabaritima",
+    "napomena": "Za mješovitu namjenu M1/M2 dopuštena je samo rekonstrukcija postojećih građevina (uvjet Ppmin=1500 m2 vrijedi za rekonstrukciju, ne za novu gradnju). Nova gradnja u naselju moguća je samo za javne/društvene građevine (čl. 49.j st. 4), garaže, komunalne građevine i poslovnu namjenu K (Ppmin=1500 m2)."
+   },
+   "2.1a": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 78",
+    "citat": "za građevine drugih namjena moguća je isključivo rekonstrukcija, uz obvezno poštivanje urbane matrice i tipologije gradnje",
+    "napomena": "Nova stambena gradnja nije dopuštena, osim javnih i društvenih građevina (čl. 49.j st. 4); dopuštena je samo rekonstrukcija (Ppmin=400 m2, kig=0,25) i dovršetak/izjednačavanje visine postojećih dvojnih (poluugrađenih) građevina (kig=0,35). Najmanji udio prirodnog terena 40% (kontaktna zona Marjana)."
+   },
+   "2.2": {
+    "nova_stambena": "da",
+    "kig": {
+     "opcenito": 0.7
+    },
+    "kis": {
+     "opcenito": 3.5
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 79",
+    "citat": "Omogućava se nova izgradnja i rekonstrukcija postojećih niskih i srednjih stambeno poslovnih građevina te uređenje javnih i drugih prostora temeljem ovog Plana uz sljedeće uvjete",
+    "napomena": "U M1 dopuštena je samo nova nestambena gradnja i rekonstrukcija (Ppmin=1500 m2, bez posebnih pravila za stambenu gradnju). U M2 dopuštena je nova gradnja niskih i srednjih stambeno-poslovnih građevina, Ppmin=1400 m2, kig=0,70. Proizvodna I: Ppmin=1000 m2, kig=0,4 (nestambeno)."
+   },
+   "2.3": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.3,
+     "dvojna": 0.3,
+     "interpolacija": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.5,
+     "dvojna": 0.9,
+     "interpolacija": 0.75
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 81",
+    "citat": "na minimalnoj površini građevne čestice Ppmin=500 m2, kig=0,30, kigP=0,6, kis=2,00, kisN+kisO=0,90, E=Po+3+Pk/Uk",
+    "napomena": "Mješovita i stambena namjena; slobodnostojeće u tri stupnja Ppmin 500/800/1200 m2 (svi kig=0,30, viša katnost na većoj čestici); interpolacija 300 m2 (kig 0,25); poluugrađene 300 m2 (kig 0,30)."
+   },
+   "2.4": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.35,
+     "dvojna": 0.35,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.2,
+     "dvojna": 1.2,
+     "interpolacija": 0.9
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 83",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,35, maksimalni kigP=0,6, Emax=Po+4+Pk/Uk",
+    "napomena": "M1 i stambena namjena; slobodnostojeća 500 m2 (kig 0,35), interpolacija 300 m2 (kig 0,30), poluugrađena 300 m2 (kig 0,35)."
+   },
+   "2.5": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.35,
+     "dvojna": 0.35,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.5,
+     "dvojna": 1.2,
+     "interpolacija": 0.9
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 84",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,35, maksimalni kigP=0,6, Emax=Po+4+Pk/Uk",
+    "napomena": "M1; slobodnostojeća 500 m2 (kig 0,35), interpolacija 300 m2 (kig 0,30), poluugrađena 400 m2 (kig 0,35); za čestice preko 1200 m2 gdje uvjeti dopuštaju Emax=Po+5+Pk/Uk. Poslovna (i zanatski sadržaji): Ppmin=1500 m2."
+   },
+   "2.6": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 85",
+    "citat": "omogućava se rekonstrukcija (dogradnja i nadogradnja) postojećih građevina temeljem ovog Plana, uz maksimalno povećanje GBPN-a i BPO-a u pojedinoj zoni do 10%",
+    "napomena": "Kompleksi jedne (javne/društvene/sportsko-rekreacijske) namjene; dopuštena je samo rekonstrukcija i ograničena nova gradnja u funkciji poboljšanja osnovne namjene, uz povećanje GBPN/BPO do 10% (za javnu i društvenu do 30-50%). Nema stambene namjene."
+   },
+   "2.7": {
+    "nova_stambena": "rekonstrukcija",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 86",
+    "citat": "Postojeće („legalne“) stambene građevine u obuhvatu ove zone mogu se rekonstruirati (nadograditi) do maksimalno E=Po+P+2 uz maksimalnu izgrađenost kig=0,30",
+    "napomena": "Kompleksi jedne namjene (zdravstvo, Brodogradilište, TTTS, groblje, Kampus, Vrboran, Sjeverna luka i dr.); jedina spomenuta stambena gradnja je rekonstrukcija/nadogradnja postojećih 'legalnih' stambenih građevina (kig=0,30). Nova samostalna stambena gradnja nije predviđena."
+   },
+   "2.8": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 89",
+    "citat": "U zoni namjene R2 - tenis centar Bačvice (Baterije) primjenjuju se opći uvjeti za rekreacijsku namjenu iz članka 49.j. stavka 6.",
+    "napomena": "Članak samo djelomično izmijenjen 2025. (dodan st. 2. o R2 tenis centru); nepromijenjeni dio (parkovi, prateće građevine do 100 m2 BRPN/ha) preuzet je iz teksta 2014. i nije predmet ove ekstrakcije. Nema stambene namjene."
+   },
+   "2.9": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 89",
+    "citat": "omogućava se izgradnja pratećih ugostiteljskih (bez smještajnih) i rekreacijskih sadržaja i montažnih (lakih) konstrukcija (sjenila, strehe za odlaganje opreme, plažni rekviziti, konstrukcije u funkciji sigurnosti) za potrebe vodenih sportova",
+    "napomena": "Nasute uređene plaže (Zenta-Orišac, Žnjan i dr.); dopušteni su samo prateći ugostiteljski/rekreacijski sadržaji (do 200 m2/ha, uz iznimke), bez gradnje stambenih građevina."
+   },
+   "3.1": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.3,
+     "dvojna": 0.3,
+     "interpolacija": 0.3
+    },
+    "kis": {
+     "slobodnostojeca": 1.7,
+     "dvojna": 0.9,
+     "interpolacija": 0.9
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 90",
+    "citat": "za novu izgradnju slobodnostojećih građevina Ppmin=500 m2; kig=0,3, kigP=0,6, Emax=Po+3+Pk/Uk, kis=1,5, kisN+kisO=0,9",
+    "napomena": "M1: slobodnostojeća 500 m2 (kig 0,3), uz mogućnost 700 m2 (i dalje kig 0,3); interpolacija 300 m2; poluugrađena 400 m2 (kig 0,3). Kroz UPU uz važnije ulice moguća je i slobodnostojeća na Ppmin=1500 m2 (kig 0,30). Proizvodna namjena: gradnja stambenih građevina nije dopuštena."
+   },
+   "3.2": {
+    "nova_stambena": "da",
+    "kig": {
+     "slobodnostojeca": 0.25,
+     "dvojna": 0.25
+    },
+    "kis": {
+     "slobodnostojeca": 1.2,
+     "dvojna": 0.75
+    },
+    "izvor": "prijedlog ID GUP-a, 2025., str. 95",
+    "citat": "za novu izgradnju slobodnostojećih građevina minimalna površina građevne čestice Ppmin=600 m2; maksimalni kig=0,25, kigP=0,5, Emax=Po+3+Pk/Uk",
+    "napomena": "M1/M2, pretežno kroz UPU: slobodnostojeća 600 m2 (kig 0,25), uz mogućnost 800 m2 (kig 0,3); poluugrađena 400 m2 (kig 0,25); interpolacija nije posebno propisana. Proizvodna namjena: gradnja stambenih građevina nije dopuštena ('ne dopušta se gradnja stambenih građevina')."
+   },
+   "3.3": {
+    "nova_stambena": "upu",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 100",
+    "citat": "ovo urbano pravilo se provodi posredno, na temelju važećih prostornih planova užeg područja - detaljnih planova uređenja",
+    "napomena": "Provodi se isključivo posredno kroz važeće DPU-ove (Zenta, Trstenik-Radoševac, Bračka/Velebitska, Gospe od Žnjana, Radoševac, Žnjan, Brnik-Jadro, Duilovo), koji detaljno propisuju veličinu i oblik čestica; GUP sam ne daje Ppmin/kig za stambenu (M1/M3) izgradnju, osim jedne vrijednosti za poslovnu K uz Držislavovu (400 m2, kig=0,5)."
+   },
+   "3.4": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 102",
+    "citat": "zabrana izgradnje (osim iznimki koje su prozvane posebnim pravilima iz stavka 2. ovog članka) i postupno uklanjanje nezakonito izgrađenih građevina",
+    "napomena": "Zabrana izgradnje (uz iznimke: privremeni plastenici/staklenici na Kamenu i Kili); rekonstrukcija postojećih građevina samo u postojećim gabaritima; u Žrnovnici bez nove izgradnje uz zadržavanje postojeće parcelacije."
+   },
+   "3.5": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 103",
+    "citat": "Omogućava se rekonstrukcija postojećih i izgradnja manjih pratećih građevina (ugostiteljski sadržaji bez smještaja i rekreacijski sadržaji) do ukupno 300 m2 po hektaru uređene zelene površine",
+    "napomena": "Z3 (uređeno zelenilo): prateće građevine do 300 m2/ha; T3 (auto-kamp Stobreč): prateće građevine do 400 m2 GBP/ha, kroz UPU. Nema stambene namjene."
+   },
+   "3.6": {
+    "nova_stambena": "ne",
+    "kig": null,
+    "kis": null,
+    "izvor": "prijedlog ID GUP-a, 2025., str. 103",
+    "citat": "Unutar obuhvata izdvojenog građevinskog područja izvan naselja sportske namjene, golf - R5 planira se golf igralište s 18 polja. Za uređenje golf igrališta i gradnju unutar njega obvezna je izrada prostornog plana užeg područja.",
+    "napomena": "Novo urbano pravilo (čl. 77.a). Golf igralište R5, obvezno kroz UPU; dopušteni su samo prateći sadržaji (klupska kuća bez smještaja, pomoćne/servisne zgrade), kig max 0,02, kisN max 0,05. Nema stambene namjene."
+   },
+   "GP": {
+    "nova_stambena": "gp",
+    "kig": null,
+    "izvor": "prijedlog ID GUP-a, 2025., gradski projekti",
+    "citat": "",
+    "napomena": "Gradski projekti GP1–GP11: ukupna kvota GBP-a po projektu."
+   }
+  }
+ },
+ "opca": {
+  "2006": [
+   {
+    "opis": "Definicija interpolacije: gradnja na građevnoj čestici koja se nalazi u već izgrađenom uličnom potezu odnosno pretežito dovršenom području (a ne stvaranje nove parcele na potpuno neizgrađenom zemljištu).",
+    "citat": "Interpolacijom u smislu ovog Plana se smatra gradnja na grañevnoj čestici koja se nalazi u izgrañenom uličnom potezu odnosno pretežito dovršenom području.",
+    "dokument": "1/06",
+    "stranica": 29
+   },
+   {
+    "opis": "Opći gornji limiti pokazatelja izgrađenosti za cijelo građevinsko područje, odvojeno za izgrađeni i neizgrađeni dio (primjenjuju se kao apsolutni maksimum kada urbana pravila ne propisuju niži kig).",
+    "citat": "Maksimalni prostorni pokazatelji za izgradnju na grañevnoj čestici: a) izgrañeni dio grañevinskog područja: maksimalni kig=1,0 maksimalni kis=8,0 b) neizgrañeni dio grañevinskog područja: maksimalni kig=0,8 maksimalni kis=6,0",
+    "dokument": "1/06",
+    "stranica": 29
+   },
+   {
+    "opis": "Opći minimalni udio procjedne (vodopropusne) površine građevne čestice kao dodatni parametar izgrađenosti uz kig/kis, s iznimkama za podzemne javne garaže i zone 1.1, 1.2, 1.4 i gradske projekte 1 i 2.",
+    "citat": "Minimalna procjedna površina za nisku izgradnju je 40%, a za srednju i visoku 30% površine grañevne čestice.",
+    "dokument": "1/06",
+    "stranica": 29
+   },
+   {
+    "opis": "Za izgrađene dijelove niskokonsolidiranih područja (zone M1, M2, gospodarska I-Mejaši i poslovna K) Ppmin za stambene, stambeno-poslovne i gospodarske građevine može se kroz detaljniji plan umanjiti do 40% u odnosu na propisani za zonu, uz zadržan ili manji kig i ograničenu katnost/visinu.",
+    "citat": "minimalna površina grañevne čestice je do 40% manja od propisane za odgovarajuće zone, kig grañevine, ukoliko je veći od propisanog, ne smije se povećavati, maksimalna katnost E=Po+P+3, maksimalna visina V=13,0 m",
+    "dokument": "1/06",
+    "stranica": 30
+   },
+   {
+    "opis": "Novi opći tip građevine 'niska stambena građevina – vila' (do P+2, najviše 3 stana, ukupne neto površine veće od 400 m2), dopušten u zonama stambene – S i mješovite pretežito stambene – M1 namjene uz vlastiti Ppmin i kig.",
+    "citat": "Niske stambene grañevine – vile, ukupne neto površine veće od 400 m2, mogu se graditi u zonama stambene – S i mješovite pretežito stambene - M1 namjene prema slijedećim uvjetima: Ppmin=700m2; kig=0,30 (nadzemni), E=Po+P+2, kis=1,2, kisN=0,80",
+    "dokument": "3/08",
+    "stranica": 3
+   },
+   {
+    "opis": "Nove srednje i visoke stambene građevine u konsolidiranim i nisko konsolidiranim područjima grade se s predvrtovima ako se u prizemlju planiraju stanovi; prenamjena poslovnog prizemlja u stanove dopuštena je samo uz osiguran predvrt.",
+    "citat": "Nove srednje i visoke stambene grañevine u konsolidiranim i nisko konsolidiranim područjima grade se i planiraju s predvrtovima, ukoliko se u prizemlju planira gradnja stanova.",
+    "dokument": "3/08",
+    "stranica": 4
+   },
+   {
+    "opis": "Opće pravilo uređenja građevne čestice namijenjene pretežito stanovanju: obveza korištenja autohtonog biljnog materijala (drvoredi, predvrtovi, blokovsko zelenilo) radi zaštite funkcionalnih i oblikovnih karakteristika urbanog prostora.",
+    "citat": "Grañevna čestica namijenjena pretežito stanovanju ureñivat će se poštujući funkcionalne i oblikovne karakteristike urbanog prostora, uz upotrebu autohtonog biljnog materijala (drvoredi, predvrtovi, blokovsko zelenilo).",
+    "dokument": "1/06",
+    "stranica": 13
+   },
+   {
+    "opis": "Građevine u nizu (osnovni tip građevine) mogu se graditi samo u obuhvatu propisanih urbanističkih planova uređenja i u zonama niske i srednje izgradnje, uz vlastiti Ppmin, širinu čestice, visinu, kig i kigP.",
+    "citat": "Grañevine u nizu mogu se graditi u obuhvatu propisanih urbanističkih planova ureñenja i u zonama niske i srednje izgradnje, uz slijedeće uvjete: minimalna površina grañevne čestice 180 m2, minimalna širina grañevne čestice 6 m, maksimalna visina Po+P+1, maksimalni kig=0,40, maksimalni kigP=0,60",
+    "dokument": "1/06",
+    "stranica": 29
+   }
+  ],
+  "2015": [
+   {
+    "opis": "Definicija interpolacije - gradnja na građevnoj čestici u izgrađenom uličnom potezu odnosno pretežito dovršenom području.",
+    "citat": "Interpolacijom u smislu ovog Plana se smatra gradnja na građevnoj čestici koja se nalazi u izgrađenom uličnom potezu odnosno pretežito dovršenom području.",
+    "stranica": 32
+   },
+   {
+    "opis": "Opći minimalni udio procjedne (zelene, vodopropusne) površine građevne čestice, ako urbano pravilo ne propisuje drugačije: 40% za nisku, 30% za srednju i visoku izgradnju.",
+    "citat": "Minimalna procjedna površina za nisku izgradnju je 40%, a za srednju i visoku 30% površine građevne čestice, ukoliko nije drugačije određeno urbanim pravilima.",
+    "stranica": 33
+   },
+   {
+    "opis": "Iznimka od gornjeg općeg minimuma: manja procjedna površina od 30% dopuštena je kod podzemnih javnih garaža te u urbanim pravilima 1.1, 1.2, 1.4 i gradski projekti 1 i 2.",
+    "citat": "Minimalna procjedna površina manja od 30% omogućava se i u područjima urbanih pravila 1.1, 1.2, 1.4 i gradski projekti 1 i 2.",
+    "stranica": 33
+   },
+   {
+    "opis": "Nisko konsolidirana područja (izgrađeni dijelovi, zone M1/M2, I i K): minimalna površina građevne čestice može kroz provedbeni dokument (ili na drugi način utvrđen odlukom) biti do 40% manja od propisane za odgovarajuću zonu, uz E=Po+P+3, V=13 m, odmak od međe 1 m.",
+    "citat": "minimalna površina građevne čestice je do 40% manja od propisane za odgovarajuće zone,",
+    "stranica": 33
+   },
+   {
+    "opis": "Opći (krovni) maksimalni koeficijenti izgrađenosti za cijelo građevinsko područje, koje urbana pravila dalje razrađuju/smanjuju: kig=1,0 (izgrađeni dio), kig=0,8 (neizgrađeni dio).",
+    "citat": "a) izgrađeni dio građevinskog područja: … maksimalni kig=1,0 … b) neizgrađeni dio građevinskog područja: … maksimalni kig=0,8",
+    "stranica": 33
+   },
+   {
+    "opis": "Opća pravila za osnovni tip 'građevine u nizu' (min. 3 prislonjene građevine): dopuštene u obuhvatu propisanih UPU-a i u zonama niske/srednje izgradnje, Ppmin=180 m², šmin=6 m, max Po+P+1, kig=0,40, kigP=0,60.",
+    "citat": "Građevine u nizu mogu se graditi u obuhvatu propisanih urbanističkih planova uređenja i u zonama niske i srednje izgradnje, uz slijedeće uvjete: … minimalna površina građevne čestice 180 m2,",
+    "stranica": 32
+   },
+   {
+    "opis": "Zabrana pretvaranja velikih vrtova i zelenih okućnica postojećih građevina u građevne parcele te zaštita karakterističnih kamenih ogradnih zidova (propisano za obalno područje vrijedne niske izgradnje, urbano pravilo 1.5, ali je relevantno kao opći princip zaštite okućnica/vrtova od parcelacije).",
+    "citat": "zabrana prenamjene velikih vrtova i zelenih okućnica postojećih građevina u građevne parcele, posebno se štite postojeći karakteristični kameni ogradni zidovi;",
+    "stranica": 38
+   },
+   {
+    "opis": "Novi opći tip građevine 'niska stambena građevina – vila' (slobodnostojeća, do najviše P+2, najviše 3 stana, ukupne neto površine veće od 400 m2), dopušten u zonama stambene – S i mješovite pretežito stambene – M1 namjene uz vlastiti Ppmin, kig i kis.",
+    "citat": "Niske stambene građevine – vile, ukupne neto površine veće od 400 m2, mogu se graditi u zonama stambene – S i mješovite pretežito stambene - M1 namjene prema slijedećim uvjetima: Ppmin=700m2; kig=0,30 (nadzemni), E=Po+P+2, kis=1,2, kisN=0,80",
+    "stranica": 12
+   },
+   {
+    "opis": "Opći (krovni) maksimalni koeficijenti izgrađenosti/iskorištenosti za cijelo građevinsko područje, koje urbana pravila dalje razrađuju/smanjuju: kig=1,0/kis=8,0 za izgrađeni dio, kig=0,8/kis=6,0 za neizgrađeni dio.",
+    "citat": "a) izgrađeni dio građevinskog područja: maksimalni kig=1,0 maksimalni kis=8,0 b) neizgrađeni dio građevinskog područja: maksimalni kig=0,8 maksimalni kis=6,0",
+    "stranica": 33
+   }
+  ],
+  "2025": [
+   {
+    "opis": "Definicija interpolacije (pojmovnik, čl. 6.a): nova zgrada se smije graditi kao 'interpolacija' samo na čestici smještenoj između dvije već izgrađene odnosno uređene čestice u izgrađenom uličnom potezu (uključujući uglovnu česticu) - ta opća definicija vrijedi posvuda gdje urbana pravila dopuštaju interpolaciju kao oblik nove stambene gradnje.",
+    "citat": "interpolacija je gradnja zgrade u izgrađenom uličnom potezu, na građevnoj čestici smještenoj između dvije već izgrađene, odnosno uređene građevne čestice, uključivo i uglovna građevna čestica",
+    "stranica": 2
+   },
+   {
+    "opis": "Opća definicija bloka (pojmovnik, čl. 6.a): unutrašnjost bloka je namijenjena zajedničkom korištenju pješačkih i zelenih površina ('blokovsko zelenilo'), a ne novoj gradnji. Pojedina urbana pravila (1.3, 1.4, 1.5) to izrijekom potvrđuju izričitom zabranom nove gradnje u unutrašnjosti (dvorištima) bloka.",
+    "citat": "blok je prostorna jedinica - dio gradskog prostora definiran sa svih strana uličnom mrežom ili drugom javnom površinom (trg, park, javno zelenilo i sl.) kojeg obilježava pretežito kontinuirana, kompaktna izgradnja po rubu. Može biti poluzatvorenog ili zatvorenog tipa, a unutrašnjost bloka namijenjena je zajedničkom korištenju pješačkih i zelenih površina („blokovsko zelenilo“).",
+    "stranica": 7
+   },
+   {
+    "opis": "Opći (najviši mogući) koeficijenti izgrađenosti/iskorištenosti koje urbana pravila dalje razrađuju (u pravilu propisuju niže, konkretnije vrijednosti): u izgrađenom dijelu građevinskog područja kig=1,0/kis=8,0, u neizgrađenom dijelu kig=0,8/kis=6,0.",
+    "citat": "u izgrađenom dijelu građevinskog područja: kig=1,0; kis=8,0",
+    "stranica": 58
+   },
+   {
+    "opis": "Opće (opće, čl. 49.g st. 9) pravilo o najmanjem udjelu zelenih površina (Z) na građevnoj čestici, primjenjivo kad pojedino urbano pravilo ne propisuje drugačije: za niske stambene građevine Z=40% (od čega 30% mora biti prirodni teren/upojna površina PT, 10% može biti ostalo uređeno zelenilo), za ostale građevine Z=35% (25% PT + 10% ostalo); ako se grade podzemni javni garažni kapaciteti, Z=20% (sve PT).",
+    "citat": "najmanji udio dio zelenih površina (Z) u površini građevne čestice određuje se sukladno sljedećoj tablici",
+    "stranica": 59
+   },
+   {
+    "opis": "Opći tip građevine 'niska stambena građevina – vila' (slobodnostojeća, do najviše P+3, tj. najviše 3 nadzemne etaže prema članku 49.j), dopušten u zonama stambene – S i mješovite pretežito stambene – M1 namjene uz vlastiti Ppmin, kig i kis.",
+    "citat": "Niske stambene građevine – vile se mogu graditi kao slobodnostojeće građevine u zonama stambene – S i mješovite pretežito stambene - M1 namjene prema sljedećim uvjetima: Ppmin=700m2; kig=0,30, kigP=0,6, E=Po+3, kis=1,2, kisN+kisO=0,80",
+    "stranica": 63
+   }
+  ]
+ }
+}

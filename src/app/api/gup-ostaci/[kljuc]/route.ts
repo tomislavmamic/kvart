@@ -2,17 +2,20 @@
  * Premali ostaci za kartu provjere GUP-a, po načinu brojanja i godini:
  * `/api/gup-ostaci/<inačica>-<godina>` →
  *   { ostaci: [[čestica, klasa], …],
- *     ppmin: { <kod pravila>: { stanovanje?, gospodarska?, javna?, izvor, citat } } }
+ *     ppmin: { <kod pravila>: { stanovanje?, gospodarska?, javna?, izvor, citat } },
+ *     gradnja: { <kod pravila>: { novaGradnja, kig, kis, nova_stambena, izvor, citat } } }
  *
  * Ostatak ovisi o susjednim česticama po cijelom gradu, a karta učitava
  * čestice po pločicama — pa ga ne može izračunati sama. Računa ga isti
  * izracun.ts kao /gup, pri gradnji (sve kombinacije su poznate unaprijed).
  * `ppmin` je najmanja građevna čestica iz odredbi po području urbanog
- * pravila i vrsti, izabrana po istim pravilima — za skočni prozor.
+ * pravila i vrsti, izabrana po istim pravilima; `gradnja` je što odredbe
+ * ondje dopuštaju graditi (za stambene i mješovite zone) — oboje treba karti
+ * da presudi česticu isto kao /gup, i skočnom prozoru da kaže zašto.
  */
 import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
-import { najmanjaCestica, VRSTA_ZA_KLASU, type NajmanjaCestica } from "@/lib/gup-grad/odredbe";
-import { ostaci, ucitajMjerenja, ucitajPpmin } from "@/lib/gup-grad/podaci";
+import { najmanjaCestica, uvjetiGradnje, VRSTA_ZA_KLASU, type NajmanjaCestica } from "@/lib/gup-grad/odredbe";
+import { ostaci, ucitajMjerenja, ucitajOdredbe } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
 
 export const dynamic = "force-static";
@@ -30,15 +33,32 @@ export async function GET(_req: Request, ctx: { params: Promise<{ kljuc: string 
   if (!inacica || !GODINE.includes(godina)) {
     return Response.json({ error: "Nepoznata inačica ili godina." }, { status: 404 });
   }
-  const [d, tab] = await Promise.all([ucitajMjerenja(), ucitajPpmin()]);
+  const [d, o] = await Promise.all([ucitajMjerenja(), ucitajOdredbe()]);
   const ppmin: Record<string, Partial<Record<string, NajmanjaCestica>>> = {};
-  for (const kod of Object.keys(tab.godine[String(godina)] ?? {})) {
+  for (const kod of Object.keys(o.ppmin.godine[String(godina)] ?? {})) {
     for (const kl of KLASE) {
       const vrsta = VRSTA_ZA_KLASU[kl.kod];
       if (!vrsta) continue;
-      const n = najmanjaCestica(tab, godina, kod, kl.kod, inacica.pravila);
+      const n = najmanjaCestica(o.ppmin, godina, kod, kl.kod, inacica.pravila);
       if (n) (ppmin[kod] ??= {})[vrsta] = n;
     }
   }
-  return Response.json({ ostaci: ostaci(d, godina, inacica.pravila, tab), ppmin });
+  const gradnja: Record<
+    string,
+    { novaGradnja: boolean; kig: number | null; kis: number | null; nova_stambena: string; izvor: string; citat: string }
+  > = {};
+  for (const kod of Object.keys(o.gradnja.godine[String(godina)] ?? {})) {
+    const u = uvjetiGradnje(o.gradnja, godina, kod, "S", inacica.pravila);
+    if (u.pravilo) {
+      gradnja[kod] = {
+        novaGradnja: u.novaGradnja,
+        kig: u.kig,
+        kis: u.kis,
+        nova_stambena: u.pravilo.nova_stambena,
+        izvor: u.pravilo.izvor,
+        citat: u.pravilo.citat,
+      };
+    }
+  }
+  return Response.json({ ostaci: ostaci(d, godina, inacica.pravila, o), ppmin, gradnja });
 }
