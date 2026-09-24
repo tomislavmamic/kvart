@@ -24,18 +24,26 @@ Ceste se uzimaju iz gradske evidencije, a ne iz OSM-a: OSM izvadak u repou
 rezan je na kvart, a gradski registar pokriva cijelo područje i nosi
 nadležnost.
 
+Katastarske čestice ne dolaze iz arhive (ondje su iz svibnja 2024.) nego iz
+spremišta koje DGU-ovom INSPIRE uslugom osvježava `npm run katastar:osvjezi`.
+
 Rezultat: public/geo/sire/*.geojson (EPSG:4326)
 
-Pokretanje:  /opt/homebrew/bin/python3 scripts/izvadi-sire.py
-Traži:       ogr2ogr (GDAL) i SHP.zip u korijenu repoa
+Pokretanje:  /opt/homebrew/bin/python3 scripts/izvadi-sire.py [sloj …]
+Traži:       ogr2ogr (GDAL) i SHP.zip u korijenu repoa (katastar ga ne treba)
 """
 from __future__ import annotations
 
 import json
 import os
 import subprocess
+import sys
+from typing import Callable
 
 from osgeo import ogr
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "katastar"))
+from spremiste import cestice as katastarske_cestice  # noqa: E402
 
 ogr.UseExceptions()
 
@@ -47,11 +55,11 @@ IZLAZ = os.path.join(KORIJEN, "public", "geo", "sire")
 # malom rezervom da čestice na rubu ne ispadnu prepolovljene.
 OBUHVAT_4326 = (16.4585, 43.5045, 16.5605, 43.5555)
 
-# ime → (putanja u arhivi, {izvorno polje: naše ime})
-SLOJEVI: dict[str, tuple[str, dict[str, str]]] = {
+# ime → (putanja u arhivi ili izvor za ogr2ogr izvan nje, {izvorno polje: naše ime})
+SLOJEVI: dict[str, tuple[str | Callable[[], list[str]], dict[str, str]]] = {
     "katastar": (
-        "SPLIT_EXPORT_BAZA/KATASTAR/CADASTRAL_PARCELS_2024_P.shp",
-        {"KO_NAZIV": "ko", "KC_BROJ": "cestica", "Shape_Area": "povrsina"},
+        lambda: [katastarske_cestice(), "cestice"],
+        {"KO_NAZIV": "ko", "KC_BROJ": "cestica", "POVRSINA": "povrsina"},
     ),
     "zgrade": (
         "SPLIT_EXPORT_PORTAL/Objekti_Split_2025_Objekti_Split_2025.shp",
@@ -89,7 +97,7 @@ SLOJEVI: dict[str, tuple[str, dict[str, str]]] = {
 }
 
 
-def izvadi(ime: str, izvor: str, polja: dict[str, str]) -> int:
+def izvadi(ime: str, izvor: str | Callable[[], list[str]], polja: dict[str, str]) -> int:
     """Reže jedan sloj na obuhvat i piše ga kao GeoJSON u EPSG:4326.
 
     Arhiva se čita na mjestu preko /vsizip — raspakirana traži 2,3 GB, a
@@ -105,9 +113,10 @@ def izvadi(ime: str, izvor: str, polja: dict[str, str]) -> int:
     # Dva prolaza jer ogr2ogr odbija `-spat_srs` zajedno s `-sql`: prvo se
     # reže u izvornom sustavu sloja i prebacuje u 4326, pa se tek onda
     # preimenuju stupci.
+    ulaz = [f"/vsizip/{ARHIVA}/SHP/{izvor}"] if isinstance(izvor, str) else izvor()
     subprocess.run(
         ["ogr2ogr", "-f", "GeoJSON", medju,
-         f"/vsizip/{ARHIVA}/SHP/{izvor}",
+         *ulaz,
          "-spat", *(str(v) for v in OBUHVAT_4326),
          "-spat_srs", "EPSG:4326",
          "-t_srs", "EPSG:4326",
@@ -148,13 +157,17 @@ def izvadi(ime: str, izvor: str, polja: dict[str, str]) -> int:
 
 
 def main() -> None:
-    """Vadi sve slojeve za širi obuhvat."""
-    if not os.path.exists(ARHIVA):
+    """Vadi sve slojeve za širi obuhvat, ili samo one navedene."""
+    trazeni = sys.argv[1:] or list(SLOJEVI)
+    nepoznati = [ime for ime in trazeni if ime not in SLOJEVI]
+    if nepoznati:
+        raise SystemExit(f"nepoznati slojevi: {nepoznati}")
+    if any(isinstance(SLOJEVI[ime][0], str) for ime in trazeni) and not os.path.exists(ARHIVA):
         raise SystemExit(f"nema arhive: {ARHIVA}")
     os.makedirs(IZLAZ, exist_ok=True)
     print(f"Širi obuhvat {OBUHVAT_4326} → {os.path.relpath(IZLAZ, KORIJEN)}")
-    for ime, (izvor, polja) in SLOJEVI.items():
-        izvadi(ime, izvor, polja)
+    for ime in trazeni:
+        izvadi(ime, *SLOJEVI[ime])
 
 
 if __name__ == "__main__":

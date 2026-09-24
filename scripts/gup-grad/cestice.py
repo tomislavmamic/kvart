@@ -3,6 +3,8 @@
 
 Ulaz:
   .cache/gup-grad/klase-<id>.npy     rešetka namjene po godini (rasteriziraj.py)
+  data/sources/katastar-dgu/         katastarske čestice s DGU-a, osvježava ih
+                                     npm run katastar:osvjezi (scripts/katastar/)
   data/sources/Split Export/...      GIS izvoz Grada Splita (SHP), vidi IZVOZ
 
 Izlaz:
@@ -81,7 +83,9 @@ from affine import Affine
 import shapely
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "katastar"))
 import rasteriziraj as R  # noqa: E402
+import spremiste as katastar  # noqa: E402
 
 ROOT = R.ROOT
 IZVOZ = os.environ.get(
@@ -257,6 +261,20 @@ def citaj(put: str, **kw):
     return d
 
 
+def citaj_cestice():
+    """Katastarske čestice iz spremišta DGU-a (gradski izvoz ih ima iz 2024.)."""
+    return citaj(katastar.cestice(), layer="cestice", columns=["KO_NAZIV", "KC_BROJ"])
+
+
+def izvor_cestica() -> str:
+    with open(os.path.join(katastar.mapa(), "stanje.json"), encoding="utf-8") as f:
+        stanje = json.load(f)
+    return (
+        "DGU, INSPIRE katastarske čestice (api.uredjenazemlja.hr/services/inspire/cp/wfs), "
+        f"osvježeno {stanje['zadnje_osvjezavanje'][:10]}"
+    )
+
+
 def rasteriziraj(geomi, vrijednosti=None, dtype="uint8") -> np.ndarray:
     geomi = [g for g in geomi if g is not None and not g.is_empty]
     if not geomi:
@@ -288,7 +306,7 @@ def main() -> None:
     maska_obuhvata = rasteriziraj([obuhvat]).astype(bool)
 
     # ---- čestice ---------------------------------------------------------
-    c = citaj(os.path.join(BAZA, "KATASTAR", "CADASTRAL_PARCELS_2024_P.shp"))
+    c = citaj_cestice()
     c = c[c.geometry.intersects(obuhvat)].reset_index(drop=True)
     print("čestica u obuhvatu:", len(c))
     ids = rasteriziraj(c.geometry.values, np.arange(1, len(c) + 1), "int32")
@@ -478,7 +496,7 @@ def main() -> None:
         "godine": godine_out,
         "urbana_pravila_kodovi": up_kodovi,
         "izvori": {
-            "cestice": "Grad Split, GIS izvoz: KATASTAR/CADASTRAL_PARCELS_2024_P",
+            "cestice": izvor_cestica(),
             "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
             "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025 (tlocrti gradskog 3D modela, isti kao Zgrade_3D/ST_3D_2024)",
             "etaze": "Grad Split, GIS izvoz: Korisna_povrsina_Split_2025 (visina krovnih ploha 3D modela, h_objekt / 3 m)",

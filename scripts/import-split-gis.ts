@@ -1,6 +1,12 @@
 /**
  * Uvozi slojeve iz GIS izvoza Grada Splita (SHP.zip) u public/geo/grad/.
- * Pokretanje:  npm run import-grad-geo
+ * Pokretanje:  npm run import-grad-geo              (svi slojevi)
+ *              npm run import-grad-geo -- katastar  (samo navedeni)
+ *
+ * Iznimka su katastarske čestice: gradski izvoz ih ima iz svibnja 2024.,
+ * pa dolaze iz spremišta koje DGU-ovom INSPIRE uslugom osvježava
+ * `npm run katastar:osvjezi` (scripts/katastar/). Za njih ne trebaju ni
+ * SHP.zip ni ogr2ogr — izvozi ih scripts/katastar/izvezi.py (pyogrio).
  *
  * Arhiva se NE raspakirava. Puna raspakirana baza je ~2,3 GB, a čita se
  * kroz GDAL-ov /vsizip/ pa ogr2ogr otvara .shp izravno iz zipa. Zbog toga
@@ -31,8 +37,11 @@ const SPAT = ["16.486975", "43.519470", "16.511532", "43.530401"];
 interface Sloj {
   /** Izlazno ime: public/geo/grad/<ime>.geojson */
   ime: string;
-  /** Putanja unutar arhive, bez vodećeg "SHP/". */
-  izvor: string;
+  /**
+   * Putanja unutar arhive, bez vodećeg "SHP/" — ili, za sloj koji ne dolazi
+   * iz arhive, funkcija koja ga vrati već u EPSG:4326, izrezan na SPAT.
+   */
+  izvor: string | (() => FeatureCollection);
   /**
    * Izvorni stupac → ime pod kojim ga karta prikazuje; ostalo otpada.
    * Kad izostane, stupci se probiru automatski (vidi ODBACI) — to je za
@@ -165,8 +174,8 @@ const SLOJEVI: Sloj[] = [
   },
   {
     ime: "katastar",
-    izvor: "SPLIT_EXPORT_BAZA/KATASTAR/CADASTRAL_PARCELS_2024_P.shp",
-    polja: { KO_NAZIV: "ko", KC_BROJ: "cestica", Shape_Area: "povrsina" },
+    izvor: () => izSpremistaKatastra(["KO_NAZIV", "KC_BROJ", "POVRSINA"]),
+    polja: { KO_NAZIV: "ko", KC_BROJ: "cestica", POVRSINA: "povrsina" },
   },
   {
     ime: "zgrade-2025",
@@ -655,8 +664,23 @@ function preslikajPolja(f: Feature, sloj: Sloj): Feature {
   return { ...f, properties: izlaz };
 }
 
+/** Čestice iz spremišta DGU-a, u okviru SPAT, s izvornim imenima polja. */
+function izSpremistaKatastra(polja: string[]): FeatureCollection {
+  const json = execFileSync(
+    process.env.PYTHON ?? "python3",
+    [
+      path.join(process.cwd(), "scripts", "katastar", "izvezi.py"),
+      "--bbox", ...SPAT,
+      "--polja", polja.map((p) => `${p}:${p}`).join(","),
+    ],
+    { encoding: "utf-8", maxBuffer: 256 * 1024 * 1024 }
+  );
+  return JSON.parse(json) as FeatureCollection;
+}
+
 /** ogr2ogr iz /vsizip/ → GeoJSON u privremenoj datoteci. */
 function izvuci(sloj: Sloj, tmp: string): FeatureCollection {
+  if (typeof sloj.izvor !== "string") return sloj.izvor();
   execFileSync(
     "ogr2ogr",
     [
@@ -674,7 +698,14 @@ function izvuci(sloj: Sloj, tmp: string): FeatureCollection {
 }
 
 async function main(): Promise<void> {
-  if (!existsSync(ZIP)) {
+  const trazeni = process.argv.slice(2);
+  const nepoznati = trazeni.filter((ime) => !SLOJEVI.some((s) => s.ime === ime));
+  if (nepoznati.length) {
+    console.error(`Nepoznati slojevi: ${nepoznati.join(", ")}`);
+    process.exit(1);
+  }
+  const odabrani = trazeni.length ? SLOJEVI.filter((s) => trazeni.includes(s.ime)) : SLOJEVI;
+  if (odabrani.some((s) => typeof s.izvor === "string") && !existsSync(ZIP)) {
     console.error(
       `Nema ${path.basename(ZIP)} u korijenu — arhiva nije u repozitoriju ` +
         "(prevelika je), pa je treba imati lokalno."
@@ -687,12 +718,12 @@ async function main(): Promise<void> {
 
   console.log("Uvozim slojeve iz GIS izvoza Grada Splita…");
   let ukupno = 0;
-  for (const sloj of SLOJEVI) {
+  for (const sloj of odabrani) {
     let fc: FeatureCollection;
     try {
       fc = izvuci(sloj, tmp);
     } catch (e) {
-      console.log(`  ✗ ${sloj.ime} — ogr2ogr nije uspio: ${String(e).slice(0, 80)}`);
+      console.log(`  ✗ ${sloj.ime} — izvoz nije uspio: ${String(e).slice(0, 240)}`);
       continue;
     }
     const prije = fc.features.length;
@@ -712,7 +743,7 @@ async function main(): Promise<void> {
     );
   }
   rmSync(tmp, { force: true });
-  console.log(`Gotovo — ${SLOJEVI.length} slojeva, ${ukupno} objekata.`);
+  console.log(`Gotovo — ${odabrani.length} slojeva, ${ukupno} objekata.`);
 }
 
 main().catch((e) => {

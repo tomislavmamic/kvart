@@ -22,7 +22,11 @@ type PolygonGeometry = Polygon | MultiPolygon;
 type PolygonFeature<P = Record<string, unknown>> = Feature<PolygonGeometry, P>;
 
 const ROOT = path.join(import.meta.dirname, "..");
-const PARCELS = path.join(ROOT, "public", "geo", "grad", "katastar.geojson");
+// Međe čestica zamrznute su na gradskom izvozu iz svibnja 2024.: na njima je
+// vlasništvo provjereno, a ponoviti se ne može (OSS ne daje skupni uvid).
+// Karta i dosje imaju svježe čestice s DGU-a (npm run katastar:osvjezi), pa
+// čestica prenumerirana od 2024. ondje nema zapis iz ove analize.
+const PARCELS = path.join(ROOT, "data", "katastar-kvart-2024.geojson");
 const ROADS = path.join(ROOT, "public", "geo", "planovi", "gup-2024-promet.geojson");
 const TARGETED = path.join(ROOT, "public", "geo", "analiza", "ciljana-provjera-vlasnistva.geojson");
 const CITY_GIS = path.join(ROOT, "public", "geo", "analiza", "javne-cestice.geojson");
@@ -337,7 +341,7 @@ async function main(): Promise<void> {
     selected_count: collection.features.length,
     ownership_status_counts: counts,
     sources: {
-      parcels: "/geo/grad/katastar.geojson",
+      parcels: "data/katastar-kvart-2024.geojson",
       roads: "/geo/planovi/gup-2024-promet.geojson",
       targeted_ownership: "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
       city_gis: "/geo/analiza/javne-cestice.geojson",

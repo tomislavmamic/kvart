@@ -115,3 +115,8 @@ data/dojave.json
 
 # gradska infografika GUP-a: međurezultati rasterizacije listova (scripts/gup-grad)
 /.cache/gup-grad/
+
+# Katastarske čestice Grada s DGU-a (~40 MB GeoPackage, mijenja se svakim
+# osvježavanjem): puni ih `npm run katastar:osvjezi` i skida samo promjene.
+# Žive u glavnoj kopiji, pa ih svi worktreeovi dijele (scripts/katastar/).
+/data/sources/katastar-dgu/

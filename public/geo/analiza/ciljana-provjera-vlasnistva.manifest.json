@@ -12,7 +12,7 @@
     "unresolved": 10
   },
   "sources": {
-    "cadastral_geometry": "/geo/grad/katastar.geojson",
+    "cadastral_geometry": "data/katastar-kvart-2024.geojson",
     "corridor": "data/public-ownership-corridor.geojson",
     "ownership": "https://oss.uredjenazemlja.hr/",
     "public_registry": "data/public-entities.json"
