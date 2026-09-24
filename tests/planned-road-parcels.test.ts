@@ -86,6 +86,24 @@ test("a narrow dossier releases map bounds so its parcel can remain visible", ()
   // zaostao za izvorom (sloj cijelih tokova proširio je okvir na zapad i
   // sjever), pa je test padao na promjeni koja s dosjeom nema veze.
   assert.deepEqual(dossierMapBounds(false), MAP_MAX_BOUNDS);
+  // pogled sa svojim granicama (Provjera GUP-a) zadržava ih
+  const grad = MAP_VIEWS.find((v) => v.id === "gup-provjera")?.granice;
+  assert.ok(grad);
+  assert.deepEqual(dossierMapBounds(false, grad), grad);
+});
+
+test("dossier layout keeps the active view's bounds when nothing is selected", () => {
+  const grad = MAP_VIEWS.find((v) => v.id === "gup-provjera")!.granice!;
+  const bounds: unknown[] = [];
+  const map = {
+    invalidateSize: () => undefined,
+    setMaxBounds: (b?: unknown) => bounds.push(b),
+    getSize: () => ({ x: 1000, y: 800 }),
+    latLngToContainerPoint: () => ({ x: 0, y: 0 }),
+    panBy: () => undefined,
+  };
+  syncDossierMapLayout(map, false, null, false, grad);
+  assert.deepEqual(bounds, [grad]);
 });
 
 test("dossier map lifecycle reapplies layout across breakpoints and close", () => {

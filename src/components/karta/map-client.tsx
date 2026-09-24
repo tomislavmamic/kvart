@@ -1089,10 +1089,11 @@ export function MapClient() {
         uskiModalOtvoren,
         dosjePrikazan ? cestica : null,
         !bezPokreta(),
+        MAP_VIEWS.find((v) => v.id === viewId)?.granice,
       );
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [ready, uskiModalOtvoren, dosjePrikazan, cestica]);
+  }, [ready, uskiModalOtvoren, dosjePrikazan, cestica, viewId]);
 
   // Dira samo refove i postavljače stanja, koji su svi stalni — pa je i sama
   // stalna, i smije stajati u popisu ovisnosti efekta ispod bez da ga budi.

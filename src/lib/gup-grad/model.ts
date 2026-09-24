@@ -22,6 +22,7 @@ export type KodKlase =
   | "R5"
   | "Z1"
   | "Z5"
+  | "Z6"
   | "N"
   | "P";
 
@@ -81,6 +82,16 @@ export const KLASE: readonly Klasa[] = [
   { kod: "R5", bojaPlana: "#7fff9f", indeks: 14, skupina: "sport", naziv: "Golf, izdvojeno građevinsko područje (novo 2025.)", kratko: "Golf" },
   { kod: "Z1", bojaPlana: "#40c040", indeks: 10, skupina: "zelenilo", naziv: "Javne zelene površine, park-šuma Marjan", kratko: "Parkovi i park-šuma" },
   { kod: "Z5", bojaPlana: "#80e000", indeks: 11, skupina: "zelenilo", naziv: "Zaštitno i pejsažno zelenilo", kratko: "Zaštitno zelenilo" },
+  {
+    kod: "Z6",
+    // List crta Z6 istom bojom kao Z5 (odvaja se po natpisima 2025., z6.py);
+    // za kartu provjere tamnija maslinasta, da se vidi razlika
+    bojaPlana: "#a0b400",
+    indeks: 16,
+    skupina: "zelenilo",
+    naziv: "Zaštitno i pejsažno zelenilo s postojećim građevinama (Meje, Bačvice)",
+    kratko: "Zelenilo s postojećim kućama",
+  },
   { kod: "N", bojaPlana: "#a000c0", indeks: 12, skupina: "ostalo", naziv: "Posebna namjena (vojska)", kratko: "Posebna" },
   {
     kod: "P",
