@@ -101,7 +101,7 @@ test("classification distinguishes confirmed, mixed, cadastral, non-public, and 
 });
 
 test("scope is exactly every road-corridor parcel plus every source parcel of at least 10,000 m²", async () => {
-  const parcels = JSON.parse(await readFile("public/geo/grad/katastar.geojson", "utf8")) as FeatureCollection;
+  const parcels = JSON.parse(await readFile("data/katastar-kvart-2024.geojson", "utf8")) as FeatureCollection;
   const corridor = JSON.parse(await readFile("data/public-ownership-corridor.geojson", "utf8")) as FeatureCollection;
   const selected = selectTargetParcels(
     parcels.features as Parameters<typeof selectTargetParcels>[0],

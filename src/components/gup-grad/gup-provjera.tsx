@@ -25,7 +25,7 @@ import type { UvjetiKomada } from "@/lib/gup-grad/izracun";
 import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
 import { predloziIspravak } from "@/lib/actions/gup";
 import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije";
-import { sudCestice, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
+import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 const MIN_ZUM = 15;
 /** Zgrade su gušće od čestica (~60 000 tlocrta), pa tek od zuma 16. */
@@ -379,10 +379,12 @@ export function useGupProvjera(opts: {
       );
     };
 
+    const stilCestice = (f: CesticaFeature) => stil(sud(f.properties), postavkeRef.current, f.properties.a);
+
     // Platno dolazi od karte (preferCanvas) — 5 000+ čestica u oknu kao SVG
     // bi zagušilo DOM.
     const sloj = L.geoJSON(undefined, {
-      style: (f) => stil(sud((f as CesticaFeature).properties), postavkeRef.current),
+      style: (f) => stilCestice(f as CesticaFeature),
       onEachFeature: (f, lyr) => {
         lyr.on("click", (e: LeafletNS.LeafletMouseEvent) => {
           pogodakSloja.current = Date.now();
@@ -483,7 +485,7 @@ export function useGupProvjera(opts: {
     };
 
     osvjeziRef.current = () => {
-      sloj.setStyle((f) => stil(sud((f as CesticaFeature).properties), postavkeRef.current));
+      sloj.setStyle((f) => stilCestice(f as CesticaFeature));
       void ucitaj();
     };
     // Prijedlog ispravka iz skočnog prozora (obrazacIspravka)
@@ -589,13 +591,13 @@ export function useGupProvjera(opts: {
  *    kad slobodni dio nije za gradnju;
  *  - sklad s planom: crvene kose pruge preko iskorištene čestice.
  */
-function stil(s: SudCestice, p: GupPostavke): LeafletNS.PathOptions {
+function stil(s: SudCestice, p: GupPostavke, a: number): LeafletNS.PathOptions {
   const nista = { stroke: false, fill: false };
   if (!s.pretezita && !s.jeUlica) return nista;
-  // dijelovi čestice boje ono unutar nje; čestica ostaje obris (i klik)
-  if (regijeVrijede(p)) {
-    return { color: "#18181b", weight: 0.7, opacity: 0.75, fillColor: "#ffffff", fillOpacity: 0 };
-  }
+  // obris (i klik): kad dijelovi čestice boje ono unutar nje, i kad je u
+  // zoni tek krhotina čestice (more, luka)
+  const obris = { color: "#18181b", weight: 0.7, opacity: 0.75, fillColor: "#ffffff", fillOpacity: 0 };
+  if (regijeVrijede(p) || uZoniKrhotina(s, a)) return obris;
   const vise = s.komadi.length > 1;
   const rub = { color: "#18181b", weight: 0.5, opacity: 0.8 };
   const crtkano = { color: "#3f3f46", weight: 1, dashArray: "4 3", opacity: 0.9 };

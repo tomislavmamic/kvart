@@ -491,7 +491,7 @@ const GRAD_SLOJEVI = [
   ["komunalna-naknada", "Naplata komunalne naknade", "Urbanizam", "#f59e0b"],
 
   // --- Katastar i adrese ---
-  ["katastar", "Katastarske čestice (2024.)", "Katastar i adrese", "#a16207"],
+  ["katastar", "Katastarske čestice", "Katastar i adrese", "#a16207"],
   ["katastar-vlasnistvo", "Čestice s vlasništvom i teretima", "Katastar i adrese", "#854d0e"],
   ["katastar-objekti", "Katastarski objekti", "Katastar i adrese", "#ca8a04"],
   ["granice-ko", "Granice katastarskih općina", "Katastar i adrese", "#713f12"],
@@ -603,6 +603,8 @@ const ATRIBUCIJA_IZNIMKE: Record<string, string> = {
   "telekom-ht-nadzemno": "Hrvatski telekom · Grad Split (GIS izvoz)",
   "telekom-ht-zdenci": "Hrvatski telekom · Grad Split (GIS izvoz)",
   "telekom-ht-stupovi": "Hrvatski telekom · Grad Split (GIS izvoz)",
+  // Čestice su s DGU-ove INSPIRE usluge (npm run katastar:osvjezi), ne iz izvoza Grada.
+  katastar: "Državna geodetska uprava — katastar (INSPIRE)",
   "popisni-krugovi": "SRPJ — Državna geodetska uprava · Grad Split (GIS izvoz)",
   "statisticki-krugovi":
     "SRPJ — Državna geodetska uprava · Grad Split (GIS izvoz)",
@@ -1313,7 +1315,8 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     type: "geojson",
     url: "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
     attribution:
-      "Uređena zemlja — ciljano provjereno 2. 8. 2026.; katastar i nacrt GUP-a 2024.",
+      "Uređena zemlja — ciljano provjereno 2. 8. 2026.; čestice iz gradskog izvoza " +
+      "(svibanj 2024.) i nacrt GUP-a 2024.",
     color: "#007956",
     group: "Katastar i adrese",
     phase: 1,
@@ -1324,8 +1327,8 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     type: "geojson",
     url: "/geo/analiza/cestice-planiranih-cesta.geojson",
     attribution:
-      "Izvedeno iz katastra i prometnih koridora nacrta GUP-a Splita 2024.; " +
-      "vlasništvo samo iz postojećih sanitiziranih zapisa",
+      "Izvedeno iz katastra (gradski izvoz, svibanj 2024.) i prometnih koridora " +
+      "nacrta GUP-a Splita 2024.; vlasništvo samo iz postojećih sanitiziranih zapisa",
     color: "#953d00",
     group: "Katastar i adrese",
     phase: 1,

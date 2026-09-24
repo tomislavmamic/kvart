@@ -83,7 +83,11 @@ interface SpatialEvidence {
 }
 
 const ROOT = path.join(import.meta.dirname, "..");
-const PARCELS = path.join(ROOT, "public", "geo", "grad", "katastar.geojson");
+// Međe čestica zamrznute su na gradskom izvozu iz svibnja 2024.: na njima je
+// vlasništvo provjereno, a ponoviti se ne može (OSS ne daje skupni uvid).
+// Karta i dosje imaju svježe čestice s DGU-a (npm run katastar:osvjezi), pa
+// čestica prenumerirana od 2024. ondje nema zapis iz ove analize.
+const PARCELS = path.join(ROOT, "data", "katastar-kvart-2024.geojson");
 const CORRIDOR = path.join(ROOT, "data", "public-ownership-corridor.geojson");
 const REGISTRY = path.join(ROOT, "data", "public-entities.json");
 const PURPOSES = path.join(ROOT, "public", "geo", "planovi", "gup-2024-namjena.geojson");
@@ -752,7 +756,7 @@ async function main(): Promise<void> {
     large_parcel_m2: LARGE_PARCEL_M2,
     counts,
     sources: {
-      cadastral_geometry: "/geo/grad/katastar.geojson",
+      cadastral_geometry: "data/katastar-kvart-2024.geojson",
       corridor: "data/public-ownership-corridor.geojson",
       ownership: "https://oss.uredjenazemlja.hr/",
       public_registry: "data/public-entities.json",

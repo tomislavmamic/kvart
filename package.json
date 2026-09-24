@@ -26,6 +26,7 @@
     "pogledaj-raspesenje": "/opt/homebrew/bin/python3 scripts/pogledaj-raspesenje.py",
     "izvedi-siru-kartu": "/opt/homebrew/bin/python3 scripts/izvedi-siru-kartu.py",
     "import-grad-geo": "tsx scripts/import-split-gis.ts",
+    "katastar:osvjezi": "/opt/homebrew/bin/python3 scripts/katastar/osvjezi.py",
     "generate-public-parcels": "tsx scripts/generate-public-parcels.ts",
     "generate-planned-road-parcels": "tsx scripts/generate-planned-road-parcels.ts",
     "generate:igra": "node --import tsx scripts/generate-igra-scene.ts",

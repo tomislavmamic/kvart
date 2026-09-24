@@ -59,7 +59,7 @@ def isjecci(prag: float) -> None:
 
     slob = [x for x in json.load(open(os.path.join(R.OUT, "slobodne.json"))) if x["m2"] >= prag]
     ob = C.obuhvat_gupa()
-    cc = C.citaj(os.path.join(C.BAZA, "KATASTAR", "CADASTRAL_PARCELS_2024_P.shp"))
+    cc = C.citaj_cestice()
     cc = cc[cc.geometry.intersects(ob)].reset_index(drop=True)  # isti redoslijed kao cestice.py
     z = C.citaj(os.path.join(C.PORTAL, "Objekti_Split_2025_Objekti_Split_2025.shp"), columns=[])
     zt, ct = shapely.STRtree(z.geometry.values), shapely.STRtree(cc.geometry.values)

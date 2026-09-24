@@ -265,7 +265,7 @@ test("the committed manifest declares the exact sources and derived counts", asy
     await readFile("public/geo/planovi/gup-2024-promet.geojson", "utf8"),
   ) as FeatureCollection;
   const parcels = JSON.parse(
-    await readFile("public/geo/grad/katastar.geojson", "utf8"),
+    await readFile("data/katastar-kvart-2024.geojson", "utf8"),
   ) as FeatureCollection;
   const derivedStatusCounts = Object.fromEntries(
     [
@@ -293,7 +293,7 @@ test("the committed manifest declares the exact sources and derived counts", asy
     selected_count: artifact.features.length,
     ownership_status_counts: derivedStatusCounts,
     sources: {
-      parcels: "/geo/grad/katastar.geojson",
+      parcels: "data/katastar-kvart-2024.geojson",
       roads: "/geo/planovi/gup-2024-promet.geojson",
       targeted_ownership:
         "/geo/analiza/ciljana-provjera-vlasnistva.geojson",
