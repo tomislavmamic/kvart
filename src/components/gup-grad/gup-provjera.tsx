@@ -24,15 +24,29 @@ import { VRSTA_ZA_KLASU, type NajmanjaCestica, type VrstaOdredbe } from "@/lib/g
 import type { UvjetiKomada } from "@/lib/gup-grad/izracun";
 import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
 import { predloziIspravak } from "@/lib/actions/gup";
-import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
+import { sudCestice, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 const MIN_ZUM = 15;
 /** Zgrade su gušće od čestica (~60 000 tlocrta), pa tek od zuma 16. */
 const MIN_ZUM_ZGRADA = 16;
 
+/**
+ * Što boja karte pokazuje. Tri osi čestice — namjena, iskorištenost, sklad
+ * s planom — svaka ima svoj kanal: nijansu, jačinu ispune i crvene pruge.
+ * „Sve” ih slaže jednu preko druge; ostali načini pokazuju samo jednu os,
+ * vlastitom jasnom paletom.
+ */
+export type BojaKarte = "sve" | "namjena" | "iskoristenost" | "sklad";
+export const BOJE_KARTE: { id: BojaKarte; naziv: string; opis: string }[] = [
+  { id: "sve", naziv: "Sve tri", opis: "Nijansa je namjena, jačina ispune iskorištenost, crvene pruge protivno planu." },
+  { id: "namjena", naziv: "Namjena", opis: "Samo zona plana u koju čestica pada, kao na listu plana." },
+  { id: "iskoristenost", naziv: "Iskorištenost", opis: "Samo koliko je čestice slobodno: što jače plavo, to više slobodnog, bez obzira na namjenu." },
+  { id: "sklad", naziv: "Sklad s planom", opis: "Samo je li ono što stoji dopušteno u toj zoni. Neiskorištene čestice nemaju suda." },
+];
+
 export interface GupPostavke {
   godina: Godina;
-  prikaz: "stanje" | "namjena";
+  prikaz: BojaKarte;
   inacica: string;
   slika: boolean;
   cestice: boolean;
@@ -41,44 +55,65 @@ export interface GupPostavke {
 
 export const POCETNE_GUP_POSTAVKE: GupPostavke = {
   godina: 2025,
-  prikaz: "stanje",
+  prikaz: "sve",
   inacica: INACICE[0].id,
   slika: true,
   cestice: true,
   zgrade: true,
 };
 
-/**
- * Kako se stanje čestice crta. Boja ispune je UVIJEK boja namjene iz
- * legende plana (pretežita klasa čestice), a rub je običan; stanje nose
- * prozirnost i šrafura:
- *  - iskorištena po planu: puna boja;
- *  - neiskorištena: poluprozirna;
- *  - iskorištena protivno planu: crvene kose pruge preko boje namjene
- *    (rjeđe i tanje kad je protivan samo dio iskorištenog).
- * Tako se i izdaleka vidi i ČIJA je čestica (namjena) i što je s njom.
- */
 const CRVENA = "#d03b3b";
-export const STANJA: Record<
-  StanjeCestice,
-  {
-    naziv: string;
-    ispuna: number;
-    pruge?: { razmak: number; debljina: number };
-    /** Isprekidan sivi rub, bez boje namjene u legendi. */
-    crtkano?: boolean;
-    /** Ispuna nije boja namjene nego ova (ulica). */
-    boja?: string;
-  }
-> = {
-  "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85 },
-  "djelomicno-slobodna": { naziv: "iskorištena, a na ostatak stane nova čestica", ispuna: 0.55 },
-  slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.3 },
-  ostatak: { naziv: "neiskorištena, ali nije za gradnju (premala, preuska ili je odredbe ne dopuštaju)", ispuna: 0.1, crtkano: true },
-  ulica: { naziv: "ulica u zoni — izuzeta iz zone", ispuna: 0.55, boja: "#a1a1aa" },
-  protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, pruge: { razmak: 8, debljina: 2.6 } },
-  "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, pruge: { razmak: 13, debljina: 1.6 } },
+/** Boja čestice koja je ulica (namjena „Ulice i infrastruktura”). */
+const ULICA = "#a1a1aa";
+
+/** Os 3 — pruge preko boje namjene; gušće = veći dio iskorištenog je protivan. */
+const PRUGE: Partial<Record<Sklad, { razmak: number; debljina: number }>> = {
+  djelomicno: { razmak: 13, debljina: 1.6 },
+  protivno: { razmak: 8, debljina: 2.6 },
 };
+
+/** Os 3 kad se gleda sama: statusne boje. */
+export const SKLAD: Record<Sklad, { naziv: string; boja: string }> = {
+  "po-planu": { naziv: "po planu", boja: "#16a34a" },
+  djelomicno: { naziv: "dijelom protivno planu", boja: "#f59e0b" },
+  protivno: { naziv: "protivno planu", boja: "#dc2626" },
+  nema: { naziv: "neiskorištena — nema što suditi", boja: "#f4f4f5" },
+};
+
+/**
+ * Os 2 — iskorištenost je broj (0–100 %) i karta ga boji kontinuirano.
+ * Razredi su samo za brojke u legendi.
+ */
+export const RAZREDI_ISKORISTENOSTI = [
+  { do: 0.05, naziv: "0–5 %" },
+  { do: 0.5, naziv: "5–50 %" },
+  { do: 0.95, naziv: "50–95 %" },
+  { do: Infinity, naziv: "95–100 %" },
+];
+const razred = (u: number) => RAZREDI_ISKORISTENOSTI.findIndex((r) => u < r.do);
+
+/** Jačina ispune za iskorištenost u načinu „Sve tri”: prazna čestica je gotovo prozirna. */
+const ispunaIskoristenosti = (u: number) => 0.1 + 0.78 * u;
+
+/** Os 2 sama: od sive (sve iskorišteno) do plave (sve slobodno). */
+const SIVA = [228, 228, 231];
+const PLAVA = [2, 132, 199];
+export function bojaSlobodnog(udioSlobodnog: number): string {
+  const t = Math.max(0, Math.min(1, udioSlobodnog));
+  const c = SIVA.map((a, i) => Math.round(a + (PLAVA[i] - a) * t));
+  return `rgb(${c.join(",")})`;
+}
+
+/** Brojke u legendi: čestice u oknu po svakoj osi — svaka se os zbraja na `n`. */
+export interface BrojUOknu {
+  n: number;
+  /** Čestice koje su (gotovo) cijele ulica izuzeta iz zone — nisu ni slobodne ni iskorištene. */
+  ulice: number;
+  namjena: Partial<Record<string, number>>;
+  iskoristenost: number[];
+  nijeZaGradnju: number;
+  sklad: Record<Sklad, number>;
+}
 
 /**
  * Šrafura kao ispuna platna: Leafletov Canvas samo prepiše `fillColor` u
@@ -181,8 +216,8 @@ interface Plocica {
 export interface GupInfo {
   zum: number;
   stanje: "ucitava" | "greska" | null;
-  /** Broj učitanih čestica u oknu po stanju (ili null ispod MIN_ZUM). */
-  uOknu: Record<StanjeCestice, number> | null;
+  /** Broj učitanih čestica u oknu po osima (ili null ispod MIN_ZUM). */
+  uOknu: BrojUOknu | null;
 }
 
 type CesticaFeature = Feature<Geometry, SvojstvaCestice>;
@@ -393,18 +428,29 @@ export function useGupProvjera(opts: {
         return;
       }
       const okno = map.getBounds();
-      const n: Record<StanjeCestice, number> = {
-        slobodna: 0,
-        "djelomicno-slobodna": 0,
-        "u-skladu": 0,
-        "djelomicno-protivno": 0,
-        protivno: 0,
-        ostatak: 0,
-        ulica: 0,
+      const n: BrojUOknu = {
+        n: 0,
+        ulice: 0,
+        namjena: {},
+        iskoristenost: RAZREDI_ISKORISTENOSTI.map(() => 0),
+        nijeZaGradnju: 0,
+        sklad: { "po-planu": 0, djelomicno: 0, protivno: 0, nema: 0 },
       };
       sloj.eachLayer((l) => {
         const pl = l as LeafletNS.Polygon & { feature?: CesticaFeature };
-        if (pl.feature && okno.intersects(pl.getBounds())) n[sud(pl.feature.properties).stanje]++;
+        if (!pl.feature || !okno.intersects(pl.getBounds())) return;
+        const s = sud(pl.feature.properties);
+        if (!s.pretezita && !s.jeUlica) return;
+        n.n++;
+        const kod = s.jeUlica ? "P" : s.pretezita!.kod;
+        n.namjena[kod] = (n.namjena[kod] ?? 0) + 1;
+        if (s.jeUlica) {
+          n.ulice++; // ulica nije ni slobodna ni iskorištena zona
+          return;
+        }
+        if (s.iskoristenost !== null) n.iskoristenost[razred(s.iskoristenost)]++;
+        if (s.slobodnoNijeZaGradnju) n.nijeZaGradnju++;
+        n.sklad[s.sklad]++;
       });
       setInfo((i) => ({ ...i, zum: map.getZoom(), uOknu: n }));
     };
@@ -531,29 +577,48 @@ export function useGupProvjera(opts: {
   return info;
 }
 
+/**
+ * Kako se čestica crta u pojedinom načinu „Boja karte”. Svaka os ima jedan
+ * kanal i nijedan kanal ne nosi dvije osi:
+ *  - namjena: nijansa (boja zone iz legende plana; ulica siva);
+ *  - iskorištenost: jačina ispune, kontinuirano po udjelu; isprekidan rub
+ *    kad slobodni dio nije za gradnju;
+ *  - sklad s planom: crvene kose pruge preko iskorištene čestice.
+ */
 function stil(s: SudCestice, p: GupPostavke): LeafletNS.PathOptions {
-  if (p.prikaz === "namjena") {
-    const vise = s.komadi.length > 1;
-    return {
-      color: "#18181b",
-      weight: vise ? 1.2 : 0.5,
-      dashArray: vise ? "4 3" : undefined,
-      fillColor: s.pretezita?.bojaPlana ?? "#ffffff",
-      fillOpacity: s.pretezita ? 0.6 : 0,
-    };
+  const nista = { stroke: false, fill: false };
+  if (!s.pretezita && !s.jeUlica) return nista;
+  const vise = s.komadi.length > 1;
+  const rub = { color: "#18181b", weight: 0.5, opacity: 0.8 };
+  const crtkano = { color: "#3f3f46", weight: 1, dashArray: "4 3", opacity: 0.9 };
+  const boja = s.jeUlica ? ULICA : s.pretezita!.bojaPlana;
+  const u = s.iskoristenost ?? 0;
+  switch (p.prikaz) {
+    case "namjena":
+      return {
+        ...rub,
+        weight: vise ? 1.2 : 0.5,
+        dashArray: vise ? "4 3" : undefined,
+        fillColor: boja,
+        fillOpacity: 0.6,
+      };
+    case "iskoristenost":
+      if (s.jeUlica) return { ...rub, weight: 0.3, fillColor: ULICA, fillOpacity: 0.5 };
+      if (s.slobodnoNijeZaGradnju && u < 0.95) return { ...crtkano, fillColor: "#ffffff", fillOpacity: 0.85 };
+      return { ...rub, weight: 0.4, fillColor: bojaSlobodnog(1 - u), fillOpacity: 0.9 };
+    case "sklad":
+      if (s.jeUlica) return { ...rub, weight: 0.3, fillColor: ULICA, fillOpacity: 0.5 };
+      return { ...rub, weight: 0.4, fillColor: SKLAD[s.sklad].boja, fillOpacity: s.sklad === "nema" ? 0.45 : 0.85 };
+    default: {
+      const pruge = PRUGE[s.sklad];
+      return {
+        ...(s.slobodnoNijeZaGradnju && u < 0.95 ? crtkano : rub),
+        // CanvasPattern kroz polje koje tipovi Leafleta opisuju kao niz znakova
+        fillColor: (pruge ? srafura(boja, pruge) : boja) as unknown as string,
+        fillOpacity: s.jeUlica ? 0.5 : pruge ? Math.max(0.6, ispunaIskoristenosti(u)) : ispunaIskoristenosti(u),
+      };
+    }
   }
-  const st = STANJA[s.stanje];
-  const boja = st.boja ?? s.pretezita?.bojaPlana ?? "#ffffff";
-  if (st.crtkano) {
-    return { color: "#71717b", weight: 0.8, dashArray: "3 3", fillColor: boja, fillOpacity: st.ispuna };
-  }
-  return {
-    color: s.stanje === "slobodna" || s.stanje === "ulica" ? "#52525c" : "#18181b",
-    weight: s.stanje === "slobodna" || s.stanje === "ulica" ? 0.4 : 0.6,
-    // CanvasPattern kroz polje koje tipovi Leafleta opisuju kao niz znakova
-    fillColor: (st.pruge ? srafura(boja, st.pruge) : boja) as unknown as string,
-    fillOpacity: s.pretezita ? st.ispuna : 0,
-  };
 }
 
 function esc(v: unknown): string {
@@ -566,17 +631,14 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   const ppmin = o.ppmin;
   const inacica = INACICE.find((i) => i.id === post.inacica) ?? INACICE[0];
   const kodPravila = p.u?.[`${post.godina}`];
-  const st = STANJA[s.stanje];
   const sivo = "color:#71717b";
   let h =
     `<b>k.č. ${esc(p.kc)}, k.o. ${esc(p.ko)}</b><br>` +
-    `<span style="${sivo}">${m2(p.a)} u katastru · GUP ${post.godina}. · brojanje: ${esc(inacica.naziv)}</span>` +
-    `<div style="margin:6px 0;display:flex;align-items:center;gap:6px">` +
-    `<span style="display:inline-block;width:14px;height:14px;border-radius:2px;border:1px solid #52525c;background:${srafuraCss(st.boja ?? s.pretezita?.bojaPlana ?? "#fff", st.pruge)};opacity:${st.ispuna < 0.5 ? 0.45 : 1}${st.crtkano ? ";border-style:dashed" : ""}"></span>` +
-    `<b>${esc(st.naziv)}</b></div>`;
+    `<span style="${sivo}">${m2(p.a)} u katastru · GUP ${post.godina}. · brojanje: ${esc(inacica.naziv)}</span>`;
   if (!s.komadi.length) {
-    return h + `<span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
+    return h + `<br><span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
   }
+  h += sazetak(s) + `<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;color:#3f3f46">Pojedinosti računa</summary>`;
   h +=
     `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)} u zoni` +
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
@@ -659,8 +721,67 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   }
   h +=
     `<div style="margin-top:8px;${sivo}">Površine komada izmjerene su na rešetki od 2 m, pa se zbroj može razlikovati od katastarske. ` +
-    `<a href="/gup?prikaz=grafikon#kako-je-izracunato" style="color:#047857">Kako se broji ↗</a></div>`;
+    `<a href="/gup?prikaz=grafikon#kako-je-izracunato" style="color:#047857">Kako se broji ↗</a></div></details>`;
   return h + obrazacIspravka(p, s, post);
+}
+
+const posto = (v: number) => `${Math.round(v * 100)} %`;
+
+/**
+ * Tri osi čestice u tri retka, na vrhu skočnog prozora: namjena,
+ * iskorištenost (broj i traka, slobodno po razlogu) i sklad s planom.
+ */
+function sazetak(s: SudCestice): string {
+  const sivo = "color:#71717b";
+  const red = (os: string, sadrzaj: string) =>
+    `<div style="display:grid;grid-template-columns:92px 1fr;gap:8px;margin-top:6px"><span style="${sivo}">${os}</span><span>${sadrzaj}</span></div>`;
+  const kvadrat = (bg: string, crtkano = false) =>
+    `<span style="display:inline-block;width:11px;height:11px;border-radius:2px;border:1px ${crtkano ? "dashed" : "solid"} #52525c;background:${bg};margin-right:5px;vertical-align:-1px"></span>`;
+
+  // 1 · namjena: pretežita zona, ostale zone čestice i ulica
+  const drugi = s.komadi.filter((k) => k.klasa !== s.pretezita);
+  const namjena = s.jeUlica
+    ? `${kvadrat(ULICA)}<b>ulica</b> <span style="${sivo}">(${m2(s.ulica)}, izuzeto iz zone)</span>`
+    : `${kvadrat(s.pretezita!.bojaPlana)}<b>${esc(s.pretezita!.kod)}</b> ${esc(s.pretezita!.kratko)}` +
+      (drugi.length ? `<br><span style="${sivo}">i ${drugi.map((k) => `${m2(k.m2)} u ${esc(k.klasa.kod)}`).join(", ")}</span>` : "") +
+      (s.ulica > 0 ? `<br><span style="${sivo}">+ ${m2(s.ulica)} ulice, izuzeto iz zone</span>` : "");
+  if (s.jeUlica) return `<div style="margin-top:4px">${red("Namjena", namjena)}</div>`;
+
+  // 2 · iskorištenost: broj, traka i slobodno po razlogu
+  const u = s.iskoristenost ?? 0;
+  const sl = s.slobodno;
+  const nije = [
+    [sl.usko, "preusko"],
+    [sl.premalo, "premalo"],
+    [sl.zabranjeno, "odredbe ne dopuštaju"],
+    [sl.neizgradivo, "neizgradiv teren"],
+  ].filter(([v]) => (v as number) >= 1) as [number, string][];
+  const iskoristenost =
+    `<b>${posto(u)}</b> <span style="${sivo}">(${m2(s.iskoristeno)} od ${m2(s.m2)})</span>` +
+    `<div style="height:6px;border-radius:3px;background:${bojaSlobodnog(1)};overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:${Math.round(u * 100)}%;background:#71717a"></i></div>` +
+    (sl.zaGradnju >= 1 ? `<span>slobodno za gradnju <b>${m2(sl.zaGradnju)}</b></span>` : "") +
+    (nije.length
+      ? `${sl.zaGradnju >= 1 ? "<br>" : ""}<span style="${sivo}">slobodno, ali nije za gradnju: ${nije.map(([v, n]) => `${n} ${m2(v)}`).join(", ")}</span>`
+      : "");
+
+  // 3 · sklad s planom
+  const protivne = [...new Set(s.komadi.flatMap((k) => k.protivneVrste))];
+  const pruge = PRUGE[s.sklad];
+  const sklad =
+    s.sklad === "nema"
+      ? `<span style="${sivo}">nema što suditi — čestica nije iskorištena</span>`
+      : `${pruge ? kvadrat(srafuraCss("#ffffff", pruge)) : ""}<b>${SKLAD[s.sklad].naziv}</b>` +
+        (s.sklad !== "po-planu"
+          ? ` <span style="${sivo}">(${m2(s.uSuprotnosti)} protivno: ${protivne.map((v) => esc(VRSTE[v])).join(", ")})</span>`
+          : "");
+
+  return (
+    `<div style="margin-top:4px">` +
+    red("Namjena", namjena) +
+    red("Iskorišteno", iskoristenost) +
+    red("Sklad s planom", sklad) +
+    `</div>`
+  );
 }
 
 /**
@@ -678,7 +799,7 @@ function obrazacIspravka(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): 
     skriveno("ko", p.ko) +
     skriveno("kc", p.kc) +
     skriveno("godina", post.godina) +
-    skriveno("stanje", s.stanje) +
+    skriveno("stanje", `${s.jeUlica ? "ulica" : posto(s.iskoristenost ?? 0)}, ${s.sklad}`) +
     skriveno("namjena", s.pretezita?.kod) +
     `<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">` +
     `<label style="display:block;font-size:12px">Što je na čestici stvarno?` +
@@ -728,19 +849,27 @@ export function GupProvjeraPostavke(props: {
         </div>
       </div>
       <div>
-        <p className={naslov}>Boja čestice</p>
-        <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Boja čestice">
-          <button type="button" aria-pressed={p.prikaz === "stanje"} onClick={() => postavi({ prikaz: "stanje" })} className={gumb(p.prikaz === "stanje")}>
-            Iskorištenost i sklad
-          </button>
-          <button type="button" aria-pressed={p.prikaz === "namjena"} onClick={() => postavi({ prikaz: "namjena" })} className={gumb(p.prikaz === "namjena")}>
-            Namjena
-          </button>
+        <p className={naslov}>Boja karte</p>
+        <div className="mt-1 grid grid-cols-2 overflow-hidden rounded-lg border border-zinc-300" role="group" aria-label="Boja karte">
+          {BOJE_KARTE.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              aria-pressed={p.prikaz === b.id}
+              onClick={() => postavi({ prikaz: b.id })}
+              className={`fokus px-2 py-1.5 text-xs font-semibold ${i % 2 === 0 ? "border-r" : ""} ${i < 2 ? "border-b" : ""} border-zinc-300 ${
+                p.prikaz === b.id ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              {b.naziv}
+            </button>
+          ))}
         </div>
+        <p className="mt-1 text-xs text-zinc-500">{BOJE_KARTE.find((b) => b.id === p.prikaz)?.opis}</p>
       </div>
-      {p.prikaz === "stanje" && (
+      {p.prikaz !== "namjena" && (
         <div>
-          <p className={naslov}>Kako se broji</p>
+          <p className={naslov}>Kako se broji iskorišteno</p>
           <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Kako se broji">
             {INACICE.map((i) => (
               <button key={i.id} type="button" aria-pressed={p.inacica === i.id} onClick={() => postavi({ inacica: i.id })} className={gumb(p.inacica === i.id)}>
@@ -774,60 +903,135 @@ export function GupProvjeraPostavke(props: {
   );
 }
 
-/** Legenda karte (desna ploča na /gup), s brojem čestica u oknu po stanju. */
+/** Jedan redak legende: uzorak, naziv i broj čestica u oknu. */
+function RedLegende(props: { uzorak: React.CSSProperties; naziv: ReactNode; broj?: number }) {
+  return (
+    <li className="flex items-center gap-2">
+      <span className="inline-block size-4 shrink-0 rounded-sm border border-zinc-600" style={props.uzorak} aria-hidden />
+      <span className="flex-1">{props.naziv}</span>
+      {props.broj !== undefined && <span className="tabular-nums text-zinc-500">{props.broj.toLocaleString("hr-HR")}</span>}
+    </li>
+  );
+}
+
+/**
+ * Legenda karte (desna ploča na /gup): po jedan blok za svaku os koju boja
+ * karte trenutačno pokazuje. Brojke su čestice u oknu; svaki blok se zbraja
+ * na isti broj čestica.
+ */
 export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo }) {
   const { postavke: p, info } = props;
+  const b = info.uOknu;
+  const [sveNamjene, setSveNamjene] = useState(false);
+  const sve = p.prikaz === "sve";
+  // P („Ulice i infrastruktura”) broji i ulice izuzete iz drugih zona, pa je uvijek zadnja
+  const namjene = [...KLASE.filter((k) => k.kod !== "P"), ...KLASE.filter((k) => k.kod === "P")].filter(
+    (k) => sveNamjene || !b || (b.namjena[k.kod] ?? 0) > 0,
+  );
+  const skrivenih = KLASE.length - namjene.length;
+  const bezUlica = b && b.ulice > 0 ? ` ${b.ulice.toLocaleString("hr-HR")} ulica izuzetih iz zona ovdje se ne broji.` : "";
+  const osNaslov = (broj: number, naziv: string, kanal: string) => (
+    <p className={`${naslov} flex justify-between`}>
+      <span>
+        {sve ? `${broj} · ` : ""}
+        {naziv}
+      </span>
+      <span className="font-normal normal-case tracking-normal">{kanal}</span>
+    </p>
+  );
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-4 text-sm">
       {info.zum > 0 && info.zum < MIN_ZUM && p.cestice && (
         <p className="rounded border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-600">Približi kartu (zum {MIN_ZUM}+) da se učitaju čestice.</p>
       )}
       {info.stanje === "ucitava" && <p className="text-xs text-zinc-500">Učitavam čestice…</p>}
       {info.stanje === "greska" && <p className="text-xs text-rose-700">Dio podataka se nije učitao; pomakni kartu za novi pokušaj.</p>}
-      {p.prikaz === "stanje" && (
+      {b && <p className="text-xs text-zinc-500">U oknu {b.n.toLocaleString("hr-HR")} čestica; brojke uz retke su čestice u oknu.</p>}
+
+      {(sve || p.prikaz === "namjena") && (
         <div>
-          <p className={naslov}>Stanje čestice</p>
+          {osNaslov(1, "Namjena", "nijansa")}
           <ul className="mt-1 space-y-1">
-            {(Object.keys(STANJA) as StanjeCestice[]).map((k) => {
-              const st = STANJA[k];
-              return (
-                <li key={k} className="flex items-center gap-2">
-                  <span className="relative inline-block size-4 shrink-0 rounded-sm border border-zinc-600 bg-white" aria-hidden>
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        background: srafuraCss(st.boja ?? "#e0a000", st.pruge),
-                        opacity: st.crtkano ? 0.25 : st.ispuna,
-                        outline: st.crtkano ? "1.5px dashed #71717b" : undefined,
-                        outlineOffset: -1.5,
-                      }}
-                    />
-                  </span>
-                  <span className="flex-1">{st.naziv}</span>
-                  {info.uOknu && <span className="tabular-nums text-zinc-500">{info.uOknu[k].toLocaleString("hr-HR")}</span>}
-                </li>
-              );
-            })}
+            {namjene.map((k) => (
+              <RedLegende
+                key={k.kod}
+                uzorak={{ background: k.kod === "P" ? ULICA : k.bojaPlana }}
+                naziv={
+                  <>
+                    {k.kratko} <span className="font-mono text-xs text-zinc-500">{k.kod}</span>
+                    {k.kod === "P" && <span className="block text-xs text-zinc-500">i ulice izuzete iz drugih zona</span>}
+                  </>
+                }
+                broj={b?.namjena[k.kod]}
+              />
+            ))}
+          </ul>
+          {b && (skrivenih > 0 || sveNamjene) && (
+            <button type="button" onClick={() => setSveNamjene((v) => !v)} className="fokus mt-1 text-xs font-semibold text-maslina underline">
+              {sveNamjene ? "Samo namjene u oknu" : `+ još ${skrivenih} namjena kojih nema u oknu`}
+            </button>
+          )}
+          {p.prikaz === "namjena" && <p className="mt-1 text-xs text-zinc-500">Iscrtkan rub: čestica je u više namjena; boja je pretežita.</p>}
+        </div>
+      )}
+
+      {(sve || p.prikaz === "iskoristenost") && (
+        <div>
+          {osNaslov(2, "Iskorištenost", sve ? "jačina ispune" : "boja")}
+          <div
+            className="mt-1 h-3 rounded-sm border border-zinc-400"
+            style={{
+              background: sve
+                ? `linear-gradient(90deg, rgba(24,24,27,${ispunaIskoristenosti(0) * 0.8}), rgba(24,24,27,${ispunaIskoristenosti(1) * 0.8}))`
+                : `linear-gradient(90deg, ${bojaSlobodnog(1)}, ${bojaSlobodnog(0)})`,
+            }}
+            aria-hidden
+          />
+          <div className="flex justify-between text-xs text-zinc-500">
+            <span>0 % iskorišteno</span>
+            <span>100 %</span>
+          </div>
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {RAZREDI_ISKORISTENOSTI.map((r, i) => (
+              <li key={r.naziv} className="flex justify-between">
+                <span>{r.naziv}</span>
+                {b && <span className="tabular-nums text-zinc-500">{b.iskoristenost[i].toLocaleString("hr-HR")}</span>}
+              </li>
+            ))}
+          </ul>
+          <ul className="mt-2 space-y-1">
+            <RedLegende uzorak={{ background: "#fff", borderStyle: "dashed" }} naziv="slobodno, ali nije za gradnju (preusko, premalo, odredbe, teren)" broj={b?.nijeZaGradnju} />
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
-            Boja je namjena iz plana (pretežita na čestici); prozirnost i crvene pruge su stanje. Uzorci su u boji mješovite
-            namjene.{info.uOknu ? " Brojke: čestice u oknu." : ""}
+            Iskorišteno uključuje i okućnicu — zemljište koje zgrada treba po odredbama — pa 100 % znači „nema mjesta za novu česticu”.
+            {sve ? " Na karti u boji namjene čestice." : " Ulice su sive."}
+            {bezUlica}
           </p>
         </div>
       )}
-      <div>
-        <p className={naslov}>Namjena</p>
-        <ul className="mt-1 space-y-1">
-          {KLASE.filter((k) => k.kod !== "P").map((k) => (
-            <li key={k.kod} className="flex items-center gap-2">
-              <span className="inline-block size-3.5 shrink-0 rounded-sm border border-zinc-500" style={{ background: k.bojaPlana }} aria-hidden />
-              <span className="font-mono text-xs text-zinc-500">{k.kod}</span>
-              <span>{k.kratko}</span>
-            </li>
-          ))}
-        </ul>
-        {p.prikaz === "namjena" && <p className="mt-1 text-xs text-zinc-500">Iscrtkan rub: čestica je u više namjena; boja je pretežita.</p>}
-      </div>
+
+      {(sve || p.prikaz === "sklad") && (
+        <div>
+          {osNaslov(3, "Sklad s planom", sve ? "pruge" : "boja")}
+          <ul className="mt-1 space-y-1">
+            {(["po-planu", "djelomicno", "protivno", "nema"] as Sklad[])
+              .filter((k) => !(sve && k === "nema"))
+              .map((k) => (
+                <RedLegende
+                  key={k}
+                  uzorak={{ background: sve ? srafuraCss("#ffffff", PRUGE[k]) : SKLAD[k].boja }}
+                  naziv={sve && k === "po-planu" ? "po planu (bez pruga)" : SKLAD[k].naziv}
+                  broj={b?.sklad[k]}
+                />
+              ))}
+          </ul>
+          <p className="mt-1 text-xs text-zinc-500">
+            Sudi se samo iskorišteni dio čestice{sve && b ? `; ${b.sklad.nema.toLocaleString("hr-HR")} neiskorištenih nema suda` : ""}.
+            {bezUlica}
+          </p>
+        </div>
+      )}
+
       {p.zgrade && (
         <div>
           <p className={naslov}>Zgrade</p>
