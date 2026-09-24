@@ -23,10 +23,25 @@ export type VrstaKoristenja =
   | "ostala" // 6xx–9xx — nadstrešnice, trafostanice, objekti uz ceste
   | "neevidentirana" // zgrada iz gradskog 3D modela koje nema u katastru
   | "promet" // ulice i nogostupi (u namjeni P; u ostalim zonama se izuzimaju, vidi `ulice`)
-  | "uredjeno" // groblja, športski objekti, parkirališta
-  | "zelenilo"; // javno zelenilo koje održavaju Parkovi i nasadi
+  | "parkiraliste" // javna i privatna parkirališta, garažni nizovi (Grad, OSM)
+  | "uredjeno" // groblja, športski tereni, igrališta, trgovi i pješačke površine
+  | "zelenilo" // javno zelenilo koje održavaju Parkovi i nasadi, parkovi iz OSM-a
+  | "gradiliste" // gradilište (OSM) — gradi se, ne zna se što
+  /**
+   * Neizgrađeni dio građevne čestice postojeće zgrade: dvorište, vrt,
+   * prilaz. Nije pokriven, ali ne može primiti novu zgradu — vidi
+   * `nacin: "gradevna"`. Sud (u skladu / protivno) dijeli sa zgradom.
+   */
+  | "okucnica";
 
 export type NacinBrojanja =
+  /**
+   * Kao građevna čestica po odredbama: zgrada troši onoliko čestice koliko
+   * joj plan propisuje (tlocrt / kig, a ne manje od Ppmin), a ostatak je
+   * slobodan samo ako je dovoljno velik za novu građevnu česticu i ako
+   * plan ondje uopće dopušta novu gradnju.
+   */
+  | "gradevna"
   /** Iskorišten je samo stvarno pokriveni dio (zgrada + promet + …). */
   | "udio"
   /** Komad je cijeli iskorišten čim je pokriven barem `prag` svoje površine. */
@@ -60,9 +75,38 @@ export interface Pravila {
   racunaj: {
     zgrade: boolean;
     promet: boolean;
+    parkiralista: boolean;
+    /** okoliš škola, vrtića, bolnica, crkava — broji se kao javna */
+    javneUstanove: boolean;
     uredjeno: boolean;
+    /** trafostanice, vodospreme, benzinske postaje, pruga */
+    infrastruktura: boolean;
     zelenilo: boolean;
+    gradilista: boolean;
+    /** ispravci iz ručnog pregleda ortofotom (data/gup-grad/pregled/rucno.json) */
+    rucniPregled: boolean;
   };
+  /** Za `gradevna`. */
+  gradevna: {
+    /**
+     * Najveći koeficijent izgrađenosti (kig) kad ga odredbe za područje
+     * ne propisuju. null = tada se cijeli komad sa zgradom broji kao
+     * njezina građevna čestica.
+     */
+    zadaniKig: number | null;
+    /**
+     * Tlocrt glavne zgrade (m²) ispod kojeg komad nema zgradu nego
+     * krhotinu susjedne — rub tuđeg krova koji uklapanje prebaci preko međe.
+     */
+    najmanjaZgradaM2: number;
+  };
+  /**
+   * Slobodno zemljište u području urbanog pravila u kojem odredbe ne
+   * dopuštaju novu stambenu gradnju („dovršena naselja”: samo
+   * rekonstrukcija postojećih) nije slobodno za stanovanje. Broji se
+   * odvojeno, kao „plan ne dopušta gradnju”.
+   */
+  postujZabraneGradnje: boolean;
   /**
    * Ulice unutar obojene zone. GUP boji namjenom cijele blokove, a crta
    * samo glavne prometnice; nerazvrstane ceste, ulice i nogostupi unutar
@@ -127,12 +171,18 @@ const SVE: readonly VrstaKoristenja[] = [
   "ostala",
   "neevidentirana",
   "promet",
+  "parkiraliste",
   "uredjeno",
   "zelenilo",
+  "gradiliste",
+  "okucnica",
 ];
 
-/** Promet, pomoćne građevine i infrastruktura prolaze kroz svaku zonu. */
-const UVIJEK: readonly VrstaKoristenja[] = ["promet", "ostala", "zelenilo"];
+/**
+ * Promet, javna parkirališta, komunalna infrastruktura i zelenilo prolaze
+ * kroz svaku zonu (čl. 8).
+ */
+const UVIJEK: readonly VrstaKoristenja[] = ["promet", "parkiraliste", "ostala", "zelenilo"];
 
 /**
  * Zadana pravila.
@@ -157,11 +207,23 @@ const UVIJEK: readonly VrstaKoristenja[] = ["promet", "ostala", "zelenilo"];
  *    zgrade, pa se ništa ne proglašava suprotnim.
  */
 export const ZADANA_PRAVILA: Pravila = {
-  nacin: "udio",
+  nacin: "gradevna",
   prag: 0.2,
   najmanjiTrag: 0.03,
   zgrade: "oba",
-  racunaj: { zgrade: true, promet: true, uredjeno: true, zelenilo: false },
+  racunaj: {
+    zgrade: true,
+    promet: true,
+    parkiralista: true,
+    javneUstanove: true,
+    uredjeno: true,
+    infrastruktura: true,
+    zelenilo: true,
+    gradilista: true,
+    rucniPregled: true,
+  },
+  gradevna: { zadaniKig: null, najmanjaZgradaM2: 20 },
+  postujZabraneGradnje: true,
   ulice: { izuzmi: true, pragUlicneCestice: 0.6 },
   ostaci: {
     ukljuci: true,
@@ -171,19 +233,21 @@ export const ZADANA_PRAVILA: Pravila = {
   dopusteno: {
     // str. 3: stanovanje, uz njega javni i poslovni sadržaji (trgovine na
     // zasebnoj čestici do 1000 m²); pomoćne samo uz stambenu građevinu
-    S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "javna", "gospodarska"],
+    // str. 3: stanovanje, uz njega javni i poslovni sadržaji, manji
+    // športsko-rekreacijski sadržaji i igrališta
+    S: [...UVIJEK, "stambena", "pomocna", "neevidentirana", "gradiliste", "javna", "gospodarska", "uredjeno"],
     // kombinirana: M1 pretežito stambena, M2 stambena i poslovna, M3
     // stanovanje i turizam, K5 poslovna sa stanovanjem — list ih boji istom
     // bojom, pa dopušta i stanovanje i poslovanje
-    "M/K5": [...UVIJEK, "stambena", "gospodarska", "javna", "pomocna", "neevidentirana", "uredjeno"],
+    "M/K5": [...UVIJEK, "stambena", "gospodarska", "javna", "pomocna", "neevidentirana", "gradiliste", "uredjeno"],
     // str. 5: u D se ne grade stambene ni poslovne građevine
-    D: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
+    D: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana", "gradiliste"],
     // str. 5: I/K gospodarske i prateće javne; stan samo uz posao na ≥2000 m²
-    "I/K": [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana"],
+    "I/K": [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana", "gradiliste"],
     // str. 5: u T nije dopušteno stanovanje (ni povremeno); 2025. samo hoteli
-    T: [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana"],
-    L: [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana"],
-    R1: [...UVIJEK, "uredjeno", "javna", "pomocna", "gospodarska", "neevidentirana"],
+    T: [...UVIJEK, "gospodarska", "javna", "pomocna", "uredjeno", "neevidentirana", "gradiliste"],
+    L: [...UVIJEK, "gospodarska", "pomocna", "uredjeno", "neevidentirana", "gradiliste"],
+    R1: [...UVIJEK, "uredjeno", "javna", "pomocna", "gospodarska", "neevidentirana", "gradiliste"],
     // str. 6: rekreacija i kupališta — manji ugostiteljski i pomoćni sadržaji
     R2: [...UVIJEK, "uredjeno", "pomocna", "gospodarska"],
     R3: [...UVIJEK, "uredjeno", "pomocna", "gospodarska"],
@@ -202,7 +266,7 @@ export const ZADANA_PRAVILA: Pravila = {
     // Odvaja se od Z5 po natpisima na listu 2025. (scripts/gup-grad/z6.py).
     Z6: [...UVIJEK, "stambena", "pomocna", "neevidentirana"],
     // str. 7: posebna namjena — ne stambene ni poslovne
-    N: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
+    N: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana", "gradiliste"],
     P: SVE,
   },
 };
@@ -219,18 +283,18 @@ export const INACICE: readonly {
   pravila: Pravila;
 }[] = [
   {
-    id: "udio",
-    naziv: "Pokriveni dio",
+    id: "gradevna",
+    naziv: "Po odredbama",
     opis:
-      "Iskorišteno je samo ono što je stvarno pokriveno: tlocrt zgrade, cesta, parkiralište, groblje ili športski objekt. Dvorište i vrt ostaju slobodni.",
+      "Zgrada troši onoliko čestice koliko joj odredbe propisuju (tlocrt kroz najveći koeficijent izgrađenosti, a ne manje od najmanje građevne čestice). Vrt uz kuću slobodan je samo ako na njega stane nova građevna čestica i ako plan ondje dopušta novu gradnju.",
     pravila: ZADANA_PRAVILA,
   },
   {
-    id: "prag",
-    naziv: "Iznad 20 %",
+    id: "udio",
+    naziv: "Samo tlocrt",
     opis:
-      "Komad čestice je cijeli iskorišten ako je pokriven barem petinom — kuća s dvorištem broji se kao cijela čestica.",
-    pravila: { ...ZADANA_PRAVILA, nacin: "prag", prag: 0.2 },
+      "Iskorišteno je samo ono što je stvarno pokriveno: tlocrt zgrade, cesta, parkiralište, igralište, park. Svako dvorište i vrt broje se kao slobodni — najstroži odgovor.",
+    pravila: { ...ZADANA_PRAVILA, nacin: "udio" },
   },
   {
     id: "cijela",
