@@ -1123,6 +1123,9 @@ const TOCKICE = "radial-gradient(circle, #3f3f46 1.2px, transparent 1.3px) 0 0 /
  * Ključ dijelova čestice (gup-regije.ts) za trenutačni način: što znači
  * boja UNUTAR obrisa čestice. Brojke u blokovima iznad ostaju po česticama.
  */
+/** Uzorak dijelova koji čekaju propisani plan (gup-regije.ts, REGIJE.ceka). */
+const PRUGE_CEKA = "repeating-linear-gradient(180deg, rgba(249,115,22,.85) 0 2px, #fff 2px 8px)";
+
 function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: string }) {
   // što je iskorišteno bez položaja ovisi o načinu brojanja (regije.py)
   const vezano =
@@ -1139,6 +1142,7 @@ function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: stri
           [{ background: "rgba(212,212,216,.7)" }, vezano],
           [{ background: "rgba(2,132,199,.8)" }, "slobodno za gradnju"],
           [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
+          [{ background: PRUGE_CEKA }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
         ]
       : prikaz === "sklad"
         ? [
@@ -1151,6 +1155,7 @@ function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: stri
             [{ background: "rgba(224,160,0,.5)" }, vezano],
             [{ background: "rgba(224,160,0,.14)" }, "slobodno za gradnju"],
             [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
+            [{ background: PRUGE_CEKA }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
             [{ background: srafuraCss("#ffffff", PRUGE.protivno) }, "zauzeto protivno planu"],
           ];
   const redovi = sviRedovi.filter((r): r is [React.CSSProperties, string] => r[1] !== null);
