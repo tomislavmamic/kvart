@@ -22,6 +22,8 @@ import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
 import { INACICE, type VrstaKoristenja } from "@/lib/gup-grad/pravila";
 import { VRSTA_ZA_KLASU, type NajmanjaCestica, type VrstaOdredbe } from "@/lib/gup-grad/odredbe";
 import type { UvjetiKomada } from "@/lib/gup-grad/izracun";
+import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
+import { predloziIspravak } from "@/lib/actions/gup";
 import { sudCestice, type StanjeCestice, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 export const GUP_POGLED = "gup-provjera";
@@ -73,7 +75,7 @@ export const STANJA: Record<
   "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85 },
   "djelomicno-slobodna": { naziv: "iskorištena, a na ostatak stane nova čestica", ispuna: 0.55 },
   slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.3 },
-  ostatak: { naziv: "neiskorištena, ali nije za gradnju (premala ili je odredbe ne dopuštaju)", ispuna: 0.1, crtkano: true },
+  ostatak: { naziv: "neiskorištena, ali nije za gradnju (premala, preuska ili je odredbe ne dopuštaju)", ispuna: 0.1, crtkano: true },
   ulica: { naziv: "ulica u zoni — izuzeta iz zone", ispuna: 0.55, boja: "#a1a1aa" },
   protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, pruge: { razmak: 8, debljina: 2.6 } },
   "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, pruge: { razmak: 13, debljina: 1.6 } },
@@ -198,10 +200,12 @@ type Gradnja = Record<
 interface Ostaci {
   /** čestica → klase njezinih komada koji su premali ostatak */
   poCestici: Map<number, Set<number>>;
+  /** čestica → klasa → [okućnica susjedne zgrade, od toga protivno], u pikselima */
+  posudjeno: Map<number, Map<number, [number, number]>>;
   ppmin: Ppmin;
   gradnja: Gradnja;
 }
-const PRAZNO: Ostaci = { poCestici: new Map(), ppmin: {}, gradnja: {} };
+const PRAZNO: Ostaci = { poCestici: new Map(), posudjeno: new Map(), ppmin: {}, gradnja: {} };
 
 /** Odredbe o gradnji za komad klase u području urbanog pravila — kao podaci.ts na poslužitelju. */
 function uvjetiKomada(o: Ostaci, kodPravila: string | undefined, klasa: (typeof KLASE)[number]): UvjetiKomada {
@@ -228,13 +232,18 @@ function ucitajOstatke(inacica: string, godina: number): Promise<Ostaci> {
   if (!p) {
     p = fetch(`/api/gup-ostaci/${kljuc}`)
       .then((r) => (r.ok ? r.json() : { ostaci: [], ppmin: {}, gradnja: {} }))
-      .then((d: { ostaci: [number, number][]; ppmin: Ppmin; gradnja?: Gradnja }) => {
+      .then((d: { ostaci: [number, number][]; posudjeno?: [number, number, number, number][]; ppmin: Ppmin; gradnja?: Gradnja }) => {
         const m = new Map<number, Set<number>>();
         for (const [c, k] of d.ostaci) {
           if (!m.has(c)) m.set(c, new Set());
           m.get(c)!.add(k);
         }
-        return { poCestici: m, ppmin: d.ppmin ?? {}, gradnja: d.gradnja ?? {} };
+        const posudjeno = new Map<number, Map<number, [number, number]>>();
+        for (const [c, k, px, protivno] of d.posudjeno ?? []) {
+          if (!posudjeno.has(c)) posudjeno.set(c, new Map());
+          posudjeno.get(c)!.set(k, [px, protivno]);
+        }
+        return { poCestici: m, posudjeno, ppmin: d.ppmin ?? {}, gradnja: d.gradnja ?? {} };
       })
       .catch(() => {
         ostaciPoKljucu.delete(kljuc);
@@ -321,7 +330,15 @@ export function useGupProvjera(opts: {
     const sud = (p: SvojstvaCestice) => {
       const g = postavkeRef.current.godina;
       const o = ostaciRef.current;
-      return sudCestice(p, g, pravila(), 4, o.poCestici.get(p.i) ?? NEMA, (kl) => uvjetiKomada(o, p.u?.[`${g}`], kl));
+      return sudCestice(
+        p,
+        g,
+        pravila(),
+        4,
+        o.poCestici.get(p.i) ?? NEMA,
+        (kl) => uvjetiKomada(o, p.u?.[`${g}`], kl),
+        o.posudjeno.get(p.i),
+      );
     };
 
     // Platno dolazi od karte (preferCanvas) — 5 000+ čestica u oknu kao SVG
@@ -420,10 +437,42 @@ export function useGupProvjera(opts: {
       sloj.setStyle((f) => stil(sud((f as CesticaFeature).properties), postavkeRef.current));
       void ucitaj();
     };
+    // Prijedlog ispravka iz skočnog prozora (obrazacIspravka)
+    const naOtvaranje = (e: LeafletNS.PopupEvent) => {
+      const f = e.popup.getElement()?.querySelector<HTMLFormElement>("form[data-ispravak]");
+      if (!f) return;
+      f.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const poruka = f.querySelector<HTMLElement>("[data-poruka]")!;
+        const gumb = f.querySelector<HTMLButtonElement>("button[type=submit]")!;
+        const fd = new FormData(f);
+        const ll = e.popup.getLatLng();
+        if (ll) {
+          fd.set("lat", String(ll.lat));
+          fd.set("lng", String(ll.lng));
+        }
+        gumb.disabled = true;
+        poruka.style.color = "#52525c";
+        poruka.textContent = "Šaljem…";
+        try {
+          const r = await predloziIspravak(fd);
+          poruka.style.color = r.ok ? "#047857" : "#b91c1c";
+          poruka.textContent = r.ok ? "Hvala! Prijedlog je zapisan i čeka pregled." : r.error;
+          if (r.ok) f.querySelectorAll("select, textarea").forEach((x) => ((x as HTMLInputElement).disabled = true));
+          else gumb.disabled = false;
+        } catch {
+          poruka.style.color = "#b91c1c";
+          poruka.textContent = "Slanje nije uspjelo. Provjerite vezu i pokušajte ponovno.";
+          gumb.disabled = false;
+        }
+      });
+    };
+    map.on("popupopen", naOtvaranje);
     map.on("moveend", ucitaj);
     void ucitaj();
     return () => {
       ziv = false;
+      map.off("popupopen", naOtvaranje);
       map.off("moveend", ucitaj);
       map.closePopup();
       sloj.remove();
@@ -533,7 +582,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
     `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)} u zoni` +
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
     (s.ulica > 0 ? `; ulica izuzeta iz zone ${m2(s.ulica)}` : "") +
-    (s.ostatak > 0 ? `; premali ostatak ${m2(s.ostatak)}` : "") +
+    (s.ostatak > 0 ? `; premali ili preuski ostatak ${m2(s.ostatak)}` : "") +
     (s.nijeZaGradnju > 0 ? `; slobodno, ali nije za gradnju ${m2(s.nijeZaGradnju)}` : "") +
     `</span>` +
     (kodPravila
@@ -586,9 +635,19 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
         `<br><span style="${sivo}">najmanja građevna čestica prema odredbama: <b>${m2(najmanja.m2)}</b> ` +
         `(${esc(TIP_GRADNJE[najmanja.tip] ?? najmanja.tip)}) — ${esc(najmanja.izvor)}</span>`;
     }
-    if (k.ostatak > 0) {
+    if (k.vrtSusjeda > 0) {
       h +=
-        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak)} je premali ostatak: manje od ${najmanja ? m2(najmanja.m2) : "najmanje čestice"}, ` +
+        `<br><span style="color:#52525c">${m2(k.vrtSusjeda)} je okućnica zgrade na susjednoj čestici: njoj na vlastitoj ` +
+        `nedostaje zemljišta koje traže odredbe, a ova čestica sama nije nova građevna čestica.</span>`;
+    }
+    if (k.usko > 0) {
+      h +=
+        `<br><span style="color:#52525c">slobodnih ${m2(k.usko)} je uski pojas (put, stube, rub uz među) — ` +
+        `uži od ~9 m, a odredbe traže česticu široku barem 10 m; ne broji se kao slobodno.</span>`;
+    }
+    if (k.ostatak - k.usko > 0) {
+      h +=
+        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak - k.usko)} je premali ostatak: manje od ${najmanja ? m2(najmanja.m2) : "najmanje čestice"}, ` +
         `a nema slobodnog susjeda iste namjene s kojim bi to doseglo — ne broji se kao slobodno.</span>`;
     }
     if (k.nijeZaGradnju > 0) {
@@ -602,7 +661,40 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   h +=
     `<div style="margin-top:8px;${sivo}">Površine komada izmjerene su na rešetki od 2 m, pa se zbroj može razlikovati od katastarske. ` +
     `<a href="/gup" style="color:#047857">Kako se broji ↗</a></div>`;
-  return h;
+  return h + obrazacIspravka(p, s, post);
+}
+
+/**
+ * Prijedlog ispravka: posjetitelj kaže što na čestici stvarno jest. Obrazac
+ * je HTML u skočnom prozoru Leafleta; slanje hvata `popupopen` u
+ * GupProvjera i zove poslužiteljsku akciju predloziIspravak.
+ */
+function obrazacIspravka(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): string {
+  const skriveno = (ime: string, v: unknown) => `<input type="hidden" name="${ime}" value="${esc(v ?? "")}">`;
+  const polje = "width:100%;margin-top:4px;border:1px solid #d4d4d8;border-radius:6px;padding:4px 6px;font-size:12px";
+  return (
+    `<details style="margin-top:8px;border-top:1px solid #e4e4e7;padding-top:6px">` +
+    `<summary style="cursor:pointer;font-weight:600;color:#047857">Krivo svrstano? Predloži ispravak</summary>` +
+    `<form data-ispravak style="margin-top:6px">` +
+    skriveno("ko", p.ko) +
+    skriveno("kc", p.kc) +
+    skriveno("godina", post.godina) +
+    skriveno("stanje", s.stanje) +
+    skriveno("namjena", s.pretezita?.kod) +
+    `<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">` +
+    `<label style="display:block;font-size:12px">Što je na čestici stvarno?` +
+    `<select name="vrsta" required style="${polje}"><option value="">— odaberi —</option>` +
+    Object.entries(VRSTE_ISPRAVKA)
+      .map(([v, naziv]) => `<option value="${v}">${esc(naziv)}</option>`)
+      .join("") +
+    `</select></label>` +
+    `<label style="display:block;font-size:12px;margin-top:6px">Napomena (neobavezno)` +
+    `<textarea name="napomena" rows="2" maxlength="${NAJDULJA_NAPOMENA}" style="${polje}" placeholder="npr. parkiralište trgovine iza zgrade"></textarea></label>` +
+    `<button type="submit" style="margin-top:6px;border-radius:9999px;background:#047857;color:#fff;font-weight:600;font-size:12px;padding:4px 12px">Pošalji prijedlog</button>` +
+    `<p data-poruka role="status" style="margin-top:4px;font-size:12px"></p>` +
+    `<p style="margin-top:2px;font-size:11px;color:#71717a">Prijedlozi se pregledaju prije nego uđu u izračun.</p>` +
+    `</form></details>`
+  );
 }
 
 export function GupProvjeraPloca(props: {

@@ -7,6 +7,7 @@
  * žive u pravilima; ovdje je samo aritmetika nad komadima čestica.
  */
 import { KLASE, KLASA_PO_INDEKSU, type Godina, type KodKlase } from "./model";
+import { VRSTA_ZA_KLASU } from "./odredbe";
 import type { Pravila, VrstaKoristenja } from "./pravila";
 
 /** Što je ručni pregled ortofotom rekao o čestici (data/gup-grad/pregled/rucno.json). */
@@ -65,12 +66,18 @@ export interface Komad {
   gr?: number;
   /** pretežita skupina katastarske zgrade (0 = nema) */
   g: number;
+  /**
+   * slobodni pikseli u slobodnom zemljištu dovoljno širokom za zgradu (u
+   * njega stane krug od ~9 m); ostalo slobodno su putovi, stube i pojasevi
+   * uz međe. Bez mjerenja se ne ograničava.
+   */
+  us?: number;
   /** ispravak iz ručnog pregleda cijele čestice */
   rucno?: RucnaVrsta;
 }
 
 /** Polja komada, redom kako ih piše scripts/gup-grad/cestice.py. */
-export const POLJA_KOMADA = ["cestica", "klasa", "n", "zk", "z25", "kat", "pr", "pa", "jv", "os", "inf", "ze", "gr", "g"] as const;
+export const POLJA_KOMADA = ["cestica", "klasa", "n", "zk", "z25", "kat", "pr", "pa", "jv", "os", "inf", "ze", "gr", "g", "us"] as const;
 
 /**
  * Komad iz niza brojeva redom POLJA_KOMADA, od indeksa `od`. S `bezCestice`
@@ -114,6 +121,14 @@ export interface Procjena {
   neizgradivo: number;
   /** Dio okućnice koji je protivan planu (dijeli sud zgrade uz koju je). */
   okucnicaProtivno?: number;
+  /**
+   * Koliko građevne čestice zgradi nedostaje na vlastitom komadu (`gradevna`):
+   * kuća na 200 m² gdje kig traži 400. Uzima se sa susjednih malih
+   * slobodnih čestica (`posudiOkucnice`).
+   */
+  manjak?: number;
+  /** Udio zgrada komada koje su u skladu s planom — sud okućnice. */
+  zgradeSklad?: number;
 }
 
 const VRSTA_ZGRADE: Record<number, VrstaKoristenja> = {
@@ -134,11 +149,20 @@ const GLAVNE: ReadonlySet<VrstaKoristenja> = new Set(["stambena", "gospodarska",
 /**
  * Koliko komada je ulica koja ne pripada zoni. U samoj P (ulice,
  * infrastruktura) ništa se ne izuzima — ondje je ulica upravo namjena.
+ *
+ * Cijeli komad je ulica kad ga ulica pokriva barem `pragUlicneCestice`, ili
+ * barem `pragUskeUlicneCestice` a ostatak nije ni zgrada, ni drugo
+ * korištenje, ni zemljište dovoljno široko za gradnju: katastarska čestica
+ * puta šira od traka oko osi ceste, uz koju ostaje samo rub.
  */
 export function ulicaKomada(k: Komad, kod: KodKlase, p: Pravila): number {
   if (!p.ulice.izuzmi || kod === "P" || k.n <= 0) return 0;
   const u = Math.min(k.pr, k.n);
-  return u >= p.ulice.pragUlicneCestice * k.n ? k.n : u;
+  if (u >= p.ulice.pragUlicneCestice * k.n) return k.n;
+  // parkiralište ili park kroz koji ide put nije čestica puta
+  const drugo = Math.max(k.zk, k.z25) + (k.pa ?? 0) + (k.jv ?? 0) + k.os + (k.inf ?? 0) + k.ze + (k.gr ?? 0);
+  const usko = k.us !== undefined && k.us < 0.1 * k.n;
+  return u >= p.ulice.pragUskeUlicneCestice * k.n && drugo < 0.1 * k.n && usko ? k.n : u;
 }
 
 /**
@@ -208,9 +232,9 @@ function okucnicaKomada(
   bruto: number,
   p: Pravila,
   u?: UvjetiKomada,
-): number {
+): { okucnica: number; manjak: number } {
   const pikselM2 = u?.pikselM2 ?? 4;
-  if (zgrada * pikselM2 < p.gradevna.najmanjaZgradaM2 || zgrada < p.najmanjiTrag * n) return 0;
+  if (zgrada * pikselM2 < p.gradevna.najmanjaZgradaM2 || zgrada < p.najmanjiTrag * n) return { okucnica: 0, manjak: 0 };
   const slobodno = Math.max(0, n - pokriveno);
   const kig = u?.kig ?? p.gradevna.zadaniKig;
   const kis = u?.kis ?? null;
@@ -222,7 +246,7 @@ function okucnicaKomada(
   const ostaje = slobodno - okucnica;
   const zaNovu = u?.najmanjaPx || potrebno;
   if (ostaje < zaNovu || (p.postujZabraneGradnje && u && !u.novaGradnja)) okucnica += ostaje;
-  return okucnica;
+  return { okucnica, manjak: Math.max(0, potrebno - n) };
 }
 
 export function procijeniKomad(k: Komad, kod: KodKlase, p: Pravila, u?: UvjetiKomada): Procjena {
@@ -267,15 +291,13 @@ export function procijeniKomad(k: Komad, kod: KodKlase, p: Pravila, u?: UvjetiKo
     }
   }
   if (p.nacin === "gradevna") {
-    const okucnica = okucnicaKomada(n, pokriveno, zgrada, k.kat ?? 0, p, u);
-    if (okucnica > 0) {
-      const r = zgradeSve > 0 ? zgradeSklad / zgradeSve : 1;
-      out.iskoristeno += okucnica;
-      out.poVrsti.okucnica = okucnica;
-      out.uSkladu += okucnica * r;
-      out.uSuprotnosti += okucnica * (1 - r);
-      out.okucnicaProtivno = okucnica * (1 - r);
+    const { okucnica, manjak } = okucnicaKomada(n, pokriveno, zgrada, k.kat ?? 0, p, u);
+    const r = zgradeSve > 0 ? zgradeSklad / zgradeSve : 1;
+    if (manjak > 0) {
+      out.manjak = manjak;
+      out.zgradeSklad = r;
     }
+    if (okucnica > 0) dodajOkucnicu(out, okucnica, r);
   }
   const slobodno = Math.max(0, n - out.iskoristeno);
   if (slobodno > 0) {
@@ -291,15 +313,85 @@ export interface Susjedi {
   lista: number[];
 }
 
+/** Dodaje okućnicu komadu (i njezin sud, po udjelu zgrada u skladu `r`). */
+export function dodajOkucnicu(out: Procjena, px: number, r: number) {
+  out.iskoristeno += px;
+  out.poVrsti.okucnica = (out.poVrsti.okucnica ?? 0) + px;
+  out.uSkladu += px * r;
+  out.uSuprotnosti += px * (1 - r);
+  out.okucnicaProtivno = (out.okucnicaProtivno ?? 0) + px * (1 - r);
+}
+
+/**
+ * Okućnica preko međe. Građevna čestica kuće često je više katastarskih:
+ * kuća na jednoj, vrt na susjednoj bez zgrade. Kad zgradi na vlastitom
+ * komadu nedostaje građevne čestice (`manjak`, iz kig/kis/Ppmin), uzima je
+ * sa susjednih komada iste klase čiji slobodni dio sam za sebe nije nova
+ * građevna čestica — takav komad ionako nije samostalno gradilište, a uz
+ * kuću jest njezin vrt. Veliku susjednu livadu ne dira.
+ *
+ * Mijenja `procjene` na mjestu; vraća indeks komada → [posuđeni pikseli,
+ * od toga protivno planu].
+ */
+export function posudiOkucnice(
+  komadi: readonly Komad[],
+  procjene: readonly (Procjena | null)[],
+  susjedi: Susjedi,
+  najmanjaPx: (k: Komad) => number,
+): Map<number, [number, number]> {
+  const out = new Map<number, [number, number]>();
+  const komadPo = new Map<string, number>();
+  komadi.forEach((k, i) => {
+    if (k.cestica !== undefined) komadPo.set(`${k.cestica}:${k.klasa}`, i);
+  });
+  // sitni jesu li sami premali — prije posudbe, da redoslijed kuća ne mijenja ishod
+  const mali = procjene.map((r, i) => !!r && slobodnoKomada(r) > 0 && slobodnoKomada(r) < najmanjaPx(komadi[i]));
+  komadi.forEach((k, i) => {
+    const r = procjene[i];
+    let treba = r?.manjak ?? 0;
+    if (!r || treba <= 0 || k.cestica === undefined) return;
+    for (let t = susjedi.od[k.cestica]; t < susjedi.od[k.cestica + 1] && treba > 0; t++) {
+      const j = komadPo.get(`${susjedi.lista[t]}:${k.klasa}`);
+      const rj = j === undefined ? null : procjene[j];
+      if (j === undefined || !rj || !mali[j]) continue;
+      const v = Math.min(treba, slobodnoKomada(rj));
+      if (v <= 0) continue;
+      const sklad = r.zgradeSklad ?? 1;
+      dodajOkucnicu(rj, v, sklad);
+      const x = out.get(j) ?? [0, 0];
+      out.set(j, [x[0] + v, x[1] + v * (1 - sklad)]);
+      treba -= v;
+    }
+  });
+  return out;
+}
+
+/** Slobodni dio komada koji nije ni zabranjen ni neizgradiv, u pikselima. */
+export function slobodnoKomada(r: Procjena): number {
+  return Math.max(0, r.n - r.iskoristeno - r.zabranjeno - r.neizgradivo);
+}
+
+/**
+ * Koliko je slobodnog dijela komada dovoljno široko za zgradu. Uski dio
+ * (put, stube, pojas uz među) je ostatak bez obzira na susjede; okućnica
+ * se oduzima od uskog prvo — to su upravo pojasevi oko kuće.
+ */
+export function sirokoKomada(k: Komad, r: Procjena, p: Pravila): number {
+  const s = slobodnoKomada(r);
+  return p.ostaci.ukljuci && p.ostaci.uski && k.us !== undefined ? Math.min(s, k.us) : s;
+}
+
 /**
  * Premali ostaci: komadi čiji slobodni dio ne može služiti namjeni.
  *
- * Slobodni dio komada manji od najmanje građevne čestice koju odredbe
- * propisuju za njegovo područje i namjenu (`najmanjaPx`, odredbe.ts) je ostatak,
- * osim ako se preko slobodne čestice iste namjene (iskorišteno ispod
- * `slobodnaUdio`) spaja s drugim slobodnim komadima i zajedno dosežu tu
- * površinu. Vrt uz kuću i vrt uz susjednu kuću se ne spajaju — obje su
- * čestice iskorištene — ali vrt uz praznu česticu se spaja s njom.
+ * Uski dio slobodnog (`sirokoKomada`) je ostatak uvijek. Široki dio manji
+ * od najmanje građevne čestice koju odredbe propisuju za njegovo područje i
+ * namjenu (`najmanjaPx`, odredbe.ts) je ostatak, osim ako se preko slobodne
+ * čestice iste namjene (iskorišteno ispod `slobodnaUdio`) spaja sa širokim
+ * slobodnim dijelom drugih komada i zajedno dosežu tu površinu. Vrt uz kuću
+ * i vrt uz susjednu kuću se ne spajaju — obje su čestice iskorištene — ali
+ * vrt uz praznu česticu se spaja s njom. Put ili pojas uz nogostup nemaju
+ * širokog dijela, pa ne spajaju ništa.
  *
  * Vraća indeks komada → slobodni pikseli koji su ostatak.
  */
@@ -313,7 +405,8 @@ export function ostaci(
 ): Map<number, number> {
   const out = new Map<number, number>();
   if (!p.ostaci.ukljuci) return out;
-  const slobodno = procjene.map((r) => Math.max(0, r.n - r.iskoristeno - r.zabranjeno - r.neizgradivo));
+  const slobodno = procjene.map((r, i) => sirokoKomada(komadi[i], r, p));
+  const usko = procjene.map((r, i) => slobodnoKomada(r) - slobodno[i]);
 
   // iskorištenost po čestici, preko svih njezinih komada
   const poCestici = new Map<number, { n: number; isk: number }>();
@@ -356,9 +449,10 @@ export function ostaci(
   });
 
   komadi.forEach((k, i) => {
-    if (slobodno[i] <= 0) return;
     const najmanje = najmanjaPx(k);
-    if (najmanje > 0 && (zbroj.get(korijen(i)) ?? 0) < najmanje) out.set(i, slobodno[i]);
+    const premalo = slobodno[i] > 0 && najmanje > 0 && (zbroj.get(korijen(i)) ?? 0) < najmanje;
+    const v = usko[i] + (premalo ? slobodno[i] : 0);
+    if (v > 0) out.set(i, v);
   });
   return out;
 }
@@ -394,24 +488,30 @@ export interface UlazGodine {
   uvjeti?: (k: Komad) => UvjetiKomada;
 }
 
-/** Procjene svih komada godine i ostaci među njima. */
+/** Procjene svih komada godine, okućnice preko međe i ostaci među njima. */
 export function procijeniGodinu(ulaz: UlazGodine, p: Pravila) {
   const uvjeti = ulaz.komadi.map((k) => ulaz.uvjeti?.(k));
   const procjene = ulaz.komadi.map((k, i) => {
     const kl = KLASA_PO_INDEKSU.get(k.klasa);
     return kl ? procijeniKomad(k, kl.kod, p, uvjeti[i]) : null;
   });
+  const najmanjaPx = (k: Komad, i: number) => {
+    const px = uvjeti[i]?.najmanjaPx ?? 0;
+    // gdje odredbe Ppmin za stanovanje ne propisuju, ni ondje čestica nije manja od najmanje u planu
+    const kod = KLASA_PO_INDEKSU.get(k.klasa)?.kod;
+    return px || (kod && VRSTA_ZA_KLASU[kod] === "stanovanje" ? p.ostaci.bezPpminM2 / ulaz.pikselM2 : 0);
+  };
+  const indeks = new Map(ulaz.komadi.map((k, i) => [k, i]));
+  const najmanja = (k: Komad) => najmanjaPx(k, indeks.get(k)!);
+  const posudjeno =
+    ulaz.susjedi && ulaz.uvjeti && p.nacin === "gradevna" && p.gradevna.prekoMede
+      ? posudiOkucnice(ulaz.komadi, procjene, ulaz.susjedi, najmanja)
+      : new Map<number, [number, number]>();
   const prazna: Procjena = { n: 0, ulica: 0, iskoristeno: 0, uSkladu: 0, uSuprotnosti: 0, poVrsti: {}, zabranjeno: 0, neizgradivo: 0 };
   const ost = ulaz.susjedi && ulaz.uvjeti
-    ? ostaci(
-        ulaz.komadi,
-        procjene.map((r) => r ?? prazna),
-        ulaz.susjedi,
-        p,
-        (k) => ulaz.uvjeti?.(k).najmanjaPx ?? 0,
-      )
+    ? ostaci(ulaz.komadi, procjene.map((r) => r ?? prazna), ulaz.susjedi, p, najmanja)
     : new Map<number, number>();
-  return { procjene, ostaci: ost };
+  return { procjene, ostaci: ost, posudjeno };
 }
 
 export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
@@ -479,13 +579,24 @@ export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
   return [...po.values()].filter((r) => r.ukupnoM2 > 0);
 }
 
-/** Ostaci godine kao parovi [čestica, klasa] — za kartu provjere. */
-export function ostaciGodine(ulaz: UlazGodine, p: Pravila): [number, number][] {
-  const { ostaci: ost } = procijeniGodinu(ulaz, p);
-  return [...ost.keys()]
-    .map((i) => ulaz.komadi[i])
-    .filter((k) => k.cestica !== undefined)
-    .map((k) => [k.cestica!, k.klasa]);
+/**
+ * Za kartu provjere, koja čestice sudi jednu po jednu: ostaci godine kao
+ * [čestica, klasa] i okućnice posuđene susjednoj zgradi kao [čestica, klasa,
+ * pikseli, od toga protivno planu] — oboje ovisi o susjedima.
+ */
+export function ostaciGodine(ulaz: UlazGodine, p: Pravila) {
+  const { ostaci: ost, posudjeno } = procijeniGodinu(ulaz, p);
+  const ostaci: [number, number][] = [];
+  for (const i of ost.keys()) {
+    const k = ulaz.komadi[i];
+    if (k.cestica !== undefined) ostaci.push([k.cestica, k.klasa]);
+  }
+  const posudjene: [number, number, number, number][] = [];
+  for (const [i, [px, protivno]] of posudjeno) {
+    const k = ulaz.komadi[i];
+    if (k.cestica !== undefined) posudjene.push([k.cestica, k.klasa, Math.round(px * 10) / 10, Math.round(protivno * 10) / 10]);
+  }
+  return { ostaci, posudjeno: posudjene };
 }
 
 export type RezultatiPoGodini = Record<Godina, RezultatKlase[]>;

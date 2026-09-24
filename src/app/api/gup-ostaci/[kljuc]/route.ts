@@ -2,11 +2,13 @@
  * Premali ostaci za kartu provjere GUP-a, po načinu brojanja i godini:
  * `/api/gup-ostaci/<inačica>-<godina>` →
  *   { ostaci: [[čestica, klasa], …],
+ *     posudjeno: [[čestica, klasa, pikseli, od toga protivno], …]  — vrt zgrade sa susjedne čestice,
  *     ppmin: { <kod pravila>: { stanovanje?, gospodarska?, javna?, izvor, citat } },
  *     gradnja: { <kod pravila>: { novaGradnja, kig, kis, nova_stambena, izvor, citat } } }
  *
- * Ostatak ovisi o susjednim česticama po cijelom gradu, a karta učitava
- * čestice po pločicama — pa ga ne može izračunati sama. Računa ga isti
+ * Ostatak i posuđena okućnica ovise o susjednim česticama po cijelom
+ * gradu, a karta učitava čestice po pločicama — pa ih ne može izračunati
+ * sama. Računa ga isti
  * izracun.ts kao /gup, pri gradnji (sve kombinacije su poznate unaprijed).
  * `ppmin` je najmanja građevna čestica iz odredbi po području urbanog
  * pravila i vrsti, izabrana po istim pravilima; `gradnja` je što odredbe
@@ -60,5 +62,5 @@ export async function GET(_req: Request, ctx: { params: Promise<{ kljuc: string 
       };
     }
   }
-  return Response.json({ ostaci: ostaci(d, godina, inacica.pravila, o), ppmin, gradnja });
+  return Response.json({ ...ostaci(d, godina, inacica.pravila, o), ppmin, gradnja });
 }

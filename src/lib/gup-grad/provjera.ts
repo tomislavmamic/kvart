@@ -9,7 +9,10 @@
  */
 import {
   komadIzNiza,
+  dodajOkucnicu,
   procijeniKomad,
+  sirokoKomada,
+  slobodnoKomada,
   pokrivenost,
   POLJA_KOMADA,
   type Procjena,
@@ -19,9 +22,10 @@ import {
 import { KLASA_PO_INDEKSU, type Godina, type Klasa } from "./model";
 import type { Pravila, VrstaKoristenja } from "./pravila";
 
-/** Komad kako ga zapisuje cestice.py: POLJA_KOMADA bez `cestica` (klasa, n, zk, z25, kat, pr, pa, jv, os, inf, ze, gr, g). */
+/** Komad kako ga zapisuje cestice.py: POLJA_KOMADA bez `cestica` (klasa, n, zk, z25, kat, pr, pa, jv, os, inf, ze, gr, g, us). */
 export type SirovKomad = number[];
-const DULJINA_KOMADA = POLJA_KOMADA.length - 1;
+/** `us` smije nedostajati (starije pločice): tada se uski pojasevi ne izdvajaju. */
+const DULJINA_KOMADA = POLJA_KOMADA.length - 2;
 
 /** Svojstva čestice u pločicama public/geo/gup-grad/cestice/*.json. */
 export interface SvojstvaCestice {
@@ -80,6 +84,10 @@ export interface KomadSuda {
   ulica: number;
   /** Slobodni dio koji je premali ostatak (0 = nije). */
   ostatak: number;
+  /** Od ostatka: uski pojas (put, stube, rub uz među) u koji zgrada ne stane. */
+  usko: number;
+  /** Okućnica zgrade sa susjedne čestice kojoj na vlastitoj nedostaje građevne čestice. */
+  vrtSusjeda: number;
   /** Slobodni dio na kojem odredbe ne dopuštaju novu gradnju ili je teren neizgradiv. */
   nijeZaGradnju: number;
   /** Izmjereno, u m²: zgrade iz katastra i iz 3D modela, promet, parkirališta, javne ustanove, uređeno, infrastruktura, zelenilo, gradilište. */
@@ -110,7 +118,9 @@ export interface SudCestice {
 
 /**
  * `ostaci` su klase komada ove čestice koje je pravilo o ostacima proglasilo
- * premalima (računa se za cijeli grad odjednom, vidi /api/gup-ostaci);
+ * premalima, a `posudjeno` okućnica koju komad klase daje zgradi na susjednoj
+ * čestici, [pikseli, od toga protivno] (oboje se računa za cijeli grad
+ * odjednom, vidi /api/gup-ostaci);
  * `uvjeti` su odredbe o gradnji za komad pojedine klase (Ppmin, kig, smije
  * li se ondje graditi novo) — iste koje /gup dobiva iz podaci.ts.
  */
@@ -121,6 +131,7 @@ export function sudCestice(
   pikselM2 = 4,
   ostaci: ReadonlySet<number> = new Set(),
   uvjeti?: (klasa: Klasa) => UvjetiKomada | undefined,
+  posudjeno?: ReadonlyMap<number, readonly [number, number]>,
 ): SudCestice {
   const komadi: KomadSuda[] = [];
   for (const sirov of s.k[`${godina}`] ?? []) {
@@ -130,12 +141,17 @@ export function sudCestice(
     const kl = KLASA_PO_INDEKSU.get(k.klasa);
     if (!kl) continue;
     const pro = procijeniKomad(k, kl.kod, p, uvjeti?.(kl));
+    const vrt = posudjeno?.get(k.klasa);
+    if (vrt && vrt[0] > 0) dodajOkucnicu(pro, vrt[0], 1 - vrt[1] / vrt[0]);
     const m = (v: number) => v * pikselM2;
     komadi.push({
       klasa: kl,
       m2: m(pro.n),
       ulica: m(pro.ulica),
-      ostatak: ostaci.has(k.klasa) ? m(Math.max(0, pro.n - pro.iskoristeno - pro.zabranjeno - pro.neizgradivo)) : 0,
+      // uski dio je ostatak uvijek, široki kad ga pravilo o ostacima proglasi premalim
+      ostatak: m(ostaci.has(k.klasa) ? slobodnoKomada(pro) : slobodnoKomada(pro) - sirokoKomada(k, pro, p)),
+      usko: m(slobodnoKomada(pro) - sirokoKomada(k, pro, p)),
+      vrtSusjeda: m(vrt?.[0] ?? 0),
       nijeZaGradnju: m(pro.zabranjeno + pro.neizgradivo),
       mjereno: {
         zk: m(k.zk),

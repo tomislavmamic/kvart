@@ -99,6 +99,13 @@ export interface Pravila {
      * krhotinu susjedne — rub tuđeg krova koji uklapanje prebaci preko međe.
      */
     najmanjaZgradaM2: number;
+    /**
+     * Građevna čestica preko međe: kad zgradi na vlastitoj čestici
+     * nedostaje zemljišta koje traže kig/kis/Ppmin, uzima ga sa susjednih
+     * čestica bez zgrade koje same nisu nova građevna čestica (vrt uz kuću
+     * upisan kao zasebna čestica). Izracun.ts, `posudiOkucnice`.
+     */
+    prekoMede: boolean;
   };
   /**
    * Slobodno zemljište u području urbanog pravila u kojem odredbe ne
@@ -122,6 +129,12 @@ export interface Pravila {
      * oko osi ceste.
      */
     pragUlicneCestice: number;
+    /**
+     * Niži prag za komad bez zgrade na kojem uz ulicu nema zemljišta
+     * dovoljno širokog za gradnju (polje `us`): put čiji je kolnik širi od
+     * traka oko osi, pa traka pokrije tek dio čestice.
+     */
+    pragUskeUlicneCestice: number;
   };
   /**
    * Premali ostaci. Slobodan dio čestice manji od najmanje građevne čestice
@@ -153,6 +166,20 @@ export interface Pravila {
      * njoj iskorišteno manje od ovog udjela.
      */
     slobodnaUdio: number;
+    /**
+     * Slobodno zemljište uže od ~9 m (put, stube, pojas uz nogostup, rub
+     * uz zgradu) je ostatak. Odredbe traže građevnu česticu široku barem
+     * 10 m (dvojna; slobodnostojeća 12–16 m; niz od 6 m samo kroz UPU).
+     * Širina se mjeri na slobodnom zemljištu, ne na čestici (cestice.py,
+     * polje `us`), pa mala čestica usred livade ostaje slobodna.
+     */
+    uski: boolean;
+    /**
+     * Najmanja čestica za stanovanje gdje je odredbe za područje ne
+     * propisuju, a gradnju dopuštaju (1.2, 3.3, gradski projekti): najmanja
+     * koju plan igdje propisuje za stanovanje — dvojna u 1.3 i 1.5, 250 m².
+     */
+    bezPpminM2: number;
   };
   /**
    * Koje vrste korištenja plan u pojedinoj klasi dopušta. Kombinirane
@@ -222,13 +249,15 @@ export const ZADANA_PRAVILA: Pravila = {
     gradilista: true,
     rucniPregled: true,
   },
-  gradevna: { zadaniKig: null, najmanjaZgradaM2: 20 },
+  gradevna: { zadaniKig: null, najmanjaZgradaM2: 20, prekoMede: true },
   postujZabraneGradnje: true,
-  ulice: { izuzmi: true, pragUlicneCestice: 0.6 },
+  ulice: { izuzmi: true, pragUlicneCestice: 0.6, pragUskeUlicneCestice: 0.25 },
   ostaci: {
     ukljuci: true,
     tipovi: { slobodnostojeca: true, dvojna: true, interpolacija: true, opcenito: true, niz: false },
     slobodnaUdio: 0.05,
+    uski: true,
+    bezPpminM2: 250,
   },
   dopusteno: {
     // str. 3: stanovanje, uz njega javni i poslovni sadržaji (trgovine na

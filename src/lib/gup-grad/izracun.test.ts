@@ -37,7 +37,7 @@ test("kuća u zaštitnom zelenilu je u suprotnosti; ulica kroz njega se izuzima 
   assert.equal(r.ulica, 30);
   assert.equal(r.n, 70);
   // bez izuzimanja ulica je korištenje zone, i to po planu
-  const bez = procijeniKomad(komad({ zk: 20, pr: 30, g: 1 }), "Z5", { ...udio, ulice: { izuzmi: false, pragUlicneCestice: 0.6 } });
+  const bez = procijeniKomad(komad({ zk: 20, pr: 30, g: 1 }), "Z5", { ...udio, ulice: { ...udio.ulice, izuzmi: false } });
   assert.equal(bez.uSkladu, 30);
   assert.equal(bez.ulica, 0);
 });
@@ -50,6 +50,17 @@ test("komad koji je većinom ulica izuzima se cijeli; u P ulica ostaje", () => {
   const p = procijeniKomad(komad({ klasa: 15, pr: 70 }), "P", udio);
   assert.equal(p.ulica, 0);
   assert.equal(p.iskoristeno, 70);
+});
+
+test("čestica puta šira od traka oko osi: uz ulicu samo uski rub → cijela je ulica", () => {
+  // 30 % pokriva traka, ostatak je uzak i prazan
+  assert.equal(procijeniKomad(komad({ pr: 30, us: 0 }), "M/K5", udio).ulica, 100);
+  // ostatak je širok — vrt ili livada uz cestu ostaje u zoni
+  assert.equal(procijeniKomad(komad({ pr: 30, us: 60 }), "M/K5", udio).ulica, 30);
+  // parkiralište kroz koje ide put nije čestica puta
+  assert.equal(procijeniKomad(komad({ pr: 30, pa: 60, us: 0 }), "M/K5", udio).ulica, 30);
+  // ni kuća uz put
+  assert.equal(procijeniKomad(komad({ pr: 30, zk: 40, g: 1, us: 0 }), "M/K5", udio).ulica, 30);
 });
 
 test("izracunajGodinu seli izuzete ulice iz zone u P", () => {
@@ -191,4 +202,73 @@ test("okućnica kuće po planu nije u protivnom po vrsti; okućnica protivne ku�
   assert.equal(m.suprotnoPoVrstiM2.okucnica, undefined);
   assert.equal(z.suprotnoPoVrstiM2.okucnica, 80 * 4);
   assert.equal(z.uSuprotnostiM2, 100 * 4);
+});
+
+test("uski pojas slobodnog je ostatak i ne spaja susjede; široki dio broji se kao prije", () => {
+  // dvije prazne čestice u M/K5 (najmanje 75 px) koje se dodiruju
+  const susjedi = { od: [0, 1, 2], lista: [1, 0] };
+  const uvjeti = (): UvjetiKomada => ({ najmanjaPx: 75, kig: null, novaGradnja: true, pikselM2: 4 });
+  const kom = (cestica: number, n: number, us?: number) => ({ ...komad({ n, us }), cestica });
+  const ostatak = (komadi: Komad[]) =>
+    izracunajGodinu({ klasePx: { 2: 10_000 }, komadi, pikselM2: 4, susjedi, uvjeti }, udio).find((x) => x.kod === "M/K5")!
+      .ostatakM2 / 4;
+  // put od 60 px uz livadu od 100 px: put je uzak, livada sama dosta velika
+  assert.equal(ostatak([kom(0, 60, 0), kom(1, 100, 100)]), 60);
+  // dvije uske čestice od 50 px zajedno imaju 100 ≥ 75, ali nijedna nema širokog dijela
+  assert.equal(ostatak([kom(0, 50, 0), kom(1, 50, 0)]), 100);
+  // mala čestica usred livade (široka, jer se mjeri polje) spaja se s njom
+  assert.equal(ostatak([kom(0, 40, 40), kom(1, 50, 50)]), 0);
+  // bez mjerenja širine (starije pločice) ništa se ne izdvaja
+  assert.equal(ostatak([kom(0, 50), kom(1, 50)]), 0);
+  // bez pravila o uskim pojasevima put je opet dio skupine
+  const bezUskih: Pravila = { ...udio, ostaci: { ...udio.ostaci, uski: false } };
+  const r = izracunajGodinu(
+    { klasePx: { 2: 10_000 }, komadi: [kom(0, 50, 0), kom(1, 50, 0)], pikselM2: 4, susjedi, uvjeti },
+    bezUskih,
+  );
+  assert.equal(r.find((x) => x.kod === "M/K5")!.ostatakM2, 0);
+});
+
+test("gdje odredbe Ppmin ne propisuju, za stanovanje vrijedi najmanji iz plana", () => {
+  const susjedi = { od: [0, 0], lista: [] };
+  const uvjeti = (): UvjetiKomada => ({ najmanjaPx: 0, kig: null, novaGradnja: true, pikselM2: 4 });
+  const r = (klasa: number, n: number) =>
+    izracunajGodinu({ klasePx: { [klasa]: 10_000 }, komadi: [{ ...komad({ klasa, n }), cestica: 0 }], pikselM2: 4, susjedi, uvjeti }, udio);
+  // 200 m² < 250 m² u M/K5 je ostatak, 300 m² nije
+  assert.equal(r(2, 50).find((x) => x.kod === "M/K5")!.ostatakM2, 200);
+  assert.equal(r(2, 75).find((x) => x.kod === "M/K5")!.ostatakM2, 0);
+  // zelenilo nema najmanje čestice
+  assert.equal(r(11, 50).find((x) => x.kod === "Z5")!.ostatakM2, 0);
+});
+
+test("gradevna: kući kojoj nedostaje čestice vrt je na susjednoj maloj čestici, ne na velikoj livadi", () => {
+  // kuća 100 px tlocrta na 150 px uz kig 0,25 → treba 400 px, nedostaje 250
+  const uvjeti = (): UvjetiKomada => ({ najmanjaPx: 75, kig: 0.25, novaGradnja: true, pikselM2: 4 });
+  const kuca = { ...komad({ n: 150, zk: 100, g: 1 }), cestica: 0 };
+  const iskoristeno = (susjed: Komad) =>
+    izracunajGodinu(
+      { klasePx: { 2: 10_000 }, komadi: [kuca, susjed], pikselM2: 4, susjedi: { od: [0, 1, 2], lista: [1, 0] }, uvjeti },
+      gradevna,
+    ).find((x) => x.kod === "M/K5")!;
+  // vrt od 60 px (< Ppmin 75) uz kuću je njezina okućnica
+  const vrt = iskoristeno({ ...komad({ n: 60, us: 60 }), cestica: 1 });
+  assert.equal(vrt.iskoristenoM2, (150 + 60) * 4);
+  assert.equal(vrt.poVrstiM2.okucnica, (50 + 60) * 4);
+  // livada od 500 px sama je građevna čestica — ostaje slobodna
+  const livada = iskoristeno({ ...komad({ n: 500, us: 500 }), cestica: 1 });
+  assert.equal(livada.iskoristenoM2, 150 * 4);
+  // bez okućnice preko međe vrt ostaje premali ostatak
+  const bez: Pravila = { ...gradevna, gradevna: { ...gradevna.gradevna, prekoMede: false } };
+  const r = izracunajGodinu(
+    {
+      klasePx: { 2: 10_000 },
+      komadi: [kuca, { ...komad({ n: 60, us: 60 }), cestica: 1 }],
+      pikselM2: 4,
+      susjedi: { od: [0, 1, 2], lista: [1, 0] },
+      uvjeti,
+    },
+    bez,
+  ).find((x) => x.kod === "M/K5")!;
+  assert.equal(r.iskoristenoM2, 150 * 4);
+  assert.equal(r.ostatakM2, 60 * 4);
 });

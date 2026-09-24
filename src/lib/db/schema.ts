@@ -318,6 +318,40 @@ export const helpPledges = pgTable(
   (table) => [index("help_pledges_station_idx").on(table.stationId)],
 );
 
+/**
+ * Prijedlozi ispravka karte provjere GUP-a (/karta, pogled „Provjera GUP-a”):
+ * posjetitelj klikne česticu koju model krivo svrstava i predloži što na njoj
+ * stvarno jest. Moderator ih pregleda na /admin/gup; prihvaćene
+ * scripts/gup-grad/ispravci.ts izvozi u data/gup-grad/pregled/ispravci.json,
+ * odakle ih cestice.py primjenjuje kao ručni pregled.
+ *
+ * Čestica se pamti po katastarskoj općini i broju (indeks u cestice.json se
+ * mijenja sa svakom gradnjom). IP se ne pamti, kao kod ponuda pomoći.
+ */
+export const gupIspravci = pgTable(
+  "gup_ispravci",
+  {
+    id: serial("id").primaryKey(),
+    ko: text("ko").notNull(),
+    kc: text("kc").notNull(),
+    /** Godina plana koja je bila na karti. */
+    godina: integer("godina").notNull(),
+    /** Stanje i pretežita namjena kako ih je karta pokazala — da se vidi što se ispravlja. */
+    stanje: text("stanje"),
+    namjena: text("namjena"),
+    /** Predloženo: vrsta iz `VRSTE_ISPRAVKA` (src/lib/gup-grad/ispravci.ts). */
+    vrsta: text("vrsta").notNull(),
+    napomena: text("napomena"),
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    /** novo | prihvaceno | odbijeno */
+    status: text("status").notNull().default("novo"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  },
+  (table) => [index("gup_ispravci_status_idx").on(table.status), index("gup_ispravci_cestica_idx").on(table.ko, table.kc)],
+);
+
 export const proposalsRelations = relations(proposals, ({ many }) => ({
   statusUpdates: many(statusUpdates),
   documents: many(documents),

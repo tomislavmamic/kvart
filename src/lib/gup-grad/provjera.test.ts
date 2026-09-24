@@ -66,3 +66,18 @@ test("godina bez komada daje praznu, slobodnu česticu", () => {
   assert.equal(s.stanje, "slobodna");
   assert.equal(s.pretezita, null);
 });
+
+test("karta: uski pojas je ostatak, a posuđena okućnica iskorištena kao kod /gup", () => {
+  // prazna čestica u M/K5, 100 px, od toga 40 px širokog slobodnog
+  const prazna: SvojstvaCestice = { i: 0, ko: "SPLIT", kc: "2/1", a: 400, k: { "2025": [[2, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 40]] } };
+  const s = sudCestice(prazna, 2025, ZADANA_PRAVILA);
+  assert.equal(s.komadi[0].usko, 240);
+  assert.equal(s.ostatak, 240);
+  // 30 px su vrt susjedne kuće (10 px od toga uz kuću protivnu planu)
+  const v = sudCestice(prazna, 2025, ZADANA_PRAVILA, 4, new Set(), undefined, new Map([[2, [30, 10] as const]]));
+  assert.equal(v.komadi[0].vrtSusjeda, 120);
+  assert.equal(v.iskoristeno, 120);
+  assert.equal(Math.round(v.uSuprotnosti), 40);
+  // vrt se uzima prvo od uskog pojasa
+  assert.equal(v.komadi[0].usko, 120);
+});
