@@ -123,7 +123,9 @@ export default async function GupPage() {
           Ulice unutar obojene zone ne broje se u zonu. Plan boji namjenom cijele blokove i ucrtava samo glavne ceste, pa
           bi nerazvrstane ceste, ulice i nogostupi unutar stambene zone inače ispali „iskorišteno stanovanje”. Njihova
           površina (os ceste ± pola profila, i nogostupi) oduzima se od zone i pribraja „Ulicama i infrastrukturi”; komad
-          čestice koji je barem 60 % ulica izuzima se cijeli.
+          čestice koji je barem 60 % ulica izuzima se cijeli, kao i čestica puta uz koju ostaje samo uski prazni rub.
+          Ceste su iz gradskih slojeva i registra nerazvrstanih cesta (2023.), a kolni prilazi, prometnice kroz naselja,
+          pješački putovi i stube koje oni nemaju iz OpenStreetMapa, sa širinom po razredu ceste.
         </p>
         <p className="mt-2">
           Najveće slobodne čestice u stambenim i mješovitim zonama pregledane su i na ortofotu (DGU, 2023.); gdje se

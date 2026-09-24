@@ -37,7 +37,7 @@ test("kuća u zaštitnom zelenilu je u suprotnosti; ulica kroz njega se izuzima 
   assert.equal(r.ulica, 30);
   assert.equal(r.n, 70);
   // bez izuzimanja ulica je korištenje zone, i to po planu
-  const bez = procijeniKomad(komad({ zk: 20, pr: 30, g: 1 }), "Z5", { ...udio, ulice: { izuzmi: false, pragUlicneCestice: 0.6 } });
+  const bez = procijeniKomad(komad({ zk: 20, pr: 30, g: 1 }), "Z5", { ...udio, ulice: { ...udio.ulice, izuzmi: false } });
   assert.equal(bez.uSkladu, 30);
   assert.equal(bez.ulica, 0);
 });
@@ -50,6 +50,17 @@ test("komad koji je većinom ulica izuzima se cijeli; u P ulica ostaje", () => {
   const p = procijeniKomad(komad({ klasa: 15, pr: 70 }), "P", udio);
   assert.equal(p.ulica, 0);
   assert.equal(p.iskoristeno, 70);
+});
+
+test("čestica puta šira od traka oko osi: uz ulicu samo uski rub → cijela je ulica", () => {
+  // 30 % pokriva traka, ostatak je uzak i prazan
+  assert.equal(procijeniKomad(komad({ pr: 30, us: 0 }), "M/K5", udio).ulica, 100);
+  // ostatak je širok — vrt ili livada uz cestu ostaje u zoni
+  assert.equal(procijeniKomad(komad({ pr: 30, us: 60 }), "M/K5", udio).ulica, 30);
+  // parkiralište kroz koje ide put nije čestica puta
+  assert.equal(procijeniKomad(komad({ pr: 30, pa: 60, us: 0 }), "M/K5", udio).ulica, 30);
+  // ni kuća uz put
+  assert.equal(procijeniKomad(komad({ pr: 30, zk: 40, g: 1, us: 0 }), "M/K5", udio).ulica, 30);
 });
 
 test("izracunajGodinu seli izuzete ulice iz zone u P", () => {

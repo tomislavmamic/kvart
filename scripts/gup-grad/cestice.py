@@ -28,7 +28,10 @@ samo izmjeri, za svaki komad čestice koji pada u jednu klasu namjene:
          najmanje 1. Odredbe uz kig propisuju i kis (bruto površina /
          čestica), pa neboder troši više čestice od prizemnice istog tlocrta.
   pr     pikseli pod ulicom: os ceste ± pola profila (Ceste,
-         NerazvrstaneCeste, državne ceste) i nogostupi. Pravila ih mogu
+         NerazvrstaneCeste, registar nerazvrstanih cesta 2023., državne
+         ceste, i OSM highway=* po razredu ceste — kolni prilazi,
+         prometnice kroz naselja, pješački putovi i stube koje gradski
+         slojevi nemaju) i nogostupi. Pravila ih mogu
          izuzeti iz namjene zone (ulica u stambenoj zoni nije stanovanje).
   pa     pikseli pod parkiralištem ili garažama: javna parkirališta
          Grada i sva iz OSM-a (trgovine, zgrade, tvrtke)
@@ -112,6 +115,40 @@ VISINA_ETAZE = 3.0  # m
 SIRINA_PX = 2
 
 OSM_PUT = os.path.join(R.OUT, "osm.json")  # scripts/gup-grad/osm.py
+OSM_CESTE_PUT = os.path.join(R.OUT, "osm-ceste.json")
+
+# Pola širine OSM ceste po razredu (m), kad oznaka width ne kaže više.
+# Poljski putovi (track) i staze kroz makiju (path) nisu korištenje
+# zemljišta za stanovanje — preko njih se gradi — pa ih nema.
+POLA_OSM = {
+    "motorway": 12.0, "trunk": 8.0, "primary": 7.0, "secondary": 5.5, "tertiary": 4.5,
+    "motorway_link": 4.0, "trunk_link": 4.0, "primary_link": 4.0, "secondary_link": 3.5, "tertiary_link": 3.5,
+    "residential": 3.5, "unclassified": 3.5, "living_street": 3.5, "service": 2.5,
+    "pedestrian": 2.5, "footway": 1.0, "steps": 1.0, "cycleway": 1.25,
+}
+
+
+def osm_ceste() -> list:
+    """OSM ceste (scripts/gup-grad/osm.py) kao poligoni os ± pola širine, u EPSG:3765."""
+    from pyproj import Transformer
+
+    if not os.path.exists(OSM_CESTE_PUT):
+        print("NEMA", OSM_CESTE_PUT, "— pokreni scripts/gup-grad/osm.py; OSM ceste prazne")
+        return []
+    u = Transformer.from_crs(4326, 3765, always_xy=True)
+    out = []
+    for e in json.load(open(OSM_CESTE_PUT))["elements"]:
+        t = e.get("tags", {})
+        pola = POLA_OSM.get(t.get("highway", ""))
+        if pola is None or t.get("area") == "yes" or len(e.get("geometry", [])) < 2:
+            continue
+        try:
+            pola = max(pola, float(t["width"].replace(",", ".").split()[0]) / 2)
+        except (KeyError, ValueError, IndexError):
+            pass
+        x, y = u.transform([p["lon"] for p in e["geometry"]], [p["lat"] for p in e["geometry"]])
+        out.append(shapely.buffer(shapely.linestrings(list(zip(x, y))), pola, cap_style="flat"))
+    return out
 
 
 def osm_kategorija(t: dict) -> str | None:
@@ -277,6 +314,13 @@ def main() -> None:
     ]:
         d = citaj(put, columns=[])
         ceste.extend(shapely.buffer(d.geometry.values, pola, cap_style="flat"))
+    # registar nerazvrstanih cesta (2023.): 3 078 dionica prema 629 u bazi
+    reg = citaj(os.path.join(PORTAL, "Nerazvrstane_ceste_Split_nerazvrstane_ceste_29112023.shp"), columns=["vrsta_cest"])
+    pola_reg = np.where(reg.vrsta_cest.fillna("").str.startswith("Pješ"), 2.0, POLA_CESTE)
+    ceste.extend(shapely.buffer(reg.geometry.values, pola_reg, cap_style="flat"))
+    osm_c = osm_ceste()
+    ceste.extend(osm_c)
+    print("OSM cesta:", len(osm_c))
     nog = citaj(os.path.join(BAZA, "KOMUNALNA_INFRASTRUKTURA", "Nogostupi.shp"), columns=["Sirina_nog"])
     sir = nog.Sirina_nog.fillna(1.5).clip(lower=1.0, upper=6.0).values
     ceste.extend(shapely.buffer(nog.geometry.values, sir / 2.0, cap_style="flat"))
@@ -406,7 +450,7 @@ def main() -> None:
             "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
             "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025 (tlocrti gradskog 3D modela, isti kao Zgrade_3D/ST_3D_2024)",
             "etaze": "Grad Split, GIS izvoz: Korisna_povrsina_Split_2025 (visina krovnih ploha 3D modela, h_objekt / 3 m)",
-            "promet": "Ceste, NerazvrstaneCeste, drzavna_cesta_1 (os ± pola profila), Nogostupi",
+            "promet": "Ceste, NerazvrstaneCeste, Nerazvrstane_ceste_Split_29112023, drzavna_cesta_1 (os ± pola profila), Nogostupi; OSM highway=* po razredu",
             "parkiralista": "JavnaParkiralista, ST_PARKING_I_NADZOR_Parkiralista; OSM amenity=parking, landuse=garages",
             "javne_ustanove": "OSM amenity=school/kindergarten/college/university/hospital/clinic/place_of_worship, landuse=education/religious",
             "ostalo": "Groblja, Sportski_objekti_p; OSM leisure=pitch/playground/sports_centre/stadium/track, trgovi i pješačke površine",

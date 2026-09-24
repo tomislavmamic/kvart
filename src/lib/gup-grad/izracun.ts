@@ -149,11 +149,20 @@ const GLAVNE: ReadonlySet<VrstaKoristenja> = new Set(["stambena", "gospodarska",
 /**
  * Koliko komada je ulica koja ne pripada zoni. U samoj P (ulice,
  * infrastruktura) ništa se ne izuzima — ondje je ulica upravo namjena.
+ *
+ * Cijeli komad je ulica kad ga ulica pokriva barem `pragUlicneCestice`, ili
+ * barem `pragUskeUlicneCestice` a ostatak nije ni zgrada, ni drugo
+ * korištenje, ni zemljište dovoljno široko za gradnju: katastarska čestica
+ * puta šira od traka oko osi ceste, uz koju ostaje samo rub.
  */
 export function ulicaKomada(k: Komad, kod: KodKlase, p: Pravila): number {
   if (!p.ulice.izuzmi || kod === "P" || k.n <= 0) return 0;
   const u = Math.min(k.pr, k.n);
-  return u >= p.ulice.pragUlicneCestice * k.n ? k.n : u;
+  if (u >= p.ulice.pragUlicneCestice * k.n) return k.n;
+  // parkiralište ili park kroz koji ide put nije čestica puta
+  const drugo = Math.max(k.zk, k.z25) + (k.pa ?? 0) + (k.jv ?? 0) + k.os + (k.inf ?? 0) + k.ze + (k.gr ?? 0);
+  const usko = k.us !== undefined && k.us < 0.1 * k.n;
+  return u >= p.ulice.pragUskeUlicneCestice * k.n && drugo < 0.1 * k.n && usko ? k.n : u;
 }
 
 /**

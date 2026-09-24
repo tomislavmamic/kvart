@@ -129,6 +129,12 @@ export interface Pravila {
      * oko osi ceste.
      */
     pragUlicneCestice: number;
+    /**
+     * Niži prag za komad bez zgrade na kojem uz ulicu nema zemljišta
+     * dovoljno širokog za gradnju (polje `us`): put čiji je kolnik širi od
+     * traka oko osi, pa traka pokrije tek dio čestice.
+     */
+    pragUskeUlicneCestice: number;
   };
   /**
    * Premali ostaci. Slobodan dio čestice manji od najmanje građevne čestice
@@ -245,7 +251,7 @@ export const ZADANA_PRAVILA: Pravila = {
   },
   gradevna: { zadaniKig: null, najmanjaZgradaM2: 20, prekoMede: true },
   postujZabraneGradnje: true,
-  ulice: { izuzmi: true, pragUlicneCestice: 0.6 },
+  ulice: { izuzmi: true, pragUlicneCestice: 0.6, pragUskeUlicneCestice: 0.25 },
   ostaci: {
     ukljuci: true,
     tipovi: { slobodnostojeca: true, dvojna: true, interpolacija: true, opcenito: true, niz: false },
