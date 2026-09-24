@@ -143,7 +143,7 @@ export function izracunaj(d: SirovaMjerenja, p: Pravila, o: Odredbe): Record<God
   return out;
 }
 
-/** Ostaci godine za kartu provjere: [čestica, klasa]. */
-export function ostaci(d: SirovaMjerenja, g: Godina, p: Pravila, o: Odredbe): [number, number][] {
+/** Ostaci i posuđene okućnice godine za kartu provjere (izracun.ts, `ostaciGodine`). */
+export function ostaci(d: SirovaMjerenja, g: Godina, p: Pravila, o: Odredbe) {
   return ostaciGodine(ulazGodine(d, g, p, o), p);
 }

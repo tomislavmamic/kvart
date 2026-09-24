@@ -73,7 +73,7 @@ export const STANJA: Record<
   "u-skladu": { naziv: "iskorištena po planu", ispuna: 0.85 },
   "djelomicno-slobodna": { naziv: "iskorištena, a na ostatak stane nova čestica", ispuna: 0.55 },
   slobodna: { naziv: "neiskorištena (ispod 5 %)", ispuna: 0.3 },
-  ostatak: { naziv: "neiskorištena, ali nije za gradnju (premala ili je odredbe ne dopuštaju)", ispuna: 0.1, crtkano: true },
+  ostatak: { naziv: "neiskorištena, ali nije za gradnju (premala, preuska ili je odredbe ne dopuštaju)", ispuna: 0.1, crtkano: true },
   ulica: { naziv: "ulica u zoni — izuzeta iz zone", ispuna: 0.55, boja: "#a1a1aa" },
   protivno: { naziv: "iskorištena protivno planu", ispuna: 0.85, pruge: { razmak: 8, debljina: 2.6 } },
   "djelomicno-protivno": { naziv: "dijelom protivno planu", ispuna: 0.85, pruge: { razmak: 13, debljina: 1.6 } },
@@ -198,10 +198,12 @@ type Gradnja = Record<
 interface Ostaci {
   /** čestica → klase njezinih komada koji su premali ostatak */
   poCestici: Map<number, Set<number>>;
+  /** čestica → klasa → [okućnica susjedne zgrade, od toga protivno], u pikselima */
+  posudjeno: Map<number, Map<number, [number, number]>>;
   ppmin: Ppmin;
   gradnja: Gradnja;
 }
-const PRAZNO: Ostaci = { poCestici: new Map(), ppmin: {}, gradnja: {} };
+const PRAZNO: Ostaci = { poCestici: new Map(), posudjeno: new Map(), ppmin: {}, gradnja: {} };
 
 /** Odredbe o gradnji za komad klase u području urbanog pravila — kao podaci.ts na poslužitelju. */
 function uvjetiKomada(o: Ostaci, kodPravila: string | undefined, klasa: (typeof KLASE)[number]): UvjetiKomada {
@@ -228,13 +230,18 @@ function ucitajOstatke(inacica: string, godina: number): Promise<Ostaci> {
   if (!p) {
     p = fetch(`/api/gup-ostaci/${kljuc}`)
       .then((r) => (r.ok ? r.json() : { ostaci: [], ppmin: {}, gradnja: {} }))
-      .then((d: { ostaci: [number, number][]; ppmin: Ppmin; gradnja?: Gradnja }) => {
+      .then((d: { ostaci: [number, number][]; posudjeno?: [number, number, number, number][]; ppmin: Ppmin; gradnja?: Gradnja }) => {
         const m = new Map<number, Set<number>>();
         for (const [c, k] of d.ostaci) {
           if (!m.has(c)) m.set(c, new Set());
           m.get(c)!.add(k);
         }
-        return { poCestici: m, ppmin: d.ppmin ?? {}, gradnja: d.gradnja ?? {} };
+        const posudjeno = new Map<number, Map<number, [number, number]>>();
+        for (const [c, k, px, protivno] of d.posudjeno ?? []) {
+          if (!posudjeno.has(c)) posudjeno.set(c, new Map());
+          posudjeno.get(c)!.set(k, [px, protivno]);
+        }
+        return { poCestici: m, posudjeno, ppmin: d.ppmin ?? {}, gradnja: d.gradnja ?? {} };
       })
       .catch(() => {
         ostaciPoKljucu.delete(kljuc);
@@ -321,7 +328,15 @@ export function useGupProvjera(opts: {
     const sud = (p: SvojstvaCestice) => {
       const g = postavkeRef.current.godina;
       const o = ostaciRef.current;
-      return sudCestice(p, g, pravila(), 4, o.poCestici.get(p.i) ?? NEMA, (kl) => uvjetiKomada(o, p.u?.[`${g}`], kl));
+      return sudCestice(
+        p,
+        g,
+        pravila(),
+        4,
+        o.poCestici.get(p.i) ?? NEMA,
+        (kl) => uvjetiKomada(o, p.u?.[`${g}`], kl),
+        o.posudjeno.get(p.i),
+      );
     };
 
     // Platno dolazi od karte (preferCanvas) — 5 000+ čestica u oknu kao SVG
@@ -533,7 +548,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
     `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)} u zoni` +
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
     (s.ulica > 0 ? `; ulica izuzeta iz zone ${m2(s.ulica)}` : "") +
-    (s.ostatak > 0 ? `; premali ostatak ${m2(s.ostatak)}` : "") +
+    (s.ostatak > 0 ? `; premali ili preuski ostatak ${m2(s.ostatak)}` : "") +
     (s.nijeZaGradnju > 0 ? `; slobodno, ali nije za gradnju ${m2(s.nijeZaGradnju)}` : "") +
     `</span>` +
     (kodPravila
@@ -586,9 +601,19 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
         `<br><span style="${sivo}">najmanja građevna čestica prema odredbama: <b>${m2(najmanja.m2)}</b> ` +
         `(${esc(TIP_GRADNJE[najmanja.tip] ?? najmanja.tip)}) — ${esc(najmanja.izvor)}</span>`;
     }
-    if (k.ostatak > 0) {
+    if (k.vrtSusjeda > 0) {
       h +=
-        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak)} je premali ostatak: manje od ${najmanja ? m2(najmanja.m2) : "najmanje čestice"}, ` +
+        `<br><span style="color:#52525c">${m2(k.vrtSusjeda)} je okućnica zgrade na susjednoj čestici: njoj na vlastitoj ` +
+        `nedostaje zemljišta koje traže odredbe, a ova čestica sama nije nova građevna čestica.</span>`;
+    }
+    if (k.usko > 0) {
+      h +=
+        `<br><span style="color:#52525c">slobodnih ${m2(k.usko)} je uski pojas (put, stube, rub uz među) — ` +
+        `uži od ~9 m, a odredbe traže česticu široku barem 10 m; ne broji se kao slobodno.</span>`;
+    }
+    if (k.ostatak - k.usko > 0) {
+      h +=
+        `<br><span style="color:#52525c">slobodnih ${m2(k.ostatak - k.usko)} je premali ostatak: manje od ${najmanja ? m2(najmanja.m2) : "najmanje čestice"}, ` +
         `a nema slobodnog susjeda iste namjene s kojim bi to doseglo — ne broji se kao slobodno.</span>`;
     }
     if (k.nijeZaGradnju > 0) {

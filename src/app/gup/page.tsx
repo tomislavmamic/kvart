@@ -102,13 +102,20 @@ export default async function GupPage() {
           visine zgrade u 3D modelu) i ne manje od Ppmin. Neboder u naselju iz sedamdesetih tako troši i parkiralište
           i zelenilo oko sebe, a kuća od 150 m² na čestici od 3 000 m² ostavlja slobodan vrt — ali samo ako je taj vrt
           sam dovoljno velik za novu građevnu česticu. Od više vrijednosti (slobodnostojeća, dvojna…) uzima se ona koja
-          zgradi pripisuje najmanje zemljišta, da se slobodno ne proglasi iskorištenim.
+          zgradi pripisuje najmanje zemljišta, da se slobodno ne proglasi iskorištenim. Građevna čestica često je više
+          katastarskih — kuća na jednoj, vrt na susjednoj — pa kad zgradi na vlastitoj čestici nedostaje zemljišta,
+          uzima ga sa susjedne čestice bez zgrade koja sama nije nova građevna čestica. Veliku susjednu livadu ne dira.
         </p>
         <p className="mt-2">
           Gdje odredbe ne dopuštaju novu stambenu gradnju — dovršena naselja u kojima je moguća samo rekonstrukcija
           postojećih zgrada, zaštićene cjeline, parkovi — slobodno zemljište stambene i mješovite zone ne broji se kao
-          slobodno za stanovanje. Isto vrijedi za premale ostatke: slobodan dio čestice manji od Ppmin koji se ne
-          dodiruje sa slobodnom česticom iste namjene (s kojom bi zajedno dosegao Ppmin). Na grafikonu je to točkasti
+          slobodno za stanovanje. Isto vrijedi za premale i preuske ostatke. Odredbe traže građevnu česticu široku
+          barem 10 m (dvojna kuća; slobodnostojeća 12–16 m), pa slobodno zemljište u koje ne stane krug od oko 9 m —
+          put, stube, pojas uz nogostup, rub uz zgradu — nije za gradnju; širina se mjeri na slobodnom zemljištu, ne na
+          čestici, pa uska čestica usred livade ostaje slobodna. Širok slobodan dio čestice manji od Ppmin je ostatak
+          ako se ne dodiruje sa slobodnom česticom iste namjene s kojom bi zajedno dosegao Ppmin; gdje ga odredbe za
+          područje ne propisuju, a gradnju dopuštaju, uzima se najmanji Ppmin za stanovanje iz plana (250 m²). Na
+          grafikonu je to točkasti
           pojas „nije za gradnju”. Izvadci odredbi (Sl. gl. 1/06 s izmjenama 3/08; pročišćeni tekst 55/14; prijedlog
           2025.) s citatima i stranicama su u <code className="font-mono text-xs">data/gup-grad/odredbe/izvor/</code>.
         </p>

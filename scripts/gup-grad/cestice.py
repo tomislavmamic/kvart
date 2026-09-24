@@ -47,6 +47,14 @@ samo izmjeri, za svaki komad čestice koji pada u jednu klasu namjene:
   g      pretežita skupina katastarskih zgrada u komadu (0 = nema):
          1 stambene (1xx), 2 gospodarske i poslovne (2xx), 3 javne (3xx),
          4 pomoćne (4xx), 5 ostale građevine (6xx–9xx)
+  us     slobodni pikseli (ništa od gore navedenog) koji leže u slobodnom
+         zemljištu iste klase dovoljno širokom za zgradu: u njega stane
+         krug promjera ~9 m (morfološko otvaranje, SIRINA_PX). Odredbe
+         traže česticu široku barem 10 m (dvojna; slobodnostojeća 12–16 m),
+         pa put, stube, pojas uz nogostup ili rub oko zgrade na tuđoj međi
+         nisu građevno zemljište — ni sami ni spojeni sa susjednima. Mala
+         čestica usred slobodnog polja ostaje široka, jer se mjeri polje,
+         ne čestica.
 
 Skupine zgrada izvedene su iz šifre VRSTA po stotici i provjerene
 položajem na planu: 1xx leže u M/S, 2xx u I/K, 3xx u D (škole, bolnice,
@@ -97,8 +105,11 @@ POLA_DRZAVNE = 6.0
 
 
 # Polja komada u cestice.json, redom (vidi opis gore).
-POLJA = ["cestica", "klasa", "n", "zk", "z25", "kat", "pr", "pa", "jv", "os", "inf", "ze", "gr", "g"]
+POLJA = ["cestica", "klasa", "n", "zk", "z25", "kat", "pr", "pa", "jv", "os", "inf", "ze", "gr", "g", "us"]
 VISINA_ETAZE = 3.0  # m
+# Najuže slobodno zemljište na kojem se može graditi: krug polumjera 2 px
+# (dx² + dy² ≤ 4 na rešetki od 2 m) — 10 m uzduž osi, ~8 m dijagonalno.
+SIRINA_PX = 2
 
 OSM_PUT = os.path.join(R.OUT, "osm.json")  # scripts/gup-grad/osm.py
 
@@ -293,6 +304,10 @@ def main() -> None:
                     ("zelenilo", ze), ("gradilišta", gr)):
         print(f"{ime}: {m_.sum() * R.KORAK * R.KORAK / 1e4:.1f} ha")
 
+    zauzeto = (zk > 0) | z25 | pr | pa | jv | os_ | inf | ze | gr
+    yy, xx = np.mgrid[-SIRINA_PX:SIRINA_PX + 1, -SIRINA_PX:SIRINA_PX + 1]
+    krug = xx * xx + yy * yy <= SIRINA_PX * SIRINA_PX
+
     # ---- po godinama -----------------------------------------------------
     n_c = len(c) + 1
     godine_out = {}
@@ -315,6 +330,7 @@ def main() -> None:
         n_kat = dict(zip(u_k.tolist(), np.bincount(inv, weights=kat[m]).astype(np.int64).tolist()))
         n_pr = zbroj(pr)
         n_mj = [zbroj(x) for x in (pa, jv, os_, inf, ze, gr)]
+        n_us = zbroj(siroko_slobodno(kl, (ids > 0) & maska_obuhvata & ~zauzeto, krug))
         # pretežita skupina zgrada po komadu
         sk = {}
         for s in range(1, 6):
@@ -331,7 +347,7 @@ def main() -> None:
             if v < NAJMANJI_UDIO_KOMADA * po_cestici[ci] and v < 25:
                 continue
             komadi.extend([ci - 1, klasa, v, n_zk.get(k, 0), n_z25.get(k, 0), n_kat.get(k, 0), n_pr.get(k, 0),
-                           *(x.get(k, 0) for x in n_mj), sk.get(k, (0, 0))[0]])
+                           *(x.get(k, 0) for x in n_mj), sk.get(k, (0, 0))[0], n_us.get(k, 0)])
         # pretežito područje urbanog pravila po čestici (urbana-pravila.py);
         # iz njega odredbe daju najmanju građevnu česticu
         up_put = os.path.join(R.OUT, f"up-{gid}.npy")
@@ -410,6 +426,20 @@ def main() -> None:
     zapisi_plocice(c, godine_out, out["cestice"], up_kodovi)
     zapisi_zgrade(zg, z25g[z25g.geometry.intersects(obuhvat)])
     zapisi_slike(mreza)
+
+
+def siroko_slobodno(kl: np.ndarray, slobodno: np.ndarray, krug: np.ndarray) -> np.ndarray:
+    """Slobodni pikseli u koje stane `krug` a da ne izađe iz slobodnog iste klase."""
+    from scipy import ndimage
+
+    out = np.zeros(slobodno.shape, bool)
+    for k in np.unique(kl[slobodno]):
+        if k == 0:
+            continue
+        m = slobodno & (kl == k)
+        out |= ndimage.binary_opening(m, structure=krug)
+    print("  široko slobodno:", round(out.sum() / max(1, slobodno.sum()) * 100), "% slobodnog")
+    return out
 
 
 def susjedi(c) -> dict:

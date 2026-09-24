@@ -457,7 +457,7 @@ function Detalji({ r, prethodno }: { r: RezultatKlase; prethodno: { godina: numb
             {" ("}
             {[
               r.zabranjenoM2 >= 500 && `plan ondje ne dopušta novu gradnju ${ha(r.zabranjenoM2, 1)} ha`,
-              r.ostatakM2 >= 500 && `premali ostaci ${ha(r.ostatakM2, 1)} ha`,
+              r.ostatakM2 >= 500 && `premali ili preuski ostaci ${ha(r.ostatakM2, 1)} ha`,
               r.neizgradivoM2 >= 500 && `neizgradiv teren ${ha(r.neizgradivoM2, 1)} ha`,
             ]
               .filter(Boolean)
