@@ -93,8 +93,9 @@ export const SIRI_OBUHVAT_KARTE: [[number, number], [number, number]] = [
  */
 export function dossierMapBounds(
   narrow: boolean,
+  granice: [[number, number], [number, number]] = MAP_MAX_BOUNDS,
 ): [[number, number], [number, number]] | undefined {
-  return narrow ? undefined : MAP_MAX_BOUNDS;
+  return narrow ? undefined : granice;
 }
 
 export type DossierPresentation = "closed" | "loading" | "resolved" | "error";
@@ -135,6 +136,12 @@ export function syncDossierMapLayout(
   narrow: boolean,
   point: [number, number] | null,
   animate: boolean,
+  /**
+   * Granice aktivnog pogleda. Bez njih se svaki raspored (i prvi, pri
+   * učitavanju) vraćao na okvir kvarta i vukao kartu pogleda „Provjera
+   * GUP-a” s Marjana ili Bačvica natrag prema Dračevcu.
+   */
+  granice: [[number, number], [number, number]] = MAP_MAX_BOUNDS,
 ): void {
   // Leaflet caches the old viewport until its resize handler runs. Refresh it
   // synchronously so a breakpoint transition cannot use the previous layout's
@@ -142,11 +149,11 @@ export function syncDossierMapLayout(
   map.invalidateSize({ animate: false, pan: false });
 
   if (!point) {
-    map.setMaxBounds(MAP_MAX_BOUNDS);
+    map.setMaxBounds(granice);
     return;
   }
 
-  map.setMaxBounds(dossierMapBounds(narrow));
+  map.setMaxBounds(dossierMapBounds(narrow, granice));
   const viewport = map.getSize();
   const current = map.latLngToContainerPoint(point);
   const target = narrow

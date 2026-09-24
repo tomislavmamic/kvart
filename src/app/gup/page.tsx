@@ -116,7 +116,9 @@ export default async function GupPage() {
           Svaka vrsta korištenja uspoređena je s onim što odredbe za tu namjenu dopuštaju: stambena zgrada u mješovitoj
           zoni je u skladu, u zaštitnom zelenilu, turističkoj ili javnoj zoni nije; manja pomoćna građevina u parku i
           ugostiteljski sadržaj na kupalištu jesu. Ono što odredbe dopuštaju samo pod posebnim uvjetom (stan uz posao u
-          poslovnoj zoni, postojeće kuće u zelenilu Z6) broji se kao protivno, jer se uvjet iz katastra ne vidi. Ceste i infrastruktura su dopuštene svugdje. Zgrada kojoj ne znamo vrstu jer je nema
+          poslovnoj zoni) broji se kao protivno, jer se uvjet iz katastra ne vidi. Zelenilo s postojećim građevinama
+          (Z6, Meje i Bačvice) list crta istom bojom kao zaštitno zelenilo Z5; odvojili smo ga po oznakama otisnutim
+          na listu 2025., pa su ondje postojeće kuće u skladu s planom. Ceste i infrastruktura su dopuštene svugdje. Zgrada kojoj ne znamo vrstu jer je nema
           u katastru protivna je samo tamo gdje plan ne predviđa nikakvu zgradu (zelenilo, rekreacija, plaže). Ovo je
           gruba provjera po skupinama namjene, a ne provjera pojedine građevinske dozvole — zgrada može biti starija od
           plana ili legalizirana.

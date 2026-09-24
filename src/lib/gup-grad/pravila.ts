@@ -141,8 +141,7 @@ const UVIJEK: readonly VrstaKoristenja[] = ["promet", "ostala", "zelenilo"];
  * data/gup-grad/odredbe/izvor/dopusteno.json; str. = Sl. gl. 55/14). U
  * skladu je ono što odredbe dopuštaju OPĆENITO; ono što dopuštaju samo pod
  * posebnim uvjetom koji zgrada iz katastra ne može pokazati (stan uz
- * poslovni prostor u K na čestici od 2000 m², postojeće kuće u Z6) broji se
- * kao protivno. Čl. 8: ulice, javna parkirališta i komunalne građevine
+ * poslovni prostor u K na čestici od 2000 m²) broji se kao protivno. Čl. 8: ulice, javna parkirališta i komunalne građevine
  * grade se na površinama svih namjena. Za zgradu koje nema u katastru (`neevidentirana`) ne
  * znamo čemu služi, pa je u suprotnosti samo ondje gdje plan ne predviđa
  * nikakvu zgradu (zelenilo, rekreacija, plaže); u građevnim zonama je
@@ -196,10 +195,12 @@ export const ZADANA_PRAVILA: Pravila = {
     // su do 2025. tolerirane „do prenamjene ili uklanjanja”, ne u skladu)
     Z1: [...UVIJEK, "uredjeno", "pomocna", "javna"],
     // str. 7: zaštitno zelenilo — javne i rekreacijske građevine samo gdje
-    // pravila područja to kažu; privatne garaže i spremišta ne. Z6 (Meje,
-    // Bačvice) čuva postojeće kuće, ali je na listu iste boje kao Z5, pa se
-    // tamošnje kuće ovdje broje kao protivne — poznato ograničenje.
+    // pravila područja to kažu; privatne garaže i spremišta ne
     Z5: [...UVIJEK],
+    // str. 7: Z6 (Meje, Bačvice) — postojeće građevine dio su zaštićenog
+    // krajobraza, pa su postojeće kuće s pomoćnim građevinama u skladu.
+    // Odvaja se od Z5 po natpisima na listu 2025. (scripts/gup-grad/z6.py).
+    Z6: [...UVIJEK, "stambena", "pomocna", "neevidentirana"],
     // str. 7: posebna namjena — ne stambene ni poslovne
     N: [...UVIJEK, "javna", "pomocna", "uredjeno", "neevidentirana"],
     P: SVE,
