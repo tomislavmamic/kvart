@@ -1715,18 +1715,6 @@ const POGLEDI: MapView[] = [
     layerIds: ["gup-2024-planirane-ceste", "cestice-planiranih-cesta"],
   },
   {
-    id: "gup-provjera",
-    label: "Provjera GUP-a (cijeli grad)",
-    razina: "nacin",
-    description:
-      "Kako je infografika „Split po GUP-u” razvrstala svaku katastarsku " +
-      "česticu: u koju namjenu pada, što na njoj stoji i je li to po planu. " +
-      "Karta ide do ruba obuhvata GUP-a; čestice se crtaju od zuma 15, a " +
-      "ispod toga se vidi naše razvrstavanje lista plana po bojama.",
-    layerIds: [],
-    granice: GUP_GRAD_BOUNDS,
-  },
-  {
     id: "okolis-rizici",
     label: "Okoliš i rizici",
     razina: "nacin",

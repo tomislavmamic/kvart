@@ -17,6 +17,21 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/cestica": ["public/geo/grad/**/*.geojson"],
   },
+  /**
+   * Karta provjere GUP-a preselila je s /karta (pogled „gup-provjera”) na
+   * /gup (prikaz „Karta čestica”). Stare poveznice — i one u prijedlozima
+   * ispravka — nose `c` i `z`, koji se prenose sami.
+   */
+  async redirects() {
+    return [
+      {
+        source: "/karta",
+        has: [{ type: "query", key: "pogled", value: "gup-provjera" }],
+        destination: "/gup?prikaz=karta",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
