@@ -272,3 +272,33 @@ test("gradevna: kući kojoj nedostaje čestice vrt je na susjednoj maloj čestic
   assert.equal(r.iskoristenoM2, 150 * 4);
   assert.equal(r.ostatakM2, 60 * 4);
 });
+
+test("planski režim: slobodno koje čeka propisani plan nije slobodno za gradnju; zabrana iz odredbi ima prednost", () => {
+  const u = (rezim: UvjetiKomada["rezim"], novaGradnja = true): UvjetiKomada => ({ najmanjaPx: 0, kig: null, novaGradnja, rezim, pikselM2: 1 });
+  const ceka = procijeniKomad(komad({ zk: 20, g: 1 }), "M/K5", udio, u("ceka"));
+  assert.equal(ceka.cekaPlan, 80);
+  assert.equal(ceka.zabranjeno, 0);
+  const zabrana = procijeniKomad(komad({ zk: 20, g: 1 }), "M/K5", udio, u("ceka", false));
+  assert.equal(zabrana.zabranjeno, 80);
+  assert.equal(zabrana.cekaPlan ?? 0, 0);
+  // pravilo isključeno: sve slobodno
+  const bez = procijeniKomad(komad({ zk: 20, g: 1 }), "M/K5", { ...udio, postujObvezuPlana: false }, u("ceka"));
+  assert.equal(bez.cekaPlan ?? 0, 0);
+});
+
+test("izracunajGodinu: čeka plan i slobodno pod planom na snazi zbrajaju se odvojeno", () => {
+  const komadi = [komad({ n: 100, zk: 20, g: 1 }), komad({ n: 50 }), komad({ n: 30 })];
+  const rezim = new Map<Komad, UvjetiKomada["rezim"]>([[komadi[0], "ceka"], [komadi[1], "vazeci"], [komadi[2], "neposredno"]]);
+  const [r] = izracunajGodinu(
+    {
+      klasePx: { 2: 180 },
+      komadi,
+      pikselM2: 4,
+      uvjeti: (k) => ({ najmanjaPx: 0, kig: null, novaGradnja: true, rezim: rezim.get(k), pikselM2: 4 }),
+    },
+    udio,
+  );
+  assert.equal(r.cekaPlanM2, 80 * 4);
+  assert.equal(r.poPlanuM2, 50 * 4);
+  assert.equal(r.ukupnoM2 - r.iskoristenoM2 - r.cekaPlanM2 - r.ostatakM2, 80 * 4);
+});

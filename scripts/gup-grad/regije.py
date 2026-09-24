@@ -51,7 +51,7 @@ MASKE = os.path.join(R.OUT, "maske.npz")
 GODINE = [("gup-2006", 2006), ("gup-2015", 2015), ("gup-2025", 2025)]
 
 ZGRADA, GRADILISTE, ULICA, PARKIRALISTE, JAVNA, UREDJENO, INFRA, ZELENILO = range(1, 9)
-OKUCNICA, SLOBODNO, USKO, PREMALO, ZABRANJENO, NEIZGRADIVO = range(9, 15)
+OKUCNICA, SLOBODNO, USKO, PREMALO, ZABRANJENO, NEIZGRADIVO, CEKA = range(9, 16)
 
 # vrsta korištenja po pikselu, za sklad s planom (imena kao VrstaKoristenja u pravila.ts)
 VRSTE = ["", "stambena", "gospodarska", "javna", "pomocna", "ostala", "neevidentirana",
@@ -140,6 +140,7 @@ def regije_godine(m, kl, ts, rucno) -> tuple[np.ndarray, np.ndarray]:
     r_s = np.full(len(kz), SLOBODNO, np.uint8)
     r_s[(zast_px & 4) > 0] = PREMALO
     r_s[~siroko] = USKO
+    r_s[(zast_px & 16) > 0] = CEKA  # široko i dovoljno veliko, ali čeka propisani plan
     r_s[(zast_px & 2) > 0] = NEIZGRADIVO
     r_s[(zast_px & 1) > 0] = ZABRANJENO
     reg[slob] = r_s

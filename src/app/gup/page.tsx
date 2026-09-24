@@ -137,6 +137,27 @@ export default async function GupPage() {
           slobodno) i svaka čestica na kojoj išta stoji.
         </p>
 
+        <h3 className="mt-5 font-bold text-zinc-900">Planovi užeg područja: gdje namjena nije dovoljna</h3>
+        <p className="mt-1">
+          Namjena kaže što se na zemljištu smije, ali ne i gradi li se po GUP-u. Gdje je na snazi urbanistički ili
+          detaljni plan uređenja (ili stari provedbeni plan), gradi se po njemu, a on može biti i stroži od GUP-a — UPU
+          Bilice II–Mostine iz 1998. u poslovnoj zoni dopušta stanovanje na najviše četvrtini zone. Gdje GUP propisuje
+          izradu plana užeg područja, a plana nema, nova gradnja u nisko konsolidiranim područjima (urbana pravila 3.x)
+          čeka taj plan; do njega se grade samo ulice i infrastruktura (Sl. gl. 55/14, čl. 104–105). Prijedlog 2025.
+          obvezu sužava na neuređene dijelove neizgrađenog građevinskog područja, urbanu preobrazbu i urbanu sanaciju
+          (čl. 103); ostali obuhvati su preporuka i do plana se gradi po GUP-u.
+        </p>
+        <p className="mt-2">
+          Obuhvate smo uzeli s listova „Obuhvat detaljnijih planova” i „Važeći planovi” (izmjene 2008.; stanje
+          28. 11. 2014.) i s lista 4.d prijedloga 2025., istim uklapanjem kao namjenu. Pročišćeni list obveza za 2015. nije
+          objavljen, pa za 2015. vrijede obveze iz 2008. (izmjene 2014. mijenjaju ih samo za Trsteničku uvalu). Čestica
+          pripada obuhvatu kad ga pokriva barem pola čestice; najmanji planovi od nekoliko čestica mogu ispasti. Na
+          grafikonu je slobodno koje čeka plan prugasto, a slobodno pod planom na snazi rešetkom — to drugo je slobodno
+          za gradnju, ali koliko se na njemu smije, odlučuje taj plan. Obuhvati su iz{" "}
+          <code className="font-mono text-xs">scripts/gup-grad/planski-rezim.py</code>, a što koji znači u{" "}
+          <code className="font-mono text-xs">src/lib/gup-grad/rezim.ts</code>.
+        </p>
+
         <h3 className="mt-5 font-bold text-zinc-900">Što je „protivno planu”</h3>
         <p className="mt-1">
           Svaka vrsta korištenja uspoređena je s onim što odredbe za tu namjenu dopuštaju: stambena zgrada u mješovitoj

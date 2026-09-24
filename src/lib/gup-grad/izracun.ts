@@ -9,6 +9,7 @@
 import { KLASE, KLASA_PO_INDEKSU, type Godina, type KodKlase } from "./model";
 import { VRSTA_ZA_KLASU } from "./odredbe";
 import type { Pravila, VrstaKoristenja } from "./pravila";
+import { rezimVrijedi, type PlanskiRezim } from "./rezim";
 
 /** Što je ručni pregled ortofotom rekao o čestici (data/gup-grad/pregled/rucno.json). */
 export type RucnaVrsta =
@@ -103,6 +104,11 @@ export interface UvjetiKomada {
   kis?: number | null;
   /** Dopuštaju li odredbe ondje novu gradnju te namjene na slobodnom zemljištu. */
   novaGradnja: boolean;
+  /**
+   * Planski režim čestice (rezim.ts): po GUP-u, po planu užeg područja na
+   * snazi, ili čeka propisani plan. Bez toga se sve broji po GUP-u.
+   */
+  rezim?: PlanskiRezim;
   pikselM2: number;
 }
 
@@ -119,6 +125,11 @@ export interface Procjena {
   zabranjeno: number;
   /** Slobodno, ali ručni pregled kaže da se ne može graditi (stijena, strmina). */
   neizgradivo: number;
+  /**
+   * Slobodno i odredbe namjene gradnju dopuštaju, ali GUP ondje propisuje
+   * plan užeg područja koji nije donesen — nova gradnja čeka taj plan.
+   */
+  cekaPlan?: number;
   /** Dio okućnice koji je protivan planu (dijeli sud zgrade uz koju je). */
   okucnicaProtivno?: number;
   /**
@@ -303,6 +314,7 @@ export function procijeniKomad(k: Komad, kod: KodKlase, p: Pravila, u?: UvjetiKo
   if (slobodno > 0) {
     if (p.racunaj.rucniPregled && k.rucno === "neizgradivo") out.neizgradivo = slobodno;
     else if (p.postujZabraneGradnje && u && !u.novaGradnja) out.zabranjeno = slobodno;
+    else if (p.postujObvezuPlana && u?.rezim === "ceka" && rezimVrijedi(kod)) out.cekaPlan = slobodno;
   }
   return out;
 }
@@ -366,9 +378,9 @@ export function posudiOkucnice(
   return out;
 }
 
-/** Slobodni dio komada koji nije ni zabranjen ni neizgradiv, u pikselima. */
+/** Slobodni dio komada koji nije ni zabranjen, ni neizgradiv, ni u čekanju plana, u pikselima. */
 export function slobodnoKomada(r: Procjena): number {
-  return Math.max(0, r.n - r.iskoristeno - r.zabranjeno - r.neizgradivo);
+  return Math.max(0, r.n - r.iskoristeno - r.zabranjeno - r.neizgradivo - (r.cekaPlan ?? 0));
 }
 
 /**
@@ -469,6 +481,14 @@ export interface RezultatKlase {
   zabranjenoM2: number;
   /** Slobodno, ali ručni pregled kaže da se ne može graditi. */
   neizgradivoM2: number;
+  /** Slobodno, ali nova gradnja čeka propisani plan užeg područja koji nije donesen. */
+  cekaPlanM2: number;
+  /**
+   * Od slobodnog (ukupno − iskorišteno − zabranjeno − neizgradivo − čeka plan −
+   * ostatak): dio pod planom užeg područja na snazi. Ondje GUP-ova namjena ne
+   * odlučuje — gradi se po tom planu, koji može biti i stroži.
+   */
+  poPlanuM2: number;
   /** Za zonu: ulice izuzete iz nje. Za P: ulice pribrojene iz drugih zona. */
   uliceM2: number;
   /** Iskorišteno po vrsti — za opis u tooltipu. */
@@ -511,7 +531,7 @@ export function procijeniGodinu(ulaz: UlazGodine, p: Pravila) {
   const ost = ulaz.susjedi && ulaz.uvjeti
     ? ostaci(ulaz.komadi, procjene.map((r) => r ?? prazna), ulaz.susjedi, p, najmanja)
     : new Map<number, number>();
-  return { procjene, ostaci: ost, posudjeno };
+  return { procjene, ostaci: ost, posudjeno, uvjeti };
 }
 
 export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
@@ -526,13 +546,15 @@ export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
       ostatakM2: 0,
       zabranjenoM2: 0,
       neizgradivoM2: 0,
+      cekaPlanM2: 0,
+      poPlanuM2: 0,
       uliceM2: 0,
       poVrstiM2: {},
       suprotnoPoVrstiM2: {},
     });
   }
   const ulice = po.get(KLASE.find((k) => k.kod === "P")!.indeks)!;
-  const { procjene, ostaci: ost } = procijeniGodinu(ulaz, p);
+  const { procjene, ostaci: ost, uvjeti } = procijeniGodinu(ulaz, p);
   const m2 = ulaz.pikselM2;
   ulaz.komadi.forEach((k, i) => {
     const kl = KLASA_PO_INDEKSU.get(k.klasa);
@@ -545,6 +567,8 @@ export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
     r.ostatakM2 += (ost.get(i) ?? 0) * m2;
     r.zabranjenoM2 += pr.zabranjeno * m2;
     r.neizgradivoM2 += pr.neizgradivo * m2;
+    r.cekaPlanM2 += (pr.cekaPlan ?? 0) * m2;
+    if (uvjeti[i]?.rezim === "vazeci" && rezimVrijedi(kl.kod)) r.poPlanuM2 += Math.max(0, slobodnoKomada(pr) - (ost.get(i) ?? 0)) * m2;
     for (const [vrsta, v] of Object.entries(pr.poVrsti) as [VrstaKoristenja, number][]) {
       r.poVrstiM2[vrsta] = (r.poVrstiM2[vrsta] ?? 0) + v * m2;
       const protivno = vrsta === "okucnica" ? (pr.okucnicaProtivno ?? 0) : p.dopusteno[kl.kod].includes(vrsta) ? 0 : v;
@@ -574,7 +598,12 @@ export function izracunajGodinu(ulaz: UlazGodine, p: Pravila): RezultatKlase[] {
     }
     r.zabranjenoM2 = Math.min(r.zabranjenoM2, r.ukupnoM2 - r.iskoristenoM2);
     r.neizgradivoM2 = Math.min(r.neizgradivoM2, r.ukupnoM2 - r.iskoristenoM2 - r.zabranjenoM2);
-    r.ostatakM2 = Math.min(r.ostatakM2, r.ukupnoM2 - r.iskoristenoM2 - r.zabranjenoM2 - r.neizgradivoM2);
+    r.cekaPlanM2 = Math.min(r.cekaPlanM2, r.ukupnoM2 - r.iskoristenoM2 - r.zabranjenoM2 - r.neizgradivoM2);
+    r.ostatakM2 = Math.min(r.ostatakM2, r.ukupnoM2 - r.iskoristenoM2 - r.zabranjenoM2 - r.neizgradivoM2 - r.cekaPlanM2);
+    r.poPlanuM2 = Math.min(
+      r.poPlanuM2,
+      Math.max(0, r.ukupnoM2 - r.iskoristenoM2 - r.zabranjenoM2 - r.neizgradivoM2 - r.cekaPlanM2 - r.ostatakM2),
+    );
   }
   return [...po.values()].filter((r) => r.ukupnoM2 > 0);
 }

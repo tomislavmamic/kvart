@@ -17,7 +17,8 @@
  *   { dopusteno: { <kod>: [vrsta…] }, klase: { <indeks>: <kod> },
  *     komadi: [[cestica, klasa, okucnicaPx, okucnicaProtivnoUdio, zastavice], …] }
  *   zastavice: 1 zabranjeno, 2 neizgradivo, 4 premalo (skupina ispod Ppmin),
- *              8 cijeli komad je ulica
+ *              8 cijeli komad je ulica, 16 slobodno čeka propisani plan užeg
+ *              područja (rezim.ts)
  *
  * Pokretanje:  npx tsx scripts/gup-grad/regije.ts   (poslije cestice.py)
  */
@@ -52,7 +53,7 @@ async function main() {
         const usko = slobodnoKomada(r) - sirokoKomada(k, r, p);
         const premalo = (ostaci.get(i) ?? 0) - usko > 0.5;
         const zastavice =
-          (r.zabranjeno > 0 ? 1 : 0) | (r.neizgradivo > 0 ? 2 : 0) | (premalo ? 4 : 0) | (r.n <= 0 && r.ulica > 0 ? 8 : 0);
+          (r.zabranjeno > 0 ? 1 : 0) | (r.neizgradivo > 0 ? 2 : 0) | (premalo ? 4 : 0) | (r.n <= 0 && r.ulica > 0 ? 8 : 0) | ((r.cekaPlan ?? 0) > 0 ? 16 : 0);
         komadi.push([k.cestica, k.klasa, Math.round(bezPolozaja), Math.round(protivno * 100) / 100, zastavice]);
       });
       const put = path.join(mapa, `regije-${id}-${g}.json`);
