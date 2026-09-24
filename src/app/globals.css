@@ -991,3 +991,9 @@ body {
 .traka-vodoravna::-webkit-scrollbar {
   display: none;
 }
+
+/* Dijelovi čestice na karti /gup (gup-regije.ts): pikseli rešetke od 2 m
+   ostaju oštri — zamućeni rub bi izgledao kao granica koje nema. */
+.leaflet-image-layer.gup-regije {
+  image-rendering: pixelated;
+}

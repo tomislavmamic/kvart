@@ -48,6 +48,7 @@
     "gup-grad:slobodne": "tsx scripts/gup-grad/slobodne.ts",
     "gup-grad:pregled": "/opt/homebrew/bin/python3 scripts/gup-grad/pregled.py",
     "gup-grad:ispravci": "tsx --env-file=.env.local scripts/gup-grad/ispravci.ts",
+    "gup-grad:regije": "tsx scripts/gup-grad/regije.ts && /opt/homebrew/bin/python3 scripts/gup-grad/regije.py",
     "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
     "hindcast": "tsx scripts/hindcast/pokreni.ts",
     "hindcast:ulazi": "tsx scripts/hindcast/ulazi.ts",

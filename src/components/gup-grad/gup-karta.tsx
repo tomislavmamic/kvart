@@ -24,6 +24,7 @@ import {
   useGupProvjera,
   type GupPostavke,
 } from "@/components/gup-grad/gup-provjera";
+import { useRegije } from "@/components/gup-grad/gup-regije";
 import { PlutajuciIzbornik } from "@/components/site-header";
 import { BASE_LAYERS, GUP_GRAD_BOUNDS, OVERLAY_LAYERS, SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
 
@@ -151,6 +152,7 @@ export function GupKarta(props: {
   }, [spremno, sluzbeni]);
 
   const info = useGupProvjera({ mapRef, LRef, spremno, aktivno: true, postavke: props.postavke, pogodakSloja });
+  useRegije({ mapRef, LRef, spremno, postavke: props.postavke });
 
   const gumb = (aktivan: boolean) =>
     `fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
