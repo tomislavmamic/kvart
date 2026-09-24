@@ -128,9 +128,11 @@ export default async function GupPage() {
           pješački putovi i stube koje oni nemaju iz OpenStreetMapa, sa širinom po razredu ceste.
         </p>
         <p className="mt-2">
-          Najveće slobodne čestice u stambenim i mješovitim zonama pregledane su i na ortofotu (DGU, 2023.); gdje se
-          na snimci vidi parkiralište, igralište, park, gradilište ili zgrada koje nema u podacima, ili teren na kojem
-          se ne može graditi, čestica je ispravljena (<code className="font-mono text-xs">data/gup-grad/pregled/rucno.json</code>).
+          Svaka čestica u stambenoj i mješovitoj zoni s barem 500 m² slobodnog (u naseljima višestambenih zgrada od
+          300 m²) pregledana je i na ortofotu (DGU, 2023.); gdje se na snimci vidi parkiralište, igralište, park,
+          gradilište ili zgrada koje nema u podacima, ili teren na kojem se ne može graditi, čestica je ispravljena (
+          <code className="font-mono text-xs">data/gup-grad/pregled/rucno.json</code>). Isječke je pregledao
+          jezični model (Claude) po pisanim uputama, a sud niske sigurnosti nije primijenjen.
         </p>
         <p className="mt-2">
           Grafikon nudi i dva druga načina brojanja za usporedbu: samo stvarno pokriveni dio (svako dvorište je
@@ -165,10 +167,24 @@ export default async function GupPage() {
           ugostiteljski sadržaj na kupalištu jesu. Ono što odredbe dopuštaju samo pod posebnim uvjetom (stan uz posao u
           poslovnoj zoni) broji se kao protivno, jer se uvjet iz katastra ne vidi. Zelenilo s postojećim građevinama
           (Z6, Meje i Bačvice) list crta istom bojom kao zaštitno zelenilo Z5; odvojili smo ga po oznakama otisnutim
-          na listu 2025., pa su ondje postojeće kuće u skladu s planom. Ceste i infrastruktura su dopuštene svugdje. Zgrada kojoj ne znamo vrstu jer je nema
+          na listu 2025., pa su ondje postojeće kuće u skladu s planom. Ceste i infrastruktura su dopuštene svugdje.
+          Kuća protivna planu u zoni bez koeficijenta izgrađenosti (zelenilo, javna ili poslovna zona) troši onoliko
+          zemljišta koliko bi joj trebalo u stambenoj zoni — tlocrt / 0,3, a ne manje od 300 m² — a ne cijeli komad
+          zone, pa velik park s jednom kućom ne postaje sav protivan planu. Zgrada kojoj ne znamo vrstu jer je nema
           u katastru protivna je samo tamo gdje plan ne predviđa nikakvu zgradu (zelenilo, rekreacija, plaže). Ovo je
           gruba provjera po skupinama namjene, a ne provjera pojedine građevinske dozvole — zgrada može biti starija od
           plana ili legalizirana.
+        </p>
+
+        <h3 className="mt-5 font-bold text-zinc-900">Granice izračuna</h3>
+        <p className="mt-1">
+          Listovi plana su skenirani crteži uklopljeni u koordinate; granica zone na njima odstupa od katastra do
+          5–10 m, pa rubni pojas čestice može pasti u susjednu zonu. Ortofoto je iz 2023., a gradski 3D model ne nosi
+          datum snimanja: zgrade građene poslije njih nema ni u jednom, osim ako su u katastru. Parkirališta, okoliš
+          ustanova i igrališta iz OpenStreetMapa nisu potpuni; pregled na ortofotu hvata ih samo na većim slobodnim
+          česticama. Katastar je iz rujna 2026., a namjena iz plana svake godine, pa 2006. i 2015. pokazuju današnje
+          stanje prema tadašnjem planu, ne tadašnje stanje. Brojke su procjena na razini grada; za pojedinu česticu
+          mjerodavni su plan, odredbe i katastar.
         </p>
 
         <h3 className="mt-5 font-bold text-zinc-900">Za one koji žele promijeniti pravila</h3>

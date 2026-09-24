@@ -302,8 +302,23 @@ export function procijeniKomad(k: Komad, kod: KodKlase, p: Pravila, u?: UvjetiKo
     }
   }
   if (p.nacin === "gradevna") {
-    const { okucnica, manjak } = okucnicaKomada(n, pokriveno, zgrada, k.kat ?? 0, p, u);
     const r = zgradeSve > 0 ? zgradeSklad / zgradeSve : 1;
+    // Zgrada protivna planu u zoni čije odredbe kig ne propisuju (kuća u
+    // parku, zaštitnom zelenilu, javnoj zoni) inače bi uzela cijeli komad.
+    // Troši koliko bi joj trebalo u stambenoj zoni; ostatak komada je
+    // neiskorištena zona, ne njezino dvorište.
+    const pr = p.gradevna.protivna;
+    const uz =
+      pr && r < 0.5 && !u?.kig && !u?.kis
+        ? {
+            najmanjaPx: Math.max(u?.najmanjaPx ?? 0, pr.najmanjaM2 / (u?.pikselM2 ?? 4)),
+            kig: pr.kig,
+            kis: null,
+            novaGradnja: u?.novaGradnja ?? true,
+            pikselM2: u?.pikselM2 ?? 4,
+          }
+        : u;
+    const { okucnica, manjak } = okucnicaKomada(n, pokriveno, zgrada, k.kat ?? 0, p, uz);
     if (manjak > 0) {
       out.manjak = manjak;
       out.zgradeSklad = r;

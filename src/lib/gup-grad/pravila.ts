@@ -106,6 +106,15 @@ export interface Pravila {
      * upisan kao zasebna čestica). Izracun.ts, `posudiOkucnice`.
      */
     prekoMede: boolean;
+    /**
+     * Okućnica zgrade protivne planu gdje odredbe za zonu kig ne propisuju
+     * (kuća u parku, zaštitnom zelenilu, javnoj ili gospodarskoj zoni):
+     * koliko bi joj trebalo u stambenoj zoni — tlocrt / kig, a ne manje od
+     * najmanje čestice — umjesto cijelog komada. kig 0,3 je tipičan za
+     * slobodnostojeće kuće u plan (0,25–0,35 u područjima 1.3–3.2), 300 m²
+     * najmanja čestica za interpolaciju. null = cijeli komad.
+     */
+    protivna: { kig: number; najmanjaM2: number } | null;
   };
   /**
    * Slobodno zemljište u području urbanog pravila u kojem odredbe ne
@@ -257,7 +266,7 @@ export const ZADANA_PRAVILA: Pravila = {
     gradilista: true,
     rucniPregled: true,
   },
-  gradevna: { zadaniKig: null, najmanjaZgradaM2: 20, prekoMede: true },
+  gradevna: { zadaniKig: null, najmanjaZgradaM2: 20, prekoMede: true, protivna: { kig: 0.3, najmanjaM2: 300 } },
   postujZabraneGradnje: true,
   postujObvezuPlana: true,
   ulice: { izuzmi: true, pragUlicneCestice: 0.6, pragUskeUlicneCestice: 0.25 },
