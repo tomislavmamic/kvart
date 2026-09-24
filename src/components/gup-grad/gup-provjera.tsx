@@ -902,9 +902,6 @@ export function GupProvjeraPostavke(props: {
           <input type="checkbox" checked={p.dijelovi} onChange={(e) => postavi({ dijelovi: e.target.checked })} />
           Dijelovi čestice — gdje je zauzeto, a gdje slobodno (od zuma {MIN_ZUM_REGIJA})
         </label>
-        {p.dijelovi && p.inacica !== INACICE[0].id && (
-          <p className="ml-6 text-xs text-zinc-500">Samo uz „{INACICE[0].naziv}”; ovdje se boji cijela čestica.</p>
-        )}
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
           Naše razvrstavanje lista plana (boje legende)
@@ -1047,7 +1044,7 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
         </div>
       )}
 
-      {regijeVrijede(p) && info.zum >= MIN_ZUM_REGIJA && <LegendaDijelova prikaz={p.prikaz} />}
+      {regijeVrijede(p) && info.zum >= MIN_ZUM_REGIJA && <LegendaDijelova prikaz={p.prikaz} inacica={p.inacica} />}
 
       {p.zgrade && (
         <div>
@@ -1074,29 +1071,37 @@ const TOCKICE = "radial-gradient(circle, #3f3f46 1.2px, transparent 1.3px) 0 0 /
  * Ključ dijelova čestice (gup-regije.ts) za trenutačni način: što znači
  * boja UNUTAR obrisa čestice. Brojke u blokovima iznad ostaju po česticama.
  */
-function LegendaDijelova({ prikaz }: { prikaz: BojaKarte }) {
-  const redovi: [React.CSSProperties, string][] =
+function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: string }) {
+  // što je iskorišteno bez položaja ovisi o načinu brojanja (regije.py)
+  const vezano =
+    inacica === "gradevna"
+      ? "okućnica — zemljište koje zgrada treba"
+      : inacica === "cijela"
+        ? "ostatak čestice sa zgradom (broji se cijela)"
+        : null;
+  const sviRedovi: [React.CSSProperties, string | null][] =
     prikaz === "iskoristenost"
       ? [
           [{ background: "rgba(82,82,91,.7)" }, "zgrada"],
           [{ background: "rgba(161,161,170,.65)" }, "parkiralište, ulica, park, igralište…"],
-          [{ background: "rgba(212,212,216,.7)" }, "okućnica — zemljište koje zgrada treba"],
+          [{ background: "rgba(212,212,216,.7)" }, vezano],
           [{ background: "rgba(2,132,199,.8)" }, "slobodno za gradnju"],
           [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
         ]
       : prikaz === "sklad"
         ? [
-            [{ background: "rgba(22,163,74,.75)" }, "zauzeto po planu (okućnica svjetlije)"],
+            [{ background: "rgba(22,163,74,.75)" }, `zauzeto po planu${vezano ? " (uz zgradu svjetlije)" : ""}`],
             [{ background: "rgba(220,38,38,.75)" }, "zauzeto protivno planu"],
             [{ background: "#ffffff" }, "slobodno — nema što suditi"],
           ]
         : [
             [{ background: "rgba(224,160,0,.85)" }, "zauzeto (zgrada, parkiralište, park…)"],
-            [{ background: "rgba(224,160,0,.5)" }, "okućnica — zemljište koje zgrada treba"],
+            [{ background: "rgba(224,160,0,.5)" }, vezano],
             [{ background: "rgba(224,160,0,.14)" }, "slobodno za gradnju"],
             [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
             [{ background: srafuraCss("#ffffff", PRUGE.protivno) }, "zauzeto protivno planu"],
           ];
+  const redovi = sviRedovi.filter((r): r is [React.CSSProperties, string] => r[1] !== null);
   return (
     <div>
       <p className={naslov}>Dijelovi čestice</p>
@@ -1106,8 +1111,8 @@ function LegendaDijelova({ prikaz }: { prikaz: BojaKarte }) {
         ))}
       </ul>
       <p className="mt-1 text-xs text-zinc-500">
-        Gdje je unutar čestice što, na rešetki od 2 m.{prikaz === "sve" ? " Uzorci su u boji mješovite namjene." : ""} Okućnica se
-        crta na zemljištu najbližem zgradi — to je prikaz, ne međa građevne čestice.
+        Gdje je unutar čestice što, na rešetki od 2 m.{prikaz === "sve" ? " Uzorci su u boji mješovite namjene." : ""}
+        {vezano ? " Zemljište uz zgradu crta se najbliže zgradi — to je prikaz, ne međa građevne čestice." : ""}
       </p>
     </div>
   );

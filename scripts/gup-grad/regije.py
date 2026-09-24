@@ -23,8 +23,12 @@ Uz regiju svaki piksel nosi sklad s planom (0 nema suda, 1 po planu,
 BROJEVI, ne boje (R = klasa, G = regija, B = sklad, A = 255 na čestici);
 karta ih boji u pregledniku prema odabranom načinu „Boja karte”.
 
-  public/geo/gup-grad/regije/<godina>/<red>_<stupac>.png
-  public/geo/gup-grad/regije.json    {korak, pločice po godini s granicama}
+  public/geo/gup-grad/regije/<način>/<godina>/<red>_<stupac>.png
+  public/geo/gup-grad/regije.json    {korak, pločice po načinu i godini s granicama}
+
+Po načinu brojanja (INACICE): „okućnica” je ono što je izračun proglasio
+iskorištenim a nema položaja — okućnica zgrade („po odredbama”) ili ostatak
+čestice sa zgradom koji se broji cijeli („sve s gradnjom”).
 
 Pokretanje (poslije cestice.py i regije.ts):
   /opt/homebrew/bin/python3 scripts/gup-grad/regije.py
@@ -204,11 +208,12 @@ def main() -> None:
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     u_4326 = Transformer.from_crs(3857, 4326, always_xy=True)
-    indeks = {"korak": KORAK_MERC, "godine": {}}
-    for gid, god in GODINE:
+    indeks = {"korak": KORAK_MERC, "inacice": {}}
+    inacice = sorted({f.split("-")[1] for f in os.listdir(R.OUT) if f.startswith("regije-") and f.endswith(".json")})
+    for inacica, (gid, god) in [(i, g) for i in inacice for g in GODINE]:
         GOD = god
         kl = np.load(os.path.join(R.OUT, f"klase-{gid}.npy"))
-        ts = json.load(open(os.path.join(R.OUT, f"regije-{god}.json")))
+        ts = json.load(open(os.path.join(R.OUT, f"regije-{inacica}-{god}.json")))
         reg, skl = regije_godine(m, kl, ts, rucno)
         slika = np.zeros(kl.shape + (4,), np.uint8)
         na = reg > 0
@@ -218,7 +223,7 @@ def main() -> None:
         slika[..., 3] = np.where(na, 255, 0)
         merc, (mx0, my1) = mercator(slika)
         del slika
-        mapa = os.path.join(IZLAZ, str(god))
+        mapa = os.path.join(IZLAZ, inacica, str(god))
         os.makedirs(mapa, exist_ok=True)
         plocice = []
         for r in range(0, merc.shape[0], PLOCICA):
@@ -230,12 +235,12 @@ def main() -> None:
                 Image.fromarray(t, "RGBA").save(os.path.join(mapa, ime), optimize=True)
                 w_, s_ = u_4326.transform(mx0 + c * KORAK_MERC, my1 - (r + t.shape[0]) * KORAK_MERC)
                 e_, n_ = u_4326.transform(mx0 + (c + t.shape[1]) * KORAK_MERC, my1 - r * KORAK_MERC)
-                plocice.append({"url": f"/geo/gup-grad/regije/{god}/{ime}",
+                plocice.append({"url": f"/geo/gup-grad/regije/{inacica}/{god}/{ime}",
                                 "granice": [[round(s_, 6), round(w_, 6)], [round(n_, 6), round(e_, 6)]]})
-        indeks["godine"][str(god)] = plocice
+        indeks["inacice"].setdefault(inacica, {})[str(god)] = plocice
         vel = sum(os.path.getsize(os.path.join(mapa, f)) for f in os.listdir(mapa))
         n = np.bincount(reg[na], minlength=15) * R.KORAK * R.KORAK / 1e4
-        print(god, len(plocice), "pločica", round(vel / 1e6, 1), "MB;",
+        print(inacica, god, len(plocice), "pločica", round(vel / 1e6, 1), "MB;",
               "ha po regiji:", {i: round(float(x), 1) for i, x in enumerate(n) if x})
     with open(os.path.join(KARTA, "regije.json"), "w") as f:
         json.dump(indeks, f)
