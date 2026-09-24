@@ -116,6 +116,8 @@ SIRINA_PX = 2
 
 OSM_PUT = os.path.join(R.OUT, "osm.json")  # scripts/gup-grad/osm.py
 OSM_CESTE_PUT = os.path.join(R.OUT, "osm-ceste.json")
+# Rasteri mjerenja za scripts/gup-grad/regije.py (samo lokalno, u .cache)
+MASKE_PUT = os.path.join(R.OUT, "maske.npz")
 
 # Pola širine OSM ceste po razredu (m), kad oznaka width ne kaže više.
 # Poljski putovi (track) i staze kroz makiju (path) nisu korištenje
@@ -362,6 +364,7 @@ def main() -> None:
     # ---- po godinama -----------------------------------------------------
     n_c = len(c) + 1
     godine_out = {}
+    siroko_po_godini = {}
     for gid, god in GODINE:
         kl = np.load(os.path.join(R.OUT, f"klase-{gid}.npy"))
         nk = int(kl.max()) + 1
@@ -381,7 +384,9 @@ def main() -> None:
         n_kat = dict(zip(u_k.tolist(), np.bincount(inv, weights=kat[m]).astype(np.int64).tolist()))
         n_pr = zbroj(pr)
         n_mj = [zbroj(x) for x in (pa, jv, os_, inf, ze, gr)]
-        n_us = zbroj(siroko_slobodno(kl, (ids > 0) & maska_obuhvata & ~zauzeto, krug))
+        siroko = siroko_slobodno(kl, (ids > 0) & maska_obuhvata & ~zauzeto, krug)
+        siroko_po_godini[god] = siroko
+        n_us = zbroj(siroko)
         # pretežita skupina zgrada po komadu
         sk = {}
         for s in range(1, 6):
@@ -424,6 +429,15 @@ def main() -> None:
         }
         print(god, "komada:", len(komadi) // len(POLJA), "obuhvat ha:", round(cnt.sum() * 4 / 1e4, 1))
         del kl, m, kljuc
+
+    # maske za regije.py (gdje je unutar čestice zauzeto, a gdje slobodno)
+    np.savez_compressed(
+        MASKE_PUT,
+        ids=ids, zk=zk, z25=z25, pr=pr, pa=pa, jv=jv, os=os_, inf=inf, ze=ze, gr=gr,
+        obuhvat=maska_obuhvata,
+        **{f"siroko_{g}": m for g, m in siroko_po_godini.items()},
+    )
+    print("maske:", MASKE_PUT, round(os.path.getsize(MASKE_PUT) / 1e6, 1), "MB")
 
     with open(os.path.join(R.OUT, "mreza.json")) as f:
         mreza = json.load(f)

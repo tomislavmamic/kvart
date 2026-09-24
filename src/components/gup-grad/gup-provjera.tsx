@@ -24,6 +24,7 @@ import { VRSTA_ZA_KLASU, type NajmanjaCestica, type VrstaOdredbe } from "@/lib/g
 import type { UvjetiKomada } from "@/lib/gup-grad/izracun";
 import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
 import { predloziIspravak } from "@/lib/actions/gup";
+import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije";
 import { sudCestice, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 
 const MIN_ZUM = 15;
@@ -51,6 +52,8 @@ export interface GupPostavke {
   slika: boolean;
   cestice: boolean;
   zgrade: boolean;
+  /** Dijelovi čestice: gdje je unutar nje zauzeto, a gdje slobodno (gup-regije.ts). */
+  dijelovi: boolean;
 }
 
 export const POCETNE_GUP_POSTAVKE: GupPostavke = {
@@ -60,6 +63,7 @@ export const POCETNE_GUP_POSTAVKE: GupPostavke = {
   slika: true,
   cestice: true,
   zgrade: true,
+  dijelovi: true,
 };
 
 const CRVENA = "#d03b3b";
@@ -588,6 +592,10 @@ export function useGupProvjera(opts: {
 function stil(s: SudCestice, p: GupPostavke): LeafletNS.PathOptions {
   const nista = { stroke: false, fill: false };
   if (!s.pretezita && !s.jeUlica) return nista;
+  // dijelovi čestice boje ono unutar nje; čestica ostaje obris (i klik)
+  if (regijeVrijede(p)) {
+    return { color: "#18181b", weight: 0.7, opacity: 0.75, fillColor: "#ffffff", fillOpacity: 0 };
+  }
   const vise = s.komadi.length > 1;
   const rub = { color: "#18181b", weight: 0.5, opacity: 0.8 };
   const crtkano = { color: "#3f3f46", weight: 1, dashArray: "4 3", opacity: 0.9 };
@@ -891,6 +899,13 @@ export function GupProvjeraPostavke(props: {
           Zgrade (od zuma {MIN_ZUM_ZGRADA})
         </label>
         <label className="meta flex items-center gap-2">
+          <input type="checkbox" checked={p.dijelovi} onChange={(e) => postavi({ dijelovi: e.target.checked })} />
+          Dijelovi čestice — gdje je zauzeto, a gdje slobodno (od zuma {MIN_ZUM_REGIJA})
+        </label>
+        {p.dijelovi && p.inacica !== INACICE[0].id && (
+          <p className="ml-6 text-xs text-zinc-500">Samo uz „{INACICE[0].naziv}”; ovdje se boji cijela čestica.</p>
+        )}
+        <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
           Naše razvrstavanje lista plana (boje legende)
         </label>
@@ -1032,6 +1047,8 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
         </div>
       )}
 
+      {regijeVrijede(p) && info.zum >= MIN_ZUM_REGIJA && <LegendaDijelova prikaz={p.prikaz} />}
+
       {p.zgrade && (
         <div>
           <p className={naslov}>Zgrade</p>
@@ -1047,6 +1064,51 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+const TOCKICE = "radial-gradient(circle, #3f3f46 1.2px, transparent 1.3px) 0 0 / 5px 5px, #ffffff";
+
+/**
+ * Ključ dijelova čestice (gup-regije.ts) za trenutačni način: što znači
+ * boja UNUTAR obrisa čestice. Brojke u blokovima iznad ostaju po česticama.
+ */
+function LegendaDijelova({ prikaz }: { prikaz: BojaKarte }) {
+  const redovi: [React.CSSProperties, string][] =
+    prikaz === "iskoristenost"
+      ? [
+          [{ background: "rgba(82,82,91,.7)" }, "zgrada"],
+          [{ background: "rgba(161,161,170,.65)" }, "parkiralište, ulica, park, igralište…"],
+          [{ background: "rgba(212,212,216,.7)" }, "okućnica — zemljište koje zgrada treba"],
+          [{ background: "rgba(2,132,199,.8)" }, "slobodno za gradnju"],
+          [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
+        ]
+      : prikaz === "sklad"
+        ? [
+            [{ background: "rgba(22,163,74,.75)" }, "zauzeto po planu (okućnica svjetlije)"],
+            [{ background: "rgba(220,38,38,.75)" }, "zauzeto protivno planu"],
+            [{ background: "#ffffff" }, "slobodno — nema što suditi"],
+          ]
+        : [
+            [{ background: "rgba(224,160,0,.85)" }, "zauzeto (zgrada, parkiralište, park…)"],
+            [{ background: "rgba(224,160,0,.5)" }, "okućnica — zemljište koje zgrada treba"],
+            [{ background: "rgba(224,160,0,.14)" }, "slobodno za gradnju"],
+            [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
+            [{ background: srafuraCss("#ffffff", PRUGE.protivno) }, "zauzeto protivno planu"],
+          ];
+  return (
+    <div>
+      <p className={naslov}>Dijelovi čestice</p>
+      <ul className="mt-1 space-y-1">
+        {redovi.map(([uzorak, naziv]) => (
+          <RedLegende key={naziv} uzorak={uzorak} naziv={naziv} />
+        ))}
+      </ul>
+      <p className="mt-1 text-xs text-zinc-500">
+        Gdje je unutar čestice što, na rešetki od 2 m.{prikaz === "sve" ? " Uzorci su u boji mješovite namjene." : ""} Okućnica se
+        crta na zemljištu najbližem zgradi — to je prikaz, ne međa građevne čestice.
+      </p>
     </div>
   );
 }
