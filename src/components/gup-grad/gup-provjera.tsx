@@ -14,7 +14,7 @@
  * Sud o čestici računa src/lib/gup-grad/provjera.ts istim funkcijama i
  * pravilima kao /gup, pa karta ne može reći drugo nego infografika.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type * as LeafletNS from "leaflet";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 
@@ -659,7 +659,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   }
   h +=
     `<div style="margin-top:8px;${sivo}">Površine komada izmjerene su na rešetki od 2 m, pa se zbroj može razlikovati od katastarske. ` +
-    `<a href="/gup#kako-je-izracunato" style="color:#047857">Kako se broji ↓</a></div>`;
+    `<a href="/gup?prikaz=grafikon#kako-je-izracunato" style="color:#047857">Kako se broji ↗</a></div>`;
   return h + obrazacIspravka(p, s, post);
 }
 
@@ -696,22 +696,29 @@ function obrazacIspravka(p: SvojstvaCestice, s: SudCestice, post: GupPostavke): 
   );
 }
 
-export function GupProvjeraPloca(props: {
+const naslov = "text-xs font-semibold uppercase tracking-wide text-zinc-500";
+const gumb = (aktivan: boolean) =>
+  `fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
+    aktivan ? "border-maslina bg-maslina text-white" : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+  }`;
+
+/**
+ * Postavke karte (lijeva ploča na /gup): godina plana, boja čestice, način
+ * brojanja i slojevi. `children` dolaze na vrh — podloga, koju zna karta.
+ */
+export function GupProvjeraPostavke(props: {
   postavke: GupPostavke;
   onPostavke: (p: GupPostavke) => void;
-  info: GupInfo;
+  children?: ReactNode;
 }) {
-  const { postavke: p, onPostavke, info } = props;
+  const { postavke: p, onPostavke } = props;
   const postavi = (d: Partial<GupPostavke>) => onPostavke({ ...p, ...d });
-  const gumb = (aktivan: boolean) =>
-    `fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
-      aktivan ? "border-maslina bg-maslina text-white" : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-    }`;
   const inacica = INACICE.find((i) => i.id === p.inacica) ?? INACICE[0];
   return (
-    <div className="mt-3 space-y-3 text-sm">
+    <div className="space-y-4 text-sm">
+      {props.children}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Plan iz</p>
+        <p className={naslov}>Plan iz</p>
         <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Godina plana">
           {GODINE.map((g) => (
             <button key={g} type="button" aria-pressed={p.godina === g} onClick={() => postavi({ godina: g })} className={gumb(p.godina === g)}>
@@ -721,7 +728,7 @@ export function GupProvjeraPloca(props: {
         </div>
       </div>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Boja čestice</p>
+        <p className={naslov}>Boja čestice</p>
         <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Boja čestice">
           <button type="button" aria-pressed={p.prikaz === "stanje"} onClick={() => postavi({ prikaz: "stanje" })} className={gumb(p.prikaz === "stanje")}>
             Iskorištenost i sklad
@@ -733,7 +740,7 @@ export function GupProvjeraPloca(props: {
       </div>
       {p.prikaz === "stanje" && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Kako se broji</p>
+          <p className={naslov}>Kako se broji</p>
           <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Kako se broji">
             {INACICE.map((i) => (
               <button key={i.id} type="button" aria-pressed={p.inacica === i.id} onClick={() => postavi({ inacica: i.id })} className={gumb(p.inacica === i.id)}>
@@ -744,49 +751,8 @@ export function GupProvjeraPloca(props: {
           <p className="mt-1 text-xs text-zinc-500">{inacica.opis}</p>
         </div>
       )}
-
-      <ul className="space-y-1" aria-label="Legenda">
-        {p.prikaz === "stanje" &&
-          (Object.keys(STANJA) as StanjeCestice[]).map((k) => {
-            const st = STANJA[k];
-            return (
-              <li key={k} className="flex items-center gap-2">
-                <span className="relative inline-block size-4 shrink-0 rounded-sm border border-zinc-600 bg-white" aria-hidden>
-                  <span
-                    className="absolute inset-0"
-                    style={{
-                      background: srafuraCss(st.boja ?? "#e0a000", st.pruge),
-                      opacity: st.crtkano ? 0.25 : st.ispuna,
-                      outline: st.crtkano ? "1.5px dashed #71717b" : undefined,
-                      outlineOffset: -1.5,
-                    }}
-                  />
-                </span>
-                <span className="flex-1">{st.naziv}</span>
-                {info.uOknu && <span className="tabular-nums text-zinc-500">{info.uOknu[k].toLocaleString("hr-HR")}</span>}
-              </li>
-            );
-          })}
-        {p.prikaz === "stanje" && (
-          <li className="pt-1 text-xs text-zinc-500">
-            Boja je namjena iz plana (pretežita na čestici); prozirnost i crvene pruge su stanje. Uzorci su u boji mješovite namjene.
-          </li>
-        )}
-        {(p.prikaz === "namjena" || p.prikaz === "stanje") &&
-          KLASE.filter((k) => k.kod !== "P").map((k) => (
-              <li key={k.kod} className="flex items-center gap-2">
-                <span className="inline-block size-3.5 shrink-0 rounded-sm border border-zinc-500" style={{ background: k.bojaPlana }} aria-hidden />
-                <span className="font-mono text-xs text-zinc-500">{k.kod}</span>
-                <span>{k.kratko}</span>
-              </li>
-            ))}
-        {p.prikaz === "namjena" && (
-          <li className="text-xs text-zinc-500">Iscrtkan rub: čestica je u više namjena; boja je pretežita.</li>
-        )}
-      </ul>
-      {p.prikaz === "stanje" && info.uOknu && <p className="text-xs text-zinc-500">Brojke uz stanja: čestice u oknu.</p>}
-
       <div className="space-y-1">
+        <p className={naslov}>Slojevi</p>
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.cestice} onChange={(e) => postavi({ cestice: e.target.checked })} />
           Čestice (od zuma {MIN_ZUM})
@@ -795,8 +761,77 @@ export function GupProvjeraPloca(props: {
           <input type="checkbox" checked={p.zgrade} onChange={(e) => postavi({ zgrade: e.target.checked })} />
           Zgrade (od zuma {MIN_ZUM_ZGRADA})
         </label>
-        {p.zgrade && (
-          <ul className="ml-6 space-y-1 text-xs text-zinc-600">
+        <label className="meta flex items-center gap-2">
+          <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
+          Naše razvrstavanje lista plana (boje legende)
+        </label>
+      </div>
+      <p className="text-xs text-zinc-500">
+        Klik na česticu pokazuje komade po namjeni, što je izmjereno i kako je presuđeno; ondje se može i predložiti
+        ispravak.
+      </p>
+    </div>
+  );
+}
+
+/** Legenda karte (desna ploča na /gup), s brojem čestica u oknu po stanju. */
+export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo }) {
+  const { postavke: p, info } = props;
+  return (
+    <div className="space-y-3 text-sm">
+      {info.zum > 0 && info.zum < MIN_ZUM && p.cestice && (
+        <p className="rounded border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-600">Približi kartu (zum {MIN_ZUM}+) da se učitaju čestice.</p>
+      )}
+      {info.stanje === "ucitava" && <p className="text-xs text-zinc-500">Učitavam čestice…</p>}
+      {info.stanje === "greska" && <p className="text-xs text-rose-700">Dio podataka se nije učitao; pomakni kartu za novi pokušaj.</p>}
+      {p.prikaz === "stanje" && (
+        <div>
+          <p className={naslov}>Stanje čestice</p>
+          <ul className="mt-1 space-y-1">
+            {(Object.keys(STANJA) as StanjeCestice[]).map((k) => {
+              const st = STANJA[k];
+              return (
+                <li key={k} className="flex items-center gap-2">
+                  <span className="relative inline-block size-4 shrink-0 rounded-sm border border-zinc-600 bg-white" aria-hidden>
+                    <span
+                      className="absolute inset-0"
+                      style={{
+                        background: srafuraCss(st.boja ?? "#e0a000", st.pruge),
+                        opacity: st.crtkano ? 0.25 : st.ispuna,
+                        outline: st.crtkano ? "1.5px dashed #71717b" : undefined,
+                        outlineOffset: -1.5,
+                      }}
+                    />
+                  </span>
+                  <span className="flex-1">{st.naziv}</span>
+                  {info.uOknu && <span className="tabular-nums text-zinc-500">{info.uOknu[k].toLocaleString("hr-HR")}</span>}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-1 text-xs text-zinc-500">
+            Boja je namjena iz plana (pretežita na čestici); prozirnost i crvene pruge su stanje. Uzorci su u boji mješovite
+            namjene.{info.uOknu ? " Brojke: čestice u oknu." : ""}
+          </p>
+        </div>
+      )}
+      <div>
+        <p className={naslov}>Namjena</p>
+        <ul className="mt-1 space-y-1">
+          {KLASE.filter((k) => k.kod !== "P").map((k) => (
+            <li key={k.kod} className="flex items-center gap-2">
+              <span className="inline-block size-3.5 shrink-0 rounded-sm border border-zinc-500" style={{ background: k.bojaPlana }} aria-hidden />
+              <span className="font-mono text-xs text-zinc-500">{k.kod}</span>
+              <span>{k.kratko}</span>
+            </li>
+          ))}
+        </ul>
+        {p.prikaz === "namjena" && <p className="mt-1 text-xs text-zinc-500">Iscrtkan rub: čestica je u više namjena; boja je pretežita.</p>}
+      </div>
+      {p.zgrade && (
+        <div>
+          <p className={naslov}>Zgrade</p>
+          <ul className="mt-1 space-y-1 text-xs text-zinc-600">
             <li className="flex items-center gap-2">
               <span className="inline-block h-3 w-4 shrink-0 rounded-[1px]" style={{ background: "rgba(24,24,27,0.55)" }} aria-hidden />
               tlocrt iz gradskog 3D modela (što stoji)
@@ -806,22 +841,8 @@ export function GupProvjeraPloca(props: {
               zgrada upisana u katastar (bijeli obris)
             </li>
           </ul>
-        )}
-        <label className="meta flex items-center gap-2">
-          <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
-          Naše razvrstavanje lista plana (boje legende)
-        </label>
-      </div>
-
-      {info.zum > 0 && info.zum < MIN_ZUM && p.cestice && (
-        <p className="rounded border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-600">Približi kartu (zum {MIN_ZUM}+) da se učitaju čestice.</p>
+        </div>
       )}
-      {info.stanje === "ucitava" && <p className="text-xs text-zinc-500">Učitavam čestice…</p>}
-      {info.stanje === "greska" && <p className="text-xs text-rose-700">Dio podataka se nije učitao; pomakni kartu za novi pokušaj.</p>}
-      <p className="text-xs text-zinc-500">
-        Klik na česticu pokazuje komade po namjeni, što je izmjereno i kako je presuđeno. Službeni list za usporedbu:
-        „Službeni list GUP-a” pod podlogom.
-      </p>
     </div>
   );
 }
