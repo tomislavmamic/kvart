@@ -7,14 +7,14 @@
  * Pločice nose brojeve, ne boje: R = klasa namjene, G = regija (zgrada,
  * ulica, parkiralište… okućnica, slobodno i razlog zbog kojeg nije za
  * gradnju), B = sklad s planom. Preglednik ih boji prema načinu „Boja
- * karte”, pa jedan komplet pločica služi svim načinima. Samo za zadani
- * način brojanja („po odredbama”) — okućnica drugih načina nije naslikana.
+ * karte”, pa jedan komplet pločica služi svim načinima boje. Za svaki
+ * način brojanja postoji svoj komplet (okućnica „po odredbama”, cijela
+ * čestica „sve s gradnjom”, samo tlocrt).
  */
 import { useEffect, useRef } from "react";
 import type * as LeafletNS from "leaflet";
 
 import { KLASA_PO_INDEKSU } from "@/lib/gup-grad/model";
-import { INACICE } from "@/lib/gup-grad/pravila";
 import type { BojaKarte, GupPostavke } from "@/components/gup-grad/gup-provjera";
 
 export const MIN_ZUM_REGIJA = 15;
@@ -39,7 +39,7 @@ export const REGIJE = {
 
 /** Vrijede li dijelovi čestice za ove postavke. */
 export function regijeVrijede(p: GupPostavke): boolean {
-  return p.dijelovi && p.cestice && p.prikaz !== "namjena" && p.inacica === INACICE[0].id;
+  return p.dijelovi && p.cestice && p.prikaz !== "namjena";
 }
 
 type Rgba = [number, number, number, number];
@@ -137,7 +137,8 @@ export function useRegije(opts: {
   const aktivno = regijeVrijede(postavke);
   const mod = postavke.prikaz;
   const godina = postavke.godina;
-  const indeks = useRef<Record<string, Plocica[]> | null>(null);
+  const inacica = postavke.inacica;
+  const indeks = useRef<Record<string, Record<string, Plocica[]>> | null>(null);
   const ucitane = useRef(new Map<string, Ucitana>());
   const modRef = useRef(mod);
 
@@ -159,12 +160,12 @@ export function useRegije(opts: {
       const vidljivo = map.getZoom() >= MIN_ZUM_REGIJA;
       indeks.current ??= await fetch("/geo/gup-grad/regije.json")
         .then((r) => r.json())
-        .then((d: { godine: Record<string, Plocica[]> }) => d.godine)
+        .then((d: { inacice: Record<string, Record<string, Plocica[]>> }) => d.inacice)
         .catch(() => ({}));
       if (!ziv) return;
       const okno = map.getBounds().pad(0.25);
       const trebaju = vidljivo
-        ? (indeks.current![String(godina)] ?? []).filter((p) => okno.intersects(L.latLngBounds(p.granice)))
+        ? (indeks.current![inacica]?.[String(godina)] ?? []).filter((p) => okno.intersects(L.latLngBounds(p.granice)))
         : [];
       const trebajuUrl = new Set(trebaju.map((p) => p.url));
       for (const [url, u] of mapa) {
@@ -199,7 +200,7 @@ export function useRegije(opts: {
       }
       mapa.clear();
     };
-  }, [mapRef, LRef, spremno, aktivno, godina]);
+  }, [mapRef, LRef, spremno, aktivno, godina, inacica]);
 
   // promjena načina „Boja karte” samo prebojava učitane pločice
   useEffect(() => {

@@ -45,7 +45,9 @@ samo izmjeri, za svaki komad čestice koji pada u jednu klasu namjene:
          parkovi, travnjaci, zelene površine, živice)
   gr     pikseli pod gradilištem (OSM landuse=construction)
   Sve to JEST korištenje zemljišta: na parkiralištu, školskom dvorištu ili
-  u parku se ne gradi stan. Kojim se redom prekrivanja broje i što je u
+  u parku se ne gradi stan. Slojevi su isključivi — piksel pripada prvom
+  redom zgrada, ulica, gradilište, parkiralište, javna ustanova, uređeno,
+  infrastruktura, zelenilo — pa se nijedan metar ne broji dvaput. Kojim se redom prekrivanja broje i što je u
   kojoj zoni u skladu s planom, odlučuje pravila.ts.
   g      pretežita skupina katastarskih zgrada u komadu (0 = nema):
          1 stambene (1xx), 2 gospodarske i poslovne (2xx), 3 javne (3xx),
@@ -353,6 +355,15 @@ def main() -> None:
     # je samo 18 ha travnjaka i živica iz istog izvora
     ze = rasteriziraj(grad(PORTAL, "Parkovi_i_nasadi_poligoni_Parkovi_i_nasadi_poligoni.shp") + osm["ze"]).astype(bool)
     gr = rasteriziraj(osm["gr"]).astype(bool)
+    # Svaki piksel broji se jednom: pripada prvom sloju redom zgrada, ulica,
+    # gradilište, parkiralište, javna ustanova, uređeno, infrastruktura,
+    # zelenilo. Traka ceste (os ± pola profila) zna prijeći preko ruba zgrade;
+    # bez ovoga je taj piksel bio i ulica (izuzeta iz zone) i zgrada, pa je
+    # zona izgubila površinu, a slobodno ispalo manje nego na tlu.
+    zauzeto_prije = (zk > 0) | z25
+    for m_ in (pr, gr, pa, jv, os_, inf, ze):
+        m_ &= ~zauzeto_prije
+        zauzeto_prije |= m_
     for ime, m_ in (("parkirališta", pa), ("javne ustanove", jv), ("uređeno", os_), ("infrastruktura", inf),
                     ("zelenilo", ze), ("gradilišta", gr)):
         print(f"{ime}: {m_.sum() * R.KORAK * R.KORAK / 1e4:.1f} ha")
