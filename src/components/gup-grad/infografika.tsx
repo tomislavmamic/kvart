@@ -37,7 +37,12 @@ const OBLICI: { id: Oblik; naziv: string }[] = [
 
 /** Slobodno, ali ne za gradnju: premali ostaci, zabrana iz odredbi, neizgradiv teren. */
 const nijeZaGradnju = (r: RezultatKlase) => r.ostatakM2 + r.zabranjenoM2 + r.neizgradivoM2;
-const zaGradnju = (r: RezultatKlase) => Math.max(0, r.ukupnoM2 - r.iskoristenoM2 - nijeZaGradnju(r));
+/** Slobodno, ali nova gradnja čeka propisani plan užeg područja koji nije donesen. */
+const cekaPlan = (r: RezultatKlase) => r.cekaPlanM2 ?? 0;
+/** Slobodno za gradnju danas: po GUP-u ili po planu užeg područja na snazi. */
+const zaGradnju = (r: RezultatKlase) => Math.max(0, r.ukupnoM2 - r.iskoristenoM2 - nijeZaGradnju(r) - cekaPlan(r));
+/** Od slobodnog za gradnju: dio pod planom užeg područja na snazi — ondje odlučuje taj plan, ne GUP. */
+const poPlanu = (r: RezultatKlase) => Math.min(zaGradnju(r), r.poPlanuM2 ?? 0);
 /** Zone u kojima plan predviđa stanovanje — za njih je pitanje „ima li još mjesta”. */
 const STAMBENE: readonly KodKlase[] = ["S", "M/K5"];
 
@@ -129,8 +134,10 @@ export function GupInfografika(props: {
           suprotno: s.suprotno + r.uSuprotnostiM2,
           stambeno: s.stambeno + (STAMBENE.includes(r.kod) ? r.ukupnoM2 : 0),
           stambenoSlobodno: s.stambenoSlobodno + (STAMBENE.includes(r.kod) ? zaGradnju(r) : 0),
+          stambenoPoPlanu: s.stambenoPoPlanu + (STAMBENE.includes(r.kod) ? poPlanu(r) : 0),
+          stambenoCeka: s.stambenoCeka + (STAMBENE.includes(r.kod) ? cekaPlan(r) : 0),
         }),
-        { ukupno: 0, iskoristeno: 0, suprotno: 0, stambeno: 0, stambenoSlobodno: 0 },
+        { ukupno: 0, iskoristeno: 0, suprotno: 0, stambeno: 0, stambenoSlobodno: 0, stambenoPoPlanu: 0, stambenoCeka: 0 },
       ),
     [rezultati],
   );
@@ -138,7 +145,10 @@ export function GupInfografika(props: {
   // Visine punjenja po ćeliji: iskorišteno se nasipa odozdo, a u pogledu
   // „u skladu” najprije dio u skladu, pa iznad njega dio u suprotnosti.
   const razine = useMemo(() => {
-    const m = new Map<KodKlase, { dno: number; iskoristeno: number; uSkladu: number; ostatak: number }>();
+    const m = new Map<
+      KodKlase,
+      { dno: number; iskoristeno: number; uSkladu: number; ostatak: number; ceka: number; poPlanu: number }
+    >();
     for (const c of raspored.celije) {
       const r = poKodu.get(c.kod);
       if (!r || r.ukupnoM2 <= 0) continue;
@@ -149,6 +159,12 @@ export function GupInfografika(props: {
         uSkladu: razinaZaUdio(c.poligon, r.uSkladuM2 / r.ukupnoM2),
         // slobodno, ali ne za gradnju, leži odmah iznad iskorištenog
         ostatak: razinaZaUdio(c.poligon, Math.min(1, (r.iskoristenoM2 + nijeZaGradnju(r)) / r.ukupnoM2)),
+        // iznad toga: slobodno koje čeka propisani plan, pa slobodno pod planom na snazi
+        ceka: razinaZaUdio(c.poligon, Math.min(1, (r.iskoristenoM2 + nijeZaGradnju(r) + cekaPlan(r)) / r.ukupnoM2)),
+        poPlanu: razinaZaUdio(
+          c.poligon,
+          Math.min(1, (r.iskoristenoM2 + nijeZaGradnju(r) + cekaPlan(r) + poPlanu(r)) / r.ukupnoM2),
+        ),
       });
     }
     return m;
@@ -222,6 +238,12 @@ export function GupInfografika(props: {
           <dd className="text-xs tabular-nums text-zinc-600 sm:text-sm">
             {posto(zbroj.stambenoSlobodno, zbroj.stambeno)} stambenih i mješovitih zona
           </dd>
+          {pogled !== "namjena" && (zbroj.stambenoCeka >= 5000 || zbroj.stambenoPoPlanu >= 5000) && (
+            <dd className="mt-1 text-xs tabular-nums text-zinc-600 sm:text-sm">
+              od toga po GUP-u {ha(zbroj.stambenoSlobodno - zbroj.stambenoPoPlanu)} ha, po planu užeg područja{" "}
+              {ha(zbroj.stambenoPoPlanu)} ha; još {ha(zbroj.stambenoCeka)} ha čeka propisani plan
+            </dd>
+          )}
         </div>
       </dl>
 
@@ -240,6 +262,18 @@ export function GupInfografika(props: {
                   <rect width="10" height="10" fill={s.svijetla} />
                   <circle cx="2.5" cy="2.5" r="1.7" fill={s.boja} />
                   <circle cx="7.5" cy="7.5" r="1.7" fill={s.boja} />
+                </pattern>
+              ))}
+              {SKUPINE.map((s) => (
+                <pattern key={s.kod} id={`${uid}-ceka-${s.kod}`} width="8" height="8" patternUnits="userSpaceOnUse">
+                  <rect width="8" height="8" fill={s.svijetla} />
+                  <rect y="0" width="8" height="3" fill={s.boja} fillOpacity="0.75" />
+                </pattern>
+              ))}
+              {SKUPINE.map((s) => (
+                <pattern key={s.kod} id={`${uid}-poplanu-${s.kod}`} width="9" height="9" patternUnits="userSpaceOnUse">
+                  <rect width="9" height="9" fill={s.svijetla} />
+                  <path d="M0,0.5H9M0.5,0V9" stroke={s.boja} strokeWidth="1" strokeOpacity="0.7" />
                 </pattern>
               ))}
               <pattern id={`${uid}-srafura`} width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -269,6 +303,24 @@ export function GupInfografika(props: {
                   <path d={put(c.poligon)} fill={pun ? s.boja : s.svijetla} style={{ transition: "fill 300ms" }} />
                   {!pun && rz && (
                     <>
+                      {/* slobodno pod planom užeg područja na snazi: rešetka, kao obuhvat plana na listu GUP-a */}
+                      <rect
+                        x={-10}
+                        y={0}
+                        width={raspored.sirina + 20}
+                        height={raspored.visina + 20}
+                        fill={`url(#${uid}-poplanu-${s.kod})`}
+                        style={{ transform: `translateY(${rz.poPlanu}px)`, transition: "transform 500ms ease" }}
+                      />
+                      {/* slobodno koje čeka propisani plan užeg područja: vodoravne pruge */}
+                      <rect
+                        x={-10}
+                        y={0}
+                        width={raspored.sirina + 20}
+                        height={raspored.visina + 20}
+                        fill={`url(#${uid}-ceka-${s.kod})`}
+                        style={{ transform: `translateY(${rz.ceka}px)`, transition: "transform 500ms ease" }}
+                      />
                       {/* premali ostaci: točkasti pojas iznad iskorištenog, ispod slobodnog */}
                       <rect
                         x={-10}
@@ -386,6 +438,21 @@ export function GupInfografika(props: {
                 </svg>
                 točkasto: neiskorišteno, ali nije za gradnju (premalo ili plan ne dopušta)
               </span>
+              <span className="inline-flex items-center gap-1.5">
+                <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>
+                  <rect width="14" height="14" fill="#e4e4e7" />
+                  <rect y="0" width="14" height="3" fill="#71717b" />
+                  <rect y="7" width="14" height="3" fill="#71717b" />
+                </svg>
+                prugasto: slobodno, ali čeka propisani plan užeg područja (UPU/DPU)
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>
+                  <rect width="14" height="14" fill="#e4e4e7" />
+                  <path d="M0,0.5H14M0,7.5H14M0.5,0V14M7.5,0V14" stroke="#71717b" strokeWidth="1" />
+                </svg>
+                rešetka: slobodno, ali gradi se po planu užeg područja na snazi
+              </span>
               {pogled === "sklad" && (
                 <span className="inline-flex items-center gap-1.5">
                   <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>
@@ -466,6 +533,12 @@ function Detalji({ r, prethodno }: { r: RezultatKlase; prethodno: { godina: numb
       </p>
       <p className="mt-1 tabular-nums text-zinc-800">
         Slobodno za gradnju <strong>{ha(zaGradnju(r), 1)} ha</strong> ({posto(zaGradnju(r), r.ukupnoM2)})
+        {poPlanu(r) >= 500 && <>, od toga po planu užeg područja na snazi {ha(poPlanu(r), 1)} ha</>}
+        {cekaPlan(r) >= 500 && (
+          <>
+            ; čeka propisani plan užeg područja <strong>{ha(cekaPlan(r), 1)} ha</strong>
+          </>
+        )}
         {nijeZaGradnju(r) >= 500 && (
           <>
             ; neiskorišteno, ali nije za gradnju {ha(nijeZaGradnju(r), 1)} ha
@@ -501,7 +574,7 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
         Sve brojke u tablici
       </summary>
       <div className="overflow-x-auto px-4 pb-4">
-        <table className="w-full min-w-[40rem] text-sm tabular-nums">
+        <table className="w-full min-w-[46rem] text-sm tabular-nums">
           <thead>
             <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
               <th className="py-2 pr-3 font-semibold">Namjena</th>
@@ -513,7 +586,8 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
               <th className="py-2 pr-3 text-right font-semibold">Iskorišteno {godina}.</th>
               <th className="py-2 pr-3 text-right font-semibold">Protivno planu</th>
               <th className="py-2 pr-3 text-right font-semibold">Nije za gradnju</th>
-              <th className="py-2 text-right font-semibold">Slobodno za gradnju</th>
+              <th className="py-2 pr-3 text-right font-semibold">Čeka plan</th>
+              <th className="py-2 text-right font-semibold">Slobodno za gradnju (od toga po planu)</th>
             </tr>
           </thead>
           <tbody>
@@ -535,7 +609,10 @@ function Tablica({ podaci, godina, inacica }: { podaci: PodaciInfografike; godin
                   </td>
                   <td className="py-1.5 pr-3 text-right">{ovaj ? ha(ovaj.uSuprotnostiM2, 1) : "—"}</td>
                   <td className="py-1.5 pr-3 text-right">{ovaj ? ha(nijeZaGradnju(ovaj), 1) : "—"}</td>
-                  <td className="py-1.5 text-right">{ovaj ? ha(zaGradnju(ovaj), 1) : "—"}</td>
+                  <td className="py-1.5 pr-3 text-right">{ovaj ? ha(cekaPlan(ovaj), 1) : "—"}</td>
+                  <td className="py-1.5 text-right">
+                    {ovaj ? `${ha(zaGradnju(ovaj), 1)}${poPlanu(ovaj) >= 500 ? ` (${ha(poPlanu(ovaj), 1)})` : ""}` : "—"}
+                  </td>
                 </tr>
               );
             })}
