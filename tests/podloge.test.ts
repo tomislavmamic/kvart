@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   BASE_LAYERS,
   BASE_SKUPINE,
+  idPodloge,
   OVERLAY_LAYERS,
   MAP_VIEWS,
 } from "../src/lib/map-views";
@@ -47,8 +48,15 @@ test("svaka podloga nosi atribuciju — to je uvjet dozvole", () => {
 });
 
 test("zadana podloga postoji u registru", () => {
-  // map-client.tsx kreće od "dof" i pada na BASE_LAYERS[0] za nepoznat id.
-  assert.ok(BASE_LAYERS.some((b) => b.id === "dof"));
+  // map-client.tsx i karta GUP-a kreću od "satelit"; map-client pada na
+  // BASE_LAYERS[0] za nepoznat id.
+  assert.ok(BASE_LAYERS.some((b) => b.id === "satelit"));
+});
+
+test("stari id podloge iz poveznica vodi na postojeću podlogu", () => {
+  assert.equal(idPodloge("dof"), "satelit");
+  assert.equal(idPodloge("karta"), "karta");
+  assert.ok(BASE_LAYERS.some((b) => b.id === idPodloge("dof")));
 });
 
 test("WMS podloga navodi sloj, XYZ podloga ima {z}/{x}/{y}", () => {
@@ -96,7 +104,7 @@ test("EPSG:4326 se traži samo ondje gdje Web Mercatora nema", () => {
 
 test("nijedna podloga ne traži 4326 bez potrebe", () => {
   const u4326 = BASE_LAYERS.filter((b) => b.wmsCrs === "EPSG:4326").map((b) => b.id);
-  assert.deepEqual(u4326, ["dof"]);
+  assert.deepEqual(u4326, []);
 });
 
 test("id podloge i id preklopnika se ne sudaraju", () => {

@@ -212,7 +212,8 @@ export interface BaseLayer {
    *
    * Provjereno GetCapabilities-om: `dof`, `tk` i `hok` nude EPSG:3857
    * (uz 900913 i 3785), a `inspire/orthophoto_2023` nudi samo 4326, 4258,
-   * 3035 i 3765 — pa je jedini koji ovo polje treba.
+   * 3035 i 3765. Tu snimku je zamijenila satelitska (bez žiga), pa danas
+   * nijedna podloga ovo polje ne treba; ostaje za sljedeći INSPIRE servis.
    */
   wmsCrs?: "EPSG:4326";
   /** Rečenica u ploči: što se na toj podlozi vidi, a na drugima ne. */
@@ -366,19 +367,35 @@ export interface MapView {
   granice?: [[number, number], [number, number]];
 }
 
+/**
+ * Stari id podloge → današnji, da poveznice s `podloga=dof` (DGU-ov DOF 2023,
+ * zamijenjen satelitskom snimkom bez žiga) i dalje otvaraju snimku.
+ */
+const STARI_ID_PODLOGE: Record<string, string> = { dof: "satelit" };
+
+export function idPodloge(id: string): string {
+  return STARI_ID_PODLOGE[id] ?? id;
+}
+
 export const BASE_LAYERS: BaseLayer[] = [
   {
-    id: "dof",
-    label: "Ortofoto (DOF 2023)",
-    type: "wms",
-    url: "https://geoportal.dgu.hr/services/inspire/orthophoto_2023/wms",
-    wmsLayers: "OI.OrthoimageCoverage",
-    attribution: "DOF 2023 © Državna geodetska uprava (Otvorena dozvola)",
+    // Satelitska snimka Esrija (Maxar), za Split snimljena 17. 10. 2023. —
+    // ista godina kao DGU-ov DOF 2023 koji je prije stajao ovdje. DGU-ov
+    // anonimni WMS preko sredine svake pločice otiskuje žig „GEOPORTAL”, a
+    // pristup bez žiga traži prijavljenog korisnika s ključem koji istječe
+    // svakih 72 sata — to javna stranica ne može nositi. Pločice idu izravno
+    // s Esrija (XYZ, Web Mercator), bez naše rute: nema žiga koji bi se
+    // pamtio, a Esri pločice poslužuje s vlastite predmemorije.
+    //
+    // Pločice postoje do z19; z20 je Esrijeva slika „nema podataka”.
+    id: "satelit",
+    label: "Satelitska snimka (2023.)",
+    type: "xyz",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Snimka © Esri, Maxar, Earthstar Geographics",
     skupina: "danas",
     godina: 2023,
-    // Jedina podloga koja Web Mercator nema — INSPIRE servis nudi samo 4326,
-    // 4258, 3035 i 3765. Ostale idu u Leafletovu zadanom 3857.
-    wmsCrs: "EPSG:4326",
+    maxNativeZoom: 19,
   },
   {
     id: "karta",
@@ -395,7 +412,7 @@ export const BASE_LAYERS: BaseLayer[] = [
     // „što je ovdje bilo prije” bez ijedne riječi tumačenja.
     //
     // Anonimni DOF servis preko sredine pločice otiskuje žig „GEOPORTAL”.
-    // Isti žig nosi i DOF 2023 koji karta već koristi, dakle nije nazadovanje;
+    // Za 2011. zamjene nema (Esrijeva arhiva počinje 2014.), pa žig ostaje;
     // zabilježen je jer se na snimci vidi i jer izbora nema.
     id: "dof-2011",
     label: "Ortofoto 2011.",

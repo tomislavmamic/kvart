@@ -127,5 +127,7 @@ test("stvarni registar nudi vremeplov, i to preko ortofota", () => {
   assert.ok(vremeplovMoguc(BASE_LAYERS));
   const zadani = zadaniVremeplov(BASE_LAYERS);
   assert.ok(zadani);
-  assert.deepEqual(zadani, { lijevo: "dof-2011", desno: "dof" });
+  assert.deepEqual(zadani, { lijevo: "dof-2011", desno: "satelit" });
+  // stara poveznica s DGU-ovim DOF-om 2023 otvara isti rez
+  assert.deepEqual(izAdrese(BASE_LAYERS, "dof-2011,dof"), zadani);
 });
