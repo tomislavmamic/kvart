@@ -626,6 +626,55 @@ body {
   }
 }
 
+/* Sadržaj cijelog teksta GUP-a (sadrzaj-izdanja.tsx). Jedan element, dvije
+   uloge: ispod `lg` popover koji traka iznad teksta otvara kao donju ploču
+   (The Bottom-Sheet Fallback Rule), od `lg` stupac uz tekst koji se lijepi za
+   vrh. Pravila stupca nadjačavaju preglednikova pravila popovera (fixed,
+   margin: auto, okvir, display: none dok je zatvoren). */
+.sadrzaj-dokumenta:popover-open {
+  position: fixed;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: 85dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: var(--color-white, #fff);
+  color: var(--color-kamen-tinta);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+.sadrzaj-dokumenta::backdrop {
+  background: rgb(24 24 27 / 0.45);
+}
+@media (min-width: 1024px) {
+  .sadrzaj-dokumenta,
+  .sadrzaj-dokumenta:popover-open {
+    position: sticky;
+    inset: auto;
+    top: 1rem;
+    grid-area: 1 / 1;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    height: auto;
+    max-height: calc(100dvh - 2rem);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+  }
+}
+
 /* Cijeli tekst GUP-a (/gup/dokument, oznacivac.tsx): citat istaknut kroz
    CSS Custom Highlight API (pravilo `::highlight(navod)` piše sam Oznacivac —
    Lightning CSS ga još ne zna pročitati); blokovi navoda dobiju tanku crtu
