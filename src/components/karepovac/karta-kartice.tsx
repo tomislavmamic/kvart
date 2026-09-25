@@ -55,7 +55,7 @@ function poVelicini(x: number) {
  * ispadne iz sredine. Pri 16 stane.
  */
 const U_KARTI =
-  "/karta?pogled=zrak-karepovac&sloj=karepovac-sati&podloga=satelit&c=43.52150,16.51050&z=16";
+  "/karta?pogled=zrak-karepovac&sloj=karepovac-sati&podloga=dof-2025&c=43.52150,16.51050&z=16";
 
 function Mjesto({
   x,

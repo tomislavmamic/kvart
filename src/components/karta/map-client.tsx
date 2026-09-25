@@ -324,7 +324,7 @@ export function MapClient() {
   // pregazila, pa je z=18 uvijek ispadao z=15.
 
   const [ready, setReady] = useState(false);
-  const [baseId, setBaseId] = useState("satelit");
+  const [baseId, setBaseId] = useState("dof-2025");
   // Vremeplov je ugašen dok se ne zatraži. Karta se otvara na jednoj podlozi,
   // ne na razdjelniku koji nitko nije povukao.
   const [vremeplov, setVremeplov] = useState<Vremeplov | null>(null);

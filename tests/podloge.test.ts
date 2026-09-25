@@ -48,9 +48,10 @@ test("svaka podloga nosi atribuciju — to je uvjet dozvole", () => {
 });
 
 test("zadana podloga postoji u registru", () => {
-  // map-client.tsx i karta GUP-a kreću od "satelit"; map-client pada na
-  // BASE_LAYERS[0] za nepoznat id.
-  assert.ok(BASE_LAYERS.some((b) => b.id === "satelit"));
+  // map-client.tsx i karta GUP-a kreću od "dof-2025"; map-client pada na
+  // BASE_LAYERS[0] za nepoznat id, pa i ona mora biti ta ista snimka.
+  assert.ok(BASE_LAYERS.some((b) => b.id === "dof-2025"));
+  assert.equal(BASE_LAYERS[0].id, "dof-2025");
 });
 
 test("stari id podloge iz poveznica vodi na postojeću podlogu", () => {
@@ -89,7 +90,7 @@ test("podloga s vlastitim pločicama ograničava maxNativeZoom", () => {
 
 test("EPSG:4326 se traži samo ondje gdje Web Mercatora nema", () => {
   // Provjereno GetCapabilities-om 14. 8. 2026.: `dof`, `tk` i `hok` nude
-  // EPSG:3857, a `inspire/orthophoto_2023` ne. Traženje u 4326 tjera
+  // EPSG:3857, a `inspire/orthophoto_2023` i `…_2025_2026` ne. Traženje u 4326 tjera
   // poslužitelj da svaku pločicu preprojicira umjesto da je posluži iz
   // predmemorije, pa je ovo postavka koja se plaća — i jedna se podloga
   // ovdje lako previdi pri sljedećem dodavanju.
@@ -103,8 +104,9 @@ test("EPSG:4326 se traži samo ondje gdje Web Mercatora nema", () => {
 });
 
 test("nijedna podloga ne traži 4326 bez potrebe", () => {
+  // Samo DOF 2025./26.: njegov INSPIRE servis Web Mercatora nema.
   const u4326 = BASE_LAYERS.filter((b) => b.wmsCrs === "EPSG:4326").map((b) => b.id);
-  assert.deepEqual(u4326, []);
+  assert.deepEqual(u4326, ["dof-2025"]);
 });
 
 test("id podloge i id preklopnika se ne sudaraju", () => {
