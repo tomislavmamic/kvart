@@ -456,7 +456,9 @@ export function useGupProvjera(opts: {
     // statusnim bojama, pa se ondje skriva; uz „namjenu” ostaje blijeda.
     const prozirnostSlike = (cesticeVidljive: boolean) => {
       const prikaz = postavkeRef.current.prikaz;
-      slikaRef.current?.setOpacity(!cesticeVidljive ? 0.55 : prikaz === "namjena" ? 0.25 : 0);
+      // dijelovi čestice nose i namjenu, a slika namjene bi ih prekrila
+      const dijeloviVidljivi = regijeVrijede(postavkeRef.current) && map.getZoom() >= MIN_ZUM_REGIJA;
+      slikaRef.current?.setOpacity(dijeloviVidljivi ? 0 : !cesticeVidljive ? 0.55 : prikaz === "namjena" ? 0.25 : 0);
     };
     prozirnostRef.current = () => prozirnostSlike(map.getZoom() >= MIN_ZUM && postavkeRef.current.cestice);
 
