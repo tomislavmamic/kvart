@@ -49,12 +49,12 @@ export default function HomePage() {
       </div>
 
       <a
-        href="https://geoportal.dgu.hr"
+        href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9"
         target="_blank"
         rel="noopener noreferrer"
         className="fokus absolute bottom-3 right-4 text-xs text-white/70 hover:text-white"
       >
-        DOF 2023 · Državna geodetska uprava
+        Snimka 2023. · Esri, Maxar, Earthstar Geographics
       </a>
     </section>
   );

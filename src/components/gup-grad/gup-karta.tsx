@@ -30,7 +30,7 @@ import { BASE_LAYERS, GUP_GRAD_BOUNDS, OVERLAY_LAYERS, SIRI_OBUHVAT_KARTE } from
 
 /** Središte grada kad adresa ne kaže drugo. */
 const SREDISTE: [number, number] = [43.5125, 16.455];
-const PODLOGE = ["dof", "karta"] as const;
+const PODLOGE = ["satelit", "karta"] as const;
 type Podloga = (typeof PODLOGE)[number];
 /** Službeni ISPU list namjene (plan na snazi) — isti sloj kao na /karta. */
 const SLUZBENI = OVERLAY_LAYERS.find((l) => l.id === "gup-namjena");
@@ -67,7 +67,7 @@ export function GupKarta(props: {
   const LRef = useRef<typeof LeafletNS | null>(null);
   const pogodakSloja = useRef(0);
   const [spremno, setSpremno] = useState(false);
-  const [podloga, setPodloga] = useState<Podloga>("dof");
+  const [podloga, setPodloga] = useState<Podloga>("satelit");
   const [sluzbeni, setSluzbeni] = useState(false);
   const [lijeva, setLijevaStanje] = useState(false);
   const [desna, setDesnaStanje] = useState(false);
@@ -198,7 +198,7 @@ export function GupKarta(props: {
                 <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Podloga">
                   {PODLOGE.map((id) => (
                     <button key={id} type="button" aria-pressed={podloga === id} onClick={() => setPodloga(id)} className={gumb(podloga === id)}>
-                      {id === "dof" ? "Ortofoto 2023." : "Ulična karta"}
+                      {id === "satelit" ? "Satelitska snimka" : "Ulična karta"}
                     </button>
                   ))}
                 </div>

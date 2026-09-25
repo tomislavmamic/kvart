@@ -33,7 +33,7 @@ export const DATASET_SECTIONS: DatasetSection[] = [
     items: [
       {
         name: "DGU digitalni ortofoto (DOF) — 2023. i 2011.",
-        desc: "Službene zračne snimke države, 0,5 m. Na karti su obje godine, kao podloge „Ortofoto (DOF 2023)” i „Ortofoto 2011.”; vremeplov ih uspoređuje rezom preko karte.",
+        desc: "Službene zračne snimke države, 0,5 m. Na karti je 2011. kao podloga „Ortofoto 2011.”; 2023. je zamijenila satelitska snimka iste godine bez žiga. Isječci za ručni pregled čestica GUP-a i dalje su s DOF-a 2023.",
         endpoints: [
           "https://geoportal.dgu.hr/services/inspire/orthophoto_2023/wms  (sloj OI.OrthoimageCoverage)",
           "https://geoportal.dgu.hr/services/dof/wms  (slojevi DOF5_2011, DOF_LIDAR_2022_2023)",
@@ -43,7 +43,19 @@ export const DATASET_SECTIONS: DatasetSection[] = [
         coverage: "potpuna",
         status: "ok",
         statusLabel: "provjereno 14. 8. 2026.",
-        note: "Anonimni pristup nosi vodeni žig „GEOPORTAL” — i na 2023. i na 2011. Sloj DOF05_VPI_2024 nad kvartom vraća praznu sliku, pa nije uzet.",
+        note: "Anonimni pristup nosi vodeni žig „GEOPORTAL” — i na 2023. i na 2011. Bez žiga je samo za prijavljene korisnike, s ključem koji istječe svakih 72 sata. Sloj DOF05_VPI_2024 nad kvartom vraća praznu sliku, pa nije uzet.",
+      },
+      {
+        name: "Esri World Imagery — satelitska snimka",
+        desc: "Satelitska snimka Maxara u Esrijevoj zbirci, za Split snimljena 17. 10. 2023. Zadana podloga karte i karte GUP-a, jer je bez vodenog žiga.",
+        endpoints: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        format: "XYZ pločice (Web Mercator), do z19",
+        license: "Esri uvjeti korištenja, uz navođenje izvora",
+        coverage: "potpuna",
+        status: "ok",
+        statusLabel: "provjereno 25. 9. 2026.",
       },
       {
         name: "DGU topografske karte (TK25/TK100/TK200, HOK 1:5000)",

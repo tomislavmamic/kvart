@@ -13,7 +13,7 @@
  * Modul je namjerno bez Leafleta i bez DOM-a: sve što ovdje stoji je odluka o
  * stanju, pa se da ispitati bez karte (vidi tests/vremeplov.test.ts).
  */
-import type { BaseLayer } from "./map-views";
+import { idPodloge, type BaseLayer } from "./map-views";
 
 export interface Vremeplov {
   /** Podloga lijevo od razdjelnika — starija. */
@@ -111,7 +111,7 @@ export function izAdrese(
   vrijednost: string | null,
 ): Vremeplov | null {
   if (!vrijednost) return null;
-  const [lijevo, desno] = vrijednost.split(",");
+  const [lijevo, desno] = vrijednost.split(",").map(idPodloge);
   if (!lijevo || !desno) return null;
   return valjanVremeplov(podloge, { lijevo, desno });
 }
@@ -119,8 +119,8 @@ export function izAdrese(
 /**
  * Natpis strane za `aria-valuetext` razdjelnika.
  *
- * „62 %” nikome ništa ne znači; „62 %, lijevo Ortofoto 2011., desno Ortofoto
- * (DOF 2023)” je ono što se zapravo gleda. Isti razlog kao kod klizača
+ * „62 %” nikome ništa ne znači; „62 %, lijevo Ortofoto 2011., desno Satelitska
+ * snimka (2023.)” je ono što se zapravo gleda. Isti razlog kao kod klizača
  * namjene.
  */
 export function natpisPodloge(podloge: BaseLayer[], id: string): string {

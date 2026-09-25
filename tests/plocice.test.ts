@@ -128,7 +128,15 @@ test("poslužuju se samo WMS podloge iz registra", () => {
 
 test("adresa izvora nosi ispravan CRS i redoslijed osi", () => {
   const mercator = BASE_LAYERS.find((b) => b.id === "dof-2011")!;
-  const cetiri = BASE_LAYERS.find((b) => b.id === "dof")!;
+  // Danas nijedna podloga ne traži 4326; put se provjerava na INSPIRE servisu
+  // koji je to tražio (DOF 2023 prije zamjene satelitskom snimkom).
+  const cetiri = {
+    ...mercator,
+    id: "inspire-4326",
+    url: "https://geoportal.dgu.hr/services/inspire/orthophoto_2023/wms",
+    wmsLayers: "OI.OrthoimageCoverage",
+    wmsCrs: "EPSG:4326" as const,
+  };
 
   const uM = new URL(adresaIzvora(mercator, SREDINA.z, SREDINA.x, SREDINA.y));
   assert.equal(uM.searchParams.get("srs"), "EPSG:3857");

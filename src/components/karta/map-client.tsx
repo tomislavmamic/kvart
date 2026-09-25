@@ -30,6 +30,7 @@ import {
   type DossierPresentation,
   type MapView,
   type OverlayLayer,
+  idPodloge,
 } from "@/lib/map-views";
 import { postaviKlizac } from "@/lib/karta-klizac";
 import {
@@ -224,7 +225,7 @@ function izAdrese(): Partial<StanjeKarte> & {
   const slojevi = q.getAll(P.sloj).filter((id) => OVERLAY_BY_ID.has(id));
   if (q.has(P.sloj)) out.activeIds = slojevi;
   const podloga = q.get(P.podloga);
-  if (podloga && BASE_LAYERS.some((b) => b.id === podloga)) out.baseId = podloga;
+  if (podloga && BASE_LAYERS.some((b) => b.id === idPodloge(podloga))) out.baseId = idPodloge(podloga);
   out.vremeplov = vremeplovIzAdrese(BASE_LAYERS, q.get(P.vremeplov));
   // Prazan `namjena=` je valjano stanje („bez podloge”), pa se razlikuje
   // od izostanka parametra — has() umjesto istinitosti vrijednosti.
@@ -323,7 +324,7 @@ export function MapClient() {
   // pregazila, pa je z=18 uvijek ispadao z=15.
 
   const [ready, setReady] = useState(false);
-  const [baseId, setBaseId] = useState("dof");
+  const [baseId, setBaseId] = useState("satelit");
   // Vremeplov je ugašen dok se ne zatraži. Karta se otvara na jednoj podlozi,
   // ne na razdjelniku koji nitko nije povukao.
   const [vremeplov, setVremeplov] = useState<Vremeplov | null>(null);
