@@ -117,6 +117,36 @@ export const NAVODI: Record<string, SpecNavoda> = {
     ],
     opis: "prijedlog 2025., čl. 103. st. 4: drugdje se do plana gradi po GUP-u",
   },
+  "obuhvat-izvan-cekanja-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      {
+        t: "na dijelovima obuhvata izvan područja iz stavka 1., do izrade prostornog plana užeg područja, gradnja je moguća neposrednom provedbom GUP-a, u skladu s odredbama GUP-a.",
+        s: 144,
+      },
+    ],
+    opis: "prijedlog 2025., čl. 103. st. 3: ostatak obuhvata propisanog plana gradi se po GUP-u",
+  },
+  "plan-na-snazi-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      {
+        t: "Na područjima unutar obuhvata GUP-a za koja su na snazi prostorni planovi užeg područja, gradnja je moguća samo temeljem prostornog plana užeg područja.",
+        s: 144,
+      },
+    ],
+    opis: "prijedlog 2025., čl. 103. st. 5: gdje je plan na snazi, gradi se samo po njemu",
+  },
+  "do-plana-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      {
+        t: "do donošenja prostornih planova užeg područja za područja iz članka 103. stavka 1., omogućava se ishođenje lokacijskih dozvola i odgovarajućih akata za građenje",
+        s: 145,
+      },
+    ],
+    opis: "prijedlog 2025., čl. 105. st. 5: što se smije graditi dok plan užeg područja ne bude donesen",
+  },
   "list-namjena-2008": { list: "namjena-2008" },
   "list-namjena-2014": { list: "namjena-2014" },
   "list-namjena-2025": { list: "namjena-2025" },

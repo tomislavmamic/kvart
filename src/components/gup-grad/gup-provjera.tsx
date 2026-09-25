@@ -27,7 +27,7 @@ import { predloziIspravak } from "@/lib/actions/gup";
 import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije";
 import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 import type { PlanskiRezim, PodrucjeCekanja, Rezim } from "@/lib/gup-grad/rezim";
-import { BOJA_OBUHVATA, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
+import { BOJA_OBUHVATA, BOJA_VAZECEG, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
 import { Navod } from "@/components/gup-dokument/navod";
 import {
   LIST_NAMJENE,
@@ -75,7 +75,7 @@ export interface GupPostavke {
   zgrade: boolean;
   /** Dijelovi čestice: gdje je unutar nje zauzeto, a gdje slobodno (gup-regije.ts). */
   dijelovi: boolean;
-  /** Obuhvati propisanih UPU-a iz prijedloga 2025. (gup-obrisi.ts). */
+  /** Obuhvati planova užeg područja, na snazi i propisanih, s lista 4.d 2025. (gup-obrisi.ts). */
   obrisi: boolean;
 }
 
@@ -1021,7 +1021,7 @@ export function GupProvjeraPostavke(props: {
         </label>
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.obrisi} onChange={(e) => postavi({ obrisi: e.target.checked })} />
-          Obuhvati propisanih UPU-a (prijedlog 2025.)
+          Obuhvati planova užeg područja — na snazi i propisani (list 4.d, 2025.)
         </label>
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
@@ -1195,17 +1195,21 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
 
       {obrisiVrijede(p) && (
         <div>
-          <p className={naslov}>Propisani UPU-i (prijedlog 2025.)</p>
+          <p className={naslov}>Planovi užeg područja (list 4.d, 2025.)</p>
           <ul className="mt-1 space-y-1">
             <RedLegende
+              uzorak={{ background: "#fff", border: `2.5px solid ${BOJA_VAZECEG}` }}
+              naziv="plan na snazi (DPU, UPU, PUP) — gradi se samo po njemu"
+            />
+            <RedLegende
               uzorak={{ background: "#fff", border: `2.5px solid ${BOJA_OBUHVATA}` }}
-              naziv="obuhvat plana užeg područja iz popisa lista 4.d"
+              naziv="propisani UPU, još nije donesen"
             />
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
-            Prijedlog propisuje 34 UPU-a; ime plana je upisano od zuma 15. Unutar obuhvata nova gradnja čeka plan samo u
-            područjima urbane sanacije, preobrazbe i neuređenog (čl. 103) — to su boje u načinu „Planski režim”; drugdje
-            se do plana gradi po GUP-u.
+            Na listu je 46 planova na snazi i 34 propisana UPU-a; ime plana je upisano od zuma 15, a mišem preko imena podeblja se rub i oboji cijeli obuhvat, a klik na ime otvara podatke o planu. Unutar propisanog
+            obuhvata nova gradnja čeka plan samo u područjima urbane sanacije, preobrazbe i neuređenog (čl. 103. st. 1) — to
+            su boje u načinu „Planski režim”; drugdje se do plana gradi po GUP-u (st. 3).
           </p>
         </div>
       )}
