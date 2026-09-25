@@ -266,8 +266,7 @@ export function GupInfografika(props: {
               ))}
               {SKUPINE.map((s) => (
                 <pattern key={s.kod} id={`${uid}-ceka-${s.kod}`} width="8" height="8" patternUnits="userSpaceOnUse">
-                  <rect width="8" height="8" fill={s.svijetla} />
-                  <rect y="0" width="8" height="3" fill={s.boja} fillOpacity="0.75" />
+                  <rect width="8" height="8" fill="#fdba74" />
                 </pattern>
               ))}
               {SKUPINE.map((s) => (
@@ -312,7 +311,7 @@ export function GupInfografika(props: {
                         fill={`url(#${uid}-poplanu-${s.kod})`}
                         style={{ transform: `translateY(${rz.poPlanu}px)`, transition: "transform 500ms ease" }}
                       />
-                      {/* slobodno koje čeka propisani plan užeg područja: vodoravne pruge */}
+                      {/* slobodno koje čeka propisani plan užeg područja: ravno narančasto, kao na karti */}
                       <rect
                         x={-10}
                         y={0}
@@ -440,11 +439,9 @@ export function GupInfografika(props: {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>
-                  <rect width="14" height="14" fill="#e4e4e7" />
-                  <rect y="0" width="14" height="3" fill="#71717b" />
-                  <rect y="7" width="14" height="3" fill="#71717b" />
+                  <rect width="14" height="14" fill="#fdba74" />
                 </svg>
-                prugasto: slobodno, ali čeka propisani plan užeg područja (UPU/DPU)
+                narančasto: slobodno, ali čeka propisani plan užeg područja (UPU/DPU)
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <svg className="size-3.5 rounded-sm" viewBox="0 0 14 14" aria-hidden>

@@ -36,3 +36,10 @@ test("režim mijenja slobodno samo u građevnim zonama", async () => {
   assert.equal(rezimVrijedi("Z1"), false);
   assert.equal(rezimVrijedi("R2"), false);
 });
+
+test("prijedlog 2025.: čekanje nosi vrstu područja s lista 4.d", () => {
+  assert.equal(planskiRezim(REZIM.SANACIJA, 2025, null).podrucje, "sanacija");
+  assert.equal(planskiRezim(REZIM.NEUREDENO, 2025, null).podrucje, "neuredeno");
+  assert.equal(planskiRezim(REZIM.PREOBRAZBA, 2025, null).podrucje, "preobrazba");
+  assert.equal(planskiRezim(REZIM.OBVEZA, 2015, "3.1").podrucje, undefined);
+});
