@@ -42,6 +42,9 @@ export interface Rezim {
   rezim: PlanskiRezim;
   /** Kratko objašnjenje za kartu: zašto baš taj režim. */
   razlog: string;
+  /** Odredba ili list na kojem to piše: navod GUP-a (src/lib/gup-dokument/navodi.ts) i kako ga nazvati. */
+  navod?: string;
+  izvor?: string;
 }
 
 /**
@@ -60,23 +63,45 @@ export function niskoKonsolidirano(kodPravila: string | null): boolean {
 }
 
 export function planskiRezim(bitovi: number, godina: Godina, kodPravila: string | null): Rezim {
-  if (bitovi & REZIM.VAZECI) return { rezim: "vazeci", razlog: "na snazi je plan užeg područja (UPU, DPU ili PUP)" };
+  if (bitovi & REZIM.VAZECI)
+    return {
+      rezim: "vazeci",
+      razlog: "na snazi je plan užeg područja (UPU, DPU ili PUP)",
+      navod: { 2006: "list-vazeci-planovi-2008", 2015: "list-vazeci-planovi-2014", 2025: "list-planske-mjere-2025" }[godina],
+      izvor: "list 4.d",
+    };
   if (godina === 2025) {
-    if (bitovi & REZIM.SANACIJA)
-      return { rezim: "ceka", razlog: "područje urbane sanacije — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
-    if (bitovi & REZIM.PREOBRAZBA)
-      return { rezim: "ceka", razlog: "područje urbane preobrazbe — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
+    const clanak103 = { navod: "obveza-plana-2025", izvor: "prijedlog 2025., čl. 103" };
+    if (bitovi & REZIM.SANACIJA) return { rezim: "ceka", razlog: "područje urbane sanacije — gradnja tek po UPU-u", ...clanak103 };
+    if (bitovi & REZIM.PREOBRAZBA) return { rezim: "ceka", razlog: "područje urbane preobrazbe — gradnja tek po UPU-u", ...clanak103 };
     if (bitovi & REZIM.NEUREDENO)
-      return { rezim: "ceka", razlog: "neuređeni dio građevinskog područja — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
+      return { rezim: "ceka", razlog: "neuređeni dio građevinskog područja — gradnja tek po UPU-u", ...clanak103 };
     if (bitovi & REZIM.OBVEZA)
-      return { rezim: "neposredno", razlog: "UPU je samo preporučen — do njega neposredna provedba GUP-a (prijedlog 2025., čl. 103. st. 4)" };
+      return {
+        rezim: "neposredno",
+        razlog: "UPU je samo preporučen — do njega neposredna provedba GUP-a",
+        navod: "preporuka-plana-2025",
+        izvor: "prijedlog 2025., čl. 103. st. 4",
+      };
     return NEPOSREDNO;
   }
-  if (bitovi & REZIM.MARJAN) return { rezim: "ceka", razlog: "Marjan — čeka prostorni plan područja posebnih obilježja (čl. 105)" };
+  const g = godina === 2006 ? "2006" : "2015";
+  if (bitovi & REZIM.MARJAN)
+    return { rezim: "ceka", razlog: "Marjan — čeka prostorni plan područja posebnih obilježja", navod: `marjan-${g}`, izvor: "čl. 105" };
   if (bitovi & REZIM.OBVEZA) {
     if (niskoKonsolidirano(kodPravila))
-      return { rezim: "ceka", razlog: "propisan je plan užeg područja koji nije donesen; u nisko konsolidiranom području gradnja tek po njemu (čl. 104–105)" };
-    return { rezim: "neposredno", razlog: "propisan je plan užeg područja, ali u konsolidiranom području gradi se i po GUP-u (čl. 104)" };
+      return {
+        rezim: "ceka",
+        razlog: "propisan je plan užeg područja koji nije donesen; u nisko konsolidiranom području gradnja tek po njemu",
+        navod: `obveza-plana-${g}`,
+        izvor: "čl. 104–105",
+      };
+    return {
+      rezim: "neposredno",
+      razlog: "propisan je plan užeg područja, ali u konsolidiranom području gradi se i po GUP-u",
+      navod: `obveza-plana-${g}`,
+      izvor: "čl. 104",
+    };
   }
   return NEPOSREDNO;
 }

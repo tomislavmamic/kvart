@@ -157,9 +157,11 @@ function SecondaryLinks({
   pathname: string;
   onNavigate: () => void;
 }) {
+  const pogodak = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // /gup/dokument je ispod /gup: aktivna je samo najdulja stavka koja odgovara
+  const najdulja = SECONDARY_NAV_ITEMS.filter((i) => pogodak(i.href)).sort((a, b) => b.href.length - a.href.length)[0];
   return SECONDARY_NAV_ITEMS.map((item) => {
-    const active =
-      pathname === item.href || pathname.startsWith(`${item.href}/`);
+    const active = item === najdulja;
     return (
       <Link
         key={item.href}
