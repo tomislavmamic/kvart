@@ -27,6 +27,7 @@ import { predloziIspravak } from "@/lib/actions/gup";
 import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije";
 import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 import type { PlanskiRezim } from "@/lib/gup-grad/rezim";
+import { OBRISI, obrisiVrijede, type VrstaObrisa } from "@/components/gup-grad/gup-obrisi";
 
 const MIN_ZUM = 15;
 /** Zgrade su gušće od čestica (~60 000 tlocrta), pa tek od zuma 16. */
@@ -60,6 +61,8 @@ export interface GupPostavke {
   zgrade: boolean;
   /** Dijelovi čestice: gdje je unutar nje zauzeto, a gdje slobodno (gup-regije.ts). */
   dijelovi: boolean;
+  /** Obrisi područja sanacije, preobrazbe i neuređenog iz prijedloga 2025. (gup-obrisi.ts). */
+  obrisi: boolean;
 }
 
 export const POCETNE_GUP_POSTAVKE: GupPostavke = {
@@ -70,6 +73,7 @@ export const POCETNE_GUP_POSTAVKE: GupPostavke = {
   cestice: true,
   zgrade: true,
   dijelovi: true,
+  obrisi: true,
 };
 
 const CRVENA = "#d03b3b";
@@ -938,6 +942,10 @@ export function GupProvjeraPostavke(props: {
           Dijelovi čestice — gdje je zauzeto, a gdje slobodno (od zuma {MIN_ZUM_REGIJA})
         </label>
         <label className="meta flex items-center gap-2">
+          <input type="checkbox" checked={p.obrisi} onChange={(e) => postavi({ obrisi: e.target.checked })} />
+          Područja urbane sanacije, preobrazbe i neuređenog (prijedlog 2025.)
+        </label>
+        <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
           Naše razvrstavanje lista plana (boje legende)
         </label>
@@ -1096,6 +1104,24 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
         </div>
       )}
 
+      {obrisiVrijede(p) && (
+        <div>
+          <p className={naslov}>Područja iz prijedloga 2025.</p>
+          <ul className="mt-1 space-y-1">
+            {(Object.keys(OBRISI) as VrstaObrisa[]).map((k) => (
+              <RedLegende
+                key={k}
+                uzorak={{ background: "#fff", border: `2px dashed ${OBRISI[k].boja}` }}
+                naziv={OBRISI[k].naziv}
+              />
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-zinc-500">
+            Crtkani rub: područja u kojima prijedlog propisuje UPU i do njega ne dopušta novu gradnju (čl. 103, list 4.d).
+          </p>
+        </div>
+      )}
+
       {regijeVrijede(p) && info.zum >= MIN_ZUM_REGIJA && <LegendaDijelova prikaz={p.prikaz} inacica={p.inacica} />}
 
       {p.zgrade && (
@@ -1124,7 +1150,7 @@ const TOCKICE = "radial-gradient(circle, #3f3f46 1.2px, transparent 1.3px) 0 0 /
  * boja UNUTAR obrisa čestice. Brojke u blokovima iznad ostaju po česticama.
  */
 /** Uzorak dijelova koji čekaju propisani plan (gup-regije.ts, REGIJE.ceka). */
-const PRUGE_CEKA = "repeating-linear-gradient(180deg, rgba(249,115,22,.85) 0 2px, #fff 2px 8px)";
+const CEKA_UZORAK = "rgba(249,115,22,.5)";
 
 function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: string }) {
   // što je iskorišteno bez položaja ovisi o načinu brojanja (regije.py)
@@ -1142,7 +1168,7 @@ function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: stri
           [{ background: "rgba(212,212,216,.7)" }, vezano],
           [{ background: "rgba(2,132,199,.8)" }, "slobodno za gradnju"],
           [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
-          [{ background: PRUGE_CEKA }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
+          [{ background: CEKA_UZORAK }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
         ]
       : prikaz === "sklad"
         ? [
@@ -1155,7 +1181,7 @@ function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: stri
             [{ background: "rgba(224,160,0,.5)" }, vezano],
             [{ background: "rgba(224,160,0,.14)" }, "slobodno za gradnju"],
             [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
-            [{ background: PRUGE_CEKA }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
+            [{ background: CEKA_UZORAK }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
             [{ background: srafuraCss("#ffffff", PRUGE.protivno) }, "zauzeto protivno planu"],
           ];
   const redovi = sviRedovi.filter((r): r is [React.CSSProperties, string] => r[1] !== null);

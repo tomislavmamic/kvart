@@ -154,8 +154,10 @@ export default async function GupPage() {
           28. 11. 2014.) i s lista 4.d prijedloga 2025., istim uklapanjem kao namjenu. Pročišćeni list obveza za 2015. nije
           objavljen, pa za 2015. vrijede obveze iz 2008. (izmjene 2014. mijenjaju ih samo za Trsteničku uvalu). Čestica
           pripada obuhvatu kad ga pokriva barem pola čestice; najmanji planovi od nekoliko čestica mogu ispasti. Na
-          grafikonu je slobodno koje čeka plan prugasto, a slobodno pod planom na snazi rešetkom — to drugo je slobodno
-          za gradnju, ali koliko se na njemu smije, odlučuje taj plan. Obuhvati su iz{" "}
+          grafikonu i na karti je slobodno koje čeka plan narančasto, a slobodno pod planom na snazi na grafikonu je rešetka — to drugo je slobodno
+          za gradnju, ali koliko se na njemu smije, odlučuje taj plan. Na karti se za prijedlog 2025. crtkano ocrtavaju i
+          sama područja urbane sanacije, urbane preobrazbe i neuređenog dijela građevinskog područja, s lista 4.d
+          (<code className="font-mono text-xs">scripts/gup-grad/planski-obrisi.py</code>). Obuhvati su iz{" "}
           <code className="font-mono text-xs">scripts/gup-grad/planski-rezim.py</code>, a što koji znači u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/rezim.ts</code>.
         </p>

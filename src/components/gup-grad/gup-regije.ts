@@ -50,8 +50,11 @@ const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16
 const SIVA_ULICA: Rgba = [161, 161, 170, 90];
 const CRVENA: [number, number, number] = [208, 59, 59];
 const nijeZaGradnju = (r: number) => r >= REGIJE.usko && r !== REGIJE.ceka;
-/** Vodoravne pruge, kao na grafikonu: slobodno koje čeka plan. */
-const CEKA: Rgba = [249, 115, 22, 215];
+/**
+ * Slobodno koje čeka plan: ravna narančasta ispuna, kao na grafikonu i u
+ * načinu „Planski režim”. Ne pruge — pruge su na karti „protivno planu”.
+ */
+const CEKA: Rgba = [249, 115, 22, 125];
 
 /**
  * Boja piksela za način karte. `x`, `y` su koordinate u pločici — za
@@ -61,7 +64,7 @@ const CEKA: Rgba = [249, 115, 22, 215];
 function boja(mod: BojaKarte, klasa: number, r: number, sklad: number, x: number, y: number): Rgba | null {
   if (r === REGIJE.ulica) return SIVA_ULICA;
   const tocka = nijeZaGradnju(r) && x % 3 === 0 && y % 3 === 0;
-  if (r === REGIJE.ceka && mod !== "sklad") return y % 4 === 0 ? CEKA : [255, 255, 255, 150];
+  if (r === REGIJE.ceka && mod !== "sklad") return CEKA;
   if (mod === "iskoristenost") {
     if (r === REGIJE.slobodno) return [2, 132, 199, 205];
     if (nijeZaGradnju(r)) return tocka ? [63, 63, 70, 200] : [255, 255, 255, 170];
