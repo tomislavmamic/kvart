@@ -17,7 +17,15 @@ import type * as LeafletNS from "leaflet";
 import { KLASA_PO_INDEKSU } from "@/lib/gup-grad/model";
 import type { BojaKarte, GupPostavke } from "@/components/gup-grad/gup-provjera";
 
-export const MIN_ZUM_REGIJA = 15;
+/**
+ * Od kojeg se zuma crtaju dijelovi čestice. Slike su male (~1,2 MB po godini i
+ * načinu brojanja za cijeli grad), pa idu i od z13, gdje je GUP cijeli u oknu
+ * i gdje se vidi kako je slobodno raspoređeno po gradu. Čestice (vektori, za
+ * klik) i dalje tek od z15 — vidi MIN_ZUM u gup-provjera.tsx.
+ */
+export const MIN_ZUM_REGIJA = 13;
+/** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi. */
+const ZUM_OSTRIH_PIKSELA = 15;
 
 /** Regije kako ih piše regije.py. */
 export const REGIJE = {
@@ -167,6 +175,7 @@ export function useRegije(opts: {
     const osvjezi = async () => {
       if (!ziv) return;
       const vidljivo = map.getZoom() >= MIN_ZUM_REGIJA;
+      map.getPane("gup-regije")?.classList.toggle("gup-regije-daleko", map.getZoom() < ZUM_OSTRIH_PIKSELA);
       indeks.current ??= await fetch("/geo/gup-grad/regije.json")
         .then((r) => r.json())
         .then((d: { inacice: Record<string, Record<string, Plocica[]>> }) => d.inacice)
