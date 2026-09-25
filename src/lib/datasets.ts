@@ -32,9 +32,10 @@ export const DATASET_SECTIONS: DatasetSection[] = [
     title: "Podloge i snimke",
     items: [
       {
-        name: "DGU digitalni ortofoto (DOF) — 2023. i 2011.",
-        desc: "Službene zračne snimke države, 0,5 m. Na karti je 2011. kao podloga „Ortofoto 2011.”; 2023. je zamijenila satelitska snimka iste godine bez žiga. Isječci za ručni pregled čestica GUP-a i dalje su s DOF-a 2023.",
+        name: "DGU digitalni ortofoto (DOF) — 2025./26., 2023. i 2011.",
+        desc: "Službene zračne snimke države. Zadana podloga karte i karte GUP-a je „Ortofoto 2025.” — DOF5 2025./26., za Split snimljen 2025., najnovija snimka kvarta koja postoji. Uz nju su „Ortofoto 2011.” i vremeplov između njih. Isječci za ručni pregled čestica GUP-a su s DOF-a 2023.",
         endpoints: [
+          "https://geoportal.dgu.hr/services/inspire/orthophoto_2025_2026/wms  (sloj OI.OrthoimageCoverage; samo EPSG:4326/3765)",
           "https://geoportal.dgu.hr/services/inspire/orthophoto_2023/wms  (sloj OI.OrthoimageCoverage)",
           "https://geoportal.dgu.hr/services/dof/wms  (slojevi DOF5_2011, DOF_LIDAR_2022_2023)",
         ],
@@ -42,12 +43,12 @@ export const DATASET_SECTIONS: DatasetSection[] = [
         license: "Otvorena dozvola (uz navođenje DGU)",
         coverage: "potpuna",
         status: "ok",
-        statusLabel: "provjereno 14. 8. 2026.",
-        note: "Anonimni pristup nosi vodeni žig „GEOPORTAL” — i na 2023. i na 2011. Bez žiga je samo za prijavljene korisnike, s ključem koji istječe svakih 72 sata. Sloj DOF05_VPI_2024 nad kvartom vraća praznu sliku, pa nije uzet.",
+        statusLabel: "provjereno 25. 9. 2026.",
+        note: "Anonimni pristup nosi vodeni žig „GEOPORTAL” na svim godinama; za 2025. je prihvaćen jer novije snimke nema. Bez žiga je samo za prijavljene korisnike, s ključem koji istječe svakih 72 sata. DOF 2024. (zapadna polovica države) i DOF05_VPI_2024 nad kvartom vraćaju praznu sliku.",
       },
       {
         name: "Esri World Imagery — satelitska snimka",
-        desc: "Satelitska snimka Maxara u Esrijevoj zbirci, za Split snimljena 17. 10. 2023. Zadana podloga karte i karte GUP-a, jer je bez vodenog žiga.",
+        desc: "Satelitska snimka Maxara u Esrijevoj zbirci, za Split snimljena 17. 10. 2023. Na karti i karti GUP-a kao podloga bez vodenog žiga, uz noviji DGU-ov ortofoto 2025.",
         endpoints: [
           "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         ],

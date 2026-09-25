@@ -17,7 +17,15 @@ import type * as LeafletNS from "leaflet";
 import { KLASA_PO_INDEKSU } from "@/lib/gup-grad/model";
 import type { BojaKarte, GupPostavke } from "@/components/gup-grad/gup-provjera";
 
-export const MIN_ZUM_REGIJA = 15;
+/**
+ * Od kojeg se zuma crtaju dijelovi čestice. Slike su male (~1,2 MB po godini i
+ * načinu brojanja za cijeli grad), pa idu i od z13, gdje je GUP cijeli u oknu
+ * i gdje se vidi kako je slobodno raspoređeno po gradu. Čestice (vektori, za
+ * klik) i dalje tek od z15 — vidi MIN_ZUM u gup-provjera.tsx.
+ */
+export const MIN_ZUM_REGIJA = 13;
+/** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi. */
+const ZUM_OSTRIH_PIKSELA = 15;
 
 /** Regije kako ih piše regije.py. */
 export const REGIJE = {
@@ -50,8 +58,11 @@ const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16
 const SIVA_ULICA: Rgba = [161, 161, 170, 90];
 const CRVENA: [number, number, number] = [208, 59, 59];
 const nijeZaGradnju = (r: number) => r >= REGIJE.usko && r !== REGIJE.ceka;
-/** Vodoravne pruge, kao na grafikonu: slobodno koje čeka plan. */
-const CEKA: Rgba = [249, 115, 22, 215];
+/**
+ * Slobodno koje čeka plan: ravna narančasta ispuna, kao na grafikonu i u
+ * načinu „Planski režim”. Ne pruge — pruge su na karti „protivno planu”.
+ */
+const CEKA: Rgba = [249, 115, 22, 125];
 
 /**
  * Boja piksela za način karte. `x`, `y` su koordinate u pločici — za
@@ -61,7 +72,7 @@ const CEKA: Rgba = [249, 115, 22, 215];
 function boja(mod: BojaKarte, klasa: number, r: number, sklad: number, x: number, y: number): Rgba | null {
   if (r === REGIJE.ulica) return SIVA_ULICA;
   const tocka = nijeZaGradnju(r) && x % 3 === 0 && y % 3 === 0;
-  if (r === REGIJE.ceka && mod !== "sklad") return y % 4 === 0 ? CEKA : [255, 255, 255, 150];
+  if (r === REGIJE.ceka && mod !== "sklad") return CEKA;
   if (mod === "iskoristenost") {
     if (r === REGIJE.slobodno) return [2, 132, 199, 205];
     if (nijeZaGradnju(r)) return tocka ? [63, 63, 70, 200] : [255, 255, 255, 170];
@@ -164,6 +175,7 @@ export function useRegije(opts: {
     const osvjezi = async () => {
       if (!ziv) return;
       const vidljivo = map.getZoom() >= MIN_ZUM_REGIJA;
+      map.getPane("gup-regije")?.classList.toggle("gup-regije-daleko", map.getZoom() < ZUM_OSTRIH_PIKSELA);
       indeks.current ??= await fetch("/geo/gup-grad/regije.json")
         .then((r) => r.json())
         .then((d: { inacice: Record<string, Record<string, Plocica[]>> }) => d.inacice)

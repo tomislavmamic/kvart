@@ -26,7 +26,8 @@ import { NAJDULJA_NAPOMENA, VRSTE_ISPRAVKA } from "@/lib/gup-grad/ispravci";
 import { predloziIspravak } from "@/lib/actions/gup";
 import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije";
 import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
-import type { PlanskiRezim } from "@/lib/gup-grad/rezim";
+import type { PlanskiRezim, PodrucjeCekanja, Rezim } from "@/lib/gup-grad/rezim";
+import { BOJA_OBUHVATA, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
 import { Navod } from "@/components/gup-dokument/navod";
 import {
   LIST_NAMJENE,
@@ -74,6 +75,8 @@ export interface GupPostavke {
   zgrade: boolean;
   /** Dijelovi čestice: gdje je unutar nje zauzeto, a gdje slobodno (gup-regije.ts). */
   dijelovi: boolean;
+  /** Obuhvati propisanih UPU-a iz prijedloga 2025. (gup-obrisi.ts). */
+  obrisi: boolean;
 }
 
 export const POCETNE_GUP_POSTAVKE: GupPostavke = {
@@ -84,6 +87,7 @@ export const POCETNE_GUP_POSTAVKE: GupPostavke = {
   cestice: true,
   zgrade: true,
   dijelovi: true,
+  obrisi: true,
 };
 
 const CRVENA = "#d03b3b";
@@ -104,11 +108,25 @@ export const SKLAD: Record<Sklad, { naziv: string; boja: string }> = {
   nema: { naziv: "neiskorištena — nema što suditi", boja: "#f4f4f5" },
 };
 
-/** Os 4 — planski režim (rezim.ts), kad se gleda sam. */
-export const REZIM_KARTE: Record<PlanskiRezim, { naziv: string; boja: string }> = {
+/**
+ * Os 4 — planski režim (rezim.ts), kad se gleda sam. U prijedlogu 2025.
+ * čekanje se dijeli po vrsti područja s lista 4.d, u bojama tog lista
+ * (sanacija zeleno, neuređeno žuto, preobrazba narančasto — malo jače, da
+ * se vide na satelitskoj snimci).
+ */
+export type KljucRezima = PlanskiRezim | `ceka-${PodrucjeCekanja}`;
+export const REZIM_KARTE: Record<KljucRezima, { naziv: string; boja: string }> = {
   neposredno: { naziv: "gradi se po GUP-u", boja: "#e4e4e7" },
   vazeci: { naziv: "plan užeg područja na snazi — gradi se po njemu", boja: "#8b5cf6" },
   ceka: { naziv: "čeka propisani plan užeg područja — nova gradnja stoji", boja: "#f97316" },
+  "ceka-sanacija": { naziv: "područje urbane sanacije — nova gradnja čeka UPU", boja: "#6fdc4f" },
+  "ceka-neuredeno": { naziv: "neuređeni dio građevinskog područja — nova gradnja čeka UPU", boja: "#fde047" },
+  "ceka-preobrazba": { naziv: "područje urbane preobrazbe — nova gradnja čeka UPU", boja: "#fb923c" },
+};
+export const kljucRezima = (r: Rezim): KljucRezima => (r.rezim === "ceka" && r.podrucje ? `ceka-${r.podrucje}` : r.rezim);
+const KLJUCEVI_REZIMA: Record<"2025" | "ranije", KljucRezima[]> = {
+  "2025": ["neposredno", "vazeci", "ceka-sanacija", "ceka-neuredeno", "ceka-preobrazba"],
+  ranije: ["neposredno", "vazeci", "ceka"],
 };
 
 /**
@@ -144,7 +162,7 @@ export interface BrojUOknu {
   iskoristenost: number[];
   nijeZaGradnju: number;
   sklad: Record<Sklad, number>;
-  rezim: Record<PlanskiRezim, number>;
+  rezim: Partial<Record<KljucRezima, number>>;
 }
 
 /**
@@ -493,7 +511,9 @@ export function useGupProvjera(opts: {
     // statusnim bojama, pa se ondje skriva; uz „namjenu” ostaje blijeda.
     const prozirnostSlike = (cesticeVidljive: boolean) => {
       const prikaz = postavkeRef.current.prikaz;
-      slikaRef.current?.setOpacity(!cesticeVidljive ? 0.55 : prikaz === "namjena" ? 0.25 : 0);
+      // dijelovi čestice nose i namjenu, a slika namjene bi ih prekrila
+      const dijeloviVidljivi = regijeVrijede(postavkeRef.current) && map.getZoom() >= MIN_ZUM_REGIJA;
+      slikaRef.current?.setOpacity(dijeloviVidljivi ? 0 : !cesticeVidljive ? 0.55 : prikaz === "namjena" ? 0.25 : 0);
     };
     prozirnostRef.current = () => prozirnostSlike(map.getZoom() >= MIN_ZUM && postavkeRef.current.cestice);
 
@@ -510,7 +530,7 @@ export function useGupProvjera(opts: {
         iskoristenost: RAZREDI_ISKORISTENOSTI.map(() => 0),
         nijeZaGradnju: 0,
         sklad: { "po-planu": 0, djelomicno: 0, protivno: 0, nema: 0 },
-        rezim: { neposredno: 0, vazeci: 0, ceka: 0 },
+        rezim: {},
       };
       sloj.eachLayer((l) => {
         const pl = l as LeafletNS.Polygon & { feature?: CesticaFeature };
@@ -527,7 +547,10 @@ export function useGupProvjera(opts: {
         if (s.iskoristenost !== null) n.iskoristenost[razred(s.iskoristenost)]++;
         if (s.slobodnoNijeZaGradnju) n.nijeZaGradnju++;
         n.sklad[s.sklad]++;
-        if (s.rezim) n.rezim[s.rezim.rezim]++;
+        if (s.rezim) {
+          const k = kljucRezima(s.rezim);
+          n.rezim[k] = (n.rezim[k] ?? 0) + 1;
+        }
       });
       setInfo((i) => ({ ...i, zum: map.getZoom(), uOknu: n }));
     };
@@ -695,7 +718,7 @@ function stil(s: SudCestice, p: GupPostavke, a: number): LeafletNS.PathOptions {
       return {
         ...rub,
         weight: 0.4,
-        fillColor: REZIM_KARTE[s.rezim.rezim].boja,
+        fillColor: REZIM_KARTE[kljucRezima(s.rezim)].boja,
         fillOpacity: s.rezim.rezim === "neposredno" ? 0.45 : 0.8,
       };
     default: {
@@ -870,7 +893,7 @@ function sazetak(s: SudCestice, godina: Godina, o: Ostaci, naListu: NaListu): st
 
   // 4 · planski režim: po GUP-u, po planu na snazi, ili čeka plan
   const rezim = s.rezim
-    ? `${kvadrat(REZIM_KARTE[s.rezim.rezim].boja)}<b>${esc(REZIM_KARTE[s.rezim.rezim].naziv)}</b><br><span style="${sivo}">${esc(s.rezim.razlog)}` +
+    ? `${kvadrat(REZIM_KARTE[kljucRezima(s.rezim)].boja)}<b>${esc(REZIM_KARTE[kljucRezima(s.rezim)].naziv)}</b><br><span style="${sivo}">${esc(s.rezim.razlog)}` +
       (s.rezim.navod && s.rezim.izvor ? ` (${navodHtml(s.rezim.navod, s.rezim.izvor)})` : "") +
       (s.rezim.rezim !== "neposredno" || s.rezim.navod ? ` · ${naListu(listRezima(godina, s.rezim.rezim), "na listu")}` : "") +
       `</span>`
@@ -995,6 +1018,10 @@ export function GupProvjeraPostavke(props: {
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.dijelovi} onChange={(e) => postavi({ dijelovi: e.target.checked })} />
           Dijelovi čestice — gdje je zauzeto, a gdje slobodno (od zuma {MIN_ZUM_REGIJA})
+        </label>
+        <label className="meta flex items-center gap-2">
+          <input type="checkbox" checked={p.obrisi} onChange={(e) => postavi({ obrisi: e.target.checked })} />
+          Obuhvati propisanih UPU-a (prijedlog 2025.)
         </label>
         <label className="meta flex items-center gap-2">
           <input type="checkbox" checked={p.slika} onChange={(e) => postavi({ slika: e.target.checked })} />
@@ -1142,8 +1169,8 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
         <div>
           {osNaslov(4, "Planski režim", "boja")}
           <ul className="mt-1 space-y-1">
-            {(["neposredno", "vazeci", "ceka"] as PlanskiRezim[]).map((k) => (
-              <RedLegende key={k} uzorak={{ background: REZIM_KARTE[k].boja }} naziv={REZIM_KARTE[k].naziv} broj={b?.rezim[k]} />
+            {KLJUCEVI_REZIMA[p.godina === 2025 ? "2025" : "ranije"].map((k) => (
+              <RedLegende key={k} uzorak={{ background: REZIM_KARTE[k].boja }} naziv={REZIM_KARTE[k].naziv} broj={b ? (b.rezim[k] ?? 0) : undefined} />
             ))}
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
@@ -1162,6 +1189,23 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
               </>
             )}
             {bezUlica}
+          </p>
+        </div>
+      )}
+
+      {obrisiVrijede(p) && (
+        <div>
+          <p className={naslov}>Propisani UPU-i (prijedlog 2025.)</p>
+          <ul className="mt-1 space-y-1">
+            <RedLegende
+              uzorak={{ background: "#fff", border: `2.5px solid ${BOJA_OBUHVATA}` }}
+              naziv="obuhvat plana užeg područja iz popisa lista 4.d"
+            />
+          </ul>
+          <p className="mt-1 text-xs text-zinc-500">
+            Prijedlog propisuje 34 UPU-a; ime plana je upisano od zuma 15. Unutar obuhvata nova gradnja čeka plan samo u
+            područjima urbane sanacije, preobrazbe i neuređenog (čl. 103) — to su boje u načinu „Planski režim”; drugdje
+            se do plana gradi po GUP-u.
           </p>
         </div>
       )}
@@ -1194,7 +1238,7 @@ const TOCKICE = "radial-gradient(circle, #3f3f46 1.2px, transparent 1.3px) 0 0 /
  * boja UNUTAR obrisa čestice. Brojke u blokovima iznad ostaju po česticama.
  */
 /** Uzorak dijelova koji čekaju propisani plan (gup-regije.ts, REGIJE.ceka). */
-const PRUGE_CEKA = "repeating-linear-gradient(180deg, rgba(249,115,22,.85) 0 2px, #fff 2px 8px)";
+const CEKA_UZORAK = "rgba(249,115,22,.5)";
 
 function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: string }) {
   // što je iskorišteno bez položaja ovisi o načinu brojanja (regije.py)
@@ -1212,7 +1256,7 @@ function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: stri
           [{ background: "rgba(212,212,216,.7)" }, vezano],
           [{ background: "rgba(2,132,199,.8)" }, "slobodno za gradnju"],
           [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
-          [{ background: PRUGE_CEKA }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
+          [{ background: CEKA_UZORAK }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
         ]
       : prikaz === "sklad"
         ? [
@@ -1225,7 +1269,7 @@ function LegendaDijelova({ prikaz, inacica }: { prikaz: BojaKarte; inacica: stri
             [{ background: "rgba(224,160,0,.5)" }, vezano],
             [{ background: "rgba(224,160,0,.14)" }, "slobodno za gradnju"],
             [{ background: TOCKICE }, "slobodno, ali nije za gradnju"],
-            [{ background: PRUGE_CEKA }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
+            [{ background: CEKA_UZORAK }, "slobodno, ali čeka propisani plan (UPU/DPU)"],
             [{ background: srafuraCss("#ffffff", PRUGE.protivno) }, "zauzeto protivno planu"],
           ];
   const redovi = sviRedovi.filter((r): r is [React.CSSProperties, string] => r[1] !== null);

@@ -25,12 +25,18 @@ import {
   type GupPostavke,
 } from "@/components/gup-grad/gup-provjera";
 import { useRegije } from "@/components/gup-grad/gup-regije";
+import { useObrisi } from "@/components/gup-grad/gup-obrisi";
 import { PlutajuciIzbornik } from "@/components/site-header";
 import { BASE_LAYERS, GUP_GRAD_BOUNDS, OVERLAY_LAYERS, SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
 
 /** Središte grada kad adresa ne kaže drugo. */
 const SREDISTE: [number, number] = [43.5125, 16.455];
-const PODLOGE = ["satelit", "karta"] as const;
+const PODLOGE = ["dof-2025", "satelit", "karta"] as const;
+const NATPIS_PODLOGE: Record<(typeof PODLOGE)[number], string> = {
+  "dof-2025": "Ortofoto 2025.",
+  satelit: "Satelitska snimka (2023.)",
+  karta: "Ulična karta",
+};
 type Podloga = (typeof PODLOGE)[number];
 /** Službeni ISPU list namjene (plan na snazi) — isti sloj kao na /karta. */
 const SLUZBENI = OVERLAY_LAYERS.find((l) => l.id === "gup-namjena");
@@ -67,7 +73,7 @@ export function GupKarta(props: {
   const LRef = useRef<typeof LeafletNS | null>(null);
   const pogodakSloja = useRef(0);
   const [spremno, setSpremno] = useState(false);
-  const [podloga, setPodloga] = useState<Podloga>("satelit");
+  const [podloga, setPodloga] = useState<Podloga>("dof-2025");
   const [sluzbeni, setSluzbeni] = useState(false);
   const [lijeva, setLijevaStanje] = useState(false);
   const [desna, setDesnaStanje] = useState(false);
@@ -164,6 +170,7 @@ export function GupKarta(props: {
 
   const info = useGupProvjera({ mapRef, LRef, spremno, aktivno: true, postavke: props.postavke, pogodakSloja });
   useRegije({ mapRef, LRef, spremno, postavke: props.postavke });
+  useObrisi({ mapRef, LRef, spremno, postavke: props.postavke });
 
   const gumb = (aktivan: boolean) =>
     `fokus meta-cip rounded-full border px-2.5 py-1 text-xs font-semibold ${
@@ -198,7 +205,7 @@ export function GupKarta(props: {
                 <div className="mt-1 flex flex-wrap gap-1.5" role="group" aria-label="Podloga">
                   {PODLOGE.map((id) => (
                     <button key={id} type="button" aria-pressed={podloga === id} onClick={() => setPodloga(id)} className={gumb(podloga === id)}>
-                      {id === "satelit" ? "Satelitska snimka" : "Ulična karta"}
+                      {NATPIS_PODLOGE[id]}
                     </button>
                   ))}
                 </div>

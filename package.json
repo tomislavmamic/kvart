@@ -45,6 +45,7 @@
     "gup-grad:urbana-pravila": "/opt/homebrew/bin/python3 scripts/gup-grad/urbana-pravila.py",
     "gup-grad:odredbe": "/opt/homebrew/bin/python3 scripts/gup-grad/odredbe.py",
     "gup-grad:osm": "/opt/homebrew/bin/python3 scripts/gup-grad/osm.py",
+    "gup-grad:planski-rezim": "/opt/homebrew/bin/python3 scripts/gup-grad/planski-rezim.py && /opt/homebrew/bin/python3 scripts/gup-grad/planski-obrisi.py",
     "gup-grad:cestice": "/opt/homebrew/bin/python3 scripts/gup-grad/cestice.py",
     "gup-grad:slobodne": "tsx scripts/gup-grad/slobodne.ts",
     "gup-grad:pregled": "/opt/homebrew/bin/python3 scripts/gup-grad/pregled.py",

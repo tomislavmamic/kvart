@@ -1151,4 +1151,8 @@ body {
 .leaflet-image-layer.gup-regije {
   image-rendering: pixelated;
 }
-
+/* Izdaleka (ispod z15) više piksela rešetke pada u jedan piksel zaslona;
+   oštro uzorkovanje tada treperi kao šum, pa se slika gladi. */
+.gup-regije-daleko .leaflet-image-layer.gup-regije {
+  image-rendering: auto;
+}
