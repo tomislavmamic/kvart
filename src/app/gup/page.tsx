@@ -155,9 +155,11 @@ export default async function GupPage() {
           objavljen, pa za 2015. vrijede obveze iz 2008. (izmjene 2014. mijenjaju ih samo za Trsteničku uvalu). Čestica
           pripada obuhvatu kad ga pokriva barem pola čestice; najmanji planovi od nekoliko čestica mogu ispasti. Na
           grafikonu i na karti je slobodno koje čeka plan narančasto, a slobodno pod planom na snazi na grafikonu je rešetka — to drugo je slobodno
-          za gradnju, ali koliko se na njemu smije, odlučuje taj plan. Na karti se za prijedlog 2025. crtkano ocrtavaju i
-          sama područja urbane sanacije, urbane preobrazbe i neuređenog dijela građevinskog područja, s lista 4.d
-          (<code className="font-mono text-xs">scripts/gup-grad/planski-obrisi.py</code>). Obuhvati su iz{" "}
+          za gradnju, ali koliko se na njemu smije, odlučuje taj plan. Na karti se za prijedlog 2025. ocrtavaju i obuhvati 34
+          propisana UPU-a s imenima iz legende lista 4.d
+          (<code className="font-mono text-xs">scripts/gup-grad/planski-obrisi.py</code>), a u načinu „Planski režim”
+          čestice koje čekaju plan obojene su po vrsti područja, kao na listu: urbana sanacija zeleno, neuređeni dio
+          građevinskog područja žuto, urbana preobrazba narančasto. Obuhvati su iz{" "}
           <code className="font-mono text-xs">scripts/gup-grad/planski-rezim.py</code>, a što koji znači u{" "}
           <code className="font-mono text-xs">src/lib/gup-grad/rezim.ts</code>.
         </p>

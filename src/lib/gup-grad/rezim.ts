@@ -38,8 +38,13 @@ export type PlanskiRezim =
   /** GUP propisuje plan užeg područja koji nije donesen; nova gradnja čeka. */
   | "ceka";
 
+/** Prijedlog 2025.: vrsta područja iz lista 4.d zbog koje gradnja čeka UPU. */
+export type PodrucjeCekanja = "sanacija" | "preobrazba" | "neuredeno";
+
 export interface Rezim {
   rezim: PlanskiRezim;
+  /** Samo za „ceka” u prijedlogu 2025. */
+  podrucje?: PodrucjeCekanja;
   /** Kratko objašnjenje za kartu: zašto baš taj režim. */
   razlog: string;
 }
@@ -63,11 +68,11 @@ export function planskiRezim(bitovi: number, godina: Godina, kodPravila: string 
   if (bitovi & REZIM.VAZECI) return { rezim: "vazeci", razlog: "na snazi je plan užeg područja (UPU, DPU ili PUP)" };
   if (godina === 2025) {
     if (bitovi & REZIM.SANACIJA)
-      return { rezim: "ceka", razlog: "područje urbane sanacije — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
+      return { rezim: "ceka", podrucje: "sanacija", razlog: "područje urbane sanacije — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
     if (bitovi & REZIM.PREOBRAZBA)
-      return { rezim: "ceka", razlog: "područje urbane preobrazbe — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
+      return { rezim: "ceka", podrucje: "preobrazba", razlog: "područje urbane preobrazbe — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
     if (bitovi & REZIM.NEUREDENO)
-      return { rezim: "ceka", razlog: "neuređeni dio građevinskog područja — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
+      return { rezim: "ceka", podrucje: "neuredeno", razlog: "neuređeni dio građevinskog područja — gradnja tek po UPU-u (prijedlog 2025., čl. 103)" };
     if (bitovi & REZIM.OBVEZA)
       return { rezim: "neposredno", razlog: "UPU je samo preporučen — do njega neposredna provedba GUP-a (prijedlog 2025., čl. 103. st. 4)" };
     return NEPOSREDNO;
