@@ -1,0 +1,327 @@
+{
+ "opis": "Izvedeno skriptom scripts/gup-grad/dokument.py.",
+ "dpi": 150,
+ "plocica": 512,
+ "listovi": {
+  "namjena-2008": {
+   "naslov": "1. Korištenje i namjena prostora",
+   "izvor": "Izmjene i dopune GUP-a, Sl. gl. 3/08",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3170&Command=Core_Download",
+   "sirina": 10100,
+   "visina": 2778,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 264
+   },
+   "uklapanje": [
+    5.846860582365992e-05,
+    1.0530094402342957e-06,
+    -33.732266871136055,
+    3.829699749629306e-06,
+    -0.00021264501202783442,
+    1023.3984969293481
+   ]
+  },
+  "namjena-2014": {
+   "naslov": "1. Korištenje i namjena prostora",
+   "izvor": "Neslužbeni pročišćeni kartografski prikaz, 2014.",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3196&Command=Core_Download",
+   "sirina": 10336,
+   "visina": 2955,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 274
+   },
+   "uklapanje": [
+    5.714208681179547e-05,
+    1.0284380911051193e-06,
+    -32.946694795714436,
+    3.598082771489772e-06,
+    -0.00019991670851432817,
+    962.184986442021
+   ]
+  },
+  "djelatnosti-2008": {
+   "naslov": "2. Mreža gospodarskih i društvenih djelatnosti",
+   "izvor": "Izmjene i dopune GUP-a, Sl. gl. 3/08",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3171&Command=Core_Download",
+   "sirina": 10100,
+   "visina": 2778,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 264
+   }
+  },
+  "promet-2008": {
+   "naslov": "3.a Promet",
+   "izvor": "Izmjene i dopune GUP-a, Sl. gl. 3/08",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3172&Command=Core_Download",
+   "sirina": 10100,
+   "visina": 2778,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 264
+   }
+  },
+  "telekomunikacije-2006": {
+   "naslov": "3.b Pošta i telekomunikacije",
+   "izvor": "GUP, Sl. gl. 1/06",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3173&Command=Core_Download",
+   "sirina": 10225,
+   "visina": 2790,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 262
+   }
+  },
+  "energetika-2008": {
+   "naslov": "3.c Energetski sustav",
+   "izvor": "Izmjene i dopune GUP-a, Sl. gl. 3/08",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3174&Command=Core_Download",
+   "sirina": 10100,
+   "visina": 2778,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 264
+   }
+  },
+  "vodoopskrba-2006": {
+   "naslov": "3.d Vodnogospodarski sustav – vodoopskrba",
+   "izvor": "GUP, Sl. gl. 1/06",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3176&Command=Core_Download",
+   "sirina": 10105,
+   "visina": 2790,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 265
+   }
+  },
+  "odvodnja-2006": {
+   "naslov": "3.e Vodnogospodarski sustav – odvodnja otpadnih voda",
+   "izvor": "GUP, Sl. gl. 1/06",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3175&Command=Core_Download",
+   "sirina": 10105,
+   "visina": 2803,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 266
+   }
+  },
+  "uvjeti-koristenja-2012": {
+   "naslov": "4.a Uvjeti korištenja",
+   "izvor": "Ciljane izmjene i dopune GUP-a, Sl. gl. 3/12",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3177&Command=Core_Download",
+   "sirina": 10336,
+   "visina": 2955,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 274
+   }
+  },
+  "urbana-pravila-2012": {
+   "naslov": "4.b Urbana pravila",
+   "izvor": "Ciljane izmjene i dopune GUP-a, Sl. gl. 3/12",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3178&Command=Core_Download",
+   "sirina": 10336,
+   "visina": 2955,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 274
+   },
+   "uklapanje": [
+    5.714208681179547e-05,
+    1.0284380911051193e-06,
+    -32.946694795714436,
+    3.598082771489772e-06,
+    -0.00019991670851432817,
+    962.184986442021
+   ]
+  },
+  "urbana-pravila-2014": {
+   "naslov": "4.b Urbana pravila",
+   "izvor": "Neslužbeni pročišćeni kartografski prikaz, 2014.",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3197&Command=Core_Download",
+   "sirina": 10336,
+   "visina": 2955,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 274
+   },
+   "uklapanje": [
+    5.714208681179547e-05,
+    1.0284380911051193e-06,
+    -32.946694795714436,
+    3.598082771489772e-06,
+    -0.00019991670851432817,
+    962.184986442021
+   ]
+  },
+  "detaljniji-planovi-2008": {
+   "naslov": "4.c Područja i dijelovi primjene planskih mjera zaštite – obuhvat detaljnijih planova",
+   "izvor": "Izmjene i dopune GUP-a, Sl. gl. 3/08",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3179&Command=Core_Download",
+   "sirina": 10100,
+   "visina": 2778,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 264
+   },
+   "uklapanje": [
+    5.846860582365992e-05,
+    1.0530094402342957e-06,
+    -33.732266871136055,
+    3.829699749629306e-06,
+    -0.00021264501202783442,
+    1023.3984969293481
+   ]
+  },
+  "vazeci-planovi-2008": {
+   "naslov": "4.d Područja i dijelovi primjene planskih mjera zaštite – važeći planovi",
+   "izvor": "Izmjene i dopune GUP-a, Sl. gl. 3/08",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3180&Command=Core_Download",
+   "sirina": 10100,
+   "visina": 2778,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 264
+   },
+   "uklapanje": [
+    5.846860582365992e-05,
+    1.0530094402342957e-06,
+    -33.732266871136055,
+    3.829699749629306e-06,
+    -0.00021264501202783442,
+    1023.3984969293481
+   ]
+  },
+  "vazeci-planovi-2014": {
+   "naslov": "4.d Područja i dijelovi primjene planskih mjera zaštite – važeći planovi",
+   "izvor": "Neslužbeni pročišćeni kartografski prikaz, stanje 28. 11. 2014.",
+   "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=3198&Command=Core_Download",
+   "sirina": 10336,
+   "visina": 2955,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 274
+   },
+   "uklapanje": [
+    5.714208681179547e-05,
+    1.0284380911051193e-06,
+    -32.946694795714436,
+    3.598082771489772e-06,
+    -0.00019991670851432817,
+    962.184986442021
+   ]
+  },
+  "namjena-2025": {
+   "naslov": "1. Korištenje i namjena prostora",
+   "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Generalnog%20urbanisti%C4%8Dkog%20plana%20Splita%20za%20ponovnu%20javnu%20raspravu/1_%20Koristenje%20i%20namjena%20prostora.pdf",
+   "sirina": 9982,
+   "visina": 2775,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 267
+   },
+   "uklapanje": [
+    5.916949413363295e-05,
+    -9.848438072228105e-10,
+    -29.005973172598683,
+    -3.54233234264601e-09,
+    -0.00021282360840408073,
+    1026.1964607779748
+   ]
+  },
+  "djelatnosti-2025": {
+   "naslov": "2. Mreža gospodarskih i društvenih djelatnosti",
+   "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Generalnog%20urbanisti%C4%8Dkog%20plana%20Splita%20za%20ponovnu%20javnu%20raspravu/2_%20Mreza%20gospodarskih%20i%20drustvenih%20djelatnosti.pdf",
+   "sirina": 9982,
+   "visina": 2775,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 267
+   }
+  },
+  "promet-2025": {
+   "naslov": "3.a Promet",
+   "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Generalnog%20urbanisti%C4%8Dkog%20plana%20Splita%20za%20ponovnu%20javnu%20raspravu/3_a%20Promet.pdf",
+   "sirina": 9982,
+   "visina": 2775,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 267
+   }
+  },
+  "energetika-2025": {
+   "naslov": "3.c Energetski sustav",
+   "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Generalnog%20urbanisti%C4%8Dkog%20plana%20Splita%20za%20ponovnu%20javnu%20raspravu/3_c%20Energetski%20sustav.pdf",
+   "sirina": 9982,
+   "visina": 2775,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 267
+   }
+  },
+  "urbana-pravila-2025": {
+   "naslov": "4.c Urbana pravila",
+   "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Generalnog%20urbanisti%C4%8Dkog%20plana%20Splita%20za%20ponovnu%20javnu%20raspravu/4_c%20Urbana%20pravila.pdf",
+   "sirina": 9982,
+   "visina": 2775,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 267
+   },
+   "uklapanje": [
+    5.916949413363295e-05,
+    -9.848438072228105e-10,
+    -29.005973172598683,
+    -3.54233234264601e-09,
+    -0.00021282360840408073,
+    1026.1964607779748
+   ]
+  },
+  "planske-mjere-2025": {
+   "naslov": "4.d Područja i dijelovi primjene planskih mjera zaštite",
+   "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Generalnog%20urbanisti%C4%8Dkog%20plana%20Splita%20za%20ponovnu%20javnu%20raspravu/4_d%20Podrucja%20i%20dijelovi%20primjene%20planskih%20mjera%20zastite.pdf",
+   "sirina": 9982,
+   "visina": 2775,
+   "maksZum": 5,
+   "slicica": {
+    "sirina": 960,
+    "visina": 267
+   },
+   "uklapanje": [
+    5.916949413363295e-05,
+    -9.848438072228105e-10,
+    -29.005973172598683,
+    -3.54233234264601e-09,
+    -0.00021282360840408073,
+    1026.1964607779748
+   ]
+  }
+ }
+}

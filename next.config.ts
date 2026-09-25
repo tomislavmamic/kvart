@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
    */
   async redirects() {
     return [
+      // plan na snazi živi na /gup/dokument; izdanja 2006. i 2025. imaju svoj put
+      { source: "/gup/dokument/2015", destination: "/gup/dokument", permanent: false },
       {
         source: "/karta",
         has: [{ type: "query", key: "pogled", value: "gup-provjera" }],

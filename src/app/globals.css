@@ -571,6 +571,160 @@ body {
   }
 }
 
+/* Navod GUP-a (navod.tsx, navodHtml): poveznica na mjesto u planu. Točkasto
+   podcrtana, da se razlikuje od obične poveznice — ne vodi drugamo, nego
+   pokazuje izvor na licu mjesta. Klasa, a ne utilityji, jer se piše i u HTML
+   nizove skočnih prozora karte, gdje Tailwind ne vidi razrede. */
+.navod {
+  color: var(--color-maslina);
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.navod:hover {
+  color: var(--color-maslina-tamna);
+  text-decoration-style: solid;
+}
+
+/* Citat u ulomku i u cijelom tekstu: marker, ne boja sustava — tuđi tekst,
+   naše isticanje. Blijeda žuta kao podloga statusa „u tijeku”. */
+.navod-oznaka {
+  background: var(--color-status-u-tijeku-ground);
+  color: inherit;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--color-status-u-tijeku-ground);
+}
+
+/* Skočni prozor navoda (prozor-navoda.tsx). Nativni <dialog>: zamućena
+   pozadina, Esc i zarobljeni fokus dolaze s njim. Na uskom zaslonu donja
+   ploča (The Bottom-Sheet Fallback Rule), od `sm` kartica u sredini. */
+.prozor-navoda {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 85dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: var(--color-white, #fff);
+  color: var(--color-kamen-tinta);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+.prozor-navoda::backdrop {
+  background: rgb(24 24 27 / 0.45);
+}
+@media (min-width: 640px) {
+  .prozor-navoda {
+    inset: 0;
+    margin: auto;
+    width: min(42rem, calc(100% - 2rem));
+    max-height: min(80dvh, 44rem);
+    border-radius: 0.75rem;
+  }
+}
+
+/* Cijeli tekst GUP-a (/gup/dokument, oznacivac.tsx): citat istaknut kroz
+   CSS Custom Highlight API (pravilo `::highlight(navod)` piše sam Oznacivac —
+   Lightning CSS ga još ne zna pročitati); blokovi navoda dobiju tanku crtu
+   uz rub, a onaj na koji se skočilo kratko bljesne, da oko nađe mjesto. */
+.navod-blok {
+  box-shadow: -0.75rem 0 0 -0.5rem #f5c56b;
+}
+@keyframes navod-bljesak {
+  from {
+    background-color: #fde68a;
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.navod-blok--skok {
+  border-radius: 0.25rem;
+  animation: navod-bljesak 2s ease-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .navod-blok--skok {
+    animation: none;
+  }
+}
+
+/* Cijeli tekst GUP-a (tekst-dokumenta.tsx). Razredi su ovdje, a ne na
+   svakom od ~2 500 blokova — vidi komentar ondje. Sidra (članak, stranica,
+   blok) ostavljaju mjesta ispod trake stranice. */
+.gup-tekst {
+  color: var(--color-kamen-tekst);
+  line-height: 1.625;
+}
+.gup-tekst [id] {
+  scroll-margin-top: 6rem;
+}
+.gup-tekst > p,
+.gup-tekst > figure {
+  margin-top: 0.75rem;
+}
+.gup-tekst > ul {
+  margin-top: 0.5rem;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+.gup-tekst > ul > li + li {
+  margin-top: 0.375rem;
+}
+.gup-tekst > ul > li::marker {
+  color: var(--color-kamen-tih);
+}
+.gup-tekst > ul > li.nast {
+  list-style: none;
+}
+.gup-tekst :is(h3, h4, h5, h6) {
+  color: var(--color-kamen-tinta);
+  font-weight: 700;
+}
+.gup-tekst > h3 {
+  margin-top: 2.5rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+.gup-tekst > h4 {
+  margin-top: 2rem;
+  font-size: 1.125rem;
+}
+.gup-tekst > h5 {
+  margin-top: 1.5rem;
+}
+.gup-tekst > h5.cl {
+  text-align: center;
+}
+.gup-tekst > h6 {
+  margin-top: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.gup-tekst > .str {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-kamen-tih);
+}
+.gup-tekst > .str::before,
+.gup-tekst > .str::after {
+  content: "";
+  height: 1px;
+  background: var(--color-kamen-tlo);
+}
+.gup-tekst > .str::before {
+  flex: 1;
+}
+.gup-tekst > .str::after {
+  width: 1.5rem;
+}
+
 /* Vrtuljak čekanja bez vrtnje.
  *
  * Uz `prefers-reduced-motion` vrtnja se gasi, ali se NE gasi obavijest: kolut

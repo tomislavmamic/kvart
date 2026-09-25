@@ -28,6 +28,20 @@ import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije"
 import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 import type { PlanskiRezim, PodrucjeCekanja, Rezim } from "@/lib/gup-grad/rezim";
 import { BOJA_OBUHVATA, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
+import { Navod } from "@/components/gup-dokument/navod";
+import {
+  LIST_NAMJENE,
+  LIST_URBANIH_PRAVILA,
+  navodGradnja,
+  navodHtml,
+  navodNamjena,
+  navodPpmin,
+  navodTocke,
+  tockaNaListu,
+} from "@/lib/gup-dokument/id";
+import { uHtrs } from "@/lib/gup-dokument/htrs";
+import { listoviKlijent, putTocke } from "@/lib/gup-dokument/listovi-klijent";
+import type { List } from "@/lib/gup-dokument/model";
 
 const MIN_ZUM = 15;
 /** Zgrade su gušće od čestica (~60 000 tlocrta), pa tek od zuma 16. */
@@ -274,8 +288,36 @@ interface Ostaci {
   posudjeno: Map<number, Map<number, [number, number]>>;
   ppmin: Ppmin;
   gradnja: Gradnja;
+  /** Navodi GUP-a koji postoje za ovu godinu — izvor se povezuje s tekstom samo kad navod ima. */
+  navodi: Set<string>;
 }
-const PRAZNO: Ostaci = { poCestici: new Map(), posudjeno: new Map(), ppmin: {}, gradnja: {} };
+const PRAZNO: Ostaci = { poCestici: new Map(), posudjeno: new Map(), ppmin: {}, gradnja: {}, navodi: new Set() };
+
+/** Tekst kao poveznica na navod GUP-a ako navod postoji, inače samo tekst. */
+function izvorHtml(o: Ostaci, id: string, tekst: string): string {
+  return o.navodi.has(id) ? navodHtml(id, tekst) : esc(tekst);
+}
+
+/**
+ * Poveznica na službeni list oko mjesta klika, ili samo tekst ako list nema
+ * uklapanje (ili podaci o listovima još nisu stigli). Isječak pokazuje ono
+ * što je izračun s lista pročitao, pa se razvrstavanje može provjeriti okom.
+ */
+type NaListu = (list: string, tekst: string) => string;
+function naListuFn(listovi: Record<string, List> | null, e: number, n: number): NaListu {
+  return (list, tekst) => {
+    const l = listovi?.[list];
+    const t = l && tockaNaListu(l.uklapanje, [e, n]);
+    return l && t ? navodHtml(navodTocke(list, t), tekst, putTocke(l, t)) : esc(tekst);
+  };
+}
+
+/** List 4.c/4.d s planskim režimom za godinu: obuhvati obveze i planova na snazi. */
+function listRezima(godina: Godina, rezim: PlanskiRezim): string {
+  if (godina === 2025) return "planske-mjere-2025";
+  if (rezim === "vazeci") return godina === 2006 ? "vazeci-planovi-2008" : "vazeci-planovi-2014";
+  return "detaljniji-planovi-2008";
+}
 
 /** Odredbe o gradnji za komad klase u području urbanog pravila — kao podaci.ts na poslužitelju. */
 function uvjetiKomada(o: Ostaci, kodPravila: string | undefined, klasa: (typeof KLASE)[number]): UvjetiKomada {
@@ -302,7 +344,7 @@ function ucitajOstatke(inacica: string, godina: number): Promise<Ostaci> {
   if (!p) {
     p = fetch(`/api/gup-ostaci/${kljuc}`)
       .then((r) => (r.ok ? r.json() : { ostaci: [], ppmin: {}, gradnja: {} }))
-      .then((d: { ostaci: [number, number][]; posudjeno?: [number, number, number, number][]; ppmin: Ppmin; gradnja?: Gradnja }) => {
+      .then((d: { ostaci: [number, number][]; posudjeno?: [number, number, number, number][]; ppmin: Ppmin; gradnja?: Gradnja; navodi?: string[] }) => {
         const m = new Map<number, Set<number>>();
         for (const [c, k] of d.ostaci) {
           if (!m.has(c)) m.set(c, new Set());
@@ -313,7 +355,7 @@ function ucitajOstatke(inacica: string, godina: number): Promise<Ostaci> {
           if (!posudjeno.has(c)) posudjeno.set(c, new Map());
           posudjeno.get(c)!.set(k, [px, protivno]);
         }
-        return { poCestici: m, posudjeno, ppmin: d.ppmin ?? {}, gradnja: d.gradnja ?? {} };
+        return { poCestici: m, posudjeno, ppmin: d.ppmin ?? {}, gradnja: d.gradnja ?? {}, navodi: new Set(d.navodi ?? []) };
       })
       .catch(() => {
         ostaciPoKljucu.delete(kljuc);
@@ -389,6 +431,18 @@ export function useGupProvjera(opts: {
   const osvjeziRef = useRef<() => void>(() => {});
   const prozirnostRef = useRef<() => void>(() => {});
   const ostaciRef = useRef<Ostaci>(PRAZNO);
+  // Veličina i uklapanje listova, za isječak službenog lista oko čestice u skočnom prozoru.
+  const listoviRef = useRef<Record<string, List> | null>(null);
+  useEffect(() => {
+    if (!aktivno) return;
+    let ziv = true;
+    listoviKlijent().then((l) => {
+      if (ziv) listoviRef.current = l;
+    });
+    return () => {
+      ziv = false;
+    };
+  }, [aktivno]);
 
   // Sloj čestica i njegovi rukovatelji žive dok je pogled aktivan.
   useEffect(() => {
@@ -422,9 +476,10 @@ export function useGupProvjera(opts: {
           pogodakSloja.current = Date.now();
           const p = (f as CesticaFeature).properties;
           const s = postavkeRef.current;
+          const [istok, sjever] = uHtrs(e.latlng.lat, e.latlng.lng);
           L.popup({ maxWidth: 340, className: "gup-provjera-popup" })
             .setLatLng(e.latlng)
-            .setContent(popup(p, sud(p), s, ostaciRef.current))
+            .setContent(popup(p, sud(p), s, ostaciRef.current, naListuFn(listoviRef.current, istok, sjever)))
             .openOn(map);
         });
       },
@@ -684,7 +739,7 @@ function esc(v: unknown): string {
 
 const m2 = (v: number) => `${Math.round(v).toLocaleString("hr-HR")} m²`;
 
-function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci): string {
+function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci, naListu: NaListu): string {
   const ppmin = o.ppmin;
   const inacica = INACICE.find((i) => i.id === post.inacica) ?? INACICE[0];
   const kodPravila = p.u?.[`${post.godina}`];
@@ -695,7 +750,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
   if (!s.komadi.length) {
     return h + `<br><span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
   }
-  h += sazetak(s) + `<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;color:#3f3f46">Pojedinosti računa</summary>`;
+  h += sazetak(s, post.godina, o, naListu) + `<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;color:#3f3f46">Pojedinosti računa</summary>`;
   h +=
     `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)} u zoni` +
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
@@ -704,12 +759,12 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
     (s.nijeZaGradnju > 0 ? `; slobodno, ali nije za gradnju ${m2(s.nijeZaGradnju)}` : "") +
     `</span>` +
     (kodPravila
-      ? `<br><span style="${sivo}">područje urbanog pravila <b>${esc(kodPravila)}</b> (list „Urbana pravila” ${post.godina}.)` +
+      ? `<br><span style="${sivo}">područje urbanog pravila <b>${esc(kodPravila)}</b> (${naListu(LIST_URBANIH_PRAVILA[post.godina], `list „Urbana pravila” ${post.godina}.`)})` +
         (o.gradnja[kodPravila]
           ? `: ${esc(NOVA_STAMBENA[o.gradnja[kodPravila].nova_stambena] ?? o.gradnja[kodPravila].nova_stambena)}` +
             (o.gradnja[kodPravila].kig ? `, kig do ${String(o.gradnja[kodPravila].kig).replace(".", ",")}` : "") +
             (o.gradnja[kodPravila].kis ? `, kis do ${String(o.gradnja[kodPravila].kis).replace(".", ",")}` : "") +
-            ` — ${esc(o.gradnja[kodPravila].izvor)}`
+            ` — ${izvorHtml(o, navodGradnja(post.godina, kodPravila), o.gradnja[kodPravila].izvor)}`
           : "") +
         `</span>`
       : "") +
@@ -751,7 +806,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci):
     if (najmanja) {
       h +=
         `<br><span style="${sivo}">najmanja građevna čestica prema odredbama: <b>${m2(najmanja.m2)}</b> ` +
-        `(${esc(TIP_GRADNJE[najmanja.tip] ?? najmanja.tip)}) — ${esc(najmanja.izvor)}</span>`;
+        `(${esc(TIP_GRADNJE[najmanja.tip] ?? najmanja.tip)}) — ${izvorHtml(o, navodPpmin(post.godina, kodPravila!), najmanja.izvor)}</span>`;
     }
     if (k.vrtSusjeda > 0) {
       h +=
@@ -788,7 +843,7 @@ const posto = (v: number) => `${Math.round(v * 100)} %`;
  * Tri osi čestice u tri retka, na vrhu skočnog prozora: namjena,
  * iskorištenost (broj i traka, slobodno po razlogu) i sklad s planom.
  */
-function sazetak(s: SudCestice): string {
+function sazetak(s: SudCestice, godina: Godina, o: Ostaci, naListu: NaListu): string {
   const sivo = "color:#71717b";
   const red = (os: string, sadrzaj: string) =>
     `<div style="display:grid;grid-template-columns:92px 1fr;gap:8px;margin-top:6px"><span style="${sivo}">${os}</span><span>${sadrzaj}</span></div>`;
@@ -799,9 +854,10 @@ function sazetak(s: SudCestice): string {
   const drugi = s.komadi.filter((k) => k.klasa !== s.pretezita);
   const namjena = s.jeUlica
     ? `${kvadrat(ULICA)}<b>ulica</b> <span style="${sivo}">(${m2(s.ulica)}, izuzeto iz zone)</span>`
-    : `${kvadrat(s.pretezita!.bojaPlana)}<b>${esc(s.pretezita!.kod)}</b> ${esc(s.pretezita!.kratko)}` +
+    : `${kvadrat(s.pretezita!.bojaPlana)}<b>${izvorHtml(o, navodNamjena(godina, s.pretezita!.kod), s.pretezita!.kod)}</b> ${esc(s.pretezita!.kratko)}` +
       (drugi.length ? `<br><span style="${sivo}">i ${drugi.map((k) => `${m2(k.m2)} u ${esc(k.klasa.kod)}`).join(", ")}</span>` : "") +
-      (s.ulica > 0 ? `<br><span style="${sivo}">+ ${m2(s.ulica)} ulice, izuzeto iz zone</span>` : "");
+      (s.ulica > 0 ? `<br><span style="${sivo}">+ ${m2(s.ulica)} ulice, izuzeto iz zone</span>` : "") +
+      `<br><span style="${sivo}">${naListu(LIST_NAMJENE[godina], `na listu namjene ${godina}.`)}</span>`;
   if (s.jeUlica) return `<div style="margin-top:4px">${red("Namjena", namjena)}</div>`;
 
   // 2 · iskorištenost: broj, traka i slobodno po razlogu
@@ -837,7 +893,10 @@ function sazetak(s: SudCestice): string {
 
   // 4 · planski režim: po GUP-u, po planu na snazi, ili čeka plan
   const rezim = s.rezim
-    ? `${kvadrat(REZIM_KARTE[kljucRezima(s.rezim)].boja)}<b>${esc(REZIM_KARTE[kljucRezima(s.rezim)].naziv)}</b><br><span style="${sivo}">${esc(s.rezim.razlog)}</span>`
+    ? `${kvadrat(REZIM_KARTE[kljucRezima(s.rezim)].boja)}<b>${esc(REZIM_KARTE[kljucRezima(s.rezim)].naziv)}</b><br><span style="${sivo}">${esc(s.rezim.razlog)}` +
+      (s.rezim.navod && s.rezim.izvor ? ` (${navodHtml(s.rezim.navod, s.rezim.izvor)})` : "") +
+      (s.rezim.rezim !== "neposredno" || s.rezim.navod ? ` · ${naListu(listRezima(godina, s.rezim.rezim), "na listu")}` : "") +
+      `</span>`
     : "";
 
   return (
@@ -1115,9 +1174,20 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
             ))}
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
-            {p.godina === 2025
-              ? "Prijedlog 2025.: nova gradnja čeka UPU samo u područjima urbane sanacije, urbane preobrazbe i neuređenog dijela građevinskog područja (list 4.d, čl. 103); drugdje je UPU preporuka."
-              : "GUP 2006./2015.: gdje je propisan plan užeg područja, a nije donesen, nova gradnja u nisko konsolidiranim područjima (urbana pravila 3.x) čeka taj plan (čl. 104–105)."}
+            {p.godina === 2025 ? (
+              <>
+                Prijedlog 2025.: nova gradnja čeka UPU samo u područjima urbane sanacije, urbane preobrazbe i
+                neuređenog dijela građevinskog područja (<Navod id="list-planske-mjere-2025">list 4.d</Navod>,{" "}
+                <Navod id="obveza-plana-2025">čl. 103</Navod>); drugdje je UPU{" "}
+                <Navod id="preporuka-plana-2025">preporuka</Navod>.
+              </>
+            ) : (
+              <>
+                GUP 2006./2015.: gdje je propisan plan užeg područja, a nije donesen, nova gradnja u nisko
+                konsolidiranim područjima (urbana pravila 3.x) čeka taj plan (
+                <Navod id={p.godina === 2006 ? "obveza-plana-2006" : "obveza-plana-2015"}>čl. 104–105</Navod>).
+              </>
+            )}
             {bezUlica}
           </p>
         </div>

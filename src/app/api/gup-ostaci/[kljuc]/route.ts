@@ -4,7 +4,8 @@
  *   { ostaci: [[čestica, klasa], …],
  *     posudjeno: [[čestica, klasa, pikseli, od toga protivno], …]  — vrt zgrade sa susjedne čestice,
  *     ppmin: { <kod pravila>: { stanovanje?, gospodarska?, javna?, izvor, citat } },
- *     gradnja: { <kod pravila>: { novaGradnja, kig, kis, nova_stambena, izvor, citat } } }
+ *     gradnja: { <kod pravila>: { novaGradnja, kig, kis, nova_stambena, izvor, citat } },
+ *     navodi: [id, …] }  — navodi GUP-a za ovu godinu (ppmin-, gradnja-, namjena-…)
  *
  * Ostatak i posuđena okućnica ovise o susjednim česticama po cijelom
  * gradu, a karta učitava čestice po pločicama — pa ih ne može izračunati
@@ -19,6 +20,7 @@ import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
 import { najmanjaCestica, uvjetiGradnje, VRSTA_ZA_KLASU, type NajmanjaCestica } from "@/lib/gup-grad/odredbe";
 import { ostaci, ucitajMjerenja, ucitajOdredbe } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
+import { imenaNavoda } from "@/lib/gup-dokument/navodi";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -62,5 +64,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ kljuc: string 
       };
     }
   }
-  return Response.json({ ...ostaci(d, godina, inacica.pravila, o), ppmin, gradnja });
+  // Skočni prozor čestice povezuje izvor odredbe s njezinim tekstom (navod GUP-a)
+  // samo ako taj navod postoji — pa mu treba popis, a sam ga ne može znati.
+  const navodi = (await imenaNavoda()).filter((id) => /^(ppmin|gradnja|namjena)-(\d{4})-/.exec(id)?.[2] === String(godina));
+  return Response.json({ ...ostaci(d, godina, inacica.pravila, o), ppmin, gradnja, navodi });
 }

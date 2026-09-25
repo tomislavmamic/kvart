@@ -67,6 +67,7 @@ export const PRIMARY_NAV_ITEMS: readonly SiteNavigationItem[] = [
 export const SECONDARY_NAV_ITEMS: readonly SecondaryNavigationItem[] = [
   { href: "/plan", label: "Izmjene GUP-a" },
   { href: "/gup", label: "Split po GUP-u" },
+  { href: "/gup/dokument", label: "GUP: tekst i karte" },
   { href: "/dokumenti", label: "Dokumenti" },
   { href: "/podaci", label: "Prostorni podaci" },
   { href: "/o-inicijativi", label: "O inicijativi" },
