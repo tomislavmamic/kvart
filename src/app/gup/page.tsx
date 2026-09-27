@@ -193,13 +193,20 @@ export default async function GupPage() {
           „Važeći planovi” (<Navod id="list-vazeci-planovi-2008">izmjene 2008.</Navod>;{" "}
           <Navod id="list-vazeci-planovi-2014">stanje 28. 11. 2014.</Navod>) i s{" "}
           <Navod id="list-planske-mjere-2025">lista 4.d prijedloga 2025.</Navod>, istim uklapanjem kao namjenu. Pročišćeni list obveza za 2015. nije
-          objavljen, pa za 2015. vrijede obveze iz 2008. (izmjene 2014. mijenjaju ih samo za Trsteničku uvalu). Čestica
+          objavljen, pa za 2015. vrijede obveze iz 2008. (izmjene 2014. mijenjaju ih samo za Trsteničku uvalu). Planove
+          na snazi list 4.d prijedloga 2025. crta samo shematski — DPU dijela područja Dračevac ondje ima 1,5 ha preko
+          ceste i susjednih kuća, a plan je jedna građevna čestica od 0,46 ha — pa je za 2025. njihov obuhvat s listova
+          samog plana u državnom Informacijskom sustavu prostornog uređenja (ISPU), georeferenciranih i izrezanih po
+          obuhvatu (<code className="font-mono text-xs">scripts/gup-grad/ispu.py</code>). Čestica
           pripada obuhvatu kad ga pokriva barem pola čestice; najmanji planovi od nekoliko čestica mogu ispasti. Na
           grafikonu i na karti je slobodno koje čeka plan narančasto, a slobodno pod planom na snazi na grafikonu je rešetka — to drugo je slobodno
           za gradnju, ali koliko se na njemu smije, odlučuje taj plan. Na karti se za prijedlog 2025. ocrtavaju i obuhvati planova
-          s imenima iz legende <Navod id="list-planske-mjere-2025">lista 4.d</Navod>: fuksijom 45 od 46 planova na snazi (DPU
-          sjevernog dijela Kmana na listu nema broja), plavo 34 propisana UPU-a
-          (<code className="font-mono text-xs">scripts/gup-grad/planski-obrisi.py</code>), a u načinu „Planski režim”
+          s imenima iz legende <Navod id="list-planske-mjere-2025">lista 4.d</Navod>: fuksijom svih 46 planova na snazi, s
+          obuhvatom s ISPU-a, plavo 34 propisana UPU-a kako ih list crta
+          (<code className="font-mono text-xs">scripts/gup-grad/planski-obrisi.py</code>). Gdje plan na snazi propisuje
+          nešto na točno određenom mjestu, to je na karti zeleno: zasad 19 stabala s listova 2. i 3. DPU-a dijela područja
+          Dračevac — drvored od 11 visokih stablašica uz južnu granicu čestice (čl. 6., t. 2.6. odluke, Sl. gl. 23/04) i
+          8 stabala uz građevinu 2 (<code className="font-mono text-xs">scripts/gup-grad/elementi-planova.py</code>). U načinu „Planski režim”
           čestice koje čekaju plan obojene su po vrsti područja, kao na listu: urbana sanacija zeleno, neuređeni dio
           građevinskog područja žuto, urbana preobrazba narančasto. Obuhvati su iz{" "}
           <code className="font-mono text-xs">scripts/gup-grad/planski-rezim.py</code>, a što koji znači u{" "}
@@ -215,7 +222,11 @@ export default async function GupPage() {
           zoni nije; manja pomoćna građevina u <Navod id={navodNamjena(2015, "Z1")}>parku</Navod> i ugostiteljski sadržaj
           na <Navod id={navodNamjena(2015, "R3")}>kupalištu</Navod> jesu. Ono što odredbe dopuštaju samo pod posebnim
           uvjetom (<Navod id={navodNamjena(2015, "I/K")}>stan uz posao u poslovnoj zoni</Navod>) broji se kao protivno,
-          jer se uvjet iz katastra ne vidi. <Navod id="z6-2015">Zelenilo s postojećim građevinama (Z6, Meje i Bačvice)</Navod>{" "}
+          jer se uvjet iz katastra ne vidi. Vrsta zgrade je ona upisana u katastar; gdje upis očito ne odgovara onome
+          što zgrada jest, ispravili smo ga ručno, s izvorima (
+          <code className="font-mono text-xs">data/gup-grad/pregled/zgrade.json</code>) — zasad poslovnu zgradu na
+          Dračevcu 4d, u katastru upisanu kao stambena, u DPU-u dijela područja Dračevac koji ondje dopušta samo
+          gospodarsku namjenu. <Navod id="z6-2015">Zelenilo s postojećim građevinama (Z6, Meje i Bačvice)</Navod>{" "}
           list crta istom bojom kao zaštitno zelenilo Z5; odvojili smo ga po{" "}
           <Navod id="z6-bacvice-2025">oznakama otisnutim na listu 2025.</Navod>, pa su ondje postojeće kuće u skladu s
           planom. <Navod id="sve-namjene-2015">Ceste i infrastruktura su dopuštene svugdje</Navod>.

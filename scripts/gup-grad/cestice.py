@@ -84,6 +84,7 @@ import shapely
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "katastar"))
+import ispu  # noqa: E402
 import rasteriziraj as R  # noqa: E402
 import spremiste as katastar  # noqa: E402
 
@@ -218,6 +219,8 @@ def osm_poligoni() -> dict[str, list]:
 
 RUCNO_PUT = os.path.join(ROOT, "data", "gup-grad", "pregled", "rucno.json")
 ISPRAVCI_PUT = os.path.join(ROOT, "data", "gup-grad", "pregled", "ispravci.json")  # scripts/gup-grad/ispravci.ts
+ZGRADE_PUT = os.path.join(ROOT, "data", "gup-grad", "pregled", "zgrade.json")  # ručni ispravci skupine zgrade
+IZVOR_ISPRAVAKA = "ručni ispravci skupine zgrade: data/gup-grad/pregled/zgrade.json"
 # Što ručni pregled smije reći o čestici; značenje u src/lib/gup-grad/pravila.ts.
 RUCNO_VRSTE = ["parkiraliste", "javna", "uredjeno", "zelenilo", "gradiliste", "izgradjeno", "promet",
                "infrastruktura", "neizgradivo", "slobodno"]
@@ -301,6 +304,24 @@ def skupina_zgrade(vrsta: int) -> int:
     return {1: 1, 2: 2, 3: 3, 4: 4}.get(s, 5)
 
 
+def ispravci_zgrada() -> dict[tuple[int, int], dict]:
+    """Ručni ispravci skupine zgrade (zgrade.json), po (matični broj k.o., broj zgrade)."""
+    if not os.path.exists(ZGRADE_PUT):
+        return {}
+    return {(int(z["ko"]), int(z["broj"])): z for z in json.load(open(ZGRADE_PUT))["zgrade"]}
+
+
+def napomene_zgrada(c, zg, ispravci) -> dict[int, str]:
+    """Čestica (indeks u c) → napomena ispravljene zgrade koja na njoj stoji."""
+    out: dict[int, str] = {}
+    for z in ispravci.values():
+        g = zg[(zg.KO == z["ko"]) & (zg.BROJ == z["broj"])].geometry
+        for geom in g:
+            for ci in np.flatnonzero(c.geometry.intersection(geom).area.values > 1.0):
+                out[int(ci)] = z["napomena"]
+    return out
+
+
 def main() -> None:
     print("izvoz:", IZVOZ)
     obuhvat = obuhvat_gupa()
@@ -316,13 +337,18 @@ def main() -> None:
     ko_obj = []
     for ime in sorted(os.listdir(os.path.join(BAZA, "ADMINISTRATIVNI_PODACI"))):
         if ime.startswith("KO_") and ime.endswith("_objekti.shp"):
-            d = citaj(os.path.join(BAZA, "ADMINISTRATIVNI_PODACI", ime), columns=["VRSTA"])
+            d = citaj(os.path.join(BAZA, "ADMINISTRATIVNI_PODACI", ime), columns=["KO", "BROJ", "VRSTA"])
             ko_obj.append(d)
     import pandas as pd
     zg = pd.concat(ko_obj, ignore_index=True)
     zg = zg[zg.geometry.intersects(obuhvat)]
     # pomoćne (4) prve pa glavne preko njih — pri preklopu vrijedi glavna
-    zg = zg.assign(sk=zg.VRSTA.map(skupina_zgrade)).sort_values("sk", key=lambda s: s.map({4: 0, 5: 1, 3: 2, 2: 3, 1: 4}))
+    zg = zg.assign(sk=zg.VRSTA.map(skupina_zgrade))
+    # zgrada upisana s načinom uporabe koji se ne koristi (zgrade.json): vrijedi ispravak
+    ispravci = ispravci_zgrada()
+    for (ko, broj), z in ispravci.items():
+        zg.loc[(zg.KO == ko) & (zg.BROJ == broj), "sk"] = z["skupina"]
+    zg = zg.sort_values("sk", key=lambda s: s.map({4: 0, 5: 1, 3: 2, 2: 3, 1: 4}))
     zk = rasteriziraj(zg.geometry.values, zg.sk.values)
     print("katastarskih zgrada:", len(zg))
 
@@ -464,6 +490,9 @@ def main() -> None:
                     continue
                 pod = np.bincount(ids[mb], minlength=n_c)
                 bit_cestice[(pod * 2 >= svi) & (svi > 0)] |= bit
+            if gid == "gup-2025":
+                # plan na snazi: obuhvati s ISPU-a, a ne shematska šrafura lista 4.d
+                bit_cestice[1:] = (bit_cestice[1:] & ~ispu.VAZECI) | np.where(ispu.na_snazi(c.geometry.values), ispu.VAZECI, 0)
             rezim = bit_cestice[1:].tolist()
             del prg
         else:
@@ -518,7 +547,7 @@ def main() -> None:
         "urbana_pravila_kodovi": up_kodovi,
         "izvori": {
             "cestice": izvor_cestica(),
-            "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti",
+            "zgrade_katastar": "Grad Split, GIS izvoz: ADMINISTRATIVNI_PODACI/KO_*_objekti; " + IZVOR_ISPRAVAKA,
             "zgrade_2025": "Grad Split, GIS izvoz: Objekti_Split_2025 (tlocrti gradskog 3D modela, isti kao Zgrade_3D/ST_3D_2024)",
             "etaze": "Grad Split, GIS izvoz: Korisna_povrsina_Split_2025 (visina krovnih ploha 3D modela, h_objekt / 3 m)",
             "promet": "Ceste, NerazvrstaneCeste, Nerazvrstane_ceste_Split_29112023, drzavna_cesta_1 (os ± pola profila), Nogostupi; OSM highway=* po razredu",
@@ -531,7 +560,7 @@ def main() -> None:
             "osm": osm_stanje(),
             "obuhvat": "OBUHVAT_PP/OBUHVATI_PP — Generalni urbanistički plan Splita",
             "urbana_pravila": "listovi 4.b/4.c Urbana pravila (2012., 2015., 2025.), scripts/gup-grad/urbana-pravila.py",
-            "planski_rezim": "listovi 4.c Obuhvat detaljnijih planova i 4.d Važeći planovi (2008., 2014.) i 4.d Područja i dijelovi primjene planskih mjera zaštite (prijedlog 2025.), scripts/gup-grad/planski-rezim.py",
+            "planski_rezim": "listovi 4.c Obuhvat detaljnijih planova i 4.d Važeći planovi (2008., 2014.) i 4.d Područja i dijelovi primjene planskih mjera zaštite (prijedlog 2025.), scripts/gup-grad/planski-rezim.py; " + ispu.IZVOR,
         },
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -539,7 +568,7 @@ def main() -> None:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print("zapisano", OUT, round(os.path.getsize(OUT) / 1e6, 2), "MB")
 
-    zapisi_plocice(c, godine_out, out["cestice"], up_kodovi)
+    zapisi_plocice(c, godine_out, out["cestice"], up_kodovi, napomene_zgrada(c, zg, ispravci))
     zapisi_zgrade(zg, z25g[z25g.geometry.intersects(obuhvat)])
     zapisi_slike(mreza)
 
@@ -583,7 +612,7 @@ PLOCICA_M = 1000.0
 PLOCICA_ISHODISTE = (490000.0, 4816000.0)
 
 
-def zapisi_plocice(c, godine_out, cestice, up_kodovi) -> None:
+def zapisi_plocice(c, godine_out, cestice, up_kodovi, napomene: dict[int, str]) -> None:
     """Čestice s mjerenjima po komadima, u pločicama od 1 km (EPSG:4326).
 
     Karta ih učitava samo za ono što je u oknu: cijeli grad je ~41 000
@@ -632,6 +661,8 @@ def zapisi_plocice(c, godine_out, cestice, up_kodovi) -> None:
                     "kc": cestice["broj"][ci],
                     "a": cestice["povrsina"][ci],
                     **({"r": RUCNO_VRSTE[cestice["rucno"][ci] - 1]} if cestice["rucno"][ci] else {}),
+                    # zgrada na čestici kojoj je skupina ispravljena (zgrade.json)
+                    **({"zn": napomene[ci]} if ci in napomene else {}),
                     "k": po_cestici[ci],
                     # područje urbanog pravila po godini (za skočni prozor)
                     "u": {god: up_kodovi[g["urbano_pravilo"][ci] - 1]

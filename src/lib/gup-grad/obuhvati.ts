@@ -1,7 +1,8 @@
 /**
  * Planovi užeg područja s lista 4.d prijedloga GUP-a 2025. (scripts/gup-grad/
  * planski-obrisi.py → public/geo/gup-grad/planski-rezim-2025.geojson): što
- * se o planu da reći iz onoga što list nosi.
+ * se o planu da reći iz onoga što list nosi. Obuhvat plana na snazi je s
+ * ISPU-a (scripts/gup-grad/ispu.py), jer ga list crta samo shematski.
  */
 
 export interface SvojstvaObuhvata {
@@ -13,6 +14,8 @@ export interface SvojstvaObuhvata {
   tocka: [number, number];
   /** važeći: brojevi Službenog glasnika Grada Splita, kako ih legenda nabraja */
   glasnik?: string;
+  /** važeći: oznaka plana na ISPU-u (DPU5), s čijeg je lista obuhvat */
+  ispu?: string;
   /** propisani: koliko obuhvata je u području gdje nova gradnja čeka plan */
   sanacija_ha?: number;
   preobrazba_ha?: number;

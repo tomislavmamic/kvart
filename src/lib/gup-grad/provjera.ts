@@ -41,6 +41,8 @@ export interface SvojstvaCestice {
   u?: Partial<Record<`${Godina}`, string>>;
   /** Ispravak iz ručnog pregleda ortofotom. */
   r?: RucnaVrsta;
+  /** Na čestici je zgrada kojoj je skupina ručno ispravljena (data/gup-grad/pregled/zgrade.json): zašto. */
+  zn?: string;
   /** Bitovi planskog režima po godini (rezim.ts, listovi 4.c/4.d). */
   p?: Partial<Record<`${Godina}`, number>>;
 }

@@ -157,7 +157,7 @@ def main() -> None:
     boja_kodovi: dict[str, list[str]] = {}
 
     for lst in LISTOVI:
-        plan = dict(next(p for p in R.PLANOVI if p["id"] == lst["plan"]))
+        plan = R.uklapanje_lista(lst["plan"], lst["pdf"])
         plan["pdf"], plan["url"] = lst["pdf"], lst["url"]
         put = R.preuzmi(plan)
         dpi = 72.0 * plan["afin"][0] / R.KORAK

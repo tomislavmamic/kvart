@@ -1,0 +1,23 @@
+{
+ "opis": "Ručni ispravci skupine katastarske zgrade (cestice.py, skupina_zgrade): zgrada kojoj je u katastru upisan način uporabe koji se na terenu ne koristi. Skupina iz ispravka vrijedi za sklad s planom; šifra upisana u katastru ostaje u podacima (v u pločicama zgrada). Zgrada je određena matičnim brojem k.o. i brojem zgrade iz katastra (KO i BROJ u gradskom izvozu KO_*_objekti, ZGRADA_ID je VEZA_AN). Skupine: 1 stambena, 2 gospodarska i poslovna, 3 javna, 4 pomoćna, 5 ostala.",
+ "zgrade": [
+  {
+   "ko": 329835,
+   "broj": 2170,
+   "zgrada_id": 4345969,
+   "adresa": "Dračevac 4d",
+   "katastar": "102 STAMBENA ZGRADA",
+   "skupina": 2,
+   "napomena": "U katastru je upisana kao stambena zgrada, ali je poslovna: u njoj su veterinarska bolnica i trgovina, a DPU dijela područja Dračevac ondje dopušta samo gospodarsku namjenu (I2). Zato se broji kao poslovna.",
+   "izvori": [
+    "DGU, DKP k.o. Split (stanje 20. 9. 2026.): zgrada br. 2170, 2 115 m², STAMBENA ZGRADA (102)",
+    "DPU dijela područja Dračevac, Sl. gl. 23/04, čl. 4. i 6.: dvije građevine zanatsko-proizvodno-skladišne namjene, I2",
+    "OpenStreetMap: Dračevac 4d, Veterinarska bolnica Vetti Split (provjereno 17. 12. 2025.)",
+    "https://vetti-split.hr/en/contact/",
+    "https://www.mojkvart.hr/Split/Dracevac/Auto-dijelovi/skuba-hrvatska-podruznica-split-za-trgovinu-i-usluge-494246",
+    "inicijativa: poslovna zgrada, potvrđeno 27. 9. 2026."
+   ],
+   "provjereno": "2026-09-27"
+  }
+ ]
+}

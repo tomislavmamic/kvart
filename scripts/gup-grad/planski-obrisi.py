@@ -14,10 +14,14 @@ užeg područja i u legendi ih nabraja po broju:
           GUP-u (st. 3)
 
 Što to znači za pojedinu česticu na kartu /gup nosi planski režim čestice
-(rezim.ts); ova skripta crta sam obuhvat svakog plana, s imenom iz legende,
-kako ga je planer nacrtao.
+(rezim.ts); ova skripta crta sam obuhvat svakog plana, s imenom iz legende.
 
-Kako (za svaku boju posebno):
+Planove na snazi list crta shematski (DPU dijela područja Dračevac ondje
+ima 1,5 ha, a plan jednu česticu od 0,46 ha), pa se njihov obuhvat uzima s
+ISPU-a, iz georeferenciranih listova samog plana (ispu.py). S lista se
+prate samo propisani planovi, kojih drugdje nema, kako ih je planer nacrtao.
+
+Kako (propisani, plavo):
   1. Debele crte su na listu ispunjene vrpce (plohe), a šrafura ili rešetka
      unutar obuhvata su tanke crte. Vrpce su zidovi.
   2. Šrafura (bit VAZECI ili OBVEZA u pr-gup-2025.npy, planski-rezim.py) bez
@@ -31,6 +35,7 @@ Izlaz: public/geo/gup-grad/planski-rezim-2025.geojson (EPSG:4326), svojstva
   vrsta          "vazeci" (crveno na listu) ili "propisan" (plavo)
   broj, naziv    iz legende lista (broj je redni broj u popisu svoje vrste)
   glasnik        važeći: brojevi Službenog glasnika Grada Splita iz legende
+  ispu           važeći: oznaka plana na ISPU-u (DPU5), odakle je obuhvat
   tocka          [lng, lat] za natpis, unutar obuhvata
   ha             površina obuhvata
   sanacija_ha, preobrazba_ha, neuredeno_ha
@@ -58,6 +63,7 @@ from scipy import ndimage
 from shapely.geometry import shape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ispu  # noqa: E402
 import rasteriziraj as R  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("planski_rezim", os.path.join(os.path.dirname(__file__), "planski-rezim.py"))
@@ -65,6 +71,8 @@ PR = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(PR)  # type: ignore[union-attr]
 
 IZLAZ = os.path.join(R.ROOT, "public", "geo", "gup-grad", "planski-rezim-2025.geojson")
+OPIS = ("Izvedeno skriptom scripts/gup-grad/planski-obrisi.py: propisani planovi s lista 4.d prijedloga "
+        "GUP-a (travanj 2025.), planovi na snazi s ISPU-a (scripts/gup-grad/ispu.py).")
 NAJMANJE_HA = 0.2          # mrvice uz rub zida nisu dio obuhvata
 IZGLADI_M = 4.0            # zatvaranje pa otvaranje ruba, u metrima
 POJEDNOSTAVI_M = 2.5
@@ -218,11 +226,24 @@ def obuhvati(v: dict, p: pymupdf.Page, put: str, plan: dict, dpi: float, vis: fl
     return feats
 
 
-def main() -> None:
+def list_4d() -> tuple[dict, str]:
+    """Plan uklapanja lista 4.d 2025. i put do PDF-a (preuzima ga ako ga nema)."""
     lst = next(x for x in PR.LISTOVI if x["id"] == "pr-2025")
-    plan = dict(next(p for p in R.PLANOVI if p["id"] == lst["plan"]))
+    plan = R.uklapanje_lista(lst["plan"], lst["pdf"])
     plan["pdf"], plan["url"] = lst["pdf"], lst["url"]
-    put = R.preuzmi(plan)
+    return plan, R.preuzmi(plan)
+
+
+def legenda_vazecih(p: pymupdf.Page | None = None) -> dict[int, tuple[str, str | None]]:
+    """Planovi na snazi iz legende lista 4.d: broj → (naziv, brojevi Službenog glasnika)."""
+    if p is None:
+        p = pymupdf.open(list_4d()[1])[0]
+    v = next(v for v in VRSTE if v["vrsta"] == "vazeci")
+    return {broj: naziv_i_glasnik(t) for broj, t in popis(p, *v["popis_y"]).items()}
+
+
+def main() -> None:
+    plan, put = list_4d()
     dpi = 72.0 * plan["afin"][0] / R.KORAK
     d = pymupdf.open(put)
     p = d[0]
@@ -233,13 +254,13 @@ def main() -> None:
     u_gupu = np.load(os.path.join(R.OUT, "klase-gup-2025.npy")) > 0
     u_gupu = ndimage.binary_dilation(u_gupu, iterations=4)  # zid na rubu obuhvata ostaje
 
-    feats = [f for v in VRSTE for f in obuhvati(v, p, put, plan, dpi, vis, g, u_gupu)]
+    # planovi na snazi: točni obuhvati s ISPU-a; propisani: praćenje lista
+    print("vazeci: s ISPU-a")
+    feats = ispu.obuhvati(legenda_vazecih(p))
+    feats += [f for v in VRSTE if v["vrsta"] != "vazeci" for f in obuhvati(v, p, put, plan, dpi, vis, g, u_gupu)]
     with open(IZLAZ, "w", encoding="utf-8") as f:
-        json.dump({
-            "type": "FeatureCollection",
-            "opis": "Izvedeno skriptom scripts/gup-grad/planski-obrisi.py iz lista 4.d prijedloga GUP-a (travanj 2025.).",
-            "features": feats,
-        }, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump({"type": "FeatureCollection", "opis": OPIS, "features": feats},
+                  f, ensure_ascii=False, separators=(",", ":"))
     print("zapisano", IZLAZ, round(os.path.getsize(IZLAZ) / 1e3), "kB")
 
 

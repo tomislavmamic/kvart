@@ -142,6 +142,22 @@ PLANOVI: list[dict] = [
     },
 ]
 
+# Prateći listovi prijedloga 2025. (4.c, 4.d) isti su CAD predložak kao list 1,
+# ali im je stranica pomaknuta za oko 1 pt. Pomak lista prema listu 1 u metrima
+# (E, N), izmjeren unakrsnom korelacijom sive podloge u 17 prozora po gradu
+# (±0,03 m, bez razlike u mjerilu i zakretu). Bez ispravka su obuhvati s 4.d
+# ~3,7 m južnije, a urbana pravila s 4.c ~4 m zapadnije nego na listu 1.
+POMAK_LISTA = {"pr-2025.pdf": (1.77, -3.21), "up-2025.pdf": (-3.73, -1.68)}
+
+
+def uklapanje_lista(plan_id: str, pdf: str) -> dict:
+    """Uklapanje lista `pdf` koji dijeli predložak s listom namjene `plan_id`."""
+    plan = dict(next(p for p in PLANOVI if p["id"] == plan_id))
+    de, dn = POMAK_LISTA.get(pdf, (0.0, 0.0))
+    sc, ox, oy = plan["afin"]
+    plan["afin"] = (sc, ox - de, oy - dn)
+    return plan
+
 
 def preuzmi(plan: dict) -> str:
     put = os.path.join(SRC, plan["pdf"])

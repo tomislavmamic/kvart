@@ -162,12 +162,13 @@ UKLAPANJE = {
 }
 
 
-def planovi_uklapanja() -> dict[str, dict]:
+def uklapanje_lista(cfg: dict) -> dict:
+    """Uklapanje lista iz rasteriziraj.py: list namjene iste godine, s pomakom pratećeg lista."""
     import importlib.util
     spec = importlib.util.spec_from_file_location("rasteriziraj", os.path.join(os.path.dirname(os.path.abspath(__file__)), "rasteriziraj.py"))
     r = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(r)  # type: ignore
-    return {p["id"]: p for p in r.PLANOVI}
+    return r.uklapanje_lista(UKLAPANJE[cfg["id"]], cfg["pdf"])
 
 
 def afina_uklapanja(plan: dict, sirina_pt: float, visina_pt: float) -> list[float]:
@@ -653,8 +654,7 @@ def listovi() -> None:
             "slicica": {"sirina": sl.width, "visina": sl.height},
         }
         if cfg["id"] in UKLAPANJE:
-            plan = planovi_uklapanja()[UKLAPANJE[cfg["id"]]]
-            meta["listovi"][cfg["id"]]["uklapanje"] = afina_uklapanja(plan, p.rect.width, p.rect.height)
+            meta["listovi"][cfg["id"]]["uklapanje"] = afina_uklapanja(uklapanje_lista(cfg), p.rect.width, p.rect.height)
         print(f"{cfg['id']:8} {im.width}×{im.height} z0–{maks} {ukupno / 1e6:.1f} MB")
         del im, razina
     with open(meta_put, "w") as f:

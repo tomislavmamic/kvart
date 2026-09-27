@@ -27,7 +27,7 @@ import { predloziIspravak } from "@/lib/actions/gup";
 import { MIN_ZUM_REGIJA, regijeVrijede } from "@/components/gup-grad/gup-regije";
 import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCestice } from "@/lib/gup-grad/provjera";
 import type { PlanskiRezim, PodrucjeCekanja, Rezim } from "@/lib/gup-grad/rezim";
-import { BOJA_OBUHVATA, BOJA_VAZECEG, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
+import { BOJA_OBUHVATA, BOJA_ODREDBE, BOJA_VAZECEG, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
 import { Navod } from "@/components/gup-dokument/navod";
 import {
   LIST_NAMJENE,
@@ -750,7 +750,7 @@ function popup(p: SvojstvaCestice, s: SudCestice, post: GupPostavke, o: Ostaci, 
   if (!s.komadi.length) {
     return h + `<br><span style="${sivo}">U ovoj godini plana čestica nije u obuhvatu GUP-a (ili je ispod krhotine od 5 %).</span>`;
   }
-  h += sazetak(s, post.godina, o, naListu) + `<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;color:#3f3f46">Pojedinosti računa</summary>`;
+  h += sazetak(s, post.godina, o, naListu, p.zn) + `<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;color:#3f3f46">Pojedinosti računa</summary>`;
   h +=
     `<span style="${sivo}">iskorišteno ${m2(s.iskoristeno)} od ${m2(s.m2)} u zoni` +
     (s.uSuprotnosti > 0 ? `, protivno planu ${m2(s.uSuprotnosti)}` : "") +
@@ -842,8 +842,10 @@ const posto = (v: number) => `${Math.round(v * 100)} %`;
 /**
  * Tri osi čestice u tri retka, na vrhu skočnog prozora: namjena,
  * iskorištenost (broj i traka, slobodno po razlogu) i sklad s planom.
+ * `napomenaZgrade`: zašto je vrsta zgrade na čestici ručno ispravljena
+ * (data/gup-grad/pregled/zgrade.json) — o njoj ovisi sklad.
  */
-function sazetak(s: SudCestice, godina: Godina, o: Ostaci, naListu: NaListu): string {
+function sazetak(s: SudCestice, godina: Godina, o: Ostaci, naListu: NaListu, napomenaZgrade?: string): string {
   const sivo = "color:#71717b";
   const red = (os: string, sadrzaj: string) =>
     `<div style="display:grid;grid-template-columns:92px 1fr;gap:8px;margin-top:6px"><span style="${sivo}">${os}</span><span>${sadrzaj}</span></div>`;
@@ -889,7 +891,8 @@ function sazetak(s: SudCestice, godina: Godina, o: Ostaci, naListu: NaListu): st
       : `${pruge ? kvadrat(srafuraCss("#ffffff", pruge)) : ""}<b>${SKLAD[s.sklad].naziv}</b>` +
         (s.sklad !== "po-planu"
           ? ` <span style="${sivo}">(${m2(s.uSuprotnosti)} protivno: ${protivne.map((v) => esc(VRSTE[v])).join(", ")})</span>`
-          : "");
+          : "") +
+        (napomenaZgrade ? `<br><span style="${sivo}">${esc(napomenaZgrade)}</span>` : "");
 
   // 4 · planski režim: po GUP-u, po planu na snazi, ili čeka plan
   const rezim = s.rezim
@@ -1205,9 +1208,13 @@ export function GupProvjeraLegenda(props: { postavke: GupPostavke; info: GupInfo
               uzorak={{ background: "#fff", border: `2.5px solid ${BOJA_OBUHVATA}` }}
               naziv="propisani UPU, još nije donesen"
             />
+            <RedLegende
+              uzorak={{ background: `radial-gradient(circle, ${BOJA_ODREDBE} 0 2.5px, #fff 3px)`, backgroundSize: "8px 8px" }}
+              naziv="stablo koje plan na snazi propisuje na tom mjestu (od zuma 17)"
+            />
           </ul>
           <p className="mt-1 text-xs text-zinc-500">
-            Na listu je 46 planova na snazi i 34 propisana UPU-a; ime plana je upisano od zuma 15, a mišem preko imena podeblja se rub i oboji cijeli obuhvat, a klik na ime otvara podatke o planu. Unutar propisanog
+            Na listu je 46 planova na snazi i 34 propisana UPU-a. Planove na snazi list crta samo shematski, pa je njihov obuhvat s listova samog plana na državnom ISPU-u; propisani su kako ih list crta. Ime plana je upisano od zuma 15, a mišem preko imena podeblja se rub i oboji cijeli obuhvat, a klik na ime otvara podatke o planu. Unutar propisanog
             obuhvata nova gradnja čeka plan samo u područjima urbane sanacije, preobrazbe i neuređenog (čl. 103. st. 1) — to
             su boje u načinu „Planski režim”; drugdje se do plana gradi po GUP-u (st. 3).
           </p>

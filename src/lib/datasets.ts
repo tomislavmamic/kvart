@@ -113,7 +113,7 @@ export const DATASET_SECTIONS: DatasetSection[] = [
         coverage: "potpuna",
         status: "ok",
         statusLabel: "provjereno",
-        note: "Servis ne podržava EPSG:3857 (web-mercator); GetFeatureInfo ne radi — samo prikaz. Legenda preko GetLegendGraphic.",
+        note: "Servis ne podržava EPSG:3857 (web-mercator); GetFeatureInfo ne radi — samo prikaz. Legenda preko GetLegendGraphic. Listovi su izrezani po obuhvatu plana (izvan njega prozirni), pa su iz njih obuhvati svih 46 planova na snazi na karti /gup — list 4.d GUP-a crta ih samo shematski — i 19 stabala s listova 2. i 3. DPU-a dijela područja Dračevac (scripts/gup-grad/ispu.py, elementi-planova.py; provjereno 27. 9. 2026.).",
       },
       {
         name: "split.hr „GIS podatci” — zapravo PDF dokumentacija planova",
