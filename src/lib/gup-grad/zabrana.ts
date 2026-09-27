@@ -1,0 +1,298 @@
+/**
+ * /gup/zabrana: gdje bi prijedlog GUP-a 2025. zabranio novu gradnju dok se
+ * ne donese UPU (čl. 103. st. 1 i čl. 105. st. 5 prijedloga).
+ *
+ * Čiste funkcije za kartu i tražilicu adrese: u kojem je režimu točka
+ * (crveno, plan na snazi, samo obuhvat propisanog UPU-a, GUP, izvan GUP-a)
+ * i traženje kućnog broja. Podatke piše scripts/gup-grad/zabrana.py
+ * (public/geo/gup-grad/zabrana-2025.geojson, kucni-brojevi.json); obuhvate
+ * planova planski-obrisi.py (planski-rezim-2025.geojson).
+ */
+
+import type { FeatureCollection } from "geojson";
+
+export type Podrucje = "sanacija" | "preobrazba" | "neuredeno";
+const PODRUCJA: readonly string[] = ["sanacija", "preobrazba", "neuredeno"];
+
+/** Boje karte i legende: crveno je zabrana, ostalo je okvir za snalaženje. */
+export const BOJE_ZABRANE = {
+  crveno: "#dc2626",
+  crvenoRub: "#991b1b",
+  vazeci: "#52525c",
+  upu: "#1d4ed8",
+  gup: "#3f3f46",
+  cestica: "#7f1d1d",
+  cesticaRub: "#450a0a",
+} as const;
+
+/** [prsten][točka][lng, lat]; prvi prsten je vanjski, ostali rupe. */
+export type Poligon = number[][][];
+export type Geometrija = { type: "Polygon"; coordinates: Poligon } | { type: "MultiPolygon"; coordinates: Poligon[] };
+/** [zapad, jug, istok, sjever] */
+export type Okvir = [number, number, number, number];
+
+export interface Oblik {
+  geometrija: Geometrija;
+  okvir: Okvir;
+}
+
+/** Kako se područje zove u rečenici „Ovo je …”. */
+export const NAZIV_PODRUCJA: Record<Podrucje, string> = {
+  sanacija: "područje urbane sanacije",
+  preobrazba: "područje urbane preobrazbe",
+  neuredeno: "neuređeni dio građevinskog područja",
+};
+
+/**
+ * Oblik imenice uz broj: [jednina, dvojina (2–4), množina] — 1 zgrada,
+ * 23 zgrade, 486 zgrada; 11–14 uvijek traže množinu (12 zgrada).
+ */
+export function imenicaUz(n: number, [jednina, dvojina, mnozina]: [string, string, string]): string {
+  const d = Math.abs(n) % 10, s = Math.abs(n) % 100;
+  if (s >= 11 && s <= 14) return mnozina;
+  if (d === 1) return jednina;
+  if (d >= 2 && d <= 4) return dvojina;
+  return mnozina;
+}
+
+const poligoniOd = (g: Geometrija): Poligon[] => (g.type === "Polygon" ? [g.coordinates] : g.coordinates);
+
+export function okvirOd(g: Geometrija): Okvir {
+  let z = Infinity, j = Infinity, i = -Infinity, s = -Infinity;
+  for (const p of poligoniOd(g))
+    for (const [x, y] of p[0]) {
+      if (x < z) z = x;
+      if (x > i) i = x;
+      if (y < j) j = y;
+      if (y > s) s = y;
+    }
+  return [z, j, i, s];
+}
+
+export const oblik = (geometrija: Geometrija): Oblik => ({ geometrija, okvir: okvirOd(geometrija) });
+
+export function spojiOkvire(okviri: Okvir[]): Okvir | null {
+  if (!okviri.length) return null;
+  return okviri.reduce((a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])]);
+}
+
+const uOkviru = (o: Okvir, lng: number, lat: number, rub = 0) =>
+  lng >= o[0] - rub && lng <= o[2] + rub && lat >= o[1] - rub && lat <= o[3] + rub;
+
+/** Je li točka u obliku (parno-neparno po prstenovima svakog poligona). */
+export function uObliku(o: Oblik, lng: number, lat: number): boolean {
+  if (!uOkviru(o.okvir, lng, lat)) return false;
+  for (const p of poligoniOd(o.geometrija)) {
+    let unutra = false;
+    for (const prsten of p)
+      for (let a = 0, b = prsten.length - 1; a < prsten.length; b = a++) {
+        const [xa, ya] = prsten[a];
+        const [xb, yb] = prsten[b];
+        if (ya > lat !== yb > lat && lng < ((xb - xa) * (lat - ya)) / (yb - ya) + xa) unutra = !unutra;
+      }
+    if (unutra) return true;
+  }
+  return false;
+}
+
+/** Udaljenost od točke do najbližeg ruba oblika, u metrima (ravna aproksimacija, dovoljna za grad). */
+export function doRuba(o: Oblik, lng: number, lat: number): number {
+  const kx = 111320 * Math.cos((lat * Math.PI) / 180);
+  const ky = 110540;
+  let najbliza = Infinity;
+  for (const p of poligoniOd(o.geometrija))
+    for (const prsten of p)
+      for (let a = 1; a < prsten.length; a++) {
+        const ax = (prsten[a - 1][0] - lng) * kx, ay = (prsten[a - 1][1] - lat) * ky;
+        const bx = (prsten[a][0] - lng) * kx, by = (prsten[a][1] - lat) * ky;
+        const dx = bx - ax, dy = by - ay, d2 = dx * dx + dy * dy;
+        const t = d2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / d2)) : 0;
+        const ex = ax + t * dx, ey = ay + t * dy;
+        najbliza = Math.min(najbliza, Math.hypot(ex, ey));
+      }
+  return najbliza;
+}
+
+export interface Komad extends Oblik {
+  podrucje: Podrucje;
+  /** Broj propisanog UPU-a s lista 4.d; 0 = ni u jednom ucrtanom obuhvatu. */
+  upu: number;
+}
+
+export interface PlanNaSnazi extends Oblik {
+  naziv: string;
+  glasnik?: string;
+}
+
+export interface PropisaniUpu extends Oblik {
+  broj: number;
+  naziv: string;
+}
+
+/** Čestica sa slobodnim zemljištem za novu zgradu koje bi čekalo UPU (zabrana-cestice-2025.geojson). */
+export interface CesticaZabrane extends Oblik {
+  kc: string;
+  ko: string;
+  /** slobodno zemljište za novu zgradu, m² */
+  m2: number;
+  neizgradjena: boolean;
+}
+
+export interface Slojevi {
+  komadi: Komad[];
+  cestice: CesticaZabrane[];
+  /** Cijelo crveno kao jedan oblik — za udaljenost do ruba. */
+  obris: Oblik | null;
+  vazeci: PlanNaSnazi[];
+  propisani: PropisaniUpu[];
+  gup: Oblik | null;
+}
+
+export type Stanje =
+  | { rezim: "zabrana"; podrucje: Podrucje; upu: PropisaniUpu | null; cestica: CesticaZabrane | null; doRuba: number }
+  | { rezim: "vazeci"; plan: PlanNaSnazi; doRuba: number }
+  | { rezim: "preporuka"; upu: PropisaniUpu; doRuba: number }
+  | { rezim: "gup"; doRuba: number }
+  | { rezim: "izvan" };
+
+/**
+ * Slojevi iz zabrana-2025.geojson (komadi, obris, gup) i
+ * planski-rezim-2025.geojson (vazeci, propisan).
+ */
+export function slojeviIzGeojsona(zabrana: FeatureCollection, planovi: FeatureCollection, cestice?: FeatureCollection): Slojevi {
+  const svojstva = (f: FeatureCollection["features"][number]) => (f.properties ?? {}) as Record<string, unknown>;
+  const geo = (f: FeatureCollection["features"][number]) => f.geometry as Geometrija;
+  const jedan = (vrsta: string) => {
+    const f = zabrana.features.find((x) => svojstva(x).vrsta === vrsta);
+    return f ? oblik(geo(f)) : null;
+  };
+  return {
+    komadi: zabrana.features
+      .filter((f) => PODRUCJA.includes(svojstva(f).vrsta as string))
+      .map((f) => ({ ...oblik(geo(f)), podrucje: svojstva(f).vrsta as Podrucje, upu: Number(svojstva(f).upu) })),
+    cestice: (cestice?.features ?? []).map((f) => ({
+      ...oblik(geo(f)),
+      kc: String(svojstva(f).kc),
+      ko: String(svojstva(f).ko),
+      m2: Number(svojstva(f).m2),
+      neizgradjena: Boolean(svojstva(f).neizgradjena),
+    })),
+    obris: jedan("obris"),
+    gup: jedan("gup"),
+    vazeci: planovi.features
+      .filter((f) => svojstva(f).vrsta === "vazeci")
+      .map((f) => ({ ...oblik(geo(f)), naziv: String(svojstva(f).naziv), glasnik: svojstva(f).glasnik as string | undefined })),
+    propisani: planovi.features
+      .filter((f) => svojstva(f).vrsta === "propisan")
+      .map((f) => ({ ...oblik(geo(f)), broj: Number(svojstva(f).broj), naziv: String(svojstva(f).naziv) })),
+  };
+}
+
+/** Rub crvenog bliži od ovoga: karta je precrtana sa skeniranog lista, pa neka se provjeri list. */
+export const BLIZU_RUBA_M = 15;
+
+/** U kojem je režimu točka po prijedlogu 2025. */
+export function stanjeTocke(s: Slojevi, lng: number, lat: number): Stanje {
+  // ~60 m: crveni komad se ne gleda ako mu okvir nije ni blizu
+  const blizu = (o: Oblik) => uOkviru(o.okvir, lng, lat, 0.0006);
+  const rub = s.obris && blizu(s.obris) ? doRuba(s.obris, lng, lat) : Infinity;
+  const komad = s.komadi.find((k) => blizu(k) && uObliku(k, lng, lat));
+  if (komad) {
+    return {
+      rezim: "zabrana",
+      podrucje: komad.podrucje,
+      upu: s.propisani.find((u) => u.broj === komad.upu) ?? null,
+      cestica: s.cestice.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
+      doRuba: rub,
+    };
+  }
+  if (s.gup && !uObliku(s.gup, lng, lat)) return { rezim: "izvan" };
+  const plan = s.vazeci.find((p) => uObliku(p, lng, lat));
+  if (plan) return { rezim: "vazeci", plan, doRuba: rub };
+  const upu = s.propisani.find((u) => uObliku(u, lng, lat));
+  if (upu) return { rezim: "preporuka", upu, doRuba: rub };
+  return { rezim: "gup", doRuba: rub };
+}
+
+// ---------------------------------------------------------------- adrese
+
+/** kucni-brojevi.json: ulice [naziv, kotar] i brojevi [ulica, broj, lng, lat]. */
+export interface SiroveAdrese {
+  ulice: [string, string][];
+  brojevi: [number, string, number, number][];
+}
+
+export interface Adresa {
+  ulica: number;
+  broj: string;
+  lng: number;
+  lat: number;
+}
+
+export interface Adrese {
+  ulice: { naziv: string; kotar: string; kljuc: string }[];
+  brojevi: Adresa[];
+}
+
+export type Prijedlog =
+  | { vrsta: "adresa"; naziv: string; kotar: string; adresa: Adresa }
+  | { vrsta: "ulica"; naziv: string; kotar: string; ulica: number };
+
+/** Mala slova, bez dijakritika, bez interpunkcije: „Put Mostina” = „put mostina”. */
+export function normaliziraj(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** „SPLIT”, „KAMEN” (katastarska općina) → „Split”, „Kamen”. */
+export const naslovno = (s: string) => s.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (_, a, b) => a + b.toUpperCase());
+
+/** „GK Lovret”, „MO Stobreč” → „Lovret”, „Stobreč”. */
+export const kotar = (s: string) => s.replace(/^(GK|MO)\s+/, "");
+
+export function pripremiAdrese(a: SiroveAdrese): Adrese {
+  return {
+    ulice: a.ulice.map(([naziv, k]) => ({ naziv, kotar: kotar(k), kljuc: normaliziraj(naziv) })),
+    brojevi: a.brojevi.map(([ulica, broj, lng, lat]) => ({ ulica, broj, lng, lat })),
+  };
+}
+
+/**
+ * Prijedlozi za upit: „mostina 12” daje kućne brojeve (prvo točan), „mostina”
+ * ulice. Svaka riječ ulice mora se pojaviti u nazivu.
+ */
+export function trazi(a: Adrese, upit: string, najvise = 8): Prijedlog[] {
+  const t = normaliziraj(upit);
+  if (t.length < 2) return [];
+  const m = t.match(/^(.*?)(?:\s+(\d+\s*[a-z]?))?$/);
+  const rijeci = (m?.[1] || t).split(" ").filter(Boolean);
+  const broj = m?.[2]?.replace(/\s/g, "") ?? null;
+  const ulice = new Set<number>();
+  a.ulice.forEach((u, i) => {
+    if (rijeci.every((r) => u.kljuc.includes(r))) ulice.add(i);
+  });
+  if (!ulice.size) return [];
+  if (broj) {
+    const nadjeni = a.brojevi.filter((b) => ulice.has(b.ulica) && b.broj.startsWith(broj));
+    nadjeni.sort(
+      (x, y) =>
+        Number(y.broj === broj) - Number(x.broj === broj) || parseInt(x.broj) - parseInt(y.broj) || x.broj.localeCompare(y.broj),
+    );
+    return nadjeni.slice(0, najvise).map((adresa) => ({
+      vrsta: "adresa",
+      naziv: `${a.ulice[adresa.ulica].naziv} ${adresa.broj}`,
+      kotar: a.ulice[adresa.ulica].kotar,
+      adresa,
+    }));
+  }
+  return [...ulice]
+    .sort((x, y) => a.ulice[x].naziv.length - a.ulice[y].naziv.length)
+    .slice(0, najvise)
+    .map((i) => ({ vrsta: "ulica", naziv: a.ulice[i].naziv, kotar: a.ulice[i].kotar, ulica: i }));
+}
