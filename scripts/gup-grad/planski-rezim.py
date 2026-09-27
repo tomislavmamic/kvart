@@ -191,7 +191,7 @@ def obuhvat_srafure(tragovi: np.ndarray) -> np.ndarray:
 
 
 def list_na_rescetku(lst: dict) -> np.ndarray:
-    plan = dict(next(p for p in R.PLANOVI if p["id"] == lst["plan"]))
+    plan = R.uklapanje_lista(lst["plan"], lst["pdf"])
     plan["pdf"], plan["url"] = lst["pdf"], lst["url"]
     put = R.preuzmi(plan)
     dpi = 72.0 * plan["afin"][0] / R.KORAK

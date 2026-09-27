@@ -1205,3 +1205,10 @@ body {
 .gup-regije-daleko .leaflet-image-layer.gup-regije {
   image-rendering: auto;
 }
+
+/* Odredba plana na karti /gup (gup-obrisi.ts, npr. drvored): klik otvara
+   skočni prozor, pa Chromeov okvir fokusa oko crte samo smeta — kao i na
+   česticama, kojih se klik ne uokviruje. */
+path.gup-odredba:focus {
+  outline: none;
+}
