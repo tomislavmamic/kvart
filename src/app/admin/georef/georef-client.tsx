@@ -108,7 +108,8 @@ const BASES = [
   {
     id: "osm",
     label: "Ulična karta",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    // Isto što i „karta” u src/lib/map-views.ts: CARTO bez ključa daje žig.
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     wms: false,
   },
 ] as const;
@@ -222,7 +223,11 @@ export function GeorefClient({ previews }: { previews: Preview[] }) {
           transparent: false,
           version: "1.3.0",
         })
-      : L.tileLayer(b.url, { maxZoom: 20 });
+      : L.tileLayer(b.url, {
+          maxZoom: 20,
+          maxNativeZoom: 19,
+          attribution: "© OpenStreetMap contributors",
+        });
     layer.addTo(map);
     layer.bringToBack();
   }, [base, ready]);

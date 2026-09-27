@@ -417,11 +417,23 @@ export const BASE_LAYERS: BaseLayer[] = [
     opis: "Ista godina kao prijašnji DGU-ov ortofoto, bez žiga.",
   },
   {
+    // OSM-ov standardni raster. Do rujna 2026. ovdje je stajao CARTO-ov
+    // Voyager, koji od tada bez ključa na svaku pločicu otiskuje „API KEY
+    // REQUIRED”. Provjereno 27. 9. 2026. s Refererom produkcije i bez njega,
+    // na svim CARTO stilovima i poddomenama — nije stvar lokalnog razvoja.
+    //
+    // OSM-ova pravila (operations.osmfoundation.org/policies/tiles) traže
+    // navod izvora, adresu bez poddomena, lagan promet bez skidanja unaprijed
+    // i Referer koji preglednik šalje sam. Zato stranica ne smije postaviti
+    // `Referrer-Policy: no-referrer`: bez Referera poslužitelj vraća pločicu
+    // „Access blocked”. Lagan promet vrijedi dok je ovo podloga na izbor, a
+    // ne zadana — /karta i /gup otvaraju ortofoto. Pločice postoje do z19,
+    // koliko karta i zumira.
     id: "karta",
     label: "Ulična karta",
     type: "xyz",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution: "© OpenStreetMap contributors © CARTO",
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap contributors",
     skupina: "danas",
   },
   {
