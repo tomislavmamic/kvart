@@ -184,9 +184,9 @@ function Znak({ o }: { o: Oznaka }) {
   return <span aria-hidden className={`mt-1 shrink-0 ${klasa}`} style={stil} />;
 }
 
-function Legenda({ oznake }: { oznake: Oznaka[] }) {
+function Legenda({ oznake, uska = false }: { oznake: Oznaka[]; uska?: boolean }) {
   return (
-    <ul className="mt-3 grid max-w-3xl gap-x-5 gap-y-1.5 text-sm text-zinc-700 sm:grid-cols-2">
+    <ul className={`grid gap-x-5 gap-y-1.5 text-sm text-zinc-700 ${uska ? "mt-2" : "mt-3 max-w-3xl sm:grid-cols-2"}`}>
       {oznake.map((o, i) => (
         <li key={i} className="flex items-start gap-2">
           <Znak o={o} />
@@ -230,6 +230,8 @@ interface Karta {
   opis: string;
   /** Znak iz tumača uz naslov, kad svaka karta prikazuje drugu oznaku. */
   znak?: Oznaka;
+  /** Tumač samo te karte, kad isti znak na dvama listovima znači različito. */
+  legenda?: Oznaka[];
 }
 
 /**
@@ -251,6 +253,7 @@ function ParKarata({ karte, legenda, children }: { karte: Karta[]; legenda: Ozna
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={k.src} width={1300} height={750} alt={k.opis} loading="lazy" className="h-auto w-full rounded-xl border border-zinc-200" />
             </a>
+            {k.legenda && <Legenda oznake={k.legenda} uska />}
           </div>
         ))}
       </div>
@@ -388,6 +391,10 @@ export default async function AnalizaPage() {
                 </>
               ),
               opis: "List 4.c važećeg GUP-a: obveza izrade UPU-a propisana je za gotovo cijeli istočni Split.",
+              legenda: [
+                { boja: "#003fff", oblik: "mreza", tekst: "obveza izrade urbanističkog plana uređenja (UPU)" },
+                { boja: "#ff0000", oblik: "srafura", tekst: "obveza izrade detaljnog plana uređenja (DPU)" },
+              ],
             },
             {
               src: "/gup/analiza/obuhvat-prijedlog.webp",
@@ -397,13 +404,13 @@ export default async function AnalizaPage() {
                 </>
               ),
               opis: "List 4.d prijedloga: obuhvati UPU-a gotovo su isti kao na listu 4.c važećeg GUP-a.",
+              legenda: [
+                { boja: "#003fff", oblik: "mreza", tekst: "obuhvat izrade urbanističkog plana uređenja (UPU)" },
+                { boja: "#ff0000", oblik: "srafura", tekst: "važeći prostorni plan užeg područja" },
+              ],
             },
           ]}
-          legenda={[
-            { boja: "#003fff", oblik: "mreza", tekst: "obuhvat urbanističkog plana uređenja (UPU)" },
-            { boja: "#ff0000", oblik: "srafura", tekst: "na listu 4.c obveza izrade detaljnog plana uređenja (DPU), na listu 4.d važeći plan užeg područja" },
-            ...PODLOGA,
-          ]}
+          legenda={PODLOGA}
         >
           <strong>Slika 1.</strong> Obuhvati UPU-a. Važeći GUP propisuje UPU za gotovo cijeli istočni Split, a prijedlog ucrtava gotovo iste obuhvate. Na karti prijedloga važeći su planovi ucrtani u stvarnim granicama iz ISPU-a jer ih list 4.d prikazuje samo shematski.
         </ParKarata>
