@@ -15,9 +15,11 @@ Split središnji dio, 4.4 Split istok – Kamen – Stobreč) čitaju kao vektor
   oznakama koje padnu u česticu svog broja. Na listovima 4.2–4.4 to je
   8 000–22 000 parova, s medijanom odstupanja 1–1,5 m.
 
-  Razredi. Plohe izgrađenog (#ffff00) i neizgrađenog (#ffffb0) dijela su
-  ispunjeni putovi u PDF-u; neuređeni dio je šrafura, crte debljine 0,84 pt
-  pod 45°, koje se spoje u plohu.
+  Razredi. Neuređeni dio je šrafura, crte debljine 0,84 pt pod 45°, koje se
+  spoje u plohu. Izgrađeni (#ffff00) i neizgrađeni dio (#ffffb0) čitaju se s
+  lista iscrtanog na 144 dpi (~0,9 m po pikselu), po boji piksela: ispune su u
+  PDF-u razlomljene u tisuće putova s rupama, pa se kao vektor ne sklapaju
+  pouzdano. Sive zgrade i crne crte preko ispune ne broje se ni u jedno.
 
 Izlaz:
   data/gup-grad/ppug-2025.json   uklapanje svakog lista (za dokument.py i
@@ -161,6 +163,41 @@ def razredi(p, M) -> dict[str, object]:
     return out
 
 
+ZUM = 2.0  # 144 dpi
+
+
+def boje_lista(p):
+    """Maske žute (izgrađeno) i svijetložute (neizgrađeno) ispune lista, u pikselima iscrtanog lista."""
+    pix = p.get_pixmap(matrix=pymupdf.Matrix(ZUM, ZUM), alpha=False)
+    a = np.frombuffer(pix.samples, np.uint8).reshape(pix.height, pix.width, 3)
+    r, g, b = (a[..., i].astype(np.int16) for i in range(3))
+    zuto = (r > 235) & (g > 235) & (b < 70)
+    svijetlo = (r > 235) & (g > 235) & (b > 140) & (b < 210)
+    return zuto, svijetlo
+
+
+def udjeli_boja(maske, M, W_pt: float, H_pt: float, g) -> tuple[float, float]:
+    """Koliko je piksela čestice žuto, a koliko svijetložuto (od obojenih)."""
+    from rasterio import features
+    from affine import Affine
+    zuto, svijetlo = maske
+    Ai = np.linalg.inv(M[:, :2])
+    c = -Ai @ M[:, 2]
+    # HTRS → (x, -y) u pt → piksel (x·ZUM, y·ZUM)
+    tr = [Ai[0, 0] * ZUM, Ai[0, 1] * ZUM, -Ai[1, 0] * ZUM, -Ai[1, 1] * ZUM, c[0] * ZUM, -c[1] * ZUM]
+    gp = affinity.affine_transform(g, tr)
+    x0, y0, x1, y1 = (int(np.floor(v)) for v in gp.bounds)
+    x0, y0 = max(x0, 0), max(y0, 0)
+    x1, y1 = min(x1 + 1, zuto.shape[1]), min(y1 + 1, zuto.shape[0])
+    if x1 <= x0 or y1 <= y0:
+        return 0.0, 0.0
+    m = features.rasterize([(gp, 1)], out_shape=(y1 - y0, x1 - x0), transform=Affine(1, 0, x0, 0, 1, y0), fill=0,
+                           dtype="uint8").astype(bool)
+    z = int(zuto[y0:y1, x0:x1][m].sum())
+    sv = int(svijetlo[y0:y1, x0:x1][m].sum())
+    return z, sv
+
+
 def main() -> None:
     cestice_po_broju: dict[str, list] = {}
     sve = []
@@ -172,6 +209,7 @@ def main() -> None:
             sve.append((f"{pr['ko']}|{pr['kc']}", g))
     listovi = {c["id"]: c for c in D.LISTOVI}
     uklapanje, plohe = {}, {"I": [], "N": [], "U": []}
+    boje = {}
     for lid in LISTOVI:
         cfg = listovi[lid]
         p = pymupdf.open(D.preuzmi(cfg["pdf"], cfg["url"]))[0]
@@ -182,6 +220,7 @@ def main() -> None:
         r = razredi(p, M)
         for k in plohe:
             plohe[k].append(r[k])
+        boje[lid] = (M, boje_lista(p), r["okvir"])
     plohe = {k: unary_union(v) for k, v in plohe.items()}
     print("ha:", {k: round(v.area / 1e4, 1) for k, v in plohe.items()})
     stablo = {k: shapely.STRtree(list(getattr(v, "geoms", [v]))) for k, v in plohe.items()}
@@ -190,15 +229,20 @@ def main() -> None:
     for kljuc, g in sve:
         if g.area <= 0:
             continue
-        udio = {}
-        for k in ("U", "I", "N"):
-            udio[k] = sum(dijelovi[k][i].intersection(g).area for i in stablo[k].query(g)) / g.area
-        if udio["U"] >= PRETEZITO:
+        u = sum(dijelovi["U"][i].intersection(g).area for i in stablo["U"].query(g)) / g.area
+        if u >= PRETEZITO:
             razred[kljuc] = "U"
-        elif udio["U"] < JEDVA and udio["I"] >= PRETEZITO:
-            razred[kljuc] = "I"
-        elif udio["U"] < JEDVA and udio["N"] >= PRETEZITO:
-            razred[kljuc] = "N"
+            continue
+        if u >= JEDVA:
+            continue
+        # izgrađeno ili neizgrađeno po boji lista na kojem je čestica
+        t = g.representative_point()
+        for M, maske, okvir in boje.values():
+            if okvir.contains(t):
+                z, sv = udjeli_boja(maske, M, 0, 0, g)
+                if z + sv >= 20:
+                    razred[kljuc] = "I" if z >= sv else "N"
+                break
     print("čestica po razredu:", {k: sum(v == k for v in razred.values()) for k in "UIN"})
     with open(IZLAZ, "w") as f:
         json.dump({"opis": "Izvedeno skriptom scripts/gup-grad/ppug.py iz listova 4.2–4.4 „Građevinska područja” prijedloga "

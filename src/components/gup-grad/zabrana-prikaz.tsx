@@ -196,6 +196,14 @@ function karticaStanja(
               uređenju, čl. 106. st. 3.) te gradnja ulica, manjih infrastrukturnih građevina i javnih zgrada (
               <Navod id="do-plana-2025">čl. 105. st. 5.</Navod>).
             </p>
+            {s.podrucje === "sanacija" && s.cestica?.neizgradjena && (
+              <p className="mt-2">
+                <strong>Čestica je prazna, a ipak je u urbanoj sanaciji.</strong> GUP tu oznaku ne crta po česticama, nego kao
+                jednu plohu preko cijelog izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenog bloka vodi kao
+                izgrađeni dio. Za razliku od neuređenog dijela, ovdje do UPU-a nema iznimke za čestice uz postojeću cestu, pa
+                se na njoj ne bi smjelo graditi ništa novo.
+              </p>
+            )}
             {s.podrucje === "neuredeno" && (
               <p className="mt-2">
                 <strong>Ako do čestice vodi postojeća javna cesta</strong> i odvodnja se može riješiti, nova se zgrada može

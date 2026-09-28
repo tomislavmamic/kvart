@@ -787,6 +787,9 @@ export default async function AnalizaPage() {
             <strong>U preostalim trima plohama nije tako.</strong> U plohi u Harakovcu ({ha1(ploha(19)?.ha ?? 0)} ha, {ploha(19)?.zgrade} zgrada) rješenje o izvedenom stanju ima {ploha(19)?.udio} % zgrada, u plohi u Mostinama ({ha1(ploha(17)?.ha ?? 0)} ha, {ploha(17)?.zgrade} zgrada, među njima velike poslovne hale) {ploha(17)?.udio} %, a u plohi u obuhvatu UPU-a proširenja groblja Lovrinac ({ha1(ploha(21)?.ha ?? 0)} ha, {ploha(21)?.zgrade} zgrada) {ploha(21)?.udio} %. Prema podacima iz registra, u tim plohama zakonski uvjet za urbanu sanaciju nije ispunjen. Na njima je {broj(sporne.sanacija.cestice)} čestica na kojima bi zabrana pogodila novu gradnju.
           </li>
           <li>
+            <strong>U plohama urbane sanacije je i {broj(sporne.prazne_u_sanaciji.cestice)} praznih čestica ({ha1(sporne.prazne_u_sanaciji.ha)} ha)</strong>, od toga {broj(sporne.prazne_u_sanaciji_uz_cestu)} uz postojeću cestu. GUP sanaciju crta kao jednu plohu preko cijelog izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenog bloka, sve do ceste, vodi kao izgrađeni dio. Na takvoj se čestici do UPU-a ne bi smjelo graditi ništa. Na jednakoj praznoj čestici u neuređenom dijelu uz postojeću javnu cestu može se dobiti lokacijska dozvola, a na onoj bez oznake gradi se odmah. Na sjevernom rubu Dračevca 2 tako je prazan maslinik s unutarnje strane zavoja ceste u sanaciji, a jednake prazne čestice iste gospodarske zone preko ceste nisu.
+          </li>
+          <li>
             <strong>I u ostatku obuhvata većina zgrada ima rješenje o izvedenom stanju (66 %), a oznake urbane sanacije ondje nema.</strong> Oznaka dakle ne prati samo udio ozakonjenih zgrada: zemljište sa sličnim udjelom na jednom je mjestu pod zabranom, a na drugome nije.
           </li>
         </ul>
@@ -818,6 +821,7 @@ export default async function AnalizaPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>da se neuređeni dio uskladi s kriterijem Grada, tako da se iz njega izuzmu čestice uz postojeću cestu široku barem 4 m i izgrađene čestice (izmjenom PPUG-a i GUP-a); popis je na karti zabrane;</li>
           <li>da se iz urbane sanacije izuzmu plohe u kojima ozakonjene zgrade nisu većina (Harakovac, Mostine i Lovrinac);</li>
+          <li>da se iz urbane sanacije izuzmu prazne čestice, barem one uz postojeću javnu cestu, jer sanacija služi uređenju ozakonjene gradnje, a na njima nje nema;</li>
           <li>za pojedinu česticu u neuređenom dijelu do koje već vodi izvedena cesta, da je Grad prebaci u uređeni dio; dokaz treba priložiti (fotografija ceste, podaci o priključku), jer je Grad takve primjedbe u raspravi o PPUG-u prihvaćao;</li>
           <li>
             da Grad objavi podatke i prag po kojima je ucrtao urbanu sanaciju te njezine granice odredi po katastarskim česticama, kao što je to u PPUG-u učinio za neuređeni dio, a u važećem GUP-u za granicu zaštićene povijesne jezgre.

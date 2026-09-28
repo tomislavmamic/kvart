@@ -348,7 +348,8 @@ def main() -> None:
     ppug_cestice = {}
     sporne, zbroj = [], {"pristup": [0, 0.0], "cesta": [0, 0.0], "izgradjena": [0, 0.0], "sanacija": [0, 0.0], "ppug": [0, 0.0],
                          "ukupno": [0, 0.0],
-                         "neuredeno": [0, 0.0], "u_sanaciji": [0, 0.0], "pristup_kanal": 0}
+                         "neuredeno": [0, 0.0], "u_sanaciji": [0, 0.0], "pristup_kanal": 0,
+                         "prazne_u_sanaciji": [0, 0.0], "prazne_u_sanaciji_uz_cestu": 0}
     for f in zc:
         p = f["properties"]
         g = stransform(Z.U_HTRS, shape(f["geometry"]))
@@ -380,6 +381,12 @@ def main() -> None:
         elif udio_u(g, SAN) >= 0.5:
             zbroj["u_sanaciji"][0] += 1
             zbroj["u_sanaciji"][1] += p["m2"] / 1e4
+            # prazna čestica u plohi sanacije: iznimka za čestice uz cestu ondje ne vrijedi
+            if p["neizgradjena"]:
+                zbroj["prazne_u_sanaciji"][0] += 1
+                zbroj["prazne_u_sanaciji"][1] += p["m2"] / 1e4
+                zbroj["prazne_u_sanaciji_uz_cestu"] += int(bool(len(siroki_t.query(g, predicate="dwithin", distance=PRISTUP_M))
+                                                            or len(moguci_t.query(g, predicate="dwithin", distance=PRISTUP_M))))
             t = g.representative_point()
             r, c = int((R.MREZA_BBOX[3] - t.y) / R.KORAK), int((t.x - R.MREZA_BBOX[0]) / R.KORAK)
             z = plohe.get(int(lab[r, c])) if 0 <= r < R.H and 0 <= c < R.W else None

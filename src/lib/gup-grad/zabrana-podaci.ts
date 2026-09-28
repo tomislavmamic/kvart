@@ -124,6 +124,9 @@ export interface ZbrojSpornih {
   /** sve čestice pod zabranom u neuređenom dijelu, odnosno u urbanoj sanaciji */
   neuredeno: BrojCestica;
   u_sanaciji: BrojCestica;
+  /** prazne čestice u plohama urbane sanacije i koliko ih je uz postojeću cestu */
+  prazne_u_sanaciji: BrojCestica;
+  prazne_u_sanaciji_uz_cestu: number;
   plohe: { ha: number; zgrade: number; udio: number; upu: number; manjina: boolean }[];
   po_upu: Record<string, { naziv: string | null; cestice: number; ha: number }>;
 }
