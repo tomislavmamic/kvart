@@ -3198,7 +3198,7 @@ function podlogaPoId(id: string): BaseLayer {
  * jedna od 512 px = 0,86–1,3 s, četiri od 256 px = 3,85 s.
  *
  * Vrijedi samo za podloge koje idu kroz našu rutu: sjenčani reljef i
- * CARTO-va ulična karta izrađeni su kao 256 px i to nije stvar dogovora.
+ * OSM-ova ulična karta izrađeni su kao 256 px i to nije stvar dogovora.
  * Mora se poklapati s PLOCICA_PX u src/lib/plocice.ts.
  */
 const WMS_PLOCICA = 512;
