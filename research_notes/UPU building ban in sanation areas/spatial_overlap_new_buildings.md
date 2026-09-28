@@ -1,5 +1,7 @@
 # Spatial check of two premises: "virtually the same area" (GUP in force vs April 2025 draft) and "many new buildings in the last 10 years"
 
+> **Update 28 Sep 2026.** The figures below are from the first run. After the draft's sheets 4.d/4.c were shifted onto sheet 1 (~3.7/4 m), plans in force were switched to their ISPU boundaries and fill hidden under plan-in-force boxes was dropped, Q1 and Q5 were recomputed and the report carries the new values (e.g. 93% instead of 92%, 635 instead of 617 buildings). The two figures here were regenerated; the zone flags in `new_buildings_east_split.csv` are still from the first run.
+
 Scope: east Split (Dračevac, Mostine, Harakovac, Bilice), with citywide figures for part A. All work done 27 Sep 2026 on the repository's own sheet-rasterisation pipeline plus DGU orthophotos; nothing in the repo was modified. Figures and a building list are saved next to these notes:
 - `fig1_regime_overlap_east_split.png` — where the in-force and draft "building waits for a UPU" areas coincide or differ.
 - `fig2_new_buildings_east_split.png` — every building that is new since the 2011 orthophoto, coloured by period, over the two regimes.
