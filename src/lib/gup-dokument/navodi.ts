@@ -352,6 +352,21 @@ export const NAVODI: Record<string, SpecNavoda> = {
     ],
     opis: "prijedlog 2025., čl. 106. st. 2: čemu služe UPU-i urbane sanacije",
   },
+  "clanak-106-preobrazba-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      { t: "Područja urbane preobrazbe su ovim Planom u najvećem dijelu definirana kao kompleksni zahvati Gradskih projekata", s: 146 },
+      { t: "pojedinačni zahvati P1, P15, P20, P34, P35 i P36", s: 146 },
+      { t: "Brodogradilište, Sjeverna luka, zone proizvodne namjene na području Dujmovače, Smokovika i Bilica te manji istočni dio TTTS-a", s: 146 },
+      { t: "Turska kula (Glavičine)", s: 146 },
+    ],
+    opis: "prijedlog 2025., čl. 106. st. 4: koja su područja urbane preobrazbe",
+  },
+  "clanak-103-karta-2025": {
+    dok: "prijedlog-2025",
+    citati: [{ t: "Područja iz prethodnog stavka prikazana su na kartografskom prikazu 4.d „Područja i dijelovi primjene planskih mjera zaštite“.", s: 144 }],
+    opis: "prijedlog 2025., čl. 103. st. 2: područja su određena samo listom 4.d",
+  },
   "clanak-106-neuredeno-2025": {
     dok: "prijedlog-2025",
     citati: [
