@@ -84,6 +84,7 @@ import sys
 import numpy as np
 import pyogrio
 import shapely
+import shapely.ops
 from rasterio import features
 from scipy import ndimage
 from shapely.geometry import LineString, Point, shape
@@ -296,17 +297,22 @@ def main() -> None:
         return unary_union([shape(g) for g, x in features.shapes(maska.astype("uint8"), mask=maska, transform=Z.TRANSFORM)]).buffer(0)
 
     neu_pol = poligon(NEU)
-    oko = neu_pol.buffer(OKO_NEUREDENOG_M)
     print("neuređeno ha", round(neu_pol.area / 1e4, 1))
+    # ceste se mjere i crtaju cijelom duljinom, svuda gdje prolaze kroz zabranu
+    oko = poligon(v > 0).buffer(OKO_NEUREDENOG_M)
 
-    # ceste uz neuređeni dio i širina njihovih čestica
+    # ceste i širina njihovih čestica
     cestice = sve_cestice(oko.buffer(40))
     osi = osi_cesta(oko, os.path.join(PORTAL, REGISTAR))
     drzavne = osi_cesta(oko, os.path.join(Z.BAZA, DRZAVNE))
-    ostale = [g for put in GRADSKE for g in osi_cesta(oko, os.path.join(Z.BAZA, put))] + osi_osm(oko, drzavne)
-    print("osi iz registra", len(osi), "ostalih (gradski slojevi, OSM)", len(ostale))
+    gradske = [[g for g in osi_cesta(oko, os.path.join(Z.BAZA, put))] for put in GRADSKE]
+    osm = osi_osm(oko, drzavne)
+    ostale = [g for gs in gradske for g in gs] + osm
+    print("osi iz registra", len(osi), "gradskih slojeva", [len(g) for g in gradske], "OSM", len(osm), "državnih", len(drzavne))
     po_osi = sirine(osi, cestice)
-    po_ostalim = sirine(ostale, cestice)
+    po_gradskim = [sirine(gs, cestice) for gs in gradske]
+    po_osm = sirine(osm, cestice)
+    po_ostalim = [o for po in po_gradskim for o in po] + po_osm
     # moguć pristup: uz postojeću cestu kojoj širina nije izmjerena ili nije u registru, osim ako je izmjerena uža od 4 m
     moguci = [p for p, w in [u for o in po_osi for u in o] if not np.isfinite(w)] + \
              [p for p, w in [u for o in po_ostalim for u in o] if not (np.isfinite(w) and w < 4.0)]
@@ -424,18 +430,33 @@ def main() -> None:
                         "properties": {"vrsta": "ploha", "ha": round(g.area / 1e4, 1), "zgrade": nz, "s_rjesenjem": nr,
                                        "udio": round(100 * nr / nz), "upu": broj, "manjina": nr * 2 < nz}})
 
-    # osi cesta uz neuređeni dio, po širini čestice ceste
+    # sve ceste kroz zabranu, cijelom duljinom, po širini čestice ceste. Ista cesta
+    # često je u više izvora; crta se jednom, iz prvog: registar, gradski slojevi,
+    # OSM, državne ceste. Državnoj cesti bez izmjerene širine pripisuje se „4+”.
+    izvori = [(osi, po_osi, False)] + [(gs, po, False) for gs, po in zip(gradske, po_gradskim)] + \
+             [(osm, po_osm, False), (drzavne, sirine(drzavne, cestice), True)]
     razredi = {"4+": [], "<4": [], "?": []}
-    uz_neuredeno = prep(neu_pol.buffer(15))
-    for o in po_osi + po_ostalim:
-        for (p0, w0), (p1, _) in zip(o, o[1:]):
-            if not uz_neuredeno.intersects(p0):
-                continue
-            razredi["?" if not np.isfinite(w0) else "4+" if w0 >= 4 else "<4"].append(LineString([p0, p1]))
-    # izmjerena dionica ima prednost pred istom cestom bez izmjerene širine
-    zauzeto = shapely.union_all(razredi["4+"] + razredi["<4"]).buffer(5) if razredi["4+"] or razredi["<4"] else None
-    if zauzeto is not None:
-        razredi["?"] = [l for l in razredi["?"] if not zauzeto.contains(l)]
+    pokriveno = None
+    for linije, po, drzavna in izvori:
+        novi = []
+        for l, uz in zip(linije, po):
+            L = l.length
+            for j, (p, w) in enumerate(uz):
+                s0 = 0.0 if j == 0 else 2 + j * KORAK_UZORKA - KORAK_UZORKA / 2
+                s1 = L if j == len(uz) - 1 else 2 + j * KORAK_UZORKA + KORAK_UZORKA / 2
+                if s1 <= s0:
+                    continue
+                dio = shapely.ops.substring(l, s0, s1)
+                if pokriveno is not None and pokriveno.contains(dio.centroid):
+                    continue
+                r = "?" if not np.isfinite(w) else "4+" if w >= 4 else "<4"
+                if drzavna and r == "?":
+                    r = "4+"
+                novi.append((dio, r))
+        for dio, r in novi:
+            razredi[r].append(dio)
+        if novi:
+            pokriveno = prep(shapely.union_all([d for ls in razredi.values() for d in ls]).buffer(5))
     ceste = []
     for k, ls in razredi.items():
         m = shapely.line_merge(shapely.union_all(ls)) if ls else None
@@ -443,6 +464,7 @@ def main() -> None:
             continue
         ceste.append({"type": "Feature", "geometry": Z.zaokruzi(m.simplify(1.5)),
                       "properties": {"vrsta": "cesta", "sirina": k}})
+    print("ceste km:", {k: round(sum(x.length for x in ls) / 1e3, 1) for k, ls in razredi.items()})
 
     okrugli = {k: ({"cestice": v[0], "ha": round(v[1], 1)} if isinstance(v, list) else v) for k, v in zbroj.items()}
     okrugli["plohe"] = [{k: f["properties"][k] for k in ("ha", "zgrade", "udio", "upu", "manjina")} for f in plohe_f]

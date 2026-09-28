@@ -21,11 +21,13 @@ import type { RedUpu } from "@/lib/gup-grad/zabrana-podaci";
 import {
   BLIZU_RUBA_M,
   BOJE_ZABRANE,
+  cesticaUTocki,
   imenicaUz,
   IZVOR_OZNAKE,
   mjestoNaPpugu,
   NAZIV_PODRUCJA,
   naslovno,
+  plociceZaTocku,
   pripremiAdrese,
   slojeviIzGeojsona,
   spojiOkvire,
@@ -35,6 +37,7 @@ import {
   type Prijedlog,
   type SiroveAdrese,
   type ListPpug,
+  type PlocicaCestica,
   type PlohaSanacije,
   type Slojevi,
   type SpornaCestica,
@@ -45,6 +48,35 @@ const ZabranaKarta = dynamic(() => import("@/components/gup-grad/zabrana-karta")
   ssr: false,
   loading: () => <div className="h-full w-full animate-pulse bg-zinc-100" />,
 });
+
+/**
+ * Katastarska čestica pod klikom, iz pločica čestica koje koristi i /gup
+ * (public/geo/gup-grad/cestice). Indeks i pločica dohvaćaju se jednom.
+ */
+function dohvacacCestica() {
+  let indeks: Promise<PlocicaCestica[]> | null = null;
+  const plocice = new Map<string, Promise<FeatureCollection | null>>();
+  return async (lng: number, lat: number) => {
+    indeks ??= fetch("/geo/gup-grad/cestice-indeks.json")
+      .then((r) => r.json() as Promise<{ plocice: PlocicaCestica[] }>)
+      .then((d) => d.plocice);
+    const ids = plociceZaTocku(await indeks, lng, lat);
+    const fcs = await Promise.all(
+      ids.map((id) => {
+        if (!plocice.has(id)) {
+          plocice.set(
+            id,
+            fetch(`/geo/gup-grad/cestice/${id}.json`)
+              .then((r) => (r.ok ? (r.json() as Promise<FeatureCollection>) : null))
+              .catch(() => null),
+          );
+        }
+        return plocice.get(id)!;
+      }),
+    );
+    return cesticaUTocki(fcs.filter((f): f is FeatureCollection => f !== null), lng, lat);
+  };
+}
 
 /** Popis po UPU-u je dug (preko 30); prvih toliko je odmah vidljivo. */
 const PRVIH_UPU = 12;
@@ -318,6 +350,9 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
   const [cilj, setCilj] = useState<CiljKarte | null>(null);
   const [oznaka, setOznaka] = useState<OznakaKarte | null>(null);
   const [kartica, setKartica] = useState<Kartica | null>(null);
+  const [cesticaKlika, setCesticaKlika] = useState<{ kc: string; ko: string } | null>(null);
+  const dohvatiCesticu = useRef(dohvacacCestica());
+  const zadnjiKlik = useRef(0);
   const [odabraniUpu, setOdabraniUpu] = useState<number | null>(null);
   const [sviUpu, setSviUpu] = useState(false);
   const kljuc = useRef(0);
@@ -360,6 +395,12 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
     setOdabraniUpu(null);
     setOznaka({ lng, lat, uZabrani: s.rezim === "zabrana" });
     setKartica({ ...karticaStanja(s, ppug), podnaslov });
+    // broj čestice pod klikom, za svaku točku; stariji odgovor ne smije prebrisati noviji
+    const n = ++zadnjiKlik.current;
+    setCesticaKlika(null);
+    dohvatiCesticu.current(lng, lat)
+      .then((c) => n === zadnjiKlik.current && setCesticaKlika(c))
+      .catch(() => {});
   };
 
   // ---------------------------------------------------------------- tražilica
@@ -561,6 +602,11 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
             <Znacka boja={kartica.boja}>{kartica.oznaka}</Znacka>
             <h3 className="mt-2 pr-8 text-base font-bold leading-snug text-zinc-900">{kartica.naslov}</h3>
             {kartica.podnaslov && <p className="font-mono text-xs text-zinc-500">{kartica.podnaslov}</p>}
+            {oznaka && cesticaKlika && (
+              <p className="font-mono text-xs text-zinc-700">
+                k.č. {cesticaKlika.kc}, k.o. {naslovno(cesticaKlika.ko)}
+              </p>
+            )}
             <div className="mt-2">{kartica.tijelo}</div>
           </div>
         )}
@@ -577,14 +623,20 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
         </Skupina>
         {podaci?.sporne && (
           <Skupina naslov="Sporno" vidljivo={sporno} promijeni={setSporno}>
-            <Stavka stil={{ border: `3px solid ${BOJE_ZABRANE.sporno}`, background: "rgba(192,38,211,0.25)" }}>
-              oznaka ne odgovara kriteriju Grada ili zakonu
-            </Stavka>
+            <Stavka stil={{ border: `3px solid ${BOJE_ZABRANE.sporno}` }}>oznaka ne odgovara kriteriju Grada ili zakonu</Stavka>
             <Stavka stil={{ border: `1.5px solid ${BOJE_ZABRANE.sporno}` }}>moguće sporno: uz cestu izvan registra</Stavka>
-            <li className="text-zinc-500">Ceste uz neuređeni dio, izbliza:</li>
-            <Stavka stil={{ height: 4, background: BOJE_ZABRANE.cesta4 }}>na čestici širokoj barem 4 m</Stavka>
-            <Stavka stil={{ height: 4, background: BOJE_ZABRANE.cestaUska }}>na užoj čestici</Stavka>
-            <Stavka stil={{ height: 4, background: BOJE_ZABRANE.cestaNepoznata }}>širina nije izmjerena</Stavka>
+            <li className="text-zinc-500">Ceste kroz zabranu, izbliza; sredina crte je širina čestice ceste:</li>
+            {(
+              [
+                [BOJE_ZABRANE.cestaSiroka, "barem 4 m"],
+                [BOJE_ZABRANE.cestaUska, "uža od 4 m"],
+                [BOJE_ZABRANE.cestaNepoznata, "nije izmjerena"],
+              ] as const
+            ).map(([boja, tekst]) => (
+              <Stavka key={tekst} stil={{ height: 9, background: boja, border: `2.5px solid ${BOJE_ZABRANE.cesta}`, borderRadius: 0 }}>
+                {tekst}
+              </Stavka>
+            ))}
           </Skupina>
         )}
         <Skupina naslov="Za snalaženje">

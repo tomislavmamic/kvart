@@ -30,9 +30,11 @@ export const BOJE_ZABRANE = {
   gup: "#18181b",
   cestica: "#3f3f46",
   sporno: "#c026d3",
-  cesta4: "#18181b",
-  cestaUska: "#a1a1aa",
-  cestaNepoznata: "#60a5fa",
+  /** cesta: jednaki obrub cijelom duljinom, a sredina kaže širinu njezine čestice */
+  cesta: "#18181b",
+  cestaSiroka: "#ffffff",
+  cestaUska: "#dc2626",
+  cestaNepoznata: "#a1a1aa",
 } as const;
 
 /** Koji plan je odredio oznaku na listu 4.d. */
@@ -184,6 +186,32 @@ export interface ListPpug {
   udio: [number, number, number, number, number, number];
   /** desno od ovoga je legenda */
   kartaDo: number;
+}
+
+/** Pločica čestica (public/geo/gup-grad/cestice-indeks.json): id i okvir [[jug, zapad], [sjever, istok]]. */
+export interface PlocicaCestica {
+  id: string;
+  granice: [[number, number], [number, number]];
+}
+
+/** Pločice čiji okvir sadrži točku (čestica na rubu pločice može biti u susjednoj). */
+export function plociceZaTocku(plocice: PlocicaCestica[], lng: number, lat: number): string[] {
+  return plocice
+    .filter(({ granice: [[j, z], [s, i]] }) => lat >= j && lat <= s && lng >= z && lng <= i)
+    .map((p) => p.id);
+}
+
+/** Katastarska čestica u kojoj je točka; null ako je nema u učitanim pločicama. */
+export function cesticaUTocki(plocice: FeatureCollection[], lng: number, lat: number): { kc: string; ko: string } | null {
+  for (const fc of plocice) {
+    for (const f of fc.features) {
+      const p = (f.properties ?? {}) as { kc?: string; ko?: string };
+      if (!p.kc || !f.geometry || (f.geometry.type !== "Polygon" && f.geometry.type !== "MultiPolygon")) continue;
+      const o = oblik(f.geometry as Geometrija);
+      if (uOkviru(o.okvir, lng, lat, 0) && uObliku(o, lng, lat)) return { kc: p.kc, ko: p.ko ?? "" };
+    }
+  }
+  return null;
 }
 
 /** Mjesto na listu PPUG-a za točku; null ako nije ni na jednom listu. */

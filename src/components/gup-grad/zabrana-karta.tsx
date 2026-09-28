@@ -10,11 +10,13 @@
  * pokazuje čestice na kojima bi zabrana pogodila novu gradnju
  * (zabrana-cestice-2025.geojson).
  *
- * Ljubičasto je sporno (sporne-2025.geojson): debelo kad oznaka ne odgovara
- * kriteriju Grada ili zakonu, tanko kad je čestica uz cestu koje nema u
- * registru ili joj širina nije izmjerena; od SPORNO_CESTE_OD_ZUMA i osi cesta
- * uz neuređeni dio po širini čestice ceste. Sporno je u vlastitom sloju
- * karte (pane), iznad oznaka. Podloga je siva, da se boje oznaka čitaju.
+ * Ljubičasti rub je sporno (sporne-2025.geojson): debeo kad oznaka ne
+ * odgovara kriteriju Grada ili zakonu, tanak kad je čestica uz cestu koje nema
+ * u registru ili joj širina nije izmjerena. Od SPORNO_CESTE_OD_ZUMA vide se i
+ * sve ceste kroz zabranu, cijelom duljinom: jednak tamni obrub, a sredina
+ * kaže širinu čestice ceste (prazna od 4 m naviše, crvena uža, siva
+ * neizmjerena). Sporno je u vlastitom sloju karte (pane), iznad oznaka.
+ * Podloga je siva, da se boje oznaka čitaju.
  *
  * Karta samo crta i javlja klik; što je na kojoj točki računa
  * ZabranaPrikaz (stanjeTocke u src/lib/gup-grad/zabrana.ts). Slojevi nisu
@@ -149,6 +151,7 @@ export function ZabranaKarta(props: {
       if (sporne) {
         map.createPane("sporno").style.zIndex = "450";
         const u = { ...netaknuto, pane: "sporno" } as const;
+        const ceste = zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cesta"));
         const jako = (f?: Feature) => f?.properties?.vrsta === "ploha" || !(f?.properties?.razlozi ?? []).every((r: string) => r === "cesta" || r === "izgradjena");
         slojeviSpornog.current = {
           cestice: L.geoJSON(
@@ -157,21 +160,28 @@ export function ZabranaKarta(props: {
               ...u,
               style: (f) =>
                 jako(f)
-                  ? { color: BOJE_ZABRANE.sporno, weight: 3, fillColor: BOJE_ZABRANE.sporno, fillOpacity: f?.properties?.vrsta === "ploha" ? 0 : 0.25 }
-                  : { color: BOJE_ZABRANE.sporno, weight: 1.5, fillColor: BOJE_ZABRANE.sporno, fillOpacity: 0.08 },
+                  ? { color: BOJE_ZABRANE.sporno, weight: 3, fill: false }
+                  : { color: BOJE_ZABRANE.sporno, weight: 1.5, fill: false },
             },
           ),
-          ceste: L.geoJSON(zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cesta")), {
-            ...u,
-            style: (f) => {
-              const w = f?.properties?.sirina;
-              return w === "4+"
-                ? { color: BOJE_ZABRANE.cesta4, weight: 4, opacity: 0.9 }
-                : w === "<4"
-                  ? { color: BOJE_ZABRANE.cestaUska, weight: 3, opacity: 0.95 }
-                  : { color: BOJE_ZABRANE.cestaNepoznata, weight: 3, opacity: 0.95 };
-            },
-          }),
+          // obrub pa sredina: grupa dodaje slojeve redom, pa se sredina crta preko obruba
+          ceste: L.layerGroup([
+            L.geoJSON(ceste, { ...u, style: { color: BOJE_ZABRANE.cesta, weight: 7, opacity: 0.9, lineCap: "butt" } }),
+            L.geoJSON(ceste, {
+              ...u,
+              style: (f) => ({
+                color:
+                  f?.properties?.sirina === "4+"
+                    ? BOJE_ZABRANE.cestaSiroka
+                    : f?.properties?.sirina === "<4"
+                      ? BOJE_ZABRANE.cestaUska
+                      : BOJE_ZABRANE.cestaNepoznata,
+                weight: 3.5,
+                opacity: 1,
+                lineCap: "butt",
+              }),
+            }),
+          ]),
         };
       }
       const granica = L.geoJSON(zbirka(gup), {

@@ -5,8 +5,10 @@ import test from "node:test";
 
 import {
   doRuba,
+  cesticaUTocki,
   imenicaUz,
   mjestoNaPpugu,
+  plociceZaTocku,
   naslovno,
   normaliziraj,
   oblik,
@@ -150,6 +152,24 @@ test("imenicaUz: jednina, dvojina i množina uz broj", () => {
   assert.equal(imenicaUz(113, k), "kućnih brojeva");
   assert.equal(imenicaUz(6697, z), "zgrada");
   assert.equal(imenicaUz(23, z), "zgrade");
+});
+
+test("cesticaUTocki i plociceZaTocku: čestica pod klikom", () => {
+  const fc = {
+    type: "FeatureCollection" as const,
+    features: [
+      { type: "Feature" as const, properties: { kc: "297/1", ko: "SPLIT" }, geometry: poligon(kvadrat(16.5, 43.52, 0.001)) },
+      { type: "Feature" as const, properties: { kc: "298/1", ko: "SPLIT" }, geometry: poligon(kvadrat(16.502, 43.52, 0.001)) },
+    ],
+  };
+  assert.deepEqual(cesticaUTocki([fc], 16.5025, 43.5205), { kc: "298/1", ko: "SPLIT" });
+  assert.equal(cesticaUTocki([fc], 16.501, 43.53), null);
+  const pl = [
+    { id: "a", granice: [[43.5, 16.4], [43.51, 16.41]] as [[number, number], [number, number]] },
+    { id: "b", granice: [[43.505, 16.405], [43.52, 16.42]] as [[number, number], [number, number]] },
+  ];
+  assert.deepEqual(plociceZaTocku(pl, 16.407, 43.507), ["a", "b"]);
+  assert.deepEqual(plociceZaTocku(pl, 16.415, 43.515), ["b"]);
 });
 
 test("mjestoNaPpugu: točka na listu, a ne u legendi ni izvan lista", () => {
