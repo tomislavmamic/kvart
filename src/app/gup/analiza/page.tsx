@@ -228,19 +228,25 @@ interface Karta {
   src: string;
   naslov: ReactNode;
   opis: string;
+  /** Znak iz tumača uz naslov, kad svaka karta prikazuje drugu oznaku. */
+  znak?: Oznaka;
 }
 
 /**
- * Dvije karte istog isječka, važeći GUP i prijedlog, jedna uz drugu. Na
- * širem zaslonu par izlazi iz stupca teksta na punu širinu stranice.
+ * Karte istog isječka jedna uz drugu: par (važeći GUP i prijedlog) ili
+ * mreža 2 × 2. Na širem zaslonu izlaze iz stupca teksta na punu širinu
+ * stranice, na mobitelu su jedna ispod druge.
  */
-function ParKarata({ karte, legenda, children }: { karte: [Karta, Karta]; legenda: Oznaka[]; children: ReactNode }) {
+function ParKarata({ karte, legenda, children }: { karte: Karta[]; legenda: Oznaka[]; children: ReactNode }) {
   return (
     <figure className="pt-4 lg:w-[56rem] xl:-ml-16 xl:w-[64rem]">
       <div className="grid gap-4 lg:grid-cols-2">
         {karte.map((k) => (
           <div key={k.src}>
-            <p className="mb-1.5 text-sm font-semibold text-zinc-900">{k.naslov}</p>
+            <p className="mb-1.5 flex items-start gap-2 text-sm font-semibold text-zinc-900">
+              {k.znak && <Znak o={k.znak} />}
+              <span>{k.naslov}</span>
+            </p>
             <a href={k.src} className="fokus block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={k.src} width={1300} height={750} alt={k.opis} loading="lazy" className="h-auto w-full rounded-xl border border-zinc-200" />
@@ -370,7 +376,7 @@ export default async function AnalizaPage() {
 
         <Podnaslov>Što je ucrtano na listovima</Podnaslov>
         <p>
-          Parovi karata u nastavku prikazuju isti isječak istočnog Splita: u svakom je paru prva karta važeći GUP, a druga prijedlog iz 2025. Oznake su preuzete sa samih listova, u izvornim bojama, i ucrtane preko katastarskih čestica i zgrada. Na kartama urbanih pravila ulice nisu obojene: list iz 2025. ostavlja ih bijelima, a list iz 2014. i njih boji bojom pravila, pa bi usporedba inače pokazala razliku koje nema.
+          Karte u nastavku prikazuju isti isječak istočnog Splita. U parovima je prva karta važeći GUP, a druga prijedlog iz 2025. Oznake su preuzete sa samih listova, u izvornim bojama, i ucrtane preko katastarskih čestica i zgrada. Na kartama urbanih pravila ulice nisu obojene: list iz 2025. ostavlja ih bijelima, a list iz 2014. i njih boji bojom pravila, pa bi usporedba inače pokazala razliku koje nema.
         </p>
         <ParKarata
           karte={[
@@ -384,25 +390,53 @@ export default async function AnalizaPage() {
               opis: "List 4.c važećeg GUP-a: obveza izrade UPU-a propisana je za gotovo cijeli istočni Split.",
             },
             {
-              src: "/gup/analiza/obveza-prijedlog.webp",
+              src: "/gup/analiza/obuhvat-prijedlog.webp",
               naslov: (
                 <>
                   Prijedlog 2025. · <Navod id="istok-4d-2025">list 4.d</Navod>
                 </>
               ),
-              opis: "List 4.d prijedloga: unutar gotovo istih obuhvata UPU-a bojom su izdvojena područja urbane sanacije i urbane preobrazbe te neuređeni dijelovi građevinskog područja.",
+              opis: "List 4.d prijedloga: obuhvati UPU-a gotovo su isti kao na listu 4.c važećeg GUP-a.",
             },
           ]}
           legenda={[
             { boja: "#003fff", oblik: "mreza", tekst: "obuhvat urbanističkog plana uređenja (UPU)" },
             { boja: "#ff0000", oblik: "srafura", tekst: "na listu 4.c obveza izrade detaljnog plana uređenja (DPU), na listu 4.d važeći plan užeg područja" },
-            { boja: "#9fff7f", tekst: "područje urbane sanacije" },
-            { boja: "#ffbf00", tekst: "područje urbane preobrazbe" },
-            { boja: "#ffffaf", tekst: "neuređeni dio građevinskog područja" },
             ...PODLOGA,
           ]}
         >
-          <strong>Slika 1.</strong> Gdje je propisan UPU. Važeći GUP propisuje ga za gotovo cijeli istočni Split. Prijedlog zadržava gotovo iste obuhvate, ali unutar njih bojom izdvaja područja urbane sanacije i urbane preobrazbe te neuređene dijelove građevinskog područja: samo je ondje UPU obvezan i samo se ondje nove zgrade ne bi smjele graditi prije njegova donošenja. U ostatku obuhvata UPU je samo preporučen. Na karti prijedloga važeći su planovi ucrtani u stvarnim granicama iz ISPU-a jer ih list 4.d prikazuje samo shematski.
+          <strong>Slika 1.</strong> Obuhvati UPU-a. Važeći GUP propisuje UPU za gotovo cijeli istočni Split, a prijedlog ucrtava gotovo iste obuhvate. Na karti prijedloga važeći su planovi ucrtani u stvarnim granicama iz ISPU-a jer ih list 4.d prikazuje samo shematski.
+        </ParKarata>
+        <ParKarata
+          karte={[
+            {
+              src: "/gup/analiza/prijedlog-sanacija.webp",
+              znak: { boja: "#9fff7f", tekst: "" },
+              naslov: "Područje urbane sanacije · 51,8 ha",
+              opis: "Područja urbane sanacije prema listu 4.d prijedloga: veći dio Dračevca 2, Mostina i sjevernog Harakovca.",
+            },
+            {
+              src: "/gup/analiza/prijedlog-neuredeno.webp",
+              znak: { boja: "#ffffaf", tekst: "" },
+              naslov: "Neuređeni dio građevinskog područja · 70,3 ha",
+              opis: "Neuređeni dijelovi građevinskog područja prema listu 4.d prijedloga: neizgrađeno zemljište Harakovca, Dračevca i Mostina.",
+            },
+            {
+              src: "/gup/analiza/prijedlog-preobrazba.webp",
+              znak: { boja: "#ffbf00", tekst: "" },
+              naslov: "Područje urbane preobrazbe · 20,9 ha",
+              opis: "Područja urbane preobrazbe prema listu 4.d prijedloga: na ovom isječku gotovo samo Karepovac.",
+            },
+            {
+              src: "/gup/analiza/prijedlog-ostatak.webp",
+              znak: { boja: "#003fff", oblik: "mreza", tekst: "" },
+              naslov: "Ostatak obuhvata UPU-a: plan samo preporučen · 28,1 ha",
+              opis: "Dijelovi obuhvata UPU-a iz prijedloga koji nisu ni urbana sanacija, ni preobrazba, ni neuređeni dio: većinom ulice i poslovne zone u Mostinama.",
+            },
+          ]}
+          legenda={PODLOGA}
+        >
+          <strong>Slika 2.</strong> Kako prijedlog dijeli obuhvate UPU-a sa Slike 1. UPU je obvezan i nove se zgrade prije njegova donošenja ne bi smjele graditi samo u područjima urbane sanacije i urbane preobrazbe te u neuređenim dijelovima građevinskog područja (prve tri karte). U ostatku obuhvata (četvrta karta) UPU je samo preporučen, pa se ondje gradi neposrednom provedbom GUP-a; od tih 28,1 ha važeći GUP za 27,2 ha propisuje UPU. Površine vrijede za ovaj isječak, bez zemljišta pod važećim planovima.
         </ParKarata>
         <ParKarata
           karte={[
@@ -437,7 +471,7 @@ export default async function AnalizaPage() {
             ...PODLOGA,
           ]}
         >
-          <strong>Slika 2.</strong> Urbano pravilo 3.1. Granice su gotovo iste: prijedlog pravilu pridružuje oko 2 ha (1,1 ha dosadašnjeg pravila 3.2 i 0,8 ha pravila 2.7), a 0,3 ha prelazi u pravilo 3.4. Inače se promijenio samo naziv: „urbana obnova” postala je „urbana preobrazba”.
+          <strong>Slika 3.</strong> Urbano pravilo 3.1. Granice su gotovo iste: prijedlog pravilu pridružuje oko 2 ha (1,1 ha dosadašnjeg pravila 3.2 i 0,8 ha pravila 2.7), a 0,3 ha prelazi u pravilo 3.4. Inače se promijenio samo naziv: „urbana obnova” postala je „urbana preobrazba”.
         </ParKarata>
         <ParKarata
           karte={[
@@ -472,7 +506,7 @@ export default async function AnalizaPage() {
             ...PODLOGA,
           ]}
         >
-          <strong>Slika 3.</strong> Urbano pravilo 3.2. Prijedlog 1,1 ha tog pravila prebacuje u pravilo 3.1; ostalo je nepromijenjeno.
+          <strong>Slika 4.</strong> Urbano pravilo 3.2. Prijedlog 1,1 ha tog pravila prebacuje u pravilo 3.1; ostalo je nepromijenjeno.
         </ParKarata>
         <ParKarata
           karte={[
@@ -497,7 +531,7 @@ export default async function AnalizaPage() {
           ]}
           legenda={[{ boja: "#00ffbf", tekst: "pravilo 3.4: „Zaštitne i vrijedne pejzažne površine”" }, ...PODLOGA]}
         >
-          <strong>Slika 4.</strong> Urbano pravilo 3.4. Razlika je manja od pola hektara. Ostala pravila skupine 3 (3.3, 3.5 i 3.6) na ovom se isječku ne pojavljuju.
+          <strong>Slika 5.</strong> Urbano pravilo 3.4. Razlika je manja od pola hektara. Ostala pravila skupine 3 (3.3, 3.5 i 3.6) na ovom se isječku ne pojavljuju.
         </ParKarata>
 
         <Podnaslov>Koliko se poklapaju</Podnaslov>
@@ -533,7 +567,7 @@ export default async function AnalizaPage() {
             { boja: "rgb(200,0,200)", tekst: "granice kvartova", oblik: "crta" },
           ]}
         >
-          <strong>Slika 5.</strong> Gdje je u istočnom Splitu za gradnju potreban UPU (rešetka od 2 m, podloga: ortofoto 2025.). Na gotovo cijelom području Dračevca 2, Mostina i Harakovca UPU propisuju oba plana. Plavo su označene izgrađene poslovne čestice i prometni koridori, a narančasti pojas na istoku je Karepovac. Izvori: <Navod id="istok-4c-2008">list 4.c</Navod> i <Navod id="istok-4b-2014">list 4.b</Navod> važećeg GUP-a, <Navod id="istok-4d-2025">list 4.d</Navod> prijedloga.
+          <strong>Slika 6.</strong> Gdje je u istočnom Splitu za gradnju potreban UPU (rešetka od 2 m, podloga: ortofoto 2025.). Na gotovo cijelom području Dračevca 2, Mostina i Harakovca UPU propisuju oba plana. Plavo su označene izgrađene poslovne čestice i prometni koridori, a narančasti pojas na istoku je Karepovac. Izvori: <Navod id="istok-4c-2008">list 4.c</Navod> i <Navod id="istok-4b-2014">list 4.b</Navod> važećeg GUP-a, <Navod id="istok-4d-2025">list 4.d</Navod> prijedloga.
         </Slika>
         <p>
           Jedna ograda vrijedi za cijelu analizu: to što važeći GUP ondje propisuje UPU kao uvjet za gradnju naše je tumačenje njegova teksta, a ne opis prakse odjela koji izdaje dozvole. To tumačenje ispituje drugo poglavlje, a praksu peto.
@@ -875,7 +909,7 @@ export default async function AnalizaPage() {
           visina={966}
           opis="Dozvole za nove stambene zgrade 2014.–2026. ucrtane na list 4.c važećeg GUP-a, Mostine i Dračevac; sve se nalaze na plavoj rešetki obveze izrade UPU-a."
         >
-          <strong>Slika 6.</strong> Dozvole za nove stambene i stambeno-poslovne zgrade (zeleno, s godinom) i zahtjevi u obradi (narančasto) iz registra ISPU, ucrtani na <Navod id="istok-4c-2008">list 4.c</Navod> važećeg GUP-a. Plava rešetka je „obveza izrade urbanističkog plana uređenja”, a crvena šrafura važeći plan. Dračevac je desno.
+          <strong>Slika 7.</strong> Dozvole za nove stambene i stambeno-poslovne zgrade (zeleno, s godinom) i zahtjevi u obradi (narančasto) iz registra ISPU, ucrtani na <Navod id="istok-4c-2008">list 4.c</Navod> važećeg GUP-a. Plava rešetka je „obveza izrade urbanističkog plana uređenja”, a crvena šrafura važeći plan. Dračevac je desno.
         </Slika>
 
         <Podnaslov>Oko 4 % zgrada nastalo je nakon 2017.</Podnaslov>
@@ -929,7 +963,7 @@ export default async function AnalizaPage() {
             { boja: "rgb(0,114,178)", tekst: "granica područja za koje važeći GUP propisuje UPU", oblik: "crta" },
           ]}
         >
-          <strong>Slika 7.</strong> Zgrade od najmanje 35 m² kojih nema na ortofotu iz 2011. Izvori: ortofoto snimke DGU-a i gradski 3D model, navedeni gore.
+          <strong>Slika 8.</strong> Zgrade od najmanje 35 m² kojih nema na ortofotu iz 2011. Izvori: ortofoto snimke DGU-a i gradski 3D model, navedeni gore.
         </Slika>
       </Poglavlje>
 
