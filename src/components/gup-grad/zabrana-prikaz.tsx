@@ -75,9 +75,9 @@ function karticaStanja(s: Stanje): Kartica {
   switch (s.rezim) {
     case "zabrana":
       return {
-        oznaka: "Nova gradnja čeka UPU",
+        oznaka: "Bez UPU-a nema nove gradnje",
         boja: "crveno",
-        naslov: s.upu ? `Čeka se ${s.upu.naziv}` : "Čeka se UPU",
+        naslov: s.upu ? `Potreban je ${s.upu.naziv}` : "Potreban je UPU",
         tijelo: (
           <>
             {s.cestica && (
@@ -85,12 +85,12 @@ function karticaStanja(s: Stanje): Kartica {
                 {s.cestica.neizgradjena ? (
                   <>
                     <strong>Neizgrađena čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na oko{" "}
-                    {okrugloM2(s.cestica.m2)} m² nova bi gradnja čekala UPU.
+                    {okrugloM2(s.cestica.m2)} m² nova bi se zgrada smjela graditi tek nakon donošenja UPU-a.
                   </>
                 ) : (
                   <>
                     <strong>Djelomično izgrađena čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na
-                    slobodnih oko {okrugloM2(s.cestica.m2)} m² nova bi gradnja čekala UPU.
+                    slobodnom dijelu od oko {okrugloM2(s.cestica.m2)} m² nova bi se zgrada smjela graditi tek nakon donošenja UPU-a.
                   </>
                 )}
               </p>
@@ -241,7 +241,7 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
       setOznaka(null);
       setOdabraniUpu(null);
       setKartica({
-        oznaka: uCrvenom === 0 ? "Gradnja je moguća" : uCrvenom === brojevi.length ? "Nova gradnja čeka UPU" : "Dijelom u crvenom",
+        oznaka: uCrvenom === 0 ? "Gradnja je moguća" : uCrvenom === brojevi.length ? "Bez UPU-a nema nove gradnje" : "Dijelom u crvenom",
         boja: uCrvenom ? "crveno" : "zeleno",
         naslov: p.naziv,
         podnaslov: p.kotar,
@@ -272,7 +272,7 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
       r.neuredeno_ha && `${ha(r.neuredeno_ha)} ha neuređenog građevinskog zemljišta`,
     ].filter(Boolean);
     setKartica({
-      oznaka: `${ha(r.sanacija_ha + r.preobrazba_ha + r.neuredeno_ha)} ha čeka UPU`,
+      oznaka: `Obvezan UPU: ${ha(r.sanacija_ha + r.preobrazba_ha + r.neuredeno_ha)} ha`,
       boja: "crveno",
       naslov: r.naziv ?? "Crveno područje izvan ucrtanih obuhvata UPU-a",
       tijelo: (
@@ -415,7 +415,7 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-700">
         <span className="flex items-center gap-2">
           <Uzorak stil={{ background: "rgba(220,38,38,0.45)", border: `2px solid ${BOJE_ZABRANE.crvenoRub}` }} />
-          nova gradnja čeka UPU
+          bez UPU-a nema nove gradnje
         </span>
         <span className="flex items-center gap-2">
           <Uzorak stil={{ background: "rgba(127,29,29,0.6)", border: `1px solid ${BOJE_ZABRANE.cesticaRub}` }} />
@@ -445,9 +445,9 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
 
       <p className="mt-2 text-sm text-zinc-500">Čestice se na karti vide pri većem povećanju.</p>
 
-      <h3 className="mt-8 font-bold text-zinc-900">Po planovima čije se donošenje čeka</h3>
+      <h3 className="mt-8 font-bold text-zinc-900">Po planovima koji još nisu doneseni</h3>
       <p className="mt-1 text-sm text-zinc-600">
-        Slobodno zemljište za novu gradnju (ha) i broj neizgrađenih čestica koje bi čekale taj UPU. Klikom na redak
+        Za svaki plan: slobodno zemljište za novu gradnju (ha) i broj neizgrađenih čestica na kojima se do njegova donošenja ne bi smjelo graditi. Klikom na redak
         obuhvat plana prikazuje se na karti.
       </p>
       <ul className="mt-2 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">

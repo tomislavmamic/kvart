@@ -377,6 +377,11 @@ export const NAVODI: Record<string, SpecNavoda> = {
     okvir: [0.4781, 0.1291, 0.6456, 0.4794],
     opis: "urbana pravila u istočnom Splitu",
   },
+  "istok-up-2025": {
+    list: "urbana-pravila-2025",
+    okvir: [0.4673, 0.1192, 0.6389, 0.481],
+    opis: "urbana pravila u istočnom Splitu, prijedlog 2025.",
+  },
   "istok-4d-2025": {
     list: "planske-mjere-2025",
     okvir: [0.4676, 0.1195, 0.6392, 0.4814],

@@ -32,7 +32,7 @@ export default async function ZabranaPage() {
   const z = zemljiste[2025];
   const redovi = [
     {
-      naziv: "čeka UPU",
+      naziv: "tek nakon UPU-a",
       opis: "urbana sanacija, urbana preobrazba ili neuređeno zemljište",
       m2: z.ceka,
       boja: "#dc2626",
@@ -235,7 +235,7 @@ export default async function ZabranaPage() {
           <strong className="text-red-700">
             {ha(z.ceka)} ha ({posto(z.ceka, z.neiskoristeno)})
           </strong>{" "}
-          od preostalih {ha(z.neiskoristeno)} ha nova bi gradnja morala čekati UPU.
+          od preostalih {ha(z.neiskoristeno)} ha nove bi se zgrade smjele graditi tek nakon donošenja UPU-a.
         </p>
 
         <figure className="mt-5">

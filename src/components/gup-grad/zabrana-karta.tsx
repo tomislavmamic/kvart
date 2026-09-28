@@ -209,5 +209,5 @@ export function ZabranaKarta(props: {
       : null;
   }, [oznaka]);
 
-  return <div ref={div} className="h-full w-full" role="application" aria-label="Karta područja na kojima bi nova gradnja morala čekati donošenje UPU-a" />;
+  return <div ref={div} className="h-full w-full" role="application" aria-label="Karta područja na kojima bi se nove zgrade smjele graditi tek nakon donošenja UPU-a" />;
 }

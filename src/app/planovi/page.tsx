@@ -11,7 +11,7 @@ import { createPageMetadata } from "@/lib/metadata";
 export const metadata = createPageMetadata({
   title: "Planovi: GUP i njegove izmjene",
   description:
-    "Sve o prostornim planovima za Dračevac i Bilice na jednom mjestu: gdje bi prijedlog izmjena GUP-a zaustavio gradnju, zašto, što nacrt mijenja u kvartu i cijeli tekst plana.",
+    "Sve o prostornim planovima za Dračevac i Bilice na jednom mjestu: gdje bi i zašto prijedlog izmjena GUP-a zaustavio gradnju, što nacrt izmjena iz 2024. mijenja u kvartu te cijeli tekst plana.",
 });
 
 interface Stranica {
@@ -25,12 +25,12 @@ interface Stranica {
 const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
   {
     naslov: "Prijedlog izmjena GUP-a",
-    uvod: "Grad mijenja GUP. Prijedlog iz travnja 2025. još nije donesen, ali bi, ako se donese, na većem dijelu kvarta zaustavio novu gradnju do donošenja urbanističkog plana uređenja (UPU).",
+    uvod: "Grad mijenja GUP. Prijedlog iz travnja 2025. još nije usvojen. Ako se usvoji, na većem bi dijelu kvarta nova gradnja stala do donošenja urbanističkog plana uređenja (UPU).",
     stranice: [
       {
         href: "/gup/zabrana",
         naslov: "Zabrana nove gradnje do donošenja UPU-a",
-        opis: "Karta područja na kojima bi nova gradnja čekala UPU i koliko neizgrađenog zemljišta to pogađa.",
+        opis: "Karta područja na kojima se bez UPU-a ne bi smjelo graditi, s površinom neizgrađenog zemljišta koje bi to pogodilo.",
         radnja: "Provjeri svoju adresu",
       },
       {
@@ -41,8 +41,8 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
       },
       {
         href: "/plan",
-        naslov: "Što nacrt GUP-a mijenja u kvartu",
-        opis: "Promjene namjene prostora iz nacrta za Dračevac i Bilice, uz obrazloženja iz samog nacrta.",
+        naslov: "Što nacrt izmjena GUP-a iz 2024. mijenja u kvartu",
+        opis: "Promjene namjene prostora u Dračevcu i Bilicama prema nacrtu, uz obrazloženja iz samog nacrta.",
       },
     ],
   },
@@ -91,9 +91,9 @@ export default function PlanoviPage() {
     <div className="mx-auto max-w-4xl">
       <h1 className="text-2xl font-bold text-kamen-tinta">Planovi</h1>
       <p className="mt-3 max-w-3xl text-kamen-tekst">
-        Što se u Dračevcu i Bilicama smije graditi, gdje prolaze ceste i koliko prostora ostaje za parkove i škole, određuju
+        Što se u Dračevcu i Bilicama smije graditi, kuda prolaze ceste i koliko prostora ostaje za parkove i škole, određuju
         prostorni planovi, ponajprije Generalni urbanistički plan Splita (GUP). Ovdje su sve naše stranice o njima: od cijelog
-        teksta plana do analiza onoga što bi izmjene promijenile.
+        teksta plana do analize predloženih izmjena.
       </p>
 
       <p className="mt-5 max-w-3xl rounded-xl bg-status-u-tijeku-ground px-4 py-3 text-sm text-status-u-tijeku">
