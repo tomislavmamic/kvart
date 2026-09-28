@@ -624,7 +624,7 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
         {podaci?.sporne && (
           <Skupina naslov="Sporno" vidljivo={sporno} promijeni={setSporno}>
             <Stavka stil={{ background: `repeating-linear-gradient(135deg, ${BOJE_ZABRANE.sporno} 0 1.2px, transparent 1.2px 5px)` }}>
-              oznaka ne odgovara kriteriju Grada ili zakonu
+              oznaka ne odgovara kriteriju Grada ili zakonu <span className="text-zinc-500">· izdaleka puna mrlja</span>
             </Stavka>
             <Stavka stil={{ border: `1.5px solid ${BOJE_ZABRANE.sporno}` }}>moguće sporno: uz cestu izvan registra</Stavka>
             <li className="text-zinc-500">Ceste kroz zabranu, izbliza; sredina crte je širina čestice ceste:</li>

@@ -340,7 +340,8 @@ export default async function ZabranaPage() {
           <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
         </p>
         <p className="mt-3 max-w-3xl border-l-4 border-fuchsia-600 bg-fuchsia-50 px-4 py-3 text-zinc-800">
-          <strong>Ljubičastim kosim crtama precrtane su sporne oznake.</strong> {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
+          <strong>Ljubičastim kosim crtama precrtane su sporne oznake</strong>; izdaleka je sporna čestica puna
+          ljubičasta mrlja. {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
           {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
           {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
           je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom

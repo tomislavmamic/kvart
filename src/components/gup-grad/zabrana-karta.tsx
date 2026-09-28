@@ -14,6 +14,8 @@
  * Ljubičasto je sporno (sporne-2025.geojson): tanke kose crte preko čestice
  * ili plohe kad oznaka ne odgovara kriteriju Grada ili zakonu, tanak rub kad
  * je čestica uz cestu koje nema u registru ili joj širina nije izmjerena.
+ * Čestica je izdaleka premalena za kose crte, pa je do SRAFURA_OD_ZUMA puna
+ * ljubičasta mrlja; ploha je dovoljno velika i ostaje precrtana.
  * Kose crte su SVG uzorak u pikselima zaslona, jednako gust na svakom zumu;
  * platno (canvas) uzorke ne zna, pa taj sloj crta SVG. Od SPORNO_CESTE_OD_ZUMA vide se i
  * sve ceste kroz zabranu, cijelom duljinom: jednak tamni obrub, a sredina
@@ -86,8 +88,10 @@ const zbirka = (features: Feature[]): FeatureCollection => ({ type: "FeatureColl
 
 /** Čestice su sitne; na pregledu cijelog grada samo bi zamutile oznake. */
 export const CESTICE_OD_ZUMA = 15;
-/** Sporno ima debeo ljubičast rub, pa se vidi i na pregledu cijelog grada: odmah se vidi gdje ga ima. */
+/** Sporno se vidi i na pregledu cijelog grada: odmah se vidi gdje ga ima. */
 export const SPORNO_OD_ZUMA = 12;
+/** Od ovog zuma sporna čestica ima dovoljno piksela za kose crte; prije je puna mrlja. */
+export const SRAFURA_OD_ZUMA = 16;
 /** Osi cesta po širini: gušće su od čestica, pa tek izbliza. */
 export const SPORNO_CESTE_OD_ZUMA = 15;
 
@@ -119,7 +123,12 @@ export function ZabranaKarta(props: {
   const klik = useRef(onKlik);
   const zabranaVidljiva = useRef(prikaziZabranu);
   const spornoVidljivo = useRef(sporno);
-  const slojeviSpornog = useRef<{ cestice: LeafletNS.Layer; ceste: LeafletNS.Layer } | null>(null);
+  const slojeviSpornog = useRef<{
+    cestice: LeafletNS.Layer;
+    izbliza: LeafletNS.Layer;
+    izdaleka: LeafletNS.Layer;
+    ceste: LeafletNS.Layer;
+  } | null>(null);
   const osvjeziCestice = useRef<() => void>(() => {});
   useEffect(() => {
     klik.current = onKlik;
@@ -181,18 +190,25 @@ export function ZabranaKarta(props: {
         const ceste = zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cesta"));
         const jako = (f?: Feature) => f?.properties?.vrsta === "ploha" || !(f?.properties?.razlozi ?? []).every((r: string) => r === "cesta" || r === "izgradjena");
         const sporneCestice = sporne.features.filter((f) => f.properties?.vrsta === "cestica" || (f.properties?.vrsta === "ploha" && f.properties?.manjina));
+        // čestica u spornoj plohi sanacije sporna je samo zbog plohe, a nju šrafura već pokriva
+        const jake = sporneCestice.filter((f) => jako(f) && f.properties?.podrucje !== "sanacija");
+        const jakeCestice = zbirka(jake.filter((f) => f.properties?.vrsta === "cestica"));
+        const precrtaj = (fc: FeatureCollection) =>
+          L.geoJSON(fc, { ...u, style: { renderer: svg, stroke: false, fillColor: `url(#${SRAFURA})`, fillOpacity: 1 } });
         slojeviSpornog.current = {
           cestice: L.layerGroup([
-            // čestica u spornoj plohi sanacije sporna je samo zbog plohe, a nju šrafura već pokriva
-            L.geoJSON(zbirka(sporneCestice.filter((f) => jako(f) && f.properties?.podrucje !== "sanacija")), {
-              ...u,
-              style: { renderer: svg, stroke: false, fillColor: `url(#${SRAFURA})`, fillOpacity: 1 },
-            }),
+            precrtaj(zbirka(jake.filter((f) => f.properties?.vrsta === "ploha"))),
             L.geoJSON(zbirka(sporneCestice.filter((f) => !jako(f))), {
               ...u,
               style: { color: BOJE_ZABRANE.sporno, weight: 1.5, fill: false },
             }),
           ]),
+          izbliza: precrtaj(jakeCestice),
+          // rub od 2 px da ni čestica manja od piksela ne nestane
+          izdaleka: L.geoJSON(jakeCestice, {
+            ...u,
+            style: { color: BOJE_ZABRANE.sporno, weight: 2, fillColor: BOJE_ZABRANE.sporno, fillOpacity: 0.85 },
+          }),
           // obrub pa sredina: grupa dodaje slojeve redom, pa se sredina crta preko obruba
           ceste: L.layerGroup([
             L.geoJSON(ceste, { ...u, style: { color: BOJE_ZABRANE.cesta, weight: 7, opacity: 0.9, lineCap: "butt" } }),
@@ -230,6 +246,8 @@ export function ZabranaKarta(props: {
         prikazi(slojCestica.current, z >= CESTICE_OD_ZUMA && zabranaVidljiva.current);
         const sp = slojeviSpornog.current;
         prikazi(sp?.cestice, z >= SPORNO_OD_ZUMA && spornoVidljivo.current);
+        prikazi(sp?.izbliza, z >= SRAFURA_OD_ZUMA && spornoVidljivo.current);
+        prikazi(sp?.izdaleka, z >= SPORNO_OD_ZUMA && z < SRAFURA_OD_ZUMA && spornoVidljivo.current);
         prikazi(sp?.ceste, z >= SPORNO_CESTE_OD_ZUMA && spornoVidljivo.current);
       };
       cesticePoZumu();
