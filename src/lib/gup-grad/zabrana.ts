@@ -22,7 +22,8 @@ const PODRUCJA: readonly string[] = ["sanacija", "preobrazba", "neuredeno"];
  * su samo granice: plan na snazi, obuhvat UPU-a i (jedini iscrtkan) GUP.
  */
 export const BOJE_ZABRANE = {
-  sanacija: "#4ade80",
+  /** list 4.d sanaciju crta zeleno, ali i ona priječi novu gradnju, pa je ovdje crvena */
+  sanacija: "#ef4444",
   preobrazba: "#fb923c",
   neuredeno: "#fde047",
   vazeci: "#71717a",
@@ -33,7 +34,7 @@ export const BOJE_ZABRANE = {
   /** cesta: jednaki obrub cijelom duljinom, a sredina kaže širinu njezine čestice */
   cesta: "#18181b",
   cestaSiroka: "#ffffff",
-  cestaUska: "#dc2626",
+  cestaUska: "#991b1b",
   cestaNepoznata: "#a1a1aa",
 } as const;
 

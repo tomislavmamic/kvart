@@ -332,14 +332,15 @@ export default async function ZabranaPage() {
           Gdje bi zabrana vrijedila
         </h2>
         <p className="mt-3 max-w-3xl text-zinc-600">
-          Boje su one s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga: zelena urbana sanacija, narančasta
-          urbana preobrazba i žuti neuređeni dio građevinskog područja, unutar obuhvata GUP-a. Izuzeta su područja
+          Crvena je urbana sanacija, narančasta urbana preobrazba, a žut neuređeni dio građevinskog područja, unutar
+          obuhvata GUP-a. Narančastu i žutu preuzeli smo s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>{" "}
+          prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Izuzeta su područja
           važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
           Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
           <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
         </p>
         <p className="mt-3 max-w-3xl border-l-4 border-fuchsia-600 bg-fuchsia-50 px-4 py-3 text-zinc-800">
-          <strong>Ljubičasto su sporne oznake.</strong> {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
+          <strong>Ljubičastim kosim crtama precrtane su sporne oznake.</strong> {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
           {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
           {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
           je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom
@@ -347,7 +348,7 @@ export default async function ZabranaPage() {
           rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
           na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
           {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Tanji ljubičasti
+          {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Tanak ljubičasti
           rub ima još {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
           {imenicaUz(sporne.cesta.cestice, ["čestica", "čestice", "čestica"])} neuređenog dijela uz cestu koje nema u
           gradskom registru ili joj se širina ne da izmjeriti: mogu biti sporne ako je cesta izvedena i javna. Kako smo to

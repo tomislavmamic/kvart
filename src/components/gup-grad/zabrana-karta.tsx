@@ -3,16 +3,19 @@
 /**
  * Karta na /gup/zabrana: gdje bi prijedlog GUP-a 2025. zabranio novu gradnju
  * do donošenja UPU-a (zabrana-2025.geojson). Tri oznake imaju svoje boje
- * (BOJE_ZABRANE, kao na listu 4.d): urbanu sanaciju i preobrazbu određuje
+ * (BOJE_ZABRANE; kao na listu 4.d, osim sanacije, koja je crvena jer i ona
+ * priječi gradnju): urbanu sanaciju i preobrazbu određuje
  * GUP, a neuređeni dio PPUG, iz kojega ga GUP preuzima. Za snalaženje su tu
  * planovi na snazi (sivo), obuhvati propisanih UPU-a (plavi rub) i granica
  * GUP-a (jedina iscrtkana crta). Od zuma CESTICE_OD_ZUMA tanak crni rub
  * pokazuje čestice na kojima bi zabrana pogodila novu gradnju
  * (zabrana-cestice-2025.geojson).
  *
- * Ljubičasti rub je sporno (sporne-2025.geojson): debeo kad oznaka ne
- * odgovara kriteriju Grada ili zakonu, tanak kad je čestica uz cestu koje nema
- * u registru ili joj širina nije izmjerena. Od SPORNO_CESTE_OD_ZUMA vide se i
+ * Ljubičasto je sporno (sporne-2025.geojson): tanke kose crte preko čestice
+ * ili plohe kad oznaka ne odgovara kriteriju Grada ili zakonu, tanak rub kad
+ * je čestica uz cestu koje nema u registru ili joj širina nije izmjerena.
+ * Kose crte su SVG uzorak u pikselima zaslona, jednako gust na svakom zumu;
+ * platno (canvas) uzorke ne zna, pa taj sloj crta SVG. Od SPORNO_CESTE_OD_ZUMA vide se i
  * sve ceste kroz zabranu, cijelom duljinom: jednak tamni obrub, a sredina
  * kaže širinu čestice ceste (prazna od 4 m naviše, crvena uža, siva
  * neizmjerena). Sporno je u vlastitom sloju karte (pane), iznad oznaka.
@@ -30,6 +33,25 @@ import type { Feature, FeatureCollection } from "geojson";
 
 import { BASE_LAYERS, SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
 import { BOJE_ZABRANE, type Okvir, type Podrucje } from "@/lib/gup-grad/zabrana";
+
+const SRAFURA = "zabrana-sporno-srafura";
+
+/** Uzorak tankih kosih crta u SVG-u sloja spornog; puni se kao fillColor: url(#SRAFURA). */
+function dodajSrafuru(svg: SVGSVGElement | null | undefined) {
+  if (!svg || svg.querySelector(`#${SRAFURA}`)) return;
+  const ns = "http://www.w3.org/2000/svg";
+  const defs = document.createElementNS(ns, "defs");
+  const uzorak = document.createElementNS(ns, "pattern");
+  const crta = document.createElementNS(ns, "line");
+  for (const [k, v] of Object.entries({ id: SRAFURA, patternUnits: "userSpaceOnUse", width: "7", height: "7", patternTransform: "rotate(45)" }))
+    uzorak.setAttribute(k, v);
+  // crta po sredini pločice, da je pločica ne odreže napola
+  for (const [k, v] of Object.entries({ x1: "3.5", y1: "0", x2: "3.5", y2: "7", stroke: BOJE_ZABRANE.sporno, "stroke-width": "1.2" }))
+    crta.setAttribute(k, v);
+  uzorak.appendChild(crta);
+  defs.appendChild(uzorak);
+  svg.insertBefore(defs, svg.firstChild);
+}
 
 export interface CiljKarte {
   /** Mijenja se pri svakom zahtjevu, da isti cilj dvaput opet pomakne kartu. */
@@ -150,20 +172,27 @@ export function ZabranaKarta(props: {
       }).addTo(map);
       if (sporne) {
         map.createPane("sporno").style.zIndex = "450";
+        // SVG ide u okno prije platna s cestama, pa su ceste iznad šrafure. Karta
+        // dodaje sloj tek kad dobije pogled, pa se uzorak upisuje na „add”.
+        const svg = L.svg({ pane: "sporno" });
+        svg.on("add", () => dodajSrafuru(map.getPane("sporno")?.querySelector("svg")));
+        svg.addTo(map);
         const u = { ...netaknuto, pane: "sporno" } as const;
         const ceste = zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cesta"));
         const jako = (f?: Feature) => f?.properties?.vrsta === "ploha" || !(f?.properties?.razlozi ?? []).every((r: string) => r === "cesta" || r === "izgradjena");
+        const sporneCestice = sporne.features.filter((f) => f.properties?.vrsta === "cestica" || (f.properties?.vrsta === "ploha" && f.properties?.manjina));
         slojeviSpornog.current = {
-          cestice: L.geoJSON(
-            zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cestica" || (f.properties?.vrsta === "ploha" && f.properties?.manjina))),
-            {
+          cestice: L.layerGroup([
+            // čestica u spornoj plohi sanacije sporna je samo zbog plohe, a nju šrafura već pokriva
+            L.geoJSON(zbirka(sporneCestice.filter((f) => jako(f) && f.properties?.podrucje !== "sanacija")), {
               ...u,
-              style: (f) =>
-                jako(f)
-                  ? { color: BOJE_ZABRANE.sporno, weight: 3, fill: false }
-                  : { color: BOJE_ZABRANE.sporno, weight: 1.5, fill: false },
-            },
-          ),
+              style: { renderer: svg, stroke: false, fillColor: `url(#${SRAFURA})`, fillOpacity: 1 },
+            }),
+            L.geoJSON(zbirka(sporneCestice.filter((f) => !jako(f))), {
+              ...u,
+              style: { color: BOJE_ZABRANE.sporno, weight: 1.5, fill: false },
+            }),
+          ]),
           // obrub pa sredina: grupa dodaje slojeve redom, pa se sredina crta preko obruba
           ceste: L.layerGroup([
             L.geoJSON(ceste, { ...u, style: { color: BOJE_ZABRANE.cesta, weight: 7, opacity: 0.9, lineCap: "butt" } }),
@@ -260,6 +289,8 @@ export function ZabranaKarta(props: {
           fillColor: oznaka.uZabrani ? "#18181b" : "#ffffff",
           fillOpacity: 1,
           interactive: false,
+          // iznad šrafure spornog (okno 450)
+          pane: "markerPane",
         }).addTo(map)
       : null;
   }, [oznaka]);
