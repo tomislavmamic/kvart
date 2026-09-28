@@ -48,6 +48,20 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
   const s: Slojevi = {
     komadi: [{ ...oblik(poligon(kvadrat(16.4, 43.5, 0.005))), podrucje: "sanacija", upu: 18 }],
     cestice: [{ ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))), kc: "406/3", ko: "SPLIT", m2: 850, neizgradjena: true }],
+    sporne: [
+      {
+        ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))),
+        kc: "406/3",
+        ko: "SPLIT",
+        m2: 850,
+        podrucje: "sanacija",
+        razlozi: ["sanacija"],
+        udio: 12,
+      },
+    ],
+    plohe: [
+      { ...oblik(poligon(kvadrat(16.4, 43.5, 0.004))), ha: 8, zgrade: 25, sRjesenjem: 3, udio: 12, manjina: true },
+    ],
     obris: oblik(poligon(kvadrat(16.4, 43.5, 0.005))),
     vazeci: [{ ...oblik(poligon(kvadrat(16.41, 43.51, 0.005))), naziv: "DPU radne zone Dračevac", glasnik: "8/03" }],
     propisani: [upu],
@@ -59,11 +73,16 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
     assert.equal(z.podrucje, "sanacija");
     assert.equal(z.upu?.naziv, "UPU Dračevac 2");
     assert.equal(z.cestica?.kc, "406/3");
+    assert.deepEqual(z.sporna?.razlozi, ["sanacija"]);
+    assert.equal(z.ploha?.udio, 12);
     // najbliži rub je 0,002° zemljopisne dužine zapadno ≈ 161 m
     assert.ok(z.doRuba > 150 && z.doRuba < 170, `${z.doRuba}`);
   }
   const bezCestice = stanjeTocke(s, 16.4045, 43.5045);
   assert.equal(bezCestice.rezim === "zabrana" && bezCestice.cestica, null);
+  assert.equal(bezCestice.rezim === "zabrana" && bezCestice.sporna, null);
+  // izvan plohe s brojem zgrada
+  assert.equal(bezCestice.rezim === "zabrana" && bezCestice.ploha, null);
   assert.equal(stanjeTocke(s, 16.412, 43.512).rezim, "vazeci");
   assert.equal(stanjeTocke(s, 16.418, 43.502).rezim, "preporuka");
   assert.equal(stanjeTocke(s, 16.43, 43.53).rezim, "gup");

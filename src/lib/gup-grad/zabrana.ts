@@ -6,7 +6,8 @@
  * (crveno, plan na snazi, samo obuhvat propisanog UPU-a, GUP, izvan GUP-a)
  * i traženje kućnog broja. Podatke piše scripts/gup-grad/zabrana.py
  * (public/geo/gup-grad/zabrana-2025.geojson, kucni-brojevi.json); obuhvate
- * planova planski-obrisi.py (planski-rezim-2025.geojson).
+ * planova planski-obrisi.py (planski-rezim-2025.geojson), a sporne čestice i
+ * plohe urbane sanacije scripts/gup-grad/sporne.py (sporne-2025.geojson).
  */
 
 import type { FeatureCollection } from "geojson";
@@ -23,6 +24,10 @@ export const BOJE_ZABRANE = {
   gup: "#3f3f46",
   cestica: "#7f1d1d",
   cesticaRub: "#450a0a",
+  /** sporna oznaka: žuto se vidi i na crvenom i na ortofotu */
+  sporno: "#facc15",
+  cesta4: "#18181b",
+  cestaUska: "#f97316",
 } as const;
 
 /** [prsten][točka][lng, lat]; prvi prsten je vanjski, ostali rupe. */
@@ -138,9 +143,39 @@ export interface CesticaZabrane extends Oblik {
   neizgradjena: boolean;
 }
 
+/** Zašto je oznaka čestice sporna (scripts/gup-grad/sporne.py). */
+export type RazlogSpora = "pristup" | "izgradjena" | "sanacija";
+
+/** Čestica pod zabranom kojoj oznaka ne odgovara kriteriju Grada ili zakona. */
+export interface SpornaCestica extends Oblik {
+  kc: string;
+  ko: string;
+  m2: number;
+  podrucje: "neuredeno" | "sanacija";
+  razlozi: RazlogSpora[];
+  /** širina čestice ceste uz koju je, m (razlog „pristup”) */
+  sirina?: number;
+  /** kanalizacija na manje od 15 m */
+  kanal?: boolean;
+  /** udio zgrada s rješenjem o izvedenom stanju u plohi, % (razlog „sanacija”) */
+  udio?: number;
+}
+
+/** Ploha urbane sanacije s barem 10 zgrada i udjelom ozakonjenih. */
+export interface PlohaSanacije extends Oblik {
+  ha: number;
+  zgrade: number;
+  sRjesenjem: number;
+  udio: number;
+  /** ozakonjene zgrade nisu većina */
+  manjina: boolean;
+}
+
 export interface Slojevi {
   komadi: Komad[];
   cestice: CesticaZabrane[];
+  sporne: SpornaCestica[];
+  plohe: PlohaSanacije[];
   /** Cijelo crveno kao jedan oblik — za udaljenost do ruba. */
   obris: Oblik | null;
   vazeci: PlanNaSnazi[];
@@ -149,17 +184,30 @@ export interface Slojevi {
 }
 
 export type Stanje =
-  | { rezim: "zabrana"; podrucje: Podrucje; upu: PropisaniUpu | null; cestica: CesticaZabrane | null; doRuba: number }
+  | {
+      rezim: "zabrana";
+      podrucje: Podrucje;
+      upu: PropisaniUpu | null;
+      cestica: CesticaZabrane | null;
+      sporna: SpornaCestica | null;
+      ploha: PlohaSanacije | null;
+      doRuba: number;
+    }
   | { rezim: "vazeci"; plan: PlanNaSnazi; doRuba: number }
   | { rezim: "preporuka"; upu: PropisaniUpu; doRuba: number }
   | { rezim: "gup"; doRuba: number }
   | { rezim: "izvan" };
 
 /**
- * Slojevi iz zabrana-2025.geojson (komadi, obris, gup) i
- * planski-rezim-2025.geojson (vazeci, propisan).
+ * Slojevi iz zabrana-2025.geojson (komadi, obris, gup),
+ * planski-rezim-2025.geojson (vazeci, propisan) i sporne-2025.geojson.
  */
-export function slojeviIzGeojsona(zabrana: FeatureCollection, planovi: FeatureCollection, cestice?: FeatureCollection): Slojevi {
+export function slojeviIzGeojsona(
+  zabrana: FeatureCollection,
+  planovi: FeatureCollection,
+  cestice?: FeatureCollection,
+  sporne?: FeatureCollection,
+): Slojevi {
   const svojstva = (f: FeatureCollection["features"][number]) => (f.properties ?? {}) as Record<string, unknown>;
   const geo = (f: FeatureCollection["features"][number]) => f.geometry as Geometrija;
   const jedan = (vrsta: string) => {
@@ -177,6 +225,35 @@ export function slojeviIzGeojsona(zabrana: FeatureCollection, planovi: FeatureCo
       m2: Number(svojstva(f).m2),
       neizgradjena: Boolean(svojstva(f).neizgradjena),
     })),
+    sporne: (sporne?.features ?? [])
+      .filter((f) => svojstva(f).vrsta === "cestica")
+      .map((f) => {
+        const p = svojstva(f);
+        return {
+          ...oblik(geo(f)),
+          kc: String(p.kc),
+          ko: String(p.ko),
+          m2: Number(p.m2),
+          podrucje: p.podrucje as SpornaCestica["podrucje"],
+          razlozi: (p.razlozi ?? []) as RazlogSpora[],
+          sirina: p.sirina === undefined ? undefined : Number(p.sirina),
+          kanal: p.kanal === undefined ? undefined : Boolean(p.kanal),
+          udio: p.udio === undefined ? undefined : Number(p.udio),
+        };
+      }),
+    plohe: (sporne?.features ?? [])
+      .filter((f) => svojstva(f).vrsta === "ploha")
+      .map((f) => {
+        const p = svojstva(f);
+        return {
+          ...oblik(geo(f)),
+          ha: Number(p.ha),
+          zgrade: Number(p.zgrade),
+          sRjesenjem: Number(p.s_rjesenjem),
+          udio: Number(p.udio),
+          manjina: Boolean(p.manjina),
+        };
+      }),
     obris: jedan("obris"),
     gup: jedan("gup"),
     vazeci: planovi.features
@@ -203,6 +280,8 @@ export function stanjeTocke(s: Slojevi, lng: number, lat: number): Stanje {
       podrucje: komad.podrucje,
       upu: s.propisani.find((u) => u.broj === komad.upu) ?? null,
       cestica: s.cestice.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
+      sporna: s.sporne.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
+      ploha: komad.podrucje === "sanacija" ? (s.plohe.find((p) => uObliku(p, lng, lat)) ?? null) : null,
       doRuba: rub,
     };
   }

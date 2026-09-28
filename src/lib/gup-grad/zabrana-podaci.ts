@@ -101,6 +101,36 @@ export async function ucitajZbrojZabrane(): Promise<ZbrojZabrane> {
   return JSON.parse(await readFile(put, "utf8")).zbroj as ZbrojZabrane;
 }
 
+/** Broj čestica i slobodno zemljište na njima (ha). */
+export interface BrojCestica {
+  cestice: number;
+  ha: number;
+}
+
+/** Zbrojevi iz scripts/gup-grad/sporne.py (sporne-2025.geojson). */
+export interface ZbrojSpornih {
+  /** čestice u neuređenom dijelu uz cestu čija je čestica široka barem 4 m */
+  pristup: BrojCestica;
+  /** od njih one uz koje na manje od 15 m prolazi i kanalizacija */
+  pristup_kanal: number;
+  /** djelomično izgrađene čestice u neuređenom dijelu (na karti nisu sporne same po sebi) */
+  izgradjena: BrojCestica;
+  /** čestice u plohama urbane sanacije u kojima ozakonjene zgrade nisu većina */
+  sanacija: BrojCestica;
+  /** sporne na karti: pristup ili sanacija */
+  ukupno: BrojCestica;
+  /** sve čestice pod zabranom u neuređenom dijelu, odnosno u urbanoj sanaciji */
+  neuredeno: BrojCestica;
+  u_sanaciji: BrojCestica;
+  plohe: { ha: number; zgrade: number; udio: number; upu: number; manjina: boolean }[];
+  po_upu: Record<string, { naziv: string | null; cestice: number; ha: number }>;
+}
+
+export async function ucitajSporne(): Promise<ZbrojSpornih> {
+  const put = path.join(process.cwd(), "public", "geo", "gup-grad", "sporne-2025.geojson");
+  return JSON.parse(await readFile(put, "utf8")).zbroj as ZbrojSpornih;
+}
+
 /** Zemljište stambenih i mješovitih zona jedne godine plana, u m². */
 export interface ZemljisteZaStanovanje {
   ukupno: number;

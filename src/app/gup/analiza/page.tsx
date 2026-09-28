@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
 
 import { Navod } from "@/components/gup-dokument/navod";
 import { imenicaUz } from "@/lib/gup-grad/zabrana";
-import { ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
+import { ucitajSporne, ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -290,7 +290,13 @@ const PODLOGA: Oznaka[] = [
 ];
 
 export default async function AnalizaPage() {
-  const [zbroj, zemljiste] = await Promise.all([ucitajZbrojZabrane(), zemljisteZaStanovanje()]);
+  const [zbroj, zemljiste, sporne] = await Promise.all([ucitajZbrojZabrane(), zemljisteZaStanovanje(), ucitajSporne()]);
+  const broj = (n: number) => n.toLocaleString("hr-HR");
+  const ha1 = (x: number) => x.toLocaleString("hr-HR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const plohe = sporne.plohe;
+  const manjina = plohe.filter((p) => p.manjina);
+  const vecina = plohe.filter((p) => !p.manjina);
+  const ploha = (upu: number) => manjina.find((p) => p.upu === upu);
   const z = zemljiste[2025];
   const h = (x: number) => ha(x * 1e4);
   const neizgradjene = zbroj.neizgradjene.cestice;
@@ -337,10 +343,10 @@ export default async function AnalizaPage() {
             <strong>Gradilo se, ali manje nego što se čini.</strong> Oko 4 % zgrada na tom području nastalo je nakon 2017., a većina kuća koje se doimaju novima stajala je već 2011. i poslije je ozakonjena.
           </li>
           <li>
-            <strong>U cijelom gradu zabrana bi pogodila {h(zbroj.slobodno_ha)} ha slobodnog zemljišta</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
+            <strong>U cijelom gradu zabrana bi pogodila {h(zbroj.slobodno_ha)} ha slobodnog zemljišta</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
           </li>
           <li>
-            <strong>Oznake nisu ucrtane dosljedno ni prema kriteriju samoga Grada ni prema zakonu.</strong> Najmanje 50 neizgrađenih čestica uz ceste čija je čestica široka barem 4 m označeno je kao neuređeni dio, a u dvjema plohama urbane sanacije ozakonjene zgrade prema registru nisu većina.
+            <strong>Oznake nisu ucrtane dosljedno ni prema kriteriju samoga Grada ni prema zakonu.</strong> Najmanje {broj(sporne.pristup.cestice)} čestica uz ceste čija je čestica široka barem 4 m označeno je kao neuređeni dio, a u trima plohama urbane sanacije ozakonjene zgrade prema registru nisu većina.
           </li>
           <li>
             <strong>Oznaku bira Grad, a ne zakon.</strong> Javni poziv za inicijative za izmjene GUP-a traje do 16. studenoga 2026. i prilika je da se zatraži drukčija oznaka.
@@ -683,14 +689,18 @@ export default async function AnalizaPage() {
 
         <Podnaslov>Neuređeni dio: zemljište uz ceste na česticama širokim barem 4 m</Podnaslov>
         <p>
-          Za neuređeni dio Grad je naveo jasan kriterij, koji se može provjeriti. Za svaku cestu iz gradskog registra nerazvrstanih cesta i za državnu cestu izmjerili smo širinu katastarske čestice na kojoj leži, a zatim utvrdili koje neizgrađene čestice u neuređenom dijelu graniče s tom cestom.
+          Za neuređeni dio Grad je naveo jasan kriterij, koji se može provjeriti. Za svaku cestu iz gradskog registra nerazvrstanih cesta i za državnu cestu izmjerili smo širinu katastarske čestice na kojoj leži, a zatim utvrdili koje čestice u neuređenom dijelu graniče s tom cestom. Brojali smo samo čestice od najmanje 250 m² na kojima bi zabrana pogodila novu gradnju, u cijelom obuhvatu GUP-a.
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            Od 481 neizgrađene čestice (56,8 ha) označene kao neuređeni dio <strong>najmanje 50 (8,0 ha) graniči s registriranom cestom čija je čestica široka barem 4 m</strong>. Ako je i sama cesta toliko široka i u funkciji, te čestice prema kriteriju Grada ne pripadaju neuređenom dijelu. Na manje od 15 m od 11 tih čestica prolazi i mješovita ili fekalna kanalizacija, što je važno jer zakon uz pristup traži i odvodnju.
+            Od {broj(sporne.neuredeno.cestice)} takvih čestica u neuređenom dijelu (s {ha1(sporne.neuredeno.ha)} ha slobodnog zemljišta) <strong>najmanje {broj(sporne.pristup.cestice)} ({ha1(sporne.pristup.ha)} ha) graniči s registriranom cestom čija je čestica široka barem 4 m</strong>. Ako je i sama cesta toliko široka i u funkciji, te čestice prema kriteriju Grada ne pripadaju neuređenom dijelu. Na manje od 15 m od {broj(sporne.pristup_kanal)} tih čestica prolazi i mješovita ili fekalna kanalizacija, što je važno jer zakon uz pristup traži i odvodnju. Sve su označene na{" "}
+            <Link href="/gup/zabrana#karta" className="fokus text-emerald-700 underline">
+              karti zabrane
+            </Link>
+            .
           </li>
           <li>
-            Kao neuređeni dio označene su i <strong>42 čestice (8,9 ha) na kojima je u gradskom 3D modelu zgrada od najmanje 35 m²</strong>, iako zakon neuređenim naziva samo neizgrađeno zemljište.
+            U neuređenom je dijelu i <strong>{broj(sporne.izgradjena.cestice)} čestica na kojima već stoji zgrada</strong> (slobodnog je zemljišta na njima {ha1(sporne.izgradjena.ha)} ha). Zakon neuređeni dio određuje kao dio neizgrađenog dijela građevinskog područja, pa je upitno pripadaju li mu izgrađene čestice.
           </li>
           <li>Neuređeni dio određen je PPUG-om, pa se njegova izmjena može zatražiti u javnom pozivu za inicijative, koji obuhvaća i izmjene PPUG-a.</li>
         </ul>
@@ -698,12 +708,12 @@ export default async function AnalizaPage() {
           src="/gup/analiza/provjera-neuredeno.webp"
           sirina={1300}
           visina={750}
-          opis="Karta istočnog Splita: neuređeni dio s lista 4.d, registrirane ceste obojene prema širini njihove čestice te crveno obrubljene neizgrađene čestice u neuređenom dijelu uz ceste čija je čestica široka barem 4 m."
+          opis="Karta istočnog Splita: neuređeni dio s lista 4.d, registrirane ceste obojene prema širini njihove čestice te crveno obrubljene čestice u neuređenom dijelu uz ceste čija je čestica široka barem 4 m."
           legenda={[
             { boja: "#ffffaf", tekst: "neuređeni dio građevinskog područja (list 4.d)" },
-            { boja: "#dc0000", tekst: "neizgrađena čestica u neuređenom dijelu, uz cestu čija je čestica široka barem 4 m", oblik: "obrub" },
-            { boja: "rgb(40,40,40)", tekst: "registrirana cesta, čestica ceste široka barem 4 m", oblik: "tocka" },
-            { boja: "rgb(240,120,0)", tekst: "registrirana cesta, čestica ceste uža od 4 m", oblik: "tocka" },
+            { boja: "#dc0000", tekst: "čestica u neuređenom dijelu uz cestu čija je čestica široka barem 4 m", oblik: "obrub" },
+            { boja: "rgb(40,40,40)", tekst: "registrirana cesta, čestica ceste široka barem 4 m", oblik: "crta" },
+            { boja: "rgb(240,120,0)", tekst: "registrirana cesta, čestica ceste uža od 4 m", oblik: "crta" },
             ...PODLOGA,
           ]}
         >
@@ -711,49 +721,51 @@ export default async function AnalizaPage() {
         </Slika>
         <Detaljnije naslov="Kako smo mjerili širinu cesta i što mjerenjem nije obuhvaćeno">
           <p>
-            Osi cesta preuzete su iz gradskog registra nerazvrstanih cesta (29. studenoga 2023.) i sloja državnih cesta. Svaka 4 m uzeli smo tetivu okomitu na os kroz usku česticu kojom os prolazi, pa širinu izgladili pomičnim medijanom na oko 40 m. Širina čestice ceste nije širina izvedenog kolnika, nego najveća širina koju cesta na njoj može imati; je li cesta doista toliko široka i u funkciji, kako traži kriterij Grada, ovim se mjerenjem ne može utvrditi. Ceste koje nisu zasebne čestice nisu izmjerene i ne broje se kao pristup, pa je 50 donja granica za čestice uz ceste čija je čestica široka barem 4 m; uži izvedeni kolnik mogao bi broj čestica koje ispunjavaju kriterij Grada i smanjiti. Kanalizacija je iz gradskog GIS sloja mreže i kolektora, samo mješovita i fekalna. Granice prenesene s lista 4.d od službenih granica odstupaju za 4 do 7 m (medijan), a čestica se ubraja u neuređeni dio kad je barem pola njezine površine u njemu. Čestica je izgrađena ako u gradskom 3D modelu na njoj stoji zgrada od najmanje 35 m², i to s barem 30 m² tlocrta unutar čestice. Čestice kojima registrirana cesta prolazi dulje od 8 m smatraju se cestom i nisu brojane.
+            Osi cesta preuzete su iz gradskog registra nerazvrstanih cesta (29. studenoga 2023.) i sloja državnih cesta. Svaka 4 m uzeli smo tetivu okomitu na os kroz usku česticu kojom os prolazi, pa širinu izgladili pomičnim medijanom na oko 40 m. Širina čestice ceste nije širina izvedenog kolnika, nego najveća širina koju cesta na njoj može imati; je li cesta doista toliko široka i u funkciji, kako traži kriterij Grada, ovim se mjerenjem ne može utvrditi. Ceste koje nisu zasebne čestice nisu izmjerene i ne broje se kao pristup, pa je {broj(sporne.pristup.cestice)} donja granica za čestice uz ceste čija je čestica široka barem 4 m; uži izvedeni kolnik mogao bi broj čestica koje ispunjavaju kriterij Grada i smanjiti. Kanalizacija je iz gradskog GIS sloja mreže i kolektora, samo mješovita i fekalna. Granice prenesene s lista 4.d od službenih granica odstupaju za 4 do 7 m (medijan), a čestica se ubraja u neuređeni dio kad je barem pola njezine površine u njemu. Je li čestica izgrađena i koliko je na njoj slobodnog zemljišta, preuzeto je iz izračuna za kartu zabrane. Čestice kojima registrirana cesta prolazi dulje od 8 m smatraju se cestom i nisu brojane.
           </p>
         </Detaljnije>
 
         <Podnaslov>Urbana sanacija: jesu li ozakonjene zgrade većina?</Podnaslov>
         <p>
-          Prema zakonu, mjere urbane sanacije propisuju se za područja na kojima pretežu ozakonjene zgrade. Za svaku zgradu na promatranom području provjerili smo ima li u registru Ministarstva (ISPU) rješenje o izvedenom stanju. Registar ne mora biti potpun, pa su udjeli u tablici približni.
+          Prema zakonu, mjere urbane sanacije propisuju se za područja na kojima pretežu ozakonjene zgrade. Za svaku zgradu u plohama urbane sanacije i na području Dračevca, Bilica, Mostina, Harakovca, Kile i Kamena provjerili smo ima li u registru Ministarstva (ISPU) rješenje o izvedenom stanju. Registar ne mora biti potpun, pa su udjeli približni.
         </p>
         <Tablica
           zaglavlje={["Oznaka", "Broj zgrada", "Udio s rješenjem o izvedenom stanju (ISPU)"]}
           redovi={[
-            ["područje urbane sanacije", "384", "79 %"],
-            ["ostatak obuhvata UPU-a (preporuka)", "51", "59 %"],
-            ["neuređeni dio", "29", "55 %"],
-            ["važeći plan užeg područja", "160", "58 %"],
-            ["izvan obuhvata UPU-a", "40", "38 %"],
+            ["područje urbane sanacije", "830", "80 %"],
+            ["ostatak obuhvata UPU-a (preporuka)", "106", "66 %"],
+            ["neuređeni dio", "44", "45 %"],
+            ["važeći plan užeg područja", "170", "56 %"],
+            ["izvan obuhvata UPU-a", "41", "39 %"],
           ]}
         />
         <ul className="list-disc space-y-2 pl-5">
-          <li>U većini ploha urbane sanacije s barem 10 zgrada rješenje o izvedenom stanju ima 71 do 89 % zgrada.</li>
           <li>
-            <strong>U dvjema plohama nisu.</strong> U plohi u Harakovcu (8,0 ha, 25 zgrada) rješenje o izvedenom stanju ima 16 % zgrada, a za 21 zgradu u registru nema ni rješenja ni uporabne dozvole. U plohi u Mostinama (4,4 ha, 16 zgrada, među njima velike poslovne hale) udio je 44 %. Prema podacima iz registra, u tim dvjema plohama zakonski uvjet za urbanu sanaciju nije ispunjen.
+            U {vecina.length} od {plohe.length} ploha urbane sanacije s barem 10 zgrada rješenje o izvedenom stanju ima {Math.min(...vecina.map((p) => p.udio))} do {Math.max(...vecina.map((p) => p.udio))} % zgrada.
           </li>
           <li>
-            <strong>I u ostatku obuhvata većina zgrada ima rješenje o izvedenom stanju (59 %), a oznake urbane sanacije ondje nema.</strong> Oznaka dakle ne prati samo udio ozakonjenih zgrada: zemljište sa sličnim udjelom na jednom je mjestu pod zabranom, a na drugome nije.
+            <strong>U preostalim trima plohama nije tako.</strong> U plohi u Harakovcu ({ha1(ploha(19)?.ha ?? 0)} ha, {ploha(19)?.zgrade} zgrada) rješenje o izvedenom stanju ima {ploha(19)?.udio} % zgrada, u plohi u Mostinama ({ha1(ploha(17)?.ha ?? 0)} ha, {ploha(17)?.zgrade} zgrada, među njima velike poslovne hale) {ploha(17)?.udio} %, a u plohi u obuhvatu UPU-a proširenja groblja Lovrinac ({ha1(ploha(21)?.ha ?? 0)} ha, {ploha(21)?.zgrade} zgrada) {ploha(21)?.udio} %. Prema podacima iz registra, u tim plohama zakonski uvjet za urbanu sanaciju nije ispunjen. Na njima je {broj(sporne.sanacija.cestice)} čestica na kojima bi zabrana pogodila novu gradnju.
+          </li>
+          <li>
+            <strong>I u ostatku obuhvata većina zgrada ima rješenje o izvedenom stanju (66 %), a oznake urbane sanacije ondje nema.</strong> Oznaka dakle ne prati samo udio ozakonjenih zgrada: zemljište sa sličnim udjelom na jednom je mjestu pod zabranom, a na drugome nije.
           </li>
         </ul>
         <Slika
           src="/gup/analiza/provjera-sanacija.webp"
           sirina={1300}
           visina={750}
-          opis="Karta istočnog Splita: plohe urbane sanacije s udjelom zgrada koje imaju rješenje o izvedenom stanju; ploha u Harakovcu ima 16 %, a jedna u Mostinama 44 %."
+          opis={`Karta istočnog Splita: plohe urbane sanacije s udjelom zgrada koje imaju rješenje o izvedenom stanju; ploha u Harakovcu ima ${ploha(19)?.udio} %, a jedna u Mostinama ${ploha(17)?.udio} %.`}
           legenda={[
             { boja: "#9fff7f", tekst: "područje urbane sanacije (list 4.d)" },
             { boja: "#dc0000", tekst: "ploha u kojoj zgrade s rješenjem u registru nisu većina", oblik: "obrub" },
             ...PODLOGA,
           ]}
         >
-          <strong>Slika 8.</strong> Udio zgrada s rješenjem o izvedenom stanju u svakoj plohi urbane sanacije s barem 10 zgrada.
+          <strong>Slika 8.</strong> Udio zgrada s rješenjem o izvedenom stanju u svakoj plohi urbane sanacije s barem 10 zgrada. Ploha u obuhvatu UPU-a proširenja groblja Lovrinac je izvan isječka.
         </Slika>
         <Detaljnije naslov="Kako smo brojali ozakonjene zgrade">
           <p>
-            Za kvartove Dračevac i Bilice te za UPU-e 17, 18 i 19 iz prijedloga rješenja o izvedenom stanju preuzeta su iz javnog registra Ministarstva (ISPU, sloj „Akt za uporabu građevine”); brojana su samo rješenja kojima je zahtjev usvojen, svako jednom. Zgradi smo pripisali rješenje ako je njegova točka u registru udaljena manje od 15 m od tlocrta zgrade; jedno se rješenje tako može pripisati i susjednoj zgradi, što udjele povećava. Zgradom smatramo tlocrt od najmanje 35 m² iz gradskog 3D modela, a dijelovi krova koji se dodiruju spojeni su u jednu zgradu. Registar ne mora biti potpun, a zgrada bez akta u registru nije nužno nezakonita: starije zgrade i dozvole izdane prije uvođenja registra u njemu ne moraju biti upisane.
+            Za sve plohe urbane sanacije, kvartove Dračevac i Bilice te za UPU-e 17–20 i 26 iz prijedloga rješenja o izvedenom stanju preuzeta su iz javnog registra Ministarstva (ISPU, sloj „Akt za uporabu građevine”); brojana su samo rješenja kojima je zahtjev usvojen, svako jednom. Zgradi smo pripisali rješenje ako je njegova točka u registru udaljena manje od 15 m od tlocrta zgrade; jedno se rješenje tako može pripisati i susjednoj zgradi, što udjele povećava. Zgradom smatramo tlocrt od najmanje 35 m² iz gradskog 3D modela, a dijelovi krova koji se dodiruju spojeni su u jednu zgradu. Registar ne mora biti potpun, a zgrada bez akta u registru nije nužno nezakonita: starije zgrade i dozvole izdane prije uvođenja registra u njemu ne moraju biti upisane.
           </p>
         </Detaljnije>
 
@@ -764,8 +776,8 @@ export default async function AnalizaPage() {
 
         <Podnaslov>Što se na temelju toga može tražiti</Podnaslov>
         <ul className="list-disc space-y-2 pl-5">
-          <li>da se neuređeni dio uskladi s kriterijem Grada, tako da se iz njega izuzmu čestice uz postojeću cestu široku barem 4 m i izgrađene čestice (izmjenom PPUG-a i GUP-a);</li>
-          <li>da se iz urbane sanacije izuzmu plohe u kojima ozakonjene zgrade nisu većina;</li>
+          <li>da se neuređeni dio uskladi s kriterijem Grada, tako da se iz njega izuzmu čestice uz postojeću cestu široku barem 4 m i izgrađene čestice (izmjenom PPUG-a i GUP-a); popis je na karti zabrane;</li>
+          <li>da se iz urbane sanacije izuzmu plohe u kojima ozakonjene zgrade nisu većina (Harakovac, Mostine i Lovrinac);</li>
           <li>
             da Grad objavi podatke i prag po kojima je ucrtao urbanu sanaciju te granice oznaka odredi po katastarskim česticama, kao što je u važećem GUP-u to učinio za granicu zaštićene povijesne jezgre.
           </li>
@@ -1066,7 +1078,7 @@ export default async function AnalizaPage() {
         </Detaljnije>
         <Podnaslov>Koliko bi zemljišta za gradnju oznake blokirale</Podnaslov>
         <p>
-          Zabrana ne dira ono što je već izgrađeno, nego slobodno zemljište na kojem bi se inače smjela graditi nova zgrada. U cijelom gradu to je <strong>{h(zbroj.slobodno_ha)} ha</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
+          Zabrana ne dira ono što je već izgrađeno, nego slobodno zemljište na kojem bi se inače smjela graditi nova zgrada. U cijelom gradu to je <strong>{h(zbroj.slobodno_ha)} ha</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
         </p>
         <Tablica
           zaglavlje={["Propisani UPU", "Slobodno zemljište (ha)", "Neizgrađene čestice"]}

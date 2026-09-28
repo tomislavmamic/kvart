@@ -48,6 +48,8 @@ next-env.d.ts
 
 # preuzeti izvorni planovi sa split.hr (~265 MB PDF-ova) — prevelik za git
 /data/sources/planovi/
+# akti s ISPU-a sadrže adrese i klase predmeta; objavljuju se samo zbrojevi (scripts/gup-grad/sporne.py)
+/data/sources/ispu-akti/
 
 # python bytecode iz scripts/vectorize-plans.py
 __pycache__/

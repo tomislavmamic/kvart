@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Navod } from "@/components/gup-dokument/navod";
 import { ZabranaPrikaz } from "@/components/gup-grad/zabrana-prikaz";
 import { imenicaUz } from "@/lib/gup-grad/zabrana";
-import { ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
+import { ucitajSporne, ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -28,7 +28,8 @@ interface Korak {
 }
 
 export default async function ZabranaPage() {
-  const [zbroj, zemljiste] = await Promise.all([ucitajZbrojZabrane(), zemljisteZaStanovanje()]);
+  const [zbroj, zemljiste, sporne] = await Promise.all([ucitajZbrojZabrane(), zemljisteZaStanovanje(), ucitajSporne()]);
+  const plohaManjina = sporne.plohe.filter((p) => p.manjina).length;
   const z = zemljiste[2025];
   const redovi = [
     {
@@ -220,6 +221,22 @@ export default async function ZabranaPage() {
           Dio obuhvata propisanog UPU-a koji nije označen crveno do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
           <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
         </p>
+        <p className="mt-3 max-w-3xl border-l-4 border-yellow-400 bg-yellow-50 px-4 py-3 text-zinc-800">
+          <strong>Žuto su sporne oznake.</strong> {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
+          {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
+          je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom
+          takvoj cesti nije neuređeno. U {plohaManjina} od {sporne.plohe.length} ploha urbane sanacije s barem 10 zgrada
+          rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
+          na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
+          {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Kako smo to
+          provjerili i što se iz toga može tražiti, piše u{" "}
+          <Link href="/gup/analiza#oznake" className="fokus font-semibold text-emerald-700 underline">
+            analizi
+          </Link>
+          .
+        </p>
         <div className="mt-4">
           <ZabranaPrikaz poUpu={zbroj.po_upu} />
         </div>
@@ -318,6 +335,16 @@ export default async function ZabranaPage() {
             na njega, zajedno sa slobodnim susjednim zemljištem, stane nova građevna čestica. Premali ostaci se ne broje.
             Čestica je neizgrađena ako na njoj nema zgrade, okućnice ni gradilišta. Javne i društvene zone nisu uključene
             jer se javne zgrade smiju graditi i prije UPU-a.
+          </li>
+          <li>
+            Sporne oznake: osi cesta iz gradskog registra nerazvrstanih cesta (2023.) i sloja državnih cesta; širina je
+            širina katastarske čestice ceste, izmjerena svaka 4 m okomito na os, a ne širina kolnika. Rješenja o izvedenom
+            stanju iz javnog registra akata Ministarstva (ISPU), zgrade iz gradskog 3D modela (tlocrti od 35 m²). Broje
+            se samo čestice od najmanje 250 m² na kojima bi zabrana pogodila novu gradnju. Izračun je u skripti{" "}
+            <a href="https://github.com/tomislavmamic/kvart/blob/main/scripts/gup-grad/sporne.py" className={vanjska}>
+              sporne.py
+            </a>
+            .
           </li>
           <li>
             Iskorištenost zemljišta računa se jednako kao na{" "}

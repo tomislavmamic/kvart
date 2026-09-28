@@ -3,12 +3,14 @@
 /**
  * /gup/zabrana: tražilica adrese, karta i popis po UPU-u.
  *
- * Podatke karte (zabrana-2025.geojson i planski-rezim-2025.geojson) učita
- * jednom i iz njih računa stanje svake točke (stanjeTocke); karta
+ * Podatke karte (zabrana-2025.geojson, planski-rezim-2025.geojson i
+ * sporne-2025.geojson) učita jednom i iz njih računa stanje svake točke
+ * (stanjeTocke); karta
  * (zabrana-karta.tsx) samo crta i javlja klik, a učitava se bez SSR-a.
  * Kućni brojevi (~0,5 MB) stižu tek kad se krene tipkati adresa.
  */
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { FeatureCollection } from "geojson";
 
@@ -29,7 +31,9 @@ import {
   type Adrese,
   type Prijedlog,
   type SiroveAdrese,
+  type PlohaSanacije,
   type Slojevi,
+  type SpornaCestica,
   type Stanje,
 } from "@/lib/gup-grad/zabrana";
 
@@ -50,6 +54,7 @@ interface Podaci {
   zabrana: FeatureCollection;
   planovi: FeatureCollection;
   cestice: FeatureCollection;
+  sporne: FeatureCollection | null;
   slojevi: Slojevi;
 }
 
@@ -62,6 +67,46 @@ function Znacka({ boja, children }: { boja: Kartica["boja"]; children: ReactNode
     zeleno: "bg-emerald-100 text-emerald-900",
   }[boja];
   return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${klasa}`}>{children}</span>;
+}
+
+const metri = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: 1 });
+
+/** Zašto je oznaka ovdje sporna (sporne-2025.geojson); null ako nije. */
+function spor(sporna: SpornaCestica | null, ploha: PlohaSanacije | null): ReactNode {
+  const vise = (
+    <Link href="/gup/analiza#oznake" className="fokus font-semibold underline">
+      Više u analizi
+    </Link>
+  );
+  if (sporna?.razlozi.includes("pristup")) {
+    return (
+      <p className="mb-2 rounded-lg border-l-4 border-yellow-400 bg-yellow-50 px-2.5 py-1.5 text-yellow-950">
+        <strong>Sporna oznaka.</strong> Veći je dio čestice k.č. {sporna.kc} označen kao neuređeni dio, a čestica
+        graniči s cestom čija je katastarska čestica široka oko {`${metri(sporna.sirina ?? 4)}\u00a0m`}
+        {sporna.kanal ? ", a na manje od 15\u00a0m prolazi i kanalizacija" : ""}. Prema kriteriju iz obrazloženja prijedloga
+        zemljište s pristupom postojećoj cesti širokoj barem 4 m nije neuređeno, ako je cesta doista izvedena u toj
+        širini. {vise}
+      </p>
+    );
+  }
+  if (ploha?.manjina) {
+    return (
+      <p className="mb-2 rounded-lg border-l-4 border-yellow-400 bg-yellow-50 px-2.5 py-1.5 text-yellow-950">
+        <strong>Sporna oznaka.</strong> U ovoj plohi urbane sanacije rješenje o izvedenom stanju prema registru ima{" "}
+        {broj(ploha.sRjesenjem)} od {broj(ploha.zgrade)} zgrada ({ploha.udio} %). Zakon mjere urbane sanacije propisuje
+        za područja na kojima pretežu ozakonjene zgrade. {vise}
+      </p>
+    );
+  }
+  if (ploha) {
+    return (
+      <p className="mb-2 text-zinc-600">
+        U ovoj plohi urbane sanacije rješenje o izvedenom stanju prema registru ima {broj(ploha.sRjesenjem)} od{" "}
+        {broj(ploha.zgrade)} zgrada ({ploha.udio} %).
+      </p>
+    );
+  }
+  return null;
 }
 
 function karticaStanja(s: Stanje): Kartica {
@@ -80,6 +125,7 @@ function karticaStanja(s: Stanje): Kartica {
         naslov: s.upu ? `Potreban je ${s.upu.naziv}` : "Potreban je UPU",
         tijelo: (
           <>
+            {spor(s.sporna, s.ploha)}
             {s.cestica && (
               <p className="mb-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-red-950">
                 {s.cestica.neizgradjena ? (
@@ -176,6 +222,7 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
   const [podaci, setPodaci] = useState<Podaci | null>(null);
   const [greska, setGreska] = useState(false);
   const [crveno, setCrveno] = useState(true);
+  const [sporno, setSporno] = useState(true);
   const [cilj, setCilj] = useState<CiljKarte | null>(null);
   const [oznaka, setOznaka] = useState<OznakaKarte | null>(null);
   const [kartica, setKartica] = useState<Kartica | null>(null);
@@ -190,9 +237,17 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
       dohvati("/geo/gup-grad/zabrana-2025.geojson"),
       dohvati("/geo/gup-grad/planski-rezim-2025.geojson"),
       dohvati("/geo/gup-grad/zabrana-cestice-2025.geojson"),
+      // sporne oznake su dodatak: bez njih karta i dalje radi
+      dohvati("/geo/gup-grad/sporne-2025.geojson").catch(() => null),
     ])
-      .then(([zabrana, planovi, cestice]) =>
-        setPodaci({ zabrana, planovi, cestice, slojevi: slojeviIzGeojsona(zabrana, planovi, cestice) }),
+      .then(([zabrana, planovi, cestice, sporne]) =>
+        setPodaci({
+          zabrana,
+          planovi,
+          cestice,
+          sporne,
+          slojevi: slojeviIzGeojsona(zabrana, planovi, cestice, sporne ?? undefined),
+        }),
       )
       .catch(() => setGreska(true));
   }, []);
@@ -376,7 +431,9 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
             zabrana={podaci.zabrana}
             planovi={podaci.planovi}
             cestice={podaci.cestice}
+            sporne={podaci.sporne}
             crveno={crveno}
+            sporno={sporno}
             odabraniUpu={odabraniUpu}
             cilj={cilj}
             oznaka={oznaka}
@@ -443,7 +500,34 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
         </label>
       </div>
 
-      <p className="mt-2 text-sm text-zinc-500">Čestice se na karti vide pri većem povećanju.</p>
+      {podaci?.sporne && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-700">
+          <span className="flex items-center gap-2">
+            <Uzorak stil={{ background: "rgba(250,204,21,0.3)", border: `2.5px solid ${BOJE_ZABRANE.sporno}` }} />
+            sporna oznaka čestice
+          </span>
+          <span className="flex items-center gap-2">
+            <Uzorak stil={{ border: `3px dashed ${BOJE_ZABRANE.sporno}` }} />
+            urbana sanacija u kojoj ozakonjene zgrade nisu većina
+          </span>
+          <span className="flex items-center gap-2">
+            <Uzorak stil={{ height: 4, background: BOJE_ZABRANE.cesta4 }} />
+            cesta na čestici širokoj barem 4 m
+          </span>
+          <span className="flex items-center gap-2">
+            <Uzorak stil={{ height: 4, background: BOJE_ZABRANE.cestaUska }} />
+            cesta na užoj čestici
+          </span>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input type="checkbox" checked={sporno} onChange={(e) => setSporno(e.target.checked)} className="h-4 w-4 accent-yellow-500" />
+            prikaži sporne oznake
+          </label>
+        </div>
+      )}
+
+      <p className="mt-2 text-sm text-zinc-500">
+        Čestice se na karti vide pri većem povećanju, a ceste po širini tek izbliza (uz neuređeni dio).
+      </p>
 
       <h3 className="mt-8 font-bold text-zinc-900">Po planovima koji još nisu doneseni</h3>
       <p className="mt-1 text-sm text-zinc-600">
