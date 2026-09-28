@@ -1,17 +1,20 @@
 "use client";
 
 /**
- * Karta na /gup/zabrana: crveno je zemljište gdje bi prijedlog GUP-a 2025.
- * zabranio novu gradnju do donošenja UPU-a (zabrana-2025.geojson), uz
- * planove na snazi, obuhvate propisanih UPU-a i granicu GUP-a. Od zuma
- * ČESTICE_OD_ZUMA vide se i čestice sa slobodnim zemljištem koje bi čekalo
- * UPU (zabrana-cestice-2025.geojson): neizgrađene punom bojom, djelomično
- * izgrađene samo iscrtkanim rubom (ispuna bi se na tamnoj snimci stopila s punom).
- * Žuto su sporne oznake (sporne-2025.geojson): plohe urbane sanacije u kojima
- * ozakonjene zgrade nisu većina i čestice pod zabranom kojima oznaka ne
- * odgovara kriteriju Grada ili zakona; od SPORNO_CESTE_OD_ZUMA i osi cesta
- * uz neuređeni dio po širini čestice ceste. Žuto je u vlastitom sloju karte
- * (pane), iznad crvenog, pa ga palenje i gašenje crvenog ne prekrije.
+ * Karta na /gup/zabrana: gdje bi prijedlog GUP-a 2025. zabranio novu gradnju
+ * do donošenja UPU-a (zabrana-2025.geojson). Tri oznake imaju svoje boje
+ * (BOJE_ZABRANE, kao na listu 4.d): urbanu sanaciju i preobrazbu određuje
+ * GUP, a neuređeni dio PPUG, iz kojega ga GUP preuzima. Za snalaženje su tu
+ * planovi na snazi (sivo), obuhvati propisanih UPU-a (plavi rub) i granica
+ * GUP-a (jedina iscrtkana crta). Od zuma CESTICE_OD_ZUMA tanak crni rub
+ * pokazuje čestice na kojima bi zabrana pogodila novu gradnju
+ * (zabrana-cestice-2025.geojson).
+ *
+ * Ljubičasto je sporno (sporne-2025.geojson): debelo kad oznaka ne odgovara
+ * kriteriju Grada ili zakonu, tanko kad je čestica uz cestu koje nema u
+ * registru ili joj širina nije izmjerena; od SPORNO_CESTE_OD_ZUMA i osi cesta
+ * uz neuređeni dio po širini čestice ceste. Sporno je u vlastitom sloju
+ * karte (pane), iznad oznaka. Podloga je siva, da se boje oznaka čitaju.
  *
  * Karta samo crta i javlja klik; što je na kojoj točki računa
  * ZabranaPrikaz (stanjeTocke u src/lib/gup-grad/zabrana.ts). Slojevi nisu
@@ -24,7 +27,7 @@ import type * as LeafletNS from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 
 import { BASE_LAYERS, SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
-import { BOJE_ZABRANE, type Okvir } from "@/lib/gup-grad/zabrana";
+import { BOJE_ZABRANE, type Okvir, type Podrucje } from "@/lib/gup-grad/zabrana";
 
 export interface CiljKarte {
   /** Mijenja se pri svakom zahtjevu, da isti cilj dvaput opet pomakne kartu. */
@@ -36,7 +39,7 @@ export interface CiljKarte {
 export interface OznakaKarte {
   lng: number;
   lat: number;
-  crveno: boolean;
+  uZabrani: boolean;
 }
 
 // Isto kao /gup: DGU-ov ortofoto je zadan. CARTO-ova ulična karta sad bez
@@ -51,16 +54,16 @@ function podloga(L: typeof LeafletNS, id: string): LeafletNS.TileLayer {
   const zajednicko = { attribution: b.attribution, maxZoom: 19, bounds: SIRI_OBUHVAT_KARTE };
   // WMS ide kroz naš posrednik (src/app/api/podloga), kao na /gup i /karta
   return b.type === "wms"
-    ? L.tileLayer(`/api/podloga/${b.id}/{z}/{x}/{y}`, { ...zajednicko, tileSize: 512, zoomOffset: -1 })
-    : L.tileLayer(b.url, { ...zajednicko, subdomains: "abcd", maxNativeZoom: b.maxNativeZoom });
+    ? L.tileLayer(`/api/podloga/${b.id}/{z}/{x}/{y}`, { ...zajednicko, tileSize: 512, zoomOffset: -1, className: "podloga-siva" })
+    : L.tileLayer(b.url, { ...zajednicko, subdomains: "abcd", maxNativeZoom: b.maxNativeZoom, className: "podloga-siva" });
 }
 
 const zbirka = (features: Feature[]): FeatureCollection => ({ type: "FeatureCollection", features });
 
-/** Čestice su sitne; na pregledu cijelog grada samo bi zamutile crveno. */
-export const CESTICE_OD_ZUMA = 14;
-/** Sporne čestice imaju debeo žuti rub, pa se vide i razinu ranije. */
-export const SPORNO_OD_ZUMA = 13;
+/** Čestice su sitne; na pregledu cijelog grada samo bi zamutile oznake. */
+export const CESTICE_OD_ZUMA = 15;
+/** Sporno ima debeo ljubičast rub, pa se vidi i na pregledu cijelog grada: odmah se vidi gdje ga ima. */
+export const SPORNO_OD_ZUMA = 12;
 /** Osi cesta po širini: gušće su od čestica, pa tek izbliza. */
 export const SPORNO_CESTE_OD_ZUMA = 15;
 
@@ -74,25 +77,25 @@ export function ZabranaKarta(props: {
   planovi: FeatureCollection;
   cestice: FeatureCollection;
   sporne: FeatureCollection | null;
-  crveno: boolean;
+  prikaziZabranu: boolean;
   sporno: boolean;
   odabraniUpu: number | null;
   cilj: CiljKarte | null;
   oznaka: OznakaKarte | null;
   onKlik: (lng: number, lat: number) => void;
 }) {
-  const { zabrana, planovi, cestice, sporne, crveno, sporno, odabraniUpu, cilj, oznaka, onKlik } = props;
+  const { zabrana, planovi, cestice, sporne, prikaziZabranu, sporno, odabraniUpu, cilj, oznaka, onKlik } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
-  const crveniSloj = useRef<LeafletNS.LayerGroup | null>(null);
+  const slojZabrane = useRef<LeafletNS.Layer | null>(null);
   const slojCestica = useRef<LeafletNS.GeoJSON | null>(null);
   const isticanje = useRef<LeafletNS.GeoJSON | null>(null);
   const tocka = useRef<LeafletNS.CircleMarker | null>(null);
   const klik = useRef(onKlik);
-  const crvenoVidljivo = useRef(crveno);
+  const zabranaVidljiva = useRef(prikaziZabranu);
   const spornoVidljivo = useRef(sporno);
-  const slojeviSpornog = useRef<{ plohe: LeafletNS.Layer; cestice: LeafletNS.Layer; ceste: LeafletNS.Layer } | null>(null);
+  const slojeviSpornog = useRef<{ cestice: LeafletNS.Layer; ceste: LeafletNS.Layer } | null>(null);
   const osvjeziCestice = useRef<() => void>(() => {});
   useEffect(() => {
     klik.current = onKlik;
@@ -121,53 +124,53 @@ export function ZabranaKarta(props: {
 
       const gup = zabrana.features.filter((f) => f.properties?.vrsta === "gup");
       const komadi = zabrana.features.filter((f) => !["gup", "obris"].includes(f.properties?.vrsta));
-      const obris = zabrana.features.filter((f) => f.properties?.vrsta === "obris");
       const netaknuto = { interactive: false } as const;
 
       L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "vazeci")), {
         ...netaknuto,
-        style: { color: BOJE_ZABRANE.vazeci, weight: 1.2, dashArray: "4 3", fillColor: BOJE_ZABRANE.vazeci, fillOpacity: 0.12 },
+        style: { color: BOJE_ZABRANE.vazeci, weight: 1, fillColor: BOJE_ZABRANE.vazeci, fillOpacity: 0.35 },
       }).addTo(map);
-      crveniSloj.current = L.layerGroup([
-        L.geoJSON(zbirka(komadi), {
-          ...netaknuto,
-          style: { stroke: false, fillColor: BOJE_ZABRANE.crveno, fillOpacity: 0.45 },
+      slojZabrane.current = L.geoJSON(zbirka(komadi), {
+        ...netaknuto,
+        style: (f) => ({
+          stroke: false,
+          fillColor: BOJE_ZABRANE[(f?.properties?.vrsta as Podrucje) ?? "neuredeno"],
+          fillOpacity: 0.65,
         }),
-        L.geoJSON(zbirka(obris), {
-          ...netaknuto,
-          style: { color: BOJE_ZABRANE.crvenoRub, weight: 1.5, fill: false },
-        }),
-      ]).addTo(map);
+      }).addTo(map);
       slojCestica.current = L.geoJSON(cestice, {
         ...netaknuto,
-        style: (f) =>
-          f?.properties?.neizgradjena
-            ? { color: BOJE_ZABRANE.cesticaRub, weight: 1, fillColor: BOJE_ZABRANE.cestica, fillOpacity: 0.6 }
-            : { color: BOJE_ZABRANE.cesticaRub, weight: 1.4, dashArray: "4 3", fillColor: BOJE_ZABRANE.cestica, fillOpacity: 0.05 },
+        style: { color: BOJE_ZABRANE.cestica, weight: 0.7, opacity: 0.55, fill: false },
       });
       L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "propisan")), {
         ...netaknuto,
-        style: { color: BOJE_ZABRANE.upu, weight: 1.2, fill: false },
+        style: { color: BOJE_ZABRANE.upu, weight: 1.5, fill: false },
       }).addTo(map);
       if (sporne) {
         map.createPane("sporno").style.zIndex = "450";
-        const vrste = (v: string) => zbirka(sporne.features.filter((f) => f.properties?.vrsta === v));
         const u = { ...netaknuto, pane: "sporno" } as const;
+        const jako = (f?: Feature) => f?.properties?.vrsta === "ploha" || !(f?.properties?.razlozi ?? []).every((r: string) => r === "cesta" || r === "izgradjena");
         slojeviSpornog.current = {
-          plohe: L.geoJSON(zbirka(sporne.features.filter((f) => f.properties?.vrsta === "ploha" && f.properties?.manjina)), {
+          cestice: L.geoJSON(
+            zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cestica" || (f.properties?.vrsta === "ploha" && f.properties?.manjina))),
+            {
+              ...u,
+              style: (f) =>
+                jako(f)
+                  ? { color: BOJE_ZABRANE.sporno, weight: 3, fillColor: BOJE_ZABRANE.sporno, fillOpacity: f?.properties?.vrsta === "ploha" ? 0 : 0.25 }
+                  : { color: BOJE_ZABRANE.sporno, weight: 1.5, fillColor: BOJE_ZABRANE.sporno, fillOpacity: 0.08 },
+            },
+          ),
+          ceste: L.geoJSON(zbirka(sporne.features.filter((f) => f.properties?.vrsta === "cesta")), {
             ...u,
-            style: { color: BOJE_ZABRANE.sporno, weight: 3, dashArray: "8 5", fill: false },
-          }),
-          cestice: L.geoJSON(vrste("cestica"), {
-            ...u,
-            style: { color: BOJE_ZABRANE.sporno, weight: 2.5, fillColor: BOJE_ZABRANE.sporno, fillOpacity: 0.3 },
-          }),
-          ceste: L.geoJSON(vrste("cesta"), {
-            ...u,
-            style: (f) =>
-              f?.properties?.sirina === "4+"
-                ? { color: BOJE_ZABRANE.cesta4, weight: 3.5, opacity: 0.9 }
-                : { color: BOJE_ZABRANE.cestaUska, weight: 3, opacity: 0.9 },
+            style: (f) => {
+              const w = f?.properties?.sirina;
+              return w === "4+"
+                ? { color: BOJE_ZABRANE.cesta4, weight: 4, opacity: 0.9 }
+                : w === "<4"
+                  ? { color: BOJE_ZABRANE.cestaUska, weight: 3, opacity: 0.95 }
+                  : { color: BOJE_ZABRANE.cestaNepoznata, weight: 3, opacity: 0.95 };
+            },
           }),
         };
       }
@@ -184,9 +187,9 @@ export function ZabranaKarta(props: {
       };
       const cesticePoZumu = () => {
         const z = map.getZoom();
-        prikazi(slojCestica.current, z >= CESTICE_OD_ZUMA && crvenoVidljivo.current);
+        prikazi(slojZabrane.current, zabranaVidljiva.current);
+        prikazi(slojCestica.current, z >= CESTICE_OD_ZUMA && zabranaVidljiva.current);
         const sp = slojeviSpornog.current;
-        prikazi(sp?.plohe, spornoVidljivo.current);
         prikazi(sp?.cestice, z >= SPORNO_OD_ZUMA && spornoVidljivo.current);
         prikazi(sp?.ceste, z >= SPORNO_CESTE_OD_ZUMA && spornoVidljivo.current);
       };
@@ -205,13 +208,9 @@ export function ZabranaKarta(props: {
   }, []);
 
   useEffect(() => {
-    const map = mapa.current, sloj = crveniSloj.current;
-    if (!map || !sloj) return;
-    crvenoVidljivo.current = crveno;
-    if (crveno && !map.hasLayer(sloj)) sloj.addTo(map);
-    if (!crveno && map.hasLayer(sloj)) sloj.remove();
+    zabranaVidljiva.current = prikaziZabranu;
     osvjeziCestice.current();
-  }, [crveno]);
+  }, [prikaziZabranu]);
 
   useEffect(() => {
     spornoVidljivo.current = sporno;
@@ -248,7 +247,7 @@ export function ZabranaKarta(props: {
           radius: 7,
           weight: 2.5,
           color: "#18181b",
-          fillColor: oznaka.crveno ? BOJE_ZABRANE.crveno : "#ffffff",
+          fillColor: oznaka.uZabrani ? "#18181b" : "#ffffff",
           fillOpacity: 1,
           interactive: false,
         }).addTo(map)

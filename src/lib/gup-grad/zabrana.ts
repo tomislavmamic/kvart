@@ -3,7 +3,7 @@
  * ne donese UPU (čl. 103. st. 1 i čl. 105. st. 5 prijedloga).
  *
  * Čiste funkcije za kartu i tražilicu adrese: u kojem je režimu točka
- * (crveno, plan na snazi, samo obuhvat propisanog UPU-a, GUP, izvan GUP-a)
+ * (zabrana, plan na snazi, samo obuhvat propisanog UPU-a, GUP, izvan GUP-a)
  * i traženje kućnog broja. Podatke piše scripts/gup-grad/zabrana.py
  * (public/geo/gup-grad/zabrana-2025.geojson, kucni-brojevi.json); obuhvate
  * planova planski-obrisi.py (planski-rezim-2025.geojson), a sporne čestice i
@@ -15,20 +15,32 @@ import type { FeatureCollection } from "geojson";
 export type Podrucje = "sanacija" | "preobrazba" | "neuredeno";
 const PODRUCJA: readonly string[] = ["sanacija", "preobrazba", "neuredeno"];
 
-/** Boje karte i legende: crveno je zabrana, ostalo je okvir za snalaženje. */
+/**
+ * Boje karte i legende. Tri oznake koje zaustavljaju gradnju nose boje lista
+ * 4.d GUP-a (sanacija zelena, preobrazba narančasta, neuređeno žuto), nešto
+ * zasićenije da se vide na sivoj snimci. Sve sporno je ljubičasto, a rubovi
+ * su samo granice: plan na snazi, obuhvat UPU-a i (jedini iscrtkan) GUP.
+ */
 export const BOJE_ZABRANE = {
-  crveno: "#dc2626",
-  crvenoRub: "#991b1b",
-  vazeci: "#52525c",
-  upu: "#1d4ed8",
-  gup: "#3f3f46",
-  cestica: "#7f1d1d",
-  cesticaRub: "#450a0a",
-  /** sporna oznaka: žuto se vidi i na crvenom i na ortofotu */
-  sporno: "#facc15",
+  sanacija: "#4ade80",
+  preobrazba: "#fb923c",
+  neuredeno: "#fde047",
+  vazeci: "#71717a",
+  upu: "#2563eb",
+  gup: "#18181b",
+  cestica: "#3f3f46",
+  sporno: "#c026d3",
   cesta4: "#18181b",
-  cestaUska: "#f97316",
+  cestaUska: "#a1a1aa",
+  cestaNepoznata: "#60a5fa",
 } as const;
+
+/** Koji plan je odredio oznaku na listu 4.d. */
+export const IZVOR_OZNAKE: Record<Podrucje, string> = {
+  sanacija: "oznaka GUP-a",
+  preobrazba: "oznaka GUP-a",
+  neuredeno: "oznaka PPUG-a, GUP je preuzima",
+};
 
 /** [prsten][točka][lng, lat]; prvi prsten je vanjski, ostali rupe. */
 export type Poligon = number[][][];
@@ -144,7 +156,7 @@ export interface CesticaZabrane extends Oblik {
 }
 
 /** Zašto je oznaka čestice sporna (scripts/gup-grad/sporne.py). */
-export type RazlogSpora = "pristup" | "izgradjena" | "sanacija" | "ppug";
+export type RazlogSpora = "pristup" | "cesta" | "izgradjena" | "sanacija" | "ppug";
 
 /** Čestica pod zabranom kojoj oznaka ne odgovara kriteriju Grada ili zakona. */
 export interface SpornaCestica extends Oblik {
@@ -203,7 +215,7 @@ export interface Slojevi {
   ppug: ListPpug[];
   /** razred čestice pod zabranom po PPUG-u, po „k.o.|k.č.” */
   ppugCestice: Record<string, "U" | "I" | "N">;
-  /** Cijelo crveno kao jedan oblik — za udaljenost do ruba. */
+  /** Cijelo područje zabrane kao jedan oblik — za udaljenost do ruba. */
   obris: Oblik | null;
   vazeci: PlanNaSnazi[];
   propisani: PropisaniUpu[];
@@ -297,12 +309,12 @@ export function slojeviIzGeojsona(
   };
 }
 
-/** Rub crvenog bliži od ovoga: karta je precrtana sa skeniranog lista, pa neka se provjeri list. */
+/** Rub područja zabrane bliži od ovoga: karta je precrtana sa skeniranog lista, pa neka se provjeri list. */
 export const BLIZU_RUBA_M = 15;
 
 /** U kojem je režimu točka po prijedlogu 2025. */
 export function stanjeTocke(s: Slojevi, lng: number, lat: number): Stanje {
-  // ~60 m: crveni komad se ne gleda ako mu okvir nije ni blizu
+  // ~60 m: komad zabrane se ne gleda ako mu okvir nije ni blizu
   const blizu = (o: Oblik) => uOkviru(o.okvir, lng, lat, 0.0006);
   const rub = s.obris && blizu(s.obris) ? doRuba(s.obris, lng, lat) : Infinity;
   const komad = s.komadi.find((k) => blizu(k) && uObliku(k, lng, lat));

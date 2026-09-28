@@ -732,7 +732,7 @@ export default async function AnalizaPage() {
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            Od {broj(sporne.neuredeno.cestice)} takvih čestica u neuređenom dijelu (s {ha1(sporne.neuredeno.ha)} ha slobodnog zemljišta) <strong>najmanje {broj(sporne.pristup.cestice)} ({ha1(sporne.pristup.ha)} ha) graniči s registriranom cestom čija je čestica široka barem 4 m</strong>. Ako je i sama cesta toliko široka i u funkciji, te čestice prema kriteriju Grada ne pripadaju neuređenom dijelu. Na manje od 15 m od {broj(sporne.pristup_kanal)} tih čestica prolazi i mješovita ili fekalna kanalizacija, što je važno jer zakon uz pristup traži i odvodnju. Sve su označene na{" "}
+            Od {broj(sporne.neuredeno.cestice)} takvih čestica u neuređenom dijelu (s {ha1(sporne.neuredeno.ha)} ha slobodnog zemljišta) <strong>najmanje {broj(sporne.pristup.cestice)} ({ha1(sporne.pristup.ha)} ha) graniči s registriranom cestom čija je čestica široka barem 4 m</strong>. Ako je i sama cesta toliko široka i u funkciji, te čestice prema kriteriju Grada ne pripadaju neuređenom dijelu. Na manje od 15 m od {broj(sporne.pristup_kanal)} tih čestica prolazi i mješovita ili fekalna kanalizacija, što je važno jer zakon uz pristup traži i odvodnju. Još {broj(sporne.cesta.cestice)} čestica ({ha1(sporne.cesta.ha)} ha) graniči s cestom koje nema u registru, a ima je u drugim gradskim slojevima ili u OpenStreetMapu, ili s cestom iz registra kojoj se širina ne da izmjeriti; one su moguće sporne. Sve su označene na{" "}
             <Link href="/gup/zabrana#karta" className="fokus text-emerald-700 underline">
               karti zabrane
             </Link>
@@ -753,6 +753,7 @@ export default async function AnalizaPage() {
             { boja: "#dc0000", tekst: "čestica u neuređenom dijelu uz cestu čija je čestica široka barem 4 m", oblik: "obrub" },
             { boja: "rgb(40,40,40)", tekst: "registrirana cesta, čestica ceste široka barem 4 m", oblik: "crta" },
             { boja: "rgb(240,120,0)", tekst: "registrirana cesta, čestica ceste uža od 4 m", oblik: "crta" },
+            { boja: "rgb(96,165,250)", tekst: "cesta izvan registra ili neizmjerene širine", oblik: "crta" },
             ...PODLOGA,
           ]}
         >
@@ -1000,6 +1001,9 @@ export default async function AnalizaPage() {
           </p>
           <p>
             Zakon o gradnji to je preslikao u čl. 110. st. 1. t. 7.: za dozvolu je potrebno da je UPU „donesen … ako se dozvola izdaje na području za koje je posebnim zakonom propisana obveza njegova donošenja” (<V href={IZVOR.zog153}>ZoG, NN 153/13</V>). Izmjena iz 2017. mijenjala je samo formulacije (<V href={IZVOR.nn65_17}>NN 65/17</V>), a <V href={IZVOR.nn67_23}>NN 67/23</V> čl. 79. nije dirao. Izmjena iz 2019. (<V href={IZVOR.nn39_19}>NN 39/19, čl. 45.</V>) uvela je, međutim, iznimku za lokacijsku dozvolu: UPU nije uvjet za „građenje nove zgrade koja ima pristup na prometnu površinu te mogućnost rješavanja odvodnje otpadnih voda prema mjesnim prilikama određenim prostornim planom” (stari ZPU, čl. 146. st. 2. t. 3.). Grad sam kaže da je upravo ta odredba „omogućila zaobilaženje te obveze, dopuštajući izdavanje akata za građenje uz tek minimalne uvjete pristupa i odvodnje, bez cjelovite planske razrade koju bi UPU osigurao” (<V href={`${IZVOR.izvjescePpug2}#page=100`}>izvješće o ponovnoj javnoj raspravi o PPUG-u, br. 8, str. 100</V>).
+          </p>
+          <p>
+            Ta iznimka ipak ne objašnjava dozvole u istočnom Splitu. Vrijedila je samo za lokacijsku dozvolu, a Zakon o gradnji građevinskoj je dozvoli ostavio samo iznimke za rekonstrukciju i zamjenu (<V href={IZVOR.nn39_19}>ZoG, čl. 110. st. 2., NN 39/19</V>). U Kili, zapadnom dijelu Kamena i Dračevcu 2 registar od 25. travnja 2019. bilježi 33 građevinske dozvole za stambene, mješovite ili poslovne zgrade i samo četiri lokacijske dozvole. Dozvole su, dakle, izdavane izravno, jer važeći GUP to zemljište ne označava kao neuređeno ni kao sanaciju.
           </p>
           <p>
             Ministarstvo to pravilo primjenjuje dosljedno. U odgovorima na česta pitanja iz 2014. kaže da se dozvole „ne mogu izdati … dok se taj plan ne donese” (<V href={IZVOR.mpgiPitanja}>MPGI, česta pitanja</V>), a mišljenje Općini Tinjan iz 2024. to ponavlja (<V href={IZVOR.mpgiTinjan}>MPGI, 21. 3. 2024.</V>). Županijski upravni odjel primijenio ga je u Baškoj Vodi, a Upravni sud u Splitu potvrdio je odbijanje zahtjeva (<V href={IZVOR.baskaVoda}>UsIgr-268/2020-6</V>).
@@ -1275,7 +1279,7 @@ export default async function AnalizaPage() {
             Od 2006. stambeni istočni Split živi pod obvezom koju je propisao <strong>plan</strong>: granicom s lista 4.c, iza koje stoji samo tekst GUP-a. Odjel koji izdaje dozvole taj je tekst čitao blago, bilo preko izraza <Navod id="pravilo-3-1-2015">„a za ostalo temeljem ovog Plana”</Navod> iz pravila 3.1, bilo preko <Navod id="clanak-49-dogradnja-2015">rečenice o dogradnji bez ograde</Navod>, bilo preko obojega. Prijedlog bi isto zemljište stavio u kategoriju koju propisuje <strong>zakon</strong>, označivši ga kao „planirano za urbanu sanaciju” ili „neuređeno”.
           </p>
           <p>
-            Kad se to dogodi, Zakon o gradnji kao uvjet za dozvolu traži da je UPU donesen (novi ZoG, čl. 73. st. 1. t. 6.; novi ZPU, čl. 180. st. 1. t. 4.), a službenik to ne može zaobići drukčijim tumačenjem neke rečenice GUP-a. Jedine su iznimke rekonstrukcija i zamjena postojeće građevine te lokacijska dozvola za novu zgradu uz postojeću cestu, za koju nije jasno vrijedi li i za obiteljske kuće. Isti prijedlog ukida odredbe GUP-a o dogradnji legalnih kuća, a rekonstrukciju veže uz uvjete za novu gradnju, koje mnoge ozakonjene kuće ne mogu ispuniti. <strong>Isto zemljište, drugi pravni temelj zabrane.</strong> Grad u § 2.1.1.4 Obrazloženja i sam upravo tako razgraničava: zakonska obveza znači da se dozvole ne mogu izdati, a planska preporuka da mogu.
+            Kad se to dogodi, Zakon o gradnji kao uvjet za dozvolu traži da je UPU donesen (novi ZoG, čl. 73. st. 1. t. 6.; novi ZPU, čl. 180. st. 1. t. 4.), a službenik to ne može zaobići drukčijim tumačenjem neke rečenice GUP-a. Jedine su iznimke rekonstrukcija i zamjena postojeće građevine te, samo u neuređenom dijelu, lokacijska dozvola za novu zgradu uz postojeću javnu cestu. Lokacijsku dozvolu stranka smije zatražiti za svaku zgradu (novi ZPU, čl. 154. st. 1. t. 13.), a građevinska se dozvola tada izdaje prema njoj, bez provjere UPU-a (novi ZoG, čl. 74.), pa je taj put otvoren i obiteljskim kućama. Isti prijedlog ukida odredbe GUP-a o dogradnji legalnih kuća, a rekonstrukciju veže uz uvjete za novu gradnju, koje mnoge ozakonjene kuće ne mogu ispuniti. <strong>Isto zemljište, drugi pravni temelj zabrane.</strong> Grad u § 2.1.1.4 Obrazloženja i sam upravo tako razgraničava: zakonska obveza znači da se dozvole ne mogu izdati, a planska preporuka da mogu.
           </p>
           <p>
             <strong>Nesklad teksta i prakse razriješen je jednostavno: Grad zabranu nije provodio.</strong> Na papiru je „zabranjeno” uvjerljivije tumačenje važećeg GUP-a za novu kuću na čestici s pravilom 3.1 unutar granice s lista 4.c, a isto proizlazi i iz Obrazloženja Grada iz travnja 2025. Ipak, registar pokazuje oko 57 izdanih dozvola, šest u Dračevcu, i dozvole za proširenja izvan postojećih gabarita, a nijedan zahtjev odbijen iz tog razloga. I odgovor Grada na primjedbu br. 73 parametre pravila 3.1 shvaća kao pravila za gradnju do donošenja planova. Stanovnici se ravnaju prema praksi. Ta praksa, međutim, počiva na spornom tumačenju, a ne na jasnom pravilu: traje dok odjel tekst tako tumači, a prestala bi sama od sebe čim stupe na snagu izmjene s oznakama iz prijedloga.
@@ -1355,7 +1359,7 @@ export default async function AnalizaPage() {
                 "Mišljenje Ministarstva; ni uputa ni sudska praksa nisu pronađene",
               ],
               [
-                "Obuhvaća li čl. 106. st. 2. t. 1. novog ZPU-a (neizgrađeno i neopremljeno) prazne čestice i prema važećem GUP-u? Vrijedi li iznimka za pristup cesti iz čl. 180. st. 2. t. 3. i za obiteljske kuće, koje građevinsku dozvolu dobivaju po čl. 73. ZoG-a?",
+                "Obuhvaća li čl. 106. st. 2. t. 1. novog ZPU-a (neizgrađeno i neopremljeno) prazne čestice i prema važećem GUP-u? Priznaje li upravno tijelo iznimku za pristup cesti iz čl. 180. st. 2. t. 3. i kad GUP do UPU-a dopušta samo zahvate s popisa iz čl. 105. st. 5.?",
                 "O tome ovisi jesu li neke čestice već pod zabranom i bi li čestice uz postojeće ceste izbjegle buduću zabranu",
                 "Mišljenje Ministarstva; obrazloženja novih zakona",
               ],

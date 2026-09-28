@@ -19,8 +19,18 @@ kriterijima koji se mogu izmjeriti:
   Državna cesta ne broji se kao pristup: Grad u odgovorima na primjedbe o
   PPUG-u pristup s nje ne priznaje („Postojeće pristupe s državne ceste ne
   treba dodatno opterećivati”, izvješće o javnoj raspravi 2025., br. 80, 89 i
-  100); njezine osi služe samo tome da se čestica ceste ne broji. Uz to se bilježi prolazi li na manje od 15 m mješovita ili fekalna
-  kanalizacija (gradski sloj mreže i kolektora).
+  100); njezine osi služe samo tome da se čestica ceste ne broji. Uz to se
+  bilježi prolazi li na manje od 15 m mješovita ili fekalna kanalizacija
+  (gradski sloj mreže i kolektora).
+
+  Ceste izvan registra. Registar ne sadrži sve postojeće ulice i putove, a Grad
+  u odgovorima na primjedbe presudnim smatra je li cesta do čestice izvedena,
+  ne koliko je široka. Zato se osi traže i u gradskim slojevima Ceste i
+  NerazvrstaneCeste te u OpenStreetMapu (kolne ceste i servisne ulice, bez
+  kolnih prilaza, parkirališnih prolaza i privatnih putova; scripts/gup-grad/
+  osm.py). Čestica neuređenog dijela uz takvu cestu, ili uz cestu iz
+  registra čija se širina ne da izmjeriti, moguće je sporna („cesta”), osim
+  ako je cesta izmjerena i uža od 4 m.
 
   Urbana sanacija. Zakon (NN 153/13, čl. 77. st. 5.) mjere urbane sanacije
   propisuje „za područja na kojima se pretežito nalaze zgrade ozakonjene na
@@ -78,6 +88,7 @@ from rasterio import features
 from scipy import ndimage
 from shapely.geometry import LineString, Point, shape
 from shapely.ops import transform as stransform, unary_union
+from shapely.prepared import prep
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import rasteriziraj as R  # noqa: E402
@@ -140,7 +151,31 @@ def sve_cestice(okvir) -> list:
 
 
 REGISTAR = "Nerazvrstane_ceste_Split_nerazvrstane_ceste_29112023.shp"
+GRADSKE = [os.path.join("KOMUNALNA_INFRASTRUKTURA", "NerazvrstaneCeste.shp"), os.path.join("KOMUNALNA_INFRASTRUKTURA", "Ceste.shp")]
+OSM_CESTE = os.path.join(R.OUT, "osm-ceste.json")
+# kolne ceste; trunk je brza cesta, a pristup s državne ceste se ne broji
+OSM_VRSTE = {"primary", "secondary", "tertiary", "unclassified", "residential", "living_street", "service",
+             "primary_link", "secondary_link", "tertiary_link"}
 DRZAVNE = os.path.join("DRZAVNA_CESTA", "drzavna_cesta_UI.shp")
+
+
+def osi_osm(oko, drzavne) -> list:
+    """Kolne ceste iz OpenStreetMapa oko neuređenog dijela, bez državnih cesta."""
+    if not os.path.exists(OSM_CESTE):
+        print("NEMA", OSM_CESTE, "— pokreni scripts/gup-grad/osm.py; ceste iz OSM-a se ne traže")
+        return []
+    drz = shapely.union_all(drzavne).buffer(6) if drzavne else None
+    out = []
+    for e in json.load(open(OSM_CESTE))["elements"]:
+        t = e.get("tags", {})
+        if t.get("highway") not in OSM_VRSTE or t.get("area") == "yes" or len(e.get("geometry", [])) < 2:
+            continue
+        if t.get("service") in ("driveway", "parking_aisle", "drive-through") or t.get("access") in ("private", "no"):
+            continue
+        g = LineString([Z.U_HTRS(q["lon"], q["lat"]) for q in e["geometry"]])
+        if g.intersects(oko) and not (drz is not None and drz.contains(g.interpolate(0.5, normalized=True))):
+            out.append(g)
+    return out
 
 
 def osi_cesta(oko, put: str) -> list:
@@ -268,7 +303,14 @@ def main() -> None:
     cestice = sve_cestice(oko.buffer(40))
     osi = osi_cesta(oko, os.path.join(PORTAL, REGISTAR))
     drzavne = osi_cesta(oko, os.path.join(Z.BAZA, DRZAVNE))
+    ostale = [g for put in GRADSKE for g in osi_cesta(oko, os.path.join(Z.BAZA, put))] + osi_osm(oko, drzavne)
+    print("osi iz registra", len(osi), "ostalih (gradski slojevi, OSM)", len(ostale))
     po_osi = sirine(osi, cestice)
+    po_ostalim = sirine(ostale, cestice)
+    # moguć pristup: uz postojeću cestu kojoj širina nije izmjerena ili nije u registru, osim ako je izmjerena uža od 4 m
+    moguci = [p for p, w in [u for o in po_osi for u in o] if not np.isfinite(w)] + \
+             [p for p, w in [u for o in po_ostalim for u in o] if not (np.isfinite(w) and w < 4.0)]
+    moguci_t = shapely.STRtree(moguci)
     uzorci = [u for o in po_osi for u in o]
     W = np.array([w for _, w in uzorci])
     print("osi", len(osi), "uzoraka", len(W), "izmjereno", int(np.isfinite(W).sum()), "≥4 m", int((W >= 4).sum()))
@@ -304,7 +346,8 @@ def main() -> None:
     # čestice pod zabranom
     zc = json.load(open(ZABRANA_CESTICE))["features"]
     ppug_cestice = {}
-    sporne, zbroj = [], {"pristup": [0, 0.0], "izgradjena": [0, 0.0], "sanacija": [0, 0.0], "ppug": [0, 0.0], "ukupno": [0, 0.0],
+    sporne, zbroj = [], {"pristup": [0, 0.0], "cesta": [0, 0.0], "izgradjena": [0, 0.0], "sanacija": [0, 0.0], "ppug": [0, 0.0],
+                         "ukupno": [0, 0.0],
                          "neuredeno": [0, 0.0], "u_sanaciji": [0, 0.0], "pristup_kanal": 0}
     for f in zc:
         p = f["properties"]
@@ -326,6 +369,9 @@ def main() -> None:
                 info["sirina"] = round(max(siroki[i][1] for i in blizu) * 2) / 2
                 info["kanal"] = bool(len(kan_t.query(g, predicate="dwithin", distance=KANAL_M)))
                 zbroj["pristup_kanal"] += int(info["kanal"])
+            elif len(moguci_t.query(g, predicate="dwithin", distance=PRISTUP_M)):
+                razlozi.append("cesta")
+                info["kanal"] = bool(len(kan_t.query(g, predicate="dwithin", distance=KANAL_M)))
             if ppug.get(kljuc) in ("I", "N"):
                 razlozi.append("ppug")
             if not p["neizgradjena"]:
@@ -348,7 +394,7 @@ def main() -> None:
             zbroj[k][1] += p["m2"] / 1e4
         # djelomično izgrađena čestica sama po sebi nije sporna na karti: neizgrađeni
         # dio zakon određuje kao područje, a ne česticu po česticu
-        if not {"pristup", "sanacija", "ppug"} & set(razlozi):
+        if not {"pristup", "cesta", "sanacija", "ppug"} & set(razlozi):
             continue
         zbroj["ukupno"][0] += 1
         zbroj["ukupno"][1] += p["m2"] / 1e4
@@ -372,17 +418,23 @@ def main() -> None:
                                        "udio": round(100 * nr / nz), "upu": broj, "manjina": nr * 2 < nz}})
 
     # osi cesta uz neuređeni dio, po širini čestice ceste
-    razredi = {"4+": [], "<4": []}
-    for o in po_osi:
+    razredi = {"4+": [], "<4": [], "?": []}
+    uz_neuredeno = prep(neu_pol.buffer(15))
+    for o in po_osi + po_ostalim:
         for (p0, w0), (p1, _) in zip(o, o[1:]):
-            if np.isfinite(w0):
-                razredi["4+" if w0 >= 4 else "<4"].append(LineString([p0, p1]))
+            if not uz_neuredeno.intersects(p0):
+                continue
+            razredi["?" if not np.isfinite(w0) else "4+" if w0 >= 4 else "<4"].append(LineString([p0, p1]))
+    # izmjerena dionica ima prednost pred istom cestom bez izmjerene širine
+    zauzeto = shapely.union_all(razredi["4+"] + razredi["<4"]).buffer(5) if razredi["4+"] or razredi["<4"] else None
+    if zauzeto is not None:
+        razredi["?"] = [l for l in razredi["?"] if not zauzeto.contains(l)]
     ceste = []
     for k, ls in razredi.items():
         m = shapely.line_merge(shapely.union_all(ls)) if ls else None
         if m is None or m.is_empty:
             continue
-        ceste.append({"type": "Feature", "geometry": Z.zaokruzi(m.simplify(1.0)),
+        ceste.append({"type": "Feature", "geometry": Z.zaokruzi(m.simplify(1.5)),
                       "properties": {"vrsta": "cesta", "sirina": k}})
 
     okrugli = {k: ({"cestice": v[0], "ha": round(v[1], 1)} if isinstance(v, list) else v) for k, v in zbroj.items()}

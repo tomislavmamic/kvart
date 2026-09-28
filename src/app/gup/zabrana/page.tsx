@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Navod } from "@/components/gup-dokument/navod";
 import { ZabranaPrikaz } from "@/components/gup-grad/zabrana-prikaz";
-import { imenicaUz } from "@/lib/gup-grad/zabrana";
+import { BOJE_ZABRANE, imenicaUz } from "@/lib/gup-grad/zabrana";
 import { ucitajSporne, ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -152,9 +152,9 @@ export default async function ZabranaPage() {
       </p>
       <h1 className="mt-1 text-2xl font-bold">Zabrana nove gradnje do donošenja UPU-a</h1>
       <p className="mt-3 max-w-3xl text-zinc-600">
-        Ako Gradsko vijeće donese izmjene i dopune GUP-a predložene u travnju 2025., na crveno označenom zemljištu neće
-        se moći ishoditi građevinska dozvola za novu zgradu sve dok se za to područje ne donese urbanistički plan uređenja
-        (UPU).
+        Ako Gradsko vijeće donese izmjene i dopune GUP-a predložene u travnju 2025., na zemljištu obojenom na karti neće se
+        moći ishoditi građevinska dozvola za novu zgradu sve dok se za to područje ne donese urbanistički plan uređenja
+        (UPU). Dvije od triju oznaka koje to uzrokuju određuje GUP, a treću PPUG.
       </p>
       <p className="mt-3 max-w-3xl rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
         <strong>Zasad ništa nije zabranjeno.</strong> Prijedlog nije donesen, a na snazi je GUP u pročišćenom tekstu iz
@@ -164,7 +164,7 @@ export default async function ZabranaPage() {
 
       <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200">
         {[
-          [`${ha(zbroj.ukupno_ha * 1e4)} ha`, "zemljišta označeno crveno"],
+          [`${ha(zbroj.ukupno_ha * 1e4)} ha`, "zemljišta pod zabranom"],
           [`${ha(zbroj.slobodno_ha * 1e4)} ha`, "slobodnog zemljišta za novu gradnju"],
           [
             zbroj.neizgradjene.cestice.toLocaleString("hr-HR"),
@@ -172,7 +172,7 @@ export default async function ZabranaPage() {
           ],
         ].map(([v, n]) => (
           <div key={n} className="bg-white px-3 py-3 sm:px-4">
-            <p className="font-mono text-xl font-bold tabular-nums text-red-700 sm:text-2xl">{v}</p>
+            <p className="font-mono text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">{v}</p>
             <p className="text-xs text-zinc-600 sm:text-sm">{n}</p>
           </div>
         ))}
@@ -180,7 +180,7 @@ export default async function ZabranaPage() {
 
       <p className="mt-3 max-w-3xl text-sm text-zinc-600">
         Zabrana ne dira ono što je već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od{" "}
-        {ha(zbroj.slobodno_ha * 1e4)} ha takvog zemljišta u crvenom {ha(zbroj.neizgradjene.ha * 1e4)} ha nalazi se na{" "}
+        {ha(zbroj.slobodno_ha * 1e4)} ha takvog zemljišta pod zabranom {ha(zbroj.neizgradjene.ha * 1e4)} ha nalazi se na{" "}
         {zbroj.neizgradjene.cestice.toLocaleString("hr-HR")}{" "}
         {imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}
         {ha(zbroj.djelomicno.ha * 1e4)} ha na slobodnim dijelovima {zbroj.djelomicno.cestice.toLocaleString("hr-HR")}{" "}
@@ -226,18 +226,120 @@ export default async function ZabranaPage() {
       </section>
 
       <section className="mt-12">
+        <h2 id="tko" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
+          Koji plan što zabranjuje
+        </h2>
+        <p className="mt-3 max-w-3xl text-zinc-600">
+          U obuhvatu GUP-a zabranu nosi GUP, njegov <Navod id="list-planske-mjere-2025">list 4.d</Navod> i{" "}
+          <Navod id="obveza-plana-2025">čl. 103.</Navod> prijedloga. Oznake na tom listu, međutim, ne potječu sve iz GUP-a.
+        </p>
+        <div className="mt-4 max-w-4xl overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-300 text-zinc-500">
+                <th className="py-2 pr-3 font-semibold">Oznaka</th>
+                <th className="py-2 pr-3 font-semibold">Tko je određuje</th>
+                <th className="py-2 pr-3 font-semibold">Mjerilo i podloga</th>
+                <th className="py-2 pr-3 text-right font-semibold">ha</th>
+                <th className="py-2 font-semibold">Kako se mijenja</th>
+              </tr>
+            </thead>
+            <tbody className="align-top text-zinc-800">
+              {(
+                [
+                  ["sanacija", "urbana sanacija", <>GUP, <Navod key="l" id="list-planske-mjere-2025">list 4.d</Navod></>, "1:10.000, topografska karta, bez čestica", "izmjenom GUP-a"],
+                  ["preobrazba", "urbana preobrazba", <>GUP, <Navod key="l" id="list-planske-mjere-2025">list 4.d</Navod></>, "1:10.000, topografska karta, bez čestica", "izmjenom GUP-a"],
+                  [
+                    "neuredeno",
+                    "neuređeni dio",
+                    <>
+                      PPUG, <Navod key="l" id="istok-ppug-2025">listovi građevinskih područja</Navod>; GUP ga preuzima na list 4.d
+                    </>,
+                    "1:5000, katastarski plan iz 2021., po česticama",
+                    "izmjenom PPUG-a, a s njim i GUP-a",
+                  ],
+                ] as const
+              ).map(([k, naziv, tko, mjerilo, izmjena]) => (
+                <tr key={k} className="border-b border-zinc-200">
+                  <td className="py-2 pr-3 font-semibold">
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-sm" style={{ background: BOJE_ZABRANE[k] }} />
+                      {naziv}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3">{tko}</td>
+                  <td className="py-2 pr-3">{mjerilo}</td>
+                  <td className="py-2 pr-3 text-right font-mono tabular-nums">{ha(zbroj.ha[k] * 1e4)}</td>
+                  <td className="py-2">{izmjena}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 max-w-3xl space-y-3 text-zinc-600">
+          <p>
+            Zakon je zamislio drukčije: unutar obuhvata GUP-a neuređeni dio određuje GUP, a PPUG samo izvan njega (stari
+            Zakon o prostornom uređenju, čl. 78. st. 1. t. 1. i čl. 76. st. 1. t. 2., po kojem se ovaj postupak dovršava).
+            Prijedlog GUP-a zato piše da su neuređeni dijelovi „određeni PPUG-om Splita” (
+            <Navod id="clanak-106-neuredeno-2025">čl. 106. st. 1.</Navod>) i prenosi ih na svoj list. Zabranu tako nosi GUP,
+            a granicu povlači PPUG. Kad se oba lista prenesu na istu podlogu, neuređeni se dio poklapa na 98 % površine, a
+            ni na jednoj čestici pod zabranom listovi se ne razilaze. Da se razilaze, nije jasno koji bi prevladao.
+          </p>
+          <p>
+            <strong>Zamjenjuje li novi GUP PPUG?</strong> Ne. PPUG je plan cijeloga grada, zajedno sa Žrnovnicom, Sitnom,
+            Srinjinama i Slatinama, i određuje granice građevinskih područja. GUP je detaljniji plan središnjeg naselja i
+            mora biti u skladu s njim. Grad mijenja oba plana usporedno, a oba prijedloga čekaju Gradsko vijeće; javni
+            poziv za inicijative obuhvaća oba. Novi zakon predviđa da planovi doneseni po starim zakonima prestanu važiti u
+            roku od sedam godina i da ih zamijene planovi nove generacije (
+            <a href="https://narodne-novine.nn.hr/clanci/sluzbeni/2025_12_155_2315.html" className={vanjska}>
+              NN 155/25
+            </a>
+            , čl. 238.), i to vrijedi za oba.
+          </p>
+          <p>
+            <strong>Što ako se do neuređene čestice izgradi cesta?</strong> Oznaka na planu ostaje dok se PPUG i GUP ne
+            izmijene, ali za novu zgradu tada ne treba ni UPU ni izmjena plana. Zakon dopušta lokacijsku dozvolu za
+            „građenje nove zgrade koja ima pristup na postojeću javnu prometnu površinu te mogućnost rješavanja odvodnje
+            otpadnih voda prema mjesnim prilikama određenim prostornim planom, ako se takvim građenjem ne sprečava opremanje
+            drugog građevinskog zemljišta” (NN 155/25, čl. 180. st. 2. t. 3.). Lokacijsku dozvolu stranka smije zatražiti za
+            svaku zgradu (čl. 154. st. 1. t. 13.), a građevinska se dozvola zatim izdaje prema njoj, bez nove provjere UPU-a
+            (Zakon o gradnji, čl. 74.). Na taj put vlasnike neuređenih čestica upućuje i sam Grad. Da oznaka nestane, treba
+            zatražiti da se čestica u PPUG-u i GUP-u prebaci u uređeni dio; Grad je to u raspravi o PPUG-u činio kad je
+            vlasnik dokazao da je cesta izvedena. DPU se od 2014. više ne donosi. Za urbanu sanaciju i preobrazbu ta
+            iznimka ne pomaže: ondje zakon do UPU-a dopušta samo rekonstrukciju i zamjenu postojeće zgrade (čl. 106. st.
+            3.). To je naše čitanje zakona; uputa Ministarstva o tome nema.
+          </p>
+          <p>
+            <strong>Zašto se u istočnom Splitu dosad gradilo?</strong> Iznimka za lokacijsku dozvolu postoji od 2019. (
+            <a href="https://narodne-novine.nn.hr/clanci/sluzbeni/2019_04_39_801.html" className={vanjska}>
+              NN 39/19
+            </a>
+            ), a Grad kaže da se njome obveza UPU-a „zaobilazila”. Dozvole u istočnom Splitu ipak ne objašnjava ona: u
+            Kili, zapadnom dijelu Kamena i Dračevcu 2 registar od 25. travnja 2019. bilježi 33 građevinske dozvole za
+            stambene, mješovite ili poslovne zgrade i samo četiri lokacijske dozvole. Građevinske dozvole izdavane su
+            izravno, a za njih stari zakon takve iznimke nije imao (Zakon o gradnji, čl. 110. st. 2., NN 39/19). Izdavane
+            su jer važeći GUP to zemljište ne označava ni kao neuređeno ni kao sanaciju (
+            <Link href="/gup/analiza#vazeci-gup" className="fokus text-emerald-700 underline">
+              analiza
+            </Link>
+            ).
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-12">
         <h2 id="karta" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
           Gdje bi zabrana vrijedila
         </h2>
         <p className="mt-3 max-w-3xl text-zinc-600">
-          Crvenom su bojom označena područja urbane sanacije, urbane preobrazbe i neuređeni dijelovi građevinskog područja s{" "}
-          <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga, unutar obuhvata GUP-a. Izuzeta su područja
+          Boje su one s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga: zelena urbana sanacija, narančasta
+          urbana preobrazba i žuti neuređeni dio građevinskog područja, unutar obuhvata GUP-a. Izuzeta su područja
           važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
-          Dio obuhvata propisanog UPU-a koji nije označen crveno do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
+          Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
           <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
         </p>
-        <p className="mt-3 max-w-3xl border-l-4 border-yellow-400 bg-yellow-50 px-4 py-3 text-zinc-800">
-          <strong>Žuto su sporne oznake.</strong> {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
+        <p className="mt-3 max-w-3xl border-l-4 border-fuchsia-600 bg-fuchsia-50 px-4 py-3 text-zinc-800">
+          <strong>Ljubičasto su sporne oznake.</strong> {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
           {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
           {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
           je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom
@@ -245,7 +347,10 @@ export default async function ZabranaPage() {
           rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
           na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
           {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Kako smo to
+          {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Tanji ljubičasti
+          rub ima još {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(sporne.cesta.cestice, ["čestica", "čestice", "čestica"])} neuređenog dijela uz cestu koje nema u
+          gradskom registru ili joj se širina ne da izmjeriti: mogu biti sporne ako je cesta izvedena i javna. Kako smo to
           provjerili i što se iz toga može tražiti, piše u{" "}
           <Link href="/gup/analiza#oznake" className="fokus font-semibold text-emerald-700 underline">
             analizi
@@ -333,7 +438,7 @@ export default async function ZabranaPage() {
         </h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <li>
-            Crvena su područja preuzeta s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga i, kao i ostali
+            Područja zabrane preuzeta su s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga i, kao i ostali
             listovi na stranici{" "}
             <Link href="/gup#kako-je-izracunato" className="fokus text-emerald-700 underline">
               Split po GUP-u

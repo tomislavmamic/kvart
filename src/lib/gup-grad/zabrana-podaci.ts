@@ -113,11 +113,13 @@ export interface ZbrojSpornih {
   pristup: BrojCestica;
   /** od njih one uz koje na manje od 15 m prolazi i kanalizacija */
   pristup_kanal: number;
+  /** čestice neuređenog dijela uz cestu izvan registra ili neizmjerene širine (moguće sporne) */
+  cesta: BrojCestica;
   /** djelomično izgrađene čestice u neuređenom dijelu (na karti nisu sporne same po sebi) */
   izgradjena: BrojCestica;
   /** čestice u plohama urbane sanacije u kojima ozakonjene zgrade nisu većina */
   sanacija: BrojCestica;
-  /** sporne na karti: pristup ili sanacija */
+  /** sporne na karti: pristup, cesta, sanacija ili ppug */
   ukupno: BrojCestica;
   /** sve čestice pod zabranom u neuređenom dijelu, odnosno u urbanoj sanaciji */
   neuredeno: BrojCestica;
