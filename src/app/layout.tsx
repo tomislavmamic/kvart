@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { SITE_NAME } from "@/lib/constants";
+import { Analitika } from "@/components/analitika";
 import { ProzorNavoda } from "@/components/gup-dokument/prozor-navoda";
 import { SiteChrome } from "@/components/site-chrome";
 import { NEIGHBORHOOD_EXTENT } from "@/lib/map-views";
@@ -80,6 +81,7 @@ export default function RootLayout({
         </SiteChrome>
         {/* Navodi GUP-a otvaraju se u prozoru na svakoj stranici — i iz skočnih prozora karte. */}
         <ProzorNavoda />
+        <Analitika />
       </body>
     </html>
   );
