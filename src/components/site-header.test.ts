@@ -44,7 +44,7 @@ test("site navigation stays compact until the full row fits", () => {
   assert.doesNotMatch(closedMarkup, /(?:^|\s)lg:hidden(?:\s|$)/);
 });
 
-test("homepage header leaves the four journeys to the hero dock", () => {
+test("homepage header leaves the five journeys to the hero dock", () => {
   const markup = renderToStaticMarkup(
     createElement(SiteHeaderView, {
       pathname: "/",

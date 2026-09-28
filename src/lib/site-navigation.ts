@@ -1,5 +1,5 @@
 export type SiteNavigationItem = {
-  id: "razgovor" | "karta" | "karepovac" | "problemi";
+  id: "razgovor" | "karta" | "planovi" | "karepovac" | "problemi";
   href: string;
   label: string;
   description: string;
@@ -46,6 +46,15 @@ export const PRIMARY_NAV_ITEMS: readonly SiteNavigationItem[] = [
     activePrefixes: ["/karta"],
   },
   {
+    id: "planovi",
+    // Ulaz u sve stranice o GUP-u: plan na snazi, prijedlog izmjena i
+    // analize. One same žive pod /gup i /plan, pa i tamo ostaje aktivna.
+    href: "/planovi",
+    label: "Planovi",
+    description: "Što se smije graditi",
+    activePrefixes: ["/planovi", "/gup", "/plan"],
+  },
+  {
     id: "karepovac",
     // Vodi na simulator, a ne na pregled: tko klikne „Karepovac” prvo pita
     // kamo miris ide sada, a tek onda što sve pratimo. S njega se u pregled
@@ -65,11 +74,6 @@ export const PRIMARY_NAV_ITEMS: readonly SiteNavigationItem[] = [
 ];
 
 export const SECONDARY_NAV_ITEMS: readonly SecondaryNavigationItem[] = [
-  { href: "/plan", label: "Izmjene GUP-a" },
-  { href: "/gup", label: "Split po GUP-u" },
-  { href: "/gup/dokument", label: "GUP: tekst i karte" },
-  { href: "/gup/zabrana", label: "Zabrana gradnje do UPU-a" },
-  { href: "/gup/analiza", label: "Zašto zabrana do UPU-a" },
   { href: "/dokumenti", label: "Dokumenti" },
   { href: "/podaci", label: "Prostorni podaci" },
   { href: "/o-inicijativi", label: "O inicijativi" },

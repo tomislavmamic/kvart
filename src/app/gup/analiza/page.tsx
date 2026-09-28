@@ -221,8 +221,8 @@ export default async function AnalizaPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <p className="text-sm text-zinc-500">
-        <Link href="/gup" className="fokus underline">
-          Split po GUP-u
+        <Link href="/planovi" className="fokus underline">
+          Planovi
         </Link>{" "}
         · analiza, 27. rujna 2026., brojke osvježene 28. rujna 2026.
       </p>

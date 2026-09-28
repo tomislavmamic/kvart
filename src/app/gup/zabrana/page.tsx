@@ -129,8 +129,8 @@ export default async function ZabranaPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <p className="text-sm text-zinc-500">
-        <Link href="/gup" className="fokus underline">
-          Split po GUP-u
+        <Link href="/planovi" className="fokus underline">
+          Planovi
         </Link>{" "}
         · prijedlog izmjena i dopuna iz travnja 2025.
       </p>
