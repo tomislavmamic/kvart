@@ -69,6 +69,7 @@ export const SECONDARY_NAV_ITEMS: readonly SecondaryNavigationItem[] = [
   { href: "/gup", label: "Split po GUP-u" },
   { href: "/gup/dokument", label: "GUP: tekst i karte" },
   { href: "/gup/zabrana", label: "Zabrana gradnje do UPU-a" },
+  { href: "/gup/analiza", label: "Zašto zabrana do UPU-a" },
   { href: "/dokumenti", label: "Dokumenti" },
   { href: "/podaci", label: "Prostorni podaci" },
   { href: "/o-inicijativi", label: "O inicijativi" },

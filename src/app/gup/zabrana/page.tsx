@@ -200,6 +200,13 @@ export default async function ZabranaPage() {
           dozvolu za novu zgradu do donošenja UPU-a priječi sam zakon. Koje će područje dobiti tu oznaku ipak odlučuje
           Grad: zakon dopušta i da GUP sam propiše uvjete gradnje s detaljnošću UPU-a (NN 155/25, čl. 106. st. 4.).
         </p>
+        <p className="mt-3 max-w-3xl text-zinc-600">
+          Što o tome kažu važeći GUP i zakoni od 1994. naovamo, koliko se gradilo i što stanovnici mogu tražiti, pročitaj u{" "}
+          <Link href="/gup/analiza" className="fokus font-semibold text-emerald-700 underline">
+            analizi zabrane
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="mt-12">

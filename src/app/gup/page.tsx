@@ -67,6 +67,10 @@ export default async function GupPage() {
         <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
           Zabrana nove gradnje do donošenja UPU-a
         </Link>
+        , a zašto bi do nje došlo kad i važeći GUP ondje propisuje UPU, u{" "}
+        <Link href="/gup/analiza" className="fokus font-semibold text-emerald-700 underline">
+          analizi
+        </Link>
         .
       </p>
 
