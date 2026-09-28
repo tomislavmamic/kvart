@@ -44,7 +44,7 @@ export async function StranicaIzdanja({ izd }: { izd: Izdanje }) {
             })}
           </nav>
 
-          <h1 className="mt-5 text-2xl font-bold">Generalni urbanistički plan Splita</h1>
+          <h1 className="mt-5 text-2xl font-bold">{izd.plan ?? "Generalni urbanistički plan Splita"}</h1>
           <p className="mt-1 font-semibold text-kamen-tekst">
             {izd.naziv} — {izd.podnaslov}
           </p>
@@ -59,10 +59,22 @@ export async function StranicaIzdanja({ izd }: { izd: Izdanje }) {
                 </a>
               </span>
             ))}
-            . Što je od ovoga izračunato, na{" "}
-            <Link href="/gup" className="fokus font-semibold text-maslina underline">
-              Split po GUP-u
-            </Link>
+            .{" "}
+            {izd.plan ? (
+              <>
+                Što iz njega slijedi za gradnju, na{" "}
+                <Link href="/gup/zabrana" className="fokus font-semibold text-maslina underline">
+                  karti zabrane gradnje
+                </Link>
+              </>
+            ) : (
+              <>
+                Što je od ovoga izračunato, na{" "}
+                <Link href="/gup" className="fokus font-semibold text-maslina underline">
+                  Split po GUP-u
+                </Link>
+              </>
+            )}
             .
           </p>
 

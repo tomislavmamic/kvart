@@ -362,6 +362,107 @@ export const NAVODI: Record<string, SpecNavoda> = {
     ],
     opis: "prijedlog 2025., čl. 106. st. 4: koja su područja urbane preobrazbe",
   },
+  "obrazlozenje-neuredeno-2025": {
+    dok: "obrazlozenje-2025",
+    citati: [
+      {
+        t: "Neuređeni dio građevinskog područja određen je PPUG-om, na kartografskom prikazu građevinskih područja, pri čemu se načelno, kao osnovni kriterij „uređenosti“ uzima mogućnost priključenja na postojeću prometnu površinu u funkciji, minimalne širine 4 m",
+        s: 6,
+      },
+    ],
+    opis: "obrazloženje prijedloga GUP-a, § 2.1.1.3: neuređeni dio određuje PPUG, s kriterijem ceste od 4 m",
+  },
+  "obrazlozenje-sanacija-2025": {
+    dok: "obrazlozenje-2025",
+    citati: [{ t: "Područja urbane sanacije su većinom nisko konsolidirana područja na istočnom dijelu grada", s: 6 }],
+    opis: "obrazloženje prijedloga GUP-a, § 2.1.1.2: što su područja urbane sanacije",
+  },
+  "obrazlozenje-preporuka-2025": {
+    dok: "obrazlozenje-2025",
+    citati: [
+      {
+        t: "zadržana obveza preporuka izrade većeg broja UPU-a za područja koja ne spadaju u nijednu od ove tri kategorije (kao planska preporuka, a ne zakonska obveza)",
+        s: 6,
+      },
+    ],
+    opis: "obrazloženje prijedloga GUP-a, § 2.1.1.4: izvan triju kategorija UPU je samo preporuka",
+  },
+  "obrazlozenje-gubitak-obveze-2025": {
+    dok: "obrazlozenje-2025",
+    citati: [
+      {
+        t: "za koja je dosadašnjim GUP-om bila obvezna izrada prostornog plana užeg područja (UPU-a), temeljem novog Zakona više se ne može propisati ta obveza, tako da gradnja postaje moguća izravno temeljem GUP-a",
+        s: 2,
+      },
+    ],
+    opis: "obrazloženje prijedloga GUP-a, § 1.3: gdje obveza UPU-a otpada, gradi se izravno prema GUP-u",
+  },
+  "obrazlozenje-ozakonjenje-2025": {
+    dok: "obrazlozenje-2025",
+    citati: [{ t: "Grada Split je dobio cca 15000 „novih postojećih“ građevina ali koje su protivne planskim odredbama", s: 25 }],
+    opis: "obrazloženje prijedloga GUP-a: ozakonjene zgrade i strože odredbe",
+  },
+  "obrazlozenje-zabrana-2025": {
+    dok: "obrazlozenje-2025",
+    citati: [
+      {
+        t: "na područjima na kojima je Zakonom prozvana obveza donošenja UPU-a, prije njegovog donošenja ne može se izdati lokacijska dozvola i građevinska dozvola za građenje nove građevine",
+        s: 6,
+      },
+    ],
+    opis: "obrazloženje prijedloga GUP-a, § 2.1.1.4: gdje zakon traži UPU, do njegova donošenja nema dozvole za novu građevinu",
+  },
+  "odredba-ppug-6-2025": {
+    dok: "ppug-odredbe-2025",
+    citati: [
+      {
+        t: "Unutar neizgrađenih dijelova građevinskog područja utvrđeni su neuređeni dijelovi na kojima nije izgrađena planirana osnovna infrastruktura",
+        s: 7,
+      },
+      { t: "Neizgrađeni dijelovi građevinskog područja koji nisu prikazani kao neuređeni smatraju se „uređenima“.", s: 7 },
+    ],
+    opis: "prijedlog izmjena PPUG-a, čl. 6. st. 1.: što je neuređeni dio i gdje je prikazan",
+  },
+  "odredba-ppug-6-izgradjeno-2025": {
+    dok: "ppug-odredbe-2025",
+    citati: [{ t: "Izgrađeni dio građevinskog područja je utvrđen na temelju podataka iz ortofoto snimke iz 2021. godine.", s: 7 }],
+    opis: "prijedlog izmjena PPUG-a, čl. 6. st. 2.: izgrađeni dio prema ortofoto snimci iz 2021.",
+  },
+  "odredba-ppug-83-2025": {
+    dok: "ppug-odredbe-2025",
+    citati: [
+      {
+        t: "je usmjeravajućeg karaktera, što znači da je mogućnost gradnje na građevnim česticama koje su prikazane kao „uređene“ uvjetovana kumulativnim ispunjavanjem sljedećih uvjeta: da se građevna čestica nalazi uz prometnu površinu u funkciji minimalne širine 4 m",
+        s: 76,
+      },
+    ],
+    opis: "prijedlog izmjena PPUG-a, čl. 83. st. 5.: i na „uređenoj” čestici gradi se samo uz cestu od 4 m",
+  },
+  "odredba-ppug-86-2025": {
+    dok: "ppug-odredbe-2025",
+    citati: [{ t: "Za neuređene dijelove građevinskog područja izrada UPU-a je obvezna, dok je na preostalom području preporučena.", s: 78 }],
+    opis: "prijedlog izmjena PPUG-a, čl. 86. st. 8. (novo 2025.): UPU je obvezan samo za neuređeni dio",
+  },
+  "obrazlozenje-ppug-metoda-2025": {
+    dok: "ppug-obrazlozenje-2025",
+    citati: [
+      {
+        t: "ovim je izmjenama napravljena detaljna analiza svih građevinskih područja te je izmijenjena podjela građevinskog područja na izgrađeni, neizgrađeni i neuređeni dio a sukladno stvarnom stanju na terenu prikazanom na službenoj državnoj digitalnoj ortofoto karti i na temelju recentnih zračnih snimaka",
+        s: 16,
+      },
+    ],
+    opis: "obrazloženje prijedloga PPUG-a, str. 16: jedini opis kako su čestice razvrstane",
+  },
+  "istok-ppug-2025": {
+    list: "ppug-podrucja-istok-2025",
+    okvir: [0, 0.03, 0.37, 0.43],
+    opis: "prijedlog izmjena PPUG-a, list 4.4: građevinska područja istočnog Splita u mjerilu 1:5000, po katastarskim česticama",
+  },
+  "legenda-ppug-2025": {
+    list: "ppug-podrucja-istok-2025",
+    okvir: [0.836, 0.195, 0.96, 0.265],
+    opis: "tumač lista 4.4 PPUG-a: izgrađeno, neizgrađeno i neuređeno (šrafirano)",
+  },
   "clanak-103-karta-2025": {
     dok: "prijedlog-2025",
     citati: [{ t: "Područja iz prethodnog stavka prikazana su na kartografskom prikazu 4.d „Područja i dijelovi primjene planskih mjera zaštite“.", s: 144 }],

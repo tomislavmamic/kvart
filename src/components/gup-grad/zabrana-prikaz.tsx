@@ -15,12 +15,14 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import type { FeatureCollection } from "geojson";
 
 import { Navod } from "@/components/gup-dokument/navod";
+import { navodTocke } from "@/lib/gup-dokument/id";
 import type { CiljKarte, OznakaKarte } from "@/components/gup-grad/zabrana-karta";
 import type { RedUpu } from "@/lib/gup-grad/zabrana-podaci";
 import {
   BLIZU_RUBA_M,
   BOJE_ZABRANE,
   imenicaUz,
+  mjestoNaPpugu,
   NAZIV_PODRUCJA,
   naslovno,
   pripremiAdrese,
@@ -31,6 +33,7 @@ import {
   type Adrese,
   type Prijedlog,
   type SiroveAdrese,
+  type ListPpug,
   type PlohaSanacije,
   type Slojevi,
   type SpornaCestica,
@@ -89,6 +92,14 @@ function spor(sporna: SpornaCestica | null, ploha: PlohaSanacije | null): ReactN
       </p>
     );
   }
+  if (sporna?.razlozi.includes("ppug")) {
+    return (
+      <p className="mb-2 rounded-lg border-l-4 border-yellow-400 bg-yellow-50 px-2.5 py-1.5 text-yellow-950">
+        <strong>Sporna oznaka.</strong> List 4.d GUP-a čestici k.č. {sporna.kc} pripisuje neuređeni dio, a na listu
+        građevinskih područja PPUG-a, koji taj dio određuje, čestica nije šrafirana. {vise}
+      </p>
+    );
+  }
   if (ploha?.manjina) {
     return (
       <p className="mb-2 rounded-lg border-l-4 border-yellow-400 bg-yellow-50 px-2.5 py-1.5 text-yellow-950">
@@ -109,7 +120,12 @@ function spor(sporna: SpornaCestica | null, ploha: PlohaSanacije | null): ReactN
   return null;
 }
 
-function karticaStanja(s: Stanje): Kartica {
+const RAZRED_PPUG = { U: "šrafirana kao neuređena", I: "u izgrađenom dijelu", N: "u neizgrađenom, ali uređenom dijelu" } as const;
+
+function karticaStanja(
+  s: Stanje,
+  ppug: { list: ListPpug; tocka: [number, number]; razred?: "U" | "I" | "N" } | null = null,
+): Kartica {
   const rub =
     s.rezim !== "izvan" && s.doRuba < BLIZU_RUBA_M ? (
       <p className="mt-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-zinc-800">
@@ -146,10 +162,30 @@ function karticaStanja(s: Stanje): Kartica {
               ovdje se do donošenja {s.upu ? "tog plana" : "UPU-a"} ne bi mogla ishoditi dozvola za novu zgradu.
               {s.upu ? "" : " Na listu 4.d ovdje nije ucrtan obuhvat nijednog propisanog UPU-a."}
             </p>
+            {ppug && (
+              <p className="mt-2">
+                {s.podrucje === "neuredeno"
+                  ? "Neuređeni dio određuje prijedlog izmjena PPUG-a, u mjerilu 1:5000 i po katastarskim česticama. "
+                  : ""}
+                {ppug.razred && s.cestica ? (
+                  <>
+                    Na <Navod id={navodTocke(ppug.list.id, ppug.tocka)}>listu {ppug.list.broj} PPUG-a</Navod> ova je
+                    čestica {RAZRED_PPUG[ppug.razred]}.
+                  </>
+                ) : (
+                  <>
+                    Ovo je mjesto na <Navod id={navodTocke(ppug.list.id, ppug.tocka)}>listu {ppug.list.broj} PPUG-a</Navod>.
+                  </>
+                )}
+              </p>
+            )}
             <p className="mt-2">
               I dalje su dopuštene rekonstrukcija postojeće zgrade i njezina zamjena na istoj čestici (Zakon o prostornom
               uređenju, čl. 106. st. 3.) te gradnja ulica, manjih infrastrukturnih građevina i javnih zgrada (
               <Navod id="do-plana-2025">čl. 105. st. 5.</Navod>).
+              {s.podrucje === "neuredeno"
+                ? " U neuređenom dijelu zakon dopušta i lokacijsku dozvolu za novu zgradu koja ima pristup na postojeću javnu cestu i rješenje odvodnje, ako se time ne sprečava opremanje drugog zemljišta (čl. 180. st. 2. t. 3.)."
+                : ""}
             </p>
             {rub}
           </>
@@ -260,9 +296,14 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
   const pokaziTocku = (lng: number, lat: number, podnaslov?: string) => {
     if (!podaci) return;
     const s = stanjeTocke(podaci.slojevi, lng, lat);
+    const mjesto = s.rezim === "zabrana" ? mjestoNaPpugu(podaci.slojevi.ppug, lng, lat) : null;
+    const ppug = mjesto && {
+      ...mjesto,
+      razred: s.rezim === "zabrana" && s.cestica ? podaci.slojevi.ppugCestice[`${s.cestica.ko}|${s.cestica.kc}`] : undefined,
+    };
     setOdabraniUpu(null);
     setOznaka({ lng, lat, crveno: s.rezim === "zabrana" });
-    setKartica({ ...karticaStanja(s), podnaslov });
+    setKartica({ ...karticaStanja(s, ppug), podnaslov });
   };
 
   // ---------------------------------------------------------------- tražilica

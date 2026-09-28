@@ -13,7 +13,7 @@
  */
 import type { DokumentId } from "./model";
 
-export type IzdanjeId = "2006" | "2015" | "2025";
+export type IzdanjeId = "2006" | "2015" | "2025" | "ppug-2025";
 
 export interface ListIzdanja {
   id: string;
@@ -23,6 +23,8 @@ export interface ListIzdanja {
 
 export interface Izdanje {
   id: IzdanjeId;
+  /** Plan kojemu izdanje pripada (naslov stranice); zadano GUP. */
+  plan?: string;
   /** Put do stranice izdanja. */
   put: string;
   naziv: string;
@@ -86,7 +88,7 @@ export const IZDANJA: readonly Izdanje[] = [
     podnaslov: "izmjene i dopune za ponovnu javnu raspravu, travanj 2025.",
     status:
       "Prijedlog izmjena koji do rujna 2026. nije donesen. Tekst je odluka o izmjenama: navodi samo ono što se mijenja i dodaje („Članak 53. mijenja se i glasi: …”).",
-    dokumenti: ["prijedlog-2025"],
+    dokumenti: ["prijedlog-2025", "obrazlozenje-2025"],
     listovi: [
       { id: "namjena-2025" },
       { id: "djelatnosti-2025" },
@@ -94,6 +96,21 @@ export const IZDANJA: readonly Izdanje[] = [
       { id: "energetika-2025" },
       { id: "urbana-pravila-2025" },
       { id: "planske-mjere-2025" },
+    ],
+  },
+  {
+    id: "ppug-2025",
+    plan: "Prostorni plan uređenja Grada Splita",
+    put: "/gup/dokument/ppug-2025",
+    naziv: "PPUG, prijedlog 2025.",
+    podnaslov: "izmjene i dopune PPUG-a za ponovnu javnu raspravu, travanj 2025.",
+    status:
+      "Prijedlog izmjena PPUG-a, izrađen usporedo s izmjenama GUP-a i također nedonesen. Na listovima građevinskih područja (1:5000, na katastarskoj podlozi) određen je neuređeni dio građevinskog područja koji list 4.d prijedloga GUP-a samo prenosi.",
+    dokumenti: ["ppug-odredbe-2025", "ppug-obrazlozenje-2025"],
+    listovi: [
+      { id: "ppug-podrucja-zapad-2025" },
+      { id: "ppug-podrucja-sredisnji-2025" },
+      { id: "ppug-podrucja-istok-2025" },
     ],
   },
 ];

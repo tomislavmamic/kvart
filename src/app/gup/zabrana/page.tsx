@@ -88,6 +88,20 @@ export default async function ZabranaPage() {
       ),
     },
     {
+      kada: "2019.",
+      sto: "Iznimka za zgradu uz cestu",
+      tekst: (
+        <>
+          Izmjena zakona dopušta lokacijsku dozvolu i prije UPU-a za novu zgradu koja ima pristup na prometnu površinu i
+          rješenje odvodnje (
+          <a href="https://narodne-novine.nn.hr/clanci/sluzbeni/2019_04_39_801.html" className={vanjska}>
+            NN 39/19
+          </a>
+          , čl. 146. st. 2. t. 3.). Grad kaže da se time obveza UPU-a „zaobilazila”.
+        </>
+      ),
+    },
+    {
       kada: "Travanj 2025.",
       sto: "Prijedlog izmjena i dopuna GUP-a",
       kljucni: true,
@@ -108,8 +122,9 @@ export default async function ZabranaPage() {
           <a href="https://narodne-novine.nn.hr/clanci/sluzbeni/2025_12_155_2315.html" className={vanjska}>
             NN 155/25
           </a>
-          ) zadržava to pravilo: do donošenja UPU-a dopuštene su samo rekonstrukcija i zamjena postojeće građevine (čl.
-          106. st. 3.).
+          ) zadržava to pravilo. U urbanoj sanaciji i preobrazbi do donošenja UPU-a dopuštene su samo rekonstrukcija i
+          zamjena postojeće građevine (čl. 106. st. 3.). U neuređenom dijelu ostaje sužena iznimka iz 2019.: lokacijska
+          dozvola za novu zgradu uz postojeću javnu cestu, s rješenjem odvodnje (čl. 180. st. 2. t. 3.).
         </>
       ),
     },

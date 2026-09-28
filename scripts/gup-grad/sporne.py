@@ -9,14 +9,17 @@ kriterijima koji se mogu izmjeriti:
   Neuređeni dio. Obrazloženje prijedloga (§ 2.1.1.3) kao „osnovni kriterij
   uređenosti” uzima „mogućnost priključenja na postojeću prometnu površinu u
   funkciji, minimalne širine 4 m”. Za svaku os iz gradskog registra
-  nerazvrstanih cesta (2023.) i sloja državnih cesta mjeri se širina čestice
+  nerazvrstanih cesta (2023.) mjeri se širina čestice
   kojom os prolazi: svaka 4 m tetiva okomita na os kroz usku česticu (tetiva
   kraća od 15 m, čestica dulja od 30 m), izglađeno pomičnim medijanom na
   ±20 m (barem 3 mjerenja). Čestica neuređenog dijela koja je od takve ceste
   široke barem 4 m udaljena najviše 3 m sporna je („pristup”). Širina čestice
   ceste nije širina kolnika, pa je to gornja granica onoga što cesta može
   biti; ceste koje nisu zasebne čestice ne mjere se i ne broje kao pristup.
-  Uz to se bilježi prolazi li na manje od 15 m mješovita ili fekalna
+  Državna cesta ne broji se kao pristup: Grad u odgovorima na primjedbe o
+  PPUG-u pristup s nje ne priznaje („Postojeće pristupe s državne ceste ne
+  treba dodatno opterećivati”, izvješće o javnoj raspravi 2025., br. 80, 89 i
+  100); njezine osi služe samo tome da se čestica ceste ne broji. Uz to se bilježi prolazi li na manje od 15 m mješovita ili fekalna
   kanalizacija (gradski sloj mreže i kolektora).
 
   Urbana sanacija. Zakon (NN 153/13, čl. 77. st. 5.) mjere urbane sanacije
@@ -27,6 +30,12 @@ kriterijima koji se mogu izmjeriti:
   iz javnog registra akata Ministarstva (ISPU, sloj „Akt za uporabu
   građevine”, samo usvojeni zahtjevi). Čestice u plohi s barem 10 zgrada u
   kojoj takve zgrade nisu većina sporne su („sanacija”).
+
+  Neuređeni dio po PPUG-u. Obrazloženje kaže da je neuređeni dio određen
+  PPUG-om, a list 4.d ga samo prikazuje. Prijedlog izmjena PPUG-a crta ga po
+  katastarskim česticama (listovi 4.2–4.4, ppug.py). Čestica koju list 4.d
+  vodi kao neuređenu, a PPUG kao izgrađenu ili neizgrađenu uređenu (bez
+  šrafure), sporna je („ppug”).
 
   Uz to se bilježe djelomično izgrađene čestice neuređenog dijela
   („izgradjena”): zakon neuređenim naziva dio neizgrađenog dijela.
@@ -44,6 +53,7 @@ Ulazi:
   public/geo/gup-grad/cestice/*.json                oblici svih čestica (cestice.py)
   data/sources/Split Export/...                     registar cesta, državne ceste,
                                                     kanalizacija, 3D model, obuhvat GUP-a
+  data/gup-grad/ppug-2025.json                      razred čestice po PPUG-u (ppug.py)
   data/sources/ispu-akti/*.json                     akti za uporabu s ISPU-a (nisu u gitu:
                                                     sadrže adrese; ovdje se iz njih broje
                                                     samo udjeli po plohi)
@@ -78,6 +88,8 @@ PORTAL = os.path.join(Z.IZVOZ, "SPLIT_EXPORT_PORTAL")
 AKTI = os.path.join(ROOT, "data", "sources", "ispu-akti")
 ZABRANA_CESTICE = Z.IZLAZ_CESTICE
 IZLAZ = os.path.join(ROOT, "public", "geo", "gup-grad", "sporne-2025.geojson")
+PPUG = os.path.join(ROOT, "data", "gup-grad", "ppug-2025.json")
+NAZIVI_PPUG = {"ppug-podrucja-zapad-2025": "4.2", "ppug-podrucja-sredisnji-2025": "4.3", "ppug-podrucja-istok-2025": "4.4"}
 
 SANACIJA, NEUREDENO = 1, 3  # vrste u crvena_rescetka
 KORAK_UZORKA = 4.0
@@ -127,15 +139,17 @@ def sve_cestice(okvir) -> list:
     return out
 
 
-def osi_cesta(oko) -> list:
+REGISTAR = "Nerazvrstane_ceste_Split_nerazvrstane_ceste_29112023.shp"
+DRZAVNE = os.path.join("DRZAVNA_CESTA", "drzavna_cesta_UI.shp")
+
+
+def osi_cesta(oko, put: str) -> list:
     osi = []
-    for put in (os.path.join(PORTAL, "Nerazvrstane_ceste_Split_nerazvrstane_ceste_29112023.shp"),
-                os.path.join(Z.BAZA, "DRZAVNA_CESTA", "drzavna_cesta_UI.shp")):
-        d = pyogrio.read_dataframe(put, columns=[])
-        for g in d.geometry.values:
-            if g is None or not g.intersects(oko):
-                continue
-            osi.extend(x for x in getattr(g, "geoms", [g]) if x.length > 0)
+    d = pyogrio.read_dataframe(put, columns=[])
+    for g in d.geometry.values:
+        if g is None or not g.intersects(oko):
+            continue
+        osi.extend(x for x in getattr(g, "geoms", [g]) if x.length > 0)
     return osi
 
 
@@ -209,6 +223,28 @@ def zgrade_3d(okvir) -> list:
     return [p for p in dijelovi if not p.is_empty and p.area >= ZGRADA_M2]
 
 
+def ppug_listovi() -> dict:
+    """Za svaki list građevinskih područja PPUG-a: WGS84 (lng, lat) → udio lista (x, y),
+    afina dotjerana na mreži točaka lista (na 10 km je razlika od HTRS96 ispod metra),
+    da preglednik iz klika na karti složi navod mjesta na listu."""
+    out = {}
+    for lid, u in json.load(open(PPUG))["uklapanje"].items():
+        a, b, c, d, e, f = u["udio"]
+        M = np.array([[a, b], [d, e]])
+        # mreža točaka u dijelu lista s kartom (x 0–0,83, y 0–1)
+        xs, ys = np.meshgrid(np.linspace(0.02, 0.81, 12), np.linspace(0.02, 0.98, 12))
+        xy = np.c_[xs.ravel(), ys.ravel()]
+        en = np.linalg.solve(M, (xy - [c, f]).T).T
+        ll = np.array([Z.U_WGS(E, N) for E, N in en])
+        A = np.c_[ll, np.ones(len(ll))]
+        koef = np.linalg.lstsq(A, xy, rcond=None)[0]
+        ost = np.abs(A @ koef - xy).max() / max(np.hypot(a, b), 1e-12)
+        out[lid] = {"broj": NAZIVI_PPUG.get(lid, lid), "udio": [round(float(v), 10) for v in (*koef[:, 0], *koef[:, 1])],
+                    "karta_do": 0.83}
+        print(f"  {lid}: najveće odstupanje WGS84 afine {ost:.2f} m")
+    return out
+
+
 def main() -> None:
     if not os.path.isdir(AKTI) or not glob.glob(os.path.join(AKTI, "*.json")):
         sys.exit(f"Nema akata u {AKTI}: prikupi ih s ISPU-a (vidi opis skripte)")
@@ -230,14 +266,17 @@ def main() -> None:
 
     # ceste uz neuređeni dio i širina njihovih čestica
     cestice = sve_cestice(oko.buffer(40))
-    osi = osi_cesta(oko)
+    osi = osi_cesta(oko, os.path.join(PORTAL, REGISTAR))
+    drzavne = osi_cesta(oko, os.path.join(Z.BAZA, DRZAVNE))
     po_osi = sirine(osi, cestice)
     uzorci = [u for o in po_osi for u in o]
     W = np.array([w for _, w in uzorci])
     print("osi", len(osi), "uzoraka", len(W), "izmjereno", int(np.isfinite(W).sum()), "≥4 m", int((W >= 4).sum()))
     siroki = [(p, w) for p, w in uzorci if np.isfinite(w) and w >= 4.0]
     siroki_t = shapely.STRtree([p for p, _ in siroki])
-    osi_t = shapely.STRtree(osi)
+    # čestica kojom prolazi os ceste (i državne) je cesta, a ne građevna čestica
+    sve_osi = osi + drzavne
+    osi_t = shapely.STRtree(sve_osi)
 
     kan = pyogrio.read_dataframe(os.path.join(PORTAL, "Kanalizacijska_mreza_i_kolektor_Kanalizacijska_mreza_i_kolektor.shp")).to_crs(3765)
     kan = [g for g, st, md in zip(kan.geometry.values, kan["status"].values, kan["medij"].values)
@@ -260,17 +299,23 @@ def main() -> None:
             z[1] += int(len(toc_t.query(g, predicate="dwithin", distance=AKT_M)) > 0)
     print("rješenja o izvedenom stanju:", len(toc), "zgrada u plohama:", sum(z[0] for z in plohe.values()))
 
+    ppug = json.load(open(PPUG))["cestice"] if os.path.exists(PPUG) else {}
+
     # čestice pod zabranom
     zc = json.load(open(ZABRANA_CESTICE))["features"]
-    sporne, zbroj = [], {"pristup": [0, 0.0], "izgradjena": [0, 0.0], "sanacija": [0, 0.0], "ukupno": [0, 0.0],
+    ppug_cestice = {}
+    sporne, zbroj = [], {"pristup": [0, 0.0], "izgradjena": [0, 0.0], "sanacija": [0, 0.0], "ppug": [0, 0.0], "ukupno": [0, 0.0],
                          "neuredeno": [0, 0.0], "u_sanaciji": [0, 0.0], "pristup_kanal": 0}
     for f in zc:
         p = f["properties"]
         g = stransform(Z.U_HTRS, shape(f["geometry"]))
         razlozi, info = [], {}
+        kljuc = f"{p['ko']}|{p['kc']}"
+        if kljuc in ppug:
+            ppug_cestice[kljuc] = ppug[kljuc]
         if g.area < NAJMANJA_CESTICA_M2:
             continue
-        if sum(osi[i].intersection(g).length for i in osi_t.query(g)) > CESTA_U_CESTICI_M:
+        if sum(sve_osi[i].intersection(g).length for i in osi_t.query(g)) > CESTA_U_CESTICI_M:
             continue
         if udio_u(g, NEU) >= 0.5:
             zbroj["neuredeno"][0] += 1
@@ -281,6 +326,8 @@ def main() -> None:
                 info["sirina"] = round(max(siroki[i][1] for i in blizu) * 2) / 2
                 info["kanal"] = bool(len(kan_t.query(g, predicate="dwithin", distance=KANAL_M)))
                 zbroj["pristup_kanal"] += int(info["kanal"])
+            if ppug.get(kljuc) in ("I", "N"):
+                razlozi.append("ppug")
             if not p["neizgradjena"]:
                 razlozi.append("izgradjena")
             podrucje = "neuredeno"
@@ -301,14 +348,15 @@ def main() -> None:
             zbroj[k][1] += p["m2"] / 1e4
         # djelomično izgrađena čestica sama po sebi nije sporna na karti: neizgrađeni
         # dio zakon određuje kao područje, a ne česticu po česticu
-        if not {"pristup", "sanacija"} & set(razlozi):
+        if not {"pristup", "sanacija", "ppug"} & set(razlozi):
             continue
         zbroj["ukupno"][0] += 1
         zbroj["ukupno"][1] += p["m2"] / 1e4
         sporne.append({"type": "Feature", "geometry": f["geometry"],
                        "properties": {"vrsta": "cestica", "kc": p["kc"], "ko": p["ko"], "m2": p["m2"],
                                       "neizgradjena": p["neizgradjena"], "upu": p["upu"], "podrucje": podrucje,
-                                      "razlozi": razlozi, **info}})
+                                      "razlozi": razlozi, **info,
+                                      **({"ppug": ppug[kljuc]} if kljuc in ppug else {})}})
 
     # plohe sanacije s barem 10 zgrada, s udjelom
     plohe_f = []
@@ -352,8 +400,12 @@ def main() -> None:
         json.dump({"type": "FeatureCollection",
                    "opis": "Izvedeno skriptom scripts/gup-grad/sporne.py: čestice pod zabranom iz prijedloga GUP-a 2025. "
                            "kojima oznaka ne odgovara kriteriju Grada (neuređeni dio uz cestu čija je čestica široka "
-                           "barem 4 m) ili zakonu (urbana sanacija gdje ozakonjene zgrade nisu većina).",
-                   "zbroj": okrugli, "features": plohe_f + ceste + sporne}, f, ensure_ascii=False, separators=(",", ":"))
+                           "barem 4 m), PPUG-u (neuređeno na listu 4.d, a ne na listu PPUG-a) ili zakonu (urbana sanacija "
+                           "gdje ozakonjene zgrade nisu većina).",
+                   "zbroj": okrugli, "ppug": ppug_listovi() if os.path.exists(PPUG) else {},
+                   # razred po PPUG-u za sve čestice pod zabranom, za karticu na karti
+                   "ppug_cestice": dict(sorted(ppug_cestice.items())),
+                   "features": plohe_f + ceste + sporne}, f, ensure_ascii=False, separators=(",", ":"))
     print("→", os.path.relpath(IZLAZ, ROOT), round(os.path.getsize(IZLAZ) / 1e3), "kB")
 
 

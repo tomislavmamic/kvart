@@ -100,7 +100,9 @@ export function ProzorNavoda() {
       <div className="flex max-h-[inherit] flex-col">
         <header className="flex items-start gap-3 border-b border-kamen-tlo px-5 pb-3 pt-4">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold uppercase tracking-[0.06em] text-kamen-drugi">Iz GUP-a</p>
+            <p className="text-xs font-bold uppercase tracking-[0.06em] text-kamen-drugi">
+              {(u?.list?.id ?? u?.dokument?.id ?? "").startsWith("ppug-") ? "Iz PPUG-a" : "Iz GUP-a"}
+            </p>
             <h2 id="navod-naslov" className="mt-1 text-lg font-bold leading-snug text-kamen-tinta">
               {u ? u.naslov : stanje ? "Učitavam navod…" : ""}
             </h2>

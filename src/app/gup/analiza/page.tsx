@@ -54,6 +54,9 @@ const IZVOR = {
     "https://split.hr/ukljuci-se/prostorno-planska-dokumentacija/izvjesca-o-javnim-raspravama/izvjesce-o-javnoj-raspravi-o-prijedlogu-izmjena-i-dopuna-generalnog-urbanistickog-plana-splita-i-strateskoj-studiji-o-utjecaju-na-okolis-izmjena-i-dopuna-generalnog-urbanistickog-plana-splita",
   izvjescePdf:
     "https://split.hr/DesktopModules/EasyDNNNews/DocumentDownload.ashx?portalid=0&moduleid=2192&articleid=20457&documentid=15067",
+  izvjescePpug1: "https://mpgi.gov.hr/UserDocsImages//dokumenti/Prostorno/Planovi/Izvjesca/Splitsko-dalmatinska//31.3.2025.Split.pdf",
+  izvjescePpug2:
+    "https://split.hr/DesktopModules/EasyDNNNews/DocumentDownload.ashx?portalid=0&moduleid=2192&articleid=23081&documentid=16564",
   izvjescePonovna:
     "https://split.hr/ukljuci-se/prostorno-planska-dokumentacija/izvjesca-o-javnim-raspravama/izvjesce-o-ponovnoj-javnoj-raspravi-o-prijedlogu-izmjena-i-dopuna-generalnog-urbanistickog-plana-splita-za-ponovnu-javnu-raspravu",
   konacni2017: "https://split.hr/gradska-uprava/gradsko-vijece/sjednice-gradskog-vijeca/lgs.axd?t=16&id=18388",
@@ -334,7 +337,7 @@ export default async function AnalizaPage() {
             <strong>Zabranu ne bi donio novi zakon, nego nova oznaka na karti.</strong> Prijedlog izmjena GUP-a iz travnja 2025. označava istočni Split kao područje urbane sanacije ili neuređeni dio građevinskog područja.
           </li>
           <li>
-            <strong>Na tako označenom zemljištu zakon ne dopušta nove zgrade dok se ne donese UPU.</strong> To pravilo vrijedi od 2014., a zadržava ga i novi zakon, na snazi od 1. siječnja 2026.
+            <strong>Na tako označenom zemljištu zakon ne dopušta nove zgrade dok se ne donese UPU.</strong> To pravilo vrijedi od 2014., a zadržava ga i novi zakon, na snazi od 1. siječnja 2026. U neuređenom dijelu iznimka je lokacijska dozvola za zgradu uz postojeću javnu cestu, s rješenjem odvodnje.
           </li>
           <li>
             <strong>Važeći GUP za gotovo isto područje već propisuje UPU, ali to zemljište ne označava ni kao sanaciju ni kao neuređeni dio.</strong> Zato Grad ondje izdaje dozvole: od 2016. oko 57 za nove stambene zgrade, od toga šest u Dračevcu.
@@ -375,7 +378,7 @@ export default async function AnalizaPage() {
                 <>
                   <strong>Na snazi od 1. siječnja 2026.</strong> (<V href={IZVOR.zpu155}>ZPU</V>, <V href={IZVOR.zog155}>ZoG</V>)
                 </>,
-                <>Do donošenja UPU-a zabranjuju izdavanje dozvole za novu zgradu ondje gdje zakon propisuje UPU; izuzete su rekonstrukcija i zamjena postojeće građevine.</>,
+                <>Do donošenja UPU-a zabranjuju izdavanje dozvole za novu zgradu ondje gdje zakon propisuje UPU; izuzete su rekonstrukcija i zamjena postojeće građevine, a u neuređenom dijelu i lokacijska dozvola za novu zgradu uz postojeću javnu cestu (ZPU, čl. 180. st. 2. t. 3.).</>,
               ],
               [
                 <>Izmjene i dopune GUP-a, prijedlog za ponovnu javnu raspravu (travanj 2025.)</>,
@@ -384,6 +387,15 @@ export default async function AnalizaPage() {
                 </>,
                 <>
                   <Navod id="istok-4d-2025">List 4.d</Navod> s ispunom urbane sanacije i neuređenih dijelova; <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod> i <Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>
+                </>,
+              ],
+              [
+                <>Izmjene i dopune PPUG-a, prijedlog za ponovnu javnu raspravu (travanj 2025.)</>,
+                <>
+                  <strong>Samo prijedlog.</strong> Izvješće o ponovnoj javnoj raspravi potpisano je 2. rujna 2026. (<V href={IZVOR.izvjescePpug2}>izvješće</V>).
+                </>,
+                <>
+                  Neuređeni dio po katastarskim česticama na listovima građevinskih područja 1:5000 (<Navod id="istok-ppug-2025">list 4.4</Navod>); UPU obvezan samo za neuređeni dio (<Navod id="odredba-ppug-86-2025">čl. 86. st. 8.</Navod>).
                 </>,
               ],
               [
@@ -651,7 +663,7 @@ export default async function AnalizaPage() {
                 „skup planskih mjera i uvjeta kojima se stanje prostornog nereda dovodi u funkcionalno i planski uređeno stanje” (<V href={IZVOR.zpu155}>ZPU, čl. 19. t. 61.</V>); mjere urbane sanacije propisuju se „za područja na kojima se pretežito nalaze zgrade ozakonjene na temelju posebnog zakona” (čl. 77. st. 5.)
               </>,
               <>
-                „većinom nisko konsolidirana područja na istočnom dijelu grada, na kojima je prisutna dugogodišnja nezakonita gradnja” (<Navod id="clanak-106-sanacija-2025">čl. 106. st. 2.</Navod>); na listu su označene samo „veće homogene površine”. Nisu navedeni ni prag (npr. udio nezakonitih zgrada) ni podaci iz kojih je oznaka izvedena.
+                „većinom nisko konsolidirana područja na istočnom dijelu grada, na kojima je prisutna dugogodišnja nezakonita gradnja” (<Navod id="clanak-106-sanacija-2025">čl. 106. st. 2.</Navod>; <Navod id="obrazlozenje-sanacija-2025">Obrazloženje, § 2.1.1.2</Navod>); na listu su označene samo „veće homogene površine”. Nisu navedeni ni prag (npr. udio nezakonitih zgrada) ni podaci iz kojih je oznaka izvedena.
               </>,
               "GUP, list 4.d",
             ],
@@ -659,9 +671,11 @@ export default async function AnalizaPage() {
               <strong key="n">Neuređeni dio građevinskog područja</strong>,
               "neizgrađeni dio građevinskog područja na kojem nije izgrađena planirana osnovna infrastruktura: odvodnja otpadnih voda i pristupna prometna površina",
               <>
-                „mogućnost priključenja na postojeću prometnu površinu u funkciji, minimalne širine 4 m” (<V href={IZVOR.obrazlozenje}>Obrazloženje, § 2.1.1.3, str. 6</V>; <Navod id="clanak-106-neuredeno-2025">čl. 106. st. 1.</Navod>)
+                „mogućnost priključenja na postojeću prometnu površinu u funkciji, minimalne širine 4 m” (<Navod id="obrazlozenje-neuredeno-2025">Obrazloženje, § 2.1.1.3</Navod>; <Navod id="clanak-106-neuredeno-2025">čl. 106. st. 1.</Navod>). PPUG ga crta na neizgrađenom zemljištu bez izgrađene ceste i odvodnje (<Navod id="odredba-ppug-6-2025">PPUG, čl. 6.</Navod>).
               </>,
-              "PPUG Splita; GUP ga samo preuzima",
+              <>
+                prijedlog izmjena PPUG-a, <Navod id="istok-ppug-2025">listovi građevinskih područja</Navod> u mjerilu 1:5000, po katastarskim česticama; GUP ga samo preuzima
+              </>,
             ],
             [
               <strong key="p">Područje urbane preobrazbe</strong>,
@@ -677,14 +691,39 @@ export default async function AnalizaPage() {
               <strong key="o">Ostatak obuhvata UPU-a</strong>,
               "Zakon ga ne poznaje: UPU ondje nije obvezan.",
               <>
-                „područja koja ne spadaju u nijednu od ove tri kategorije” (<V href={IZVOR.obrazlozenje}>Obrazloženje, § 2.1.1.4</V>). Kriterij nije naveden.
+                „područja koja ne spadaju u nijednu od ove tri kategorije” (<Navod id="obrazlozenje-preporuka-2025">Obrazloženje, § 2.1.1.4</Navod>). Kriterij nije naveden.
               </>,
               "GUP, list 4.d",
             ],
           ]}
         />
         <p>
-          Granice tih oznaka nisu određene po katastarskim česticama. Odredbe upućuju samo na <Navod id="clanak-103-karta-2025">list 4.d</Navod> u mjerilu 1:10.000. Na tom je listu i popis svih 34 UPU-a pod naslovom „Popis planova užeg područja za koje je propisana obveza izrade”, a da je izrada obvezna samo za urbanu sanaciju, preobrazbu i neuređeni dio, kaže tek bilješka. Na isječku istočnog Splita sa slika 1–5 granica između zemljišta pod zabranom i zemljišta na kojem je UPU samo preporučen presijeca, prema našem prijenosu lista, 148 čestica, pa vlasnici tih čestica s lista ne mogu pouzdano iščitati koje pravilo za njih vrijedi.
+          Neuređeni dio određen je po katastarskim česticama, ali ne u GUP-u, nego u prijedlogu izmjena PPUG-a: na njegovim <Navod id="istok-ppug-2025">listovima građevinskih područja</Navod> u mjerilu 1:5000 šrafiran je čestica po čestica (<Navod id="legenda-ppug-2025">tumač znakova</Navod>). List 4.d GUP-a to samo prenosi: kad se oba lista prenesu na istu podlogu, neuređeni se dio poklapa na 98 % površine. Urbanu sanaciju i urbanu preobrazbu, međutim, određuje samo <Navod id="clanak-103-karta-2025">list 4.d</Navod> u mjerilu 1:10.000, bez katastarske podloge. Na tom je listu i popis svih 34 UPU-a pod naslovom „Popis planova užeg područja za koje je propisana obveza izrade”, a da je izrada obvezna samo za urbanu sanaciju, preobrazbu i neuređeni dio, kaže tek bilješka. Granica urbane sanacije ili preobrazbe prema zemljištu na kojem je UPU samo preporučen presijeca, prema našem prijenosu lista, 155 čestica od najmanje 250 m² u gradu, od toga 50 na isječku istočnog Splita, pa vlasnici tih čestica s lista ne mogu pouzdano iščitati koje pravilo za njih vrijedi.
+        </p>
+
+        <Podnaslov>Kako su čestice razvrstane i kako su iz neuređenog dijela izlazile</Podnaslov>
+        <p>
+          Metodu razvrstavanja Grad nije objavio. Obrazloženje PPUG-a kaže samo da je podjela na izgrađeni, neizgrađeni i neuređeni dio napravljena „sukladno stvarnom stanju na terenu prikazanom na službenoj državnoj digitalnoj ortofoto karti i na temelju recentnih zračnih snimaka” (<Navod id="obrazlozenje-ppug-metoda-2025">Obrazloženje PPUG-a, str. 16</Navod>), a odredbe da je izgrađeni dio „utvrđen na temelju podataka iz ortofoto snimke iz 2021. godine” (<Navod id="odredba-ppug-6-izgradjeno-2025">PPUG, čl. 6. st. 2.</Navod>). Popisa čestica, podataka o kanalizaciji ni mjerenja širine cesta nema.
+        </p>
+        <p>
+          Više otkrivaju odgovori na primjedbe iz dviju javnih rasprava o PPUG-u (<V href={`${IZVOR.izvjescePpug1}#page=147`}>izvješće iz ožujka 2025.</V> i <V href={`${IZVOR.izvjescePpug2}#page=97`}>izvješće iz rujna 2026.</V>):
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <strong>Presudno je je li cesta do čestice izvedena, a ne koliko je široka.</strong> Grad je prihvatio primjedbu za čestice uz „pristupni put širine 3 m” (br. 37), a odbio vlasnicu koja je navela put od 4 m: „Nesporno je da postoji katastarska čestica puta, ali prema dostupnim podacima, sama prometna površina nije izgrađena” (<V href={`${IZVOR.izvjescePpug2}#page=99`}>br. 7, str. 99</V>).
+          </li>
+          <li>
+            <strong>Pristup s državne ceste ne računa se</strong>: „Postojeće pristupe s državne ceste ne treba dodatno opterećivati” (<V href={`${IZVOR.izvjescePpug1}#page=162`}>br. 80, 89 i 100</V>). Računa se, naprotiv, pristup preko susjedne čestice istog vlasnika (br. 65, 72, 75, 79, 99 i 102).
+          </li>
+          <li>
+            <strong>Zemljište je iz neuređenog dijela izlazilo samo na zahtjev vlasnika.</strong> Prihvaćeno je 14 primjedbi, većinom zato što su vlasnici pokazali da do čestica vodi izvedena cesta ili da im pristup osigurava susjedna čestica, a četiri djelomično. Grad je dokaz i sam tražio, primjerice „recentnu fotografiju na kojoj se vidi izvedena cesta”.
+          </li>
+          <li>
+            <strong>Urbanu sanaciju u tim raspravama nitko nije osporio.</strong> Grad je objasnio da je to samo zakonski naziv za dosadašnju „urbanu obnovu” (<V href={`${IZVOR.izvjescePdf}#page=213`}>izvješće o GUP-u, br. 107, str. 213</V>).
+          </li>
+        </ul>
+        <p>
+          Grad vlasnicima neuređenih čestica preporučuje i put mimo UPU-a: lokacijsku dozvolu za novu zgradu uz postojeću javnu cestu, s rješenjem odvodnje (novi ZPU, čl. 180. st. 2. t. 3.; <a href="#zakon" className="fokus text-emerald-700 underline">4. poglavlje</a>). U urbanoj sanaciji do donošenja UPU-a zakon dopušta samo rekonstrukciju i zamjenu (čl. 106. st. 3.), pa ta iznimka ondje, prema našem čitanju, ne pomaže.
         </p>
 
         <Podnaslov>Neuređeni dio: zemljište uz ceste na česticama širokim barem 4 m</Podnaslov>
@@ -778,8 +817,9 @@ export default async function AnalizaPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>da se neuređeni dio uskladi s kriterijem Grada, tako da se iz njega izuzmu čestice uz postojeću cestu široku barem 4 m i izgrađene čestice (izmjenom PPUG-a i GUP-a); popis je na karti zabrane;</li>
           <li>da se iz urbane sanacije izuzmu plohe u kojima ozakonjene zgrade nisu većina (Harakovac, Mostine i Lovrinac);</li>
+          <li>za pojedinu česticu u neuređenom dijelu do koje već vodi izvedena cesta, da je Grad prebaci u uređeni dio; dokaz treba priložiti (fotografija ceste, podaci o priključku), jer je Grad takve primjedbe u raspravi o PPUG-u prihvaćao;</li>
           <li>
-            da Grad objavi podatke i prag po kojima je ucrtao urbanu sanaciju te granice oznaka odredi po katastarskim česticama, kao što je u važećem GUP-u to učinio za granicu zaštićene povijesne jezgre.
+            da Grad objavi podatke i prag po kojima je ucrtao urbanu sanaciju te njezine granice odredi po katastarskim česticama, kao što je to u PPUG-u učinio za neuređeni dio, a u važećem GUP-u za granicu zaštićene povijesne jezgre.
           </li>
         </ul>
       </Poglavlje>
@@ -830,7 +870,7 @@ export default async function AnalizaPage() {
             U istom smjeru upućuje i povijest teksta. Izmjene iz 2008. uvele su izraz „za ostalo” tako što su <Navod id="izmjena-pravila-3-1-2008">zamijenile riječi „(u granicama obuhvata utvrđenim ovim Planom)”</Navod>. Zamjena je dakle prostorna: „ostalo” je ostatak zemljišta s pravilom 3.1, ono na kojem obveze plana nema.
           </p>
           <p>
-            Tome u prilog idu i riječi samoga Grada. <V href={IZVOR.obrazlozenje}>Obrazloženje prijedloga iz travnja 2025.</V> (str. 2) kaže da za neka područja „za koja je dosadašnjim GUP-om bila obvezna izrada … UPU-a … više se ne može propisati ta obveza, tako da gradnja postaje moguća izravno temeljem GUP-a”. Odlomak govori o područjima koja obvezu gube, ali polazi od toga da obveza na snazi priječi neposrednu gradnju.
+            Tome u prilog idu i riječi samoga Grada. <Navod id="obrazlozenje-gubitak-obveze-2025">Obrazloženje prijedloga iz travnja 2025.</Navod> kaže da za neka područja „za koja je dosadašnjim GUP-om bila obvezna izrada … UPU-a … više se ne može propisati ta obveza, tako da gradnja postaje moguća izravno temeljem GUP-a”. Odlomak govori o područjima koja obvezu gube, ali polazi od toga da obveza na snazi priječi neposrednu gradnju.
           </p>
           <p>
             Obvezu iz plana Grad je i provodio kad ju je pravilo izričito propisivalo. Godine 2016. vlasniku u konsolidiranoj zoni s pravilom 2.7 odgovorio je da dozvola nije moguća jer je „GUP-om (<Navod id="clanak-70-2015">članak 70.</Navod>) predviđena obveza izrade detaljnijeg plana”, kako stoji u primjedbi br. 70 (<V href={IZVOR.izvjescePdf}>Izvješće o javnoj raspravi, 26. 3. 2025., str. 187–188</V>).
@@ -959,7 +999,7 @@ export default async function AnalizaPage() {
             <strong>Današnju zabranu uveo je 2014. stari Zakon o prostornom uređenju</strong>, u čl. 79. Stavak 1. propisuje UPU „za neuređene dijelove građevinskog područja i za izgrađene dijelove tih područja planiranih za urbanu preobrazbu ili urbanu sanaciju”. Stavak 2. obvezu ukida ako PPUG ili GUP propiše uvjete „s detaljnošću propisanom za urbanistički plan uređenja”. <strong>Stavak 3. kaže da se do tada „ne može izdati akt za građenje nove građevine”</strong>, a stavak 4. izuzima rekonstrukciju i zamjenu postojeće građevine (<V href={IZVOR.zpu153}>ZPU, NN 153/13</V>).
           </p>
           <p>
-            Zakon o gradnji to je preslikao u čl. 110. st. 1. t. 7.: za dozvolu je potrebno da je UPU „donesen … ako se dozvola izdaje na području za koje je posebnim zakonom propisana obveza njegova donošenja” (<V href={IZVOR.zog153}>ZoG, NN 153/13</V>). Kasnije izmjene mijenjale su samo formulacije (<V href={IZVOR.nn65_17}>NN 65/17</V>; <V href={IZVOR.nn39_19}>NN 39/19</V>), a <V href={IZVOR.nn67_23}>NN 67/23</V> čl. 79. nije dirao.
+            Zakon o gradnji to je preslikao u čl. 110. st. 1. t. 7.: za dozvolu je potrebno da je UPU „donesen … ako se dozvola izdaje na području za koje je posebnim zakonom propisana obveza njegova donošenja” (<V href={IZVOR.zog153}>ZoG, NN 153/13</V>). Izmjena iz 2017. mijenjala je samo formulacije (<V href={IZVOR.nn65_17}>NN 65/17</V>), a <V href={IZVOR.nn67_23}>NN 67/23</V> čl. 79. nije dirao. Izmjena iz 2019. (<V href={IZVOR.nn39_19}>NN 39/19, čl. 45.</V>) uvela je, međutim, iznimku za lokacijsku dozvolu: UPU nije uvjet za „građenje nove zgrade koja ima pristup na prometnu površinu te mogućnost rješavanja odvodnje otpadnih voda prema mjesnim prilikama određenim prostornim planom” (stari ZPU, čl. 146. st. 2. t. 3.). Grad sam kaže da je upravo ta odredba „omogućila zaobilaženje te obveze, dopuštajući izdavanje akata za građenje uz tek minimalne uvjete pristupa i odvodnje, bez cjelovite planske razrade koju bi UPU osigurao” (<V href={`${IZVOR.izvjescePpug2}#page=100`}>izvješće o ponovnoj javnoj raspravi o PPUG-u, br. 8, str. 100</V>).
           </p>
           <p>
             Ministarstvo to pravilo primjenjuje dosljedno. U odgovorima na česta pitanja iz 2014. kaže da se dozvole „ne mogu izdati … dok se taj plan ne donese” (<V href={IZVOR.mpgiPitanja}>MPGI, česta pitanja</V>), a mišljenje Općini Tinjan iz 2024. to ponavlja (<V href={IZVOR.mpgiTinjan}>MPGI, 21. 3. 2024.</V>). Županijski upravni odjel primijenio ga je u Baškoj Vodi, a Upravni sud u Splitu potvrdio je odbijanje zahtjeva (<V href={IZVOR.baskaVoda}>UsIgr-268/2020-6</V>).
@@ -986,7 +1026,7 @@ export default async function AnalizaPage() {
         </Detaljnije>
         <Detaljnije naslov="Što donosi novi zakon (NN 155/25)">
           <p>
-            Čl. 106. st. 2. novog ZPU-a (NN 155/25) propisuje UPU, među ostalim, za dijelove građevinskog područja „koji nisu izgrađeni i opremljeni osnovnom infrastrukturom” i za „postojeće i izgrađene dijelove građevinskih područja za koje se planira urbana preobrazba i/ili urbana sanacija”. Do donošenja UPU-a građevinska dozvola može se izdati samo za rekonstrukciju ili zamjenu postojeće građevine (novi ZoG, čl. 73. st. 1. t. 6. i st. 3.). Za lokacijsku dozvolu zakon uvodi jednu novu iznimku: „građenje nove zgrade koja ima pristup na postojeću javnu prometnu površinu te mogućnost rješavanja odvodnje otpadnih voda prema mjesnim prilikama” (novi ZPU, čl. 180. st. 2. t. 3.; <V href={IZVOR.zpu155}>ZPU</V> i <V href={IZVOR.zog155}>ZoG, NN 155/25</V>).
+            Čl. 106. st. 2. novog ZPU-a (NN 155/25) propisuje UPU, među ostalim, za dijelove građevinskog područja „koji nisu izgrađeni i opremljeni osnovnom infrastrukturom” i za „postojeće i izgrađene dijelove građevinskih područja za koje se planira urbana preobrazba i/ili urbana sanacija”. Do donošenja UPU-a građevinska dozvola može se izdati samo za rekonstrukciju ili zamjenu postojeće građevine (novi ZoG, čl. 73. st. 1. t. 6. i st. 3.). Za lokacijsku dozvolu novi zakon zadržava iznimku iz 2019., ali je sužava: vrijedi za „građenje nove zgrade koja ima pristup na postojeću javnu prometnu površinu te mogućnost rješavanja odvodnje otpadnih voda prema mjesnim prilikama određenim prostornim planom, ako se takvim građenjem ne sprečava opremanje drugog građevinskog zemljišta” (novi ZPU, čl. 180. st. 2. t. 3.; <V href={IZVOR.zpu155}>ZPU</V> i <V href={IZVOR.zog155}>ZoG, NN 155/25</V>). Za urbanu sanaciju i preobrazbu do donošenja UPU-a vrijede samo prijelazne mjere za rekonstrukciju i zamjenu (čl. 106. st. 3.), pa iznimka ondje ne pomaže; za neuređeni dio takve odredbe nema. Grad na tu iznimku upućuje vlasnike neuređenih čestica (<V href={`${IZVOR.izvjescePpug2}#page=98`}>izvješće o ponovnoj javnoj raspravi o PPUG-u, br. 5, 7 i 9</V>).
           </p>
           <p>
             Novi zakon nema pretpostavku poput one iz čl. 201. Njegova kategorija sanacije i preobrazbe traži da je promjena „planirana”, a to je oznaka plana, pa se, doslovno protumačena, ne odnosi na neoznačena područja s lista 4.c važećeg GUP-a. Kategorija zemljišta koje „nije izgrađeno i opremljeno” sročena je kao činjenica, a ne kao oznaka, pa bi mogla obuhvatiti prazne neopremljene čestice i prema važećem GUP-u. To je naše tumačenje; nijedna uputa ga ne potvrđuje. Ni stari ni novi ZPU zabrani ne određuje rok.
@@ -1020,7 +1060,7 @@ export default async function AnalizaPage() {
               <>
                 Samo kroz UPU (<Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>); nije na popisu iz <Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>
               </>,
-              "Nema dozvole do UPU-a (stari ZPU, čl. 79. st. 3.; novi ZoG, čl. 73. st. 1. t. 6.). Iznimka za lokacijsku dozvolu za čestice uz postojeću cestu (novi ZPU, čl. 180. st. 2. t. 3.)",
+              "Nema dozvole do UPU-a (stari ZPU, čl. 79. st. 3.; novi ZoG, čl. 73. st. 1. t. 6.). U neuređenom dijelu iznimka za lokacijsku dozvolu za čestice uz cestu (od 2019. stari ZPU, čl. 146. st. 2. t. 3.; novi ZPU, čl. 180. st. 2. t. 3.)",
             ],
             [
               "Rekonstrukcija u postojećim gabaritima",
@@ -1058,12 +1098,12 @@ export default async function AnalizaPage() {
             Prema postojećim kućama prijedlog je stroži. Popis iznimaka u <Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod> sužava se na „manje” građevine infrastrukture, a iznimka za proizvodne i poslovne građevine nestaje. Nestaje i mogućnost rekonstrukcije u postojećim gabaritima do donošenja plana, kao i rečenica o dogradnji i nadogradnji u niskokonsolidiranom području. Nestaju i <Navod id="clanak-49-izgradeni-dijelovi-2015">blaži uvjeti za izgrađene dijelove</Navod>: do 40 % manja čestica, Po+P+3, 1 m od međe te plaćanje umjesto osiguravanja parkirališnih mjesta. Prema novom <Navod id="clanak-49b-2025">čl. 49.b st. 2.</Navod> „rekonstrukcija postojećih građevina dozvoljena je pod istim uvjetima propisanim ovim Planom za izgradnju novih građevina”. Te promjene vrijede za cijeli grad, ali najjače pogađaju istok.
           </p>
           <p>
-            Grad kaže da je to namjerno. Ozakonjenje od 2012. dalo je Splitu „cca 15000 ‚novih postojećih’ građevina ali koje su protivne planskim odredbama”, pa su pravila pooštrena „kako se, sada zakonitim ali ‚neplanskim’ građevinama, ne bi omogućile nove nadogradnje i dogradnje” (<V href={IZVOR.obrazlozenje}>Obrazloženje, str. 25</V>).
+            Grad kaže da je to namjerno. Ozakonjenje od 2012. dalo je Splitu „cca 15000 ‚novih postojećih’ građevina ali koje su protivne planskim odredbama”, pa su pravila pooštrena „kako se, sada zakonitim ali ‚neplanskim’ građevinama, ne bi omogućile nove nadogradnje i dogradnje” (<Navod id="obrazlozenje-ozakonjenje-2025">Obrazloženje, str. 25</Navod>).
           </p>
         </Detaljnije>
         <Detaljnije naslov="Traži li zakon zabranu? Propisuje posljedicu, ali ne i oznaku">
           <p>
-            Grad promjenu predstavlja kao posljedicu zakona: „na područjima na kojima je Zakonom prozvana obveza donošenja UPU-a, prije njegovog donošenja ne može se izdati lokacijska dozvola i građevinska dozvola za građenje nove građevine, dok je na područjima planske obveze preporuke … izdavanje navedenih akata moguće i prije donošenja tog plana” (<V href={IZVOR.obrazlozenje}>Obrazloženje, § 2.1.1.4, str. 6</V>). Županiji je odgovorio da novi UPU-i imaju „status sanacijskog plana ili plana urbane preobrazbe što je zakonom propisana obveza” (<V href={IZVOR.izvjesce}>Izvješće, str. 323</V>).
+            Grad promjenu predstavlja kao posljedicu zakona: „na područjima na kojima je Zakonom prozvana obveza donošenja UPU-a, prije njegovog donošenja ne može se izdati lokacijska dozvola i građevinska dozvola za građenje nove građevine, dok je na područjima planske obveze preporuke … izdavanje navedenih akata moguće i prije donošenja tog plana” (<Navod id="obrazlozenje-zabrana-2025">Obrazloženje, § 2.1.1.4</Navod>). Županiji je odgovorio da novi UPU-i imaju „status sanacijskog plana ili plana urbane preobrazbe što je zakonom propisana obveza” (<V href={IZVOR.izvjesce}>Izvješće, str. 323</V>).
           </p>
           <p>
             To je <strong>točno kad je riječ o posljedici, ali nepotpuno kad je riječ o uzroku</strong>. Zakon traži „mjere za urbanu sanaciju” gdje prevladavaju ozakonjene zgrade (stari ZPU, čl. 53. st. 5.; novi čl. 77. st. 5.), ali ne traži da te mjere budu baš UPU. Dopušta i da GUP sam propiše uvjete s detaljnošću UPU-a, čime otpadaju i obveza UPU-a i zabrana (stari čl. 79. st. 2.; novi čl. 106. st. 4.; <V href={IZVOR.zpu153}>NN 153/13</V>, <V href={IZVOR.zpu155}>NN 155/25</V>). Taj put ima cijenu: Ministarstvo ga tumači tako da tekst i karte moraju biti „u mjerilu propisanom za urbanistički plan uređenja” (<V href={IZVOR.mpgiTinjan}>MPGI, 21. 3. 2024.</V>).
@@ -1358,6 +1398,18 @@ export default async function AnalizaPage() {
               Split po GUP-u
             </Link>
             . Listovi 4.d i 4.c prijedloga pomaknuti su za oko 3,7 odnosno 4 m na položaj lista 1 (izmjereno usporedbom podloge). Važeći planovi ucrtani su u stvarnim granicama, preuzetima s listova samih planova u ISPU-u, jer ih list 4.d crta shematski: DPU dijela područja Dračevac ondje zauzima 1,5 ha, preko ceste i kuća, a plan je jedna čestica od 0,46 ha. Ispuna koju list skriva ispod bijelih, šrafiranih ploha važećih planova ne broji se, jer je list ne pokazuje. Na kartama urbanih pravila ulice nisu obojene: list iz 2025. ostavlja ih bijelima, a list iz 2014. i njih boji bojom pravila, pa bi usporedba inače pokazala razliku koje nema. Površine uz karte na Slici 2 vrijede za prikazani isječak, bez zemljišta pod važećim planovima.
+          </li>
+          <li>
+            Prijedlog izmjena PPUG-a (odredbe, obrazloženje i listovi građevinskih područja 4.2–4.4) je na stranici{" "}
+            <Link href="/gup/dokument/ppug-2025" className="fokus text-emerald-700 underline">
+              PPUG, prijedlog 2025.
+            </Link>
+            . Listovi su uklopljeni prema brojevima katastarskih čestica ispisanima na njima (8.000 do 22.000 parova po listu, medijan odstupanja 1–1,5 m), a neuređeni dio, šrafura na listu, pročitan je iz PDF-a kao vektor. Odgovori Grada na primjedbe su iz izvješća o javnim raspravama o PPUG-u (<V href={IZVOR.izvjescePpug1}>ožujak 2025.</V>, <V href={IZVOR.izvjescePpug2}>rujan 2026.</V>) i o GUP-u.
+          </li>
+          <li>
+            Sporne čestice (2. poglavlje): osi cesta iz gradskog registra nerazvrstanih cesta (2023.), širina katastarske čestice ceste izmjerena svaka 4 m okomito na os; kanalizacija iz gradskog GIS sloja mreže i kolektora; rješenja o izvedenom stanju iz registra ISPU (u repozitoriju se objavljuju samo zbrojevi po plohi). Izračun je u skriptama{" "}
+            <V href="https://github.com/tomislavmamic/kvart/blob/main/scripts/gup-grad/sporne.py">sporne.py</V> i{" "}
+            <V href="https://github.com/tomislavmamic/kvart/blob/main/scripts/gup-grad/ppug.py">ppug.py</V>.
           </li>
           <li>
             Slobodno zemljište računa se po katastarskim česticama, jednako kao na stranici{" "}

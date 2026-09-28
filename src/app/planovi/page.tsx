@@ -73,6 +73,11 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
     uvod: "Odakle su podaci i što je Gradu dosad poslano.",
     stranice: [
       {
+        href: "/gup/dokument/ppug-2025",
+        naslov: "PPUG: prijedlog izmjena iz 2025.",
+        opis: "Odredbe, obrazloženje i listovi građevinskih područja u mjerilu 1:5000, na kojima je po česticama ucrtan neuređeni dio koji GUP preuzima.",
+      },
+      {
         href: "/dokumenti",
         naslov: "Dokumenti",
         opis: "Prostorni planovi, dopisi Gradu Splitu, odgovori i zapisnici važni za kvart.",

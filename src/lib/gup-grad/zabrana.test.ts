@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   doRuba,
   imenicaUz,
+  mjestoNaPpugu,
   naslovno,
   normaliziraj,
   oblik,
@@ -62,6 +63,8 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
     plohe: [
       { ...oblik(poligon(kvadrat(16.4, 43.5, 0.004))), ha: 8, zgrade: 25, sRjesenjem: 3, udio: 12, manjina: true },
     ],
+    ppug: [],
+    ppugCestice: {},
     obris: oblik(poligon(kvadrat(16.4, 43.5, 0.005))),
     vazeci: [{ ...oblik(poligon(kvadrat(16.41, 43.51, 0.005))), naziv: "DPU radne zone Dračevac", glasnik: "8/03" }],
     propisani: [upu],
@@ -147,4 +150,12 @@ test("imenicaUz: jednina, dvojina i množina uz broj", () => {
   assert.equal(imenicaUz(113, k), "kućnih brojeva");
   assert.equal(imenicaUz(6697, z), "zgrada");
   assert.equal(imenicaUz(23, z), "zgrade");
+});
+
+test("mjestoNaPpugu: točka na listu, a ne u legendi ni izvan lista", () => {
+  // list 0,1° × 0,1°: x raste s dužinom, y pada sa širinom
+  const l = { id: "ppug-x", broj: "4.4", udio: [10, 0, -164, 0, -10, 436] as [number, number, number, number, number, number], kartaDo: 0.83 };
+  assert.deepEqual(mjestoNaPpugu([l], 16.45, 43.55)?.tocka.map((v) => Math.round(v * 100) / 100), [0.5, 0.5]);
+  assert.equal(mjestoNaPpugu([l], 16.49, 43.55), null); // legenda
+  assert.equal(mjestoNaPpugu([l], 16.3, 43.55), null);
 });

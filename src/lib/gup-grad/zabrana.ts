@@ -144,7 +144,7 @@ export interface CesticaZabrane extends Oblik {
 }
 
 /** Zašto je oznaka čestice sporna (scripts/gup-grad/sporne.py). */
-export type RazlogSpora = "pristup" | "izgradjena" | "sanacija";
+export type RazlogSpora = "pristup" | "izgradjena" | "sanacija" | "ppug";
 
 /** Čestica pod zabranom kojoj oznaka ne odgovara kriteriju Grada ili zakona. */
 export interface SpornaCestica extends Oblik {
@@ -159,6 +159,30 @@ export interface SpornaCestica extends Oblik {
   kanal?: boolean;
   /** udio zgrada s rješenjem o izvedenom stanju u plohi, % (razlog „sanacija”) */
   udio?: number;
+  /** razred čestice na listu građevinskih područja PPUG-a: neuređeno, izgrađeno, neizgrađeno */
+  ppug?: "U" | "I" | "N";
+}
+
+/** List građevinskih područja PPUG-a (1:5000) i kako se na nj preslika točka. */
+export interface ListPpug {
+  id: string;
+  /** „4.4” */
+  broj: string;
+  /** (lng, lat) → udio lista: x = a·lng + b·lat + c, y = d·lng + e·lat + f */
+  udio: [number, number, number, number, number, number];
+  /** desno od ovoga je legenda */
+  kartaDo: number;
+}
+
+/** Mjesto na listu PPUG-a za točku; null ako nije ni na jednom listu. */
+export function mjestoNaPpugu(listovi: ListPpug[], lng: number, lat: number): { list: ListPpug; tocka: [number, number] } | null {
+  for (const l of listovi) {
+    const [a, b, c, d, e, f] = l.udio;
+    const x = a * lng + b * lat + c;
+    const y = d * lng + e * lat + f;
+    if (x > 0 && x < l.kartaDo && y > 0 && y < 1) return { list: l, tocka: [x, y] };
+  }
+  return null;
 }
 
 /** Ploha urbane sanacije s barem 10 zgrada i udjelom ozakonjenih. */
@@ -176,6 +200,9 @@ export interface Slojevi {
   cestice: CesticaZabrane[];
   sporne: SpornaCestica[];
   plohe: PlohaSanacije[];
+  ppug: ListPpug[];
+  /** razred čestice pod zabranom po PPUG-u, po „k.o.|k.č.” */
+  ppugCestice: Record<string, "U" | "I" | "N">;
   /** Cijelo crveno kao jedan oblik — za udaljenost do ruba. */
   obris: Oblik | null;
   vazeci: PlanNaSnazi[];
@@ -239,6 +266,7 @@ export function slojeviIzGeojsona(
           sirina: p.sirina === undefined ? undefined : Number(p.sirina),
           kanal: p.kanal === undefined ? undefined : Boolean(p.kanal),
           udio: p.udio === undefined ? undefined : Number(p.udio),
+          ppug: p.ppug as SpornaCestica["ppug"],
         };
       }),
     plohe: (sporne?.features ?? [])
@@ -254,6 +282,10 @@ export function slojeviIzGeojsona(
           manjina: Boolean(p.manjina),
         };
       }),
+    ppug: Object.entries(((sporne as unknown as { ppug?: Record<string, { broj: string; udio: number[]; karta_do: number }> })?.ppug) ?? {}).map(
+      ([id, l]) => ({ id, broj: l.broj, udio: l.udio as ListPpug["udio"], kartaDo: l.karta_do }),
+    ),
+    ppugCestice: ((sporne as unknown as { ppug_cestice?: Record<string, "U" | "I" | "N"> })?.ppug_cestice) ?? {},
     obris: jedan("obris"),
     gup: jedan("gup"),
     vazeci: planovi.features

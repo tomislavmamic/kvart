@@ -213,7 +213,7 @@ Nothing in the transitional provisions says whether art. 106(3) applies to plans
     1. rekonstrukciju postojeće građevine
     2. građenje nove građevine na mjestu ili u neposrednoj blizini mjesta prethodno uklonjene postojeće građevine unutar iste građevne čestice…
     3. **građenje nove zgrade koja ima pristup na postojeću javnu prometnu površinu te mogućnost rješavanja odvodnje otpadnih voda prema mjesnim prilikama određenim prostornim planom, ako se takvim građenjem ne sprečava opremanje drugog građevinskog zemljišta.**"
-  - Point 3 is new; it did not exist in old ZPU art. 146.
+  - Correction (28 Sep 2026): point 3 is **not** new. NN 39/19 art. 45 rewrote old ZPU art. 146(2) and added "3. građenje nove zgrade koja ima pristup na prometnu površinu te mogućnost rješavanja odvodnje otpadnih voda prema mjesnim prilikama određenim prostornim planom" from 2019. The new law narrows it (existing *public* road; must not prevent servicing other land). See `ppug_and_key_sources.md` § 8.5(c).
   - Source: [ZPU NN 155/25](https://narodne-novine.nn.hr/clanci/sluzbeni/2025_12_155_2315.html)
 - **New ZoG art. 73** (conditions for a građevinska dozvola without a lokacijska dozvola):
   - (1) for "manje složena zgrada": "… 3. je idejni projekt u pogledu lokacijskih uvjeta izrađen u skladu s uvjetima za provedbu zahvata u prostoru propisanim prostornim planom … 6. **je donesen urbanistički plan uređenja, ako se dozvola izdaje na području za koje je posebnim zakonom propisana obveza njegova donošenja**"
