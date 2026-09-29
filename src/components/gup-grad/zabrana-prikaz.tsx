@@ -696,7 +696,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
             </Stavka>
           ))}
           <Stavka stil={{ border: `1px solid ${BOJE_ZABRANE.cestica}` }}>
-            čestica sa slobodnim zemljištem <span className="text-zinc-500">· izbliza</span>
+            čestica s mjestom za novu zgradu <span className="text-zinc-500">· izbliza</span>
           </Stavka>
         </Skupina>
         {podaci?.sporne && (
