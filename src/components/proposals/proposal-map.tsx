@@ -30,6 +30,8 @@ const COLORS: Record<string, string> = {
   "dpu-sidewalk": "#7c3aed",
   "dpu-road": "#64748b",
   "dpu-boundary": "#52525b",
+  "obligation-plot": "#7e22ce",
+  "obligation-tree": "#7e22ce",
 };
 
 const NETWORK_COLORS: Record<string, string> = {
@@ -66,7 +68,11 @@ const LABELS: Record<string, string> = {
   "dpu-sidewalk": "DPU — planirani nogostupi",
   "dpu-road": "DPU — kolnici",
   "dpu-boundary": "Granica DPU-a",
+  "obligation-plot": "Čestice čiji su vlasnici dužni saditi",
+  "obligation-tree": "Dugovana stabla",
 };
+
+const PLACEMENTS: Record<string, string> = { plan: "ucrtana u DPU-u", ilustracija: "po GUP-u, položaj je prijedlog" };
 
 const LEVELS: Record<string, string> = { surface: "razina terena", upper: "gornja razina", lower: "donja razina" };
 const PLAN_STATUS: Record<string, string> = {
@@ -76,22 +82,28 @@ const PLAN_STATUS: Record<string, string> = {
   "source-plan": "DPU ne razdvaja postojeće i planirano u ovom sloju",
 };
 
-export function ProposalMap({ url, label, sidewalks = false }: { url: string; label: string; sidewalks?: boolean }) {
+/** `extraUrls`: dodatni slojevi iste karte, npr. obveze sadnje uz nogostupe. */
+export function ProposalMap({ url, extraUrls = [], label, sidewalks = false }: { url: string; extraUrls?: string[]; label: string; sidewalks?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const views = useRef<{ target: () => void; plan: () => void } | null>(null);
   const [error, setError] = useState(false);
   const [hasPlan, setHasPlan] = useState(false);
 
+  // Niz se svakim iscrtavanjem stvara iznova; efekt ovisi o sadržaju, ne o nizu.
+  const extraKey = extraUrls.join("\n");
+
   useEffect(() => {
     const abort = new AbortController();
+    const extra = extraKey ? extraKey.split("\n") : [];
     let map: import("leaflet").Map | undefined;
     async function setup() {
-      const [L, response] = await Promise.all([
+      const [L, responses] = await Promise.all([
         import("leaflet"),
-        fetch(url, { signal: abort.signal }),
+        Promise.all([url, ...extra].map((u) => fetch(u, { signal: abort.signal }))),
       ]);
-      if (!response.ok) throw new Error("Geometrija nije dostupna");
-      const data: FeatureCollection = await response.json();
+      if (responses.some((r) => !r.ok)) throw new Error("Geometrija nije dostupna");
+      const collections: FeatureCollection[] = await Promise.all(responses.map((r) => r.json()));
+      const data: FeatureCollection = { type: "FeatureCollection", features: collections.flatMap((c) => c.features) };
       if (abort.signal.aborted || !container.current) return;
       map = L.map(container.current, { scrollWheelZoom: false });
       const streets = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", {
@@ -106,6 +118,7 @@ export function ProposalMap({ url, label, sidewalks = false }: { url: string; la
       map.createPane("parcels").style.zIndex = "410";
       map.createPane("utilities").style.zIndex = "420";
       map.createPane("canopies").style.zIndex = "430";
+      map.createPane("obligations").style.zIndex = "435";
       map.createPane("planting").style.zIndex = "440";
       const groups: Record<string, import("leaflet").FeatureGroup> = {};
       const proposalGroups = new Set<string>();
@@ -115,18 +128,21 @@ export function ProposalMap({ url, label, sidewalks = false }: { url: string; la
         const plannedNetwork = p.network_status === "dpu-plan";
         const name = role === "infrastructure"
           ? `${String(p.label ?? "Instalacije").replace(/^DPU · /, "")} · ${plannedNetwork ? "DPU" : "gradska evidencija"}`
-          : `${LABELS[role] ?? role}${["dpu-sidewalk", "dpu-road"].includes(role) && p.level ? ` · ${LEVELS[p.level] ?? p.level}` : ""}`;
+          : `${LABELS[role] ?? role}${["dpu-sidewalk", "dpu-road"].includes(role) && p.level ? ` · ${LEVELS[p.level] ?? p.level}` : ""}${role === "obligation-tree" && p.placement ? ` · ${PLACEMENTS[p.placement] ?? p.placement}` : ""}`;
         const group = groups[name] ??= L.featureGroup();
-        if (role.startsWith("proposal-") || ["recreation-zone", "retained-trees", "proposed-tree", "tree-conflict", "planned-sidewalk"].includes(role)) proposalGroups.add(name);
+        if (role.startsWith("proposal-") || ["recreation-zone", "retained-trees", "proposed-tree", "tree-conflict", "planned-sidewalk", "obligation-plot", "obligation-tree"].includes(role)) proposalGroups.add(name);
         const color = role === "infrastructure"
           ? NETWORK_COLORS[String(p.network).replace(/^dpu-/, "")] ?? "#a30037"
           : COLORS[role] ?? "#a30037";
         const isParcel = ["parcel", "road-parcel", "project-parcel"].includes(role);
-        const pane = role === "proposal-canopy" ? "canopies" : role === "infrastructure" ? "utilities" : p.candidate_id ? "planting" : isParcel ? "parcels" : "overlayPane";
+        const obligation = role.startsWith("obligation-");
+        const pane = role === "proposal-canopy" ? "canopies" : obligation ? "obligations" : role === "infrastructure" ? "utilities" : p.candidate_id ? "planting" : isParcel ? "parcels" : "overlayPane";
         const layer = L.geoJSON(feature, {
           pane,
-          style: { pane, color, weight: role === "existing-sidewalk" ? 4 : role === "road-parcel" ? 3 : role === "dpu-road" || role === "parcel" ? 1 : 2, fillOpacity: role === "proposal-canopy" ? 0.14 : role === "retained-trees" ? 0.3 : role.startsWith("proposal-") ? 0.5 : isParcel ? 0 : role === "dpu-sidewalk" ? 0.32 : role === "planned-sidewalk" || role === "recreation-zone" ? 0.12 : 0.05, dashArray: plannedNetwork || ["proposal-canopy", "retained-trees", "parcel", "planned-sidewalk", "dpu-boundary", "unresolved-road-parcels"].includes(role) ? "5 5" : undefined },
-          pointToLayer: (_, latlng) => p.candidate_id
+          style: { pane, color, weight: role === "existing-sidewalk" ? 4 : role === "road-parcel" ? 3 : role === "dpu-road" || role === "parcel" ? 1 : 2, fillOpacity: role === "proposal-canopy" ? 0.14 : role === "retained-trees" ? 0.3 : role.startsWith("proposal-") ? 0.5 : isParcel ? 0 : role === "dpu-sidewalk" ? 0.32 : role === "planned-sidewalk" || role === "recreation-zone" ? 0.12 : role === "obligation-plot" ? 0.04 : 0.05, dashArray: plannedNetwork || p.conditional || ["proposal-canopy", "retained-trees", "parcel", "planned-sidewalk", "dpu-boundary", "unresolved-road-parcels"].includes(role) ? "5 5" : undefined },
+          pointToLayer: (_, latlng) => role === "obligation-tree"
+            ? L.circle(latlng, { pane, color, fillColor: color, fillOpacity: 0.25, radius: Number(p.crown_radius_m ?? 2), weight: 2, dashArray: p.placement === "ilustracija" ? "4 3" : undefined })
+            : p.candidate_id
             ? L.circle(latlng, { pane, color, fillColor: color, fillOpacity: 0.8, radius: Number(p.tree_pit_radius_m ?? 1), weight: 1.5 })
             : L.circleMarker(latlng, { pane, color, fillColor: color, fillOpacity: 1, radius: 5, weight: 2 }),
         });
@@ -168,13 +184,13 @@ export function ProposalMap({ url, label, sidewalks = false }: { url: string; la
     }
     setup().catch(() => { if (!abort.signal.aborted) setError(true); });
     return () => { abort.abort(); views.current = null; map?.remove(); };
-  }, [url, sidewalks]);
+  }, [url, extraKey, sidewalks]);
 
   return (
     <div>
       <div ref={container} role="region" aria-label={label} className="relative z-0 h-[420px] w-full rounded-xl bg-kamen-tlo sm:h-[520px]" />
       {error && <p role="alert" className="mt-3 text-kamen-tekst">Kartu nije moguće učitati. Pokušajte ponovno učitati stranicu ili otvorite kartu kvarta.</p>}
-      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-kamen-tekst">{(sidewalks ? [["#b45309", "Dopuna nogostupa"], ["#007956", "Moguća sadnja"], ["#a30037", "Sadnja uz prilagodbu instalacija"]] : [["#005f46", "Cageball"], ["#b65e37", "Teretana"], ["#b58938", "Dječja igra"], ["#729353", "Zelena šetnica"], ["#285c35", "Postojeća sadnja · zadržati"], ["#5a893c", "Buduće krošnje"], ["#64748b", "3 parkirna mjesta"]]).map(([color, text]) => <span key={text} className="inline-flex items-center gap-2"><span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{text}</span>)}</div>
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-kamen-tekst">{(sidewalks ? [["#b45309", "Dopuna nogostupa"], ["#007956", "Moguća sadnja"], ["#a30037", "Sadnja uz prilagodbu instalacija"], ...(extraUrls.length ? [["#7e22ce", "Stabla koja duguju susjedne građevine"]] : [])] : [["#005f46", "Cageball"], ["#b65e37", "Teretana"], ["#b58938", "Dječja igra"], ["#729353", "Zelena šetnica"], ["#285c35", "Postojeća sadnja · zadržati"], ["#5a893c", "Buduće krošnje"], ["#64748b", "3 parkirna mjesta"]]).map(([color, text]) => <span key={text} className="inline-flex items-center gap-2"><span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{text}</span>)}</div>
       <p className="mt-3 text-sm leading-6 text-kamen-tekst">Prikazan je prijedlog uređenja. Katastar, postojeće nogostupe i instalacije možete uključiti u izborniku slojeva u gornjem desnom kutu.</p>
       {hasPlan && <details className="mt-3 text-sm"><summary className="fokus cursor-pointer py-2 font-semibold text-maslina">Pregled izvornog plana</summary><div className="flex flex-wrap gap-3 py-2"><button type="button" onClick={() => views.current?.target()} className="fokus min-h-11 rounded-lg border border-kamen-rub px-4">Vrati na prijedlog</button><button type="button" onClick={() => views.current?.plan()} className="fokus min-h-11 rounded-lg border border-kamen-rub px-4">Obuhvat cijelog DPU-a</button></div><p className="leading-6 text-kamen-tekst">Slojeve DPU-a uključite zasebno u izborniku karte.</p></details>}
     </div>
