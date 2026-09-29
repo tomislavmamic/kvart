@@ -25,9 +25,11 @@
         { "tekst": "Nacrt izmjena GUP-a 2025., čl. 36. st. 18.: drvorede planirati uz sve postojeće prometnice gdje prostorne mogućnosti dopuštaju", "navod": "/gup/dokument/2025#cl-36" }
       ],
       "akti": [
-        { "naziv": "Produljenje lokacijske dozvole za cestovnu građevinu preko čestica k.o. Split, Kamen i Mravince, uključujući 419/9", "klasa": "UP/I-350-05/20-01/000045", "datum": "2020-12-08", "izdao": "Splitsko-dalmatinska županija" },
-        { "naziv": "Zahtjev za novo produljenje te dozvole odbijen", "klasa": "UP/I-350-05/24-01/000208", "datum": "2025-03-25", "izdao": "Splitsko-dalmatinska županija" }
+        { "naziv": "Zahtjev Grada za lokacijsku dozvolu za cestu na zapadnom čvoru ulice (64 čestice, uključujući 419/9), zaprimljen 6. 11. 2020., u obradi", "klasa": "UP/I-350-05/20-01/000040", "datum": null, "izdao": "Grad Split" },
+        { "naziv": "Produljenje lokacijske dozvole za novu cestu od istočnog zavoja prema jugoistoku (i preko 419/9)", "klasa": "UP/I-350-05/20-01/000045", "datum": "2020-12-08", "izdao": "Splitsko-dalmatinska županija" },
+        { "naziv": "Zahtjev za izmjenu te dozvole odbijen", "klasa": "UP/I-350-05/24-01/000208", "datum": "2025-03-25", "izdao": "Splitsko-dalmatinska županija" }
       ],
+      "dozvole_za_cestu": "U registru nema ni lokacijske ni građevinske dozvole za samu ulicu. Obuhvati lokacijskih dozvola za ceste pokrivaju samo zapadni čvor (0–50 m osi) i istočni zavoj (330–490 m); između, i ispred Dračevca 15, nema nijednog. Provjereno upitima na os ceste svakih 15 m i na slici sloja lokacijskih dozvola.",
       "danas": "Drvoreda nema."
     },
     {
@@ -94,6 +96,7 @@
       "zona": "K5 (poslovna namjena i stanovanje), urbano pravilo 3.1",
       "zelenilo_udio": 0.3,
       "masline": "U4",
+      "tlocrt_dozvole": "scripts/data/dracevac-15-dozvola-2017.geojson",
       "izvori": [
         { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice, vrste očekivane visine oko 10 m, pri sadnji visoko najmanje 3 m", "navod": "/gup/dokument#cl-91" },
         { "tekst": "Zid i krošnje: Google Karte, 3D prikaz (prije 2025.), poravnat prema gradskim oknima i slivnicima; međa: katastarski plan DGU-a. Obrisi i kontrolne točke su u scripts/data/dracevac-15-google.json" }

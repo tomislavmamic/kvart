@@ -4,7 +4,7 @@ import test from "node:test";
 import { FEATURED_PROPOSALS } from "../../lib/featured-proposals";
 
 type Feature = { geometry: { type: string; coordinates: number[] }; properties: Record<string, unknown> };
-type Obligation = { id: string; vrsta: string; uvjetno?: boolean; akti: { klasa: string }[]; izvori: { navod?: string }[]; izracun: { stabala?: number; na_karti?: number; ostatak_na_cestici?: number; zamjenjuje?: string[]; u_kolnim_ulazima?: string[]; ulicna_u_ulazu?: string[]; mjesta_na_nogostupu?: number; mjesta_u_prijedlogu?: number; zid_od_mede_m?: number[]; ulicna_iza_zida?: string[] } };
+type Obligation = { id: string; vrsta: string; uvjetno?: boolean; akti: { klasa: string }[]; izvori: { navod?: string }[]; izracun: { stabala?: number; na_karti?: number; ostatak_na_cestici?: number; zamjenjuje?: string[]; u_kolnim_ulazima?: string[]; ulicna_u_ulazu?: string[]; mjesta_na_nogostupu?: number; mjesta_u_prijedlogu?: number; zid_od_mede_m?: number[]; ulicna_iza_zida?: string[]; dozvola_od_ulice_m?: number; nova_gradevina_m2?: number; nova_gradevina_u_tlocrtu_m2?: number } };
 type Figure = { src: string; width: number; height: number; marks: { xy: number[] }[]; lines: { kind: string }[] };
 
 const read = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
@@ -68,6 +68,9 @@ test("the Dračevac 15 wall is measured off the plot, on the aligned view only, 
   assert.ok(kinds("dracevac-15-google").includes("wall") && kinds("dracevac-15-google").includes("boundary"));
   // today's orthophoto leans crowns and roofs ~2 m north, so no boundary is drawn on it
   assert.ok(!kinds("dracevac-15").includes("boundary"));
+  // the permit's footprint and the building that stands are compared, not assumed to be one
+  assert.ok((c15.dozvola_od_ulice_m ?? 0) > 0);
+  assert.ok((c15.nova_gradevina_u_tlocrtu_m2 ?? 0) < (c15.nova_gradevina_m2 ?? 0));
 });
 
 test("every obligation names its act and cites GUP articles that exist in the reader", () => {

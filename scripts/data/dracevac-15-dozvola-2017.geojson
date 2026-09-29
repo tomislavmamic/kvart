@@ -1,0 +1,78 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       16.5035255,
+       43.5269132
+      ],
+      [
+       16.5034476,
+       43.5269618
+      ],
+      [
+       16.5034401,
+       43.526951
+      ],
+      [
+       16.5034151,
+       43.5269584
+      ],
+      [
+       16.5034541,
+       43.5270219
+      ],
+      [
+       16.503403,
+       43.5270388
+      ],
+      [
+       16.5034049,
+       43.5270496
+      ],
+      [
+       16.5033307,
+       43.5270725
+      ],
+      [
+       16.503326,
+       43.5270773
+      ],
+      [
+       16.503313,
+       43.5272042
+      ],
+      [
+       16.5033307,
+       43.5272305
+      ],
+      [
+       16.5036721,
+       43.5271198
+      ],
+      [
+       16.5037306,
+       43.5270867
+      ],
+      [
+       16.5035255,
+       43.5269132
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "klasa": "UP/I-361-03/16-01/000170",
+    "datum": "2017-04-25",
+    "cestica": "291",
+    "opis": "Tlocrt građevine iz građevinske dozvole za proizvodnju sladoleda, Dračevac 15, kako ga crta ISPU",
+    "izvor": "ISPU, Registar dozvola/akata, sloj Akt za građenje građevine (WMS layerHash 42mGASGF7Lk, slojevi 42,43,44), očitan 29. 9. 2026. s rastera 0,15 m/px; obris pojednostavljen na 0,3 m. Nije projekt: točan tlocrt je u glavnom projektu."
+   }
+  }
+ ]
+}

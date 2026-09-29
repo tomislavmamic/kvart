@@ -29,6 +29,9 @@ type Computed = {
   zid_na_cesti_m2?: number;
   ulicna_iza_zida?: string[];
   snimka_odstupanje_m?: number;
+  dozvola_od_ulice_m?: number;
+  nova_gradevina_m2?: number;
+  nova_gradevina_u_tlocrtu_m2?: number;
 };
 type Obligation = { id: string; tko: string; cestica: string; citat?: string; izvori: Source[]; akti: Act[]; izracun: Computed };
 type Figure = {
@@ -161,7 +164,8 @@ export function PlantingObligations() {
     <Stretch id="ulica" eyebrow="Ulica · k.č. 419/9" title="Drvored uz nogostup je posao Grada" o={street} bounds={street.izracun.okvir}
       ask={<>da Grad drvored uvrsti u svako uređenje ove ceste, a za mjesta blizu vodova s upraviteljima dogovori zaštitu ili izmještanje voda.</>}>
       <p>Cesta je nerazvrstana; njome upravlja Grad, a čestica je prema gradskom GIS-u u vlasništvu države. GUP traži da se ulice uređuju s drvoredom gdje za to ima prostora, a nacrt izmjena iz 2025. to izričito proteže na sve postojeće ceste.</p>
-      <p>Uz nogostup smo našli {street.izracun.mjesta_na_nogostupu} mjesta za stabla; {street.izracun.ulicna_uz_instalacije} ih je blizu podzemnih vodova. Za cestu preko ove čestice Županija je izdala lokacijsku dozvolu, produljenu 2020.; novo produljenje odbijeno je 2025.</p>
+      <p>Uz nogostup smo našli {street.izracun.mjesta_na_nogostupu} mjesta za stabla; {street.izracun.ulicna_uz_instalacije} ih je blizu podzemnih vodova.</p>
+      <p>Za samu ulicu u registru nema ni lokacijske ni građevinske dozvole. Dozvole za ceste postoje samo na njezinim krajevima: za zapadni čvor Grad je 2020. zatražio lokacijsku dozvolu i zahtjev je još u obradi, a s istočnog zavoja Županija je dozvolila novu cestu prema jugoistoku. Točnu crtu ulice između njih ne crta nijedan plan: GUP je u mjerilu 1:5000, a UPU Dračevac 2 još nije izrađen.</p>
     </Stretch>
 
     <Stretch id="dracevac-4d" eyebrow="Dračevac 4d · sjeverna strana" title="Drvored iz plana nikad nije posađen" o={d4} bounds={d4.izracun.okvir}
@@ -193,7 +197,7 @@ export function PlantingObligations() {
       ask={<>da Grad geodetski izmjeri zid. Ako je na javnoj površini, zid se vraća na među, a oslobođeni pojas{behindWall.length > 0 && <>, s mjestom {list(behindWall)},</>} pripada nogostupu. Masline presaditi, a uz ulicu posaditi visoka stabla.</>}>
       <p>Dvorište na čestici 291 od ulice dijeli betonski zid sa žičanom ogradom, a iza zida je red maslina, posađen prije 2017. Na Googleovoj snimci, poravnatoj prema gradskim oknima i slivnicima na oko {decimal(c15.izracun.snimka_odstupanje_m ?? 0)} m, zid stoji {decimal(wallFrom)} do {decimal(wallTo)} m sjeverno od katastarske međe. Toliko se vidi na istočnih {c15.izracun.zid_vidljiv_m} m pročelja; zapadnije ga skrivaju krošnje.</p>
       <p>Po katastarskom planu zid tako ograđuje oko {c15.izracun.zid_na_cesti_m2} m² cestovne čestice u vlasništvu države{behindWall.length > 0 && <>, a mjesto {list(behindWall)} iz prijedloga nogostupa ostaje iza njega</>}. Građevna čestica iz dozvole iz 2017. je samo k.č. 291, bez tog pojasa. Zapadni zid istog dvorišta, prema susjednoj privatnoj čestici, stoji oko metar od svoje međe, pa plan ovdje nije grubo pomaknut; gdje je međa na terenu, ipak potvrđuje tek geodet. Oko {share} krošnji maslina je preko katastarske međe.</p>
-      <p>Dozvola iz 2017. je za proizvodnju sladoleda. Kad se pogon izgradi, čestica po GUP-u duguje oko {stabala(c15.izracun.stabala ?? 0)} koja narastu oko deset metara; masline u ovakvom redu ostaju niske. Između 2023. i 2025. uz sam red maslina podignuta je nova građevina; prijave početka građenja za nju u registru nema.</p>
+      <p>Dozvola iz 2017. je za proizvodnju sladoleda. Kad se pogon izgradi, čestica po GUP-u duguje oko {stabala(c15.izracun.stabala ?? 0)} koja narastu oko deset metara; masline u ovakvom redu ostaju niske. Između 2023. i 2025. uz sam red maslina podignuta je nova građevina; prijave početka građenja za nju u registru nema. Nije ni na mjestu pogona iz dozvole: ISPU crta njegov tlocrt najmanje {decimal(c15.izracun.dozvola_od_ulice_m ?? 0)} m od ulice, a nova građevina od {c15.izracun.nova_gradevina_m2} m² stoji na samoj međi i s tim se tlocrtom preklapa u {c15.izracun.nova_gradevina_u_tlocrtu_m2} m².</p>
     </Stretch>
 
     <Stretch id="dracevac-9c" eyebrow="Dračevac 9C · južna strana" title="Jedno stablo" o={c9} bounds={c9.izracun.okvir}

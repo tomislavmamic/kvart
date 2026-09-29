@@ -289,6 +289,16 @@ def main():
                 "ulicna_iza_zida": sorted((t["id"] for t in street_trees_all if behind.contains(t["point"])), key=lambda i: int(i[1:])),
                 "snimka_odstupanje_m": round(view["rms_m"], 1),
             }
+        if item.get("tlocrt_dozvole"):
+            # the permit's building as ISPU draws it, against the building that stands closest to the street
+            permitted = unary_union([metres(f) for f in json.loads((ROOT / item["tlocrt_dozvole"]).read_text())["features"]])
+            standing = min((f for f in footprints if f.intersects(plot) and f.area > 100), key=lambda f: f.distance(edge))
+            computed |= {
+                "dozvola_od_ulice_m": round(permitted.distance(edge), 1),
+                "nova_gradevina_m2": round(standing.area),
+                "nova_gradevina_od_ulice_m": round(standing.distance(edge), 1),
+                "nova_gradevina_u_tlocrtu_m2": round(standing.intersection(permitted).area),
+            }
         summary.append({**item, "izracun": computed,
                         "polozaji": [list(TO_WGS(p.x, p.y)) for p in positions]})
 

@@ -42,6 +42,28 @@ koji pomiče kartu na taj potez. Na karti su dugovana stabla ljubičasta
     Zato za građevine bez dozvole nakon 2006. ne crtamo stabla, nego tražimo
     da ih Grad u budućim dozvolama i UPU-u Dračevac 2 smjesti uz ulicu.
 
+## Dozvole za cestu
+
+ISPU, sloj lokacijskih dozvola i akata za građenje i uporabu, upit na os ceste
+svakih 15 m i slika sloja duž cijele ulice (29. 9. 2026.):
+
+- Za samu ulicu nema ni lokacijske ni građevinske ni uporabne dozvole.
+- Zapadni čvor (0–50 m osi): zahtjev Grada za lokacijsku dozvolu za cestu,
+  KLASA UP/I-350-05/20-01/000040, zaprimljen 6. 11. 2020., u obradi; popis
+  od 64 čestice uključuje 419/9 i čestice uz sjevernu stranu, ali obuhvat na
+  ISPU-u pokriva samo čvor. Prethodi mu odluka Ministarstva o prijenosu
+  nadležnosti za rekonstrukciju ceste (20-01/000137, 19. 10. 2020.).
+- Istočni zavoj (330–490 m): produljenje županijske lokacijske dozvole za
+  novu cestu prema jugoistoku (20-01/000045, 8. 12. 2020.); zahtjev za
+  izmjenu odbijen 25. 3. 2025. (24-01/000208). Uz zavoj je i lokacijska
+  dozvola Ministarstva iz 2020. (18-01/000193).
+- Između (50–330 m), i ispred Dračevca 15, nema obuhvata nijedne dozvole.
+  Planovi: samo GUP (list 1:5000, na ISPU-u GUP1 R07) i PPUG; nijedan DPU
+  ne seže dovde, a UPU Dračevac 2 nije izrađen. Točne crte ceste ovdje nema
+  ni u jednom javnom aktu.
+- Projekti (situacije) nisu javni: čuvaju ih tijela koja su akte izdala;
+  javne stranice e-Dozvole za ove akte ne otvaraju se.
+
 ## Izračun (`scripts/generate-sidewalk-obligations.py`)
 
 - DPU: položaji su oni iz plana; čestica je obuhvat plana s ISPU-a.
@@ -81,6 +103,12 @@ koji pomiče kartu na taj potez. Na karti su dugovana stabla ljubičasta
   prema privatnoj k.č. 292, je oko metar od svoje međe, pa plan nije grubo
   pomaknut. Oko 45 % krošnji maslina je preko međe. Zauzimanje ipak ne
   tvrdimo: tražimo geodetsko mjerenje.
+- Nova građevina uz masline (tlocrt Grada 2025., 171 m²) stoji na samoj
+  međi; tlocrt pogona iz dozvole iz 2017., kako ga crta ISPU-ov sloj akata za
+  građenje, najmanje je 4,8 m od ulice, a preklapaju se u 29 m². Obris je
+  očitan s ISPU-ova rastera 0,15 m/px u
+  `scripts/data/dracevac-15-dozvola-2017.geojson`; točan tlocrt je u glavnom
+  projektu.
 - DGU-ovi ortofoti ovdje visoke predmete naginju na sjever: krošnje maslina
   2–3 m, krov nove građevine oko 2,4 m prema tlocrtu Grada. Raniji izračun
   „oko dvije trećine krošnji preko međe” s DOF 2021./22. zato je bio
