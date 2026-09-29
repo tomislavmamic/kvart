@@ -184,8 +184,10 @@ export default async function ZabranaPage() {
                   rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
                   na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
                   {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
-                  {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Tanak ljubičasti
-                  rub ima još {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
+                  {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Ljubičastim
+                  točkama, a izdaleka blijedom mrljom,{" "}
+                  {imenicaUz(sporne.cesta.cestice, ["označena je", "označene su", "označeno je"])} još{" "}
+                  {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
                   {imenicaUz(sporne.cesta.cestice, ["čestica", "čestice", "čestica"])} neuređenog dijela uz cestu koje nema u
                   gradskom registru ili joj se širina ne da izmjeriti: mogu biti sporne ako je cesta izvedena i javna. Kako smo to
                   provjerili i što se iz toga može tražiti, piše u{" "}

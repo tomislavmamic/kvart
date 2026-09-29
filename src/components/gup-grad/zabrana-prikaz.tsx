@@ -702,7 +702,9 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
             <Stavka stil={{ background: `repeating-linear-gradient(135deg, ${BOJE_ZABRANE.sporno} 0 1.2px, transparent 1.2px 5px)` }}>
               oznaka ne odgovara kriteriju Grada ili zakonu <span className="text-zinc-500">· izdaleka puna mrlja</span>
             </Stavka>
-            <Stavka stil={{ border: `1.5px solid ${BOJE_ZABRANE.sporno}` }}>moguće sporno: uz cestu izvan registra</Stavka>
+            <Stavka stil={{ background: `radial-gradient(circle, ${BOJE_ZABRANE.sporno} 1.3px, transparent 1.7px) 0 0 / 6px 6px` }}>
+              moguće sporno: uz cestu izvan registra <span className="text-zinc-500">· izdaleka blijeda mrlja</span>
+            </Stavka>
             <li className="text-zinc-500">Ceste kroz zabranu, izbliza; sredina crte je širina čestice ceste:</li>
             {(
               [
