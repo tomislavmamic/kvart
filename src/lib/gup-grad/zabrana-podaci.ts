@@ -90,6 +90,8 @@ export interface RedUpu {
   fokus_ha: number;
   fokus_slobodno_ha: number;
   fokus_neizgradjene: number;
+  /** čestice s mjestom za novu zgradu na karti (neizgrađene i djelomično izgrađene) */
+  fokus_cestice: number;
 }
 
 /**

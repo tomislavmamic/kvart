@@ -135,6 +135,9 @@ test("zabrana-cestice-2025.geojson: zbroj čestica jednak je iskazanom slobodnom
   assert.equal(f.filter((x) => x.properties.neizgradjena).length, z.fokus.neizgradjene.cestice);
   const haF = f.reduce((s, x) => s + x.properties.m2, 0) / 1e4;
   assert.ok(Math.abs(haF - z.fokus.slobodno_ha) < 0.2, `${haF} vs ${z.fokus.slobodno_ha}`);
+  // po UPU-u su prebrojane sve čestice s karte (po njima se crtaju obuhvati)
+  const poUpu = z.po_upu as { fokus_cestice: number }[];
+  assert.equal(poUpu.reduce((s, r) => s + r.fokus_cestice, 0), f.length);
 });
 
 test("zabrana-2025.geojson: komadi zbrojeni daju iskazanu površinu", () => {

@@ -136,7 +136,9 @@ def zaokruzi(geom):
 
 def novi_red(broj: int, naziv: str | None) -> dict:
     return {"broj": broj, "naziv": naziv, "sanacija_ha": 0.0, "preobrazba_ha": 0.0, "neuredeno_ha": 0.0,
-            "slobodno_ha": 0.0, "neizgradjene": 0, "fokus_ha": 0.0, "fokus_slobodno_ha": 0.0, "fokus_neizgradjene": 0}
+            "slobodno_ha": 0.0, "neizgradjene": 0, "fokus_ha": 0.0, "fokus_slobodno_ha": 0.0, "fokus_neizgradjene": 0,
+            # čestice s mjestom za zgradu na karti; karta crta obuhvat samo UPU-a koji ih ima
+            "fokus_cestice": 0}
 
 
 def crvena_rescetka(gup, planovi) -> np.ndarray:
@@ -319,6 +321,7 @@ def main() -> None:
         k[1] += m2 / 1e4
         po_zoni[zona] = po_zoni.get(zona, 0.0) + m2 / 1e4
         if u_f:
+            z["fokus_cestice"] += 1
             z["fokus_slobodno_ha"] += m2 / 1e4
             z["fokus_neizgradjene"] += int(neizgradjena)
             k = u_fokusu["neizgradjene" if neizgradjena else "djelomicno"]

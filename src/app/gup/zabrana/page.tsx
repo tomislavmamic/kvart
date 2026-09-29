@@ -183,6 +183,7 @@ export default async function ZabranaPage() {
                   Obje su oznake s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga; list sanaciju crta
                   zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Tamnijim su tonom čestice na kojima ima
                   mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju. Svjetliji je ostatak zone, većinom izgrađen.
+                  Plavim je rubom obuhvat UPU-a u kojem su te čestice; ostale obuhvate iz prijedloga karta ne crta.
                 </p>
                 <p className="mt-3 max-w-3xl text-zinc-600">
                   List 4.d boji i zemljište koje karta ne boji jer nije privatno zemljište za pojedinačnu gradnju: ulice,

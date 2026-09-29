@@ -511,7 +511,8 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
     doKarte();
   };
 
-  const redoviUpu = poUpu.filter((r) => r.fokus_ha >= 0.05).sort((a, b) => b.fokus_slobodno_ha - a.fokus_slobodno_ha || b.fokus_ha - a.fokus_ha);
+  // planovi s obojenim česticama; po njima karta crta i obuhvate (ispod 0,05 ha popis bi pisao 0,0)
+  const redoviUpu = poUpu.filter((r) => r.fokus_cestice > 0 && r.fokus_slobodno_ha >= 0.05).sort((a, b) => b.fokus_slobodno_ha - a.fokus_slobodno_ha || b.fokus_ha - a.fokus_ha);
   const vidljiviUpu = sviUpu ? redoviUpu : redoviUpu.slice(0, PRVIH_UPU);
 
   return (
@@ -611,6 +612,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
               zabrana={podaci.zabrana}
               planovi={podaci.planovi}
               cestice={podaci.cestice}
+              upuNaKarti={redoviUpu.map((r) => r.broj).filter(Boolean)}
               prikaziZabranu={prikaziZabranu}
               odabraniUpu={odabraniUpu}
               cilj={cilj}
@@ -675,7 +677,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
         </Skupina>
         {/* poravnato sa stavkama skupine, ispod njezina naslova */}
         <ul className="sm:pt-[1.875rem]">
-          <Stavka stil={{ border: `2px solid ${BOJE_ZABRANE.upu}` }}>obuhvat UPU-a iz prijedloga</Stavka>
+          <Stavka stil={{ border: `2px solid ${BOJE_ZABRANE.upu}` }}>obuhvat UPU-a u kojem su te čestice</Stavka>
         </ul>
       </div>
 

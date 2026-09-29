@@ -13,7 +13,8 @@
  * zabrana stvarno priječi gradnju (zabrana-cestice-2025.geojson,
  * TAMNE_ZABRANE). Od zuma CESTICE_OD_ZUMA te čestice dobivaju i tanak rub, da
  * se susjedne razlikuju. Za snalaženje su tu planovi na snazi (sivo), obuhvati
- * propisanih UPU-a (plavi rub), granica GUP-a (jedina iscrtkana crta) i, od
+ * propisanih UPU-a u kojima su te čestice (plavi rub; upuNaKarti), granica
+ * GUP-a (jedina iscrtkana crta) i, od
  * ZGRADE_OD_ZUMA, zgrade iz gradskog 3D modela (tlocrti onoga što stoji na
  * tlu, pločice iz cestice.py), iznad oznaka. Podloga je siva, da se boje
  * oznaka čitaju.
@@ -77,6 +78,8 @@ export function ZabranaKarta(props: {
   zabrana: FeatureCollection;
   planovi: FeatureCollection;
   cestice: FeatureCollection;
+  /** brojevi UPU-a čiji se obuhvat crta: oni u kojima su obojene čestice */
+  upuNaKarti: number[];
   prikaziZabranu: boolean;
   odabraniUpu: number | null;
   cilj: CiljKarte | null;
@@ -85,7 +88,7 @@ export function ZabranaKarta(props: {
   punZaslon?: boolean;
   onKlik: (lng: number, lat: number) => void;
 }) {
-  const { zabrana, planovi, cestice, prikaziZabranu, odabraniUpu, cilj, oznaka, punZaslon = false, onKlik } = props;
+  const { zabrana, planovi, cestice, upuNaKarti, prikaziZabranu, odabraniUpu, cilj, oznaka, punZaslon = false, onKlik } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
@@ -171,7 +174,7 @@ export function ZabranaKarta(props: {
       map.on("moveend", () => {
         if (map.getZoom() >= ZGRADE_OD_ZUMA) ucitajZgrade(L, map.getBounds().pad(0.2), () => {}).catch(() => {});
       });
-      L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "propisan")), {
+      L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "propisan" && upuNaKarti.includes(f.properties?.broj))), {
         ...netaknuto,
         style: { color: BOJE_ZABRANE.upu, weight: 1.5, fill: false },
       }).addTo(map);
