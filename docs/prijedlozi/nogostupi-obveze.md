@@ -47,9 +47,18 @@ koji pomiče kartu na taj potez. Na karti su dugovana stabla ljubičasta
 - GUP: neizgrađeni dio = čestica (DGU katastar) minus tlocrti zgrada Grada iz
   2025.; stabala = cijeli broj neizgrađenih m² / 200.
 - Položaj GUP-ovih stabala je naš prijedlog: red odmah iza ulične ograde
-  (1,5–2,5 m od međe), izvan kolnih ulaza (prilazi očitani za prijedlog
-  nogostupa, otvor najmanje 8 m + 1,5 m) i 2,5 m od zgrada, najmanje 7 m
-  međusobno.
+  (1,5–2,5 m od međe), izvan kolnih ulaza (otvor najmanje 8 m + 1,5 m) i
+  2,5 m od zgrada; unutar svakog slobodnog dijela ograde jednoliko, najmanje
+  6 m međusobno, a prednost imaju mjesta iza uličnih mjesta uz vodove.
+- Kolni ulazi su prilazi očitani za prijedlog nogostupa
+  (`scripts/data/sidewalk-tree-retention.json`). Dva ulaza hale 7A bila su
+  očitana krivo; ispravljeni su prema Google Street Viewu (travanj 2024.),
+  triangulacijom s dvije panorame i prema rasvjetnom stupu 9688 i ormariću
+  KRO2363 iz gradskog GIS-a: kamionski ulaz je 9–17 m, glavni 60–69 m od
+  zapadnog kraja pročelja. Mjesta prijedloga D18 i D25 pala su u te ulaze i
+  otpadaju (sloj karte `street-tree-in-driveway`); izlazi prijedloga
+  nogostupa nisu ponovno generirani, pa ih 3D prikaz i popis položaja još
+  sadrže. Ostali prilazi provjereni su na Street Viewu i nisu mijenjani.
 - Mjesto na nogostupu ispred dugovanog stabla: ako je uz podzemni vod
   („conflict” u probiru prijedloga), dugovano stablo iza ograde ga zamjenjuje
   i na karti je sivo zaokruženo; ako je slobodno, ostaje i ulica dobiva

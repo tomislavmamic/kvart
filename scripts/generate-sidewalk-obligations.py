@@ -49,7 +49,7 @@ BUILDING_SETBACK_M = 2.5
 GAP_MIN_RADIUS_M = 4.0  # driveway kept clear: at least 8 m, lorries use the west gate of 7A
 GAP_CLEARANCE_M = 1.5
 REPLACE_WITHIN_M = 4.0  # owed tree this close behind a clashing street spot replaces it
-MIN_SPACING_M = 7.0     # between owed trees
+MIN_SPACING_M = 6.0     # between owed trees: a continuous row, crowns touching when grown
 KEEP_FROM_STREET_M = 4.0  # an owed tree next to a kept street tree, for a staggered double row
 POWER_LINE_NEAR_M = 10.0
 # Crown radius drawn on the map: DPU5 sheets draw ~3.8 m crowns; a GUP tree is
@@ -98,8 +98,9 @@ def retention():
 
     gaps = {g["label"]: line(g["pixels"]).buffer(max(g["buffer_m"], GAP_MIN_RADIUS_M) + GAP_CLEARANCE_M)
             for g in data["access_gaps"]}
+    driveways = {g["label"]: line(g["pixels"]).buffer(g["buffer_m"]) for g in data["access_gaps"]}
     groups = {g["id"]: (g, line(g["pixels"]).buffer(g["buffer_m"])) for g in data["groups"]}
-    return gaps, groups
+    return gaps, driveways, groups
 
 
 def place_owed(plot, built, road, count, gaps, street_trees):
@@ -114,37 +115,46 @@ def place_owed(plot, built, road, count, gaps, street_trees):
         room = room.intersection(edge.buffer(ROW_DEPTH_M))
     if room.is_empty:
         return [], {}
-    # candidate spots every half metre along the fence line
-    if edge is not None and edge.length >= 4:
-        anchors = [edge.interpolate(d) for d in [i * 0.5 for i in range(int(edge.length / 0.5) + 1)]]
-    else:
-        anchors = [nearest_points(plot, road)[0]]
-    candidates = []
-    for anchor in anchors:
-        spot = nearest_points(room, anchor)[0]
-        if spot.distance(anchor) <= ROW_DEPTH_M + 0.5 and all(spot.distance(c) > 0.4 for c in candidates):
-            candidates.append(spot)
     in_front = [t for t in street_trees if t["point"].distance(plot) <= IN_FRONT_M]
-    chosen, replaces = [], {}
-    # 1. behind every clashing street spot, the owed tree takes its place
-    for tree in sorted((t for t in in_front if t["conflict"]), key=lambda t: t["chainage"]):
+    kept = [t["point"] for t in in_front if not t["conflict"]]
+
+    def spot(chainage):
+        anchor = edge.interpolate(chainage)
+        point = nearest_points(room, anchor)[0]
+        usable = point.distance(anchor) <= ROW_DEPTH_M + 0.5 and all(point.distance(k) >= KEEP_FROM_STREET_M for k in kept)
+        return point if usable else None
+
+    if edge is None or edge.length < 4:
+        candidates = [nearest_points(room, road)[0]]
+    else:
+        # usable stretches of the fence line, then trees evenly spaced in each
+        step = 0.5
+        usable = [i * step for i in range(int(edge.length / step) + 1) if spot(i * step) is not None]
+        stretches, start = [], None
+        for a, b in zip(usable, usable[1:] + [None]):
+            start = a if start is None else start
+            if b is None or b - a > step + 1e-6:
+                stretches.append((start, a))
+                start = None
+        candidates = []
+        for a, b in stretches:
+            n = int((b - a) // MIN_SPACING_M) + 1
+            chainages = [(a + b) / 2] if n == 1 else [a + i * (b - a) / (n - 1) for i in range(n)]
+            candidates += [spot(c) for c in chainages]
+    # prefer spots right behind a street spot that clashes with a utility: there the owed tree replaces it
+    clashes = [t["point"] for t in in_front if t["conflict"]]
+    candidates.sort(key=lambda c: min([c.distance(p) for p in clashes] or [math.inf]))
+    chosen = []
+    for c in candidates:
         if len(chosen) == count:
             break
-        best = min(candidates, key=lambda c: c.distance(tree["point"]), default=None)
-        if best is None or best.distance(tree["point"]) > REPLACE_WITHIN_M:
-            continue
-        if all(best.distance(c) >= MIN_SPACING_M for c in chosen):
-            chosen.append(best)
-            replaces[tree["id"]] = len(chosen) - 1
-    # 2. the rest staggered between the kept street trees, as far as possible from everything
-    kept = [t["point"] for t in in_front if t["id"] not in replaces]
-    while len(chosen) < count:
-        free = [c for c in candidates
-                if all(c.distance(o) >= MIN_SPACING_M for o in chosen)
-                and all(c.distance(k) >= KEEP_FROM_STREET_M for k in kept)]
-        if not free:
-            break
-        chosen.append(max(free, key=lambda c: min([c.distance(o) for o in chosen + kept] or [math.inf])))
+        if all(c.distance(o) >= MIN_SPACING_M - 0.01 for o in chosen):
+            chosen.append(c)
+    replaces = {}
+    for tree in in_front:
+        near = [i for i, c in enumerate(chosen) if c.distance(tree["point"]) <= REPLACE_WITHIN_M]
+        if tree["conflict"] and near:
+            replaces[tree["id"]] = min(near, key=lambda i: chosen[i].distance(tree["point"]))
     return chosen, replaces
 
 
@@ -172,13 +182,20 @@ def main():
                      "utility": f["properties"]["nearest_utility"]["label"],
                      "utility_m": f["properties"]["nearest_utility_distance_m"]}
                     for f in read("prijedlozi/nogostupi.geojson") if f["properties"].get("role") == "proposed-tree"]
-    gaps, groups = retention()
+    gaps, driveways, groups = retention()
+    # Street spots of the proposal that fall in a driveway (the proposal read two
+    # gates of hall 7A in the wrong place); they are dropped, whoever plants.
+    in_driveway = {t["id"]: name for t in street_trees for name, way in driveways.items() if way.contains(t["point"])}
+    street_trees_all = street_trees
+    street_trees = [t for t in street_trees if t["id"] not in in_driveway]
 
     features, summary = [], []
     for item in facts["obveze"]:
         conditional = bool(item.get("uvjetno"))
         computed, positions, replaces, placement = {}, [], {}, None
         if item["vrsta"] == "ulica":
+            computed["mjesta_u_prijedlogu"] = len(street_trees_all)
+            computed["u_kolnim_ulazima"] = sorted(in_driveway, key=lambda i: int(i[1:]))
             computed["mjesta_na_nogostupu"] = len(street_trees)
             computed["ulicna_uz_instalacije"] = sum(t["conflict"] for t in street_trees)
             computed["okvir"] = bounds(unary_union([t["point"] for t in street_trees]), 20)
@@ -213,6 +230,8 @@ def main():
         computed["zamjenjuje"] = sorted(replaces, key=lambda i: int(i[1:]))
         in_front = sorted((t for t in street_trees if t["point"].distance(plot) <= IN_FRONT_M), key=lambda t: t["chainage"])
         computed["ulicna_ispred"] = [t["id"] for t in in_front]
+        computed["ulicna_u_ulazu"] = sorted((t["id"] for t in street_trees_all if t["id"] in in_driveway and t["point"].distance(plot) <= IN_FRONT_M),
+                                            key=lambda i: int(i[1:]))
         computed["ulicna_dvostruki_red"] = [t["id"] for t in in_front if t["id"] not in replaces]
         near_power = [i for i, p in enumerate(positions) if min((line.distance(p) for line in power_lines), default=math.inf) < POWER_LINE_NEAR_M]
         computed["uz_dalekovod"] = len(near_power)
@@ -252,6 +271,11 @@ def main():
         summary.append({**item, "izracun": computed,
                         "polozaji": [list(TO_WGS(p.x, p.y)) for p in positions]})
 
+    for tree in street_trees_all:
+        if tree["id"] in in_driveway:
+            features.append(mapped_feature(
+                tree["point"], role="street-tree-in-driveway", candidate_id=tree["id"],
+                action=f"Mjesto {tree['id']} je u kolnom ulazu ({in_driveway[tree['id']]}) i otpada"))
     due = sum(o["izracun"]["stabala"] for o in summary if o["vrsta"] != "ulica" and not o.get("uvjetno"))
     write(GEO / "prijedlozi/nogostupi-obveze.geojson", {"type": "FeatureCollection", "features": features})
     write(ROOT / "src/generated/sidewalk-obligations.json", {

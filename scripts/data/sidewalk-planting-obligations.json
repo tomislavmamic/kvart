@@ -57,7 +57,7 @@
       "adresa": "Dračevac 7A",
       "zona": "K (poslovna namjena), urbano pravilo 3.1",
       "zelenilo_udio": 0.2,
-      "prilazi": ["Sjeverni prilaz poslovnoj zgradi", "Ulaz uz istočni kraj poslovne zgrade"],
+      "prilazi": ["Kamionski ulaz hale Dračevac 7A", "Glavni ulaz hale Dračevac 7A"],
       "izvori": [
         { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice i 1 na 4 parkirna mjesta; sadnja je uvjet za uporabnu dozvolu", "navod": "/gup/dokument#cl-91" },
         { "tekst": "GUP, čl. 73. (urbano pravilo 3.1, poslovna namjena K): najmanje 20 % čestice zelena površina", "navod": "/gup/dokument#cl-73" }

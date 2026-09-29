@@ -32,7 +32,7 @@ export const FEATURED_PROPOSALS = [
     category: "ceste" as Category,
     neighborhoods: ["dracevac"] as Neighborhood[],
     subject: "Pješaci i drvored",
-    detail: "490 m ceste · 46 mjesta uz nogostup · 28 dugovanih stabala",
+    detail: "490 m ceste · 44 mjesta uz nogostup · 28 dugovanih stabala",
     image: "/prijedlozi/nogostupi-render-hlad.png",
     imageAlt: "Nogostupi u hladu razvijenih krošnji uz postojeće zgrade Dračevca",
     visualNote: "Idejni prikaz · gušći drvored i razvijene krošnje",

@@ -22,7 +22,7 @@ from pathlib import Path
 from PIL import Image
 from pyproj import Transformer
 from shapely.geometry import LineString, box, shape
-from shapely.ops import transform
+from shapely.ops import nearest_points, transform
 
 ROOT = Path(__file__).resolve().parent.parent
 GEO = ROOT / "public/geo"
@@ -49,8 +49,8 @@ FIGURES = [
 # Driveways the figures label, by the access-gap names of the sidewalk proposal.
 GAP_LABELS = {
     "Prilaz kod hale": "kolni ulaz",
-    "Sjeverni prilaz poslovnoj zgradi": "kolni ulaz, kamioni",
-    "Ulaz uz istočni kraj poslovne zgrade": "glavni ulaz",
+    "Kamionski ulaz hale Dračevac 7A": "kamionski ulaz",
+    "Glavni ulaz hale Dračevac 7A": "glavni ulaz",
     "Južni poslovni prilaz": "kolni ulaz",
 }
 
@@ -94,8 +94,10 @@ def main():
     retention = json.loads((ROOT / "scripts/data/sidewalk-tree-retention.json").read_text())
     rx0, ry0, rx1, ry1 = retention["bbox_3765"]
     rw, rh = retention["image_size"]
-    gaps = {g["label"]: LineString([(rx0 + px * (rx1 - rx0) / rw, ry1 - py * (ry1 - ry0) / rh) for px, py in g["pixels"]]).buffer(g["buffer_m"])
-            for g in retention["access_gaps"]}
+    gap_lines = {g["label"]: LineString([(rx0 + px * (rx1 - rx0) / rw, ry1 - py * (ry1 - ry0) / rh) for px, py in g["pixels"]])
+                 for g in retention["access_gaps"]}
+    gaps = {g["label"]: gap_lines[g["label"]].buffer(g["buffer_m"]) for g in retention["access_gaps"]}
+    road_axis = next(transform(TO_METRES, shape(f["geometry"])) for f in proposal if f["properties"].get("role") == "road")
     OUT.mkdir(parents=True, exist_ok=True)
     figures = {}
     for fid, bbox, kind, owners in FIGURES:
@@ -114,8 +116,10 @@ def main():
         frame = box(x0, y0, x1, y1)
         marks, lines, areas = [], [], []
         if kind.startswith("dof"):
-            replaced = {f["properties"]["candidate_id"] for f in obligations if f["properties"]["role"] == "street-tree-replaceable"
-                        and f["properties"]["obligation"] in owners}
+            # spots given up: for an owed tree of this stretch, or because they are in a driveway
+            replaced = {f["properties"]["candidate_id"] for f in obligations
+                        if (f["properties"]["role"] == "street-tree-replaceable" and f["properties"]["obligation"] in owners)
+                        or f["properties"]["role"] == "street-tree-in-driveway"}
             for f in proposal:
                 p = f["properties"]
                 if p.get("role") != "proposed-tree":
@@ -125,12 +129,12 @@ def main():
                     kind_ = "street-drop" if p["candidate_id"] in replaced else "street-conflict" if p["screen_result"] == "conflict" else "street"
                     mark = {"kind": kind_, "xy": px(point.x, point.y), "r": 1.0 / STEP_M}
                     # only the street spots the text talks about carry their number
-                    if any(p["candidate_id"] in summary[o]["izracun"].get("ulicna_ispred", []) for o in owners):
+                    if any(p["candidate_id"] in summary[o]["izracun"].get("ulicna_ispred", []) + summary[o]["izracun"].get("ulicna_u_ulazu", []) for o in owners):
                         mark["label"] = p["candidate_id"]
                     marks.append(mark)
             for f in obligations:
                 p = f["properties"]
-                if p["obligation"] not in owners:
+                if p.get("obligation") not in owners:
                     continue
                 geometry = transform(TO_METRES, shape(f["geometry"]))
                 if p["role"] == "obligation-tree":
@@ -148,7 +152,10 @@ def main():
                     area = {"kind": "gap", "points": [px(*c) for c in clipped.exterior.coords]}
                     # a driveway at the frame's edge is drawn but not named
                     if clipped.area > 0.5 * gap.area:
-                        label_at = clipped.representative_point()
+                        # at the road end of the driveway, clear of the street spots on the plot edge
+                        label_at = nearest_points(gap_lines[name], road_axis)[0]
+                        if not frame.buffer(-3).contains(label_at):
+                            label_at = clipped.representative_point()
                         area |= {"label": GAP_LABELS.get(name, "kolni ulaz"), "label_xy": px(label_at.x, label_at.y)}
                     areas.append(area)
             for line in power:

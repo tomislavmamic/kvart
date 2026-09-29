@@ -47,8 +47,13 @@
       ],
       "danas": "Drvoreda nema.",
       "izracun": {
-        "mjesta_na_nogostupu": 46,
-        "ulicna_uz_instalacije": 41,
+        "mjesta_u_prijedlogu": 46,
+        "u_kolnim_ulazima": [
+          "D18",
+          "D25"
+        ],
+        "mjesta_na_nogostupu": 44,
+        "ulicna_uz_instalacije": 40,
         "okvir": [
           16.501147,
           43.526946,
@@ -132,6 +137,7 @@
           "D7",
           "D8"
         ],
+        "ulicna_u_ulazu": [],
         "ulicna_dvostruki_red": [],
         "uz_dalekovod": 2
       },
@@ -223,8 +229,8 @@
       "zona": "K (poslovna namjena), urbano pravilo 3.1",
       "zelenilo_udio": 0.2,
       "prilazi": [
-        "Sjeverni prilaz poslovnoj zgradi",
-        "Ulaz uz istočni kraj poslovne zgrade"
+        "Kamionski ulaz hale Dračevac 7A",
+        "Glavni ulaz hale Dračevac 7A"
       ],
       "izvori": [
         {
@@ -264,55 +270,54 @@
           "D22",
           "D23",
           "D24",
-          "D25",
           "D26"
         ],
         "ulicna_ispred": [
-          "D18",
           "D20",
           "D22",
           "D23",
           "D24",
-          "D25",
           "D26"
         ],
-        "ulicna_dvostruki_red": [
-          "D18"
+        "ulicna_u_ulazu": [
+          "D18",
+          "D25"
         ],
+        "ulicna_dvostruki_red": [],
         "uz_dalekovod": 0
       },
       "polozaji": [
         [
-          16.503275934963014,
-          43.52748372500469
+          16.503814029140422,
+          43.5273050572022
         ],
         [
-          16.503388646425282,
-          43.52743916615672
+          16.50327517484011,
+          43.52748405290105
         ],
         [
-          16.503499862369477,
-          43.52739974037592
+          16.50363060436149,
+          43.527359697310615
         ],
         [
-          16.503612593278504,
-          43.52736502134561
+          16.503485563184775,
+          43.527404809410946
         ],
         [
-          16.503727204417434,
-          43.52733099874282
+          16.5034140672253,
+          43.52743015455924
         ],
         [
-          16.503818756848872,
-          43.52730364465223
+          16.503342571205962,
+          43.5274554996627
         ],
         [
-          16.50309732341356,
-          43.527535984719044
+          16.50355692263833,
+          43.527381477435824
         ],
         [
-          16.503196122013136,
-          43.52751815409404
+          16.503101705813187,
+          43.52753539853817
         ]
       ]
     },
@@ -362,6 +367,7 @@
           "D27",
           "D28"
         ],
+        "ulicna_u_ulazu": [],
         "ulicna_dvostruki_red": [
           "D27",
           "D28"
@@ -419,6 +425,7 @@
           "D21",
           "D27"
         ],
+        "ulicna_u_ulazu": [],
         "ulicna_dvostruki_red": [
           "D21",
           "D27"

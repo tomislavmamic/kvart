@@ -4,7 +4,7 @@ import test from "node:test";
 import { FEATURED_PROPOSALS } from "../../lib/featured-proposals";
 
 type Feature = { geometry: { type: string; coordinates: number[] }; properties: Record<string, unknown> };
-type Obligation = { id: string; vrsta: string; uvjetno?: boolean; akti: { klasa: string }[]; izvori: { navod?: string }[]; izracun: { stabala?: number; na_karti?: number; ostatak_na_cestici?: number; zamjenjuje?: string[] } };
+type Obligation = { id: string; vrsta: string; uvjetno?: boolean; akti: { klasa: string }[]; izvori: { navod?: string }[]; izracun: { stabala?: number; na_karti?: number; ostatak_na_cestici?: number; zamjenjuje?: string[]; u_kolnim_ulazima?: string[]; ulicna_u_ulazu?: string[]; mjesta_na_nogostupu?: number; mjesta_u_prijedlogu?: number } };
 type Figure = { src: string; width: number; height: number; marks: { xy: number[] }[] };
 
 const read = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
@@ -40,6 +40,17 @@ test("only street spots that clash with a utility line are given up for an owed 
   }
 });
 
+test("street spots in a driveway are dropped on the map and never count as replaced or kept", () => {
+  const street = summary.obveze.find((o) => o.id === "grad-ulica")!.izracun;
+  const dropped = byRole("street-tree-in-driveway").map((f) => String(f.properties.candidate_id)).sort();
+  assert.deepEqual(dropped, [...(street.u_kolnim_ulazima ?? [])].sort());
+  assert.equal(street.mjesta_na_nogostupu, (street.mjesta_u_prijedlogu ?? 0) - dropped.length);
+  for (const o of summary.obveze) {
+    for (const id of o.izracun.zamjenjuje ?? []) assert.ok(!dropped.includes(id), `${o.id}: ${id} is in a driveway`);
+    for (const id of o.izracun.ulicna_u_ulazu ?? []) assert.ok(dropped.includes(id), `${o.id}: ${id}`);
+  }
+});
+
 test("the olive row replaces the proposal's keep marker of the same group", () => {
   const olives = byRole("olive-row");
   assert.ok(olives.length > 0);
@@ -66,7 +77,9 @@ test("every figure has its image, and its marks fall on it", () => {
   }
 });
 
-test("the proposal card quotes the same owed total as the page", () => {
+test("the proposal card quotes the same numbers as the page", () => {
   const card = FEATURED_PROPOSALS.find((p) => p.slug === "uredenje-nogostupa")!;
+  const street = summary.obveze.find((o) => o.id === "grad-ulica")!.izracun;
   assert.match(card.detail, new RegExp(`${summary.dugovano_stabala} dugovanih stabala`));
+  assert.match(card.detail, new RegExp(`${street.mjesta_na_nogostupu} mjesta uz nogostup`));
 });

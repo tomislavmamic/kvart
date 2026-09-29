@@ -17,6 +17,9 @@ type Computed = {
   ulicna_dvostruki_red?: string[];
   uz_dalekovod?: number | string[];
   mjesta_na_nogostupu?: number;
+  mjesta_u_prijedlogu?: number;
+  u_kolnim_ulazima?: string[];
+  ulicna_u_ulazu?: string[];
   ulicna_uz_instalacije?: number;
   okvir_dalekovod?: number[] | null;
   masline_na_cesti_m2?: number;
@@ -36,6 +39,10 @@ const byId = (id: string) => data.obveze.find((o) => o.id === id)!;
 
 /** Stabla koja susjedne građevine danas duguju (bez uvjetnih obveza). */
 export const OWED_TREES = data.dugovano_stabala;
+/** Mjesta uz nogostup bez onih koja su pala u kolne ulaze. */
+export const STREET_SPOTS = byId("grad-ulica").izracun.mjesta_na_nogostupu ?? 0;
+/** Mjesta iz prijedloga nogostupa koja su u kolnim ulazima i otpadaju. */
+export const SPOTS_IN_DRIVEWAYS = byId("grad-ulica").izracun.u_kolnim_ulazima ?? [];
 export const OBLIGATIONS_URL = "/geo/prijedlozi/nogostupi-obveze.geojson";
 
 const linkStyle = "fokus rounded font-semibold text-maslina underline underline-offset-4 hover:text-maslina-tamna";
@@ -130,6 +137,7 @@ export function PlantingObligations() {
   const street = byId("grad-ulica"), d4 = byId("dracevac-4d"), hall = byId("hala-7a"), c15 = byId("dracevac-15"), c9 = byId("dracevac-9c");
   const hallReplaced = hall.izracun.zamjenjuje ?? [];
   const hallKept = hall.izracun.ulicna_dvostruki_red ?? [];
+  const hallDriveway = hall.izracun.ulicna_u_ulazu ?? [];
   const powerSpots = (street.izracun.uz_dalekovod as string[] | undefined) ?? [];
   const olives = (c15.izracun.masline_na_cesti_m2 ?? 0) + (c15.izracun.masline_na_cestici_m2 ?? 0);
   // udio je grub (pojas maslina očitan sa snimke), pa se kaže riječima
@@ -159,11 +167,12 @@ export function PlantingObligations() {
     </Stretch>
 
     <Stretch id="hala-7a" eyebrow="Dračevac 7A · sjeverna strana" title="Osam stabala hale, odmah iza ograde" o={hall} bounds={hall.izracun.okvir}
-      figure={<ObligationFigure id="hala-7a" alt="Hala uz ulicu: dva kolna ulaza ostaju slobodna, a osam dugovanih stabala stoji u redu iza ograde, ispred mjesta na nogostupu koja leže na kabelu" caption="Pročelje hale prema ulici" />}
-      ask={<>{hall.izracun.stabala} visokih stabala iza ograde, između dva kolna ulaza. Stabla uz parkiralište, jedno na četiri mjesta, dolaze uz to.</>}>
+      figure={<ObligationFigure id="hala-7a" alt="Hala uz ulicu: kamionski i glavni ulaz ostaju slobodni, a osam dugovanih stabala stoji u redu iza ograde, na mjestu uličnih mjesta koja leže na kabelu" caption="Pročelje hale prema ulici" />}
+      ask={<>{hall.izracun.stabala} visokih stabala iza ograde, izvan dva kolna ulaza. Stabla uz parkiralište, jedno na četiri mjesta, dolaze uz to.</>}>
       <p>Dozvola iz 2016. je za proizvodnu halu i urede. Po GUP-u čestica mora imati jedno stablo na 200 m² neizgrađenog dijela, ovdje najmanje {stabala(hall.izracun.stabala ?? 0)}, i barem 20 % zelenila. Iza ulične ograde danas je samo živica.</p>
-      <p>Hala ima dva kolna ulaza, kamionski na zapadu i glavni s parkiralištem na istoku; oni ostaju slobodni. Od {hall.izracun.ulicna_ispred?.length} mjesta na nogostupu ispred hale {hallReplaced.length} leži na podzemnom kabelu ili odvodnji ({list(hallReplaced)}). Zato predlažemo da hala svoja stabla posadi odmah iza ograde: {hallReplaced.length} zamjenjuje ta mjesta, a ostala stoje uz {list(hallKept)}, koje ostaje, pa ulica ondje dobiva dvostruki red.</p>
-      <p>Ako Grad kabel zaštiti ili izmjesti, stabla na nogostupu i iza ograde mogu stajati zajedno cijelom dužinom.</p>
+      <p>Hala ima dva kolna ulaza: kamionski na zapadu i glavni, s parkiralištem, na istoku. Oba ostaju slobodna.{hallDriveway.length > 0 && <> Mjesta {list(hallDriveway)} iz prvog prijedloga nogostupa pala su upravo u te ulaze, pa otpadaju.</>}</p>
+      <p>{hallKept.length === 0 ? "Sva preostala" : `Od preostalih, ${hallReplaced.length}`} mjesta na nogostupu ispred hale ({list(hallReplaced)}) leže na podzemnom kabelu ili odvodnji. Zato predlažemo da hala svoja stabla posadi odmah iza ograde, izvan ulaza: ondje zamjenjuju ta mjesta i hlade nogostup.{hallKept.length > 0 && <> Uz {list(hallKept)}, koje ostaje, ulica dobiva dvostruki red.</>}</p>
+      <p>Ako Grad kabel zaštiti ili izmjesti, stabla na nogostupu i iza ograde mogu stajati zajedno, u dvostrukom redu.</p>
     </Stretch>
 
     <Stretch id="dracevac-15" eyebrow="Dračevac 15 · k.č. 291 · južna strana" title="Masline na međi, a zid treba izmjeriti" o={c15} bounds={c15.izracun.okvir}

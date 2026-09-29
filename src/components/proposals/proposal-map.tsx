@@ -33,6 +33,7 @@ const COLORS: Record<string, string> = {
   "obligation-plot": "#7e22ce",
   "obligation-tree": "#7e22ce",
   "street-tree-replaceable": "#71717b",
+  "street-tree-in-driveway": "#71717b",
   "olive-row": "#d97706",
 };
 
@@ -73,6 +74,7 @@ const LABELS: Record<string, string> = {
   "obligation-plot": "Čestice čiji su vlasnici dužni saditi",
   "obligation-tree": "Dugovana stabla",
   "street-tree-replaceable": "Mjesto na nogostupu otpada ako susjed posadi svoje",
+  "street-tree-in-driveway": "Mjesto na nogostupu u kolnom ulazu — otpada",
   "olive-row": "Masline za zamjenu visokim stablima",
 };
 
@@ -140,7 +142,7 @@ export function ProposalMap({ url, extraUrls = [], label, sidewalks = false }: {
           ? `${String(p.label ?? "Instalacije").replace(/^DPU · /, "")} · ${plannedNetwork ? "DPU" : "gradska evidencija"}`
           : `${LABELS[role] ?? role}${["dpu-sidewalk", "dpu-road"].includes(role) && p.level ? ` · ${LEVELS[p.level] ?? p.level}` : ""}${role === "obligation-tree" && p.placement ? ` · ${PLACEMENTS[p.placement] ?? p.placement}` : ""}`;
         const group = groups[name] ??= L.featureGroup();
-        if (role.startsWith("proposal-") || ["recreation-zone", "retained-trees", "proposed-tree", "tree-conflict", "planned-sidewalk", "obligation-plot", "obligation-tree", "street-tree-replaceable", "olive-row"].includes(role)) proposalGroups.add(name);
+        if (role.startsWith("proposal-") || ["recreation-zone", "retained-trees", "proposed-tree", "tree-conflict", "planned-sidewalk", "obligation-plot", "obligation-tree", "street-tree-replaceable", "street-tree-in-driveway", "olive-row"].includes(role)) proposalGroups.add(name);
         const color = role === "infrastructure"
           ? NETWORK_COLORS[String(p.network).replace(/^dpu-/, "")] ?? "#a30037"
           : COLORS[role] ?? "#a30037";
@@ -150,7 +152,7 @@ export function ProposalMap({ url, extraUrls = [], label, sidewalks = false }: {
         const layer = L.geoJSON(feature, {
           pane,
           style: { pane, color, weight: role === "existing-sidewalk" ? 4 : role === "road-parcel" ? 3 : role === "dpu-road" || role === "parcel" ? 1 : 2, fillOpacity: role === "proposal-canopy" ? 0.14 : role === "retained-trees" ? 0.3 : role.startsWith("proposal-") ? 0.5 : isParcel ? 0 : role === "dpu-sidewalk" ? 0.32 : role === "planned-sidewalk" || role === "recreation-zone" ? 0.12 : role === "obligation-plot" ? 0.04 : role === "olive-row" ? 0.2 : 0.05, dashArray: plannedNetwork || p.conditional || ["proposal-canopy", "retained-trees", "parcel", "planned-sidewalk", "dpu-boundary", "unresolved-road-parcels", "olive-row"].includes(role) ? "5 5" : undefined },
-          pointToLayer: (_, latlng) => role === "street-tree-replaceable"
+          pointToLayer: (_, latlng) => role === "street-tree-replaceable" || role === "street-tree-in-driveway"
             ? L.circle(latlng, { pane, color, fill: false, radius: 2.2, weight: 2, dashArray: "3 3" })
             : role === "obligation-tree"
             ? L.circle(latlng, { pane, color, fillColor: color, fillOpacity: 0.25, radius: Number(p.crown_radius_m ?? 2), weight: 2, dashArray: p.placement === "ilustracija" ? "4 3" : undefined })
@@ -208,7 +210,7 @@ export function ProposalMap({ url, extraUrls = [], label, sidewalks = false }: {
     <div>
       <div ref={container} role="region" aria-label={label} className="relative z-0 h-[420px] w-full rounded-xl bg-kamen-tlo sm:h-[520px]" />
       {error && <p role="alert" className="mt-3 text-kamen-tekst">Kartu nije moguće učitati. Pokušajte ponovno učitati stranicu ili otvorite kartu kvarta.</p>}
-      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-kamen-tekst">{(sidewalks ? [["#b45309", "Dopuna nogostupa"], ["#007956", "Moguća sadnja"], ["#a30037", "Sadnja uz prilagodbu instalacija"], ...(extraUrls.length ? [["#7e22ce", "Stabla koja duguju susjedne građevine"], ["#71717b", "Otpada ako susjed posadi svoje"], ["#d97706", "Masline za zamjenu"]] : [])] : [["#005f46", "Cageball"], ["#b65e37", "Teretana"], ["#b58938", "Dječja igra"], ["#729353", "Zelena šetnica"], ["#285c35", "Postojeća sadnja · zadržati"], ["#5a893c", "Buduće krošnje"], ["#64748b", "3 parkirna mjesta"]]).map(([color, text]) => <span key={text} className="inline-flex items-center gap-2"><span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{text}</span>)}</div>
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-kamen-tekst">{(sidewalks ? [["#b45309", "Dopuna nogostupa"], ["#007956", "Moguća sadnja"], ["#a30037", "Sadnja uz prilagodbu instalacija"], ...(extraUrls.length ? [["#7e22ce", "Stabla koja duguju susjedne građevine"], ["#71717b", "Mjesto na nogostupu koje otpada"], ["#d97706", "Masline za zamjenu"]] : [])] : [["#005f46", "Cageball"], ["#b65e37", "Teretana"], ["#b58938", "Dječja igra"], ["#729353", "Zelena šetnica"], ["#285c35", "Postojeća sadnja · zadržati"], ["#5a893c", "Buduće krošnje"], ["#64748b", "3 parkirna mjesta"]]).map(([color, text]) => <span key={text} className="inline-flex items-center gap-2"><span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{text}</span>)}</div>
       <p className="mt-3 text-sm leading-6 text-kamen-tekst">Prikazan je prijedlog uređenja. Katastar, postojeće nogostupe i instalacije možete uključiti u izborniku slojeva u gornjem desnom kutu.</p>
       {hasPlan && <details className="mt-3 text-sm"><summary className="fokus cursor-pointer py-2 font-semibold text-maslina">Pregled izvornog plana</summary><div className="flex flex-wrap gap-3 py-2"><button type="button" onClick={() => views.current?.target()} className="fokus min-h-11 rounded-lg border border-kamen-rub px-4">Vrati na prijedlog</button><button type="button" onClick={() => views.current?.plan()} className="fokus min-h-11 rounded-lg border border-kamen-rub px-4">Obuhvat cijelog DPU-a</button></div><p className="leading-6 text-kamen-tekst">Slojeve DPU-a uključite zasebno u izborniku karte.</p></details>}
     </div>
