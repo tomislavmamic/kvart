@@ -24,12 +24,17 @@ type Computed = {
   okvir_dalekovod?: number[] | null;
   masline_na_cesti_m2?: number;
   masline_na_cestici_m2?: number;
+  zid_od_mede_m?: number[];
+  zid_vidljiv_m?: number;
+  zid_na_cesti_m2?: number;
+  ulicna_iza_zida?: string[];
+  snimka_odstupanje_m?: number;
 };
 type Obligation = { id: string; tko: string; cestica: string; citat?: string; izvori: Source[]; akti: Act[]; izracun: Computed };
 type Figure = {
   src: string; width: number; height: number; source: string;
   marks: { kind: string; xy: number[]; r: number; label?: string }[];
-  lines: { kind: string; points: number[][]; label?: string }[];
+  lines: { kind: string; points: number[][]; label?: string; label_xy?: number[] }[];
   areas: { kind: string; points: number[][]; label?: string; label_xy?: number[] }[];
 };
 // JSON s obvezama raznih vrsta TypeScript vidi kao uniju; ovdje je jedan oblik.
@@ -47,6 +52,7 @@ export const OBLIGATIONS_URL = "/geo/prijedlozi/nogostupi-obveze.geojson";
 
 const linkStyle = "fokus rounded font-semibold text-maslina underline underline-offset-4 hover:text-maslina-tamna";
 const number = (value: number) => value.toLocaleString("hr-HR", { maximumFractionDigits: 0 });
+const decimal = (value: number) => value.toLocaleString("hr-HR", { maximumFractionDigits: 1 });
 const date = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number);
   return `${d}. ${m}. ${y}.`;
@@ -68,6 +74,7 @@ const SHAPE: Record<string, { stroke: string; fill?: string; fillOpacity?: numbe
   "plot-conditional": { stroke: "#7e22ce", width: 1.5, dash: "6 4" },
   power: { stroke: "#dc2626", width: 3, dash: "10 6" },
   boundary: { stroke: "#f59e0b", width: 4 },
+  wall: { stroke: "#fff", width: 3 },
 };
 const LEGEND: [string, string, string][] = [
   ["plan", "#7e22ce", "Stablo ucrtano u planu"],
@@ -99,7 +106,7 @@ export function ObligationFigure({ id, alt, caption, legend = true }: { id: stri
         {f.marks.filter((m) => m.r > 0).map((m, i) => { const s = SHAPE[m.kind]; return <circle key={`m${i}`} cx={m.xy[0]} cy={m.xy[1]} r={Math.max(m.r, MIN_DOT)} stroke={s.stroke} strokeWidth={s.width} strokeDasharray={s.dash} fill={s.fill} fillOpacity={s.fillOpacity} vectorEffect="non-scaling-stroke" />; })}
       </svg>
       {f.areas.filter((a) => a.label && a.label_xy).map((a, i) => <Label key={`al${i}`} at={a.label_xy!} figure={f} centred>{a.label}</Label>)}
-      {f.lines.filter((l, i) => l.label && f.lines.findIndex((o) => o.label === l.label && o.points.length > l.points.length) === -1 && f.lines.findIndex((o) => o.label === l.label && o.points.length === l.points.length) === i).map((l, i) => <Label key={`ll${i}`} at={middle(l.points)} figure={f}>{l.label}</Label>)}
+      {f.lines.filter((l, i) => l.label && f.lines.findIndex((o) => o.label === l.label && o.points.length > l.points.length) === -1 && f.lines.findIndex((o) => o.label === l.label && o.points.length === l.points.length) === i).map((l, i) => <Label key={`ll${i}`} at={l.label_xy ?? middle(l.points)} figure={f} centred={Boolean(l.label_xy)}>{l.label}</Label>)}
       {f.marks.filter((m) => m.label).map((m, i) => m.kind === "note" ? <Label key={`ml${i}`} at={m.xy} figure={f} centred>{m.label}</Label> : <Label key={`ml${i}`} at={[m.xy[0] + Math.max(m.r, MIN_DOT) + 4, m.xy[1]]} figure={f} wide>{m.label}</Label>)}
     </div>
     {legend && <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-kamen-tekst">{LEGEND.filter(([kind]) => kinds.has(kind)).map(([kind, color, text]) => <li key={kind} className="inline-flex items-center gap-2"><span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{text}</li>)}</ul>}
@@ -142,6 +149,9 @@ export function PlantingObligations() {
   const olives = (c15.izracun.masline_na_cesti_m2 ?? 0) + (c15.izracun.masline_na_cestici_m2 ?? 0);
   // udio je grub (pojas maslina očitan sa snimke), pa se kaže riječima
   const share = (c15.izracun.masline_na_cesti_m2 ?? 0) / (olives || 1) >= 0.6 ? "dvije trećine" : "polovice";
+  const [wallFrom, wallTo] = c15.izracun.zid_od_mede_m ?? [0, 0];
+  const behindWall = c15.izracun.ulicna_iza_zida ?? [];
+  const c9Spots = (c9.izracun.ulicna_ispred ?? []).filter((id) => !behindWall.includes(id));
   return <section id="obveze" className="scroll-mt-24 space-y-10">
     <div className="max-w-3xl">
       <h2 className="text-2xl font-bold tracking-tight">Tko sadi, od zapada prema istoku</h2>
@@ -175,19 +185,19 @@ export function PlantingObligations() {
       <p>Ako Grad kabel zaštiti ili izmjesti, stabla na nogostupu i iza ograde mogu stajati zajedno, u dvostrukom redu.</p>
     </Stretch>
 
-    <Stretch id="dracevac-15" eyebrow="Dračevac 15 · k.č. 291 · južna strana" title="Masline na međi, a zid treba izmjeriti" o={c15} bounds={c15.izracun.okvir}
+    <Stretch id="dracevac-15" eyebrow="Dračevac 15 · k.č. 291 · južna strana" title="Zid preko međe, iza njega masline" o={c15} bounds={c15.izracun.okvir}
       figure={<div className="grid gap-4 sm:grid-cols-2">
-        <ObligationFigure id="dracevac-15-2019" legend={false} alt="Red maslina uz ulicu 2019.: veći dio krošnji je sjeverno od katastarske međe, na cestovnoj čestici" caption="2019./20.: red maslina preko međe" />
-        <ObligationFigure id="dracevac-15" alt="Isti rub danas: uz red maslina podignuta je nova građevina" caption="Danas: nova građevina uz masline" />
+        <ObligationFigure id="dracevac-15-google" alt={`Rub dvorišta prije nove građevine: ulični zid s ogradom stoji ${decimal(wallFrom)} do ${decimal(wallTo)} m sjeverno od katastarske međe, a red maslina raste s obje strane međe`} caption="Prije nove građevine: zid preko međe, masline na njoj" />
+        <ObligationFigure id="dracevac-15" legend={false} alt="Isti rub danas: uz red maslina podignuta je nova građevina" caption="Danas: nova građevina uz masline. DGU-ove snimke krošnje i krovove ovdje naginju oko 2 m na sjever, pa među mjerimo na Googleovoj" />
       </div>}
-      ask={<>da Grad geodetski utvrdi gdje je zid. Ako je na javnoj površini, pojas se vraća ulici i u njemu je mjesto za drvored. Masline presaditi, a uz ulicu posaditi visoka stabla.</>}>
-      <p>Dvorište na čestici 291 od ulice dijeli betonski zid sa žičanom ogradom, a iza zida je red maslina, posađen prije 2017. Oko {share} krošnji leži preko katastarske međe, na cestovnoj čestici u vlasništvu države. Građevna čestica iz dozvole iz 2017. je samo k.č. 291, bez tog pojasa.</p>
-      <p>Je li zid na međi ili na javnoj površini, snimke ne mogu reći. Na snimci iz 2011., prije maslina, rub dvorišta je na međi ili do metar izvan nje, a to je unutar točnosti katastarskog plana.</p>
+      ask={<>da Grad geodetski izmjeri zid. Ako je na javnoj površini, zid se vraća na među, a oslobođeni pojas{behindWall.length > 0 && <>, s mjestom {list(behindWall)},</>} pripada nogostupu. Masline presaditi, a uz ulicu posaditi visoka stabla.</>}>
+      <p>Dvorište na čestici 291 od ulice dijeli betonski zid sa žičanom ogradom, a iza zida je red maslina, posađen prije 2017. Na Googleovoj snimci, poravnatoj prema gradskim oknima i slivnicima na oko {decimal(c15.izracun.snimka_odstupanje_m ?? 0)} m, zid stoji {decimal(wallFrom)} do {decimal(wallTo)} m sjeverno od katastarske međe. Toliko se vidi na istočnih {c15.izracun.zid_vidljiv_m} m pročelja; zapadnije ga skrivaju krošnje.</p>
+      <p>Po katastarskom planu zid tako ograđuje oko {c15.izracun.zid_na_cesti_m2} m² cestovne čestice u vlasništvu države{behindWall.length > 0 && <>, a mjesto {list(behindWall)} iz prijedloga nogostupa ostaje iza njega</>}. Građevna čestica iz dozvole iz 2017. je samo k.č. 291, bez tog pojasa. Zapadni zid istog dvorišta, prema susjednoj privatnoj čestici, stoji oko metar od svoje međe, pa plan ovdje nije grubo pomaknut; gdje je međa na terenu, ipak potvrđuje tek geodet. Oko {share} krošnji maslina je preko katastarske međe.</p>
       <p>Dozvola iz 2017. je za proizvodnju sladoleda. Kad se pogon izgradi, čestica po GUP-u duguje oko {stabala(c15.izracun.stabala ?? 0)} koja narastu oko deset metara; masline u ovakvom redu ostaju niske. Između 2023. i 2025. uz sam red maslina podignuta je nova građevina; prijave početka građenja za nju u registru nema.</p>
     </Stretch>
 
     <Stretch id="dracevac-9c" eyebrow="Dračevac 9C · južna strana" title="Jedno stablo" o={c9} bounds={c9.izracun.okvir}
-      ask={<>stablo na uskom kraju čestice uz ulicu, iza mjesta {list(c9.izracun.ulicna_ispred ?? [])} na nogostupu.</>}>
+      ask={<>stablo na uskom kraju čestice uz ulicu, iza mjesta {list(c9Spots)} na nogostupu.</>}>
       <p>Dozvola iz 2021. je za stambeno-poslovnu zgradu koja je na čestici stajala i prije. Po GUP-u čestica mora imati najmanje jedno stablo i 30 % zelenila, oko {number(c9.izracun.zelenilo_m2 ?? 0)} m². Neizgrađeni dio uz zgradu je popločen.</p>
     </Stretch>
 

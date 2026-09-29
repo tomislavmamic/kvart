@@ -4,8 +4,8 @@ import test from "node:test";
 import { FEATURED_PROPOSALS } from "../../lib/featured-proposals";
 
 type Feature = { geometry: { type: string; coordinates: number[] }; properties: Record<string, unknown> };
-type Obligation = { id: string; vrsta: string; uvjetno?: boolean; akti: { klasa: string }[]; izvori: { navod?: string }[]; izracun: { stabala?: number; na_karti?: number; ostatak_na_cestici?: number; zamjenjuje?: string[]; u_kolnim_ulazima?: string[]; ulicna_u_ulazu?: string[]; mjesta_na_nogostupu?: number; mjesta_u_prijedlogu?: number } };
-type Figure = { src: string; width: number; height: number; marks: { xy: number[] }[] };
+type Obligation = { id: string; vrsta: string; uvjetno?: boolean; akti: { klasa: string }[]; izvori: { navod?: string }[]; izracun: { stabala?: number; na_karti?: number; ostatak_na_cestici?: number; zamjenjuje?: string[]; u_kolnim_ulazima?: string[]; ulicna_u_ulazu?: string[]; mjesta_na_nogostupu?: number; mjesta_u_prijedlogu?: number; zid_od_mede_m?: number[]; ulicna_iza_zida?: string[] } };
+type Figure = { src: string; width: number; height: number; marks: { xy: number[] }[]; lines: { kind: string }[] };
 
 const read = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 const summary: { dugovano_stabala: number; obveze: Obligation[] } = read("../../generated/sidewalk-obligations.json");
@@ -56,6 +56,18 @@ test("the olive row replaces the proposal's keep marker of the same group", () =
   assert.ok(olives.length > 0);
   const retained = new Set(proposal.features.filter((f) => f.properties.role === "retained-trees").map((f) => f.properties.retention_id));
   for (const f of olives) assert.ok(retained.has(f.properties.overrides), `${f.properties.overrides} must be a retained group`);
+});
+
+test("the Dračevac 15 wall is measured off the plot, on the aligned view only, and what stands behind it is a proposal spot", () => {
+  const c15 = summary.obveze.find((o) => o.id === "dracevac-15")!.izracun;
+  const [from, to] = c15.zid_od_mede_m ?? [];
+  assert.ok(from > 0 && to >= from, "the wall stands north of the cadastral boundary");
+  const spots = new Set(proposal.features.filter((f) => f.properties.role === "proposed-tree").map((f) => f.properties.candidate_id));
+  for (const id of c15.ulicna_iza_zida ?? []) assert.ok(spots.has(id), id);
+  const kinds = (id: string) => figures[id].lines.map((l) => l.kind);
+  assert.ok(kinds("dracevac-15-google").includes("wall") && kinds("dracevac-15-google").includes("boundary"));
+  // today's orthophoto leans crowns and roofs ~2 m north, so no boundary is drawn on it
+  assert.ok(!kinds("dracevac-15").includes("boundary"));
 });
 
 test("every obligation names its act and cites GUP articles that exist in the reader", () => {

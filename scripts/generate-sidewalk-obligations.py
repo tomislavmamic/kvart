@@ -21,7 +21,11 @@ from geometry:
     the street gets a double row.
   - An olive row on a plot boundary that the proposal marked "keep", when the
     facts say it should be replaced (feature "olive-row", which overrides the
-    retained-trees feature of the same id on the map).
+    retained-trees feature of the same id on the map). Its crowns and the
+    street wall in front of them are read from Google's 3D view, aligned to the
+    city's manholes (scripts/nogostupi_google.py): how far the wall stands from
+    the cadastral boundary, how much road parcel it encloses, and which street
+    spots of the proposal fall behind it.
 
 Writes public/geo/prijedlozi/nogostupi-obveze.geojson (extra layer of the
 sidewalk proposal map) and src/generated/sidewalk-obligations.json (page data).
@@ -31,8 +35,10 @@ import math
 from pathlib import Path
 
 from pyproj import Transformer
-from shapely.geometry import LineString, MultiLineString, Point, mapping, shape
-from shapely.ops import linemerge, nearest_points, transform, unary_union
+from shapely.geometry import LineString, MultiLineString, Point, Polygon, mapping, shape
+from shapely.ops import linemerge, nearest_points, substring, transform, unary_union
+
+import nogostupi_google
 
 ROOT = Path(__file__).resolve().parent.parent
 GEO = ROOT / "public/geo"
@@ -87,7 +93,7 @@ def frontage(plot, road):
 
 
 def retention():
-    """Access gaps and retained planting groups of the sidewalk proposal, in EPSG:3765."""
+    """Access gaps of the sidewalk proposal, in EPSG:3765: kept clear for planting, and as driven."""
     data = json.loads(RETENTION.read_text())
     x0, y0, x1, y1 = data["bbox_3765"]
     width, height = data["image_size"]
@@ -99,8 +105,7 @@ def retention():
     gaps = {g["label"]: line(g["pixels"]).buffer(max(g["buffer_m"], GAP_MIN_RADIUS_M) + GAP_CLEARANCE_M)
             for g in data["access_gaps"]}
     driveways = {g["label"]: line(g["pixels"]).buffer(g["buffer_m"]) for g in data["access_gaps"]}
-    groups = {g["id"]: (g, line(g["pixels"]).buffer(g["buffer_m"])) for g in data["groups"]}
-    return gaps, driveways, groups
+    return gaps, driveways
 
 
 def place_owed(plot, built, road, count, gaps, street_trees):
@@ -182,7 +187,7 @@ def main():
                      "utility": f["properties"]["nearest_utility"]["label"],
                      "utility_m": f["properties"]["nearest_utility_distance_m"]}
                     for f in read("prijedlozi/nogostupi.geojson") if f["properties"].get("role") == "proposed-tree"]
-    gaps, driveways, groups = retention()
+    gaps, driveways = retention()
     # Street spots of the proposal that fall in a driveway (the proposal read two
     # gates of hall 7A in the wrong place); they are dropped, whoever plants.
     in_driveway = {t["id"]: name for t in street_trees for name, way in driveways.items() if way.contains(t["point"])}
@@ -260,14 +265,30 @@ def main():
                     action=f"Mjesto {tree['id']} na nogostupu otpada ako {item['tko'].lower()} posadi stablo iza ograde",
                     evidence=f"{tree['utility']} na {tree['utility_m']:.1f} m".replace(".", ",")))
         if item.get("masline"):
-            group, area = groups[item["masline"]]
+            # crowns as Google's 3D view shows them; DGU's orthophotos lean them ~2 m north
+            view = nogostupi_google.load()
+            area = view["canopy"]
             features.append(mapped_feature(
                 area, role="olive-row", obligation=item["id"], overrides=item["masline"],
                 label="Masline uz rub čestice " + item["cestica"],
                 action="Zamijeniti visokim stablima; masline presaditi",
-                evidence=f"Danas: {item['danas']}"))
+                evidence=f"Danas: {item['danas']} Krošnje: {view['source']}."))
             computed["masline_na_cesti_m2"] = round(area.intersection(road).area)
             computed["masline_na_cestici_m2"] = round(area.intersection(plot).area)
+            # the street wall where the view shows it, against the plot's cadastral edge
+            wall = view["wall"]
+            samples = [wall.interpolate(i * 0.5) for i in range(int(wall.length / 0.5) + 1)]
+            assert not any(plot.contains(p) for p in samples), "zid je na karti unutar čestice"
+            offsets = [p.distance(edge) for p in samples]
+            behind = Polygon(list(wall.coords) + list(substring(edge, edge.project(Point(wall.coords[-1])),
+                                                                edge.project(Point(wall.coords[0]))).coords))
+            computed |= {
+                "zid_od_mede_m": [round(min(offsets), 1), round(max(offsets), 1)],
+                "zid_vidljiv_m": round(wall.length),
+                "zid_na_cesti_m2": round(behind.intersection(road).area),
+                "ulicna_iza_zida": sorted((t["id"] for t in street_trees_all if behind.contains(t["point"])), key=lambda i: int(i[1:])),
+                "snimka_odstupanje_m": round(view["rms_m"], 1),
+            }
         summary.append({**item, "izracun": computed,
                         "polozaji": [list(TO_WGS(p.x, p.y)) for p in positions]})
 

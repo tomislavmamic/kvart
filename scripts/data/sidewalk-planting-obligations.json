@@ -6,7 +6,7 @@
     "url": "https://ispu.mgipu.hr/",
     "napomena": "Arhiva akata od 1968. nije potpuna, pa to što uporabna dozvola ili prijava početka građenja nije pronađena ne dokazuje da ne postoji."
   },
-  "teren": "Google Street View, travanj 2024.; DGU DOF 2011., 2017., 2019./20., 2021./22., 2023. i 2025./26.",
+  "teren": "Google Street View, travanj 2024.; Google Karte, 3D prikaz (prije 2025.); DGU DOF 2011., 2017., 2019./20., 2021./22., 2023. i 2025./26.",
   "gup": {
     "kvota_m2_po_stablu": 200,
     "citat_cl91": "Za sve nove zahvate na području grada obvezno je za nadzemno neizgrađeni dio građevne čestice, kao dio hortikulturnog rješenja, planirati minimalno 1 stablo/200 m² neizgrađenog dijela čestice. Na svim otvorenim parkirališnim površinama obvezno je planirati minimalno 1 stablo na 4 parkirališnih mjesta. […] Pod stablom se podrazumijeva tradicionalno prihvaćena i lokalno dobro adaptirana vrsta očekivane visine cca 10 m. Kod realizacije hortikulturnog rješenja minimalna visina stabala kod sadnje je 3 m. Hortikulturna rješenja su dio uređenja građevne čestice i obvezno ih je prikazati u idejnom projektu za lokacijsku dozvolu odnosno drugom odgovarajućem aktu za građenje odnosno glavnom projektu a njihova realizacija je uvjet za izdavanje uporabne dozvole.",
@@ -95,12 +95,13 @@
       "zelenilo_udio": 0.3,
       "masline": "U4",
       "izvori": [
-        { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice, vrste očekivane visine oko 10 m, pri sadnji visoko najmanje 3 m", "navod": "/gup/dokument#cl-91" }
+        { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice, vrste očekivane visine oko 10 m, pri sadnji visoko najmanje 3 m", "navod": "/gup/dokument#cl-91" },
+        { "tekst": "Zid i krošnje: Google Karte, 3D prikaz (prije 2025.), poravnat prema gradskim oknima i slivnicima; međa: katastarski plan DGU-a. Obrisi i kontrolne točke su u scripts/data/dracevac-15-google.json" }
       ],
       "akti": [
         { "naziv": "Građevinska dozvola, proizvodnja sladoleda; građevna čestica = k.č. 291", "klasa": "UP/I-361-03/16-01/000170", "datum": "2017-04-25" }
       ],
-      "danas": "Uz ulicu red maslina iza betonskog zida i žičane ograde; krošnje većim dijelom preko katastarske međe, na cestovnoj čestici. Između 2023. i 2025./26. uz rub podignuta nova građevina."
+      "danas": "Uz ulicu betonski zid sa žičanom ogradom, 1–2,5 m sjeverno od katastarske međe, a iza njega red maslina; oko polovice krošnji je preko međe. Između 2023. i 2025./26. uz rub podignuta nova građevina."
     }
   ]
 }

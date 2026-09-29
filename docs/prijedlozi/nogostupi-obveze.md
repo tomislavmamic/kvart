@@ -18,8 +18,9 @@ koji pomiče kartu na taj potez. Na karti su dugovana stabla ljubičasta
   Brojevi čestica 30xx u aktima nisu katastarske čestice uz ulicu (vjerojatno
   zemljišnoknjižne), pa ih ne navodimo.
 - Teren: DGU DOF 2011., 2017., 2019./20., 2021./22., 2023. i 2025./26.;
-  Google Street View, travanj 2024. (ulazi, ograde, živica, masline). Slike
-  Street Viewa se ne prenose; na stranici su samo DGU-ove snimke i list plana.
+  Google Street View, travanj 2024. (ulazi, ograde, živica, masline); Google
+  Karte, 3D prikaz ruba dvorišta Dračevac 15 prije nove građevine (snimka
+  zaslona, uz navod „© Google”). Slike Street Viewa se ne prenose.
 - Vlasništvo cestovne čestice 419/9: Republika Hrvatska, prema vlasničkom
   sloju gradskog GIS-a (`public/geo/analiza/javne-cestice.geojson`); cestom
   kao nerazvrstanom upravlja Grad.
@@ -67,12 +68,25 @@ koji pomiče kartu na taj potez. Na karti su dugovana stabla ljubičasta
   obris čestice i ne ulazi u zbroj.
 - Red maslina uz 291 (skupina U4 prijedloga nogostupa, koja je bila
   označena „zadržati”) na karti je zamijenjen oznakom „zamijeniti visokim
-  stablima” (`overrides`). Udio krošnji na cestovnoj čestici: po pojasu U4
-  oko 70 %, po masci vegetacije s DOF 2021./22. oko dvije trećine (medijan
-  oko 1 m preko međe). Građevna čestica iz dozvole iz 2017. (ISPU) je
-  katastarska čestica 291, bez tog pojasa. Na DOF 2011., prije maslina, rub
-  dvorišta je na međi ili do 1 m izvan nje, unutar točnosti katastra; zato
-  tražimo geodetsko mjerenje, a ne tvrdimo zauzimanje.
+  stablima” (`overrides`), s obrisom krošnji s Googleova 3D prikaza.
+  Građevna čestica iz dozvole iz 2017. (ISPU) je katastarska čestica 291.
+- Zid i masline uz 291 mjere se na Googleovu 3D prikazu
+  (`scripts/data/dracevac-15-google.json`, `scripts/nogostupi_google.py`).
+  Snimka je poravnata sličnošću prema tri okna i četiri slivnika gradske
+  odvodnje koji se na njoj vide, na oba ruba ceste; odstupanje 0,26 m, a bez
+  bilo koje točke najviše 0,54 m. Na tlu se s DOF 2019./20. slaže na oko pola
+  metra. Rezultat: ulični zid s ogradom, gdje se vidi (istočnih 28 m), stoji
+  1,3–2,4 m sjeverno od katastarske međe i po planu ograđuje oko 53 m²
+  cestovne čestice; mjesto D27 prijedloga nogostupa je iza njega. Zapadni zid,
+  prema privatnoj k.č. 292, je oko metar od svoje međe, pa plan nije grubo
+  pomaknut. Oko 45 % krošnji maslina je preko međe. Zauzimanje ipak ne
+  tvrdimo: tražimo geodetsko mjerenje.
+- DGU-ovi ortofoti ovdje visoke predmete naginju na sjever: krošnje maslina
+  2–3 m, krov nove građevine oko 2,4 m prema tlocrtu Grada. Raniji izračun
+  „oko dvije trećine krošnji preko međe” s DOF 2021./22. zato je bio
+  precijenjen, a na današnjem DOF-u slika ne crta među. Google crta 3D prikaz
+  iz kamere iznad sredine snimke, pa visoko naginje malo od sredine (krošnje
+  do 1 m, zid ispod 0,1 m poprijeko).
 - Dalekovod 110 kV (D118, gradski GIS) prelazi zapadni kraj čestice 4d i
   zavoj na istoku; stabla u njegovoj blizini (< 10 m) su označena, visinu
   treba uskladiti s HOPS-om.
@@ -80,8 +94,10 @@ koji pomiče kartu na taj potez. Na karti su dugovana stabla ljubičasta
 ## Slike (`scripts/generate-sidewalk-figures.py`)
 
 Podloge se dohvaćaju jednom u `public/prijedlozi/nogostupi-obveze/`: list 2.
-DPU5 s ISPU-a kako ga plan tiska, DGU DOF 2025./26. i za maslinik DOF
-2019./20. (obje bez žiga). Oznake su u `src/generated/sidewalk-figures.json`
+DPU5 s ISPU-a kako ga plan tiska i DGU DOF 2025./26. (bez žiga). Za zid uz
+291 podloga je izrez Googleova 3D prikaza, spremljen u repozitoriju jer se ne
+može ponovno dohvatiti; oznake na njemu računa poravnanje iz
+`scripts/nogostupi_google.py`. Oznake su u `src/generated/sidewalk-figures.json`
 u pikselima slike; stranica ih crta kao SVG, a natpise kao HTML, da ostanu
 oštri na mobitelu. Brojevi mjesta na nogostupu na mobitelu su skriveni (ima
 ih karta).
