@@ -481,7 +481,23 @@
       "kis_citat": "za novu izgradnju slobodnostojećih građevina Ppmin=1500 m2; … maksimalni kig=0,30, kigP=0,60, kis=3,50, kisN+kisO=1,7",
       "zelenilo_min": null,
       "zelenilo_citat": null,
-      "napomena": "M1: slobodnostojeća 500 m2 (kig 0,3), uz mogućnost 700 m2 (i dalje kig 0,3); interpolacija 300 m2; poluugrađena 400 m2 (kig 0,3). Kroz UPU uz važnije ulice moguća je i slobodnostojeća na Ppmin=1500 m2 (kig 0,30). Proizvodna namjena: gradnja stambenih građevina nije dopuštena."
+      "napomena": "M1: slobodnostojeća 500 m2 (kig 0,3), uz mogućnost 700 m2 (i dalje kig 0,3); interpolacija 300 m2; poluugrađena 400 m2 (kig 0,3). Kroz UPU uz važnije ulice moguća je i slobodnostojeća na Ppmin=1500 m2 (kig 0,30). Proizvodna namjena: gradnja stambenih građevina nije dopuštena.",
+      "izvan_stanovanja": {
+        "I/K": {
+          "kig": 0.4,
+          "kis": 1.6,
+          "stranica": 91,
+          "citat": "za građevnu česticu poslovne namjene od Ppmin=1000 m², Emax=Po+4+Pk/Uk, Kig=0,4, KigP=0,6, kisN+kisO=1,6",
+          "napomena": "Poslovna K: Ppmin 600 m² (kig 0,3, kisN+kisO 0,9) ili 1000 m² (kig 0,4, kisN+kisO 1,6), str. 91; proizvodna I: Ppmin 1000 m², kig 0,4, kisN 1,6, str. 92. Uzeti su najveći kig i kis i najmanja čestica."
+        },
+        "T": {
+          "kig": 0.4,
+          "kis": 1.5,
+          "stranica": 93,
+          "citat": "maksimalni kig=0,4, maksimalni kis=3,0, maksimalni kisN+kisO=1,5",
+          "napomena": "Ugostiteljska i turistička namjena T; kis je nadzemni (kisN+kisO), kao za stanovanje."
+        }
+      }
     },
     {
       "kod": "3.2",
@@ -504,7 +520,23 @@
       "kis_citat": "dozvoljava se izgradnja slobodnostojećih građevina na Ppmin=800 m2; maksimalni kig=0,3, kigP=0,5, Emax=Po+4+Pk/Uk, kis=2,00, kisN+kisO=1,2",
       "zelenilo_min": null,
       "zelenilo_citat": null,
-      "napomena": "M1/M2, pretežno kroz UPU: slobodnostojeća 600 m2 (kig 0,25), uz mogućnost 800 m2 (kig 0,3); poluugrađena 400 m2 (kig 0,25); interpolacija nije posebno propisana. Proizvodna namjena: gradnja stambenih građevina nije dopuštena ('ne dopušta se gradnja stambenih građevina')."
+      "napomena": "M1/M2, pretežno kroz UPU: slobodnostojeća 600 m2 (kig 0,25), uz mogućnost 800 m2 (kig 0,3); poluugrađena 400 m2 (kig 0,25); interpolacija nije posebno propisana. Proizvodna namjena: gradnja stambenih građevina nije dopuštena ('ne dopušta se gradnja stambenih građevina').",
+      "izvan_stanovanja": {
+        "I/K": {
+          "kig": 0.35,
+          "kis": null,
+          "stranica": 96,
+          "citat": "za građevnu česticu proizvodne ili poslovne namjene Ppmin=1000 m2, minimalno 30% ukupne površine svih građevnih čestica moraju biti čestice veće od 2000 m2, maksimalni kig=0,35, kigP=0,6",
+          "napomena": "Proizvodna: Ppmin 1000 m², kig 0,35, kis nije propisan (str. 96). Poslovna samo kroz UPU: čestica od 1500 m², 3000 m²/ha nadzemno izgrađeno i 12 000 m²/ha GBPN i BPO na cijeloj zoni (str. 97). Uzeti su najveći kig, najmanja čestica, a kis kao za proizvodnu (bez njega)."
+        },
+        "T": {
+          "kig": null,
+          "kis": 1.2,
+          "stranica": 98,
+          "citat": "maksimalni GBPN i BPO nove izgradnje 12.000 m2/ha",
+          "napomena": "Zona Trstenik, kroz UPU: 12 000 m²/ha na obuhvatu, što se ovdje uzima kao kis 1,2; kig nije propisan (pojedinačni hotel P29: kig 0,45, kisN 2,1)."
+        }
+      }
     },
     {
       "kod": "3.3",

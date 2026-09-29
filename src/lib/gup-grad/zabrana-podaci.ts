@@ -49,7 +49,9 @@ export interface CesticaZabrane {
  * ostalo slobodno zemljište; premali ostaci se ne broje.
  */
 export function cesticeZabrane(d: SirovaMjerenja, o: Odredbe, godina: Godina = 2025): CesticaZabrane[] {
-  const p = { ...INACICE[0].pravila, postujObvezuPlana: false };
+  const osnovna = INACICE[0].pravila;
+  // gospodarska i turistička zgrada troši česticu po kig/kis iz posebnih pravila, kao stambena
+  const p = { ...osnovna, postujObvezuPlana: false, gradevna: { ...osnovna.gradevna, izvanStanovanja: true } };
   const u = ulazGodine(d, godina, p, o);
   const { procjene, ostaci, uvjeti } = procijeniGodinu(u, p);
   const izgradjena = new Set<number>();

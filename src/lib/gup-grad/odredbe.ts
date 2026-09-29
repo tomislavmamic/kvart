@@ -117,6 +117,8 @@ export interface PravilaGradnje {
   izvor: string;
   citat: string;
   napomena: string;
+  /** kig i kis gospodarske (I/K) i turističke (T) namjene, po kodu klase; samo gdje su ih odredbe izvađene */
+  izvan_stanovanja?: Partial<Record<string, { kig: number | null; kis: number | null; izvor: string; citat: string; napomena: string }>>;
 }
 
 export interface TablicaGradnje {
@@ -130,7 +132,8 @@ const BEZ_NOVE: readonly NovaStambena[] = ["rekonstrukcija", "ne"];
  * Dopuštaju li odredbe novu gradnju namjene komada na slobodnom zemljištu,
  * i najveći kig. Zabrana se odnosi samo na stambenu gradnju u stambenim i
  * mješovitim zonama — to je ono što urbana pravila razlikuju; za ostale
- * namjene gradnja se ne ograničava.
+ * namjene gradnja se ne ograničava. Gospodarska i turistička namjena dobiva
+ * kig i kis samo uz `p.gradevna.izvanStanovanja` (izračun zabrane).
  *
  * Od više kig-ova i kis-ova (slobodnostojeća, dvojna…) uzima se NAJVEĆI uključeni:
  * postojeća zgrada tako zauzima najmanje zemljišta, pa se slobodno ne
@@ -143,8 +146,12 @@ export function uvjetiGradnje(
   klasa: KodKlase,
   p: Pravila,
 ): { novaGradnja: boolean; kig: number | null; kis: number | null; pravilo: PravilaGradnje | null } {
-  if (VRSTA_ZA_KLASU[klasa] !== "stanovanje" || !kodPravila) return { novaGradnja: true, kig: null, kis: null, pravilo: null };
+  if (!kodPravila) return { novaGradnja: true, kig: null, kis: null, pravilo: null };
   const pr = tab.godine[String(godina)]?.[kodPravila];
+  if (VRSTA_ZA_KLASU[klasa] !== "stanovanje") {
+    const iz = p.gradevna.izvanStanovanja ? pr?.izvan_stanovanja?.[klasa] : undefined;
+    return { novaGradnja: true, kig: iz?.kig ?? null, kis: iz?.kis ?? null, pravilo: null };
+  }
   if (!pr) return { novaGradnja: true, kig: null, kis: null, pravilo: null };
   const najveci = (o: Partial<Record<string, number>> | null | undefined) => {
     const v = Object.entries(o ?? {})

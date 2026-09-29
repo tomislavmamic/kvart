@@ -60,6 +60,14 @@ export const NAVODI: Record<string, SpecNavoda> = {
     ],
     opis: "zelenilo s postojećim građevinama (Z6)",
   },
+  "kig-gospodarska-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      { t: "za građevnu česticu poslovne namjene od Ppmin=1000 m², Emax=Po+4+Pk/Uk, Kig=0,4, KigP=0,6, kisN+kisO=1,6", s: 91 },
+      { t: "za građevnu česticu proizvodne i poslovne namjene Ppmin=1000 m², Kig=0,4, KigP=0,8, kisN=1,60", s: 92 },
+    ],
+    opis: "kig i kis poslovne i proizvodne namjene u urbanom pravilu 3.1",
+  },
   "ppmin-250-2015": {
     dok: "55-14",
     citati: [{ t: "za novu izgradnju dvojnih građevina Ppmin=250 m2", s: 36 }],

@@ -95,6 +95,13 @@ export interface Pravila {
      */
     zadaniKig: number | null;
     /**
+     * kig i kis gospodarske (I/K) i turističke (T) namjene iz posebnih
+     * pravila (gradnja.json, `izvan_stanovanja`), inače samo za stanovanje.
+     * Zasad ih ima samo prijedlog 2025. u pravilima koja pogađa zabrana, pa ih
+     * uključuje samo izračun zabrane, da grafikon po godinama ostane usporediv.
+     */
+    izvanStanovanja?: boolean;
+    /**
      * Tlocrt glavne zgrade (m²) ispod kojeg komad nema zgradu nego
      * krhotinu susjedne — rub tuđeg krova koji uklapanje prebaci preko međe.
      */
