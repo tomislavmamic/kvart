@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Karta na /gup/zabrana: područja u kojima bi se po prijedlogu GUP-a 2025.
- * zamrznula gradnja, i to samo privatno zemljište na kojem bi nova zgrada
- * morala čekati UPU: urbana sanacija (crveno; list 4.d je crta zeleno) i
+ * Karta na /gup/zabrana: područja u kojima se po prijedlogu GUP-a 2025.
+ * zamrzava gradnja, i to samo privatno zemljište na kojem će nova zgrada
+ * morati čekati UPU: urbana sanacija (crveno; list 4.d je crta zeleno) i
  * urbana preobrazba stambenih i mješovitih zona izvan gradskih projekata
  * (narančasto). Boje se čestice (zabrana-izgradjenost-2025.geojson), a ne
  * zona: izgrađene svjetlijim tonom, neizgrađene tamnijim (TAMNE_ZABRANE). Od
@@ -252,5 +252,5 @@ export function ZabranaKarta(props: {
       : null;
   }, [oznaka]);
 
-  return <div ref={div} className="h-full w-full" role="application" aria-label="Karta područja u kojima bi se zamrznula gradnja do donošenja UPU-a" />;
+  return <div ref={div} className="h-full w-full" role="application" aria-label="Karta područja u kojima se zamrzava gradnja do donošenja UPU-a" />;
 }

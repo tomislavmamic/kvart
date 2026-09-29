@@ -23,7 +23,7 @@ interface Korak {
   kada: string;
   sto: string;
   tekst: ReactNode;
-  /** Korak kojim zabrana nastaje ili bi nastala. */
+  /** Korak kojim zabrana nastaje. */
   kljucni?: boolean;
   /** Još se nije dogodilo. */
   buduci?: boolean;
@@ -147,8 +147,7 @@ export default async function ZabranaPage() {
       buduci: true,
       tekst: (
         <>
-          Ako Gradsko vijeće donese prijedlog, zabrana će vrijediti čim izmjene stupe na snagu, a prijedlog ne predviđa ni
-          rok ni sredstva za izradu UPU-a.
+          Zabrana vrijedi čim izmjene stupe na snagu, a prijedlog ne predviđa ni rok ni sredstva za izradu UPU-a.
         </>
       ),
     },
@@ -164,14 +163,14 @@ export default async function ZabranaPage() {
       </p>
       <h1 className="mt-1 text-2xl font-bold">Zabrana nove gradnje do donošenja UPU-a</h1>
       <p className="mt-3 max-w-3xl text-zinc-600">
-        Ako Gradsko vijeće donese izmjene i dopune GUP-a predložene u travnju 2025., na privatnom zemljištu obojenom na
+        Kad Gradsko vijeće donese izmjene i dopune GUP-a predložene u travnju 2025., na privatnom zemljištu obojenom na
         karti neće se moći ishoditi građevinska dozvola za novu zgradu sve dok se za to područje ne donese urbanistički
         plan uređenja (UPU). To su područja urbane sanacije i urbane preobrazbe stambenih i mješovitih zona.
       </p>
 
       <section className="mt-8">
         <h2 id="karta" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
-          Područja u kojima bi se zamrznula gradnja
+          Područja u kojima se zamrzava gradnja
         </h2>
         <div className="mt-4">
           <ZabranaPrikaz
@@ -256,7 +255,7 @@ export default async function ZabranaPage() {
 
       <section className="mt-12">
         <h2 id="kako" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
-          Kako bi zabrana stupila na snagu
+          Kako zabrana stupa na snagu
         </h2>
         <ol className="mt-5 space-y-5 border-l-2 border-zinc-200 pl-5">
           {koraci.map((k) => (
@@ -401,7 +400,7 @@ export default async function ZabranaPage() {
           <strong className="text-red-700">
             {ha(cekaFokus)} ha ({posto(cekaFokus, z.neiskoristeno)})
           </strong>{" "}
-          od preostalih {ha(z.neiskoristeno)} ha nove bi se zgrade smjele graditi tek nakon donošenja UPU-a, jer su u urbanoj
+          od preostalih {ha(z.neiskoristeno)} ha nove će se zgrade smjeti graditi tek nakon donošenja UPU-a, jer su u urbanoj
           sanaciji ili preobrazbi. UPU se traži i za još {ha(cekaOstalo)} ha u neuređenom dijelu i gradskim projektima, ali
           u neuređenom se dijelu uz postojeću cestu gradi i prije njega.
         </p>
@@ -458,7 +457,7 @@ export default async function ZabranaPage() {
         <p className="mt-4 max-w-3xl text-sm text-zinc-600">
           Usporedbe radi: pročita li se doslovno, i važeći GUP gradnju na {ha(zemljiste[2015].ceka)} ha takvog zemljišta
           uvjetuje planovima koji nisu doneseni (<Navod id="obveza-plana-2015">čl. 104. i 105.</Navod>), no Grad je ondje
-          posljednjih godina ipak izdavao dozvole. Prijedlog bi ta područja svrstao u kategoriju za koju zabranu propisuje
+          posljednjih godina ipak izdavao dozvole. Prijedlog ta područja svrstava u kategoriju za koju zabranu propisuje
           zakon.
         </p>
       </section>

@@ -154,7 +154,7 @@ function karticaStanja(
               {s.izvan === "gradski-projekt"
                 ? "Ovo je urbana preobrazba u gradskom projektu: preuređenje većeg područja prema UPU-u koji priprema Grad, a ne gradnja na pojedinačnim privatnim česticama."
                 : "Ovo je urbana preobrazba gospodarske zone: preuređenje većeg poslovnog, lučkog ili industrijskog područja, a ne gradnja na pojedinačnim privatnim česticama."}{" "}
-              I ovdje bi se nova zgrada smjela graditi tek nakon UPU-a (<Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>), ali
+              I ovdje će se nova zgrada smjeti graditi tek nakon UPU-a (<Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>), ali
               karta boji samo urbanu sanaciju i preobrazbu stambenih i mješovitih zona izvan gradskih projekata.
             </p>
           ),
@@ -172,7 +172,7 @@ function karticaStanja(
                 Ovo je <strong>{NAZIV_PODRUCJA[s.podrucje]}</strong>. Tu oznaku određuje sam GUP, na{" "}
                 <Navod id="list-planske-mjere-2025">listu 4.d</Navod> u mjerilu 1:10.000.
                 {naListuPpug && ppug?.razred && s.cestica ? <> Na {naListuPpug} čestica je {RAZRED_PPUG[ppug.razred]}.</> : ""}{" "}
-                Do donošenja {s.upu ? "tog plana" : "UPU-a"} ne bi se mogla ishoditi dozvola za novu zgradu (
+                Do donošenja {s.upu ? "tog plana" : "UPU-a"} neće se moći ishoditi dozvola za novu zgradu (
                 <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>).
                 {s.upu ? "" : " Na listu 4.d ovdje nije ucrtan obuhvat nijednog propisanog UPU-a."}
               </span>
@@ -182,12 +182,12 @@ function karticaStanja(
                 {s.cestica.neizgradjena ? (
                   <>
                     <strong>Neizgrađena čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na oko{" "}
-                    {okrugloM2(s.cestica.m2)} m² nova bi se zgrada smjela graditi tek nakon donošenja UPU-a.
+                    {okrugloM2(s.cestica.m2)} m² nova će se zgrada smjeti graditi tek nakon donošenja UPU-a.
                   </>
                 ) : (
                   <>
                     <strong>Djelomično izgrađena čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na
-                    slobodnom dijelu od oko {okrugloM2(s.cestica.m2)} m² nova bi se zgrada smjela graditi tek nakon donošenja UPU-a.
+                    slobodnom dijelu od oko {okrugloM2(s.cestica.m2)} m² nova će se zgrada smjeti graditi tek nakon donošenja UPU-a.
                   </>
                 )}
               </p>
@@ -202,7 +202,7 @@ function karticaStanja(
                 <strong>Čestica je prazna, a ipak je u urbanoj sanaciji.</strong> GUP tu oznaku ne crta po česticama, nego kao
                 jednu plohu preko cijelog izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenog bloka vodi kao
                 izgrađeni dio. Za razliku od neuređenog dijela, ovdje do UPU-a nema iznimke za čestice uz postojeću cestu, pa
-                se na njoj ne bi smjelo graditi ništa novo.
+                se na njoj neće smjeti graditi ništa novo.
               </p>
             )}
             {rub}
@@ -701,7 +701,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
 
       <h3 className="mt-8 font-bold text-zinc-900">Po planovima koji još nisu doneseni</h3>
       <p className="mt-1 text-sm text-zinc-600">
-        Za svaki plan: slobodno zemljište za novu gradnju (ha) i broj neizgrađenih čestica na kojima se do njegova donošenja ne bi smjelo graditi. Klikom na redak
+        Za svaki plan: slobodno zemljište za novu gradnju (ha) i broj neizgrađenih čestica na kojima se do njegova donošenja neće smjeti graditi. Klikom na redak
         obuhvat plana prikazuje se na karti.
       </p>
       <ul className="mt-2 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
