@@ -1,15 +1,15 @@
 {
-  "opis": "Tko je uz cestu Dračevac (k.č. 419/9) dužan saditi stabla: Grad za ulicu, vlasnici susjednih građevina na svojim česticama. Ručno sastavljeno iz odluka o planovima i ISPU-ova registra dozvola/akata; brojke izvodi scripts/generate-sidewalk-obligations.py. Registar daje samo podatke o aktu, ne i projekt: koliko je stabala i gdje ucrtano u hortikulturnom rješenju, vidi se tek uvidom u glavni projekt.",
+  "opis": "Tko je uz cestu Dračevac (k.č. 419/9) dužan saditi stabla i na temelju čega: činjenice i izvori, ručno. Tekst stranice je u src/components/proposals/planting-obligations.tsx; brojke, položaje i sloj karte izvodi scripts/generate-sidewalk-obligations.py. Registar dozvola daje samo podatke o aktu, ne i projekt: koliko je stabala i gdje ucrtano u hortikulturnom rješenju, vidi se tek uvidom u glavni projekt.",
   "provjereno": "2026-09-29",
   "registar": {
     "naziv": "ISPU, Registar dozvola/akata",
     "url": "https://ispu.mgipu.hr/",
-    "napomena": "Javni sloj karte (Akt za građenje, Akt za uporabu, Lokacijska dozvola, Prijava početka građenja). Arhiva akata od 1968. nije potpuna, pa to što uporabna dozvola nije pronađena ne dokazuje da ne postoji."
+    "napomena": "Arhiva akata od 1968. nije potpuna, pa to što uporabna dozvola ili prijava početka građenja nije pronađena ne dokazuje da ne postoji."
   },
+  "teren": "Google Street View, travanj 2024.; DGU DOF 2011., 2017., 2019./20., 2021./22., 2023. i 2025./26.",
   "gup": {
     "kvota_m2_po_stablu": 200,
     "citat_cl91": "Za sve nove zahvate na području grada obvezno je za nadzemno neizgrađeni dio građevne čestice, kao dio hortikulturnog rješenja, planirati minimalno 1 stablo/200 m² neizgrađenog dijela čestice. Na svim otvorenim parkirališnim površinama obvezno je planirati minimalno 1 stablo na 4 parkirališnih mjesta. […] Pod stablom se podrazumijeva tradicionalno prihvaćena i lokalno dobro adaptirana vrsta očekivane visine cca 10 m. Kod realizacije hortikulturnog rješenja minimalna visina stabala kod sadnje je 3 m. Hortikulturna rješenja su dio uređenja građevne čestice i obvezno ih je prikazati u idejnom projektu za lokacijsku dozvolu odnosno drugom odgovarajućem aktu za građenje odnosno glavnom projektu a njihova realizacija je uvjet za izdavanje uporabne dozvole.",
-    "citat_cl32": "Gradska magistrala, glavne gradske ulice, gradske ulice, opskrbne, sabirne i pristupne ulice i trgovi uređuju se u skladu s urbanim ambijentom, s drvoredom (ukoliko za to postoje prostorne mogućnosti), pješačkim pločnikom, javnom rasvjetom […]",
     "izvor": "GUP Splita, pročišćeni tekst odredbi (Sl. gl. 55/14); čl. 91. u istom je obliku od Sl. gl. 1/06",
     "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=6130&Command=Core_Download"
   },
@@ -17,174 +17,90 @@
     {
       "id": "grad-ulica",
       "vrsta": "ulica",
-      "tko": "Grad Split",
-      "uloga": "vlasnik i upravitelj nerazvrstane ceste Dračevac",
+      "tko": "Grad Split, upravitelj nerazvrstane ceste Dračevac",
       "cestica": "419/9",
-      "sto": "Drvored uz ulicu, gdje za to ima prostora. Ovaj prijedlog nalazi 46 takvih mjesta unutar cestovne čestice.",
-      "zasto": [
-        {
-          "tekst": "GUP, čl. 32.: gradske, sabirne i pristupne ulice uređuju se s drvoredom ako za to postoje prostorne mogućnosti",
-          "navod": "/gup/dokument#cl-32"
-        },
-        {
-          "tekst": "GUP, čl. 73. (urbano pravilo 3.1): sanirati sliku naselja uz prometnice, posebno sadnjom drvoreda",
-          "navod": "/gup/dokument#cl-73"
-        }
+      "vlasnistvo": "Republika Hrvatska, prema vlasničkom sloju gradskog GIS-a",
+      "izvori": [
+        { "tekst": "GUP, čl. 32.: ulice se uređuju s drvoredom ako za to postoje prostorne mogućnosti", "navod": "/gup/dokument#cl-32" },
+        { "tekst": "Nacrt izmjena GUP-a 2025., čl. 36. st. 18.: drvorede planirati uz sve postojeće prometnice gdje prostorne mogućnosti dopuštaju", "navod": "/gup/dokument/2025#cl-36" }
       ],
       "akti": [
-        {
-          "naziv": "Rješenje o produljenju lokacijske dozvole za cestovnu građevinu preko čestica k.o. Split, Kamen i Mravince, uključujući 419/9",
-          "klasa": "UP/I-350-05/20-01/000045",
-          "datum": "2020-12-08",
-          "izdao": "Splitsko-dalmatinska županija"
-        },
-        {
-          "naziv": "Zahtjev za novo produljenje te lokacijske dozvole odbijen",
-          "klasa": "UP/I-350-05/24-01/000208",
-          "datum": "2025-03-25",
-          "izdao": "Splitsko-dalmatinska županija"
-        },
-        {
-          "naziv": "Rekonstrukcija DC1, dionica 218 na dijelu naselja Dračevac, duljine cca 500 m — zahvat u prostoru, u obradi",
-          "klasa": "UP/I-350-05/20-01/000040",
-          "datum": null,
-          "izdao": "Splitsko-dalmatinska županija"
-        }
+        { "naziv": "Produljenje lokacijske dozvole za cestovnu građevinu preko čestica k.o. Split, Kamen i Mravince, uključujući 419/9", "klasa": "UP/I-350-05/20-01/000045", "datum": "2020-12-08", "izdao": "Splitsko-dalmatinska županija" },
+        { "naziv": "Zahtjev za novo produljenje te dozvole odbijen", "klasa": "UP/I-350-05/24-01/000208", "datum": "2025-03-25", "izdao": "Splitsko-dalmatinska županija" }
       ],
-      "stanje": "Drvoreda nema. Projekti ceste preko ove čestice nisu javni, pa se ne zna je li u njima bio drvored. Na samom zapadnom kraju ulice DPU radne zone Dračevac crta rotor sa stablima; rotor nije izveden."
+      "danas": "Drvoreda nema."
     },
     {
       "id": "dracevac-4d",
       "vrsta": "dpu",
-      "tko": "Investitor, odnosno vlasnik poslovne zgrade Dračevac 4d",
+      "tko": "Vlasnik poslovne zgrade Dračevac 4d",
       "cestica": "285/1",
-      "cestice": "285/1 i dio 285/10 (građevna čestica DPU-a)",
       "adresa": "Dračevac 4d",
       "plan": "DPU5",
-      "odredbe": [
-        "drvored",
-        "stabla-gradevina-2"
-      ],
-      "sto": "19 stabala na mjestima koja je plan ucrtao: drvored od 11 visokih stablašica uz južnu među, uz ovu ulicu, i 8 stabala uz manju građevinu 2 na istoku čestice.",
-      "zasto": [
-        {
-          "tekst": "DPU dijela područja Dračevac (Sl. gl. 23/04), čl. 6. t. 2.6.: „Uz južnu granicu parcele zasaditi drvored visokih stablašica (zelenilo u potezu)”; stabla su ucrtana na listovima 2. i 3.",
-          "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?language=hr-HR&Command=Core_Download&EntryId=3559&PortalId=0"
-        },
-        {
-          "tekst": "GUP, čl. 91.: sadnja iz hortikulturnog rješenja uvjet je za uporabnu dozvolu",
-          "navod": "/gup/dokument/2006#cl-91"
-        }
+      "odredbe": ["drvored", "stabla-gradevina-2"],
+      "citat": "Uz južnu granicu parcele zasaditi drvored visokih stablašica (zelenilo u potezu), a kolne otoke zasaditi cvjetnim grmovima.",
+      "izvori": [
+        { "tekst": "DPU dijela područja Dračevac, Sl. gl. 23/04, čl. 6. t. 2.6. i listovi 2. i 3.", "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?language=hr-HR&Command=Core_Download&EntryId=3559&PortalId=0" },
+        { "tekst": "GUP, čl. 91.: sadnja je uvjet za uporabnu dozvolu", "navod": "/gup/dokument/2006#cl-91" }
       ],
       "akti": [
-        {
-          "naziv": "Lokacijska dozvola — poslovno-proizvodna zgrada",
-          "klasa": "UP/I 361-03/05-01/00033",
-          "datum": "2005-05-31"
-        },
-        {
-          "naziv": "Građevinska dozvola — 1. faza poslovne građevine",
-          "klasa": "UP/I 361-03/05-01/00128",
-          "datum": "2006-02-24"
-        },
-        {
-          "naziv": "Uporabna dozvola — poslovna građevina",
-          "klasa": "361-05/08-01/0018",
-          "datum": "2008-02-07"
-        }
+        { "naziv": "Građevinska dozvola, 1. faza poslovne građevine", "klasa": "UP/I 361-03/05-01/00128", "datum": "2006-02-24" },
+        { "naziv": "Uporabna dozvola", "klasa": "361-05/08-01/0018", "datum": "2008-02-07" }
       ],
-      "posadeno": "Na mjestu drvoreda raste red manjih biljaka (krošnje oko 2–3 m na snimkama 2017.–2026.), a ne visoke stablašice. Uz istočnu među, gdje plan crta 8 stabala uz građevinu 2, nema stabala, samo uski pojas grmlja.",
-      "stanje": "Uporabna dozvola izdana je 2008.; na snimkama od 2011. do danas visokih stablašica ondje nema."
+      "danas": "Na mjestu drvoreda red niskih biljaka (krošnje 2–3 m); visokih stablašica nema ni na jednoj snimci od 2011."
     },
     {
       "id": "hala-7a",
       "vrsta": "gup",
-      "tko": "Investitor, odnosno vlasnik proizvodne hale Dračevac 7A",
+      "tko": "Vlasnik hale Dračevac 7A",
       "cestica": "288/3",
-      "cestice": "288/3 i 3011/2 (prema dozvoli)",
       "adresa": "Dračevac 7A",
-      "namjena_gup": "gospodarska i poslovna (I/K), urbano pravilo 3.1",
+      "zona": "K (poslovna namjena), urbano pravilo 3.1",
       "zelenilo_udio": 0.2,
-      "stabala_danas": 0,
-      "sto_dodatno": "uz to 1 stablo na 4 otvorena parkirna mjesta, najmanje 20 % čestice uređeno kao zelena površina i, jer je čestica na rubu radne zone, pojas zaštitnog zelenila prema kućama",
-      "zasto": [
-        {
-          "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice i 1 na 4 parkirna mjesta; sadnja je uvjet za uporabnu dozvolu",
-          "navod": "/gup/dokument#cl-91"
-        },
-        {
-          "tekst": "GUP, čl. 73. (urbano pravilo 3.1, proizvodna namjena): najmanje 20 % čestice zelena površina; na rubnim česticama radne zone pojas pejzažnog i zaštitnog zelenila prema susjednoj izgradnji",
-          "navod": "/gup/dokument#cl-73"
-        }
+      "prilazi": ["Sjeverni prilaz poslovnoj zgradi", "Ulaz uz istočni kraj poslovne zgrade"],
+      "izvori": [
+        { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice i 1 na 4 parkirna mjesta; sadnja je uvjet za uporabnu dozvolu", "navod": "/gup/dokument#cl-91" },
+        { "tekst": "GUP, čl. 73. (urbano pravilo 3.1, poslovna namjena K): najmanje 20 % čestice zelena površina", "navod": "/gup/dokument#cl-73" }
       ],
       "akti": [
-        {
-          "naziv": "Rješenje o izmjeni i dopuni građevinske dozvole — proizvodna hala i uredi (prehrambeno-prerađivačka)",
-          "klasa": "UP/I-361-03/16-01/000099",
-          "datum": "2016-07-08"
-        }
+        { "naziv": "Izmjena i dopuna građevinske dozvole, proizvodna hala i uredi", "klasa": "UP/I-361-03/16-01/000099", "datum": "2016-07-08" }
       ],
-      "posadeno": "Nijedno stablo. Čestica je popločena, uključujući cijelo pročelje prema ulici; tako je na snimkama 2017., 2023. i 2025./26. Hala je dograđena između 2011. i 2017.",
-      "stanje": "Uporabna dozvola u registru nije pronađena."
+      "danas": "Iza ulične ograde živica; stabala nema. Kolni ulazi: kamionski na zapadu, glavni s parkiralištem na istoku."
     },
     {
       "id": "dracevac-9c",
       "vrsta": "gup",
-      "tko": "Investitor, odnosno vlasnik stambeno-poslovne zgrade Dračevac 9C",
+      "tko": "Vlasnik zgrade Dračevac 9C",
       "cestica": "290/2",
-      "cestice": "290/2 i 3010/2 (prema dozvoli)",
       "adresa": "Dračevac 9C",
-      "namjena_gup": "mješovita (M), urbano pravilo 3.1",
+      "zona": "K5 (poslovna namjena i stanovanje), urbano pravilo 3.1",
       "zelenilo_udio": 0.3,
-      "stabala_danas": 0,
-      "sto_dodatno": "uz to najmanje 30 % čestice kao zelena površina s visokim i niskim zelenilom",
-      "zasto": [
-        {
-          "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice; sadnja je uvjet za uporabnu dozvolu",
-          "navod": "/gup/dokument#cl-91"
-        },
-        {
-          "tekst": "GUP, čl. 73. (urbano pravilo 3.1, mješovita namjena M1): najmanje 30 % čestice zelena površina",
-          "navod": "/gup/dokument#cl-73"
-        }
+      "izvori": [
+        { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice; sadnja je uvjet za uporabnu dozvolu", "navod": "/gup/dokument#cl-91" },
+        { "tekst": "GUP, čl. 73. (urbano pravilo 3.1, K5 prema M1): najmanje 30 % čestice zelena površina", "navod": "/gup/dokument#cl-73" }
       ],
       "akti": [
-        {
-          "naziv": "Građevinska dozvola — stambeno-poslovna zgrada",
-          "klasa": "UP/I-361-03/20-01/000010",
-          "datum": "2021-03-17"
-        }
+        { "naziv": "Građevinska dozvola, stambeno-poslovna zgrada", "klasa": "UP/I-361-03/20-01/000010", "datum": "2021-03-17" }
       ],
-      "posadeno": "Nijedno stablo; neizgrađeni dio uz zgradu popločen je. Zgrada je na čestici i 2017., pa je dozvola iz 2021. vjerojatno za rekonstrukciju ili dogradnju.",
-      "stanje": "Uporabna dozvola u registru nije pronađena."
+      "danas": "Neizgrađeni dio uz zgradu popločen; stabla nema."
     },
     {
       "id": "dracevac-15",
       "vrsta": "gup",
       "uvjetno": true,
-      "tko": "Investitor pogona na čestici 291 (adresa u dozvoli Dračevac 15)",
+      "tko": "Investitor s adresom Dračevac 15, vlasnik dvorišta na čestici 291",
       "cestica": "291",
-      "cestice": "291 i 3009 (prema dozvoli)",
       "adresa": "Dračevac 15",
-      "namjena_gup": "mješovita (M), urbano pravilo 3.1",
+      "zona": "K5 (poslovna namjena i stanovanje), urbano pravilo 3.1",
       "zelenilo_udio": 0.3,
-      "stabala_danas": 0,
-      "sto_dodatno": "broj ovisi o tome koliko će čestice zauzeti zgrada; uz to 1 stablo na 4 otvorena parkirna mjesta i najmanje 30 % čestice kao zelena površina",
-      "zasto": [
-        {
-          "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice i 1 na 4 parkirna mjesta",
-          "navod": "/gup/dokument#cl-91"
-        }
+      "masline": "U4",
+      "izvori": [
+        { "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice, vrste očekivane visine oko 10 m, pri sadnji visoko najmanje 3 m", "navod": "/gup/dokument#cl-91" }
       ],
       "akti": [
-        {
-          "naziv": "Građevinska dozvola — proizvodnja sladoleda",
-          "klasa": "UP/I-361-03/16-01/000170",
-          "datum": "2017-04-25"
-        }
+        { "naziv": "Građevinska dozvola, proizvodnja sladoleda; građevna čestica = k.č. 291", "klasa": "UP/I-361-03/16-01/000170", "datum": "2017-04-25" }
       ],
-      "posadeno": "Pogon nije izgrađen; čestica je parkiralište kamiona i prikolica, bez stabala. Između 2023. i 2025./26. uz rub ceste podignuta je nova građevina, tik uz postojeći red stabala na granici s cestom (U4), koji treba sačuvati.",
-      "stanje": "Obveza dospijeva s gradnjom. Dozvola iz 2017. mogla je u međuvremenu isteći."
+      "danas": "Uz ulicu red maslina iza betonskog zida i žičane ograde; krošnje većim dijelom preko katastarske međe, na cestovnoj čestici. Između 2023. i 2025./26. uz rub podignuta nova građevina."
     }
   ]
 }

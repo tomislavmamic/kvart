@@ -28,11 +28,11 @@ export const FEATURED_PROPOSALS = [
   {
     slug: "uredenje-nogostupa",
     title: "Uređenje nogostupa",
-    description: "Gušći drvored za više hlada, povezani nogostupi i očuvana postojeća sadnja. Razgledajte novi raspored u 3D prikazu.",
+    description: "Drvored uz cestu kroz poslovnu zonu: mjesta uz nogostup i stabla koja susjedne građevine već duguju po planovima i dozvolama.",
     category: "ceste" as Category,
     neighborhoods: ["dracevac"] as Neighborhood[],
     subject: "Pješaci i drvored",
-    detail: "490 m ceste · 46 mjesta za sadnju · više hlada",
+    detail: "490 m ceste · 46 mjesta uz nogostup · 28 dugovanih stabala",
     image: "/prijedlozi/nogostupi-render-hlad.png",
     imageAlt: "Nogostupi u hladu razvijenih krošnji uz postojeće zgrade Dračevca",
     visualNote: "Idejni prikaz · gušći drvored i razvijene krošnje",

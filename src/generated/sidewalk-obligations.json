@@ -4,12 +4,12 @@
   "registar": {
     "naziv": "ISPU, Registar dozvola/akata",
     "url": "https://ispu.mgipu.hr/",
-    "napomena": "Javni sloj karte (Akt za građenje, Akt za uporabu, Lokacijska dozvola, Prijava početka građenja). Arhiva akata od 1968. nije potpuna, pa to što uporabna dozvola nije pronađena ne dokazuje da ne postoji."
+    "napomena": "Arhiva akata od 1968. nije potpuna, pa to što uporabna dozvola ili prijava početka građenja nije pronađena ne dokazuje da ne postoji."
   },
+  "teren": "Google Street View, travanj 2024.; DGU DOF 2011., 2017., 2019./20., 2021./22., 2023. i 2025./26.",
   "gup": {
     "kvota_m2_po_stablu": 200,
     "citat_cl91": "Za sve nove zahvate na području grada obvezno je za nadzemno neizgrađeni dio građevne čestice, kao dio hortikulturnog rješenja, planirati minimalno 1 stablo/200 m² neizgrađenog dijela čestice. Na svim otvorenim parkirališnim površinama obvezno je planirati minimalno 1 stablo na 4 parkirališnih mjesta. […] Pod stablom se podrazumijeva tradicionalno prihvaćena i lokalno dobro adaptirana vrsta očekivane visine cca 10 m. Kod realizacije hortikulturnog rješenja minimalna visina stabala kod sadnje je 3 m. Hortikulturna rješenja su dio uređenja građevne čestice i obvezno ih je prikazati u idejnom projektu za lokacijsku dozvolu odnosno drugom odgovarajućem aktu za građenje odnosno glavnom projektu a njihova realizacija je uvjet za izdavanje uporabne dozvole.",
-    "citat_cl32": "Gradska magistrala, glavne gradske ulice, gradske ulice, opskrbne, sabirne i pristupne ulice i trgovi uređuju se u skladu s urbanim ambijentom, s drvoredom (ukoliko za to postoje prostorne mogućnosti), pješačkim pločnikom, javnom rasvjetom […]",
     "izvor": "GUP Splita, pročišćeni tekst odredbi (Sl. gl. 55/14); čl. 91. u istom je obliku od Sl. gl. 1/06",
     "url": "https://split.hr/strateski-dokumenti/prostorno-planska-dokumentacija/planovi-na-snazi/gis-podatci?EntryId=6130&Command=Core_Download"
   },
@@ -18,217 +18,416 @@
     {
       "id": "grad-ulica",
       "vrsta": "ulica",
-      "tko": "Grad Split",
-      "uloga": "vlasnik i upravitelj nerazvrstane ceste Dračevac",
+      "tko": "Grad Split, upravitelj nerazvrstane ceste Dračevac",
       "cestica": "419/9",
-      "sto": "Drvored uz ulicu, gdje za to ima prostora. Ovaj prijedlog nalazi 46 takvih mjesta unutar cestovne čestice.",
-      "zasto": [
+      "vlasnistvo": "Republika Hrvatska, prema vlasničkom sloju gradskog GIS-a",
+      "izvori": [
         {
-          "tekst": "GUP, čl. 32.: gradske, sabirne i pristupne ulice uređuju se s drvoredom ako za to postoje prostorne mogućnosti",
+          "tekst": "GUP, čl. 32.: ulice se uređuju s drvoredom ako za to postoje prostorne mogućnosti",
           "navod": "/gup/dokument#cl-32"
         },
         {
-          "tekst": "GUP, čl. 73. (urbano pravilo 3.1): sanirati sliku naselja uz prometnice, posebno sadnjom drvoreda",
-          "navod": "/gup/dokument#cl-73"
+          "tekst": "Nacrt izmjena GUP-a 2025., čl. 36. st. 18.: drvorede planirati uz sve postojeće prometnice gdje prostorne mogućnosti dopuštaju",
+          "navod": "/gup/dokument/2025#cl-36"
         }
       ],
       "akti": [
         {
-          "naziv": "Rješenje o produljenju lokacijske dozvole za cestovnu građevinu preko čestica k.o. Split, Kamen i Mravince, uključujući 419/9",
+          "naziv": "Produljenje lokacijske dozvole za cestovnu građevinu preko čestica k.o. Split, Kamen i Mravince, uključujući 419/9",
           "klasa": "UP/I-350-05/20-01/000045",
           "datum": "2020-12-08",
           "izdao": "Splitsko-dalmatinska županija"
         },
         {
-          "naziv": "Zahtjev za novo produljenje te lokacijske dozvole odbijen",
+          "naziv": "Zahtjev za novo produljenje te dozvole odbijen",
           "klasa": "UP/I-350-05/24-01/000208",
           "datum": "2025-03-25",
           "izdao": "Splitsko-dalmatinska županija"
-        },
-        {
-          "naziv": "Rekonstrukcija DC1, dionica 218 na dijelu naselja Dračevac, duljine cca 500 m — zahvat u prostoru, u obradi",
-          "klasa": "UP/I-350-05/20-01/000040",
-          "datum": null,
-          "izdao": "Splitsko-dalmatinska županija"
         }
       ],
-      "stanje": "Drvoreda nema. Projekti ceste preko ove čestice nisu javni, pa se ne zna je li u njima bio drvored. Na samom zapadnom kraju ulice DPU radne zone Dračevac crta rotor sa stablima; rotor nije izveden.",
+      "danas": "Drvoreda nema.",
       "izracun": {
-        "cestica_m2": 5148
+        "mjesta_na_nogostupu": 46,
+        "ulicna_uz_instalacije": 41,
+        "okvir": [
+          16.501147,
+          43.526946,
+          16.505255,
+          43.527847
+        ],
+        "uz_dalekovod": [
+          "D32",
+          "D34",
+          "D35",
+          "D36",
+          "D37"
+        ],
+        "okvir_dalekovod": [
+          16.503961,
+          43.526977,
+          16.504884,
+          43.527572
+        ]
       },
-      "polozaja_na_karti": 0
+      "polozaji": []
     },
     {
       "id": "dracevac-4d",
       "vrsta": "dpu",
-      "tko": "Investitor, odnosno vlasnik poslovne zgrade Dračevac 4d",
+      "tko": "Vlasnik poslovne zgrade Dračevac 4d",
       "cestica": "285/1",
-      "cestice": "285/1 i dio 285/10 (građevna čestica DPU-a)",
       "adresa": "Dračevac 4d",
       "plan": "DPU5",
       "odredbe": [
         "drvored",
         "stabla-gradevina-2"
       ],
-      "sto": "19 stabala na mjestima koja je plan ucrtao: drvored od 11 visokih stablašica uz južnu među, uz ovu ulicu, i 8 stabala uz manju građevinu 2 na istoku čestice.",
-      "zasto": [
+      "citat": "Uz južnu granicu parcele zasaditi drvored visokih stablašica (zelenilo u potezu), a kolne otoke zasaditi cvjetnim grmovima.",
+      "izvori": [
         {
-          "tekst": "DPU dijela područja Dračevac (Sl. gl. 23/04), čl. 6. t. 2.6.: „Uz južnu granicu parcele zasaditi drvored visokih stablašica (zelenilo u potezu)”; stabla su ucrtana na listovima 2. i 3.",
+          "tekst": "DPU dijela područja Dračevac, Sl. gl. 23/04, čl. 6. t. 2.6. i listovi 2. i 3.",
           "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?language=hr-HR&Command=Core_Download&EntryId=3559&PortalId=0"
         },
         {
-          "tekst": "GUP, čl. 91.: sadnja iz hortikulturnog rješenja uvjet je za uporabnu dozvolu",
+          "tekst": "GUP, čl. 91.: sadnja je uvjet za uporabnu dozvolu",
           "navod": "/gup/dokument/2006#cl-91"
         }
       ],
       "akti": [
         {
-          "naziv": "Lokacijska dozvola — poslovno-proizvodna zgrada",
-          "klasa": "UP/I 361-03/05-01/00033",
-          "datum": "2005-05-31"
-        },
-        {
-          "naziv": "Građevinska dozvola — 1. faza poslovne građevine",
+          "naziv": "Građevinska dozvola, 1. faza poslovne građevine",
           "klasa": "UP/I 361-03/05-01/00128",
           "datum": "2006-02-24"
         },
         {
-          "naziv": "Uporabna dozvola — poslovna građevina",
+          "naziv": "Uporabna dozvola",
           "klasa": "361-05/08-01/0018",
           "datum": "2008-02-07"
         }
       ],
-      "posadeno": "Na mjestu drvoreda raste red manjih biljaka (krošnje oko 2–3 m na snimkama 2017.–2026.), a ne visoke stablašice. Uz istočnu među, gdje plan crta 8 stabala uz građevinu 2, nema stabala, samo uski pojas grmlja.",
-      "stanje": "Uporabna dozvola izdana je 2008.; na snimkama od 2011. do danas visokih stablašica ondje nema.",
+      "danas": "Na mjestu drvoreda red niskih biljaka (krošnje 2–3 m); visokih stablašica nema ni na jednoj snimci od 2011.",
       "izracun": {
+        "okvir": [
+          16.500925,
+          43.527351,
+          16.502582,
+          43.528206
+        ],
         "cestica_m2": 4777,
         "izgradeno_m2": 1284,
         "neizgradeno_m2": 3493,
         "procelje_m": 99,
-        "predlozenih_ispred": 5,
-        "stabala": 19
+        "stabala": 19,
+        "na_karti": 19,
+        "ostatak_na_cestici": 0,
+        "zamjenjuje": [
+          "D4",
+          "D5",
+          "D7",
+          "D8"
+        ],
+        "ulicna_ispred": [
+          "D4",
+          "D5",
+          "D7",
+          "D8"
+        ],
+        "ulicna_dvostruki_red": [],
+        "uz_dalekovod": 2
       },
-      "polozaja_na_karti": 19
+      "polozaji": [
+        [
+          16.501331,
+          43.52751200000001
+        ],
+        [
+          16.501395,
+          43.527509
+        ],
+        [
+          16.501468000000003,
+          43.52750699999999
+        ],
+        [
+          16.50152,
+          43.52750700000001
+        ],
+        [
+          16.501579,
+          43.52750900000001
+        ],
+        [
+          16.501633,
+          43.527509
+        ],
+        [
+          16.501691,
+          43.52751099999999
+        ],
+        [
+          16.501751,
+          43.527508000000005
+        ],
+        [
+          16.501807,
+          43.52751099999999
+        ],
+        [
+          16.501866,
+          43.527511999999994
+        ],
+        [
+          16.501929,
+          43.527514000000004
+        ],
+        [
+          16.502151,
+          43.527529
+        ],
+        [
+          16.502224,
+          43.527534
+        ],
+        [
+          16.502279,
+          43.527535
+        ],
+        [
+          16.502279,
+          43.52757900000001
+        ],
+        [
+          16.502282,
+          43.52762299999999
+        ],
+        [
+          16.502282,
+          43.52766900000001
+        ],
+        [
+          16.502285,
+          43.527717
+        ],
+        [
+          16.502278,
+          43.527759
+        ]
+      ]
     },
     {
       "id": "hala-7a",
       "vrsta": "gup",
-      "tko": "Investitor, odnosno vlasnik proizvodne hale Dračevac 7A",
+      "tko": "Vlasnik hale Dračevac 7A",
       "cestica": "288/3",
-      "cestice": "288/3 i 3011/2 (prema dozvoli)",
       "adresa": "Dračevac 7A",
-      "namjena_gup": "gospodarska i poslovna (I/K), urbano pravilo 3.1",
+      "zona": "K (poslovna namjena), urbano pravilo 3.1",
       "zelenilo_udio": 0.2,
-      "stabala_danas": 0,
-      "sto_dodatno": "uz to 1 stablo na 4 otvorena parkirna mjesta, najmanje 20 % čestice uređeno kao zelena površina i, jer je čestica na rubu radne zone, pojas zaštitnog zelenila prema kućama",
-      "zasto": [
+      "prilazi": [
+        "Sjeverni prilaz poslovnoj zgradi",
+        "Ulaz uz istočni kraj poslovne zgrade"
+      ],
+      "izvori": [
         {
           "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice i 1 na 4 parkirna mjesta; sadnja je uvjet za uporabnu dozvolu",
           "navod": "/gup/dokument#cl-91"
         },
         {
-          "tekst": "GUP, čl. 73. (urbano pravilo 3.1, proizvodna namjena): najmanje 20 % čestice zelena površina; na rubnim česticama radne zone pojas pejzažnog i zaštitnog zelenila prema susjednoj izgradnji",
+          "tekst": "GUP, čl. 73. (urbano pravilo 3.1, poslovna namjena K): najmanje 20 % čestice zelena površina",
           "navod": "/gup/dokument#cl-73"
         }
       ],
       "akti": [
         {
-          "naziv": "Rješenje o izmjeni i dopuni građevinske dozvole — proizvodna hala i uredi (prehrambeno-prerađivačka)",
+          "naziv": "Izmjena i dopuna građevinske dozvole, proizvodna hala i uredi",
           "klasa": "UP/I-361-03/16-01/000099",
           "datum": "2016-07-08"
         }
       ],
-      "posadeno": "Nijedno stablo. Čestica je popločena, uključujući cijelo pročelje prema ulici; tako je na snimkama 2017., 2023. i 2025./26. Hala je dograđena između 2011. i 2017.",
-      "stanje": "Uporabna dozvola u registru nije pronađena.",
+      "danas": "Iza ulične ograde živica; stabala nema. Kolni ulazi: kamionski na zapadu, glavni s parkiralištem na istoku.",
       "izracun": {
+        "okvir": [
+          16.502826,
+          43.527143,
+          16.504273,
+          43.527892
+        ],
         "cestica_m2": 2830,
         "izgradeno_m2": 1077,
         "neizgradeno_m2": 1754,
         "procelje_m": 79,
-        "predlozenih_ispred": 7,
         "stabala": 8,
-        "zelenilo_m2": 566
+        "zelenilo_m2": 566,
+        "na_karti": 8,
+        "ostatak_na_cestici": 0,
+        "zamjenjuje": [
+          "D20",
+          "D22",
+          "D23",
+          "D24",
+          "D25",
+          "D26"
+        ],
+        "ulicna_ispred": [
+          "D18",
+          "D20",
+          "D22",
+          "D23",
+          "D24",
+          "D25",
+          "D26"
+        ],
+        "ulicna_dvostruki_red": [
+          "D18"
+        ],
+        "uz_dalekovod": 0
       },
-      "polozaja_na_karti": 8
+      "polozaji": [
+        [
+          16.503275934963014,
+          43.52748372500469
+        ],
+        [
+          16.503388646425282,
+          43.52743916615672
+        ],
+        [
+          16.503499862369477,
+          43.52739974037592
+        ],
+        [
+          16.503612593278504,
+          43.52736502134561
+        ],
+        [
+          16.503727204417434,
+          43.52733099874282
+        ],
+        [
+          16.503818756848872,
+          43.52730364465223
+        ],
+        [
+          16.50309732341356,
+          43.527535984719044
+        ],
+        [
+          16.503196122013136,
+          43.52751815409404
+        ]
+      ]
     },
     {
       "id": "dracevac-9c",
       "vrsta": "gup",
-      "tko": "Investitor, odnosno vlasnik stambeno-poslovne zgrade Dračevac 9C",
+      "tko": "Vlasnik zgrade Dračevac 9C",
       "cestica": "290/2",
-      "cestice": "290/2 i 3010/2 (prema dozvoli)",
       "adresa": "Dračevac 9C",
-      "namjena_gup": "mješovita (M), urbano pravilo 3.1",
+      "zona": "K5 (poslovna namjena i stanovanje), urbano pravilo 3.1",
       "zelenilo_udio": 0.3,
-      "stabala_danas": 0,
-      "sto_dodatno": "uz to najmanje 30 % čestice kao zelena površina s visokim i niskim zelenilom",
-      "zasto": [
+      "izvori": [
         {
           "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice; sadnja je uvjet za uporabnu dozvolu",
           "navod": "/gup/dokument#cl-91"
         },
         {
-          "tekst": "GUP, čl. 73. (urbano pravilo 3.1, mješovita namjena M1): najmanje 30 % čestice zelena površina",
+          "tekst": "GUP, čl. 73. (urbano pravilo 3.1, K5 prema M1): najmanje 30 % čestice zelena površina",
           "navod": "/gup/dokument#cl-73"
         }
       ],
       "akti": [
         {
-          "naziv": "Građevinska dozvola — stambeno-poslovna zgrada",
+          "naziv": "Građevinska dozvola, stambeno-poslovna zgrada",
           "klasa": "UP/I-361-03/20-01/000010",
           "datum": "2021-03-17"
         }
       ],
-      "posadeno": "Nijedno stablo; neizgrađeni dio uz zgradu popločen je. Zgrada je na čestici i 2017., pa je dozvola iz 2021. vjerojatno za rekonstrukciju ili dogradnju.",
-      "stanje": "Uporabna dozvola u registru nije pronađena.",
+      "danas": "Neizgrađeni dio uz zgradu popločen; stabla nema.",
       "izracun": {
+        "okvir": [
+          16.503323,
+          43.526695,
+          16.504101,
+          43.527267
+        ],
         "cestica_m2": 478,
         "izgradeno_m2": 150,
         "neizgradeno_m2": 329,
         "procelje_m": 5,
-        "predlozenih_ispred": 2,
         "stabala": 1,
-        "zelenilo_m2": 143
+        "zelenilo_m2": 143,
+        "na_karti": 1,
+        "ostatak_na_cestici": 0,
+        "zamjenjuje": [],
+        "ulicna_ispred": [
+          "D27",
+          "D28"
+        ],
+        "ulicna_dvostruki_red": [
+          "D27",
+          "D28"
+        ],
+        "uz_dalekovod": 0
       },
-      "polozaja_na_karti": 1
+      "polozaji": [
+        [
+          16.503813539415283,
+          43.52711698396535
+        ]
+      ]
     },
     {
       "id": "dracevac-15",
       "vrsta": "gup",
       "uvjetno": true,
-      "tko": "Investitor pogona na čestici 291 (adresa u dozvoli Dračevac 15)",
+      "tko": "Investitor s adresom Dračevac 15, vlasnik dvorišta na čestici 291",
       "cestica": "291",
-      "cestice": "291 i 3009 (prema dozvoli)",
       "adresa": "Dračevac 15",
-      "namjena_gup": "mješovita (M), urbano pravilo 3.1",
+      "zona": "K5 (poslovna namjena i stanovanje), urbano pravilo 3.1",
       "zelenilo_udio": 0.3,
-      "stabala_danas": 0,
-      "sto_dodatno": "broj ovisi o tome koliko će čestice zauzeti zgrada; uz to 1 stablo na 4 otvorena parkirna mjesta i najmanje 30 % čestice kao zelena površina",
-      "zasto": [
+      "masline": "U4",
+      "izvori": [
         {
-          "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice i 1 na 4 parkirna mjesta",
+          "tekst": "GUP, čl. 91.: 1 stablo na 200 m² neizgrađenog dijela čestice, vrste očekivane visine oko 10 m, pri sadnji visoko najmanje 3 m",
           "navod": "/gup/dokument#cl-91"
         }
       ],
       "akti": [
         {
-          "naziv": "Građevinska dozvola — proizvodnja sladoleda",
+          "naziv": "Građevinska dozvola, proizvodnja sladoleda; građevna čestica = k.č. 291",
           "klasa": "UP/I-361-03/16-01/000170",
           "datum": "2017-04-25"
         }
       ],
-      "posadeno": "Pogon nije izgrađen; čestica je parkiralište kamiona i prikolica, bez stabala. Između 2023. i 2025./26. uz rub ceste podignuta je nova građevina, tik uz postojeći red stabala na granici s cestom (U4), koji treba sačuvati.",
-      "stanje": "Obveza dospijeva s gradnjom. Dozvola iz 2017. mogla je u međuvremenu isteći.",
+      "danas": "Uz ulicu red maslina iza betonskog zida i žičane ograde; krošnje većim dijelom preko katastarske međe, na cestovnoj čestici. Između 2023. i 2025./26. uz rub podignuta nova građevina.",
       "izracun": {
+        "okvir": [
+          16.502813,
+          43.526754,
+          16.503985,
+          43.527468
+        ],
         "cestica_m2": 1518,
         "izgradeno_m2": 280,
         "neizgradeno_m2": 1238,
         "procelje_m": 54,
-        "predlozenih_ispred": 2,
         "stabala": 6,
-        "zelenilo_m2": 455
+        "zelenilo_m2": 455,
+        "na_karti": 0,
+        "ostatak_na_cestici": 0,
+        "zamjenjuje": [],
+        "ulicna_ispred": [
+          "D21",
+          "D27"
+        ],
+        "ulicna_dvostruki_red": [
+          "D21",
+          "D27"
+        ],
+        "uz_dalekovod": 0,
+        "masline_na_cesti_m2": 130,
+        "masline_na_cestici_m2": 55
       },
-      "polozaja_na_karti": 0
+      "polozaji": []
     }
   ]
 }
