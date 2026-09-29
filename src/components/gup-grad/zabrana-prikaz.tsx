@@ -695,7 +695,9 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
               {NAZIV_OZNAKE[p]} <span className="text-zinc-500">· {IZVOR_OZNAKE[p]}</span>
             </Stavka>
           ))}
-          <Stavka stil={{ border: `1px solid ${BOJE_ZABRANE.cestica}` }}>čestica na kojoj bi zabrana pogodila novu gradnju (izbliza)</Stavka>
+          <Stavka stil={{ border: `1px solid ${BOJE_ZABRANE.cestica}` }}>
+            čestica pod zabranom <span className="text-zinc-500">· izbliza</span>
+          </Stavka>
         </Skupina>
         {podaci?.sporne && (
           <Skupina naslov="Sporno" vidljivo={sporno} promijeni={setSporno}>
