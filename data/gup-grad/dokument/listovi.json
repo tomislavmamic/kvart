@@ -322,6 +322,69 @@
     -0.00021282360840408073,
     1026.1971439354882
    ]
+  },
+  "ppug-podrucja-zapad-2025": {
+   "naslov": "PPUG 4.2. Građevinska područja – Split zapad",
+   "izvor": "Prijedlog ID PPUG-a Splita za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Prostornog%20plana%20ure%C4%91enja%20Grada%20Splita%20za%20ponovnu%20javnu%20raspravu/4_Gradevinska%20podrucja-4_2_Split%20zapad.pdf",
+   "sirina": 6703,
+   "visina": 4465,
+   "maksZum": 4,
+   "slicica": {
+    "sirina": 960,
+    "visina": 639
+   },
+   "uklapanje": [
+    0.000176231495,
+    2.0954e-08,
+    -86.583028911756,
+    1.244e-09,
+    -0.000264628155,
+    1275.837852078887
+   ],
+   "mjerilo": 5000
+  },
+  "ppug-podrucja-sredisnji-2025": {
+   "naslov": "PPUG 4.3. Građevinska područja – Split središnji dio",
+   "izvor": "Prijedlog ID PPUG-a Splita za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Prostornog%20plana%20ure%C4%91enja%20Grada%20Splita%20za%20ponovnu%20javnu%20raspravu/4_Gradevinska%20podrucja-4_3_Split%20sredisnji%20dio.pdf",
+   "sirina": 6703,
+   "visina": 4465,
+   "maksZum": 4,
+   "slicica": {
+    "sirina": 960,
+    "visina": 639
+   },
+   "uklapanje": [
+    0.000176231765,
+    -1.2536e-08,
+    -87.143558654704,
+    -2.629e-09,
+    -0.000264561739,
+    1275.523809089474
+   ],
+   "mjerilo": 5000
+  },
+  "ppug-podrucja-istok-2025": {
+   "naslov": "PPUG 4.4. Građevinska područja – Split istok, Kamen, Stobreč",
+   "izvor": "Prijedlog ID PPUG-a Splita za ponovnu javnu raspravu, travanj 2025.",
+   "url": "https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Prostornog%20plana%20ure%C4%91enja%20Grada%20Splita%20za%20ponovnu%20javnu%20raspravu/4_Gradevinska%20podrucja-4_4_Split%20istok-Kamen-Stobrec.pdf",
+   "sirina": 6703,
+   "visina": 4465,
+   "maksZum": 4,
+   "slicica": {
+    "sirina": 960,
+    "visina": 639
+   },
+   "uklapanje": [
+    0.000176239823,
+    1.2736e-08,
+    -87.987267545249,
+    -1.047e-09,
+    -0.00026455096,
+    1275.468546215338
+   ],
+   "mjerilo": 5000
   }
  }
 }

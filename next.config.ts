@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
     "/api/cestica": ["public/geo/grad/**/*.geojson"],
   },
   /**
+   * Pregled razvojnog poslužitelja s drugog uređaja (mobitel na istoj mreži,
+   * Tailscale). Next 16 razvojne resurse daje samo localhostu: stranica se
+   * iscrta, ali se klijent ne pokrene, pa npr. karta na /gup/zabrana ostane na
+   * „Karta se učitava…”. Adrese dolaze iz okoline, da u repozitoriju ne stoje
+   * nečije IP adrese: DEV_ORIGINS=192.168.1.10,100.64.0.5 npx next dev -H 0.0.0.0
+   */
+  allowedDevOrigins: process.env.DEV_ORIGINS?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+  /**
    * Karta provjere GUP-a preselila je s /karta (pogled „gup-provjera”) na
    * /gup (prikaz „Karta čestica”). Stare poveznice — i one u prijedlozima
    * ispravka — nose `c` i `z`, koji se prenose sami.

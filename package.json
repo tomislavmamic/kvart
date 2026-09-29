@@ -52,6 +52,7 @@
     "gup-grad:ispravci": "tsx --env-file=.env.local scripts/gup-grad/ispravci.ts",
     "gup-grad:regije": "tsx scripts/gup-grad/regije.ts && /opt/homebrew/bin/python3 scripts/gup-grad/regije.py",
     "gup-grad:dokument": "/opt/homebrew/bin/python3 scripts/gup-grad/dokument.py",
+    "gup-grad:zabrana": "tsx scripts/gup-grad/zabrana-cestice.ts && /opt/homebrew/bin/python3 scripts/gup-grad/zabrana.py",
     "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
     "hindcast": "tsx scripts/hindcast/pokreni.ts",
     "hindcast:ulazi": "tsx scripts/hindcast/ulazi.ts",

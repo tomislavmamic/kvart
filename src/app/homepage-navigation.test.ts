@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import HomePage from "./page";
 
-test("homepage presents one broad invitation and one four-journey dock", () => {
+test("homepage presents one broad invitation and one five-journey dock", () => {
   const markup = renderToStaticMarkup(createElement(HomePage));
 
   assert.match(

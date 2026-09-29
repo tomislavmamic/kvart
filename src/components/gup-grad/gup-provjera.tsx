@@ -16,7 +16,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type * as LeafletNS from "leaflet";
-import type { Feature, FeatureCollection, Geometry } from "geojson";
+import type { Feature, Geometry } from "geojson";
 
 import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
 import { INACICE, type VrstaKoristenja } from "@/lib/gup-grad/pravila";
@@ -29,6 +29,7 @@ import { sudCestice, uZoniKrhotina, type Sklad, type SudCestice, type SvojstvaCe
 import type { PlanskiRezim, PodrucjeCekanja, Rezim } from "@/lib/gup-grad/rezim";
 import { BOJA_OBUHVATA, BOJA_ODREDBE, BOJA_VAZECEG, obrisiVrijede } from "@/components/gup-grad/gup-obrisi";
 import { Navod } from "@/components/gup-dokument/navod";
+import { plocnik } from "@/lib/gup-grad/plocnik";
 import {
   LIST_NAMJENE,
   LIST_URBANIH_PRAVILA,
@@ -257,12 +258,6 @@ const TIP_GRADNJE: Record<string, string> = {
   niz: "građevine u nizu",
 };
 
-interface Plocica {
-  id: string;
-  n: number;
-  granice: [[number, number], [number, number]];
-}
-
 export interface GupInfo {
   zum: number;
   stanje: "ucitava" | "greska" | null;
@@ -374,31 +369,6 @@ interface SvojstvaZgrade {
   g?: number;
   /** šifra VRSTA iz katastra */
   v?: number;
-}
-
-/**
- * Dohvaćač pločica jednog sloja: indeks se čita jednom, pločica jednom, a
- * ona koja nije stigla smije se tražiti ponovno.
- */
-function plocnik<P>(indeksUrl: string, mapa: string, dodaj: (fc: FeatureCollection<Geometry, P>) => void) {
-  let indeks: Plocica[] | null = null;
-  const ucitane = new Set<string>();
-  return async (L: typeof LeafletNS, okno: LeafletNS.LatLngBounds, prije: () => void) => {
-    indeks ??= ((await (await fetch(indeksUrl)).json()) as { plocice: Plocica[] }).plocice;
-    const trebaju = indeks.filter((p) => !ucitane.has(p.id) && okno.intersects(L.latLngBounds(p.granice)));
-    if (trebaju.length) prije();
-    await Promise.all(
-      trebaju.map(async (p) => {
-        ucitane.add(p.id);
-        const r = await fetch(`${mapa}/${p.id}.json`);
-        if (!r.ok) {
-          ucitane.delete(p.id);
-          throw new Error(`pločica ${p.id}: ${r.status}`);
-        }
-        dodaj((await r.json()) as FeatureCollection<Geometry, P>);
-      }),
-    );
-  };
 }
 
 /**

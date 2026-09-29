@@ -12,7 +12,9 @@ type PrimaryNavigationProps = {
 };
 
 const NAV_CLASS = {
-  hero: "grid grid-cols-2 overflow-hidden rounded-xl border border-white/30 bg-white/95 text-kamen-tinta shadow-lg sm:grid-cols-4",
+  // Crte među gumbima su razmak od 1 px kroz koji se vidi podloga; na
+  // mobitelu su dva stupca, a peti gumb zauzima cijeli zadnji red.
+  hero: "grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/30 bg-kamen-tlo text-kamen-tinta shadow-lg md:grid-cols-5",
   header: "flex items-center gap-4 text-sm",
   menu: "flex flex-col gap-1 text-sm",
 } as const;
@@ -31,7 +33,7 @@ export function PrimaryNavigation({
           variant={variant}
           active={isNavigationItemActive(pathname, item)}
           onNavigate={onNavigate}
-          index={index}
+          zadnjiNeparni={index === PRIMARY_NAV_ITEMS.length - 1 && PRIMARY_NAV_ITEMS.length % 2 === 1}
         />
       ))}
     </nav>
@@ -43,15 +45,16 @@ function NavigationItem({
   variant,
   active,
   onNavigate,
-  index,
+  zadnjiNeparni,
 }: {
   item: SiteNavigationItem;
   variant: PrimaryNavigationProps["variant"];
   active: boolean;
   onNavigate?: () => void;
-  index: number;
+  /** Zadnji gumb kad ih je neparan broj: na mobitelu zauzima cijeli red. */
+  zadnjiNeparni: boolean;
 }) {
-  const className = navigationItemClass(variant, active, index);
+  const className = navigationItemClass(variant, active, zadnjiNeparni);
   const content =
     variant === "hero" ? (
       <>
@@ -91,16 +94,12 @@ function NavigationItem({
 function navigationItemClass(
   variant: PrimaryNavigationProps["variant"],
   active: boolean,
-  index: number,
+  zadnjiNeparni: boolean,
 ) {
   if (variant === "hero") {
-    const gridBorders = [
-      "border-b border-r border-kamen-tlo sm:border-b-0",
-      "border-b border-kamen-tlo sm:border-b-0 sm:border-r",
-      "border-r border-kamen-tlo",
-      "",
-    ][index];
-    return `fokus meta flex min-h-20 flex-col justify-center px-4 py-3 transition-colors hover:bg-maslina-vez ${gridBorders}`;
+    return `fokus meta flex min-h-20 flex-col justify-center bg-white px-4 py-3 transition-colors hover:bg-maslina-vez ${
+      zadnjiNeparni ? "col-span-2 md:col-span-1" : ""
+    }`;
   }
 
   if (variant === "menu") {

@@ -16,8 +16,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const izd = izdanje((await params).izdanje);
   return createPageMetadata({
-    title: izd ? `GUP Splita: ${izd.naziv} (${izd.podnaslov})` : "GUP Splita",
-    description: izd ? `${izd.status} Cijeli tekst odredbi i kartografski prikazi.` : "Generalni urbanistički plan Splita.",
+    title: izd ? `${izd.plan ? "PPUG Splita" : "GUP Splita"}: ${izd.naziv} (${izd.podnaslov})` : "GUP Splita",
+    description: izd ? `${izd.status} Cijeli tekst i kartografski prikazi.` : "Generalni urbanistički plan Splita.",
   });
 }
 

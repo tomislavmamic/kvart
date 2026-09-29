@@ -5,7 +5,14 @@
  * poslužitelju.
  */
 
-export type DokumentId = "1-06" | "3-08" | "55-14" | "prijedlog-2025";
+export type DokumentId =
+  | "1-06"
+  | "3-08"
+  | "55-14"
+  | "prijedlog-2025"
+  | "obrazlozenje-2025"
+  | "ppug-odredbe-2025"
+  | "ppug-obrazlozenje-2025";
 
 /**
  * Blok teksta: `n` naslov (razina `r`: 1 poglavlje … 4 odjeljak, 5 podnaslov),
@@ -46,6 +53,8 @@ export interface List {
   naslov: string;
   izvor: string;
   url: string;
+  /** Mjerilo lista (10 000 za GUP, 5 000 za građevinska područja PPUG-a). */
+  mjerilo?: number;
   /** Puna rezolucija (150 dpi) u pikselima; razina `maksZum` je puna, svaka niža upola. */
   sirina: number;
   visina: number;

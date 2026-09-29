@@ -124,6 +124,13 @@ def gradnja() -> None:
                 "citat": e.get("nova_stambena_citat", ""),
                 "napomena": e.get("napomena", ""),
             }
+            # kig i kis gospodarske (I/K) i turističke (T) namjene iz posebnih pravila
+            # (Ppmin je već u ppmin.json); zasad samo 2025., gdje pogađaju zabranu
+            if e.get("izvan_stanovanja"):
+                tab[kod]["izvan_stanovanja"] = {
+                    kl: {**{k: v for k, v in x.items() if k in ("kig", "kis", "citat", "napomena")},
+                         "izvor": f"{dok}, str. {x['stranica']}"}
+                    for kl, x in e["izvan_stanovanja"].items()}
         out["godine"][str(god)] = tab
         out["opca"][str(god)] = d.get("opca", [])
         bez = [k for k, v in tab.items() if v["nova_stambena"] in ("rekonstrukcija", "ne")]

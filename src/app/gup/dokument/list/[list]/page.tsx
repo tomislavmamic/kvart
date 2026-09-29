@@ -22,8 +22,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const l = (await ucitajListove())[(await params).list];
   return createPageMetadata({
-    title: l ? `GUP Splita: ${l.naslov} (${l.izvor})` : "GUP Splita: kartografski prikaz",
-    description: "Kartografski prikaz Generalnog urbanističkog plana Splita u mjerilu 1:10 000, u punoj veličini.",
+    title: l ? `${l.id.startsWith("ppug-") ? "PPUG" : "GUP"} Splita: ${l.naslov} (${l.izvor})` : "GUP Splita: kartografski prikaz",
+    description: l?.id.startsWith("ppug-")
+      ? "Kartografski prikaz građevinskih područja iz prijedloga izmjena Prostornog plana uređenja Grada Splita, mjerilo 1:5000, u punoj veličini."
+      : "Kartografski prikaz Generalnog urbanističkog plana Splita u mjerilu 1:10 000, u punoj veličini.",
   });
 }
 
@@ -42,7 +44,7 @@ export default async function ListPage({ params }: Props) {
       </p>
       <h1 className="mt-2 text-2xl font-bold">{l.naslov}</h1>
       <p className="mt-1 text-sm text-kamen-drugi">
-        {l.izvor} · mjerilo 1:10 000 ·{" "}
+        {l.izvor} · mjerilo 1:{(l.mjerilo ?? 10000).toLocaleString("hr-HR")} ·{" "}
         <a href={l.url} target="_blank" rel="noopener noreferrer" className="fokus underline hover:text-kamen-tinta">
           izvornik (PDF, split.hr)
         </a>

@@ -26,7 +26,16 @@ neuređeno) uzima se kakva jest.
 
 Izlaz (.cache/gup-grad/): pr-<id>.npy (uint8, bitovi REZIM), pregled-pr-<id>.png
 
-Pokretanje:  python scripts/gup-grad/planski-rezim.py
+Ispuna se uzima samo gdje se na listu i vidi. List prekriva dijelove ispune
+bijelim plohama nacrtanim preko nje (npr. shematski obuhvat DPU-a dijela
+područja Dračevac: bijela ploha s crvenom šrafurom preko sanacije), pa bi
+ispuna po boji crteža ondje bila i ono čega na listu nema. Ploha uža od
+~8 m (bijele crte ulica, podloga brojeva, crte šrafure) ne skida ispunu.
+
+Pokretanje:  python scripts/gup-grad/planski-rezim.py [--cestice]
+  --cestice uz to prepravi bitove sanacije, preobrazbe i neuređenog za 2025.
+  u već izvezenim česticama (data/gup-grad/cestice.json i pločice), samo
+  gdje ih je promijenio novi list, bez ponovnog pokretanja cijelog cestice.py
 """
 from __future__ import annotations
 
@@ -34,9 +43,15 @@ import json
 import os
 import sys
 
+import glob
+
 import numpy as np
 from PIL import Image
+from rasterio import features
+from rasterio.transform import Affine
 from scipy import ndimage
+from shapely.geometry import shape
+from shapely.ops import transform as stransform
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import rasteriziraj as R  # noqa: E402
@@ -190,6 +205,21 @@ def obuhvat_srafure(tragovi: np.ndarray) -> np.ndarray:
     return ndimage.binary_dilation(puno, iterations=2)
 
 
+def bijele_plohe(put: str, dpi: float) -> np.ndarray:
+    """Plohe lista šire od ~4 px (8 m) koje prekrivaju ispunu: bijele, ili bijele s crvenom šrafurom
+    plana na snazi. Gdje je šrafura preko vidljive ispune, između crta je boja ispune, pa to ostaje.
+    Ispuna ispod njih je u crtežu, ali je list ne pokazuje (odrezana ili prekrivena)."""
+    p = pymupdf.open(put)[0]
+    p.set_cropbox(p.mediabox)
+    pix = p.get_pixmap(matrix=pymupdf.Matrix(dpi / 72.0, dpi / 72.0), alpha=False)
+    rgb = np.frombuffer(pix.samples, np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, :3]
+    c = rgb.astype(np.int16)
+    papir = rgb.min(axis=2) >= 245
+    # crvena šrafura na bijelom i njezini rozi rubovi (G ≈ B); šrafura preko narančaste ima B ≈ 0
+    rozo = (c[:, :, 0] >= 230) & (np.abs(c[:, :, 1] - c[:, :, 2]) <= 30) & (c[:, :, 1] <= 245)
+    return ndimage.binary_opening(papir | rozo, iterations=4)
+
+
 def list_na_rescetku(lst: dict) -> np.ndarray:
     plan = R.uklapanje_lista(lst["plan"], lst["pdf"])
     plan["pdf"], plan["url"] = lst["pdf"], lst["url"]
@@ -203,8 +233,9 @@ def list_na_rescetku(lst: dict) -> np.ndarray:
         m = obuhvat_srafure(crtez(put, dpi, boja, "srafura") | crtez(put, dpi, boja, "crta"))
         bitovi = np.zeros(m.shape, np.uint8) if bitovi is None else bitovi
         bitovi[m] |= bit
+    bijelo = bijele_plohe(put, dpi) if lst["ispune"] else None
     for boja, bit in lst["ispune"].items():
-        m = crtez(put, dpi, boja, "ispuna")
+        m = crtez(put, dpi, boja, "ispuna") & ~bijelo
         m = ndimage.binary_closing(m, iterations=2)
         bitovi = np.zeros(m.shape, np.uint8) if bitovi is None else bitovi
         bitovi[m] |= bit
@@ -222,8 +253,74 @@ def pregled(g: np.ndarray, kl: np.ndarray | None, put: str) -> None:
     Image.fromarray(rgb[::2, ::2]).save(put)
 
 
+ISPUNE_2025 = SANACIJA | PREOBRAZBA | NEUREDENO
+
+
+def bitovi_po_cestici(g: np.ndarray, ids: np.ndarray, n: int) -> np.ndarray:
+    """Kao cestice.py: bit ide čestici kad pokriva barem pola njezinih piksela."""
+    mc = ids > 0
+    svi = np.bincount(ids[mc], minlength=n)
+    out = np.zeros(n, np.int64)
+    for bit in (SANACIJA, PREOBRAZBA, NEUREDENO):
+        mb = mc & ((g & bit) > 0)
+        pod = np.bincount(ids[mb], minlength=n)
+        out[(pod * 2 >= svi) & (svi > 0)] |= bit
+    return out
+
+
+def popravi_cestice(staro: np.ndarray, novo: np.ndarray) -> None:
+    """Bitovi ispune za 2025. u izvezenim česticama: mijenja se samo ono što je promijenio list.
+
+    Čestice se rasteriziraju iz pločica (public/geo/gup-grad/cestice), pa se
+    za svaku usporede bitovi po starom i po novom listu na istoj rešetki;
+    razlika se prenese u cestice.json i pločice. Tako rubni slučajevi zbog
+    malo drukčijeg oblika čestice u pločici ne mijenjaju ništa.
+    """
+    from pyproj import Transformer
+
+    u3765 = Transformer.from_crs(4326, 3765, always_xy=True).transform
+    trans = Affine(R.KORAK, 0.0, R.MREZA_BBOX[0], 0.0, -R.KORAK, R.MREZA_BBOX[3])
+    plocice = {}
+    for put in sorted(glob.glob(os.path.join(R.ROOT, "public", "geo", "gup-grad", "cestice", "*.json"))):
+        with open(put, encoding="utf-8") as f:
+            plocice[put] = json.load(f)
+    znacajke = [(put, z) for put, fc in plocice.items() for z in fc["features"]]
+    n = max(z["properties"]["i"] for _, z in znacajke) + 2
+    ids = features.rasterize(((stransform(u3765, shape(z["geometry"])), z["properties"]["i"] + 1) for _, z in znacajke),
+                             out_shape=(R.H, R.W), transform=trans, fill=0, dtype="int32")
+    razlika = bitovi_po_cestici(staro, ids, n) ^ bitovi_po_cestici(novo, ids, n)
+    put_json = os.path.join(R.ROOT, "data", "gup-grad", "cestice.json")
+    with open(put_json, encoding="utf-8") as f:
+        d = json.load(f)
+    rezim = d["godine"]["2025"]["planski_rezim"]
+    promijenjene, broj = set(), 0
+    for put, z in znacajke:
+        s = z["properties"]
+        r = int(razlika[s["i"] + 1])
+        if not r:
+            continue
+        novi = s.get("p", {}).get("2025", 0) ^ r
+        if novi:
+            s.setdefault("p", {})["2025"] = novi
+        else:
+            del s["p"]["2025"]
+            if not s["p"]:
+                del s["p"]
+        rezim[s["i"]] = novi
+        promijenjene.add(put)
+        broj += 1
+    for put in promijenjene:
+        with open(put, "w", encoding="utf-8") as f:
+            json.dump(plocice[put], f, ensure_ascii=False, separators=(",", ":"))
+    with open(put_json, "w", encoding="utf-8") as f:
+        json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"čestice: bitovi ispune 2025. promijenjeni na {broj}; pločica prepravljeno {len(promijenjene)}")
+
+
 def main() -> None:
     os.makedirs(R.OUT, exist_ok=True)
+    stari_2025 = os.path.join(R.OUT, "pr-gup-2025.npy")
+    staro = np.load(stari_2025) if "--cestice" in sys.argv[1:] and os.path.exists(stari_2025) else None
     po_listu = {lst["id"]: list_na_rescetku(lst) for lst in LISTOVI}
     izvj = {"bitovi": {"VAZECI": VAZECI, "OBVEZA": OBVEZA, "SANACIJA": SANACIJA, "PREOBRAZBA": PREOBRAZBA,
                        "NEUREDENO": NEUREDENO, "MARJAN": MARJAN},
@@ -237,6 +334,8 @@ def main() -> None:
         if kl is not None:
             g[kl == 0] = 0  # izvan obuhvata GUP-a (i legende lista) nema režima
         np.save(os.path.join(R.OUT, f"pr-{gid}.npy"), g)
+        if gid == "gup-2025" and staro is not None:
+            popravi_cestice(staro, g)
         pregled(g, kl, os.path.join(R.OUT, f"pregled-pr-{gid}.png"))
         ha = {ime: round(float(((g & bit) > 0).sum()) * R.KORAK ** 2 / 1e4, 1) for ime, bit in izvj["bitovi"].items()}
         izvj["godine"][gid] = {"listovi": listovi, "ha": ha}

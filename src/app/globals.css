@@ -1195,6 +1195,11 @@ body {
   display: none;
 }
 
+/* Siva podloga karte zabrane (/gup/zabrana): boje oznaka s lista 4.d čitaju se tek na neutralnoj snimci */
+.leaflet-layer.podloga-siva {
+  filter: grayscale(1) contrast(0.6) brightness(1.3);
+}
+
 /* Dijelovi čestice na karti /gup (gup-regije.ts): pikseli rešetke od 2 m
    ostaju oštri — zamućeni rub bi izgledao kao granica koje nema. */
 .leaflet-image-layer.gup-regije {

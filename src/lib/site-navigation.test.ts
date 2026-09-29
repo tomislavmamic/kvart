@@ -7,10 +7,10 @@ import {
   resolveWhatsAppUrl,
 } from "./site-navigation";
 
-test("primary navigation keeps the four resident journeys in order", () => {
+test("primary navigation keeps the five resident journeys in order", () => {
   assert.deepEqual(
     PRIMARY_NAV_ITEMS.map((item) => item.label),
-    ["Razgovor", "Karta", "Karepovac", "Problemi"],
+    ["Razgovor", "Karta", "Planovi", "Karepovac", "Problemi"],
   );
 });
 
@@ -39,4 +39,14 @@ test("nested Karepovac and Problems routes keep their primary item active", () =
   );
   assert.equal(isNavigationItemActive("/prijavi", problemi), true);
   assert.equal(isNavigationItemActive("/karta", problemi), false);
+});
+
+test("every GUP page keeps Planovi active", () => {
+  const planovi = PRIMARY_NAV_ITEMS.find((item) => item.id === "planovi");
+
+  assert.ok(planovi);
+  for (const put of ["/planovi", "/plan", "/gup", "/gup/dokument/2025", "/gup/analiza", "/gup/navod/clanak-104-2015"])
+    assert.equal(isNavigationItemActive(put, planovi), true, put);
+  assert.equal(isNavigationItemActive("/karta", planovi), false);
+  assert.equal(isNavigationItemActive("/prijedlozi", planovi), false);
 });

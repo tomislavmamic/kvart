@@ -57,6 +57,8 @@ PONOVNA = ("https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%2
 
 # Tekstualni izvori. `od` je prva stranica s tekstom (prva je naslovnica sa
 # sadržajem broja glasnika); `stupci` je raspored sloga.
+PPUG_PONOVNA_TEKST = ("https://split.hr/Portals/0/Dokumenti/Prostorno-planska/Izmjene%20i%20dopune%20Prostornog%20plana%20ure"
+                      "%C4%91enja%20Grada%20Splita%20za%20ponovnu%20javnu%20raspravu/")
 DOKUMENTI = [
     {
         "id": "1-06",
@@ -95,6 +97,41 @@ DOKUMENTI = [
         "naslov": "Odredbe za provedbu – prijedlog Izmjena i dopuna GUP-a Splita za ponovnu javnu raspravu",
         "izvor": "Grad Split, travanj 2025. (prijedlog, nije donesen)",
         "kratko": "Prijedlog 2025.",
+        "stupci": 1,
+        "od": 1,
+    },
+    # Obrazloženje uz prijedlog: kako su određeni urbana sanacija, preobrazba i
+    # neuređeni dio i zašto je obveza UPU-a za ostatak obuhvata samo preporuka
+    # (§ 2.1.1.2–2.1.1.4). Isti predložak kao odredbe prijedloga.
+    {
+        "id": "obrazlozenje-2025",
+        "pdf": "obrazlozenje-2025.pdf",
+        "url": PONOVNA + "3_%20Obrazlozenje.pdf",
+        "naslov": "Obrazloženje – prijedlog Izmjena i dopuna GUP-a Splita za ponovnu javnu raspravu",
+        "izvor": "Grad Split, travanj 2025. (prijedlog, nije donesen)",
+        "kratko": "Obrazloženje 2025.",
+        "stupci": 1,
+        "od": 1,
+    },
+    # PPUG određuje neuređeni dio koji list 4.d GUP-a prenosi (listovi 4.2–4.4,
+    # ppug-podrucja-*). Odredbe i obrazloženje istog prijedloga za ponovnu raspravu.
+    {
+        "id": "ppug-odredbe-2025",
+        "pdf": "ppug-odredbe-2025.pdf",
+        "url": PPUG_PONOVNA_TEKST + "1_%20Odredbe%20za%20provedbu.pdf",
+        "naslov": "Odredbe za provedbu – prijedlog Izmjena i dopuna PPUG-a Splita za ponovnu javnu raspravu",
+        "izvor": "Grad Split, travanj 2025. (prijedlog, nije donesen)",
+        "kratko": "PPUG, prijedlog 2025.",
+        "stupci": 1,
+        "od": 1,
+    },
+    {
+        "id": "ppug-obrazlozenje-2025",
+        "pdf": "ppug-obrazlozenje-2025.pdf",
+        "url": PPUG_PONOVNA_TEKST + "3_%20Obrazlozenje.pdf",
+        "naslov": "Obrazloženje – prijedlog Izmjena i dopuna PPUG-a Splita za ponovnu javnu raspravu",
+        "izvor": "Grad Split, travanj 2025. (prijedlog, nije donesen)",
+        "kratko": "Obrazloženje PPUG-a 2025.",
         "stupci": 1,
         "od": 1,
     },
@@ -144,6 +181,22 @@ LISTOVI = [
      "naslov": "4.c Urbana pravila", "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025."},
     {"id": "planske-mjere-2025", "pdf": "pr-2025.pdf", "url": PONOVNA + "4_d%20Podrucja%20i%20dijelovi%20primjene%20planskih%20mjera%20zastite.pdf",
      "naslov": "4.d Područja i dijelovi primjene planskih mjera zaštite", "izvor": "Prijedlog ID GUP-a za ponovnu javnu raspravu, travanj 2025."},
+]
+
+# Prijedlog izmjena PPUG-a za ponovnu javnu raspravu (travanj 2025.): listovi
+# građevinskih područja na kojima je neuređeni dio koji list 4.d GUP-a prenosi.
+# Uklapanje im daje scripts/gup-grad/ppug.py iz ispisanih brojeva čestica.
+PPUG_PONOVNA = PPUG_PONOVNA_TEKST
+PPUG_IZVOR = "Prijedlog ID PPUG-a Splita za ponovnu javnu raspravu, travanj 2025."
+LISTOVI += [
+    {"id": "ppug-podrucja-zapad-2025", "pdf": "ppug-4-2-2025.pdf", "url": PPUG_PONOVNA + "4_Gradevinska%20podrucja-4_2_Split%20zapad.pdf",
+     "naslov": "PPUG 4.2. Građevinska područja – Split zapad", "izvor": PPUG_IZVOR, "mjerilo": 5000},
+    {"id": "ppug-podrucja-sredisnji-2025", "pdf": "ppug-4-3-2025.pdf",
+     "url": PPUG_PONOVNA + "4_Gradevinska%20podrucja-4_3_Split%20sredisnji%20dio.pdf",
+     "naslov": "PPUG 4.3. Građevinska područja – Split središnji dio", "izvor": PPUG_IZVOR, "mjerilo": 5000},
+    {"id": "ppug-podrucja-istok-2025", "pdf": "ppug-4-4-2025.pdf",
+     "url": PPUG_PONOVNA + "4_Gradevinska%20podrucja-4_4_Split%20istok-Kamen-Stobrec.pdf",
+     "naslov": "PPUG 4.4. Građevinska područja – Split istok, Kamen, Stobreč", "izvor": PPUG_IZVOR, "mjerilo": 5000},
 ]
 
 DPI_LISTA = 150
@@ -582,7 +635,10 @@ def sidra(blokovi: list[dict]) -> None:
 
 def tekst() -> None:
     os.makedirs(IZLAZ, exist_ok=True)
+    samo = set(sys.argv[2:])
     for cfg in DOKUMENTI:
+        if samo and cfg["id"] not in samo:
+            continue
         blokovi, _ = blokovi_dokumenta(cfg)
         razine_naslova(blokovi)
         sidra(blokovi)
@@ -613,6 +669,9 @@ def listovi() -> None:
     if os.path.exists(meta_put):
         meta["listovi"] = json.load(open(meta_put)).get("listovi", {})
     samo = set(sys.argv[2:])
+    # uklapanje listova PPUG-a (scripts/gup-grad/ppug.py, pokreni ga prije ovoga)
+    ppug_put = os.path.join(IZLAZ, "..", "ppug-2025.json")
+    ppug = json.load(open(ppug_put))["uklapanje"] if os.path.exists(ppug_put) else {}
     for cfg in LISTOVI:
         if samo and cfg["id"] not in samo:
             continue
@@ -653,8 +712,12 @@ def listovi() -> None:
             "sirina": im.width, "visina": im.height, "maksZum": maks,
             "slicica": {"sirina": sl.width, "visina": sl.height},
         }
+        if cfg.get("mjerilo"):
+            meta["listovi"][cfg["id"]]["mjerilo"] = cfg["mjerilo"]
         if cfg["id"] in UKLAPANJE:
             meta["listovi"][cfg["id"]]["uklapanje"] = afina_uklapanja(uklapanje_lista(cfg), p.rect.width, p.rect.height)
+        elif cfg["id"] in ppug:
+            meta["listovi"][cfg["id"]]["uklapanje"] = ppug[cfg["id"]]["udio"]
         print(f"{cfg['id']:8} {im.width}×{im.height} z0–{maks} {ukupno / 1e6:.1f} MB")
         del im, razina
     with open(meta_put, "w") as f:

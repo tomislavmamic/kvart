@@ -82,7 +82,8 @@ test("svaki navod spomenut u kodu postoji", async () => {
   };
   hodaj(path.join(process.cwd(), "src"));
   const trazeni = new Set<string>();
-  const oblik = /["`]((?:list|obveza-plana|preporuka-plana|marjan|z6|sve-namjene|ppmin-250|sirina-cestice|clanak)-[A-Za-z0-9_-]+?)["`]/g;
+  const oblik =
+    /["`]((?:list|obveza-plana|preporuka-plana|marjan|z6|sve-namjene|ppmin-250|sirina-cestice|clanak|pravilo|izmjena|istok|legenda|obuhvat-izvan-cekanja|plan-na-snazi|do-plana|obrazlozenje-[a-z]+|odredba)-[A-Za-z0-9_-]+?)["`]/g;
   for (const f of datoteke) {
     const t = readFileSync(f, "utf8");
     for (const m of t.matchAll(oblik)) if (!m[1].endsWith("-")) trazeni.add(m[1]);
