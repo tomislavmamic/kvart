@@ -33,7 +33,7 @@ Izlaz:
       obris cijelog crvenog, obuhvat GUP-a, zbrojevi (crveno, slobodno zemljište,
       neizgrađene čestice, po UPU-u)
   public/geo/gup-grad/zabrana-cestice-2025.geojson   čestice sa slobodnim
-      zemljištem koje bi čekalo UPU
+      zemljištem koje bi čekalo UPU, s pretežitom oznakom pod sobom (vrsta)
   public/geo/gup-grad/kucni-brojevi.json     kućni brojevi u obuhvatu GUP-a
       za tražilicu adrese na /gup/zabrana
 
@@ -141,6 +141,23 @@ def crvena_rescetka(gup, planovi) -> np.ndarray:
     return v
 
 
+def vrsta_cestice(g, v: np.ndarray) -> str | None:
+    """Pretežita oznaka (sanacija, preobrazba, neuređeno) pod česticom."""
+    minx, miny, maxx, maxy = g.bounds
+    c0 = max(0, int((minx - R.MREZA_BBOX[0]) / R.KORAK))
+    c1 = min(R.W, int((maxx - R.MREZA_BBOX[0]) / R.KORAK) + 1)
+    r0 = max(0, int((R.MREZA_BBOX[3] - maxy) / R.KORAK))
+    r1 = min(R.H, int((R.MREZA_BBOX[3] - miny) / R.KORAK) + 1)
+    if c1 <= c0 or r1 <= r0:
+        return None
+    t = Affine(R.KORAK, 0, R.MREZA_BBOX[0] + c0 * R.KORAK, 0, -R.KORAK, R.MREZA_BBOX[3] - r0 * R.KORAK)
+    # all_touched, da ni čestica uža od piksela ne ostane bez oznake
+    sub = features.rasterize([(g, 1)], out_shape=(r1 - r0, c1 - c0), transform=t, fill=0, dtype="uint8", all_touched=True)
+    x = v[r0:r1, c0:c1][sub.astype(bool)]
+    x = x[x > 0]
+    return VRSTE[int(np.bincount(x).argmax())] if x.size else None
+
+
 def main() -> None:
     if not os.path.exists(REZIM):
         sys.exit(f"Nema {REZIM}: prvo pokreni scripts/gup-grad/planski-rezim.py")
@@ -194,7 +211,7 @@ def main() -> None:
                 oblici[i] = f
     upu_prep = [(p["broj"], prep(ug)) for p, ug in upu]
     nazivi = {p["broj"]: p["naziv"] for p, _ in upu}
-    cestice, bez_oblika = [], 0
+    cestice, bez_oblika, bez_vrste = [], 0, 0
     ukupno = {"neizgradjene": [0, 0.0], "djelomicno": [0, 0.0]}
     po_zoni = {}
     for i, (m2, neizgradjena, zona) in sorted(redovi.items()):
@@ -202,11 +219,15 @@ def main() -> None:
         if f is None:
             bez_oblika += 1
             continue
-        t = stransform(U_HTRS, shape(f["geometry"])).representative_point()
+        g = stransform(U_HTRS, shape(f["geometry"]))
+        t = g.representative_point()
         broj = next((b for b, pg in upu_prep if pg.contains(t)), 0)
+        vrsta = vrsta_cestice(g, v)
+        bez_vrste += vrsta is None
         cestice.append({"type": "Feature", "geometry": f["geometry"],
                         "properties": {"kc": f["properties"]["kc"], "ko": f["properties"]["ko"], "m2": m2,
-                                       "neizgradjena": neizgradjena, "zona": zona, "upu": broj}})
+                                       "neizgradjena": neizgradjena, "zona": zona, "upu": broj,
+                                       **({"vrsta": vrsta} if vrsta else {})}})
         z = zbroj_upu.setdefault(broj, novi_red(broj, nazivi.get(broj)))
         z["slobodno_ha"] += m2 / 1e4
         z["neizgradjene"] += int(neizgradjena)
@@ -216,6 +237,8 @@ def main() -> None:
         po_zoni[zona] = po_zoni.get(zona, 0.0) + m2 / 1e4
     if bez_oblika:
         print(f"upozorenje: {bez_oblika} čestica nema oblika u pločicama")
+    if bez_vrste:
+        print(f"upozorenje: {bez_vrste} čestica nema oznake s lista 4.d pod sobom")
 
     kb = pyogrio.read_dataframe(os.path.join(BAZA, "AR_V_HOUSENUMBERS_PT_HTRS.shp"),
                                 columns=["HN_NUMBER", "HN_TEXTADD", "STREETNA_1", "STREETNAME", "GRAD_KOT_1"])

@@ -169,7 +169,9 @@ export default async function ZabranaPage() {
                 <p className="max-w-3xl text-zinc-600">
                   Crvena je urbana sanacija, narančasta urbana preobrazba, a žut neuređeni dio građevinskog područja, unutar
                   obuhvata GUP-a. Narančastu i žutu preuzeli smo s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>{" "}
-                  prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Izuzeta su područja
+                  prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Tamnijim su
+                  tonom iste boje čestice na kojima ima mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju, a
+                  ostatak područja većinom je izgrađen. Izuzeta su područja
                   važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
                   Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
                   <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).

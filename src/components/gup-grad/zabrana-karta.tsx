@@ -7,9 +7,10 @@
  * priječi gradnju): urbanu sanaciju i preobrazbu određuje
  * GUP, a neuređeni dio PPUG, iz kojega ga GUP preuzima. Za snalaženje su tu
  * planovi na snazi (sivo), obuhvati propisanih UPU-a (plavi rub) i granica
- * GUP-a (jedina iscrtkana crta). Od zuma CESTICE_OD_ZUMA tanak crni rub
- * pokazuje čestice na kojima bi zabrana pogodila novu gradnju
- * (zabrana-cestice-2025.geojson).
+ * GUP-a (jedina iscrtkana crta). Svaka oznaka ima dva tona: svjetliji je cijelo
+ * područje, a tamniji čestice s mjestom za novu zgradu, na kojima zabrana
+ * stvarno priječi gradnju (zabrana-cestice-2025.geojson, TAMNE_ZABRANE). Od
+ * zuma CESTICE_OD_ZUMA te čestice dobivaju i tanak rub, da se susjedne razlikuju.
  *
  * Ljubičasto je sporno (sporne-2025.geojson): tanke kose crte preko čestice
  * ili plohe kad oznaka ne odgovara kriteriju Grada ili zakonu, točke kad je
@@ -35,7 +36,7 @@ import type * as LeafletNS from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 
 import { BASE_LAYERS, SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
-import { BOJE_ZABRANE, type Okvir, type Podrucje } from "@/lib/gup-grad/zabrana";
+import { BOJE_ZABRANE, PROZIRNOST_ZABRANE, TAMNE_ZABRANE, type Okvir, type Podrucje } from "@/lib/gup-grad/zabrana";
 
 const SRAFURA = "zabrana-sporno-srafura";
 const TOCKE = "zabrana-sporno-tocke";
@@ -90,7 +91,7 @@ function podloga(L: typeof LeafletNS, id: string): LeafletNS.TileLayer {
 
 const zbirka = (features: Feature[]): FeatureCollection => ({ type: "FeatureCollection", features });
 
-/** Čestice su sitne; na pregledu cijelog grada samo bi zamutile oznake. */
+/** Od ovog zuma čestice s mjestom za zgradu imaju rub; izdaleka bi rubovi zamutili ton. */
 export const CESTICE_OD_ZUMA = 15;
 /** Sporno se vidi i na pregledu cijelog grada: odmah se vidi gdje ga ima. */
 export const SPORNO_OD_ZUMA = 12;
@@ -178,13 +179,21 @@ export function ZabranaKarta(props: {
         style: (f) => ({
           stroke: false,
           fillColor: BOJE_ZABRANE[(f?.properties?.vrsta as Podrucje) ?? "neuredeno"],
-          fillOpacity: 0.65,
+          fillOpacity: PROZIRNOST_ZABRANE.podrucje,
         }),
       }).addTo(map);
-      slojCestica.current = L.geoJSON(cestice, {
+      // čestica bez oznake pod sobom (nekoliko rubnih) nije ni u jednom obojenom području
+      slojCestica.current = L.geoJSON(zbirka(cestice.features.filter((f) => f.properties?.vrsta)), {
         ...netaknuto,
-        style: { color: BOJE_ZABRANE.cestica, weight: 0.7, opacity: 0.55, fill: false },
-      });
+        style: (f) => ({
+          stroke: false,
+          color: BOJE_ZABRANE.cestica,
+          weight: 0.6,
+          opacity: 0.5,
+          fillColor: TAMNE_ZABRANE[f?.properties?.vrsta as Podrucje],
+          fillOpacity: PROZIRNOST_ZABRANE.cestica,
+        }),
+      }).addTo(map);
       L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "propisan")), {
         ...netaknuto,
         style: { color: BOJE_ZABRANE.upu, weight: 1.5, fill: false },
@@ -250,7 +259,8 @@ export function ZabranaKarta(props: {
       const cesticePoZumu = () => {
         const z = map.getZoom();
         prikazi(slojZabrane.current, zabranaVidljiva.current);
-        prikazi(slojCestica.current, z >= CESTICE_OD_ZUMA && zabranaVidljiva.current);
+        prikazi(slojCestica.current, zabranaVidljiva.current);
+        slojCestica.current?.setStyle({ stroke: z >= CESTICE_OD_ZUMA });
         const sp = slojeviSpornog.current;
         prikazi(sp?.cestice, z >= SPORNO_OD_ZUMA && spornoVidljivo.current);
         prikazi(sp?.izbliza, z >= SRAFURA_OD_ZUMA && spornoVidljivo.current);

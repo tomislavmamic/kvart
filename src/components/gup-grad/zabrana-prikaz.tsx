@@ -21,6 +21,8 @@ import type { RedUpu } from "@/lib/gup-grad/zabrana-podaci";
 import {
   BLIZU_RUBA_M,
   BOJE_ZABRANE,
+  PROZIRNOST_ZABRANE,
+  TAMNE_ZABRANE,
   cesticaUTocki,
   imenicaUz,
   IZVOR_OZNAKE,
@@ -34,6 +36,7 @@ import {
   stanjeTocke,
   trazi,
   type Adrese,
+  type Podrucje,
   type Prijedlog,
   type SiroveAdrese,
   type ListPpug,
@@ -312,6 +315,13 @@ function karticaStanja(
 function Uzorak({ stil }: { stil: CSSProperties }) {
   return <span aria-hidden className="inline-block h-4 w-6 shrink-0 rounded-sm" style={stil} />;
 }
+
+/** Uzorak tumača: lijevo svjetliji ton područja, desno tamniji ton čestice, kao na karti (na bijeloj podlozi). */
+const dvaTona = (p: Podrucje) => {
+  const svijetlo = `color-mix(in srgb, ${BOJE_ZABRANE[p]} ${PROZIRNOST_ZABRANE.podrucje * 100}%, white)`;
+  const tamno = `color-mix(in srgb, ${TAMNE_ZABRANE[p]} ${PROZIRNOST_ZABRANE.cestica * 100}%, white)`;
+  return `linear-gradient(90deg, ${svijetlo} 0 50%, ${tamno} 50% 100%)`;
+};
 
 const NAZIV_OZNAKE = { sanacija: "urbana sanacija", preobrazba: "urbana preobrazba", neuredeno: "neuređeni dio" } as const;
 
@@ -691,13 +701,11 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
       <div className="mt-3 grid gap-x-6 gap-y-4 text-sm text-zinc-700 md:grid-cols-3">
         <Skupina naslov="Nova gradnja tek nakon UPU-a" vidljivo={prikaziZabranu} promijeni={setPrikaziZabranu}>
           {(["sanacija", "preobrazba", "neuredeno"] as const).map((p) => (
-            <Stavka key={p} stil={{ background: BOJE_ZABRANE[p], opacity: 0.8 }}>
+            <Stavka key={p} stil={{ background: dvaTona(p) }}>
               {NAZIV_OZNAKE[p]} <span className="text-zinc-500">· {IZVOR_OZNAKE[p]}</span>
             </Stavka>
           ))}
-          <Stavka stil={{ border: `1px solid ${BOJE_ZABRANE.cestica}` }}>
-            čestica s mjestom za novu zgradu <span className="text-zinc-500">· izbliza</span>
-          </Stavka>
+          <li className="text-zinc-500">Svjetliji ton je cijelo područje, a tamniji čestica s mjestom za novu zgradu.</li>
         </Skupina>
         {podaci?.sporne && (
           <Skupina naslov="Sporno" vidljivo={sporno} promijeni={setSporno}>

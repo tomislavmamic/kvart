@@ -38,6 +38,15 @@ export const BOJE_ZABRANE = {
   cestaNepoznata: "#a1a1aa",
 } as const;
 
+/** Tamniji ton iste oznake: čestica s mjestom za novu zgradu, na kojoj zabrana stvarno priječi gradnju. */
+export const TAMNE_ZABRANE: Record<Podrucje, string> = {
+  sanacija: "#dc2626",
+  preobrazba: "#ea580c",
+  neuredeno: "#eab308",
+};
+/** Neprozirnost svjetlijeg (cijelo područje) i tamnijeg tona (čestica s mjestom za zgradu) na karti. */
+export const PROZIRNOST_ZABRANE = { podrucje: 0.4, cestica: 0.85 } as const;
+
 /** Koji plan je odredio oznaku na listu 4.d. */
 export const IZVOR_OZNAKE: Record<Podrucje, string> = {
   sanacija: "oznaka GUP-a",
