@@ -173,7 +173,7 @@ export default async function ZabranaPage() {
                   za gradnju (stambenoj, mješovitoj, gospodarskoj i turističkoj). Tamnijim su tonom iste boje čestice na kojima
                   ima mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju. Svjetliji je ostatak zone, većinom
                   izgrađen; u neuređenom dijelu, koji bi po zakonu trebao biti neizgrađen, to su čestice na kojima već stoji
-                  zgrada. Sivoplavo je ono što list 4.d boji, a prijedlog namjenjuje ulicama, infrastrukturi, javnim sadržajima,
+                  zgrada. Gotovo bijelo, kao izbrisano, ono je što list 4.d boji, a prijedlog namjenjuje ulicama, infrastrukturi, javnim sadržajima,
                   sportu ili zelenilu: ondje se privatna zgrada ne bi gradila ni bez zabrane. Izuzeta su područja
                   važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
                   Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (

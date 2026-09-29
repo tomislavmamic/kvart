@@ -31,7 +31,7 @@ export const BOJE_ZABRANE = {
   gup: "#18181b",
   cestica: "#3f3f46",
   /** dio područja zabrane na kojem se ni bez nje ne gradi privatna zgrada */
-  negradivo: "#94a3b8",
+  negradivo: "#f8fafc",
   zgrada: "#27272a",
   sporno: "#c026d3",
   /** cesta: jednaki obrub cijelom duljinom, a sredina kaže širinu njezine čestice */

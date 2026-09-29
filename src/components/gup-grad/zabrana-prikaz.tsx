@@ -725,7 +725,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
             </Stavka>
           ))}
           <li className="text-zinc-500">Svjetliji ton je zona za gradnju, a tamniji čestica s mjestom za novu zgradu.</li>
-          <Stavka stil={{ background: BOJE_ZABRANE.negradivo, opacity: 0.6 }}>
+          <Stavka stil={{ background: BOJE_ZABRANE.negradivo, border: "1px solid #cbd5e1" }}>
             ni bez zabrane nije za gradnju: ulice, javna, športska i zelena namjena
           </Stavka>
         </Skupina>

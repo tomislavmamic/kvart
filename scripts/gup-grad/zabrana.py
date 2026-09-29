@@ -147,19 +147,23 @@ def crvena_rescetka(gup, planovi) -> np.ndarray:
     return v
 
 
-def vrsta_cestice(g, v: np.ndarray) -> str | None:
-    """Pretežita oznaka (sanacija, preobrazba, neuređeno) pod česticom."""
+def pikseli(g, resetka: np.ndarray) -> np.ndarray:
+    """Vrijednosti rešetke pod česticom; all_touched, da ni čestica uža od piksela ne ostane prazna."""
     minx, miny, maxx, maxy = g.bounds
     c0 = max(0, int((minx - R.MREZA_BBOX[0]) / R.KORAK))
     c1 = min(R.W, int((maxx - R.MREZA_BBOX[0]) / R.KORAK) + 1)
     r0 = max(0, int((R.MREZA_BBOX[3] - maxy) / R.KORAK))
     r1 = min(R.H, int((R.MREZA_BBOX[3] - miny) / R.KORAK) + 1)
     if c1 <= c0 or r1 <= r0:
-        return None
+        return resetka[:0, :0].ravel()
     t = Affine(R.KORAK, 0, R.MREZA_BBOX[0] + c0 * R.KORAK, 0, -R.KORAK, R.MREZA_BBOX[3] - r0 * R.KORAK)
-    # all_touched, da ni čestica uža od piksela ne ostane bez oznake
     sub = features.rasterize([(g, 1)], out_shape=(r1 - r0, c1 - c0), transform=t, fill=0, dtype="uint8", all_touched=True)
-    x = v[r0:r1, c0:c1][sub.astype(bool)]
+    return resetka[r0:r1, c0:c1][sub.astype(bool)]
+
+
+def vrsta_cestice(g, v: np.ndarray) -> str | None:
+    """Pretežita oznaka (sanacija, preobrazba, neuređeno) pod česticom."""
+    x = pikseli(g, v)
     x = x[x > 0]
     return VRSTE[int(np.bincount(x).argmax())] if x.size else None
 
@@ -246,7 +250,7 @@ def main() -> None:
                 oblici[i] = f
     upu_prep = [(p["broj"], prep(ug)) for p, ug in upu]
     nazivi = {p["broj"]: p["naziv"] for p, _ in upu}
-    cestice, bez_oblika, bez_vrste = [], 0, 0
+    cestice, bez_oblika, bez_vrste, izvan_gradnje = [], 0, 0, [0, 0.0]
     ukupno = {"neizgradjene": [0, 0.0], "djelomicno": [0, 0.0]}
     po_zoni = {}
     for i, (m2, neizgradjena, zona) in sorted(redovi.items()):
@@ -255,6 +259,13 @@ def main() -> None:
             bez_oblika += 1
             continue
         g = stransform(U_HTRS, shape(f["geometry"]))
+        # čestica kojoj je većina na ulici, javnoj, športskoj ili zelenoj namjeni (npr. u
+        # koridoru planirane ceste) nije privatno građevno zemljište, iako ima rub u zoni
+        z = pikseli(g, gradnja)
+        if z.size and z.mean() < 0.5:
+            izvan_gradnje[0] += 1
+            izvan_gradnje[1] += m2 / 1e4
+            continue
         t = g.representative_point()
         broj = next((b for b, pg in upu_prep if pg.contains(t)), 0)
         vrsta = vrsta_cestice(g, vg) or vrsta_cestice(g, v)
@@ -274,6 +285,7 @@ def main() -> None:
         print(f"upozorenje: {bez_oblika} čestica nema oblika u pločicama")
     if bez_vrste:
         print(f"upozorenje: {bez_vrste} čestica nema oznake s lista 4.d pod sobom")
+    print(f"izostavljeno {izvan_gradnje[0]} čestica ({izvan_gradnje[1]:.2f} ha slobodnog) kojima je većina izvan zona za gradnju")
 
     kb = pyogrio.read_dataframe(os.path.join(BAZA, "AR_V_HOUSENUMBERS_PT_HTRS.shp"),
                                 columns=["HN_NUMBER", "HN_TEXTADD", "STREETNA_1", "STREETNAME", "GRAD_KOT_1"])
@@ -321,7 +333,8 @@ def main() -> None:
     with open(IZLAZ_CESTICE, "w") as f:
         json.dump({"type": "FeatureCollection",
                    "opis": "Izvedeno skriptom scripts/gup-grad/zabrana.py: čestice sa slobodnim zemljištem za novu zgradu "
-                           "koje bi po prijedlogu GUP-a 2025. čekalo UPU (m2), neizgrađene ili djelomično izgrađene.",
+                           "koje bi po prijedlogu GUP-a 2025. čekalo UPU (m2), neizgrađene ili djelomično izgrađene; "
+                           "bez čestica kojima je većina izvan zona za gradnju (ulice, javna, športska i zelena namjena).",
                    "features": cestice}, f, ensure_ascii=False, separators=(",", ":"))
     with open(IZLAZ_BROJEVI, "w") as f:
         json.dump({"opis": "Kućni brojevi u obuhvatu GUP-a iz adresnog registra Grada Splita (scripts/gup-grad/zabrana.py).",

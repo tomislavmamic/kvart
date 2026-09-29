@@ -11,7 +11,8 @@
  * dva tona: svjetliji je zona, a tamniji čestice s mjestom za novu zgradu, na
  * kojima zabrana stvarno priječi gradnju (zabrana-cestice-2025.geojson,
  * TAMNE_ZABRANE). Dio oznake na ulicama, javnoj, športskoj ili zelenoj namjeni
- * je sivoplav („negradivo”): ondje se privatna zgrada ne gradi ni bez zabrane. Od
+ * gotovo bijel („negradivo”), kao izbrisan: ondje se privatna zgrada ne gradi ni
+ * bez zabrane. Plan na snazi ostaje srednje siv, da se to dvoje ne miješa. Od
  * zuma CESTICE_OD_ZUMA te čestice dobivaju i tanak rub, da se susjedne razlikuju.
  *
  * Ljubičasto je sporno (sporne-2025.geojson): tanke kose crte preko čestice
@@ -186,7 +187,7 @@ export function ZabranaKarta(props: {
         ...netaknuto,
         style: (f) =>
           f?.properties?.vrsta === "negradivo"
-            ? { stroke: false, fillColor: BOJE_ZABRANE.negradivo, fillOpacity: 0.55 }
+            ? { stroke: false, fillColor: BOJE_ZABRANE.negradivo, fillOpacity: 0.8 }
             : {
                 stroke: false,
                 fillColor: BOJE_ZABRANE[(f?.properties?.vrsta as Podrucje) ?? "neuredeno"],
