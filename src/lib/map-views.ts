@@ -1065,6 +1065,26 @@ export const OVERLAY_LAYERS: OverlayLayer[] = [
     phase: 1,
   },
   // ---------- DPU radne zone Dračevac (vektorizirano iz PDF-a) ----------
+  {
+    id: "dpu-nogostupi",
+    label: "Planirani nogostupi (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/dpu-nogostupi.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — izvorne plohe nogostupa, listovi 2a.1 i 2a.2",
+    color: "#7c3aed",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
+  {
+    id: "dpu-kolnici",
+    label: "Planirani kolnici (DPU Dračevac)",
+    type: "geojson",
+    url: "/geo/planovi/dpu-kolnici.geojson",
+    attribution: "DPU radne zone Dračevac, Grad Split — izvorne prometne plohe, listovi 2a.1 i 2a.2",
+    color: "#64748b",
+    group: "DPU radne zone Dračevac",
+    phase: 1,
+  },
   // Izvučeno iz službenih CAD listova plana i georeferencirano prema ISPU
   // obuhvatu — vidi scripts/vectorize-plans.py. U OSM-u za ovo područje
   // nema nijednog takvog objekta.
@@ -1567,6 +1587,7 @@ const POGLEDI: MapView[] = [
       "ulice-osi",
       "drzavne-ceste",
       "nogostupi",
+      "dpu-nogostupi",
       "pjesacki-prijelazi",
       "izbocine",
       "prometni-znakovi",
@@ -1686,6 +1707,7 @@ const POGLEDI: MapView[] = [
       "internet",
       "solar",
       "dpu-vodoopskrba",
+      "dpu-nogostupi",
       "dpu-odvodnja",
       "dpu-oborinska",
       "dpu-struja",

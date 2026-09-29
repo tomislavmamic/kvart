@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "projection": "EPSG:3765",
+  "description": "Ručna radna os kratkog spoja Bilica na zapadni dio 4E; nije geodetski projekt.",
+  "newSegments": [
+    {"id":"bilice-connection","label":"Spoj s postojećom Ulicom Bilice II","points":[[499631.07656110125,4820718.913136524],[499647,4820719]],"widthM":7,"leftM":5.5,"rightM":5.5},
+    {"id":"4b","label":"Kratka dionica 4B / OS 4","points":[[499647,4820719],[499648,4820684]],"widthM":7,"leftM":8.5,"rightM":14.25},
+    {"id":"4e","label":"Zapadni dio 4E / OS 2","points":[[499648,4820684],[499779.16210641863,4820685.75]],"widthM":10.5,"leftM":13.25,"rightM":9.75}
+  ],
+  "municipalRoadIndices": [59,70],
+  "osmSlipIndex": 7,
+  "reuseScreenWidthM": 6,
+  "dpuHighlight": {
+    "sheet": "2a-1",
+    "description": "Selection window only: road edges, curves and islands come from the original DPU fills. Gates cut branch ends, not a constant-width route buffer.",
+    "selectionRing": [[499610,4820666],[500090,4820666],[500090,4820875],[500010,4820875],[499990,4820874],[499950,4820870],[499903.6,4820866.5],[499903.6,4820850],[499975,4820850],[500000,4820830],[500000,4820730],[499970,4820710],[499675,4820710],[499675,4820730],[499610,4820730]]
+  },
+  "widening": {
+    "id": "bilice-first-75m",
+    "requestedLengthM": 75,
+    "studyWidthM": 5,
+    "workingClearanceM": 0.15,
+    "maximumOffsetM": 15,
+    "stationStepM": 1,
+    "offsetStepM": 0.25,
+    "maximumOffsetStepM": 0.75,
+    "comparisonWidthsM": [5, 5.5, 6, 7, 8, 11],
+    "assumption": "Prvih 75 m mjeri se od predloženog spoja na DPU prema zapadu u Ulicu Bilice II, preko središnjeg križanja još 5,86 m. Odabir smjera treba potvrditi korisnik."
+  },
+  "notes": [
+    "4B: presjek 3–3, 22,75 m s kolnikom, nogostupom i zelenilom; asimetrični radni omotač prema crtežu.",
+    "4E: presjek 6–6, 23 m ispod planiranog nathodnika; kolnik 10,5 m, sjeverni nogostup 8 m i južni 4,5 m, orijentirano prema stvarnim ispunama prometnog lista.",
+    "Izvedbeni položaj osi, širine na križanju i radijusi trebaju geodetsku i prometnu razradu.",
+    "Postojeći dio prikazan je radnom širinom 6 m jer gradski registar daje osi, ne snimljene rubove."
+  ]
+}

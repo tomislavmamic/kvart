@@ -14,7 +14,7 @@ test("hero navigation renders all four journeys as one responsive dock", () => {
   assert.match(markup, /aria-label="Glavni načini sudjelovanja"/);
   assert.match(markup, /grid-cols-2/);
   assert.match(markup, /sm:grid-cols-4/);
-  for (const label of ["Razgovor", "Karta", "Karepovac", "Problemi"]) {
+  for (const label of ["Razgovor", "Karta", "Karepovac", "Prijedlozi"]) {
     assert.equal((markup.match(new RegExp(`>${label}<`, "g")) ?? []).length, 1);
   }
 });

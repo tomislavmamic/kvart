@@ -10,7 +10,7 @@ import {
 test("primary navigation keeps the four resident journeys in order", () => {
   assert.deepEqual(
     PRIMARY_NAV_ITEMS.map((item) => item.label),
-    ["Razgovor", "Karta", "Karepovac", "Problemi"],
+    ["Razgovor", "Karta", "Karepovac", "Prijedlozi"],
   );
 });
 

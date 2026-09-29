@@ -44,7 +44,7 @@ test("the main public journeys use the approved share copy", async () => {
     ],
     [
       "prijavi/page.tsx",
-      "Prijavi problem u Dračevcu ili Bilicama bez registracije. Prijavu pregledavamo prije javne objave.",
+      "Predloži poboljšanje Dračevca ili Bilica bez registracije. Prijedloge pregledavamo prije javne objave.",
     ],
   ]);
 

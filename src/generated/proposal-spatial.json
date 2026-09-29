@@ -1,0 +1,3193 @@
+{
+  "method": "Površine i udaljenosti izračunate u HTRS96/TM (EPSG:3765).",
+  "recreation": {
+    "source_pdf": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?Command=Core_Download&EntryId=13948&PortalId=0&language=hr-HR",
+    "plan_status": "draft",
+    "plan_item": "1.15",
+    "area_m2": 2238.0,
+    "perimeter_m": 199.1,
+    "bounds": [
+      16.501221,
+      43.526919,
+      16.501938,
+      43.527441
+    ],
+    "centroid": [
+      16.501541164199047,
+      43.52724261882494
+    ],
+    "parcel_419_1_area_m2": 3999.1,
+    "parcels": [
+      {
+        "parcel_number": "419/1",
+        "overlap_m2": 1871.9,
+        "public_level": "city",
+        "ownership_evidence": "city-gis",
+        "source_updated_at": "2025-10-03"
+      },
+      {
+        "parcel_number": "419/9",
+        "overlap_m2": 366.1,
+        "public_level": "state",
+        "ownership_evidence": "city-gis",
+        "source_updated_at": "2025-10-03"
+      }
+    ],
+    "equipment_records": {
+      "playground": 4,
+      "workout": 1
+    },
+    "tree_inventory": {
+      "records_inside_zone": 0,
+      "records_in_available_dataset": 1,
+      "complete": false,
+      "observed_groups": 3
+    },
+    "shade": {
+      "retained_groups": 3,
+      "existing_source": "DGU DOF 2023 + korisnikove fotografije sa sjeveroistoka",
+      "existing_note": "Vizualno očitane približne skupine, ne inventar pojedinačnih debala. Gradski skup nema zapisa unutar R2. Vrste, debla, krošnje i korijenje treba snimiti; nijedno vidljivo stablo nije predloženo za uklanjanje.",
+      "new_trees": 4,
+      "conditional_trees": 3,
+      "canopy_diameter_m": 10,
+      "open_soil_radius_m": 2,
+      "species": "Platana (Platanus), kandidat za velike krošnje; konačan odabir nakon provjere tla i instalacija.",
+      "species_source": "https://www.rhs.org.uk/plants/96764/platanus-%C3%97-hispanica/details",
+      "note": "Očuvati postojeće skupine, novu sadnju uklopiti u dječju terasu i uz šetnicu. Promjer krošnje je ilustracija budućeg razvoja, ne obećanje hlada odmah nakon sadnje. Potreban je povezan prostor za korijen, veći od kruga otvorenog tla."
+    },
+    "utilities": [
+      {
+        "layer": "vodovod",
+        "label": "Vodovod",
+        "network_status": "existing",
+        "source_path": "/geo/grad/vodovod.geojson",
+        "records_within_10m": 18,
+        "mapped_length_inside_zone_m": 181.4
+      },
+      {
+        "layer": "odvodnja",
+        "label": "Odvodnja",
+        "network_status": "existing",
+        "source_path": "/geo/grad/odvodnja.geojson",
+        "records_within_10m": 29,
+        "mapped_length_inside_zone_m": 130.6
+      },
+      {
+        "layer": "odvodnja-tlacni",
+        "label": "Tlačna odvodnja",
+        "network_status": "existing",
+        "source_path": "/geo/grad/odvodnja-tlacni.geojson",
+        "records_within_10m": 0,
+        "mapped_length_inside_zone_m": 0.0
+      },
+      {
+        "layer": "struja-nn",
+        "label": "Podzemna niskonaponska mreža",
+        "network_status": "existing",
+        "source_path": "/geo/grad/struja-nn.geojson",
+        "records_within_10m": 12,
+        "mapped_length_inside_zone_m": 77.5
+      },
+      {
+        "layer": "struja-sn",
+        "label": "Podzemna srednjonaponska mreža",
+        "network_status": "existing",
+        "source_path": "/geo/grad/struja-sn.geojson",
+        "records_within_10m": 6,
+        "mapped_length_inside_zone_m": 77.8
+      },
+      {
+        "layer": "telekom-ht-podzemno",
+        "label": "HT podzemna mreža",
+        "network_status": "existing",
+        "source_path": "/geo/grad/telekom-ht-podzemno.geojson",
+        "records_within_10m": 11,
+        "mapped_length_inside_zone_m": 104.4
+      },
+      {
+        "layer": "telekom-trase",
+        "label": "Telekom kanalizacija (DTK)",
+        "network_status": "existing",
+        "source_path": "/geo/grad/telekom-trase.geojson",
+        "records_within_10m": 26,
+        "mapped_length_inside_zone_m": 138.2
+      },
+      {
+        "layer": "dpu-vodoopskrba",
+        "label": "DPU · Interni vodovodni razvodi/priključci",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_10m": 0,
+        "mapped_length_inside_zone_m": 0.0
+      },
+      {
+        "layer": "dpu-odvodnja",
+        "label": "DPU · Planirana fekalna kanalizacija",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_10m": 0,
+        "mapped_length_inside_zone_m": 0.0
+      },
+      {
+        "layer": "dpu-oborinska",
+        "label": "DPU · Planirana oborinska kanalizacija",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_10m": 0,
+        "mapped_length_inside_zone_m": 0.0
+      },
+      {
+        "layer": "dpu-struja",
+        "label": "DPU · Elektroopskrba 20 kV",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_10m": 0,
+        "mapped_length_inside_zone_m": 0.0
+      },
+      {
+        "layer": "dpu-plin",
+        "label": "DPU · Planirani plinovod",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_10m": 0,
+        "mapped_length_inside_zone_m": 0.0
+      },
+      {
+        "layer": "dpu-telekom",
+        "label": "DPU · Telekom kanalizacija",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_10m": 1,
+        "mapped_length_inside_zone_m": 0.0
+      }
+    ],
+    "program": {
+      "cageball_courts": 1,
+      "outdoor_gyms": 1,
+      "retained_parking_spaces": 3,
+      "cageball_area_m2": 198,
+      "cageball_dimensions_m": [
+        22,
+        9
+      ],
+      "gym_area_m2": 48,
+      "playground_area_m2": 637,
+      "parking_outside_r2": true,
+      "pedestrian_path_width_m": 2.4,
+      "padel": {
+        "included": false,
+        "fits_working_middle_terrace": false,
+        "court_dimensions_m": [
+          20,
+          10
+        ],
+        "source": "https://www.padelfip.com/wp-content/uploads/2025/12/FIP_Rules-of-Padel-1.pdf",
+        "note": "Uz veći cageball i prolaze nije pronađeno mjesto za 20 × 10 m u obje orijentacije usporedne s postojećim terenom. Provjeriti nakon snimke; padel nije prikazan."
+      },
+      "status": "concept",
+      "terrain": "Dječja igra dolje, cageball na srednjoj terasi, teretana na gornjoj. Južna cesta ostaje iznad parka i iza potpornog zida.",
+      "note": "Dimenzije su radni prostorni raspored. Kote, stabilnost zida, pristupačnost, promet, sigurnosne razmake i instalacije treba razraditi projektom."
+    },
+    "dpu": {
+      "source_path": "/geo/grad/planovi-obuhvat-pp.geojson",
+      "source_url": "https://www.split.hr/ukljuci-se/prostorno-planska-dokumentacija/planovi-na-snazi/dpu-i-na-snazi",
+      "plan_status": "in-force",
+      "bounds": [
+        16.495378,
+        43.523681999999994,
+        16.501461,
+        43.528059
+      ],
+      "target_covered_area_m2": 0.0,
+      "coverage_percent": 0.0,
+      "sidewalk_area_m2_within_target": 19.5,
+      "road_area_m2_within_target": 0.0,
+      "note": "Prikazan je cijeli dostupni DPU, uključujući zapadni dio izvan početnog pogleda. Izvan njegova obuhvata ovaj plan ne daje uvjete."
+    },
+    "planting_screen": {
+      "utility_distance_m": 5,
+      "boundary_distance_m": 2,
+      "equipment_distance_m": null,
+      "tree_spacing_m": 8,
+      "building_distance_m": 5,
+      "tree_pit_radius_m": 2,
+      "utility_scope": {
+        "planned_networks_included": [
+          "dpu-vodoopskrba",
+          "dpu-odvodnja",
+          "dpu-oborinska",
+          "dpu-struja",
+          "dpu-plin",
+          "dpu-telekom"
+        ],
+        "planned_routes_source": "/geo/planovi/dpu-infrastruktura.geojson",
+        "completeness": "partial-conservative",
+        "note": "Probir uključuje gradske vodove i pouzdano izdvojene poteze mreža iz DPU-a. Njihov izvorni status (postojeće, planirano ili nerazlučeno) ostaje uz trasu. Razmaci među CAD crticama nisu popunjavani, a nejasni potezi i simboli su izostavljeni: udaljenost je do dostupne geometrije, ne potvrda slobodnog prostora. Prije sadnje treba pregledati izvorne listove, utvrditi dubine i pribaviti uvjete upravitelja."
+      },
+      "assumed_carriageway_half_width_m": 3,
+      "note": "Radni prijedlog većih krošnji. Krug otvorenog tla polumjera 2 m ostaje unutar čestica i izvan sportskih ploha, pješačke staze i vidljivih postojećih skupina. Dječje sprave rasporediti oko sadnje. Stabla zamjenjuju dijelove parkirališta u prijedlogu prenamjene, a blizina vodova ostaje označena. Razmak 5 m od osi voda radni je probir (2 m otvorenog tla + 3 m), ne propisani razmak ni projekt korijenskog prostora.",
+      "candidates": [
+        {
+          "role": "proposed-tree",
+          "candidate_id": "T1",
+          "source": "Radni položaj za hlad, uz očuvanje vidljivih postojećih skupina stabala.",
+          "purpose": "Hlad nad zapadnim dijelom dječje terase i klupama",
+          "species_proposal": "Platana (Platanus); vrstu potvrditi projektom",
+          "status": "needs-soil-and-utility-design",
+          "screen_result": "conflict",
+          "nearest_utility": {
+            "layer": "odvodnja",
+            "network": "odvodnja",
+            "label": "Odvodnja",
+            "network_status": "existing",
+            "source_path": "/geo/grad/odvodnja.geojson",
+            "source": "/geo/grad/odvodnja.geojson",
+            "source_index": 343,
+            "name": "Mreža"
+          },
+          "nearest_utility_distance_m": 4.67,
+          "boundary_distance_m": 12.99,
+          "tree_pit_radius_m": 2,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 10 m ilustrira budući razvoj, ne veličinu sadnice ni najveću veličinu vrste; nije izračun sjene.",
+          "passage_distance_m": 11.8,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/1",
+              "parcel_number": "419/1",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "city",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/1"
+          ],
+          "parcel_fit": "recreation-parcels",
+          "action": "Provjeriti ili prilagoditi instalacije, zaštitu zidova i povezani prostor za korijen. Krug otvorenog tla nije puna zona korijena.",
+          "coordinates": [
+            16.501418939681294,
+            43.52732406956215
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "T2",
+          "source": "Radni položaj za hlad, uz očuvanje vidljivih postojećih skupina stabala.",
+          "purpose": "Hlad nad središnjim dijelom dječje igre",
+          "species_proposal": "Platana (Platanus); vrstu potvrditi projektom",
+          "status": "needs-soil-and-utility-design",
+          "screen_result": "suggested",
+          "nearest_utility": {
+            "layer": "vodovod",
+            "network": "vodovod",
+            "label": "Vodovod",
+            "network_status": "existing",
+            "source_path": "/geo/grad/vodovod.geojson",
+            "source": "/geo/grad/vodovod.geojson",
+            "source_index": 59,
+            "name": "Distributivni"
+          },
+          "nearest_utility_distance_m": 5.26,
+          "boundary_distance_m": 14.99,
+          "tree_pit_radius_m": 2,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 10 m ilustrira budući razvoj, ne veličinu sadnice ni najveću veličinu vrste; nije izračun sjene.",
+          "passage_distance_m": 22.78,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/1",
+              "parcel_number": "419/1",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "city",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/1"
+          ],
+          "parcel_fit": "recreation-parcels",
+          "action": "Provjeriti ili prilagoditi instalacije, zaštitu zidova i povezani prostor za korijen. Krug otvorenog tla nije puna zona korijena.",
+          "coordinates": [
+            16.501555023747148,
+            43.52730606468066
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "T3",
+          "source": "Radni položaj za hlad, uz očuvanje vidljivih postojećih skupina stabala.",
+          "purpose": "Hlad nad istočnim dijelom dječje terase",
+          "species_proposal": "Platana (Platanus); vrstu potvrditi projektom",
+          "status": "needs-soil-and-utility-design",
+          "screen_result": "conflict",
+          "nearest_utility": {
+            "layer": "odvodnja",
+            "network": "odvodnja",
+            "label": "Odvodnja",
+            "network_status": "existing",
+            "source_path": "/geo/grad/odvodnja.geojson",
+            "source": "/geo/grad/odvodnja.geojson",
+            "source_index": 436,
+            "name": "Mreža"
+          },
+          "nearest_utility_distance_m": 2.27,
+          "boundary_distance_m": 10.92,
+          "tree_pit_radius_m": 2,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 10 m ilustrira budući razvoj, ne veličinu sadnice ni najveću veličinu vrste; nije izračun sjene.",
+          "passage_distance_m": 41.8,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/1",
+              "parcel_number": "419/1",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "city",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/1"
+          ],
+          "parcel_fit": "recreation-parcels",
+          "action": "Provjeriti ili prilagoditi instalacije, zaštitu zidova i povezani prostor za korijen. Krug otvorenog tla nije puna zona korijena.",
+          "coordinates": [
+            16.501790079836372,
+            43.527342067465554
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "T4",
+          "source": "Radni položaj za hlad, uz očuvanje vidljivih postojećih skupina stabala.",
+          "purpose": "Hlad nad šetnicom i ulazom na dječju terasu",
+          "species_proposal": "Platana (Platanus); vrstu potvrditi projektom",
+          "status": "needs-soil-and-utility-design",
+          "screen_result": "conflict",
+          "nearest_utility": {
+            "layer": "telekom-ht-podzemno",
+            "network": "telekom-ht-podzemno",
+            "label": "HT podzemna mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-ht-podzemno.geojson",
+            "source": "/geo/grad/telekom-ht-podzemno.geojson",
+            "source_index": 403,
+            "name": "21_V40_353"
+          },
+          "nearest_utility_distance_m": 2.42,
+          "boundary_distance_m": 5.06,
+          "tree_pit_radius_m": 2,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 10 m ilustrira budući razvoj, ne veličinu sadnice ni najveću veličinu vrste; nije izračun sjene.",
+          "passage_distance_m": 2.58,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/1",
+              "parcel_number": "419/1",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "city",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/1"
+          ],
+          "parcel_fit": "recreation-parcels",
+          "action": "Provjeriti ili prilagoditi instalacije, zaštitu zidova i povezani prostor za korijen. Krug otvorenog tla nije puna zona korijena.",
+          "coordinates": [
+            16.50130759682224,
+            43.527279063110385
+          ]
+        }
+      ]
+    }
+  },
+  "road_candidate": {
+    "confirmed_by_user": false,
+    "source": "/geo/grad/ceste-nerazvrstane.geojson",
+    "source_indices": [
+      71,
+      76,
+      73,
+      72,
+      78,
+      79
+    ],
+    "name": "Dračevac",
+    "direction": "west-to-east",
+    "sidewalks": {
+      "existing_length_m": 699.9,
+      "existing_coverage_m": 691.9,
+      "gap_length_m": 287.8,
+      "records": [
+        {
+          "source_index": 1,
+          "width_m": 1.7,
+          "side": "left",
+          "length_m": 255.5,
+          "from_m": 92.4,
+          "to_m": 349.3
+        },
+        {
+          "source_index": 2,
+          "width_m": 2.0,
+          "side": "right",
+          "length_m": 62.0,
+          "from_m": 371.3,
+          "to_m": 433.4
+        },
+        {
+          "source_index": 5,
+          "width_m": 1.8,
+          "side": "left",
+          "length_m": 71.0,
+          "from_m": 13.9,
+          "to_m": 83.8
+        },
+        {
+          "source_index": 9,
+          "width_m": 1.2,
+          "side": "right",
+          "length_m": 54.0,
+          "from_m": 29.5,
+          "to_m": 83.1
+        },
+        {
+          "source_index": 10,
+          "width_m": 2.2,
+          "side": "right",
+          "length_m": 29.0,
+          "from_m": 99.2,
+          "to_m": 127.8
+        },
+        {
+          "source_index": 16,
+          "width_m": 2.0,
+          "side": "right",
+          "length_m": 217.0,
+          "from_m": 137.7,
+          "to_m": 347.4
+        },
+        {
+          "source_index": 16,
+          "width_m": 2.0,
+          "side": "right",
+          "length_m": 2.4,
+          "from_m": 369.3,
+          "to_m": 371.3
+        },
+        {
+          "source_index": 20,
+          "width_m": 1.5,
+          "side": "right",
+          "length_m": 9.0,
+          "from_m": 4.1,
+          "to_m": 13.0
+        }
+      ],
+      "sides": [
+        {
+          "side": "left",
+          "existing_m": 326.8,
+          "gap_m": 163.0,
+          "existing_intervals": [
+            [
+              13.9,
+              83.8
+            ],
+            [
+              92.4,
+              349.3
+            ]
+          ],
+          "gap_intervals": [
+            [
+              0,
+              13.9
+            ],
+            [
+              83.8,
+              92.4
+            ],
+            [
+              349.3,
+              489.8
+            ]
+          ]
+        },
+        {
+          "side": "right",
+          "existing_m": 365.1,
+          "gap_m": 124.8,
+          "existing_intervals": [
+            [
+              4.1,
+              13.0
+            ],
+            [
+              29.5,
+              83.1
+            ],
+            [
+              99.2,
+              127.8
+            ],
+            [
+              137.7,
+              347.4
+            ],
+            [
+              369.3,
+              433.4
+            ]
+          ],
+          "gap_intervals": [
+            [
+              0,
+              4.1
+            ],
+            [
+              13.0,
+              29.5
+            ],
+            [
+              83.1,
+              99.2
+            ],
+            [
+              127.8,
+              137.7
+            ],
+            [
+              347.4,
+              369.3
+            ],
+            [
+              433.4,
+              489.8
+            ]
+          ]
+        }
+      ],
+      "method": "Gradske linije nogostupa i atribut sirina; uzorkovanje po 1 m, usporedba smjera do 35° i udaljenosti do 10 m od gradske osi. Okvir prolaza pretpostavlja liniju u sredini širine (sirina/2 sa svake strane). Razmaci bez evidencije nisu potvrda da nogostup na terenu nedostaje."
+    },
+    "length_m": 489.8,
+    "endpoints": [
+      [
+        16.500932,
+        43.52742
+      ],
+      [
+        16.50638,
+        43.52727
+      ]
+    ],
+    "bounds": [
+      16.500932,
+      43.527213,
+      16.50638,
+      43.527755
+    ],
+    "utilities": [
+      {
+        "layer": "vodovod",
+        "label": "Vodovod",
+        "network_status": "existing",
+        "source_path": "/geo/grad/vodovod.geojson",
+        "records_within_15m": 15,
+        "mapped_length_within_15m": 601.1
+      },
+      {
+        "layer": "odvodnja",
+        "label": "Odvodnja",
+        "network_status": "existing",
+        "source_path": "/geo/grad/odvodnja.geojson",
+        "records_within_15m": 35,
+        "mapped_length_within_15m": 522.1
+      },
+      {
+        "layer": "odvodnja-tlacni",
+        "label": "Tlačna odvodnja",
+        "network_status": "existing",
+        "source_path": "/geo/grad/odvodnja-tlacni.geojson",
+        "records_within_15m": 0,
+        "mapped_length_within_15m": 0.0
+      },
+      {
+        "layer": "struja-nn",
+        "label": "Podzemna niskonaponska mreža",
+        "network_status": "existing",
+        "source_path": "/geo/grad/struja-nn.geojson",
+        "records_within_15m": 22,
+        "mapped_length_within_15m": 920.9
+      },
+      {
+        "layer": "struja-sn",
+        "label": "Podzemna srednjonaponska mreža",
+        "network_status": "existing",
+        "source_path": "/geo/grad/struja-sn.geojson",
+        "records_within_15m": 5,
+        "mapped_length_within_15m": 283.4
+      },
+      {
+        "layer": "telekom-ht-podzemno",
+        "label": "HT podzemna mreža",
+        "network_status": "existing",
+        "source_path": "/geo/grad/telekom-ht-podzemno.geojson",
+        "records_within_15m": 34,
+        "mapped_length_within_15m": 628.5
+      },
+      {
+        "layer": "telekom-trase",
+        "label": "Telekom kanalizacija (DTK)",
+        "network_status": "existing",
+        "source_path": "/geo/grad/telekom-trase.geojson",
+        "records_within_15m": 89,
+        "mapped_length_within_15m": 649.7
+      },
+      {
+        "layer": "dpu-vodoopskrba",
+        "label": "DPU · Interni vodovodni razvodi/priključci",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_15m": 0,
+        "mapped_length_within_15m": 0.0
+      },
+      {
+        "layer": "dpu-odvodnja",
+        "label": "DPU · Planirana fekalna kanalizacija",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_15m": 0,
+        "mapped_length_within_15m": 0.0
+      },
+      {
+        "layer": "dpu-oborinska",
+        "label": "DPU · Planirana oborinska kanalizacija",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_15m": 0,
+        "mapped_length_within_15m": 0.0
+      },
+      {
+        "layer": "dpu-struja",
+        "label": "DPU · Elektroopskrba 20 kV",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_15m": 0,
+        "mapped_length_within_15m": 0.0
+      },
+      {
+        "layer": "dpu-plin",
+        "label": "DPU · Planirani plinovod",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_15m": 1,
+        "mapped_length_within_15m": 19.1
+      },
+      {
+        "layer": "dpu-telekom",
+        "label": "DPU · Telekom kanalizacija",
+        "network_status": "dpu-plan",
+        "source_path": "/geo/planovi/dpu-infrastruktura.geojson",
+        "records_within_15m": 1,
+        "mapped_length_within_15m": 18.7
+      }
+    ],
+    "dpu": {
+      "source_path": "/geo/grad/planovi-obuhvat-pp.geojson",
+      "source_url": "https://www.split.hr/ukljuci-se/prostorno-planska-dokumentacija/planovi-na-snazi/dpu-i-na-snazi",
+      "plan_status": "in-force",
+      "bounds": [
+        16.495378,
+        43.523681999999994,
+        16.501461,
+        43.528059
+      ],
+      "target_covered_length_m": 14.7,
+      "coverage_percent": 3.0,
+      "sidewalk_area_m2_within_target": 237.8,
+      "road_area_m2_within_target": 313.5,
+      "note": "Prikazan je cijeli dostupni DPU, uključujući zapadni dio izvan početnog pogleda. Izvan njegova obuhvata ovaj plan ne daje uvjete."
+    },
+    "cadastre": {
+      "source": "/geo/grad/katastar.geojson",
+      "road_register_source": "/geo/grad/ceste-nerazvrstane.geojson",
+      "parcel_ids": [
+        "SPLIT:419/9"
+      ],
+      "register_references": [
+        "k.o. Split; k.č. 417/1, 357, 419/9"
+      ],
+      "covered_length_m": 350.0,
+      "unconfirmed_length_m": 67.6,
+      "missing_cadastre_length_m": 72.2,
+      "records": [
+        {
+          "parcel_id": "SPLIT:419/9",
+          "parcel_number": "419/9",
+          "cadastral_municipality": "SPLIT",
+          "route_length_m": 350.0
+        }
+      ]
+    },
+    "screening": {
+      "axis_source": "/geo/grad/ceste-nerazvrstane.geojson",
+      "tree_offset_m": 6,
+      "tree_interval_m": 10,
+      "conditional_minimum_interval_m": 10,
+      "axis_search_offsets_m": [
+        6,
+        12
+      ],
+      "sidewalk_search_offsets_m": [
+        1.1,
+        7.5
+      ],
+      "existing_sidewalk_outer_offset_m": 1.1,
+      "tree_spacing_m": 8,
+      "tree_pit_radius_m": 1,
+      "utility_distance_m": 3,
+      "building_distance_m": 3,
+      "equipment_distance_m": 5,
+      "shade": {
+        "previous_candidate_count": 19,
+        "retained_groups": 5,
+        "source": "DGU DOF 2023., public/prijedlozi/nogostupi-ortofoto.jpg",
+        "source_complete": false,
+        "access_gaps_checked": 5,
+        "canopy_diameters_m": [
+          6,
+          8,
+          10
+        ],
+        "canopy_counts": {
+          "6": 2,
+          "8": 41,
+          "10": 3
+        },
+        "note": "Gušća sadnja s radnim razmakom od oko 10 m, uz postojeće skupine i prekide za prilaze. Veće krošnje samo gdje odmak od zgrada i sadni prostor to dopuštaju; sav korijenski prostor i instalacije razraditi projektom."
+      },
+      "sidewalk_width_m": 1.8,
+      "sidewalk_inner_offset_m": 3,
+      "sidewalk_outer_offset_m": 4.8,
+      "sections": [
+        {
+          "id": 1,
+          "from_m": 0,
+          "to_m": 200,
+          "suggested": 2,
+          "conflict": 20,
+          "excluded_buildings": 4,
+          "excluded_sidewalks": 8,
+          "excluded_parcels": 6,
+          "unknown_ownership": 0,
+          "existing_sidewalk_m": 331.0,
+          "gap_m": 69.0
+        },
+        {
+          "id": 2,
+          "from_m": 200,
+          "to_m": 400,
+          "suggested": 3,
+          "conflict": 21,
+          "excluded_buildings": 5,
+          "excluded_sidewalks": 2,
+          "excluded_parcels": 9,
+          "unknown_ownership": 0,
+          "existing_sidewalk_m": 327.5,
+          "gap_m": 72.5
+        },
+        {
+          "id": 3,
+          "from_m": 400,
+          "to_m": 489.8,
+          "suggested": 0,
+          "conflict": 0,
+          "excluded_buildings": 0,
+          "excluded_sidewalks": 0,
+          "excluded_parcels": 18,
+          "unknown_ownership": 0,
+          "existing_sidewalk_m": 33.4,
+          "gap_m": 146.2
+        }
+      ],
+      "candidates": [
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D1",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 38,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 9,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.36,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1012,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 1.15,
+          "building_distance_m": 18.92,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.01,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50139425640643,
+            43.527390909604165
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D2",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 48,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 9,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1013,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 1.59,
+          "building_distance_m": 18.63,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.14,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50151792898872,
+            43.52738767251196
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D3",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 58,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 9,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.5,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1014,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 2.37,
+          "building_distance_m": 19.18,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.08,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.501641180717442,
+            43.527379929750424
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D4",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 68,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 5,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.1,
+          "nearest_utility": {
+            "layer": "struja-sn",
+            "network": "struja-sn",
+            "label": "Podzemna srednjonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-sn.geojson",
+            "source": "/geo/grad/struja-sn.geojson",
+            "source_index": 50,
+            "name": "1KV404/3"
+          },
+          "nearest_utility_distance_m": 0.84,
+          "building_distance_m": 7.63,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.66,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.1,
+          "action": "Podzemna srednjonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.501769654718444,
+            43.52748112412304
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D5",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 78,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 5,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.1,
+          "nearest_utility": {
+            "layer": "struja-sn",
+            "network": "struja-sn",
+            "label": "Podzemna srednjonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-sn.geojson",
+            "source": "/geo/grad/struja-sn.geojson",
+            "source_index": 50,
+            "name": "1KV404/3"
+          },
+          "nearest_utility_distance_m": 0.65,
+          "building_distance_m": 7.45,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 2.38,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.1,
+          "action": "Podzemna srednjonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.501892287605784,
+            43.527480003119045
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D6",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 78,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 9,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1014,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 1.74,
+          "building_distance_m": 18.58,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.45,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50189117145703,
+            43.52737978078517
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D7",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 98,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.5,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 2.29,
+          "building_distance_m": 13.81,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.05,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502129902081457,
+            43.52750439772145
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D8",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 108,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 507,
+            "name": "1TS868-NNI9,KRO-2363"
+          },
+          "nearest_utility_distance_m": 1.69,
+          "building_distance_m": 12.84,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.16,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502253940751583,
+            43.52750965805111
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D9",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 108,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 10,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1017,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 2.08,
+          "building_distance_m": 12.95,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.33,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50226933595108,
+            43.527398875364284
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D10",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 118,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.5,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 82,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.47,
+          "building_distance_m": 14.95,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.33,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.5,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502377546054536,
+            43.527515494370526
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D11",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 118,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 10,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "telekom-ht-podzemno",
+            "network": "telekom-ht-podzemno",
+            "label": "HT podzemna mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-ht-podzemno.geojson",
+            "source": "/geo/grad/telekom-ht-podzemno.geojson",
+            "source_index": 224,
+            "name": "21_V40_1877"
+          },
+          "nearest_utility_distance_m": 0.43,
+          "building_distance_m": 14.73,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.51,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "HT podzemna mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50239399100011,
+            43.527408709339724
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D12",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 138,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.99,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 1.52,
+          "building_distance_m": 8.52,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.43,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502629533357787,
+            43.52753589974034
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D13",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 148,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 3,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.5,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 1.1,
+          "building_distance_m": 3.61,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.1,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.5,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50275557536905,
+            43.52753584095263
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D14",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 148,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 3.0,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1050,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 2.51,
+          "building_distance_m": 17.21,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.06,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502751433748138,
+            43.527413261001044
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D15",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 158,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 3,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.98,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 1.52,
+          "building_distance_m": 3.17,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.17,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502882999569444,
+            43.52753221020613
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D16",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 158,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.47,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1048,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 2.03,
+          "building_distance_m": 16.78,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.01,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.502868694309594,
+            43.52741022583009
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D17",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 168,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.98,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1048,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 1.73,
+          "building_distance_m": 18.38,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.44,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50297298283535,
+            43.52739941310237
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D18",
+          "screen_result": "suggested",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 178,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 3.5,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 3.09,
+          "building_distance_m": 16.85,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.63,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3.5,
+          "action": "Kandidat za terensku provjeru trase i sadnog prostora.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50314338954857,
+            43.52750118391452
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D19",
+          "screen_result": "suggested",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 178,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 3.0,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1047,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 3.16,
+          "building_distance_m": 20.7,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.39,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Kandidat za terensku provjeru trase i sadnog prostora.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50308351798032,
+            43.52736814561272
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D20",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 188,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.49,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 2.23,
+          "building_distance_m": 9.51,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.31,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503259248247993,
+            43.527461468721796
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D21",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 188,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.5,
+          "nearest_utility": {
+            "layer": "vodovod",
+            "network": "vodovod",
+            "label": "Vodovod",
+            "network_status": "existing",
+            "source_path": "/geo/grad/vodovod.geojson",
+            "source": "/geo/grad/vodovod.geojson",
+            "source_index": 51,
+            "name": "Distributivni"
+          },
+          "nearest_utility_distance_m": 1.98,
+          "building_distance_m": 11.13,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.01,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Vodovod: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503199477771748,
+            43.527344048114514
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D22",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 198,
+          "section_id": 1,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 1.73,
+          "building_distance_m": 9.61,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.22,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503373644692974,
+            43.52741729202616
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D23",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 208,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.66,
+          "nearest_utility": {
+            "layer": "odvodnja",
+            "network": "odvodnja",
+            "label": "Odvodnja",
+            "network_status": "existing",
+            "source_path": "/geo/grad/odvodnja.geojson",
+            "source": "/geo/grad/odvodnja.geojson",
+            "source_index": 176,
+            "name": "Mreža"
+          },
+          "nearest_utility_distance_m": 0.74,
+          "building_distance_m": 10.99,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.49,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Odvodnja: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503483385306417,
+            43.52737559948088
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D24",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 218,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.43,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 2.89,
+          "building_distance_m": 11.16,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.07,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503599234709355,
+            43.52734399390914
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D25",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 228,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.94,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 497,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 2.66,
+          "building_distance_m": 15.47,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.27,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503711679802862,
+            43.52730872240443
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D26",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 238,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.35,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 351,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 0.35,
+          "building_distance_m": 18.48,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.14,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503807843984216,
+            43.52728117319232
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D27",
+          "screen_result": "suggested",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 238,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.96,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1042,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 3.17,
+          "building_distance_m": 11.45,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.4,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Kandidat za terensku provjeru trase i sadnog prostora.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50377195074962,
+            43.527150534602974
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D28",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 248,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 3.0,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 202,
+            "name": "1TS1065-NNI10,KRO-2363"
+          },
+          "nearest_utility_distance_m": 0.95,
+          "building_distance_m": 5.24,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.2,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.503902047359624,
+            43.52713239994641
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D29",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 258,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.7,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 0.41,
+          "building_distance_m": 21.24,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.26,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504040124767403,
+            43.527258919354665
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D30",
+          "screen_result": "suggested",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 258,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.99,
+          "nearest_utility": {
+            "layer": "telekom-ht-podzemno",
+            "network": "telekom-ht-podzemno",
+            "label": "HT podzemna mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-ht-podzemno.geojson",
+            "source": "/geo/grad/telekom-ht-podzemno.geojson",
+            "source_index": 25,
+            "name": "21_V40_2093"
+          },
+          "nearest_utility_distance_m": 3.48,
+          "building_distance_m": 9.44,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.36,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Kandidat za terensku provjeru trase i sadnog prostora.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.5040498458759,
+            43.52712561636116
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D31",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 268,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.5,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1038,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 2.7,
+          "building_distance_m": 17.89,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.5,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504182227068885,
+            43.52713427239309
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D32",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 278,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.5,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 0.15,
+          "building_distance_m": 14.07,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.37,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.5042698436207,
+            43.52727429210477
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D33",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 278,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.5,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1035,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 1.31,
+          "building_distance_m": 24.19,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.45,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.5,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50432231518726,
+            43.527163427909755
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D34",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 288,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.5,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 0.08,
+          "building_distance_m": 7.73,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.22,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504384058707284,
+            43.52730569732075
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D35",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 288,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.09,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1034,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.92,
+          "building_distance_m": 19.76,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.18,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.1,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.5044473584859,
+            43.52720157616151
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D36",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 298,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.07,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 0.64,
+          "building_distance_m": 5.47,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.33,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2.5,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504473576385546,
+            43.5273465584456
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D37",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 298,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.49,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1033,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.72,
+          "building_distance_m": 18.71,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.11,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.5,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504574324392618,
+            43.52725264748392
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D38",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 308,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.76,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 2.87,
+          "building_distance_m": 10.34,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.03,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 4,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504557100074013,
+            43.52740843806041
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D39",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 308,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.1,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1032,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.46,
+          "building_distance_m": 20.85,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.22,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.1,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504672862909057,
+            43.52731692214963
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D40",
+          "screen_result": "suggested",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 318,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 3.82,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 3.27,
+          "building_distance_m": 18.7,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.0,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 4.5,
+          "action": "Kandidat za terensku provjeru trase i sadnog prostora.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504635131595055,
+            43.52747419642861
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D41",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 318,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.08,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1031,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.07,
+          "building_distance_m": 26.7,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.39,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.1,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504763248367485,
+            43.52738821497767
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D42",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 328,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.75,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 60,
+            "name": "1TS1065-NNI9,KB SPOJEN"
+          },
+          "nearest_utility_distance_m": 1.92,
+          "building_distance_m": 26.48,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.02,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 3,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504707504149582,
+            43.52753451481517
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D43",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 328,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.0,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1031,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.94,
+          "building_distance_m": 35.04,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.21,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504852116528127,
+            43.527466662359636
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D44",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 338,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 16,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 4,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.98,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1029,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 1.08,
+          "building_distance_m": 42.57,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 1.01,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 2,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.504911236103226,
+            43.527550672139434
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D45",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "left",
+          "chainage_m": 348,
+          "section_id": 2,
+          "passage_basis": "existing-sidewalk",
+          "nearest_sidewalk_source_index": 1,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 1.27,
+          "nearest_utility": {
+            "layer": "struja-nn",
+            "network": "struja-nn",
+            "label": "Podzemna niskonaponska mreža",
+            "network_status": "existing",
+            "source_path": "/geo/grad/struja-nn.geojson",
+            "source": "/geo/grad/struja-nn.geojson",
+            "source_index": 353,
+            "name": "1TS868-NNI9,KRO-2363"
+          },
+          "nearest_utility_distance_m": 0.4,
+          "building_distance_m": 36.21,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 3.29,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 1.5,
+          "action": "Podzemna niskonaponska mreža: provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz vanjski rub evidentiranog nogostupa.",
+          "coordinates": [
+            16.50476932565896,
+            43.527667243904624
+          ]
+        },
+        {
+          "role": "proposed-tree",
+          "candidate_id": "D46",
+          "screen_result": "conflict",
+          "status": "needs-soil-and-utility-design",
+          "side": "right",
+          "chainage_m": 348,
+          "section_id": 2,
+          "passage_basis": "gap-concept",
+          "nearest_sidewalk_source_index": null,
+          "tree_pit_radius_m": 1,
+          "canopy_radius_m": 5,
+          "canopy_note": "Krošnja promjera 6–10 m ilustrira budući razvoj, ne trenutačnu veličinu sadnice ni proračun sjene.",
+          "soil_note": "Krug otvorenog tla nije ukupni prostor korijena. Projektirati povezano tlo ispod zelenih traka i propusnih površina bez sužavanja nogostupa.",
+          "passage_distance_m": 2.21,
+          "nearest_utility": {
+            "layer": "telekom-trase",
+            "network": "telekom-trase",
+            "label": "Telekom kanalizacija (DTK)",
+            "network_status": "existing",
+            "source_path": "/geo/grad/telekom-trase.geojson",
+            "source": "/geo/grad/telekom-trase.geojson",
+            "source_index": 1079,
+            "name": "Telekom kanalizacija (DTK)"
+          },
+          "nearest_utility_distance_m": 0.88,
+          "building_distance_m": 52.76,
+          "parcels": [
+            {
+              "parcel_id": "SPLIT:419/9",
+              "parcel_number": "419/9",
+              "ownership_status": "city-gis-public-record",
+              "source": "/geo/analiza/javne-cestice.geojson",
+              "public_level": "state",
+              "source_updated_at": "2025-10-03"
+            }
+          ],
+          "planting_parcel_ids": [
+            "SPLIT:419/9"
+          ],
+          "parcel_fit": "road-parcels",
+          "parcel_boundary_distance_m": 2.51,
+          "ownership_status": "evidence-available",
+          "search_offset_m": 12,
+          "action": "Telekom kanalizacija (DTK): provjeriti točnu trasu i dubinu; bez boljeg položaja uvjetovati sadnju suglasnošću upravitelja ili projektom prelaganja.",
+          "source": "Radni položaj uz shemu dopune na intervalu bez evidencije; provjeriti stvarno stanje.",
+          "coordinates": [
+            16.50500791096945,
+            43.527625672434326
+          ]
+        }
+      ],
+      "suggested": 5,
+      "conflict": 41,
+      "excluded_buildings": 9,
+      "excluded_sidewalks": 10,
+      "excluded_parcels": 33,
+      "unknown_ownership": 0,
+      "assumed_carriageway_half_width_m": 3,
+      "note": "Cijeli krug sadnje polumjera 1 m mora stati u dostupnu cestovnu česticu koja je navedena u gradskom registru i preklapa odabranu trasu. Na koracima od 10 m tražena su alternativna mjesta izvan nogostupa, radnih dopuna, prometnih ploha DPU-a, vidljive postojeće sadnje i očitanih prilaza. Uz gradske osi korišten je radni odmak 3 m, bez tvrdnje o snimljenoj širini kolnika. Razmak 3 m od vodova radni je probir. Izvan potvrđenih cestovnih čestica stabla nisu predložena; trase, dubine i izvedivost trebaju provjeru.",
+      "utility_scope": {
+        "planned_networks_included": [
+          "dpu-vodoopskrba",
+          "dpu-odvodnja",
+          "dpu-oborinska",
+          "dpu-struja",
+          "dpu-plin",
+          "dpu-telekom"
+        ],
+        "planned_routes_source": "/geo/planovi/dpu-infrastruktura.geojson",
+        "completeness": "partial-conservative",
+        "note": "Probir uključuje gradske vodove i pouzdano izdvojene poteze mreža iz DPU-a. Njihov izvorni status (postojeće, planirano ili nerazlučeno) ostaje uz trasu. Razmaci među CAD crticama nisu popunjavani, a nejasni potezi i simboli su izostavljeni: udaljenost je do dostupne geometrije, ne potvrda slobodnog prostora. Prije sadnje treba pregledati izvorne listove, utvrditi dubine i pribaviti uvjete upravitelja."
+      }
+    },
+    "all_city_named_segments": 53,
+    "all_city_named_length_m": 4437.1,
+    "note": "Gradska os ceste koja prati evidentirane nogostupe sjeverno od rekreacijske zone, od zapadnog spoja do istočnog kraja. Sjeverni i južni odvojci nisu uključeni."
+  }
+}

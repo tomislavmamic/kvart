@@ -1,0 +1,341 @@
+{
+  "version": 2,
+  "screenedAt": "2026-09-22",
+  "title": "Školska stajališta za Bilice i Dračevac",
+  "status": "spatial-screening-not-approved-route",
+  "summary": "Za Dračevac usporediti R1 s dolaskom iz radne zone i N1 na sjevernom rubu rotora. Za Bilice razraditi B2 uz ulaz koji je već prikazan u DPU-u. Stajališta su novi prijedlozi, ne postojeći planirani peroni.",
+  "candidates": [
+    {
+      "id": "R1",
+      "label": "Dračevac · R1 iz radne zone",
+      "coordinate": [
+        16.501,
+        43.52736
+      ],
+      "parcel": "SPLIT:419/1",
+      "publicLevel": "city",
+      "status": "preferred-work-zone-approach",
+      "reason": "Polazna varijanta prema prijedlogu stanovnika: prići iz radne zone i zadržati ukrcaj uz rub parka. Time se prilaz ne oslanja na skretanje autobusa iz samoga rotora.",
+      "issues": [
+        "Dokazati završni ulaz, peron i izlaz bez vožnje unatrag kroz prostor dječje igre.",
+        "Razdvojiti čekanje djece od putanje autobusa i sačuvati prohodan nogostup.",
+        "Provjeriti zahvat i visine uz planirane rubnjake i otoke; strelica dolaska nije proračun skretanja."
+      ],
+      "neighborhood": "dracevac",
+      "title": "R1 · sjeverozapadni rub parka",
+      "stage": "Prvi izbor za Dračevac",
+      "road": "4D / Os 6 → izdvojeni desni skretač prema istoku",
+      "location": "Uz sjeverozapadni prilaz rekreativnoj zoni, na gradskoj čestici 419/1.",
+      "direction": "Dolazak sa juga, iz radne zone ulicom 4D / Os 6, zatim izdvojenim desnim skretačem prema R1. Autobus za taj dolazak ne mora ulaziti u kružni kolnik. Završni prilaz peronu i odlazak nakon ukrcaja treba projektirati.",
+      "evidence": "Točka R1 je na čestici 419/1 s gradskom GIS evidencijom vlasništva. DPU 2a-1 prikazuje prilaz 4D / Os 6 i odvojeni desni skretač jug–istok.",
+      "ownershipNote": "Gradska GIS evidencija od 3. listopada 2025.; izvedeni skup od 2. kolovoza 2026. Nije aktualni zemljišnoknjižni izvadak ni potvrda udjela 1/1.",
+      "catchment": {
+        "source": "/geo/grad/adrese.geojson",
+        "method": "Ravna zračna udaljenost do GIS adrese u EPSG:3765; nije hodna ruta.",
+        "addressSelection": "Ulica točno DRAČEVAC",
+        "totalAddresses": 186,
+        "within300m": 96,
+        "within500m": 168,
+        "medianDistanceM": 290,
+        "maximumDistanceM": 793,
+        "limitation": "Adrese nisu popis kućanstava ni učenika. Udaljenosti ne potvrđuju siguran pješački put."
+      }
+    },
+    {
+      "id": "N1",
+      "label": "Dračevac · sjeverni rub rotora",
+      "title": "N1 · sjeverni rub rotora",
+      "neighborhood": "dracevac",
+      "coordinate": [
+        16.5007,
+        43.5278
+      ],
+      "parcel": "SPLIT:276/1",
+      "publicLevel": "state",
+      "status": "alternative-northern-edge",
+      "stage": "Usporedna mogućnost za Dračevac",
+      "road": "Sjeverni rub planiranog rotora, izvan kružnog kolnika",
+      "location": "Javni pojas sjeverno od kružnog kolnika, između rotora i sjeverne ceste. Referentna točka je na čestici 276/1.",
+      "direction": "Predmet provjere je izdvojeno ugibalište uz vanjski sjeverni rub, s ulazom i izlazom koje treba projektirati. DPU nema sjeverni krak rotora ni nacrtano stajalište na toj poziciji.",
+      "evidence": "Točka je na čestici 276/1 s državnom GIS evidencijom vlasništva, izvan izvučenog planiranog kolnika. U DPU-u je na tom području zeleni pojas; javna površina nije automatski slobodna za autobus.",
+      "reason": "Druga mogućnost koju su predložili stanovnici. Oslobađa rekreativnu zonu od manevra autobusa, ali traži prilagodbu planiranog ruba rotora i siguran pješački pristup iz naselja.",
+      "issues": [
+        "Stajalište ne postavljati na kružni kolnik; dokazati prostor za izdvojeno ugibalište, peron i uključenje.",
+        "Uskladiti rješenje s planiranim zelenilom i stablima te cestovnim česticama.",
+        "Projektirati neprekinut pješački prilaz i prijelaze; ne pretpostaviti da djeca mogu preko prometnog otoka."
+      ],
+      "ownershipNote": "Gradska GIS evidencija od 3. listopada 2025.; izvedeni skup od 2. kolovoza 2026. Nije aktualni zemljišnoknjižni izvadak ni potvrda udjela 1/1.",
+      "catchment": {
+        "source": "/geo/grad/adrese.geojson",
+        "method": "Ravna zračna udaljenost do GIS adrese u EPSG:3765; nije hodna ruta.",
+        "addressSelection": "Ulica točno DRAČEVAC",
+        "totalAddresses": 186,
+        "within300m": 70,
+        "within500m": 150,
+        "medianDistanceM": 341,
+        "maximumDistanceM": 848,
+        "limitation": "Adrese nisu popis kućanstava ni učenika. Udaljenosti ne potvrđuju siguran pješački put."
+      }
+    },
+    {
+      "id": "B2",
+      "label": "Bilice · uz ulaz iz DPU-a",
+      "title": "B2 · uz planski ulaz u Bilice",
+      "neighborhood": "bilice",
+      "coordinate": [
+        16.49555,
+        43.52655
+      ],
+      "parcel": "SPLIT:252/2",
+      "publicLevel": "state",
+      "status": "new-stop-at-dpu-planned-entry",
+      "stage": "Ugraditi u projekt novog ulaza",
+      "road": "Zapadni rub 4B / Os 4, uz ulaz prema Bilicama II",
+      "location": "Na strani radne zone, uz 4B i sjeverno od ulaza prema Bilicama II. Točka na 252/2 označava područje za razradu, ne točan otisak ugibališta.",
+      "direction": "Autobus zadržati na planiranoj 4B, a djecu dovesti nogostupom kroz novi ulaz. Zapadna strana odgovara vratima autobusa koji vozi prema jugu. Položaj perona i povratnu vožnju uskladiti s projektom ulica 4B i 4E.",
+      "evidence": "DPU 2a-1 izričito prikazuje otvor prema zapadu na 4B / Os 4, prema Bilicama II. Referentna točka stajališta leži na državnoj GIS čestici 252/2; sam otvor ulaza je na 13571/1, također s državnom GIS evidencijom.",
+      "reason": "Ulaz već postoji u prometnom crtežu DPU-a, pa stajalište treba razraditi zajedno s njegovim projektom i nogostupom. Bus ostaje u planiranom profilu radne zone, bez ulaska u usku Bilice II.",
+      "issues": [
+        "Sam autobusni peron ovdje nije nacrtan u DPU-u. To je novi prijedlog na osnovi §3.1.3, koji dopušta naknadna ugibališta uz tehničke uvjete.",
+        "Sačuvati planirani nogostup i zelenilo; točka u javnoj čestici ne dokazuje da cijelo ugibalište stane u nju.",
+        "Uskladiti cijelu vožnju s etapom izgradnje, smjerovima i niveletama planiranih 4B i 4E."
+      ],
+      "ownershipNote": "Gradska GIS evidencija od 3. listopada 2025.; izvedeni skup od 2. kolovoza 2026. Nije aktualni zemljišnoknjižni izvadak ni potvrda udjela 1/1.",
+      "catchment": {
+        "source": "/geo/grad/adrese.geojson",
+        "method": "Ravna zračna udaljenost do GIS adrese u EPSG:3765; nije hodna ruta.",
+        "addressSelection": "Ulica sadrži BILICE (Bilice I i II)",
+        "totalAddresses": 93,
+        "within300m": 69,
+        "within500m": 90,
+        "medianDistanceM": 215,
+        "maximumDistanceM": 688,
+        "limitation": "Adrese nisu popis kućanstava ni učenika. Udaljenosti ne potvrđuju siguran pješački put."
+      }
+    }
+  ],
+  "alternatives": [
+    {
+      "id": "B1",
+      "label": "Ranije · Bilice · postojeće stajalište Dračevac",
+      "neighborhood": "bilice",
+      "coordinate": [
+        16.496277,
+        43.526917
+      ],
+      "parcel": "SPLIT:253/1",
+      "publicLevel": "city",
+      "status": "earlier-not-preferred",
+      "stage": "Prvo provjeriti postojeće stajalište",
+      "road": "Zapadni rub radne zone, postojeći servisni krug",
+      "direction": "Smjer ukrcaja i prolaz kroz postojeći servisni krug treba potvrditi s prijevoznikom. Evidencija stajališta ne dokazuje oba smjera rada.",
+      "evidence": "Službeni gradski sloj stajališta navodi DRAČEVAC na ovoj točki. Točka leži na čestici 253/1 s GIS evidencijom gradskog vlasništva.",
+      "reason": "Prethodno razmotreno; prednost sada ima integracija uz planski ulaz B2.",
+      "issues": [
+        "Provjeriti da postojeći servisni krug i priključci primaju odabrani autobus bez vožnje unatrag; širine nisu snimljene.",
+        "Potvrditi pravo prolaza, upravljanje i aktualni status službeno evidentiranog stajališta.",
+        "Urediti neprekinut pješački pristup iz Bilica. U dostupnom GIS-u nije evidentiran nogostup do ove točke; najbliži evidentirani nogostup udaljen je oko 84 m.",
+        "Točka registra je oko 3 m od tlocrta zgrade; peron i manevar moraju se posebno položiti unutar javnih čestica.",
+        "Ne koristiti usku Bilice II kao prolaznu trasu autobusa."
+      ],
+      "ownershipNote": "Gradska GIS evidencija od 3. listopada 2025.; izvedeni skup od 2. kolovoza 2026. Nije aktualni zemljišnoknjižni izvadak ni potvrda udjela 1/1.",
+      "sourceStopName": "DRAČEVAC"
+    },
+    {
+      "id": "D1",
+      "label": "Ranije · Dračevac · uz cestu istočno od parka",
+      "neighborhood": "dracevac",
+      "coordinate": [
+        16.5025,
+        43.52744
+      ],
+      "parcel": "SPLIT:419/9",
+      "publicLevel": "state",
+      "status": "earlier-not-preferred",
+      "stage": "Kandidat za zamjenu nakon prometne provjere",
+      "road": "Postojeća ulica Dračevac, istočno od rekreacijske zone",
+      "direction": "Radna točka uz južni nogostup odgovara vožnji prema istoku, s vratima prema naselju. Suprotni peron za vožnju prema zapadu razmatrati na sjevernoj strani iste ceste, uz siguran prijelaz.",
+      "oppositeCurbCoordinate": [
+        16.5025,
+        43.52752
+      ],
+      "evidence": "Točka je unutar čestice 419/9 s GIS evidencijom državnog vlasništva, izvan obuhvata prijedloga rekreacije. Uz točku je evidentiran nogostup širine 2,2 m; postojeći evidentirani prijelaz je oko 21 m zapadno.",
+      "reason": "Prethodno razmotreno; prednost sada ima R1 s dolaskom iz radne zone ili usporedna mogućnost N1. Istočni nastavak D1 ostaje prometno neriješen.",
+      "issues": [
+        "Odabrati školsku i povratnu vožnju zajedno: polazak s južnog perona traži provjeren nastavak prema istoku bez uskih stambenih ulica ili odobreno okretanje izvan naselja.",
+        "Postojanje planiranog rotora zapadno od stajališta samo po sebi ne rješava okretanje autobusa koji od njega dolazi prema istoku.",
+        "Istočni nastavak i podvožnjak prema sjeveru nisu provjereni za gabarit i prometni režim školskog autobusa; nisu prikazani kao odobrena trasa.",
+        "Potvrditi dovoljnu širinu kolnika, položaj zaustavljanja izvan raskrižja i kolne ulaze. GIS širina nogostupa nije dokaz dovoljne širine autobusnog perona.",
+        "Potvrditi aktualno vlasništvo i pravo korištenja cijelog zahvata."
+      ],
+      "ownershipNote": "Gradska GIS evidencija od 3. listopada 2025.; izvedeni skup od 2. kolovoza 2026. Nije aktualni zemljišnoknjižni izvadak ni potvrda udjela 1/1."
+    },
+    {
+      "id": "O1",
+      "label": "Postojeće stajalište u budućem parku",
+      "coordinate": [
+        16.501709,
+        43.527283
+      ],
+      "parcel": "SPLIT:419/1",
+      "publicLevel": "city",
+      "status": "relocate-for-recreation",
+      "reason": "GIS DRAČEVAC NIRS 2 i gradska nadstrešnica nalaze se unutar prijedloga rekreacijske zone. Stalni autobusni promet ovdje sukobljava se s prenamjenom parkirališta."
+    },
+    {
+      "id": "R2",
+      "label": "Rezerva · Dračevac Sud",
+      "coordinate": [
+        16.499878,
+        43.526917
+      ],
+      "parcel": "SPLIT:420/6",
+      "publicLevel": "unverified",
+      "status": "ownership-unverified",
+      "reason": "Službeni gradski registar navodi DRAČEVAC SUD 1 i 2 na istoj točki. Čestica 420/6 nema potvrdu javnosti u dostupnom izvedenom skupu, a za Bilice je udaljenija od B1. Nije prvi izbor pod uvjetom javnog zemljišta."
+    }
+  ],
+  "routing": {
+    "verifiedCompleteLoop": false,
+    "principle": "Radna varijanta: B2 na planiranoj 4B → 4E → 4D / Os 6 → desni skretač prema R1. To je slijed za projektnu provjeru, ne odobrena cjelovita linija. N1 je alternativa R1, ne dodatno treće stajalište.",
+    "constraint": "R1 se razmatra s dolaskom iz radne zone. Završni ulaz i izlaz, smjer prema školi te povratna vožnja još se moraju riješiti. Ne pretpostaviti izlaz suprotno jednosmjernoj 4A ili postojećoj ulaznoj rampi DC1.",
+    "economy": "Povezati jedno stajalište Bilica i jedno Dračevca na planiranom koridoru radne zone, bez posebnog obilaska uskih ulica. Usporediti R1 i N1 po punoj vožnji i građevinskim radovima; nema potvrđene uštede u kilometrima ili eurima."
+  },
+  "ownershipEvidence": "Gradska GIS evidencija od 3. listopada 2025.; izvedeni skup od 2. kolovoza 2026. Nije aktualni zemljišnoknjižni izvadak ni potvrda udjela 1/1.",
+  "sources": [
+    {
+      "label": "Grad Split · stajališta",
+      "path": "/geo/grad/stajalista-grad.geojson"
+    },
+    {
+      "label": "Gradski katastarski poligoni",
+      "path": "/geo/grad/katastar.geojson"
+    },
+    {
+      "label": "Javna vlasnička GIS evidencija",
+      "path": "/geo/analiza/javne-cestice.geojson"
+    },
+    {
+      "label": "Grad Split · adrese",
+      "path": "/geo/grad/adrese.geojson"
+    },
+    {
+      "label": "Grad Split · nogostupi i prijelazi",
+      "path": "/geo/grad/nogostupi.geojson"
+    },
+    {
+      "label": "Postojeće ceste (OSM i gradski izvodi)",
+      "path": "/geo/ceste-sve.geojson"
+    },
+    {
+      "label": "Usvojeni DPU · list 2a-1",
+      "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?Command=Core_Download&EntryId=14243&PortalId=0&language=hr-HR"
+    },
+    {
+      "label": "DPU · pročišćene odredbe 10/25, §3.1.1 i §3.1.3",
+      "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?Command=Core_Download&EntryId=14341&PortalId=0&language=hr-HR"
+    }
+  ],
+  "publicParcels": [
+    "SPLIT:419/1",
+    "SPLIT:419/9",
+    "SPLIT:276/1",
+    "SPLIT:282/2",
+    "SPLIT:282/5",
+    "SPLIT:281/3",
+    "SPLIT:252/2",
+    "SPLIT:13571/1",
+    "SPLIT:419/5",
+    "SPLIT:420/11",
+    "SPLIT:13905/4",
+    "SPLIT:419/7",
+    "SPLIT:420/12",
+    "SPLIT:419/2"
+  ],
+  "bilicePlan": {
+    "entryDrawn": true,
+    "stopDrawn": false,
+    "entryCoordinate": [
+      16.495436,
+      43.526393
+    ],
+    "entryParcel": "SPLIT:13571/1",
+    "road": "4B / Os 4",
+    "finding": "Ulaz u Bilice prikazan je u DPU-u. Školsko stajalište uz njega nije ucrtano; predlaže se kao dopuna pri projektiranju ulaza.",
+    "basis": "DPU 2a-1 i §3.1.3 pročišćenog teksta 10/25"
+  },
+  "overlays": [
+    {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            16.50035,
+            43.5269
+          ],
+          [
+            16.50039,
+            43.527
+          ],
+          [
+            16.500438,
+            43.5271
+          ],
+          [
+            16.500515,
+            43.5272
+          ],
+          [
+            16.50058,
+            43.52725
+          ],
+          [
+            16.50065,
+            43.5273
+          ],
+          [
+            16.5007,
+            43.52733
+          ],
+          [
+            16.50076,
+            43.52736
+          ],
+          [
+            16.50084,
+            43.52739
+          ],
+          [
+            16.50092,
+            43.52741
+          ]
+        ]
+      },
+      "properties": {
+        "role": "approach-direction",
+        "label": "Iz radne zone · 4D / Os 6 → desni skretač",
+        "reason": "Shematski smjer po planiranom kolniku. Završava prije lokalnog ulaza u R1; ne prikazuje proračun skretanja ili riješenu putanju do perona."
+      }
+    },
+    {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            16.495435053,
+            43.526393782
+          ],
+          [
+            16.495633,
+            43.526394
+          ]
+        ]
+      },
+      "properties": {
+        "role": "dpu-entry",
+        "label": "Ulaz iz 4B prema Bilicama II · prikazan u DPU-u",
+        "reason": "Referentni položaj otvora na zapadnoj strani 4B / Os 4 prema listu 2a-1. Školsko stajalište B2 zaseban je novi prijedlog."
+      }
+    }
+  ]
+}

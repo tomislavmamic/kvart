@@ -80,6 +80,6 @@ test("share constants describe the production site", () => {
   assert.match(DEFAULT_SHARE_DESCRIPTION, /Razgovaraj sa susjedima/u);
   assert.equal(
     PROBLEMS_SHARE_DESCRIPTION,
-    "Pregledaj što su susjedi prijavili, što je poslano Gradu i dokle je stiglo rješavanje.",
+    "Praćenje zagađenja zraka, rekreativna zona Dračevac i nogostupi: prijedlozi, karte i sljedeći koraci za bolji kvart.",
   );
 });

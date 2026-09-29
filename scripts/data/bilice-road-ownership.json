@@ -1,0 +1,54 @@
+{
+  "checkedAt": "2026-09-22T17:53:41.858Z",
+  "method": "Ciljani javni OSS dohvat; katastarski posjednici nisu prepisani kao ZK vlasnici.",
+  "parcels": {
+    "SPLIT:250/11": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16871429",
+      "checkedAt": "2026-09-22T17:53:42.185Z"
+    },
+    "SPLIT:247/2": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=37111516",
+      "checkedAt": "2026-09-22T17:53:42.482Z"
+    },
+    "SPLIT:532": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16872100",
+      "checkedAt": "2026-09-22T17:53:42.685Z"
+    },
+    "SPLIT:13572/1": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16907654",
+      "checkedAt": "2026-09-22T17:53:43.071Z"
+    },
+    "SPLIT:251/2": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16871431",
+      "checkedAt": "2026-09-22T17:53:43.542Z"
+    },
+    "SPLIT:452/1": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16871940",
+      "checkedAt": "2026-09-22T17:53:43.807Z"
+    },
+    "SPLIT:13571/1": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16907651",
+      "checkedAt": "2026-09-22T17:53:44.069Z"
+    },
+    "SPLIT:248/1": {
+      "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+      "ownershipStatus": "missing_land_register_link",
+      "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=21836492",
+      "checkedAt": "2026-09-22T17:53:44.351Z"
+    }
+  }
+}

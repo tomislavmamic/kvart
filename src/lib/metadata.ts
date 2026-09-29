@@ -30,7 +30,7 @@ const TWITTER_IMAGE = {
 export const DEFAULT_SHARE_DESCRIPTION = SITE_DESCRIPTION;
 
 export const PROBLEMS_SHARE_DESCRIPTION =
-  "Pregledaj što su susjedi prijavili, što je poslano Gradu i dokle je stiglo rješavanje.";
+  "Praćenje zagađenja zraka, rekreativna zona Dračevac i nogostupi: prijedlozi, karte i sljedeći koraci za bolji kvart.";
 
 type PageMetadataInput = {
   title: string;

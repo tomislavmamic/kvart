@@ -1,0 +1,21 @@
+{
+  "source": "DGU DOF 2023., public/prijedlozi/nogostupi-ortofoto.jpg",
+  "bbox_3765": [500025.3354100953,4820727.536115983,500565.70934278716,4820952.69192127],
+  "image_size": [1920,800],
+  "complete": false,
+  "note": "Približno očitani pojasevi vidljive sadnje i važniji prilazi. Nisu inventar debala ni prometna snimka; postojeću sadnju zadržati, položaje i ulaze potvrditi na terenu.",
+  "groups": [
+    {"id":"U1","label":"Postojeća sadnja ispred velike hale","pixels":[[293,390],[453,390]],"buffer_m":2},
+    {"id":"U2","label":"Postojeće stablo uz rekreativnu zonu","pixels":[[416,425],[416,426]],"buffer_m":3.5},
+    {"id":"U3","label":"Postojeća skupina južno od ceste","pixels":[[539,437],[547,461]],"buffer_m":3},
+    {"id":"U4","label":"Postojeća sadnja uz južni rub zavoja","pixels":[[875,480],[933,506],[985,520]],"buffer_m":2.5},
+    {"id":"U5","label":"Postojeća sadnja uz sjeverni rub zavoja","pixels":[[1087,465],[1156,449],[1218,413]],"buffer_m":2.5}
+  ],
+  "access_gaps": [
+    {"label":"Prilaz kod hale","pixels":[[472,365],[472,410]],"buffer_m":3},
+    {"label":"Sjeverni prilaz uz kuće","pixels":[[630,352],[630,410]],"buffer_m":3},
+    {"label":"Sjeverni prilaz poslovnoj zgradi","pixels":[[780,350],[780,414]],"buffer_m":3.5},
+    {"label":"Ulaz uz istočni kraj poslovne zgrade","pixels":[[1020,427],[1044,477]],"buffer_m":3.5},
+    {"label":"Južni poslovni prilaz","pixels":[[862,441],[841,490]],"buffer_m":4}
+  ]
+}

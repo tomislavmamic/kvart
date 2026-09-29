@@ -62,4 +62,4 @@ export const STATUS_COLORS: Record<Status, string> = {
 
 export const SITE_NAME = "Naš kvart — Dračevac i Bilice";
 export const SITE_DESCRIPTION =
-  "Razgovaraj sa susjedima, istraži kvart, prati Karepovac te prijavi ili pregledaj probleme.";
+  "Razgovaraj sa susjedima, istraži kvart, prati Karepovac i predloži kako poboljšati Dračevac i Bilice.";

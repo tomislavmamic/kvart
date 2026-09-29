@@ -1,0 +1,39 @@
+Built-in image_gen; final photo + 3D scene guided revision, 2026-09-22.
+
+Geometry source: public/geo/prijedlozi/nogostupi-3d.json (unchanged).
+Supporting PNGs project the scene's terrain, sidewalk polygons, retained
+planting and 46 proposed tree coordinates, using the original DGU orthophoto.
+Camera approximately fitted to manually matched ground landmarks in the
+user's CleanShot 2026-09-22 at 21.22.29@2x.png; not a survey registration.
+Camera local XYZ: -140.24127, 44.65677, -50.66389 m.
+Yaw 0.869887557 rad, downward pitch 0.360445388 rad,
+focal length 1997.045 px at 2048 x 1131.
+The public result remains a concept illustration; it does not replace the
+source GIS geometry or verify tree feasibility or solar shading.
+
+FINAL PROMPT
+
+Use case: compositing
+Asset: photorealistic architectural proposal hero image for existing Dračevac sidewalks.
+
+Inputs:
+1. EDIT TARGET: the real oblique Google Maps photograph. This is authoritative for composition, every building, road and curb edge, property boundary, side-road access, bus stop and existing tree.
+2. Geometric supporting reference: perspective projection of the ACTUAL project's 3D scene, using its unchanged terrain, sidewalk polygons, tree coordinates and 6–10 metre crown diameters. This is a dimensional and planting-layout guide, not an appearance reference. The camera is approximately matched, not pixel-registered; the model has no extruded buildings. Do not flatten the photograph's buildings.
+3. Same projected 3D scene without proposed trees: YELLOW means existing sidewalk footprint; ORANGE means a small missing sidewalk connection/crossing, never a plaza; dark green indicates retained existing planting. These are reference overlays only, not final colors.
+
+Request: create a dramatically greener, deeply shaded but SPATIALLY FAITHFUL future version of PHOTO 1, with the latest denser tree plan. Make an accurate edit of the original photo, not a redesigned street. Preserve the original camera, crop, perspective, road layout, curbs, widths, elevations, all surrounding architecture, gardens and walls. The commercial access road branching to the right of the cypress garden must remain the ORIGINAL NARROW GRAY ASPHALT VEHICLE ROAD, connected to the main road; do not make it paving or a pedestrian plaza.
+
+CRITICAL WIDTH CONSTRAINT: The previous rejected render exaggerated the sidewalk widths. Keep the existing sidewalk boundaries exactly as in photo 1. Their modest widths and relationship to the car lane must agree with the narrow yellow strips in reference 3. Paving should be only a narrow 1.5–2 metre-looking band in the foreground, not a 4–6 metre promenade. Do not move the curb inward into the carriageway. Do not expand it into the garden, private forecourts or building footprints. Keep the garden cypress boundary exactly in place. Do not combine sidewalk plus tree verge into a wide paved strip. A repaired smooth pale-gray concrete surface inside the current footprint is sufficient; avoid bright broad cream paving that visually inflates the path. The existing blue bus shelter, tight turning junction and low walls remain.
+
+PLANTING AND SHADE: use reference 2's tree positions and relative crown sizes. Add a dense sequence of realistic mature broad-crowned plane/sycamore trees in the roadside planting pockets, with mostly 8 m-wide crowns and some 10 m crowns where the model allows, clear slim mottled trunks and branching canopies reaching OVER the narrow pedestrian route. Preserve the actual existing cypresses, mature roadside trees and garden planting, and infill around them; do not replace them. The crown overlap and the actual shade are the main improvement: dense, irregular, lush full-leaf crowns should create a near-continuous cool, dappled shaded walk on long stretches. Show convincingly strong connected canopy shadows ON the sidewalk, not mostly out on the carriageway; avoid isolated little ball trees with large sunny gaps. Tree trunks stay in small soil/low-shrub pockets BESIDE the walking line, not blocking it. Do not invent a double or triple line of new trees in private gardens. Existing driveways and the side-road junction stay clear.
+
+Photorealistic high-quality architectural visualization in convincing Mediterranean summer daylight, rich natural greens, leafy texture, real branching, speckled bark, detailed believable hardscape. Keep the original real-world character and building colors. Ground and crowns have natural contrast and depth. Do not turn the surroundings into generic luxury buildings. No diagrams, no yellow overlays, no new legend, labels or advertising. Maintain the unobtrusive Google Maps source attribution. Output one finished landscape image with the original approximately 1.81:1 framing.
+
+FINAL TARGETED EDIT — LEFT-SIDE TREES AND CLEAR WALKWAYS
+
+Use case: precise-object-edit.
+Image 1 is the accepted current concept render and the EDIT TARGET. Image 2 is the supporting projection of the actual 3D planting plan. Keep image 1's camera, framing, realistic appearance, buildings, road geometry, narrow sidewalk widths, garden walls, cypresses, side access road, bus shelter, and all the successful new trees unchanged.
+
+Make one focused correction: the LEFT SIDE of the main curving road must also have a shady tree line, replacing the cars that currently occupy the sidewalk/roadside planting strip. This is especially the row of white/gray cars from beside the warehouse with the red fascia toward the foreground pink apartment building. Remove those sidewalk-parked cars and place realistic mature broad-crowned plane/sycamore trees at the corresponding left-side tree positions shown in image 2. Use small planted soil pockets in the former roadside parking strip, with trunks OUTSIDE the narrow clear walking line. Keep existing vehicle entrances open. The tree crowns should arch over and strongly shade the left pedestrian route just as on the right, with lush irregular crowns, branching, mottled bark and convincing connected dappled shadows. Do not simply add tiny saplings. Do not widen the pavement, narrow the car lanes or move the curb. Preserve the accepted accurate, modest sidewalk width.
+
+Remove any remaining vehicle parked on a sidewalk anywhere in this frame, leaving walking paths visibly unobstructed. Vehicles legitimately within separate business forecourts or private driveways can remain; do not turn those forecourts into a different project. Do not add cars in new positions. Do not change the private cypress garden or move its wall. No new labels or diagram colors. Retain Google Maps source attribution. Return the same approximately 1.81:1 landscape composition, as a polished photorealistic proposal hero.

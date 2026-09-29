@@ -58,8 +58,8 @@ export const PRIMARY_NAV_ITEMS: readonly SiteNavigationItem[] = [
   {
     id: "problemi",
     href: "/prijedlozi",
-    label: "Problemi",
-    description: "Prijavi ili pregledaj",
+    label: "Prijedlozi",
+    description: "Što želimo urediti",
     activePrefixes: ["/prijedlozi", "/prijavi"],
   },
 ];
