@@ -331,8 +331,9 @@ export default async function ZabranaPage() {
           <p>
             <strong>Zamjenjuje li novi GUP PPUG?</strong> Ne. PPUG je plan cijeloga grada, zajedno sa Žrnovnicom, Sitnom,
             Srinjinama i Slatinama, i određuje granice građevinskih područja. GUP je detaljniji plan središnjeg naselja i
-            mora biti u skladu s njim. Grad mijenja oba plana usporedno, a oba prijedloga čekaju Gradsko vijeće; javni
-            poziv za inicijative obuhvaća oba. Novi zakon predviđa da planovi doneseni po starim zakonima prestanu važiti u
+            mora biti u skladu s njim. Grad mijenja oba plana usporedno, a oba prijedloga čekaju Gradsko vijeće. Novi javni
+            poziv za inicijative nije dio tog postupka: njime Grad prikuplja prijedloge za sljedeće izmjene, i GUP-a i
+            PPUG-a. Novi zakon predviđa da planovi doneseni po starim zakonima prestanu važiti u
             roku od sedam godina i da ih zamijene planovi nove generacije (
             <a href="https://narodne-novine.nn.hr/clanci/sluzbeni/2025_12_155_2315.html" className={vanjska}>
               NN 155/25
