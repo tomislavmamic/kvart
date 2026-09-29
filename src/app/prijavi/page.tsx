@@ -2,9 +2,9 @@ import { createPageMetadata } from "@/lib/metadata";
 import { SubmitForm } from "./submit-form";
 
 export const metadata = createPageMetadata({
-  title: "Prijavi problem",
+  title: "Dodaj prijedlog",
   description:
-    "Prijavi problem u Dračevcu ili Bilicama bez registracije. Prijavu pregledavamo prije javne objave.",
+    "Predloži poboljšanje Dračevca ili Bilica bez registracije. Prijedloge pregledavamo prije javne objave.",
 });
 
 /**
@@ -40,7 +40,7 @@ export default async function SubmitPage({
   const lokacija = lokacijaIzUpita(await searchParams);
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold">Prijavi problem ili prijedlog</h1>
+      <h1 className="text-2xl font-bold">Dodaj prijedlog</h1>
       <p className="mt-2 text-zinc-600">
         Bez registracije, traje minutu. Što konkretniji opis i fotografija —
         veća šansa da se stvar pomakne.

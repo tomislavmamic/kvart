@@ -18,6 +18,7 @@
 # objava iz radnog direktorija poslala bi je na javnu stranicu — što
 # .gitignore ne može spriječiti jer ovdje git nije u igri.
 /public/geo/grad/katastar-vlasnistvo.geojson
+/.cache/bilice-ownership/
 
 # Izvoz dojava iz produkcije (npm run izvezi-dojave): oznake preglednika
 # i adrese dojavitelja. Analiza na razvojnom stroju, nikad na stranici.
@@ -53,5 +54,10 @@
 /node_modules/
 /.git/
 /.impeccable/
+# Lokalne sesije alata, paralelna radna stabla i radni nacrti.
+/.claude/
+/.codex/
+/.superpowers/
+/output/
 __pycache__/
 *.tsbuildinfo

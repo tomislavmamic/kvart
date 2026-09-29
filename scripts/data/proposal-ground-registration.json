@@ -1,0 +1,31 @@
+{
+  "source_image": "/prijedlozi/nogostupi-ortofoto.jpg",
+  "source_bbox_3765": [500025.3354100953, 4820727.536115983, 500565.70934278716, 4820952.69192127],
+  "source_size": [1920, 800],
+  "enhanced_image": "/prijedlozi/nogostupi-render.png",
+  "enhanced_size": [1536, 1024],
+  "method": "Thin-plate spline from approximate manually matched landmarks. Visual texture only; never used for feature coordinates or measurements.",
+  "note": "AI illustration includes altered detail, shadows and trees. It is not an orthophoto or evidence of existing planting. Keep original-image comparison available.",
+  "landmarks": [
+    {"label":"West road junction", "source":[152,408], "enhanced":[84,410]},
+    {"label":"Hall southern frontage west", "source":[302,385], "enhanced":[219,386]},
+    {"label":"Round plaza centre", "source":[575,216], "enhanced":[432,237]},
+    {"label":"Road centre opposite recreation hut", "source":[414,411], "enhanced":[331,419]},
+    {"label":"Road centre at central bend", "source":[773,418], "enhanced":[652,426]},
+    {"label":"Road southern bend", "source":[1034,504], "enhanced":[892,536]},
+    {"label":"Road eastern curve", "source":[1250,416], "enhanced":[1090,469]},
+    {"label":"Eastern fork", "source":[1335,365], "enhanced":[1170,383]},
+    {"label":"Eastern road continuation", "source":[1815,499], "enhanced":[1510,497]},
+    {"label":"North road bend", "source":[1094,118], "enhanced":[945,127]},
+    {"label":"East warehouse frontage", "source":[1463,245], "enhanced":[1283,265]},
+    {"label":"Western highway", "source":[0,175], "enhanced":[0,174]},
+    {"label":"Highway by hall", "source":[326,151], "enhanced":[241,153]},
+    {"label":"Recreation court centre", "source":[368,523], "enhanced":[259,544]},
+    {"label":"Recreation roundabout centre", "source":[422,602], "enhanced":[301,660]},
+    {"label":"Rounded building centre", "source":[569,602], "enhanced":[461,686]},
+    {"label":"Solar roof building centre", "source":[804,647], "enhanced":[692,725]},
+    {"label":"Southern road bend", "source":[845,784], "enhanced":[727,902]},
+    {"label":"Tennis court centre", "source":[1294,569], "enhanced":[1161,608]},
+    {"label":"Northeast highway edge", "source":[1570,10], "enhanced":[1309,5]}
+  ]
+}

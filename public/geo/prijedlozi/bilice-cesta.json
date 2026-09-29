@@ -1,0 +1,926 @@
+{
+  "version": 1,
+  "title": "Spoj Bilica preko DPU-a Dračevac",
+  "recommendation": "Razrađen je kratki spoj Bilice II → 4B → zapadni 4E, uz zadržavanje postojećeg istočnog Dračevca. Potpuna zakonita veza u oba smjera bez rušenja nije potvrđena. Prvo treba riješiti izlaz, prometnu etapu, nivelete i neslaganje katastarskih tlocrta. Kraći sjeverni spoj preko postojećeg puta ostaje zasebna varijanta za provjeru prilagodbe nogostupa 4A.",
+  "status": "study-candidate-outbound-unverified",
+  "metrics": {
+    "totalLengthM": 772.2,
+    "existingLengthM": 590.1,
+    "newLengthM": 182.1,
+    "reusePercent": 76.4,
+    "carriagewayWidthM": 10.5,
+    "screenedWidthM": 23,
+    "buildingConflicts": 1,
+    "primaryBuildingConflicts": 0,
+    "secondaryObjectConflicts": 3,
+    "newStageBuildingConflicts": 0,
+    "existingWorkingWidthConflicts": 0,
+    "plannedRoadCoveragePercent": 98.6,
+    "newAxisOutsideDpuM": 2.1,
+    "newFullProfileAreaM2": 3802.3,
+    "newFullProfileOutsideDpuM2": 40.2,
+    "newAxisOnExistingRegisterWithin4mM": 8.2,
+    "costEur": null,
+    "terrainMinimumM": 19.5,
+    "terrainMaximumM": 62.1
+  },
+  "alternatives": [
+    {
+      "id": "north-4b",
+      "label": "Puni sjeverni spoj 4B → 4A",
+      "status": "rejected-no-demolition",
+      "buildingConflicts": 1,
+      "buildingOverlapM2": 191.1,
+      "screenedAreaM2": 1490.3,
+      "reason": "Službeni planirani kolnik i nogostup preklapaju postojeću zgradu; odbačeno zbog zahtjeva bez rušenja.",
+      "screenMethod": "Točni kolnik + nogostupi DPU-a unutar navedenog usporednog dijela; zelenilo može povećati sukobe.",
+      "screenBounds3765": [
+        499633,
+        4820725,
+        499660,
+        4820860
+      ],
+      "conflicts": [
+        {
+          "sourceIndex": 1320,
+          "overlapM2": 191.08,
+          "bounds": [
+            16.495509,
+            43.527291999999996,
+            16.496477,
+            43.527425999999984
+          ]
+        }
+      ]
+    },
+    {
+      "id": "full-4d",
+      "label": "Puni istočni profil 4D",
+      "status": "rejected-no-demolition",
+      "buildingConflicts": 4,
+      "buildingOverlapM2": 223.6,
+      "screenedAreaM2": 6929.1,
+      "reason": "Širenje na puni planirani profil zahvaća postojeće zgrade. Prva faza zadržava postojeću cestu; takvu etapu treba odobriti.",
+      "screenMethod": "Točni kolnik + nogostupi DPU-a unutar navedenog usporednog dijela; zelenilo može povećati sukobe.",
+      "screenBounds3765": [
+        499819,
+        4820670,
+        500080,
+        4820855
+      ],
+      "conflicts": [
+        {
+          "sourceIndex": 126,
+          "overlapM2": 7.86,
+          "bounds": [
+            16.500334,
+            43.52734400000001,
+            16.500376,
+            43.52738800000001
+          ]
+        },
+        {
+          "sourceIndex": 158,
+          "overlapM2": 2.17,
+          "bounds": [
+            16.500274,
+            43.527231,
+            16.500333,
+            43.52726499999999
+          ]
+        },
+        {
+          "sourceIndex": 1017,
+          "overlapM2": 74.11,
+          "bounds": [
+            16.498801,
+            43.526140999999996,
+            16.498936,
+            43.526238000000006
+          ]
+        },
+        {
+          "sourceIndex": 1018,
+          "overlapM2": 139.51,
+          "bounds": [
+            16.499464,
+            43.526136,
+            16.499647,
+            43.526284999999994
+          ]
+        }
+      ]
+    },
+    {
+      "id": "north-4c",
+      "label": "Puni središnji spoj 4C → 4A",
+      "status": "rejected-no-demolition",
+      "buildingConflicts": 2,
+      "buildingOverlapM2": 623.7,
+      "screenedAreaM2": 3199.7,
+      "reason": "Središnji sjeverni koridor zahvaća dvije postojeće zgrade; odbačeno zbog zahtjeva bez rušenja.",
+      "screenMethod": "Točni kolnik + nogostupi DPU-a unutar navedenog usporednog dijela; zelenilo može povećati sukobe.",
+      "screenBounds3765": [
+        499780,
+        4820690,
+        499817,
+        4820860
+      ],
+      "conflicts": [
+        {
+          "sourceIndex": 1001,
+          "overlapM2": 553.76,
+          "bounds": [
+            16.497373,
+            43.52635699999999,
+            16.497998,
+            43.526697
+          ]
+        },
+        {
+          "sourceIndex": 1324,
+          "overlapM2": 69.94,
+          "bounds": [
+            16.497491,
+            43.526251,
+            16.497850000000003,
+            43.52636199999999
+          ]
+        }
+      ]
+    },
+    {
+      "id": "south-4g",
+      "label": "Puni južni koridor 4G",
+      "status": "rejected-no-demolition",
+      "buildingConflicts": 5,
+      "buildingOverlapM2": 222.1,
+      "screenedAreaM2": 6272.0,
+      "reason": "Puni planirani kolnik i nogostup zahvaćaju postojeće zgrade; odbačeno zbog zahtjeva bez rušenja.",
+      "screenMethod": "Točni kolnik + nogostupi DPU-a unutar navedenog usporednog dijela; zelenilo može povećati sukobe.",
+      "screenBounds3765": [
+        499640,
+        4820430,
+        499920,
+        4820560
+      ],
+      "conflicts": [
+        {
+          "sourceIndex": 577,
+          "overlapM2": 2.67,
+          "bounds": [
+            16.496067,
+            43.524662,
+            16.496125,
+            43.52472399999999
+          ]
+        },
+        {
+          "sourceIndex": 578,
+          "overlapM2": 87.33,
+          "bounds": [
+            16.497159,
+            43.523663,
+            16.497727,
+            43.52434599999999
+          ]
+        },
+        {
+          "sourceIndex": 995,
+          "overlapM2": 8.98,
+          "bounds": [
+            16.496084,
+            43.524668999999996,
+            16.49615,
+            43.52472099999999
+          ]
+        },
+        {
+          "sourceIndex": 1318,
+          "overlapM2": 106.19,
+          "bounds": [
+            16.495637,
+            43.524753,
+            16.495858000000002,
+            43.52487000000001
+          ]
+        },
+        {
+          "sourceIndex": 1319,
+          "overlapM2": 16.9,
+          "bounds": [
+            16.495607,
+            43.524819,
+            16.495671,
+            43.524879
+          ]
+        }
+      ]
+    },
+    {
+      "id": "north-reuse-track",
+      "label": "Postojeći sjeverni put → 4B iznad zgrade → 4A",
+      "status": "further-study",
+      "newLengthM": 64.1,
+      "buildingConflicts": 1,
+      "buildingOverlapM2": 34.4,
+      "reason": "Kratki spoj širine 11 m iznad duge zgrade prolazi bez dodira zgrada 2025., ali istočni nogostup 4A zahvaća drugu zgradu za 34,4 m². Potrebno je dokazati premještanje nogostupa unutar cestovne čestice, puni profil i zakonitost nadogradnje postojećeg sjevernog puta izvan DPU-a. Nije odobreni cjeloviti spoj.",
+      "screenMethod": "Spoj iznad zgrade: 11 m radni profil; nastavak4A: izvorni kolnik i nogostupi. Različito od gradnje cijelog sjevernog4B kroz zgradu.",
+      "conflicts": [
+        {
+          "sourceIndex": 1322,
+          "overlapM2": 34.43,
+          "bounds": [
+            16.495968,
+            43.52752499999999,
+            16.496255,
+            43.52764
+          ]
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "id": "bilice-connection",
+      "label": "Spoj s postojećom Ulicom Bilice II",
+      "kind": "new",
+      "lengthM": 15.9,
+      "widthM": 7,
+      "onewayInbound": false
+    },
+    {
+      "id": "4b",
+      "label": "Kratka dionica 4B / OS 4",
+      "kind": "new",
+      "lengthM": 35.0,
+      "widthM": 7,
+      "onewayInbound": false
+    },
+    {
+      "id": "4e",
+      "label": "Zapadni dio 4E / OS 2",
+      "kind": "new",
+      "lengthM": 131.2,
+      "widthM": 10.5,
+      "onewayInbound": false
+    },
+    {
+      "id": "existing-59",
+      "label": "Postojeći Dračevac · istočni nastavak",
+      "kind": "existing",
+      "lengthM": 319.3,
+      "widthM": 6,
+      "onewayInbound": false
+    },
+    {
+      "id": "existing-70",
+      "label": "Postojeći Dračevac · spoj na odvojak",
+      "kind": "existing",
+      "lengthM": 77.1,
+      "widthM": 6,
+      "onewayInbound": false
+    },
+    {
+      "id": "existing-slip",
+      "label": "Postojeći jednosmjerni odvojak D1 prema Dračevcu",
+      "kind": "existing",
+      "lengthM": 193.7,
+      "widthM": 6,
+      "onewayInbound": true
+    }
+  ],
+  "parcelScreen": {
+    "count": 27,
+    "unknownCount": 22,
+    "publicCount": 4,
+    "missingCadastreAreaM2": 0.0,
+    "records": [
+      {
+        "parcelId": "SPLIT:443/2",
+        "areaM2": 50.7,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:450/2",
+        "areaM2": 1273.5,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:458/2",
+        "areaM2": 17.1,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:458/3",
+        "areaM2": 38.1,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:446/2",
+        "areaM2": 1335.9,
+        "status": "city-gis-public-record"
+      },
+      {
+        "parcelId": "SPLIT:458/5",
+        "areaM2": 28.1,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:450/1",
+        "areaM2": 5.4,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:466/1",
+        "areaM2": 8.7,
+        "status": "private_or_other",
+        "publicEntities": []
+      },
+      {
+        "parcelId": "SPLIT:456/1",
+        "areaM2": 9.6,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:456/3",
+        "areaM2": 7.1,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:251/1",
+        "areaM2": 19.5,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:251/2",
+        "areaM2": 8.9,
+        "status": "city-gis-public-record"
+      },
+      {
+        "parcelId": "SPLIT:445/1",
+        "areaM2": 4.2,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:450/4",
+        "areaM2": 27.5,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:451/2",
+        "areaM2": 16.9,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:457/1",
+        "areaM2": 3.4,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:458/1",
+        "areaM2": 92.2,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:13571/1",
+        "areaM2": 7.5,
+        "status": "city-gis-public-record"
+      },
+      {
+        "parcelId": "SPLIT:452/2",
+        "areaM2": 41.3,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:452/3",
+        "areaM2": 5.5,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:457/2",
+        "areaM2": 8.2,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:451/1",
+        "areaM2": 4.4,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:451/3",
+        "areaM2": 30.7,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:456/4",
+        "areaM2": 365.5,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:457/3",
+        "areaM2": 329.9,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:13571/8",
+        "areaM2": 48.9,
+        "status": "unknown"
+      },
+      {
+        "parcelId": "SPLIT:252/2",
+        "areaM2": 13.7,
+        "status": "city-gis-public-record"
+      }
+    ]
+  },
+  "buildingScreen": {
+    "source": "/geo/grad/zgrade-2025.geojson",
+    "sourceBuildingCount": 1501,
+    "newFullProfile": [],
+    "existingWorkingWidth": [],
+    "secondaryScreens": [
+      {
+        "source": "/geo/zgrade.geojson",
+        "count": 528,
+        "conflicts": []
+      },
+      {
+        "source": "/geo/grad/katastar-objekti.geojson",
+        "count": 734,
+        "conflicts": [
+          {
+            "sourceIndex": 231,
+            "kind": "new",
+            "overlapM2": 0.07,
+            "properties": {
+              "broj": 18525,
+              "vrsta": 406,
+              "povrsina": 9
+            },
+            "bounds": [
+              16.495363,
+              43.52633199999999,
+              16.495439,
+              43.52636
+            ]
+          },
+          {
+            "sourceIndex": 575,
+            "kind": "new",
+            "overlapM2": 0.1,
+            "properties": {
+              "broj": 12728,
+              "vrsta": 406,
+              "povrsina": 14
+            },
+            "bounds": [
+              16.495368,
+              43.526312999999995,
+              16.495448,
+              43.526347
+            ]
+          },
+          {
+            "sourceIndex": 156,
+            "kind": "existing",
+            "overlapM2": 14.86,
+            "properties": {
+              "broj": 15793,
+              "vrsta": 101,
+              "povrsina": 36
+            },
+            "bounds": [
+              16.500257,
+              43.526955,
+              16.500356,
+              43.526998
+            ]
+          }
+        ]
+      }
+    ],
+    "note": "Nula preklapanja s gradskim zgradama 2025. i OSM zgradama. Stariji katastarski objekti imaju neslaganja; to nije potvrda svih nadstrešnica, zidova ili terenskih rubova. Novi profil uključuje nogostupe i zelenilo 4B; radni omotač 4E je 23 m. Postojeći dio ispitan je samo radnom širinom 6 m."
+  },
+  "assumptions": [
+    "4B: presjek 3–3, 22,75 m s kolnikom, nogostupom i zelenilom; asimetrični radni omotač prema crtežu.",
+    "4E: presjek 6–6, 23 m ispod planiranog nathodnika; kolnik 10,5 m, sjeverni nogostup 8 m i južni 4,5 m, orijentirano prema stvarnim ispunama prometnog lista.",
+    "Izvedbeni položaj osi, širine na križanju i radijusi trebaju geodetsku i prometnu razradu.",
+    "Postojeći dio prikazan je radnom širinom 6 m jer gradski registar daje osi, ne snimljene rubove.",
+    "Duljina nove etape je opseg rekonstrukcije/novog zahvata, ne tvrdnja da je cijela podloga danas neasfaltirana.",
+    "Usporedba građevinskog opsega nije troškovnik. Najjeftinije potpuno izvedivo rješenje nije utvrđeno zbog neriješenog izlaza, profila, vlasništva i konstrukcija.",
+    "Nijedna postojeća zgrada nije izostavljena iz provjere zbog odabira trase. Nema dodira s gradskim tlocrtima 2025. ni OSM zgradama; stariji katastarski objekti imaju tri neslaganja koja treba riješiti prije potvrde uvjeta bez rušenja."
+  ],
+  "constraints": [
+    "Grad mora potvrditi da spoj i zadržavanje postojećeg istočnog Dračevca čine samostalnu prometnu i tehničku etapu prema točki 3.1 DPU-a.",
+    "Zapadni 4E prolazi ispod planiranog pješačkog nathodnika. Kote, rampe, zidovi, odvodnja i uvjeti rezervacije nathodnika nisu riješeni; ravna jeftina zamjena nije potvrđena planom.",
+    "Postojeći odvojak D1 prema Dračevcu označen je jednosmjernim u dostupnim podacima. Prikaz potvrđuje mrežni spoj i ulazni smjer; siguran i zakonit izlaz treba potvrditi cjelovitom prometnom shemom i uvjetima Hrvatskih cesta.",
+    "Geometrija novih križanja, radijusi, preglednost, stvarne širine postojeće ceste i pristup interventnih vozila zahtijevaju snimku i projekt.",
+    "Čestice i pravo građenja treba riješiti prije gradnje. Gradski registar osi nije dokaz vlasništva, dozvole ili dovoljne širine.",
+    "Nije odobrena niti pretpostavljena prenamjena zemljišta izvan cestovnih čestica. Rubni spoj Bilica i omotač na zapadnoj granici traže geodetsku provjeru i dopušteno uklapanje.",
+    "Stariji katastarski objekt 15793 (vrsta 101) zahvaća radni omotač postojeće ceste 14,86 m², a objekti 12728 i 18525 (vrsta 406) rub nove etape 0,10 i 0,07 m². Ti objekti nisu jednako prikazani u novijim podacima: terenski provjeriti, ne pretpostaviti rušenje ili nestanak."
+  ],
+  "sources": [
+    {
+      "label": "DPU · pročišćeni tekst 10/25",
+      "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?Command=Core_Download&EntryId=14341&PortalId=0&language=hr-HR"
+    },
+    {
+      "label": "DPU · promet 2a-1, 87/24",
+      "url": "https://split.hr/DesktopModules/Bring2mind/DMX/API/Entries/Download?Command=Core_Download&EntryId=14243&PortalId=0&language=hr-HR",
+      "path": "/geo/planovi/dpu-kolnici.geojson"
+    },
+    {
+      "label": "Grad Split · registar nerazvrstanih cesta",
+      "path": "/geo/grad/ceste-nerazvrstane.geojson"
+    },
+    {
+      "label": "Grad Split · zgrade 2025",
+      "path": "/geo/grad/zgrade-2025.geojson"
+    },
+    {
+      "label": "Grad Split · katastar",
+      "path": "/geo/grad/katastar.geojson"
+    },
+    {
+      "label": "DGU · LiDAR DMR",
+      "path": "/geo/reljef/visine.json"
+    },
+    {
+      "label": "Postojeće ulice i smjerovi · OSM",
+      "path": "/geo/ceste-sve.geojson"
+    }
+  ],
+  "widening": {
+    "id": "bilice-first-75m",
+    "label": "Obuhvat prvih 75 m · radna os 75,8 m",
+    "requestedLengthM": 75,
+    "lengthM": 75.82,
+    "adjustedAxisLengthM": 75.82,
+    "widthM": 5,
+    "areaM2": 379.0,
+    "startDescription": "Predloženi spoj s DPU-om na istočnom rubu Ulice Bilice II",
+    "endDescription": "5.86 m zapadno od središnjeg križanja Ulice Bilice II",
+    "start": [
+      16.495436,
+      43.526393
+    ],
+    "referenceEnd": [
+      16.494564399366052,
+      43.52616534538987
+    ],
+    "assumption": "Prvih 75 m mjeri se od predloženog spoja na DPU prema zapadu u Ulicu Bilice II, preko središnjeg križanja još 5,86 m. Odabir smjera treba potvrditi korisnik.",
+    "status": "constrained-width-study-not-road-design",
+    "buildingScreen": {
+      "primaryConflicts": 0,
+      "allSourceObjectConflicts": 0,
+      "minimumMappedClearanceM": 0.17,
+      "sources": {
+        "grad/zgrade-2025": 1501,
+        "zgrade": 528,
+        "grad/katastar-objekti": 734
+      },
+      "closestObjects": [
+        {
+          "source": "/geo/grad/zgrade-2025.geojson",
+          "sourceIndex": 957,
+          "clearanceM": 0.2,
+          "properties": {
+            "tlocrt": 62.84942386,
+            "korisna": 12.85129567
+          }
+        },
+        {
+          "source": "/geo/grad/zgrade-2025.geojson",
+          "sourceIndex": 958,
+          "clearanceM": 0.17,
+          "properties": {
+            "tlocrt": 135.22388995,
+            "korisna": 70.82324591
+          }
+        },
+        {
+          "source": "/geo/grad/zgrade-2025.geojson",
+          "sourceIndex": 1250,
+          "clearanceM": 0.18,
+          "properties": {
+            "tlocrt": 8.32636016,
+            "korisna": 0.02169211
+          }
+        },
+        {
+          "source": "/geo/grad/zgrade-2025.geojson",
+          "sourceIndex": 1251,
+          "clearanceM": 0.19,
+          "properties": {
+            "tlocrt": 31.50597787,
+            "korisna": 18.95529994
+          }
+        },
+        {
+          "source": "/geo/grad/zgrade-2025.geojson",
+          "sourceIndex": 1252,
+          "clearanceM": 0.2,
+          "properties": {
+            "tlocrt": 21.95083396,
+            "korisna": 10
+          }
+        },
+        {
+          "source": "/geo/grad/zgrade-2025.geojson",
+          "sourceIndex": 1253,
+          "clearanceM": 0.19,
+          "properties": {
+            "tlocrt": 6.36347531
+          }
+        },
+        {
+          "source": "/geo/grad/katastar-objekti.geojson",
+          "sourceIndex": 10,
+          "clearanceM": 0.35,
+          "properties": {
+            "broj": 19612,
+            "vrsta": 100,
+            "povrsina": 8
+          }
+        },
+        {
+          "source": "/geo/grad/katastar-objekti.geojson",
+          "sourceIndex": 128,
+          "clearanceM": 0.18,
+          "properties": {
+            "broj": 19956,
+            "vrsta": 100,
+            "povrsina": 10
+          }
+        },
+        {
+          "source": "/geo/grad/katastar-objekti.geojson",
+          "sourceIndex": 231,
+          "clearanceM": 0.35,
+          "properties": {
+            "broj": 18525,
+            "vrsta": 406,
+            "povrsina": 9
+          }
+        },
+        {
+          "source": "/geo/grad/katastar-objekti.geojson",
+          "sourceIndex": 272,
+          "clearanceM": 0.5,
+          "properties": {
+            "broj": 9987,
+            "vrsta": 100,
+            "povrsina": 6
+          }
+        },
+        {
+          "source": "/geo/grad/katastar-objekti.geojson",
+          "sourceIndex": 362,
+          "clearanceM": 0.66,
+          "properties": {
+            "broj": 4110,
+            "vrsta": 101,
+            "povrsina": 9
+          }
+        }
+      ],
+      "note": "Oko 0,15 m radnog odmaka manje je od nepoznate položajne nesigurnosti podloga. Nula računalnih preklapanja ne potvrđuje izvedivost bez rušenja."
+    },
+    "widthComparison": [
+      {
+        "widthM": 5,
+        "found": true,
+        "unshiftedPrimaryBuildingConflicts": 5,
+        "description": "Pronađen radni omotač bez preklapanja izvora; nije projektirana cesta.",
+        "adjustedAxisLengthM": 75.82,
+        "minimumMappedClearanceM": 0.17,
+        "maximumNorthOffsetM": 2.25,
+        "maximumSouthOffsetM": 0.5
+      },
+      {
+        "widthM": 5.5,
+        "found": false,
+        "unshiftedPrimaryBuildingConflicts": 6,
+        "description": "U ograničenoj pretrazi nije pronađen kontinuirani omotač bez dodira evidentiranih zgrada i objekata."
+      },
+      {
+        "widthM": 6,
+        "found": false,
+        "unshiftedPrimaryBuildingConflicts": 6,
+        "description": "U ograničenoj pretrazi nije pronađen kontinuirani omotač bez dodira evidentiranih zgrada i objekata."
+      },
+      {
+        "widthM": 7,
+        "found": false,
+        "unshiftedPrimaryBuildingConflicts": 6,
+        "description": "U ograničenoj pretrazi nije pronađen kontinuirani omotač bez dodira evidentiranih zgrada i objekata."
+      },
+      {
+        "widthM": 8,
+        "found": false,
+        "unshiftedPrimaryBuildingConflicts": 6,
+        "description": "U ograničenoj pretrazi nije pronađen kontinuirani omotač bez dodira evidentiranih zgrada i objekata."
+      },
+      {
+        "widthM": 11,
+        "found": false,
+        "unshiftedPrimaryBuildingConflicts": 7,
+        "description": "U ograničenoj pretrazi nije pronađen kontinuirani omotač bez dodira evidentiranih zgrada i objekata."
+      }
+    ],
+    "search": {
+      "maximumOffsetM": 15,
+      "offsetStepM": 0.25,
+      "stationStepM": 1,
+      "maximumOffsetStepM": 0.75,
+      "score": "Duljina + blizina postojećoj osi i cestovnim česticama + manja promjena bočnog pomaka; nije financijski trošak."
+    },
+    "parcels": [
+      {
+        "id": "SPLIT:13571/1",
+        "label": "k.č. 13571/1 · k.o. SPLIT",
+        "overlapM2": 253.7,
+        "parcelAreaM2": 1642.3,
+        "ownershipLabel": "Republika Hrvatska · vlasništvo prema GIS-u (2025-10-03); aktualni ZK nije potvrđen",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16907651",
+        "checkedAt": "2026-09-22T17:53:44.069Z",
+        "representativePoint": [
+          16.494070216782863,
+          43.52593550133597
+        ],
+        "historicalOwnership": {
+          "entityLabel": "Republika Hrvatska",
+          "publicLevel": "state",
+          "ownershipForm": "ownership",
+          "sourceUpdatedAt": "2025-10-03",
+          "generatedAt": "2026-08-02",
+          "sourceUrl": "/geo/analiza/javne-cestice.geojson",
+          "sourceLabel": "GIS Grada Splita · izričiti status i oblik upisa"
+        }
+      },
+      {
+        "id": "SPLIT:248/1",
+        "label": "k.č. 248/1 · k.o. SPLIT",
+        "overlapM2": 34.7,
+        "parcelAreaM2": 180.9,
+        "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=21836492",
+        "checkedAt": "2026-09-22T17:53:44.351Z",
+        "representativePoint": [
+          16.49505952300435,
+          43.526337000105386
+        ]
+      },
+      {
+        "id": "SPLIT:247/2",
+        "label": "k.č. 247/2 · k.o. SPLIT",
+        "overlapM2": 32.8,
+        "parcelAreaM2": 1490.5,
+        "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=37111516",
+        "checkedAt": "2026-09-22T17:53:42.482Z",
+        "representativePoint": [
+          16.494696433120072,
+          43.526556006576556
+        ]
+      },
+      {
+        "id": "SPLIT:250/11",
+        "label": "k.č. 250/11 · k.o. SPLIT",
+        "overlapM2": 31.4,
+        "parcelAreaM2": 437.9,
+        "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16871429",
+        "checkedAt": "2026-09-22T17:53:42.185Z",
+        "representativePoint": [
+          16.49529534965816,
+          43.52643300478395
+        ]
+      },
+      {
+        "id": "SPLIT:452/1",
+        "label": "k.č. 452/1 · k.o. SPLIT",
+        "overlapM2": 21.0,
+        "parcelAreaM2": 111.9,
+        "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16871940",
+        "checkedAt": "2026-09-22T17:53:43.807Z",
+        "representativePoint": [
+          16.49489199385091,
+          43.52622999790152
+        ]
+      },
+      {
+        "id": "SPLIT:251/2",
+        "label": "k.č. 251/2 · k.o. SPLIT",
+        "overlapM2": 2.4,
+        "parcelAreaM2": 317.0,
+        "ownershipLabel": "Republika Hrvatska · vlasništvo prema GIS-u (2025-10-03); aktualni ZK nije potvrđen",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16871431",
+        "checkedAt": "2026-09-22T17:53:43.542Z",
+        "representativePoint": [
+          16.49541473044241,
+          43.526782998949706
+        ],
+        "historicalOwnership": {
+          "entityLabel": "Republika Hrvatska",
+          "publicLevel": "state",
+          "ownershipForm": "ownership",
+          "sourceUpdatedAt": "2025-10-03",
+          "generatedAt": "2026-08-02",
+          "sourceUrl": "/geo/analiza/javne-cestice.geojson",
+          "sourceLabel": "GIS Grada Splita · izričiti status i oblik upisa"
+        }
+      },
+      {
+        "id": "SPLIT:532",
+        "label": "k.č. 532 · k.o. SPLIT",
+        "overlapM2": 2.3,
+        "parcelAreaM2": 1805.1,
+        "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16872100",
+        "checkedAt": "2026-09-22T17:53:42.685Z",
+        "representativePoint": [
+          16.494361792748986,
+          43.52640249204721
+        ]
+      },
+      {
+        "id": "SPLIT:13572/1",
+        "label": "k.č. 13572/1 · k.o. SPLIT",
+        "overlapM2": 0.6,
+        "parcelAreaM2": 430.1,
+        "ownershipLabel": "Vlasnik nije utvrđen · katastar nema povezan ZK uložak",
+        "ownershipStatus": "missing_land_register_link",
+        "sourceUrl": "https://oss.uredjenazemlja.hr/oss/public/cad/parcel-info?parcelId=16907654",
+        "checkedAt": "2026-09-22T17:53:43.071Z",
+        "representativePoint": [
+          16.494901179101884,
+          43.525426499989415
+        ]
+      }
+    ],
+    "notes": [
+      "Profil 5 m je ograničena prostorna studija bez zasebnog nogostupa, ne preporučena ili dopuštena širina ceste.",
+      "Stvarni rubovi postojeće ceste nisu snimljeni. Prikazana površina cijelog radnog koridora nije površina otkupa niti dokaz koliko ceste treba proširiti.",
+      "Krivine, mimoilaženje, pješački pristup, interventna vozila, zidovi, stupovi i instalacije trebaju terenski pregled i prometni projekt.",
+      "U ograničenoj pretrazi 5,5–11 m nije pronađeno bez dodira objekata. To nije dokaz da svako moguće projektno rješenje šire ceste zahtijeva rušenje."
+    ]
+  },
+  "displayGeometry": {
+    "mode": "existing-road-first",
+    "existingSelectedLengthM": 590.1,
+    "newStageLengthM": 182.1,
+    "existingFootprintAreaM2": 3566.8,
+    "plannedGapFootprintAreaM2": 1804.2,
+    "outsideDpuCandidateAreaM2": 1.7,
+    "plannedSegmentIds": [
+      "bilice-connection",
+      "4b",
+      "4e"
+    ],
+    "newAxisInsideMappedExistingWorkingWidthM": 6.2,
+    "existingWidthM": 6,
+    "selectionBranchCuts3765": {
+      "southNorthingM": 4820673,
+      "northNorthingM": 4820724.5,
+      "eastEastingM": 499779.16210641863
+    },
+    "sourceCarriagewayAreaClippedWithoutExistingReplacementM2": 0.0,
+    "note": "Prikaz zadržava odabrane postojeće osi Dračevca i odvojka D1 unutar i izvan DPU-a. Izvorni planirani kolnik ističe samo nedostajući zapadni spoj; istočno proširenje i budući rotor nisu dio istaknute trase. Postojeća širina 6 m je radni prikaz, ne snimljeni rub asfalta niti ocjena stanja ceste."
+  },
+  "validation": {
+    "projection": "EPSG:3765",
+    "routeContinuityToleranceM": 0.001,
+    "primaryBuildingScreen": "passed-zero-overlap-new-and-existing-working-width",
+    "secondaryBuildingScreen": "requires-source-reconciliation",
+    "north4bBypass": {
+      "buildingSourceIndex": 1320,
+      "carriagewayOverlapM2": 94.73,
+      "sidewalkOverlapM2": 96.79,
+      "crossSectionNorthingM": 4820825,
+      "westernDpuBoundaryEastingM": 499629.18,
+      "buildingWesternExtentEastingM": 499636.98,
+      "availableWesternStripM": 7.8,
+      "minimumTwoLanesAndTwoSidewalksM": 11,
+      "conclusion": "Zapadni pojas je uži od 7 m kolnika i dva nogostupa po 2 m. Istočni obilazak izlazi iz cestovne čestice 4B; dopušten pomak unutar čestice nije utvrđen."
+    },
+    "inputSha256": {
+      "grad/ceste-nerazvrstane": "c8f15cc97709cb660fdca37a9da56acb5ef49de35c9502b1f227927052f4e3f9",
+      "ceste-sve": "4a040efb66b4cfe300e47d948dc5c4b96f722ef61926d1f4f62b6ec7316a498b",
+      "grad/zgrade-2025": "bc7cdd053e49e8bc14b8037cf8b5fad2b48d854671f22390890e42909b319e12",
+      "grad/katastar-objekti": "df2106857d7092202197d278968618b804fcc07c372f34ab182d4d37daf384f6",
+      "zgrade": "534c4bad18039f9fa543a7ba019ca040a088bbbef2a4b7b422acd9df57c81b8b",
+      "planovi/dpu-kolnici": "16697bf9b15ecaee79c2d4cc862de3efceca2204cbc67416aedb026d21d7e43f",
+      "planovi/dpu-nogostupi": "77e9dedfe9e18ac83e235911294238b69c70b110c1fbaeb5087c34d61d843045"
+    }
+  }
+}
