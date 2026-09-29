@@ -30,6 +30,7 @@ export const BOJE_ZABRANE = {
   upu: "#2563eb",
   gup: "#18181b",
   cestica: "#3f3f46",
+  zgrada: "#27272a",
   sporno: "#c026d3",
   /** cesta: jednaki obrub cijelom duljinom, a sredina kaže širinu njezine čestice */
   cesta: "#18181b",

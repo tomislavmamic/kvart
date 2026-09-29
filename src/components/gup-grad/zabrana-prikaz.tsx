@@ -730,6 +730,9 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
           </Skupina>
         )}
         <Skupina naslov="Za snalaženje">
+          <Stavka stil={{ background: BOJE_ZABRANE.zgrada, opacity: 0.6 }}>
+            zgrada iz 3D modela Grada <span className="text-zinc-500">· izbliza</span>
+          </Stavka>
           <Stavka stil={{ background: "rgba(113,113,122,0.35)", border: `1px solid ${BOJE_ZABRANE.vazeci}` }}>
             plan na snazi: gradi se prema njemu
           </Stavka>

@@ -23,6 +23,8 @@
  * sve ceste kroz zabranu, cijelom duljinom: jednak tamni obrub, a sredina
  * kaže širinu čestice ceste (prazna od 4 m naviše, crvena uža, siva
  * neizmjerena). Sporno je u vlastitom sloju karte (pane), iznad oznaka.
+ * Od ZGRADE_OD_ZUMA vide se i zgrade iz gradskog 3D modela (tlocrti onoga što
+ * stoji na tlu, pločice iz cestice.py), iznad oznaka a ispod spornog.
  * Podloga je siva, da se boje oznaka čitaju.
  *
  * Karta samo crta i javlja klik; što je na kojoj točki računa
@@ -36,6 +38,7 @@ import type * as LeafletNS from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 
 import { BASE_LAYERS, SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
+import { plocnik } from "@/lib/gup-grad/plocnik";
 import { BOJE_ZABRANE, PROZIRNOST_ZABRANE, TAMNE_ZABRANE, type Okvir, type Podrucje } from "@/lib/gup-grad/zabrana";
 
 const SRAFURA = "zabrana-sporno-srafura";
@@ -99,6 +102,8 @@ export const SPORNO_OD_ZUMA = 12;
 export const SRAFURA_OD_ZUMA = 16;
 /** Osi cesta po širini: gušće su od čestica, pa tek izbliza. */
 export const SPORNO_CESTE_OD_ZUMA = 15;
+/** Zgrade su gušće i od cesta, a pločica ima stotine kilobajta: tek izbliza. */
+export const ZGRADE_OD_ZUMA = 16;
 
 const uGranice = (o: Okvir): LeafletNS.LatLngBoundsExpression => [
   [o[1], o[0]],
@@ -125,6 +130,7 @@ export function ZabranaKarta(props: {
   const LRef = useRef<typeof LeafletNS | null>(null);
   const slojZabrane = useRef<LeafletNS.Layer | null>(null);
   const slojCestica = useRef<LeafletNS.GeoJSON | null>(null);
+  const slojZgrada = useRef<LeafletNS.GeoJSON | null>(null);
   const isticanje = useRef<LeafletNS.GeoJSON | null>(null);
   const tocka = useRef<LeafletNS.CircleMarker | null>(null);
   const klik = useRef(onKlik);
@@ -194,6 +200,24 @@ export function ZabranaKarta(props: {
           fillOpacity: PROZIRNOST_ZABRANE.cestica,
         }),
       }).addTo(map);
+      // zgrade u vlastitom oknu: iznad oznaka i obuhvata, ispod spornog i cesta
+      const oknoZgrada = map.createPane("zgrade");
+      oknoZgrada.style.zIndex = "420";
+      oknoZgrada.style.pointerEvents = "none";
+      const zgrade = L.geoJSON(undefined, {
+        ...netaknuto,
+        pane: "zgrade",
+        // pločice nose i katastarske zgrade (s: k); na tlu je ono što je snimio 3D model (s: m)
+        filter: (f) => f.properties?.s === "m",
+        style: { stroke: false, fillColor: BOJE_ZABRANE.zgrada, fillOpacity: 0.6 },
+      });
+      slojZgrada.current = zgrade;
+      const ucitajZgrade = plocnik<{ s: string }>("/geo/gup-grad/zgrade-indeks.json", "/geo/gup-grad/zgrade", (fc) => {
+        if (!otkazano) zgrade.addData(fc);
+      });
+      map.on("moveend", () => {
+        if (map.getZoom() >= ZGRADE_OD_ZUMA) ucitajZgrade(L, map.getBounds().pad(0.2), () => {}).catch(() => {});
+      });
       L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "propisan")), {
         ...netaknuto,
         style: { color: BOJE_ZABRANE.upu, weight: 1.5, fill: false },
@@ -260,6 +284,7 @@ export function ZabranaKarta(props: {
         const z = map.getZoom();
         prikazi(slojZabrane.current, zabranaVidljiva.current);
         prikazi(slojCestica.current, zabranaVidljiva.current);
+        prikazi(slojZgrada.current, z >= ZGRADE_OD_ZUMA);
         slojCestica.current?.setStyle({ stroke: z >= CESTICE_OD_ZUMA });
         const sp = slojeviSpornog.current;
         prikazi(sp?.cestice, z >= SPORNO_OD_ZUMA && spornoVidljivo.current);
