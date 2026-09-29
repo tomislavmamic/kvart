@@ -26,6 +26,9 @@ import type { Podrucje } from "./zabrana";
 export const ZONE_ZABRANE = { S: "stanovanje", "M/K5": "stanovanje", "I/K": "gospodarstvo", T: "turizam" } as const;
 export type ZonaZabrane = (typeof ZONE_ZABRANE)[keyof typeof ZONE_ZABRANE];
 
+/** Javna površina na komadu: ulica, parkiralište, trg ili park. Takva čestica nije privatna građevna. */
+const JAVNO = ["promet", "parkiraliste", "uredjeno", "zelenilo"] as const;
+
 /** Što na komadu čini česticu izgrađenom: zgrada bilo koje vrste, njezina okućnica ili gradilište. */
 const IZGRADJENO = ["stambena", "gospodarska", "javna", "pomocna", "ostala", "neevidentirana", "okucnica", "gradiliste"];
 
@@ -49,12 +52,27 @@ export interface CesticaZabrane {
  * ostalo slobodno zemljište; premali ostaci se ne broje.
  */
 export function cesticeZabrane(d: SirovaMjerenja, o: Odredbe, godina: Godina = 2025): CesticaZabrane[] {
+  return izracunZabrane(d, o, godina).slobodne;
+}
+
+/**
+ * Isti izračun, a uz čestice sa slobodnim zemljištem i sve čestice koje
+ * dotiče zona za gradnju pod zabranom, izgrađene ili ne: po njima karta na
+ * /gup/zabrana boji izgrađene i neizgrađene čestice.
+ */
+export function izracunZabrane(
+  d: SirovaMjerenja,
+  o: Odredbe,
+  godina: Godina = 2025,
+): { slobodne: CesticaZabrane[]; sve: { cestica: number; izgradjena: boolean; javna: boolean }[] } {
   const osnovna = INACICE[0].pravila;
   // gospodarska i turistička zgrada troši česticu po kig/kis iz posebnih pravila, kao stambena
   const p = { ...osnovna, postujObvezuPlana: false, gradevna: { ...osnovna.gradevna, izvanStanovanja: true } };
   const u = ulazGodine(d, godina, p, o);
   const { procjene, ostaci, uvjeti } = procijeniGodinu(u, p);
   const izgradjena = new Set<number>();
+  // po čestici u zoni pod zabranom: [sve, javno] u pikselima
+  const uZoni = new Map<number, [number, number]>();
   const po = new Map<number, Map<ZonaZabrane, number>>();
   u.komadi.forEach((k, i) => {
     const r = procjene[i];
@@ -62,17 +80,25 @@ export function cesticeZabrane(d: SirovaMjerenja, o: Odredbe, godina: Godina = 2
     if (IZGRADJENO.some((v) => (r.poVrsti[v as keyof typeof r.poVrsti] ?? 0) > 0)) izgradjena.add(k.cestica);
     const kod = KLASA_PO_INDEKSU.get(k.klasa)?.kod as keyof typeof ZONE_ZABRANE | undefined;
     if (!kod || !(kod in ZONE_ZABRANE) || uvjeti[i]?.rezim !== "ceka") return;
+    const z = uZoni.get(k.cestica) ?? [0, 0];
+    z[0] += r.n + r.ulica;
+    z[1] += r.ulica + JAVNO.reduce((a, v) => a + (r.poVrsti[v] ?? 0), 0);
+    uZoni.set(k.cestica, z);
     const px = Math.max(0, r.n - r.iskoristeno - r.zabranjeno - r.neizgradivo) - (ostaci.get(i) ?? 0);
     if (px <= 0) return;
     const zone = po.get(k.cestica) ?? new Map<ZonaZabrane, number>();
     zone.set(ZONE_ZABRANE[kod], (zone.get(ZONE_ZABRANE[kod]) ?? 0) + px * u.pikselM2);
     po.set(k.cestica, zone);
   });
-  return [...po].map(([cestica, zone]) => {
+  const slobodne = [...po].map(([cestica, zone]) => {
     const [zona] = [...zone].sort((a, b) => b[1] - a[1])[0];
     const m2 = [...zone.values()].reduce((a, b) => a + b, 0);
     return { cestica, m2, poZoni: Object.fromEntries(zone), neizgradjena: !izgradjena.has(cestica), zona };
   });
+  const sve = [...uZoni]
+    .sort((a, b) => a[0] - b[0])
+    .map(([cestica, [n, javno]]) => ({ cestica, izgradjena: izgradjena.has(cestica), javna: n > 0 && javno / n >= 0.5 }));
+  return { slobodne, sve };
 }
 
 export interface RedUpu {
@@ -107,6 +133,8 @@ export interface FokusZabrane {
   slobodno_po_zoni_ha: Partial<Record<ZonaZabrane, number>>;
   neizgradjene: { cestice: number; ha: number };
   djelomicno: { cestice: number; ha: number };
+  /** čestice koje karta boji, i neizgrađene među njima (i one na koje ne stane nova zgrada) */
+  na_karti: { cestice: number; neizgradjene: number };
 }
 
 export interface ZbrojZabrane {

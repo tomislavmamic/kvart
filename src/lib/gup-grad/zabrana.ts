@@ -39,13 +39,13 @@ export const BOJE_ZABRANE = {
   zgrada: "#27272a",
 } as const;
 
-/** Tamniji ton iste oznake: čestica s mjestom za novu zgradu, na kojoj zabrana stvarno priječi gradnju. */
+/** Tamniji ton iste oznake: neizgrađena čestica. Izgrađena je u osnovnoj boji (BOJE_ZABRANE). */
 export const TAMNE_ZABRANE: Record<Podrucje, string> = {
   sanacija: "#dc2626",
   preobrazba: "#ea580c",
   neuredeno: "#eab308",
 };
-/** Neprozirnost svjetlijeg (cijelo područje) i tamnijeg tona (čestica s mjestom za zgradu) na karti. */
+/** Neprozirnost svjetlijeg (izgrađena čestica) i tamnijeg tona (neizgrađena) na karti. */
 export const PROZIRNOST_ZABRANE = { podrucje: 0.4, cestica: 0.85 } as const;
 
 /** Koji plan je odredio oznaku na listu 4.d. */

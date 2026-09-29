@@ -1,23 +1,21 @@
 "use client";
 
 /**
- * Karta na /gup/zabrana: privatno zemljište na kojem bi se po prijedlogu
- * GUP-a 2025. nova zgrada smjela graditi tek nakon donošenja UPU-a
- * (zabrana-2025.geojson, komadi s „fokus”): urbana sanacija (crveno; list 4.d
- * je crta zeleno) i urbana preobrazba stambenih i mješovitih zona izvan
- * gradskih projekata (narančasto). Neuređeni dio (uz postojeću cestu gradi se
- * i prije UPU-a), preobrazba gospodarskih zona i gradskih projekata te dijelovi
- * oznaka na ulicama, javnoj, športskoj i zelenoj namjeni nisu obojeni; ostaju u
- * podacima, da klik ondje kaže što vrijedi. Oznaka se boji u dva tona:
- * svjetliji je zona, a tamniji čestice s mjestom za novu zgradu, na kojima
- * zabrana stvarno priječi gradnju (zabrana-cestice-2025.geojson,
- * TAMNE_ZABRANE). Od zuma CESTICE_OD_ZUMA te čestice dobivaju i tanak rub, da
- * se susjedne razlikuju. Za snalaženje su tu planovi na snazi (sivo), obuhvati
- * propisanih UPU-a u kojima su te čestice (plavi rub; upuNaKarti), granica
- * GUP-a (jedina iscrtkana crta) i, od
- * ZGRADE_OD_ZUMA, zgrade iz gradskog 3D modela (tlocrti onoga što stoji na
- * tlu, pločice iz cestice.py), iznad oznaka. Podloga je siva, da se boje
- * oznaka čitaju.
+ * Karta na /gup/zabrana: područja u kojima bi se po prijedlogu GUP-a 2025.
+ * zamrznula gradnja, i to samo privatno zemljište na kojem bi nova zgrada
+ * morala čekati UPU: urbana sanacija (crveno; list 4.d je crta zeleno) i
+ * urbana preobrazba stambenih i mješovitih zona izvan gradskih projekata
+ * (narančasto). Boje se čestice (zabrana-izgradjenost-2025.geojson), a ne
+ * zona: izgrađene svjetlijim tonom, neizgrađene tamnijim (TAMNE_ZABRANE). Od
+ * zuma CESTICE_OD_ZUMA čestice dobivaju i tanak rub, da se susjedne razlikuju.
+ * Neuređeni dio (uz postojeću cestu gradi se i prije UPU-a), preobrazba
+ * gospodarskih zona i gradskih projekata te ulice, javna, športska i zelena
+ * namjena nisu obojeni; ostaju u podacima, da klik ondje kaže što vrijedi.
+ * Za snalaženje su tu planovi na snazi (sivo), obuhvati propisanih UPU-a u
+ * kojima su te čestice (plavi rub; upuNaKarti), granica GUP-a (jedina
+ * iscrtkana crta) i, od ZGRADE_OD_ZUMA, zgrade iz gradskog 3D modela (tlocrti
+ * onoga što stoji na tlu, pločice iz cestice.py), iznad čestica. Podloga je
+ * siva, da se boje čitaju.
  *
  * Karta samo crta i javlja klik; što je na kojoj točki računa
  * ZabranaPrikaz (stanjeTocke u src/lib/gup-grad/zabrana.ts). Slojevi nisu
@@ -64,7 +62,7 @@ function podloga(L: typeof LeafletNS, id: string): LeafletNS.TileLayer {
 
 const zbirka = (features: Feature[]): FeatureCollection => ({ type: "FeatureCollection", features });
 
-/** Od ovog zuma čestice s mjestom za zgradu imaju rub; izdaleka bi rubovi zamutili ton. */
+/** Od ovog zuma obojene čestice imaju rub; izdaleka bi rubovi zamutili ton. */
 export const CESTICE_OD_ZUMA = 15;
 /** Zgrade su gušće od čestica, a pločica ima stotine kilobajta: tek izbliza. */
 export const ZGRADE_OD_ZUMA = 16;
@@ -77,7 +75,8 @@ const uGranice = (o: Okvir): LeafletNS.LatLngBoundsExpression => [
 export function ZabranaKarta(props: {
   zabrana: FeatureCollection;
   planovi: FeatureCollection;
-  cestice: FeatureCollection;
+  /** čestice koje karta boji: vrsta (sanacija, preobrazba) i izgradjena */
+  izgradjenost: FeatureCollection;
   /** brojevi UPU-a čiji se obuhvat crta: oni u kojima su obojene čestice */
   upuNaKarti: number[];
   prikaziZabranu: boolean;
@@ -88,11 +87,10 @@ export function ZabranaKarta(props: {
   punZaslon?: boolean;
   onKlik: (lng: number, lat: number) => void;
 }) {
-  const { zabrana, planovi, cestice, upuNaKarti, prikaziZabranu, odabraniUpu, cilj, oznaka, punZaslon = false, onKlik } = props;
+  const { zabrana, planovi, izgradjenost, upuNaKarti, prikaziZabranu, odabraniUpu, cilj, oznaka, punZaslon = false, onKlik } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
-  const slojZabrane = useRef<LeafletNS.Layer | null>(null);
   const slojCestica = useRef<LeafletNS.GeoJSON | null>(null);
   const slojZgrada = useRef<LeafletNS.GeoJSON | null>(null);
   const isticanje = useRef<LeafletNS.GeoJSON | null>(null);
@@ -130,31 +128,26 @@ export function ZabranaKarta(props: {
       L.control.layers(podloge, undefined, { position: "topright" }).addTo(map);
 
       const gup = zabrana.features.filter((f) => f.properties?.vrsta === "gup");
-      const komadi = zabrana.features.filter((f) => f.properties?.fokus === true);
       const netaknuto = { interactive: false } as const;
 
       L.geoJSON(zbirka(planovi.features.filter((f) => f.properties?.vrsta === "vazeci")), {
         ...netaknuto,
         style: { color: BOJE_ZABRANE.vazeci, weight: 1, fillColor: BOJE_ZABRANE.vazeci, fillOpacity: 0.35 },
       }).addTo(map);
-      slojZabrane.current = L.geoJSON(zbirka(komadi), {
+      slojCestica.current = L.geoJSON(izgradjenost, {
         ...netaknuto,
-        style: (f) => ({
-          stroke: false,
-          fillColor: BOJE_ZABRANE[f?.properties?.vrsta as Podrucje],
-          fillOpacity: PROZIRNOST_ZABRANE.podrucje,
-        }),
-      }).addTo(map);
-      slojCestica.current = L.geoJSON(zbirka(cestice.features.filter((f) => f.properties?.fokus === true && f.properties?.vrsta)), {
-        ...netaknuto,
-        style: (f) => ({
-          stroke: false,
-          color: BOJE_ZABRANE.cestica,
-          weight: 0.6,
-          opacity: 0.5,
-          fillColor: TAMNE_ZABRANE[f?.properties?.vrsta as Podrucje],
-          fillOpacity: PROZIRNOST_ZABRANE.cestica,
-        }),
+        style: (f) => {
+          const vrsta = f?.properties?.vrsta as Podrucje;
+          const izgradjena = f?.properties?.izgradjena === true;
+          return {
+            stroke: false,
+            color: BOJE_ZABRANE.cestica,
+            weight: 0.6,
+            opacity: 0.5,
+            fillColor: izgradjena ? BOJE_ZABRANE[vrsta] : TAMNE_ZABRANE[vrsta],
+            fillOpacity: izgradjena ? PROZIRNOST_ZABRANE.podrucje : PROZIRNOST_ZABRANE.cestica,
+          };
+        },
       }).addTo(map);
       // zgrade u vlastitom oknu: iznad oznaka i obuhvata
       const oknoZgrada = map.createPane("zgrade");
@@ -191,7 +184,6 @@ export function ZabranaKarta(props: {
       };
       const cesticePoZumu = () => {
         const z = map.getZoom();
-        prikazi(slojZabrane.current, zabranaVidljiva.current);
         prikazi(slojCestica.current, zabranaVidljiva.current);
         prikazi(slojZgrada.current, z >= ZGRADE_OD_ZUMA);
         slojCestica.current?.setStyle({ stroke: z >= CESTICE_OD_ZUMA });
@@ -260,5 +252,5 @@ export function ZabranaKarta(props: {
       : null;
   }, [oznaka]);
 
-  return <div ref={div} className="h-full w-full" role="application" aria-label="Karta područja na kojima bi se nove zgrade smjele graditi tek nakon donošenja UPU-a" />;
+  return <div ref={div} className="h-full w-full" role="application" aria-label="Karta područja u kojima bi se zamrznula gradnja do donošenja UPU-a" />;
 }

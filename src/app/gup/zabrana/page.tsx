@@ -171,7 +171,7 @@ export default async function ZabranaPage() {
 
       <section className="mt-8">
         <h2 id="karta" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
-          Gdje bi zabrana vrijedila
+          Područja u kojima bi se zamrznula gradnja
         </h2>
         <div className="mt-4">
           <ZabranaPrikaz
@@ -179,11 +179,12 @@ export default async function ZabranaPage() {
             objasnjenje={
               <>
                 <p className="max-w-3xl text-zinc-600">
-                  Crvena je urbana sanacija, a narančasta urbana preobrazba stambenih i mješovitih zona, unutar obuhvata GUP-a.
-                  Obje su oznake s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga; list sanaciju crta
-                  zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Tamnijim su tonom čestice na kojima ima
-                  mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju. Svjetliji je ostatak zone, većinom izgrađen.
-                  Plavim je rubom obuhvat UPU-a u kojem su te čestice; ostale obuhvate iz prijedloga karta ne crta.
+                  Crveno su čestice određene za urbanu sanaciju, a narančasto za urbanu preobrazbu stambenih i mješovitih zona,
+                  unutar obuhvata GUP-a. Obje su oznake s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga;
+                  list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Tamnijim su tonom
+                  neizgrađene čestice, a svjetlijim izgrađene, na kojima se postojeća zgrada smije obnoviti ili zamijeniti, ali
+                  ni ondje se na slobodnom dijelu ne smije graditi nova. Plavim je rubom obuhvat UPU-a u kojem su te čestice;
+                  ostale obuhvate iz prijedloga karta ne crta.
                 </p>
                 <p className="mt-3 max-w-3xl text-zinc-600">
                   List 4.d boji i zemljište koje karta ne boji jer nije privatno zemljište za pojedinačnu gradnju: ulice,
@@ -215,7 +216,7 @@ export default async function ZabranaPage() {
             [`${ha1(f.slobodno_ha)} ha`, "slobodnog zemljišta za novu gradnju"],
             [
               f.neizgradjene.cestice.toLocaleString("hr-HR"),
-              imenicaUz(f.neizgradjene.cestice, ["neizgrađena čestica", "neizgrađene čestice", "neizgrađenih čestica"]),
+              `${imenicaUz(f.neizgradjene.cestice, ["neizgrađena čestica", "neizgrađene čestice", "neizgrađenih čestica"])} s mjestom za zgradu`,
             ],
           ].map(([v, n]) => (
             <div key={n} className="bg-white px-3 py-3 sm:px-4">
@@ -233,7 +234,10 @@ export default async function ZabranaPage() {
           {imenicaUz(f.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}
           {ha1(f.djelomicno.ha)} ha na slobodnim dijelovima {f.djelomicno.cestice.toLocaleString("hr-HR")}{" "}
           {imenicaUz(f.djelomicno.cestice, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])} (npr. veliko
-          dvorište ili neizgrađen dio poslovne čestice). Po namjeni: {ha1(f.slobodno_po_zoni_ha.stanovanje ?? 0)} ha
+          dvorište ili neizgrađen dio poslovne čestice). Neizgrađenih čestica na karti ima{" "}
+          {f.na_karti.neizgradjene.toLocaleString("hr-HR")}, ali na ostalih{" "}
+          {(f.na_karti.neizgradjene - f.neizgradjene.cestice).toLocaleString("hr-HR")} nova zgrada ne stane ni sa slobodnim
+          susjednim zemljištem ili se na njima po odredbama ne smije graditi. Po namjeni: {ha1(f.slobodno_po_zoni_ha.stanovanje ?? 0)} ha
           stambene i mješovite, {ha1(f.slobodno_po_zoni_ha.gospodarstvo ?? 0)} ha gospodarske i{" "}
           {ha1(f.slobodno_po_zoni_ha.turizam ?? 0)} ha turističke namjene.
         </p>

@@ -3,8 +3,8 @@
 /**
  * /gup/zabrana: tražilica adrese, karta i popis po UPU-u.
  *
- * Podatke karte (zabrana-2025.geojson, planski-rezim-2025.geojson i, za
- * listove PPUG-a, sporne-2025.geojson) učita jednom i iz njih računa stanje
+ * Podatke karte (zabrana-2025.geojson, zabrana-izgradjenost-2025.geojson,
+ * planski-rezim-2025.geojson i, za listove PPUG-a, sporne-2025.geojson) učita jednom i iz njih računa stanje
  * svake točke (stanjeTocke); karta
  * (zabrana-karta.tsx) samo crta i javlja klik, a učitava se bez SSR-a.
  * Kućni brojevi (~0,5 MB) stižu tek kad se krene tipkati adresa.
@@ -90,6 +90,7 @@ interface Podaci {
   zabrana: FeatureCollection;
   planovi: FeatureCollection;
   cestice: FeatureCollection;
+  izgradjenost: FeatureCollection;
   slojevi: Slojevi;
 }
 
@@ -290,12 +291,11 @@ function Uzorak({ stil }: { stil: CSSProperties }) {
   return <span aria-hidden className="inline-block h-4 w-6 shrink-0 rounded-sm" style={stil} />;
 }
 
-/** Uzorak tumača: lijevo svjetliji ton područja, desno tamniji ton čestice, kao na karti (na bijeloj podlozi). */
-const dvaTona = (p: Podrucje) => {
-  const svijetlo = `color-mix(in srgb, ${BOJE_ZABRANE[p]} ${PROZIRNOST_ZABRANE.podrucje * 100}%, white)`;
-  const tamno = `color-mix(in srgb, ${TAMNE_ZABRANE[p]} ${PROZIRNOST_ZABRANE.cestica * 100}%, white)`;
-  return `linear-gradient(90deg, ${svijetlo} 0 50%, ${tamno} 50% 100%)`;
-};
+/** Uzorak tumača: ton čestice kao na karti (na bijeloj podlozi), svjetliji za izgrađenu, tamniji za neizgrađenu. */
+const ton = (p: Podrucje, izgradjena: boolean) =>
+  izgradjena
+    ? `color-mix(in srgb, ${BOJE_ZABRANE[p]} ${PROZIRNOST_ZABRANE.podrucje * 100}%, white)`
+    : `color-mix(in srgb, ${TAMNE_ZABRANE[p]} ${PROZIRNOST_ZABRANE.cestica * 100}%, white)`;
 
 const NAZIV_OZNAKE = { sanacija: "urbana sanacija", preobrazba: "urbana preobrazba", neuredeno: "neuređeni dio" } as const;
 
@@ -396,11 +396,18 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
       dohvati("/geo/gup-grad/zabrana-2025.geojson"),
       dohvati("/geo/gup-grad/planski-rezim-2025.geojson"),
       dohvati("/geo/gup-grad/zabrana-cestice-2025.geojson"),
+      dohvati("/geo/gup-grad/zabrana-izgradjenost-2025.geojson"),
       // listovi PPUG-a (smještaj i razred čestice) su dodatak: bez njih karta i dalje radi
       dohvati("/geo/gup-grad/sporne-2025.geojson").catch(() => null),
     ])
-      .then(([zabrana, planovi, cestice, ppugIzvor]) =>
-        setPodaci({ zabrana, planovi, cestice, slojevi: slojeviIzGeojsona(zabrana, planovi, cestice, ppugIzvor ?? undefined) }),
+      .then(([zabrana, planovi, cestice, izgradjenost, ppugIzvor]) =>
+        setPodaci({
+          zabrana,
+          planovi,
+          cestice,
+          izgradjenost,
+          slojevi: slojeviIzGeojsona(zabrana, planovi, cestice, ppugIzvor ?? undefined),
+        }),
       )
       .catch(() => setGreska(true));
   }, []);
@@ -611,7 +618,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
             <ZabranaKarta
               zabrana={podaci.zabrana}
               planovi={podaci.planovi}
-              cestice={podaci.cestice}
+              izgradjenost={podaci.izgradjenost}
               upuNaKarti={redoviUpu.map((r) => r.broj).filter(Boolean)}
               prikaziZabranu={prikaziZabranu}
               odabraniUpu={odabraniUpu}
@@ -671,9 +678,18 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
 
       <div className="mt-3 flex flex-wrap items-start gap-x-10 gap-y-3 text-sm text-zinc-700">
         <Skupina naslov="Nova gradnja tek nakon UPU-a" vidljivo={prikaziZabranu} promijeni={setPrikaziZabranu}>
-          <Stavka stil={{ background: dvaTona("sanacija") }}>urbana sanacija</Stavka>
-          <Stavka stil={{ background: dvaTona("preobrazba") }}>urbana preobrazba stambenih i mješovitih zona</Stavka>
-          <li className="text-zinc-500">Svjetliji ton je zona za gradnju, a tamniji čestica s mjestom za novu zgradu.</li>
+          {(
+            [
+              ["sanacija", "urbanu sanaciju"],
+              ["preobrazba", "urbanu preobrazbu"],
+            ] as const
+          ).flatMap(([p, za]) =>
+            [true, false].map((izgradjena) => (
+              <Stavka key={`${p}-${izgradjena}`} stil={{ background: ton(p, izgradjena) }}>
+                {izgradjena ? "izgrađene" : "neizgrađene"} čestice određene za {za}
+              </Stavka>
+            )),
+          )}
         </Skupina>
         {/* poravnato sa stavkama skupine, ispod njezina naslova */}
         <ul className="sm:pt-[1.875rem]">

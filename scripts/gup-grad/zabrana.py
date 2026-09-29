@@ -35,6 +35,9 @@ Izlaz:
       i posebno za fokus)
   public/geo/gup-grad/zabrana-cestice-2025.geojson   čestice sa slobodnim
       zemljištem koje bi čekalo UPU, s pretežitom oznakom pod sobom (vrsta)
+  public/geo/gup-grad/zabrana-izgradjenost-2025.geojson   čestice koje karta
+      boji (barem pola u fokusu ili sa slobodnim zemljištem u njemu; bez ulica,
+      trgova i parkova), s oznakom pod sobom i je li izgrađena
   public/geo/gup-grad/kucni-brojevi.json     kućni brojevi u obuhvatu GUP-a
       za tražilicu adrese na /gup/zabrana
 
@@ -75,6 +78,7 @@ IZLAZ_BROJEVI = os.path.join(ROOT, "public", "geo", "gup-grad", "kucni-brojevi.j
 CESTICE = os.path.join(ROOT, "data", "gup-grad", "zabrana-cestice.json")
 PLOCICE = os.path.join(ROOT, "public", "geo", "gup-grad", "cestice")
 IZLAZ_CESTICE = os.path.join(ROOT, "public", "geo", "gup-grad", "zabrana-cestice-2025.geojson")
+IZLAZ_IZGRADJENOST = os.path.join(ROOT, "public", "geo", "gup-grad", "zabrana-izgradjenost-2025.geojson")
 
 # bitovi iz planski-rezim.py
 SANACIJA, PREOBRAZBA, NEUREDENO = 4, 8, 16
@@ -277,12 +281,17 @@ def main() -> None:
              {"type": "Feature", "properties": {"vrsta": "gup"}, "geometry": zaokruzi(gup.simplify(2.0, preserve_topology=True))}]
 
     # slobodno zemljište za novu zgradu, po čestici, s oblikom i UPU-om
-    redovi = {c: (m2, bool(n), zona) for c, m2, n, zona in json.load(open(CESTICE))["cestice"]}
+    ulaz = json.load(open(CESTICE))
+    redovi = {c: (m2, bool(n), zona) for c, m2, n, zona in ulaz["cestice"]}
+    # sve čestice koje dotiče zona za gradnju pod zabranom: izgrađena ili ne; javna
+    # (većinom ulica, parkiralište, trg ili park) nije privatna građevna čestica
+    sve_u_zoni = {c: (bool(iz), bool(javna)) for c, iz, javna in ulaz.get("sve", [])}
+    trazene = set(redovi) | set(sve_u_zoni)
     oblici = {}
     for put in sorted(glob.glob(os.path.join(PLOCICE, "*.json"))):
         for f in json.load(open(put))["features"]:
             i = f["properties"]["i"]
-            if i in redovi and i not in oblici:
+            if i in trazene and i not in oblici:
                 oblici[i] = f
     upu_prep = [(p["broj"], prep(ug)) for p, ug in upu]
     nazivi = {p["broj"]: p["naziv"] for p, _ in upu}
@@ -291,6 +300,7 @@ def main() -> None:
     po_zoni = {}
     u_fokusu = {"neizgradjene": [0, 0.0], "djelomicno": [0, 0.0]}
     po_zoni_fokus = {}
+    slobodne_u_fokusu = set()
     for i, (m2, neizgradjena, zona) in sorted(redovi.items()):
         f = oblici.get(i)
         if f is None:
@@ -321,6 +331,7 @@ def main() -> None:
         k[1] += m2 / 1e4
         po_zoni[zona] = po_zoni.get(zona, 0.0) + m2 / 1e4
         if u_f:
+            slobodne_u_fokusu.add(i)
             z["fokus_cestice"] += 1
             z["fokus_slobodno_ha"] += m2 / 1e4
             z["fokus_neizgradjene"] += int(neizgradjena)
@@ -330,6 +341,31 @@ def main() -> None:
             po_zoni_fokus[zona] = po_zoni_fokus.get(zona, 0.0) + m2 / 1e4
     if bez_oblika:
         print(f"upozorenje: {bez_oblika} čestica nema oblika u pločicama")
+
+    # Karta boji čestice, a ne zonu: izgrađene svjetlije, neizgrađene tamnije. Čestica
+    # ide na kartu ako joj je barem pola u fokusu ili ima slobodno zemljište u njemu
+    # (i ono je dio brojki), da se čestica koju zona tek dotiče ne pripiše oznaci.
+    # Javna čestica (ulica, trg, park) ne ide na kartu, osim ako ima slobodno zemljište.
+    izgradjenost, bez_mjesta = [], [0, 0.0]
+    for i, (izgradjena, javna) in sorted(sve_u_zoni.items()):
+        f = oblici.get(i)
+        if f is None or (javna and i not in slobodne_u_fokusu):
+            continue
+        g = stransform(U_HTRS, shape(f["geometry"]))
+        x = pikseli(g, vf)
+        u_f = np.isin(x, FOKUS)
+        if not x.size or (u_f.mean() < 0.5 and i not in slobodne_u_fokusu):
+            continue
+        k = int(np.bincount(x[u_f]).argmax())
+        if not izgradjena and i not in slobodne_u_fokusu:
+            bez_mjesta[0] += 1
+            bez_mjesta[1] += g.area / 1e4
+        izgradjenost.append({"type": "Feature", "geometry": f["geometry"],
+                             "properties": {"kc": f["properties"]["kc"], "ko": f["properties"]["ko"],
+                                            "vrsta": VRSTE[k], "izgradjena": izgradjena}})
+    n_neizgr = sum(not c["properties"]["izgradjena"] for c in izgradjenost)
+    print(f"karta: {len(izgradjenost)} čestica, {n_neizgr} neizgrađenih; od njih {bez_mjesta[0]} "
+          f"({bez_mjesta[1]:.2f} ha) bez mjesta za novu zgradu")
     if bez_vrste:
         print(f"upozorenje: {bez_vrste} čestica nema oznake s lista 4.d pod sobom")
     print(f"izostavljeno {izvan_gradnje[0]} čestica ({izvan_gradnje[1]:.2f} ha slobodnog) kojima je većina izvan zona za gradnju")
@@ -383,6 +419,8 @@ def main() -> None:
                  "slobodno_po_zoni_ha": {z: round(v, 1) for z, v in sorted(po_zoni_fokus.items())},
                  "neizgradjene": {"cestice": u_fokusu["neizgradjene"][0], "ha": round(u_fokusu["neizgradjene"][1], 1)},
                  "djelomicno": {"cestice": u_fokusu["djelomicno"][0], "ha": round(u_fokusu["djelomicno"][1], 1)},
+                 # čestice koje karta boji (zabrana-izgradjenost-2025.geojson)
+                 "na_karti": {"cestice": len(izgradjenost), "neizgradjene": n_neizgr},
              },
              "po_upu": po_upu}
     print(json.dumps({k: zbroj[k] for k in zbroj if k != "po_upu"}, ensure_ascii=False))
@@ -398,10 +436,16 @@ def main() -> None:
                            "koje bi po prijedlogu GUP-a 2025. čekalo UPU (m2), neizgrađene ili djelomično izgrađene; "
                            "bez čestica kojima je većina izvan zona za gradnju (ulice, javna, športska i zelena namjena).",
                    "features": cestice}, f, ensure_ascii=False, separators=(",", ":"))
+    with open(IZLAZ_IZGRADJENOST, "w") as f:
+        json.dump({"type": "FeatureCollection",
+                   "opis": "Izvedeno skriptom scripts/gup-grad/zabrana.py: čestice u urbanoj sanaciji i urbanoj preobrazbi "
+                           "stambenih i mješovitih zona izvan gradskih projekata po prijedlogu GUP-a 2025., izgrađene ili ne "
+                           "(izgrađena = zgrada, okućnica ili gradilište na snimci).",
+                   "features": izgradjenost}, f, ensure_ascii=False, separators=(",", ":"))
     with open(IZLAZ_BROJEVI, "w") as f:
         json.dump({"opis": "Kućni brojevi u obuhvatu GUP-a iz adresnog registra Grada Splita (scripts/gup-grad/zabrana.py).",
                    "ulice": ulice, "brojevi": brojevi}, f, ensure_ascii=False, separators=(",", ":"))
-    for p in (IZLAZ, IZLAZ_CESTICE, IZLAZ_BROJEVI):
+    for p in (IZLAZ, IZLAZ_CESTICE, IZLAZ_IZGRADJENOST, IZLAZ_BROJEVI):
         print(os.path.relpath(p, ROOT), round(os.path.getsize(p) / 1e6, 2), "MB")
 
 

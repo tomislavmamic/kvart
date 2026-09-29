@@ -138,6 +138,13 @@ test("zabrana-cestice-2025.geojson: zbroj čestica jednak je iskazanom slobodnom
   // po UPU-u su prebrojane sve čestice s karte (po njima se crtaju obuhvati)
   const poUpu = z.po_upu as { fokus_cestice: number }[];
   assert.equal(poUpu.reduce((s, r) => s + r.fokus_cestice, 0), f.length);
+  // karta boji izgrađene i neizgrađene čestice; neizgrađene s mjestom za zgradu su među njima
+  const k = citaj("zabrana-izgradjenost-2025.geojson").features as { properties: { kc: string; ko: string; izgradjena: boolean } }[];
+  assert.equal(k.length, z.fokus.na_karti.cestice);
+  assert.equal(k.filter((x) => !x.properties.izgradjena).length, z.fokus.na_karti.neizgradjene);
+  const naKarti = new Set(k.filter((x) => !x.properties.izgradjena).map((x) => `${x.properties.ko}|${x.properties.kc}`));
+  const sMjestom = f.filter((x) => x.properties.neizgradjena) as unknown as { properties: { kc: string; ko: string } }[];
+  assert.ok(sMjestom.every((x) => naKarti.has(`${x.properties.ko}|${x.properties.kc}`)));
 });
 
 test("zabrana-2025.geojson: komadi zbrojeni daju iskazanu površinu", () => {
