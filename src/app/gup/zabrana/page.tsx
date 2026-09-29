@@ -156,11 +156,6 @@ export default async function ZabranaPage() {
         moći ishoditi građevinska dozvola za novu zgradu sve dok se za to područje ne donese urbanistički plan uređenja
         (UPU). Dvije od triju oznaka koje to uzrokuju određuje GUP, a treću PPUG.
       </p>
-      <p className="mt-3 max-w-3xl rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        <strong>Zasad ništa nije zabranjeno.</strong> Prijedlog nije donesen, a na snazi je GUP u pročišćenom tekstu iz
-        2014. („Službeni glasnik Grada Splita”, br. 55/14). Javni poziv za podnošenje inicijativa za izmjene GUP-a traje
-        od 1. listopada do 16. studenoga 2026.
-      </p>
 
       <section className="mt-8">
         <h2 id="karta" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
