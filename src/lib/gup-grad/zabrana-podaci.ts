@@ -87,8 +87,14 @@ export interface RedUpu {
 }
 
 export interface ZbrojZabrane {
+  /** sve što je na listu 4.d obojeno */
   ha: Record<Podrucje, number>;
   ukupno_ha: number;
+  /** od toga u zonama za gradnju (S, M/K5, I/K, T) */
+  gradnja_ha: Record<Podrucje, number>;
+  gradnja_ukupno_ha: number;
+  /** od toga na ulicama, javnoj, športskoj i zelenoj namjeni */
+  negradivo_ha: Record<Podrucje, number>;
   slobodno_ha: number;
   slobodno_po_zoni_ha: Record<ZonaZabrane, number>;
   neizgradjene: { cestice: number; ha: number };

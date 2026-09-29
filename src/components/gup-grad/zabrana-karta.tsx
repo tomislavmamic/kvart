@@ -7,9 +7,11 @@
  * priječi gradnju): urbanu sanaciju i preobrazbu određuje
  * GUP, a neuređeni dio PPUG, iz kojega ga GUP preuzima. Za snalaženje su tu
  * planovi na snazi (sivo), obuhvati propisanih UPU-a (plavi rub) i granica
- * GUP-a (jedina iscrtkana crta). Svaka oznaka ima dva tona: svjetliji je cijelo
- * područje, a tamniji čestice s mjestom za novu zgradu, na kojima zabrana
- * stvarno priječi gradnju (zabrana-cestice-2025.geojson, TAMNE_ZABRANE). Od
+ * GUP-a (jedina iscrtkana crta). Oznaka se boji samo u zonama za gradnju, i to u
+ * dva tona: svjetliji je zona, a tamniji čestice s mjestom za novu zgradu, na
+ * kojima zabrana stvarno priječi gradnju (zabrana-cestice-2025.geojson,
+ * TAMNE_ZABRANE). Dio oznake na ulicama, javnoj, športskoj ili zelenoj namjeni
+ * je sivoplav („negradivo”): ondje se privatna zgrada ne gradi ni bez zabrane. Od
  * zuma CESTICE_OD_ZUMA te čestice dobivaju i tanak rub, da se susjedne razlikuju.
  *
  * Ljubičasto je sporno (sporne-2025.geojson): tanke kose crte preko čestice
@@ -182,11 +184,14 @@ export function ZabranaKarta(props: {
       }).addTo(map);
       slojZabrane.current = L.geoJSON(zbirka(komadi), {
         ...netaknuto,
-        style: (f) => ({
-          stroke: false,
-          fillColor: BOJE_ZABRANE[(f?.properties?.vrsta as Podrucje) ?? "neuredeno"],
-          fillOpacity: PROZIRNOST_ZABRANE.podrucje,
-        }),
+        style: (f) =>
+          f?.properties?.vrsta === "negradivo"
+            ? { stroke: false, fillColor: BOJE_ZABRANE.negradivo, fillOpacity: 0.55 }
+            : {
+                stroke: false,
+                fillColor: BOJE_ZABRANE[(f?.properties?.vrsta as Podrucje) ?? "neuredeno"],
+                fillOpacity: PROZIRNOST_ZABRANE.podrucje,
+              },
       }).addTo(map);
       // čestica bez oznake pod sobom (nekoliko rubnih) nije ni u jednom obojenom području
       slojCestica.current = L.geoJSON(zbirka(cestice.features.filter((f) => f.properties?.vrsta)), {

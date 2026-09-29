@@ -50,6 +50,7 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
   const upu = { ...oblik(poligon(kvadrat(16.4, 43.5, 0.02))), broj: 18, naziv: "UPU Dračevac 2" };
   const s: Slojevi = {
     komadi: [{ ...oblik(poligon(kvadrat(16.4, 43.5, 0.005))), podrucje: "sanacija", upu: 18 }],
+    negradivo: [{ ...oblik(poligon(kvadrat(16.406, 43.5, 0.003))), podrucje: "neuredeno", namjena: "promet", upu: 18 }],
     cestice: [{ ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))), kc: "406/3", ko: "SPLIT", m2: 850, neizgradjena: true }],
     sporne: [
       {
@@ -88,6 +89,12 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
   assert.equal(bezCestice.rezim === "zabrana" && bezCestice.sporna, null);
   // izvan plohe s brojem zgrada
   assert.equal(bezCestice.rezim === "zabrana" && bezCestice.ploha, null);
+  const ng = stanjeTocke(s, 16.4075, 43.5015);
+  assert.equal(ng.rezim, "negradivo");
+  if (ng.rezim === "negradivo") {
+    assert.equal(ng.namjena, "promet");
+    assert.equal(ng.upu?.naziv, "UPU Dračevac 2");
+  }
   assert.equal(stanjeTocke(s, 16.412, 43.512).rezim, "vazeci");
   assert.equal(stanjeTocke(s, 16.418, 43.502).rezim, "preporuka");
   assert.equal(stanjeTocke(s, 16.43, 43.53).rezim, "gup");
@@ -135,10 +142,13 @@ test("zabrana-cestice-2025.geojson: zbroj čestica jednak je iskazanom slobodnom
 
 test("zabrana-2025.geojson: komadi zbrojeni daju iskazanu površinu", () => {
   const d = JSON.parse(readFileSync(path.join(process.cwd(), "public/geo/gup-grad/zabrana-2025.geojson"), "utf8"));
-  const komadi = d.features.filter((f: { properties: { vrsta: string } }) => ["sanacija", "preobrazba", "neuredeno"].includes(f.properties.vrsta));
-  const ha = komadi.reduce((s: number, f: { properties: { ha: number } }) => s + f.properties.ha, 0);
+  type K = { properties: { vrsta: string; ha: number } };
+  const zbroji = (vrste: string[]) => d.features.filter((f: K) => vrste.includes(f.properties.vrsta)).reduce((s: number, f: K) => s + f.properties.ha, 0);
+  const gradnja = zbroji(["sanacija", "preobrazba", "neuredeno"]);
+  const sve = gradnja + zbroji(["negradivo"]);
   // odbačene mrvice ispod 150 m² — razlika je unutar pola posto
-  assert.ok(Math.abs(ha - d.zbroj.ukupno_ha) / d.zbroj.ukupno_ha < 0.005, `${ha} vs ${d.zbroj.ukupno_ha}`);
+  assert.ok(Math.abs(gradnja - d.zbroj.gradnja_ukupno_ha) / d.zbroj.gradnja_ukupno_ha < 0.005, `${gradnja} vs ${d.zbroj.gradnja_ukupno_ha}`);
+  assert.ok(Math.abs(sve - d.zbroj.ukupno_ha) / d.zbroj.ukupno_ha < 0.01, `${sve} vs ${d.zbroj.ukupno_ha}`);
   assert.equal(d.features.filter((f: { properties: { vrsta: string } }) => f.properties.vrsta === "gup").length, 1);
 });
 

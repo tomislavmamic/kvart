@@ -169,11 +169,12 @@ export default async function ZabranaPage() {
                 <p className="max-w-3xl text-zinc-600">
                   Crvena je urbana sanacija, narančasta urbana preobrazba, a žut neuređeni dio građevinskog područja, unutar
                   obuhvata GUP-a. Narančastu i žutu preuzeli smo s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>{" "}
-                  prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Tamnijim su
-                  tonom iste boje čestice na kojima ima mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju.
-                  Svjetliji je ostatak područja: izgrađene čestice, ulice i zemljište namijenjeno javnim sadržajima, sportu ili
-                  zelenilu. U neuređenom dijelu, koji bi po zakonu trebao biti neizgrađen, svjetlije su tako i čestice na kojima
-                  već stoji zgrada. Izuzeta su područja
+                  prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Boje su samo u zonama
+                  za gradnju (stambenoj, mješovitoj, gospodarskoj i turističkoj). Tamnijim su tonom iste boje čestice na kojima
+                  ima mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju. Svjetliji je ostatak zone, većinom
+                  izgrađen; u neuređenom dijelu, koji bi po zakonu trebao biti neizgrađen, to su čestice na kojima već stoji
+                  zgrada. Sivoplavo je ono što list 4.d boji, a prijedlog namjenjuje ulicama, infrastrukturi, javnim sadržajima,
+                  sportu ili zelenilu: ondje se privatna zgrada ne bi gradila ni bez zabrane. Izuzeta su područja
                   važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
                   Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
                   <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
@@ -212,7 +213,7 @@ export default async function ZabranaPage() {
         </h2>
         <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200">
           {[
-            [`${ha(zbroj.ukupno_ha * 1e4)} ha`, "zemljišta pod zabranom"],
+            [`${ha(zbroj.gradnja_ukupno_ha * 1e4)} ha`, "zona za gradnju pod zabranom"],
             [`${ha(zbroj.slobodno_ha * 1e4)} ha`, "slobodnog zemljišta za novu gradnju"],
             [
               zbroj.neizgradjene.cestice.toLocaleString("hr-HR"),
@@ -227,7 +228,10 @@ export default async function ZabranaPage() {
         </div>
 
         <p className="mt-3 max-w-3xl text-sm text-zinc-600">
-          Zabrana ne dira ono što je već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od{" "}
+          List 4.d boji {ha(zbroj.ukupno_ha * 1e4)} ha, ali{" "}
+          {ha((zbroj.ukupno_ha - zbroj.gradnja_ukupno_ha) * 1e4)} ha od toga prijedlog namjenjuje ulicama, infrastrukturi,
+          javnim sadržajima, sportu ili zelenilu, gdje se privatna zgrada ne gradi ni bez zabrane. Zabrana ne dira ni ono
+          što je već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od{" "}
           {ha(zbroj.slobodno_ha * 1e4)} ha takvog zemljišta pod zabranom {ha(zbroj.neizgradjene.ha * 1e4)} ha nalazi se na{" "}
           {zbroj.neizgradjene.cestice.toLocaleString("hr-HR")}{" "}
           {imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}

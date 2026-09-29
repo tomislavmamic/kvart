@@ -26,6 +26,7 @@ import {
   cesticaUTocki,
   imenicaUz,
   IZVOR_OZNAKE,
+  NAZIV_NEGRADIVOG,
   mjestoNaPpugu,
   NAZIV_PODRUCJA,
   naslovno,
@@ -253,6 +254,24 @@ function karticaStanja(
         ),
       };
     }
+    case "negradivo":
+      return {
+        oznaka: "Nije za privatnu gradnju",
+        boja: "sivo",
+        naslov: NAZIV_NEGRADIVOG[s.namjena].naslov,
+        tijelo: (
+          <>
+            <p>
+              Prijedlog GUP-a ovdje predviđa {NAZIV_NEGRADIVOG[s.namjena].opis}, pa ni bez zabrane ondje ne bi nastala
+              stambena ni poslovna zgrada. Na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> mjesto je ipak dio
+              oznake „{NAZIV_OZNAKE[s.podrucje]}”{s.upu ? ` u obuhvatu plana ${s.upu.naziv}` : ""}: do donošenja UPU-a ovdje
+              su dopuštene ulice, manje infrastrukturne građevine i javne zgrade (
+              <Navod id="do-plana-2025">čl. 105. st. 5.</Navod>).
+            </p>
+            {rub}
+          </>
+        ),
+      };
     case "vazeci":
       return {
         oznaka: "Važeći plan",
@@ -705,7 +724,10 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
               {NAZIV_OZNAKE[p]} <span className="text-zinc-500">· {IZVOR_OZNAKE[p]}</span>
             </Stavka>
           ))}
-          <li className="text-zinc-500">Svjetliji ton je cijelo područje, a tamniji čestica s mjestom za novu zgradu.</li>
+          <li className="text-zinc-500">Svjetliji ton je zona za gradnju, a tamniji čestica s mjestom za novu zgradu.</li>
+          <Stavka stil={{ background: BOJE_ZABRANE.negradivo, opacity: 0.6 }}>
+            ni bez zabrane nije za gradnju: ulice, javna, športska i zelena namjena
+          </Stavka>
         </Skupina>
         {podaci?.sporne && (
           <Skupina naslov="Sporno" vidljivo={sporno} promijeni={setSporno}>

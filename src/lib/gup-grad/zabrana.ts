@@ -30,6 +30,8 @@ export const BOJE_ZABRANE = {
   upu: "#2563eb",
   gup: "#18181b",
   cestica: "#3f3f46",
+  /** dio područja zabrane na kojem se ni bez nje ne gradi privatna zgrada */
+  negradivo: "#94a3b8",
   zgrada: "#27272a",
   sporno: "#c026d3",
   /** cesta: jednaki obrub cijelom duljinom, a sredina kaže širinu njezine čestice */
@@ -149,6 +151,22 @@ export interface Komad extends Oblik {
   upu: number;
 }
 
+/** Namjena s lista 1 na kojoj se ni bez zabrane ne gradi stambena ni poslovna zgrada (zabrana.py, NEGRADIVO). */
+export type NamjenaNegradivog = "promet" | "javna" | "sport" | "zelenilo" | "ostalo";
+
+/** Dio područja zabrane izvan zona za gradnju: ulice, javna, športska ili zelena namjena. */
+export interface KomadNegradivog extends Komad {
+  namjena: NamjenaNegradivog;
+}
+
+export const NAZIV_NEGRADIVOG: Record<NamjenaNegradivog, { naslov: string; opis: string }> = {
+  promet: { naslov: "Ulice i infrastruktura", opis: "ulice, prugu, groblje ili drugu infrastrukturu" },
+  javna: { naslov: "Javna i društvena namjena", opis: "javnu i društvenu namjenu (škole, vrtići, zdravstvo, kultura)" },
+  sport: { naslov: "Šport i rekreacija", opis: "šport, rekreaciju, kupalište ili golf" },
+  zelenilo: { naslov: "Zelenilo", opis: "javno ili zaštitno zelenilo" },
+  ostalo: { naslov: "Luka ili posebna namjena", opis: "luku ili posebnu (vojnu) namjenu" },
+};
+
 export interface PlanNaSnazi extends Oblik {
   naziv: string;
   glasnik?: string;
@@ -248,6 +266,8 @@ export interface PlohaSanacije extends Oblik {
 
 export interface Slojevi {
   komadi: Komad[];
+  /** dijelovi područja zabrane na kojima se ni bez nje ne gradi privatna zgrada */
+  negradivo: KomadNegradivog[];
   cestice: CesticaZabrane[];
   sporne: SpornaCestica[];
   plohe: PlohaSanacije[];
@@ -271,6 +291,7 @@ export type Stanje =
       ploha: PlohaSanacije | null;
       doRuba: number;
     }
+  | { rezim: "negradivo"; podrucje: Podrucje; namjena: NamjenaNegradivog; upu: PropisaniUpu | null; doRuba: number }
   | { rezim: "vazeci"; plan: PlanNaSnazi; doRuba: number }
   | { rezim: "preporuka"; upu: PropisaniUpu; doRuba: number }
   | { rezim: "gup"; doRuba: number }
@@ -296,6 +317,14 @@ export function slojeviIzGeojsona(
     komadi: zabrana.features
       .filter((f) => PODRUCJA.includes(svojstva(f).vrsta as string))
       .map((f) => ({ ...oblik(geo(f)), podrucje: svojstva(f).vrsta as Podrucje, upu: Number(svojstva(f).upu) })),
+    negradivo: zabrana.features
+      .filter((f) => svojstva(f).vrsta === "negradivo")
+      .map((f) => ({
+        ...oblik(geo(f)),
+        podrucje: svojstva(f).podrucje as Podrucje,
+        namjena: svojstva(f).namjena as NamjenaNegradivog,
+        upu: Number(svojstva(f).upu),
+      })),
     cestice: (cestice?.features ?? []).map((f) => ({
       ...oblik(geo(f)),
       kc: String(svojstva(f).kc),
@@ -365,6 +394,16 @@ export function stanjeTocke(s: Slojevi, lng: number, lat: number): Stanje {
       cestica: s.cestice.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
       sporna: s.sporne.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
       ploha: komad.podrucje === "sanacija" ? (s.plohe.find((p) => uObliku(p, lng, lat)) ?? null) : null,
+      doRuba: rub,
+    };
+  }
+  const ng = s.negradivo.find((k) => blizu(k) && uObliku(k, lng, lat));
+  if (ng) {
+    return {
+      rezim: "negradivo",
+      podrucje: ng.podrucje,
+      namjena: ng.namjena,
+      upu: s.propisani.find((u) => u.broj === ng.upu) ?? null,
       doRuba: rub,
     };
   }
