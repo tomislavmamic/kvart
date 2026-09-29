@@ -4,16 +4,18 @@ import type { ReactNode } from "react";
 import { Navod } from "@/components/gup-dokument/navod";
 import { ZabranaPrikaz } from "@/components/gup-grad/zabrana-prikaz";
 import { BOJE_ZABRANE, imenicaUz } from "@/lib/gup-grad/zabrana";
-import { ucitajSporne, ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
+import { ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/gup-grad/zabrana-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Zabrana nove gradnje do donošenja UPU-a",
   description:
-    "Karta područja Splita na kojima prijedlog izmjena i dopuna GUP-a iz 2025. ne dopušta novu gradnju do donošenja urbanističkog plana uređenja, uz provjeru adrese.",
+    "Karta privatnog zemljišta u Splitu na kojem prijedlog izmjena i dopuna GUP-a iz 2025. ne dopušta novu zgradu do donošenja urbanističkog plana uređenja, uz provjeru adrese.",
 });
 
 const ha = (m2: number) => Math.round(m2 / 1e4).toLocaleString("hr-HR");
+/** Slobodno zemljište na karti mjeri se desecima hektara: cijeli bi hektari zbrojeni dali krivo. */
+const ha1 = (h: number) => h.toLocaleString("hr-HR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const posto = (dio: number, cijelo: number) => `${Math.round((dio / cijelo) * 100)} %`;
 const vanjska = "fokus text-emerald-700 underline";
 
@@ -28,16 +30,26 @@ interface Korak {
 }
 
 export default async function ZabranaPage() {
-  const [zbroj, zemljiste, sporne] = await Promise.all([ucitajZbrojZabrane(), zemljisteZaStanovanje(), ucitajSporne()]);
-  const plohaManjina = sporne.plohe.filter((p) => p.manjina).length;
+  const [zbroj, zemljiste] = await Promise.all([ucitajZbrojZabrane(), zemljisteZaStanovanje()]);
+  const f = zbroj.fokus;
   const z = zemljiste[2025];
+  // karta boji samo sanaciju i stambenu preobrazbu izvan gradskih projekata; ostatak onoga što čeka UPU je neuređeno ili gradski projekt
+  const cekaFokus = Math.min(z.ceka, (f.slobodno_po_zoni_ha.stanovanje ?? 0) * 1e4);
+  const cekaOstalo = z.ceka - cekaFokus;
   const redovi = [
     {
       naziv: "tek nakon UPU-a",
-      opis: "urbana sanacija, urbana preobrazba ili neuređeno zemljište",
-      m2: z.ceka,
+      opis: "urbana sanacija ili urbana preobrazba, kao na karti",
+      m2: cekaFokus,
       boja: "#dc2626",
       tamno: true,
+    },
+    {
+      naziv: "neuređeno ili gradski projekt",
+      opis: "i ovdje UPU, ali neuređeno uz postojeću cestu i prije njega",
+      m2: cekaOstalo,
+      boja: "#fca5a5",
+      tamno: false,
     },
     { naziv: "u obuhvatu važećeg plana", opis: "gradi se prema tom UPU-u ili DPU-u", m2: z.poPlanu, boja: "#52525c", tamno: true },
     { naziv: "može se graditi odmah", opis: "neposrednom provedbom GUP-a", m2: z.poGupu, boja: "#7dd3fc", tamno: false },
@@ -152,9 +164,9 @@ export default async function ZabranaPage() {
       </p>
       <h1 className="mt-1 text-2xl font-bold">Zabrana nove gradnje do donošenja UPU-a</h1>
       <p className="mt-3 max-w-3xl text-zinc-600">
-        Ako Gradsko vijeće donese izmjene i dopune GUP-a predložene u travnju 2025., na zemljištu obojenom na karti neće se
-        moći ishoditi građevinska dozvola za novu zgradu sve dok se za to područje ne donese urbanistički plan uređenja
-        (UPU). Dvije od triju oznaka koje to uzrokuju određuje GUP, a treću PPUG.
+        Ako Gradsko vijeće donese izmjene i dopune GUP-a predložene u travnju 2025., na privatnom zemljištu obojenom na
+        karti neće se moći ishoditi građevinska dozvola za novu zgradu sve dok se za to područje ne donese urbanistički
+        plan uređenja (UPU). To su područja urbane sanacije i urbane preobrazbe stambenih i mješovitih zona.
       </p>
 
       <section className="mt-8">
@@ -167,39 +179,24 @@ export default async function ZabranaPage() {
             objasnjenje={
               <>
                 <p className="max-w-3xl text-zinc-600">
-                  Crvena je urbana sanacija, narančasta urbana preobrazba, a žut neuređeni dio građevinskog područja, unutar
-                  obuhvata GUP-a. Narančastu i žutu preuzeli smo s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>{" "}
-                  prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Boje su samo u zonama
-                  za gradnju (stambenoj, mješovitoj, gospodarskoj i turističkoj). Tamnijim su tonom iste boje čestice na kojima
-                  ima mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju. Svjetliji je ostatak zone, većinom
-                  izgrađen; u neuređenom dijelu, koji bi po zakonu trebao biti neizgrađen, to su čestice na kojima već stoji
-                  zgrada. Gotovo bijelo, kao izbrisano, ono je što list 4.d boji, a prijedlog namjenjuje ulicama, infrastrukturi, javnim sadržajima,
-                  sportu ili zelenilu: ondje se privatna zgrada ne bi gradila ni bez zabrane. Izuzeta su područja
-                  važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
-                  Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
-                  <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
+                  Crvena je urbana sanacija, a narančasta urbana preobrazba stambenih i mješovitih zona, unutar obuhvata GUP-a.
+                  Obje su oznake s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga; list sanaciju crta
+                  zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Tamnijim su tonom čestice na kojima ima
+                  mjesta za novu zgradu: na njima zabrana stvarno priječi gradnju. Svjetliji je ostatak zone, većinom izgrađen.
                 </p>
-                <p className="mt-3 max-w-3xl border-l-4 border-fuchsia-600 bg-fuchsia-50 px-4 py-3 text-zinc-800">
-                  <strong>Ljubičastim kosim crtama precrtane su sporne oznake</strong>; izdaleka je sporna čestica puna
-                  ljubičasta mrlja. {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
-                  {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
-                  {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
-                  je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom
-                  takvoj cesti nije neuređeno. U {plohaManjina} od {sporne.plohe.length} ploha urbane sanacije s barem 10 zgrada
-                  rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
-                  na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
-                  {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
-                  {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Ljubičastim
-                  točkama, a izdaleka blijedom mrljom,{" "}
-                  {imenicaUz(sporne.cesta.cestice, ["označena je", "označene su", "označeno je"])} još{" "}
-                  {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
-                  {imenicaUz(sporne.cesta.cestice, ["čestica", "čestice", "čestica"])} neuređenog dijela uz cestu koje nema u
-                  gradskom registru ili joj se širina ne da izmjeriti: mogu biti sporne ako je cesta izvedena i javna. Kako smo to
-                  provjerili i što se iz toga može tražiti, piše u{" "}
-                  <Link href="/gup/analiza#oznake" className="fokus font-semibold text-emerald-700 underline">
-                    analizi
-                  </Link>
-                  .
+                <p className="mt-3 max-w-3xl text-zinc-600">
+                  List 4.d boji i zemljište koje karta ne boji jer nije privatno zemljište za pojedinačnu gradnju: ulice,
+                  javnu, športsku i zelenu namjenu te urbanu preobrazbu gospodarskih zona i gradskih projekata (brodogradilište,
+                  Kopilica, Karepovac, luka), gdje se preuređuje cijelo područje. Ne boji ni neuređeni dio: ondje se uz
+                  postojeću javnu cestu nova zgrada može dobiti i prije UPU-a (
+                  <a href="#tko" className="fokus text-emerald-700 underline">
+                    niže
+                  </a>
+                  ), a bez ceste se ionako ne gradi. Klik na takvo mjesto kaže što ondje vrijedi. Izuzeta su i područja
+                  važećih planova (sivo) jer se ondje i dalje gradi prema njima (
+                  <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). U obuhvatu propisanog UPU-a zemljište bez oznake na
+                  listu 4.d do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
+                  <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
                 </p>
               </>
             }
@@ -213,11 +210,11 @@ export default async function ZabranaPage() {
         </h2>
         <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200">
           {[
-            [`${ha(zbroj.gradnja_ukupno_ha * 1e4)} ha`, "zona za gradnju pod zabranom"],
-            [`${ha(zbroj.slobodno_ha * 1e4)} ha`, "slobodnog zemljišta za novu gradnju"],
+            [`${ha(f.gradnja_ukupno_ha * 1e4)} ha`, "zona za gradnju pod zabranom"],
+            [`${ha1(f.slobodno_ha)} ha`, "slobodnog zemljišta za novu gradnju"],
             [
-              zbroj.neizgradjene.cestice.toLocaleString("hr-HR"),
-              imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađena čestica", "neizgrađene čestice", "neizgrađenih čestica"]),
+              f.neizgradjene.cestice.toLocaleString("hr-HR"),
+              imenicaUz(f.neizgradjene.cestice, ["neizgrađena čestica", "neizgrađene čestice", "neizgrađenih čestica"]),
             ],
           ].map(([v, n]) => (
             <div key={n} className="bg-white px-3 py-3 sm:px-4">
@@ -228,19 +225,27 @@ export default async function ZabranaPage() {
         </div>
 
         <p className="mt-3 max-w-3xl text-sm text-zinc-600">
-          List 4.d boji {ha(zbroj.ukupno_ha * 1e4)} ha, ali{" "}
-          {ha((zbroj.ukupno_ha - zbroj.gradnja_ukupno_ha) * 1e4)} ha od toga prijedlog namjenjuje ulicama, infrastrukturi,
-          javnim sadržajima, sportu ili zelenilu, gdje se privatna zgrada ne gradi ni bez zabrane. Zabrana ne dira ni ono
-          što je već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od{" "}
-          {ha(zbroj.slobodno_ha * 1e4)} ha takvog zemljišta pod zabranom {ha(zbroj.neizgradjene.ha * 1e4)} ha nalazi se na{" "}
-          {zbroj.neizgradjene.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}
-          {ha(zbroj.djelomicno.ha * 1e4)} ha na slobodnim dijelovima {zbroj.djelomicno.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(zbroj.djelomicno.cestice, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])} (npr. veliko
-          dvorište ili neizgrađen dio poslovne čestice). Po namjeni:{" "}
-          {ha((zbroj.slobodno_po_zoni_ha.stanovanje ?? 0) * 1e4)} ha stambene i mješovite,{" "}
-          {ha((zbroj.slobodno_po_zoni_ha.gospodarstvo ?? 0) * 1e4)} ha gospodarske i{" "}
-          {ha((zbroj.slobodno_po_zoni_ha.turizam ?? 0) * 1e4)} ha turističke namjene.
+          Karta boji {ha(f.gradnja_ukupno_ha * 1e4)} ha: {ha(f.gradnja_ha.sanacija * 1e4)} ha urbane sanacije i{" "}
+          {ha(f.gradnja_ha.preobrazba * 1e4)} ha urbane preobrazbe stambenih i mješovitih zona. Zabrana ne dira ono što je
+          već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od {ha1(f.slobodno_ha)} ha
+          takvog zemljišta {ha1(f.neizgradjene.ha)} ha nalazi se na {f.neizgradjene.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(f.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}
+          {ha1(f.djelomicno.ha)} ha na slobodnim dijelovima {f.djelomicno.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(f.djelomicno.cestice, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])} (npr. veliko
+          dvorište ili neizgrađen dio poslovne čestice). Po namjeni: {ha1(f.slobodno_po_zoni_ha.stanovanje ?? 0)} ha
+          stambene i mješovite, {ha1(f.slobodno_po_zoni_ha.gospodarstvo ?? 0)} ha gospodarske i{" "}
+          {ha1(f.slobodno_po_zoni_ha.turizam ?? 0)} ha turističke namjene.
+        </p>
+        <p className="mt-3 max-w-3xl text-sm text-zinc-600">
+          Sve oznake lista 4.d zajedno obuhvaćaju {ha(zbroj.ukupno_ha * 1e4)} ha. Od onoga što karta ne boji{" "}
+          {ha((zbroj.ukupno_ha - zbroj.gradnja_ukupno_ha) * 1e4)} ha su ulice, javna, športska i zelena namjena,{" "}
+          {ha(f.izvan_ha.neuredeno * 1e4)} ha neuređeni dio, a{" "}
+          {ha((f.izvan_ha.gradski_projekt + f.izvan_ha.gospodarska_preobrazba) * 1e4)} ha urbana preobrazba gradskih
+          projekata i gospodarskih zona. Brojke za sve oznake su u{" "}
+          <Link href="/gup/analiza" className="fokus text-emerald-700 underline">
+            analizi
+          </Link>
+          .
         </p>
       </section>
 
@@ -389,9 +394,11 @@ export default async function ZabranaPage() {
           Prijedlog za stambenu (S) i mješovitu namjenu (M, K5) predviđa {ha(z.ukupno)} ha. Od toga je {ha(z.iskoristeno)}{" "}
           ha već iskorišteno, a na{" "}
           <strong className="text-red-700">
-            {ha(z.ceka)} ha ({posto(z.ceka, z.neiskoristeno)})
+            {ha(cekaFokus)} ha ({posto(cekaFokus, z.neiskoristeno)})
           </strong>{" "}
-          od preostalih {ha(z.neiskoristeno)} ha nove bi se zgrade smjele graditi tek nakon donošenja UPU-a.
+          od preostalih {ha(z.neiskoristeno)} ha nove bi se zgrade smjele graditi tek nakon donošenja UPU-a, jer su u urbanoj
+          sanaciji ili preobrazbi. UPU se traži i za još {ha(cekaOstalo)} ha u neuređenom dijelu i gradskim projektima, ali
+          u neuređenom se dijelu uz postojeću cestu gradi i prije njega.
         </p>
 
         <figure className="mt-5">
@@ -457,12 +464,13 @@ export default async function ZabranaPage() {
         </h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <li>
-            Područja zabrane preuzeta su s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga i, kao i ostali
+            Oznake su preuzete s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga i, kao i ostali
             listovi na stranici{" "}
             <Link href="/gup#kako-je-izracunato" className="fokus text-emerald-700 underline">
               Split po GUP-u
             </Link>
-            , prenesena na rešetku od 2 m. Granice su točne na 5 do 15 m, pa je za česticu uz rub mjerodavan sam list.
+            , prenesene na rešetku od 2 m. Granice su točne na 5 do 15 m, pa je za česticu uz rub mjerodavan sam list. Namjena
+            zone (stambena i mješovita, gospodarska) je s lista 1, a gradski projekti su UPU-i koje prijedlog tako naziva.
           </li>
           <li>
             Obuhvat GUP-a preuzet je iz GIS izvoza Grada Splita, a obuhvati važećih planova s listova samih planova u
@@ -474,16 +482,6 @@ export default async function ZabranaPage() {
             na njega, zajedno sa slobodnim susjednim zemljištem, stane nova građevna čestica. Premali ostaci se ne broje.
             Čestica je neizgrađena ako na njoj nema zgrade, okućnice ni gradilišta. Javne i društvene zone nisu uključene
             jer se javne zgrade smiju graditi i prije UPU-a.
-          </li>
-          <li>
-            Sporne oznake: osi cesta iz gradskog registra nerazvrstanih cesta (2023.) i sloja državnih cesta; širina je
-            širina katastarske čestice ceste, izmjerena svaka 4 m okomito na os, a ne širina kolnika. Rješenja o izvedenom
-            stanju iz javnog registra akata Ministarstva (ISPU), zgrade iz gradskog 3D modela (tlocrti od 35 m²). Broje
-            se samo čestice od najmanje 250 m² na kojima bi zabrana pogodila novu gradnju. Izračun je u skripti{" "}
-            <a href="https://github.com/tomislavmamic/kvart/blob/main/scripts/gup-grad/sporne.py" className={vanjska}>
-              sporne.py
-            </a>
-            .
           </li>
           <li>
             Iskorištenost zemljišta računa se jednako kao na{" "}

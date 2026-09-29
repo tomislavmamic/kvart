@@ -86,6 +86,25 @@ export interface RedUpu {
   slobodno_ha: number;
   /** neizgrađene čestice među njima */
   neizgradjene: number;
+  /** isto, samo za ono što karta boji (FokusZabrane) */
+  fokus_ha: number;
+  fokus_slobodno_ha: number;
+  fokus_neizgradjene: number;
+}
+
+/**
+ * Samo ono što karta na /gup/zabrana boji: urbana sanacija i urbana preobrazba
+ * stambenih i mješovitih zona izvan gradskih projekata (zabrana.py, FOKUS).
+ */
+export interface FokusZabrane {
+  gradnja_ha: { sanacija: number; preobrazba: number };
+  gradnja_ukupno_ha: number;
+  /** u zonama za gradnju, a karta ih ne boji */
+  izvan_ha: { neuredeno: number; gradski_projekt: number; gospodarska_preobrazba: number };
+  slobodno_ha: number;
+  slobodno_po_zoni_ha: Partial<Record<ZonaZabrane, number>>;
+  neizgradjene: { cestice: number; ha: number };
+  djelomicno: { cestice: number; ha: number };
 }
 
 export interface ZbrojZabrane {
@@ -101,6 +120,7 @@ export interface ZbrojZabrane {
   slobodno_po_zoni_ha: Record<ZonaZabrane, number>;
   neizgradjene: { cestice: number; ha: number };
   djelomicno: { cestice: number; ha: number };
+  fokus: FokusZabrane;
   po_upu: RedUpu[];
 }
 

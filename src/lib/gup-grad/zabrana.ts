@@ -6,8 +6,14 @@
  * (zabrana, plan na snazi, samo obuhvat propisanog UPU-a, GUP, izvan GUP-a)
  * i traženje kućnog broja. Podatke piše scripts/gup-grad/zabrana.py
  * (public/geo/gup-grad/zabrana-2025.geojson, kucni-brojevi.json); obuhvate
- * planova planski-obrisi.py (planski-rezim-2025.geojson), a sporne čestice i
- * plohe urbane sanacije scripts/gup-grad/sporne.py (sporne-2025.geojson).
+ * planova planski-obrisi.py (planski-rezim-2025.geojson), a smještaj listova
+ * PPUG-a i razred čestice po PPUG-u scripts/gup-grad/sporne.py
+ * (sporne-2025.geojson).
+ *
+ * Karta boji samo privatno zemljište na kojem bi nova zgrada čekala UPU
+ * (komad s „fokus”): urbanu sanaciju i preobrazbu stambenih i mješovitih zona
+ * izvan gradskih projekata (zabrana.py, FOKUS). Neuređeni dio i ostala
+ * preobrazba ostaju u podacima, da klik ondje kaže što vrijedi.
  */
 
 import type { FeatureCollection } from "geojson";
@@ -16,10 +22,10 @@ export type Podrucje = "sanacija" | "preobrazba" | "neuredeno";
 const PODRUCJA: readonly string[] = ["sanacija", "preobrazba", "neuredeno"];
 
 /**
- * Boje karte i legende. Tri oznake koje zaustavljaju gradnju nose boje lista
- * 4.d GUP-a (sanacija zelena, preobrazba narančasta, neuređeno žuto), nešto
- * zasićenije da se vide na sivoj snimci. Sve sporno je ljubičasto, a rubovi
- * su samo granice: plan na snazi, obuhvat UPU-a i (jedini iscrtkan) GUP.
+ * Boje karte i legende. Oznake nose boje lista 4.d GUP-a (preobrazba
+ * narančasta, neuređeno žuto), nešto zasićenije da se vide na sivoj snimci;
+ * sanacija je crvena (vidi niže). Rubovi su samo granice: plan na snazi,
+ * obuhvat UPU-a i (jedini iscrtkan) GUP.
  */
 export const BOJE_ZABRANE = {
   /** list 4.d sanaciju crta zeleno, ali i ona priječi novu gradnju, pa je ovdje crvena */
@@ -30,15 +36,7 @@ export const BOJE_ZABRANE = {
   upu: "#2563eb",
   gup: "#18181b",
   cestica: "#3f3f46",
-  /** dio područja zabrane na kojem se ni bez nje ne gradi privatna zgrada */
-  negradivo: "#f8fafc",
   zgrada: "#27272a",
-  sporno: "#c026d3",
-  /** cesta: jednaki obrub cijelom duljinom, a sredina kaže širinu njezine čestice */
-  cesta: "#18181b",
-  cestaSiroka: "#ffffff",
-  cestaUska: "#991b1b",
-  cestaNepoznata: "#a1a1aa",
 } as const;
 
 /** Tamniji ton iste oznake: čestica s mjestom za novu zgradu, na kojoj zabrana stvarno priječi gradnju. */
@@ -145,17 +143,23 @@ export function doRuba(o: Oblik, lng: number, lat: number): number {
   return najbliza;
 }
 
+/** Zašto karta komad preobrazbe ne boji: gradski projekt ili gospodarska zona. */
+export type IzvanFokusa = "gradski-projekt" | "gospodarska";
+
 export interface Komad extends Oblik {
   podrucje: Podrucje;
   /** Broj propisanog UPU-a s lista 4.d; 0 = ni u jednom ucrtanom obuhvatu. */
   upu: number;
+  /** karta ga boji: privatno zemljište na kojem bi nova zgrada čekala UPU */
+  fokus: boolean;
+  izvan?: IzvanFokusa;
 }
 
 /** Namjena s lista 1 na kojoj se ni bez zabrane ne gradi stambena ni poslovna zgrada (zabrana.py, NEGRADIVO). */
 export type NamjenaNegradivog = "promet" | "javna" | "sport" | "zelenilo" | "ostalo";
 
 /** Dio područja zabrane izvan zona za gradnju: ulice, javna, športska ili zelena namjena. */
-export interface KomadNegradivog extends Komad {
+export interface KomadNegradivog extends Omit<Komad, "fokus" | "izvan"> {
   namjena: NamjenaNegradivog;
 }
 
@@ -184,26 +188,8 @@ export interface CesticaZabrane extends Oblik {
   /** slobodno zemljište za novu zgradu, m² */
   m2: number;
   neizgradjena: boolean;
-}
-
-/** Zašto je oznaka čestice sporna (scripts/gup-grad/sporne.py). */
-export type RazlogSpora = "pristup" | "cesta" | "izgradjena" | "sanacija" | "ppug";
-
-/** Čestica pod zabranom kojoj oznaka ne odgovara kriteriju Grada ili zakona. */
-export interface SpornaCestica extends Oblik {
-  kc: string;
-  ko: string;
-  m2: number;
-  podrucje: "neuredeno" | "sanacija";
-  razlozi: RazlogSpora[];
-  /** širina čestice ceste uz koju je, m (razlog „pristup”) */
-  sirina?: number;
-  /** kanalizacija na manje od 15 m */
-  kanal?: boolean;
-  /** udio zgrada s rješenjem o izvedenom stanju u plohi, % (razlog „sanacija”) */
-  udio?: number;
-  /** razred čestice na listu građevinskih područja PPUG-a: neuređeno, izgrađeno, neizgrađeno */
-  ppug?: "U" | "I" | "N";
+  /** pretežito na zemljištu koje karta boji (Komad.fokus) */
+  fokus: boolean;
 }
 
 /** List građevinskih područja PPUG-a (1:5000) i kako se na nj preslika točka. */
@@ -254,27 +240,15 @@ export function mjestoNaPpugu(listovi: ListPpug[], lng: number, lat: number): { 
   return null;
 }
 
-/** Ploha urbane sanacije s barem 10 zgrada i udjelom ozakonjenih. */
-export interface PlohaSanacije extends Oblik {
-  ha: number;
-  zgrade: number;
-  sRjesenjem: number;
-  udio: number;
-  /** ozakonjene zgrade nisu većina */
-  manjina: boolean;
-}
-
 export interface Slojevi {
   komadi: Komad[];
   /** dijelovi područja zabrane na kojima se ni bez nje ne gradi privatna zgrada */
   negradivo: KomadNegradivog[];
   cestice: CesticaZabrane[];
-  sporne: SpornaCestica[];
-  plohe: PlohaSanacije[];
   ppug: ListPpug[];
   /** razred čestice pod zabranom po PPUG-u, po „k.o.|k.č.” */
   ppugCestice: Record<string, "U" | "I" | "N">;
-  /** Cijelo područje zabrane kao jedan oblik — za udaljenost do ruba. */
+  /** Sve što karta boji kao jedan oblik — za udaljenost do ruba. */
   obris: Oblik | null;
   vazeci: PlanNaSnazi[];
   propisani: PropisaniUpu[];
@@ -285,10 +259,11 @@ export type Stanje =
   | {
       rezim: "zabrana";
       podrucje: Podrucje;
+      /** karta ovo boji; inače neuređeno ili preobrazba izvan stambenih zona i gradskih projekata */
+      fokus: boolean;
+      izvan?: IzvanFokusa;
       upu: PropisaniUpu | null;
       cestica: CesticaZabrane | null;
-      sporna: SpornaCestica | null;
-      ploha: PlohaSanacije | null;
       doRuba: number;
     }
   | { rezim: "negradivo"; podrucje: Podrucje; namjena: NamjenaNegradivog; upu: PropisaniUpu | null; doRuba: number }
@@ -299,13 +274,13 @@ export type Stanje =
 
 /**
  * Slojevi iz zabrana-2025.geojson (komadi, obris, gup),
- * planski-rezim-2025.geojson (vazeci, propisan) i sporne-2025.geojson.
+ * planski-rezim-2025.geojson (vazeci, propisan) i sporne-2025.geojson (samo listovi PPUG-a).
  */
 export function slojeviIzGeojsona(
   zabrana: FeatureCollection,
   planovi: FeatureCollection,
   cestice?: FeatureCollection,
-  sporne?: FeatureCollection,
+  ppugIzvor?: FeatureCollection,
 ): Slojevi {
   const svojstva = (f: FeatureCollection["features"][number]) => (f.properties ?? {}) as Record<string, unknown>;
   const geo = (f: FeatureCollection["features"][number]) => f.geometry as Geometrija;
@@ -316,7 +291,13 @@ export function slojeviIzGeojsona(
   return {
     komadi: zabrana.features
       .filter((f) => PODRUCJA.includes(svojstva(f).vrsta as string))
-      .map((f) => ({ ...oblik(geo(f)), podrucje: svojstva(f).vrsta as Podrucje, upu: Number(svojstva(f).upu) })),
+      .map((f) => ({
+        ...oblik(geo(f)),
+        podrucje: svojstva(f).vrsta as Podrucje,
+        upu: Number(svojstva(f).upu),
+        fokus: svojstva(f).fokus !== false,
+        izvan: svojstva(f).izvan as IzvanFokusa | undefined,
+      })),
     negradivo: zabrana.features
       .filter((f) => svojstva(f).vrsta === "negradivo")
       .map((f) => ({
@@ -331,41 +312,12 @@ export function slojeviIzGeojsona(
       ko: String(svojstva(f).ko),
       m2: Number(svojstva(f).m2),
       neizgradjena: Boolean(svojstva(f).neizgradjena),
+      fokus: svojstva(f).fokus !== false,
     })),
-    sporne: (sporne?.features ?? [])
-      .filter((f) => svojstva(f).vrsta === "cestica")
-      .map((f) => {
-        const p = svojstva(f);
-        return {
-          ...oblik(geo(f)),
-          kc: String(p.kc),
-          ko: String(p.ko),
-          m2: Number(p.m2),
-          podrucje: p.podrucje as SpornaCestica["podrucje"],
-          razlozi: (p.razlozi ?? []) as RazlogSpora[],
-          sirina: p.sirina === undefined ? undefined : Number(p.sirina),
-          kanal: p.kanal === undefined ? undefined : Boolean(p.kanal),
-          udio: p.udio === undefined ? undefined : Number(p.udio),
-          ppug: p.ppug as SpornaCestica["ppug"],
-        };
-      }),
-    plohe: (sporne?.features ?? [])
-      .filter((f) => svojstva(f).vrsta === "ploha")
-      .map((f) => {
-        const p = svojstva(f);
-        return {
-          ...oblik(geo(f)),
-          ha: Number(p.ha),
-          zgrade: Number(p.zgrade),
-          sRjesenjem: Number(p.s_rjesenjem),
-          udio: Number(p.udio),
-          manjina: Boolean(p.manjina),
-        };
-      }),
-    ppug: Object.entries(((sporne as unknown as { ppug?: Record<string, { broj: string; udio: number[]; karta_do: number }> })?.ppug) ?? {}).map(
+    ppug: Object.entries(((ppugIzvor as unknown as { ppug?: Record<string, { broj: string; udio: number[]; karta_do: number }> })?.ppug) ?? {}).map(
       ([id, l]) => ({ id, broj: l.broj, udio: l.udio as ListPpug["udio"], kartaDo: l.karta_do }),
     ),
-    ppugCestice: ((sporne as unknown as { ppug_cestice?: Record<string, "U" | "I" | "N"> })?.ppug_cestice) ?? {},
+    ppugCestice: ((ppugIzvor as unknown as { ppug_cestice?: Record<string, "U" | "I" | "N"> })?.ppug_cestice) ?? {},
     obris: jedan("obris"),
     gup: jedan("gup"),
     vazeci: planovi.features
@@ -390,10 +342,10 @@ export function stanjeTocke(s: Slojevi, lng: number, lat: number): Stanje {
     return {
       rezim: "zabrana",
       podrucje: komad.podrucje,
+      fokus: komad.fokus,
+      izvan: komad.izvan,
       upu: s.propisani.find((u) => u.broj === komad.upu) ?? null,
       cestica: s.cestice.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
-      sporna: s.sporne.find((c) => blizu(c) && uObliku(c, lng, lat)) ?? null,
-      ploha: komad.podrucje === "sanacija" ? (s.plohe.find((p) => uObliku(p, lng, lat)) ?? null) : null,
       doRuba: rub,
     };
   }

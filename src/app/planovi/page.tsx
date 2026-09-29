@@ -30,7 +30,7 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
       {
         href: "/gup/zabrana",
         naslov: "Zabrana nove gradnje do donošenja UPU-a",
-        opis: "Karta područja na kojima se bez UPU-a ne bi smjelo graditi, s površinom neizgrađenog zemljišta koje bi to pogodilo.",
+        opis: "Karta privatnog zemljišta na kojem se bez UPU-a ne bi smjela graditi nova zgrada, s površinom slobodnog zemljišta koje bi to pogodilo.",
         radnja: "Provjeri svoju adresu",
       },
       {

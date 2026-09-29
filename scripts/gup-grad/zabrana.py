@@ -29,9 +29,10 @@ Ulazi:
   data/sources/Split Export/...      GIS izvoz Grada: obuhvat GUP-a, kućni brojevi
 
 Izlaz:
-  public/geo/gup-grad/zabrana-2025.geojson   komadi po vrsti i UPU-u,
-      obris cijelog crvenog, obuhvat GUP-a, zbrojevi (crveno, slobodno zemljište,
-      neizgrađene čestice, po UPU-u)
+  public/geo/gup-grad/zabrana-2025.geojson   komadi po vrsti i UPU-u (fokus:
+      boji li ga karta, vidi FOKUS), obris onoga što karta boji, obuhvat GUP-a,
+      zbrojevi (crveno, slobodno zemljište, neizgrađene čestice, po UPU-u; sve
+      i posebno za fokus)
   public/geo/gup-grad/zabrana-cestice-2025.geojson   čestice sa slobodnim
       zemljištem koje bi čekalo UPU, s pretežitom oznakom pod sobom (vrsta)
   public/geo/gup-grad/kucni-brojevi.json     kućni brojevi u obuhvatu GUP-a
@@ -44,6 +45,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+import re
 import sys
 
 import numpy as np
@@ -82,6 +84,19 @@ VRSTE = {1: "sanacija", 2: "preobrazba", 3: "neuredeno"}
 # za privatnu gradnju, pa se na karti ne boji kao zabrana nego kao „negradivo”.
 GRADNJA = (1, 2, 4, 5)
 NEGRADIVO = {"promet": (15, 0), "javna": (3,), "sport": (7, 8, 9, 13, 14), "zelenilo": (10, 11), "ostalo": (6, 12)}
+# Karta na /gup/zabrana boji samo privatno zemljište na kojem bi nova zgrada čekala UPU
+# („fokus”): urbanu sanaciju i urbanu preobrazbu stambenih i mješovitih zona (S, M/K5)
+# izvan gradskih projekata. Neuređeni dio nije u tome: uz postojeću javnu cestu zgrada se
+# smije graditi i prije UPU-a (ZPU NN 155/25, čl. 180. st. 2. t. 3.), a bez ceste se
+# ionako ne gradi. Preobrazba gospodarskih zona i gradskih projekata preuređenje je većih
+# područja (brodogradilište, Kopilica, Karepovac, luka), a ne gradnja na privatnim česticama.
+STAMBENE = (1, 2)
+GRADSKI_PROJEKT = re.compile(r"gradsk\w* projekt", re.IGNORECASE)
+# vrijednosti rešetke vf: 1–3 kao VRSTE, a preobrazba izvan fokusa ima svoje
+PREOBRAZBA_GP, PREOBRAZBA_GOSP = 4, 5
+FOKUS = (1, 2)
+VRSTA_VF = {1: "sanacija", 2: "preobrazba", 3: "neuredeno", PREOBRAZBA_GP: "preobrazba", PREOBRAZBA_GOSP: "preobrazba"}
+IZVAN_FOKUSA = {PREOBRAZBA_GP: "gradski-projekt", PREOBRAZBA_GOSP: "gospodarska"}
 # komadići ispune manji od ovoga su ostaci skeniranja (38 px = 152 m²)
 NAJMANJE_PX = 38
 POJEDNOSTAVI_M = 1.2
@@ -121,7 +136,7 @@ def zaokruzi(geom):
 
 def novi_red(broj: int, naziv: str | None) -> dict:
     return {"broj": broj, "naziv": naziv, "sanacija_ha": 0.0, "preobrazba_ha": 0.0, "neuredeno_ha": 0.0,
-            "slobodno_ha": 0.0, "neizgradjene": 0}
+            "slobodno_ha": 0.0, "neizgradjene": 0, "fokus_ha": 0.0, "fokus_slobodno_ha": 0.0, "fokus_neizgradjene": 0}
 
 
 def crvena_rescetka(gup, planovi) -> np.ndarray:
@@ -161,11 +176,17 @@ def pikseli(g, resetka: np.ndarray) -> np.ndarray:
     return resetka[r0:r1, c0:c1][sub.astype(bool)]
 
 
-def vrsta_cestice(g, v: np.ndarray) -> str | None:
-    """Pretežita oznaka (sanacija, preobrazba, neuređeno) pod česticom."""
+def pretezito(g, v: np.ndarray) -> int:
+    """Pretežita obojena vrijednost rešetke pod česticom; 0 = ništa obojeno."""
     x = pikseli(g, v)
     x = x[x > 0]
-    return VRSTE[int(np.bincount(x).argmax())] if x.size else None
+    return int(np.bincount(x).argmax()) if x.size else 0
+
+
+def vrsta_cestice(g, v: np.ndarray) -> str | None:
+    """Pretežita oznaka (sanacija, preobrazba, neuređeno) pod česticom."""
+    k = pretezito(g, v)
+    return VRSTE[k] if k else None
 
 
 def main() -> None:
@@ -193,21 +214,30 @@ def main() -> None:
     print("za gradnju ha", {VRSTE[k]: round(float((vg == k).sum()) * R.KORAK ** 2 / 1e4, 1) for k in VRSTE},
           "negradivo ha", {VRSTE[k]: round(float((vn == k).sum()) * R.KORAK ** 2 / 1e4, 1) for k in VRSTE})
 
-    po_vrsti = {k: [] for k in VRSTE}
-    for geom, val in features.shapes(vg, mask=vg > 0, transform=TRANSFORM):
+    upu = [(f["properties"], stransform(U_HTRS, shape(f["geometry"])).buffer(0))
+           for f in pr["features"] if f["properties"]["vrsta"] == "propisan"]
+    svi_upu = unary_union([g for _, g in upu])
+    gp = [ug for p, ug in upu if GRADSKI_PROJEKT.search(p["naziv"] or "")]
+    u_gp = features.rasterize(((g, 1) for g in gp), out_shape=(R.H, R.W), transform=TRANSFORM, fill=0, dtype="uint8") > 0
+    vf = vg.copy()
+    vf[(vg == 2) & u_gp] = PREOBRAZBA_GP
+    vf[(vg == 2) & ~u_gp & ~np.isin(namjena, STAMBENE)] = PREOBRAZBA_GOSP
+    fokus = np.isin(vf, FOKUS)
+    print("fokus ha", {VRSTA_VF[k] + ("" if k in FOKUS else f" ({IZVAN_FOKUSA.get(k, 'izvan')})"):
+                       round(float((vf == k).sum()) * R.KORAK ** 2 / 1e4, 1) for k in VRSTA_VF})
+
+    po_vrsti = {k: [] for k in VRSTA_VF}
+    for geom, val in features.shapes(vf, mask=vf > 0, transform=TRANSFORM):
         po_vrsti[int(val)].append(shape(geom))
     po_vrsti = {k: unary_union(g).buffer(0) for k, g in po_vrsti.items()}
-    sve = unary_union([shape(g) for g, _ in features.shapes((v > 0).astype("uint8"), mask=v > 0, transform=TRANSFORM)]).buffer(0)
+    # obris onoga što karta boji: rub do kojega se mjeri „blizu ruba”
+    sve = unary_union([shape(g) for g, _ in features.shapes(fokus.astype("uint8"), mask=fokus, transform=TRANSFORM)]).buffer(0)
     negradivo = {}
     for ime, klase in NEGRADIVO.items():
         m = (vn > 0) & np.isin(namjena, klase)
         for geom, val in features.shapes(np.where(m, vn, 0), mask=m, transform=TRANSFORM):
             negradivo.setdefault((int(val), ime), []).append(shape(geom))
     negradivo = {k: unary_union(g).buffer(0) for k, g in negradivo.items()}
-
-    upu = [(f["properties"], stransform(U_HTRS, shape(f["geometry"])).buffer(0))
-           for f in pr["features"] if f["properties"]["vrsta"] == "propisan"]
-    svi_upu = unary_union([g for _, g in upu])
 
     komadi, zbroj_upu = [], {}
     for k, g in po_vrsti.items():
@@ -220,10 +250,14 @@ def main() -> None:
                 ps = p.simplify(POJEDNOSTAVI_M, preserve_topology=True)
                 if ps.is_empty:
                     continue
-                komadi.append({"type": "Feature", "properties": {"vrsta": VRSTE[k], "upu": broj, "ha": round(p.area / 1e4, 2)},
+                komadi.append({"type": "Feature",
+                               "properties": {"vrsta": VRSTA_VF[k], "upu": broj, "ha": round(p.area / 1e4, 2), "fokus": k in FOKUS,
+                                              **({"izvan": IZVAN_FOKUSA[k]} if k in IZVAN_FOKUSA else {})},
                                "geometry": zaokruzi(ps)})
                 z = zbroj_upu.setdefault(broj, novi_red(broj, naziv))
-                z[f"{VRSTE[k]}_ha"] += p.area / 1e4
+                z[f"{VRSTA_VF[k]}_ha"] += p.area / 1e4
+                if k in FOKUS:
+                    z["fokus_ha"] += p.area / 1e4
     for (k, ime), g in negradivo.items():
         dijelovi = [(p["broj"], g.intersection(ug)) for p, ug in upu] + [(0, g.difference(svi_upu))]
         for broj, dio in dijelovi:
@@ -253,6 +287,8 @@ def main() -> None:
     cestice, bez_oblika, bez_vrste, izvan_gradnje = [], 0, 0, [0, 0.0]
     ukupno = {"neizgradjene": [0, 0.0], "djelomicno": [0, 0.0]}
     po_zoni = {}
+    u_fokusu = {"neizgradjene": [0, 0.0], "djelomicno": [0, 0.0]}
+    po_zoni_fokus = {}
     for i, (m2, neizgradjena, zona) in sorted(redovi.items()):
         f = oblici.get(i)
         if f is None:
@@ -270,10 +306,11 @@ def main() -> None:
         broj = next((b for b, pg in upu_prep if pg.contains(t)), 0)
         vrsta = vrsta_cestice(g, vg) or vrsta_cestice(g, v)
         bez_vrste += vrsta is None
+        u_f = pretezito(g, vf) in FOKUS
         cestice.append({"type": "Feature", "geometry": f["geometry"],
                         "properties": {"kc": f["properties"]["kc"], "ko": f["properties"]["ko"], "m2": m2,
                                        "neizgradjena": neizgradjena, "zona": zona, "upu": broj,
-                                       **({"vrsta": vrsta} if vrsta else {})}})
+                                       **({"vrsta": vrsta} if vrsta else {}), "fokus": u_f}})
         z = zbroj_upu.setdefault(broj, novi_red(broj, nazivi.get(broj)))
         z["slobodno_ha"] += m2 / 1e4
         z["neizgradjene"] += int(neizgradjena)
@@ -281,6 +318,13 @@ def main() -> None:
         k[0] += 1
         k[1] += m2 / 1e4
         po_zoni[zona] = po_zoni.get(zona, 0.0) + m2 / 1e4
+        if u_f:
+            z["fokus_slobodno_ha"] += m2 / 1e4
+            z["fokus_neizgradjene"] += int(neizgradjena)
+            k = u_fokusu["neizgradjene" if neizgradjena else "djelomicno"]
+            k[0] += 1
+            k[1] += m2 / 1e4
+            po_zoni_fokus[zona] = po_zoni_fokus.get(zona, 0.0) + m2 / 1e4
     if bez_oblika:
         print(f"upozorenje: {bez_oblika} čestica nema oblika u pločicama")
     if bez_vrste:
@@ -309,11 +353,15 @@ def main() -> None:
         brojevi.append([indeks[kljuc], f"{broj}{dodatak.lower()}", round(lon, 5), round(lat, 5)])
 
     ha = {VRSTE[k]: round(float((v == k).sum()) * R.KORAK ** 2 / 1e4, 1) for k in VRSTE}
-    po_upu = sorted(({**z, **{k: round(z[k], 1) for k in ("sanacija_ha", "preobrazba_ha", "neuredeno_ha", "slobodno_ha")}}
+    po_upu = sorted(({**z, **{k: round(z[k], 1) for k in ("sanacija_ha", "preobrazba_ha", "neuredeno_ha", "slobodno_ha",
+                                                         "fokus_ha", "fokus_slobodno_ha")}}
                      for z in zbroj_upu.values()),
                     key=lambda z: (-z["slobodno_ha"], -(z["sanacija_ha"] + z["preobrazba_ha"] + z["neuredeno_ha"])))
     ha_gradnja = {VRSTE[k]: round(float((vg == k).sum()) * R.KORAK ** 2 / 1e4, 1) for k in VRSTE}
     ha_negradivo = {VRSTE[k]: round(float((vn == k).sum()) * R.KORAK ** 2 / 1e4, 1) for k in VRSTE}
+
+    def ha_vf(k: int) -> float:
+        return round(float((vf == k).sum()) * R.KORAK ** 2 / 1e4, 1)
     zbroj = {"ha": ha, "ukupno_ha": round(sum(ha.values()), 1),
              # ha: sve što je na listu 4.d obojeno; gradnja_ha: od toga u zonama za gradnju
              "gradnja_ha": ha_gradnja, "gradnja_ukupno_ha": round(sum(ha_gradnja.values()), 1),
@@ -322,6 +370,17 @@ def main() -> None:
              "slobodno_po_zoni_ha": {z: round(v, 1) for z, v in sorted(po_zoni.items())},
              "neizgradjene": {"cestice": ukupno["neizgradjene"][0], "ha": round(ukupno["neizgradjene"][1], 1)},
              "djelomicno": {"cestice": ukupno["djelomicno"][0], "ha": round(ukupno["djelomicno"][1], 1)},
+             # samo ono što karta boji (FOKUS): sanacija i stambena preobrazba izvan gradskih projekata
+             "fokus": {
+                 "gradnja_ha": {"sanacija": ha_vf(1), "preobrazba": ha_vf(2)},
+                 "gradnja_ukupno_ha": round(ha_vf(1) + ha_vf(2), 1),
+                 "izvan_ha": {"neuredeno": ha_vf(3), "gradski_projekt": ha_vf(PREOBRAZBA_GP),
+                              "gospodarska_preobrazba": ha_vf(PREOBRAZBA_GOSP)},
+                 "slobodno_ha": round(sum(po_zoni_fokus.values()), 1),
+                 "slobodno_po_zoni_ha": {z: round(v, 1) for z, v in sorted(po_zoni_fokus.items())},
+                 "neizgradjene": {"cestice": u_fokusu["neizgradjene"][0], "ha": round(u_fokusu["neizgradjene"][1], 1)},
+                 "djelomicno": {"cestice": u_fokusu["djelomicno"][0], "ha": round(u_fokusu["djelomicno"][1], 1)},
+             },
              "po_upu": po_upu}
     print(json.dumps({k: zbroj[k] for k in zbroj if k != "po_upu"}, ensure_ascii=False))
 
