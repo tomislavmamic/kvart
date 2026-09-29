@@ -110,9 +110,11 @@ export function ZabranaKarta(props: {
   odabraniUpu: number | null;
   cilj: CiljKarte | null;
   oznaka: OznakaKarte | null;
+  /** karta preko cijelog zaslona: nema stranice ispod, pa kotačić zumira */
+  punZaslon?: boolean;
   onKlik: (lng: number, lat: number) => void;
 }) {
-  const { zabrana, planovi, cestice, sporne, prikaziZabranu, sporno, odabraniUpu, cilj, oznaka, onKlik } = props;
+  const { zabrana, planovi, cestice, sporne, prikaziZabranu, sporno, odabraniUpu, cilj, oznaka, punZaslon = false, onKlik } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
@@ -151,6 +153,10 @@ export function ZabranaKarta(props: {
         scrollWheelZoom: false,
       });
       mapa.current = map;
+      // okvir mijenja veličinu (cijeli zaslon, okretanje mobitela), a Leaflet to sam ne primijeti
+      const promatrac = new ResizeObserver(() => map.invalidateSize());
+      promatrac.observe(div.current);
+      map.on("unload", () => promatrac.disconnect());
       const podloge = Object.fromEntries(PODLOGE.map((p) => [p.naziv, podloga(L, p.id)]));
       podloge[PODLOGE[0].naziv].addTo(map);
       L.control.layers(podloge, undefined, { position: "topright" }).addTo(map);
@@ -273,6 +279,12 @@ export function ZabranaKarta(props: {
     spornoVidljivo.current = sporno;
     osvjeziCestice.current();
   }, [sporno]);
+
+  useEffect(() => {
+    const kotacic = mapa.current?.scrollWheelZoom;
+    if (punZaslon) kotacic?.enable();
+    else kotacic?.disable();
+  }, [punZaslon]);
 
   useEffect(() => {
     const map = mapa.current, L = LRef.current;

@@ -342,7 +342,25 @@ function Skupina(props: { naslov: string; vidljivo?: boolean; promijeni?: (v: bo
   );
 }
 
-export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
+/** Strelice prema kutovima (proširi) ili prema sredini (vrati). */
+function IkonaZaslona({ puno }: { puno: boolean }) {
+  const d = puno
+    ? "M7 2v5H2M11 2v5h5M7 16v-5H2M11 16v-5h5"
+    : "M2 7V2h5M16 7V2h-5M2 11v5h5M16 11v5h-5";
+  return (
+    <svg aria-hidden viewBox="0 0 18 18" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d={d} />
+    </svg>
+  );
+}
+
+/**
+ * Tražilica i karta, a ispod njih tumač, `objasnjenje` i popis planova. Gumb
+ * na karti širi tražilicu i kartu preko cijelog zaslona: pravi cijeli zaslon
+ * gdje ga preglednik daje, inače (iPhone ga za elemente nema) prozor preko
+ * stranice. Izlaz je isti gumb ili Esc.
+ */
+export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnjenje?: ReactNode }) {
   const [podaci, setPodaci] = useState<Podaci | null>(null);
   const [greska, setGreska] = useState(false);
   const [prikaziZabranu, setPrikaziZabranu] = useState(true);
@@ -357,6 +375,37 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
   const [sviUpu, setSviUpu] = useState(false);
   const kljuc = useRef(0);
   const okvirKarte = useRef<HTMLDivElement>(null);
+  const cijeli = useRef<HTMLDivElement>(null);
+  const [puno, setPuno] = useState(false);
+  const prebaciZaslon = () => {
+    if (puno) {
+      setPuno(false);
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      return;
+    }
+    setPuno(true);
+    cijeli.current?.requestFullscreen?.()?.catch(() => {});
+  };
+  useEffect(() => {
+    if (!puno) return;
+    // Esc u pravom cijelom zaslonu hvata preglednik i javlja fullscreenchange
+    const izlaz = () => {
+      if (!document.fullscreenElement) setPuno(false);
+    };
+    const tipka = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.fullscreenElement && (e.target as HTMLElement | null)?.tagName !== "INPUT") setPuno(false);
+    };
+    const html = document.documentElement;
+    const staro = html.style.overflow;
+    html.style.overflow = "hidden";
+    document.addEventListener("fullscreenchange", izlaz);
+    document.addEventListener("keydown", tipka);
+    return () => {
+      html.style.overflow = staro;
+      document.removeEventListener("fullscreenchange", izlaz);
+      document.removeEventListener("keydown", tipka);
+    };
+  }, [puno]);
 
   useEffect(() => {
     const dohvati = (u: string) => fetch(u).then((r) => (r.ok ? (r.json() as Promise<FeatureCollection>) : Promise.reject(new Error(u))));
@@ -381,7 +430,7 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
 
   const pomakni = (c: Omit<CiljKarte, "kljuc">) => setCilj({ ...c, kljuc: ++kljuc.current });
   const doKarte = () => {
-    if (window.matchMedia("(max-width: 640px)").matches) okvirKarte.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!puno && window.matchMedia("(max-width: 640px)").matches) okvirKarte.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const pokaziTocku = (lng: number, lat: number, podnaslov?: string) => {
@@ -486,130 +535,157 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
 
   return (
     <div>
-      <div className="relative max-w-md">
-        <label htmlFor="zabrana-adresa" className="block font-semibold text-zinc-900">
-          Provjeri adresu
-        </label>
-        <input
-          id="zabrana-adresa"
-          type="search"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="npr. Put Mostina 12"
-          role="combobox"
-          aria-expanded={otvoreno && upit.trim().length > 0}
-          aria-controls="zabrana-prijedlozi"
-          aria-autocomplete="list"
-          aria-activedescendant={otvoreno && prijedlozi[aktivni] ? `zabrana-p-${aktivni}` : undefined}
-          value={upit}
-          onFocus={() => {
-            ucitajAdrese();
-            setOtvoreno(true);
-          }}
-          onBlur={() => setTimeout(() => setOtvoreno(false), 120)}
-          onChange={(e) => {
-            ucitajAdrese();
-            setUpit(e.target.value);
-            setAktivni(0);
-            setOtvoreno(true);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowDown" && prijedlozi.length) {
-              setAktivni((a) => (a + 1) % prijedlozi.length);
-              e.preventDefault();
-            } else if (e.key === "ArrowUp" && prijedlozi.length) {
-              setAktivni((a) => (a - 1 + prijedlozi.length) % prijedlozi.length);
-              e.preventDefault();
-            } else if (e.key === "Enter") {
-              if (prijedlozi[aktivni]) odaberi(prijedlozi[aktivni]);
-              e.preventDefault();
-            } else if (e.key === "Escape") setOtvoreno(false);
-          }}
-          className="fokus mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900"
-        />
-        {otvoreno && upit.trim().length > 0 && (
-          <ul
-            id="zabrana-prijedlozi"
-            role="listbox"
-            className="absolute inset-x-0 top-full z-[1100] mt-1 max-h-80 overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
-          >
-            {prijedlozi.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-zinc-500">
-                {adrese ? "Te ulice nema u gradskom adresnom registru" : "Adrese se učitavaju…"}
-              </li>
-            ) : (
-              prijedlozi.map((p, i) => (
-                <li
-                  key={`${p.naziv}-${p.kotar}-${i}`}
-                  id={`zabrana-p-${i}`}
-                  role="option"
-                  aria-selected={i === aktivni}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    odaberi(p);
-                  }}
-                  className={`flex cursor-pointer justify-between gap-3 px-3 py-2 text-sm ${i === aktivni ? "bg-zinc-100" : "hover:bg-zinc-50"}`}
-                >
-                  <span className="text-zinc-900">{p.naziv}</span>
-                  <span className="shrink-0 text-zinc-500">{p.kotar}</span>
-                </li>
-              ))
-            )}
-          </ul>
-        )}
-        <p className="mt-1 text-sm text-zinc-500">Ili klikni bilo gdje na karti.</p>
-      </div>
-
       <div
-        ref={okvirKarte}
-        className="relative mt-3 h-[65svh] min-h-[380px] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 sm:h-[560px]"
+        ref={cijeli}
+        className={
+          puno
+            ? "fixed inset-0 z-[1300] flex flex-col bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-3"
+            : ""
+        }
       >
-        {podaci ? (
-          <ZabranaKarta
-            zabrana={podaci.zabrana}
-            planovi={podaci.planovi}
-            cestice={podaci.cestice}
-            sporne={podaci.sporne}
-            prikaziZabranu={prikaziZabranu}
-            sporno={sporno}
-            odabraniUpu={odabraniUpu}
-            cilj={cilj}
-            oznaka={oznaka}
-            onKlik={(lng, lat) => pokaziTocku(lng, lat)}
+        <div className="relative max-w-md">
+          <label htmlFor="zabrana-adresa" className={puno ? "sr-only" : "block font-semibold text-zinc-900"}>
+            Provjeri adresu
+          </label>
+          <input
+            id="zabrana-adresa"
+            type="search"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="npr. Put Mostina 12"
+            role="combobox"
+            aria-expanded={otvoreno && upit.trim().length > 0}
+            aria-controls="zabrana-prijedlozi"
+            aria-autocomplete="list"
+            aria-activedescendant={otvoreno && prijedlozi[aktivni] ? `zabrana-p-${aktivni}` : undefined}
+            value={upit}
+            onFocus={() => {
+              ucitajAdrese();
+              setOtvoreno(true);
+            }}
+            onBlur={() => setTimeout(() => setOtvoreno(false), 120)}
+            onChange={(e) => {
+              ucitajAdrese();
+              setUpit(e.target.value);
+              setAktivni(0);
+              setOtvoreno(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown" && prijedlozi.length) {
+                setAktivni((a) => (a + 1) % prijedlozi.length);
+                e.preventDefault();
+              } else if (e.key === "ArrowUp" && prijedlozi.length) {
+                setAktivni((a) => (a - 1 + prijedlozi.length) % prijedlozi.length);
+                e.preventDefault();
+              } else if (e.key === "Enter") {
+                if (prijedlozi[aktivni]) odaberi(prijedlozi[aktivni]);
+                e.preventDefault();
+              } else if (e.key === "Escape") setOtvoreno(false);
+            }}
+            className="fokus mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900"
           />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-            {greska ? "Karta se nije učitala. Osvježi stranicu." : "Karta se učitava…"}
-          </div>
-        )}
-        {kartica && (
-          <div
-            aria-live="polite"
-            className="absolute inset-x-2 bottom-2 z-[1000] max-h-[70%] overflow-y-auto rounded-xl bg-white p-4 text-sm leading-relaxed text-zinc-700 shadow-lg sm:inset-x-auto sm:left-3 sm:w-96"
-          >
+          {otvoreno && upit.trim().length > 0 && (
+            <ul
+              id="zabrana-prijedlozi"
+              role="listbox"
+              className="absolute inset-x-0 top-full z-[1100] mt-1 max-h-80 overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
+            >
+              {prijedlozi.length === 0 ? (
+                <li className="px-3 py-2 text-sm text-zinc-500">
+                  {adrese ? "Te ulice nema u gradskom adresnom registru" : "Adrese se učitavaju…"}
+                </li>
+              ) : (
+                prijedlozi.map((p, i) => (
+                  <li
+                    key={`${p.naziv}-${p.kotar}-${i}`}
+                    id={`zabrana-p-${i}`}
+                    role="option"
+                    aria-selected={i === aktivni}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      odaberi(p);
+                    }}
+                    className={`flex cursor-pointer justify-between gap-3 px-3 py-2 text-sm ${i === aktivni ? "bg-zinc-100" : "hover:bg-zinc-50"}`}
+                  >
+                    <span className="text-zinc-900">{p.naziv}</span>
+                    <span className="shrink-0 text-zinc-500">{p.kotar}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+          {!puno && <p className="mt-1 text-sm text-zinc-500">Ili klikni bilo gdje na karti.</p>}
+        </div>
+
+        <div
+          ref={okvirKarte}
+          className={
+            puno
+              ? "relative mt-2 min-h-0 flex-1 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100"
+              : "relative mt-3 h-[65svh] min-h-[380px] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 sm:h-[560px]"
+          }
+        >
+          {podaci ? (
+            <ZabranaKarta
+              zabrana={podaci.zabrana}
+              planovi={podaci.planovi}
+              cestice={podaci.cestice}
+              sporne={podaci.sporne}
+              prikaziZabranu={prikaziZabranu}
+              sporno={sporno}
+              odabraniUpu={odabraniUpu}
+              cilj={cilj}
+              oznaka={oznaka}
+              punZaslon={puno}
+              onKlik={(lng, lat) => pokaziTocku(lng, lat)}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+              {greska ? "Karta se nije učitala. Osvježi stranicu." : "Karta se učitava…"}
+            </div>
+          )}
+          {podaci && (
+            // ispod gumba za zum, u istom obliku
             <button
               type="button"
-              aria-label="Zatvori"
-              onClick={() => {
-                setKartica(null);
-                setOznaka(null);
-                setOdabraniUpu(null);
-              }}
-              className="fokus absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg text-lg text-zinc-500 hover:bg-zinc-100"
+              onClick={prebaciZaslon}
+              aria-pressed={puno}
+              aria-label={puno ? "Vrati kartu na stranicu" : "Karta preko cijelog zaslona"}
+              title={puno ? "Vrati kartu na stranicu (Esc)" : "Karta preko cijelog zaslona"}
+              className="fokus absolute left-[10px] top-[84px] z-[1000] grid h-[34px] w-[34px] place-items-center rounded border-2 border-black/20 bg-white bg-clip-padding text-zinc-900 hover:bg-zinc-50"
             >
-              ×
+              <IkonaZaslona puno={puno} />
             </button>
-            <Znacka boja={kartica.boja}>{kartica.oznaka}</Znacka>
-            <h3 className="mt-2 pr-8 text-base font-bold leading-snug text-zinc-900">{kartica.naslov}</h3>
-            {kartica.podnaslov && <p className="font-mono text-xs text-zinc-500">{kartica.podnaslov}</p>}
-            {oznaka && cesticaKlika && (
-              <p className="font-mono text-xs text-zinc-700">
-                k.č. {cesticaKlika.kc}, k.o. {naslovno(cesticaKlika.ko)}
-              </p>
-            )}
-            <div className="mt-2">{kartica.tijelo}</div>
-          </div>
-        )}
+          )}
+          {kartica && (
+            <div
+              aria-live="polite"
+              className="absolute inset-x-2 bottom-2 z-[1000] max-h-[70%] overflow-y-auto rounded-xl bg-white p-4 text-sm leading-relaxed text-zinc-700 shadow-lg sm:inset-x-auto sm:left-3 sm:w-96"
+            >
+              <button
+                type="button"
+                aria-label="Zatvori"
+                onClick={() => {
+                  setKartica(null);
+                  setOznaka(null);
+                  setOdabraniUpu(null);
+                }}
+                className="fokus absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg text-lg text-zinc-500 hover:bg-zinc-100"
+              >
+                ×
+              </button>
+              <Znacka boja={kartica.boja}>{kartica.oznaka}</Znacka>
+              <h3 className="mt-2 pr-8 text-base font-bold leading-snug text-zinc-900">{kartica.naslov}</h3>
+              {kartica.podnaslov && <p className="font-mono text-xs text-zinc-500">{kartica.podnaslov}</p>}
+              {oznaka && cesticaKlika && (
+                <p className="font-mono text-xs text-zinc-700">
+                  k.č. {cesticaKlika.kc}, k.o. {naslovno(cesticaKlika.ko)}
+                </p>
+              )}
+              <div className="mt-2">{kartica.tijelo}</div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 grid gap-x-6 gap-y-4 text-sm text-zinc-700 md:grid-cols-3">
@@ -651,6 +727,8 @@ export function ZabranaPrikaz({ poUpu }: { poUpu: RedUpu[] }) {
           </Stavka>
         </Skupina>
       </div>
+
+      {objasnjenje && <div className="mt-6">{objasnjenje}</div>}
 
       <h3 className="mt-8 font-bold text-zinc-900">Po planovima koji još nisu doneseni</h3>
       <p className="mt-1 text-sm text-zinc-600">

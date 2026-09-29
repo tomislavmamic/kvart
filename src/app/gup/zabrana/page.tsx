@@ -162,36 +162,84 @@ export default async function ZabranaPage() {
         od 1. listopada do 16. studenoga 2026.
       </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200">
-        {[
-          [`${ha(zbroj.ukupno_ha * 1e4)} ha`, "zemljišta pod zabranom"],
-          [`${ha(zbroj.slobodno_ha * 1e4)} ha`, "slobodnog zemljišta za novu gradnju"],
-          [
-            zbroj.neizgradjene.cestice.toLocaleString("hr-HR"),
-            imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađena čestica", "neizgrađene čestice", "neizgrađenih čestica"]),
-          ],
-        ].map(([v, n]) => (
-          <div key={n} className="bg-white px-3 py-3 sm:px-4">
-            <p className="font-mono text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">{v}</p>
-            <p className="text-xs text-zinc-600 sm:text-sm">{n}</p>
-          </div>
-        ))}
-      </div>
+      <section className="mt-8">
+        <h2 id="karta" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
+          Gdje bi zabrana vrijedila
+        </h2>
+        <div className="mt-4">
+          <ZabranaPrikaz
+            poUpu={zbroj.po_upu}
+            objasnjenje={
+              <>
+                <p className="max-w-3xl text-zinc-600">
+                  Crvena je urbana sanacija, narančasta urbana preobrazba, a žut neuređeni dio građevinskog područja, unutar
+                  obuhvata GUP-a. Narančastu i žutu preuzeli smo s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>{" "}
+                  prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Izuzeta su područja
+                  važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
+                  Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
+                  <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
+                </p>
+                <p className="mt-3 max-w-3xl border-l-4 border-fuchsia-600 bg-fuchsia-50 px-4 py-3 text-zinc-800">
+                  <strong>Ljubičastim kosim crtama precrtane su sporne oznake</strong>; izdaleka je sporna čestica puna
+                  ljubičasta mrlja. {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
+                  {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
+                  {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
+                  je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom
+                  takvoj cesti nije neuređeno. U {plohaManjina} od {sporne.plohe.length} ploha urbane sanacije s barem 10 zgrada
+                  rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
+                  na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
+                  {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
+                  {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Tanak ljubičasti
+                  rub ima još {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
+                  {imenicaUz(sporne.cesta.cestice, ["čestica", "čestice", "čestica"])} neuređenog dijela uz cestu koje nema u
+                  gradskom registru ili joj se širina ne da izmjeriti: mogu biti sporne ako je cesta izvedena i javna. Kako smo to
+                  provjerili i što se iz toga može tražiti, piše u{" "}
+                  <Link href="/gup/analiza#oznake" className="fokus font-semibold text-emerald-700 underline">
+                    analizi
+                  </Link>
+                  .
+                </p>
+              </>
+            }
+          />
+        </div>
+      </section>
 
-      <p className="mt-3 max-w-3xl text-sm text-zinc-600">
-        Zabrana ne dira ono što je već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od{" "}
-        {ha(zbroj.slobodno_ha * 1e4)} ha takvog zemljišta pod zabranom {ha(zbroj.neizgradjene.ha * 1e4)} ha nalazi se na{" "}
-        {zbroj.neizgradjene.cestice.toLocaleString("hr-HR")}{" "}
-        {imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}
-        {ha(zbroj.djelomicno.ha * 1e4)} ha na slobodnim dijelovima {zbroj.djelomicno.cestice.toLocaleString("hr-HR")}{" "}
-        {imenicaUz(zbroj.djelomicno.cestice, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])} (npr. veliko
-        dvorište ili neizgrađen dio poslovne čestice). Po namjeni:{" "}
-        {ha((zbroj.slobodno_po_zoni_ha.stanovanje ?? 0) * 1e4)} ha stambene i mješovite,{" "}
-        {ha((zbroj.slobodno_po_zoni_ha.gospodarstvo ?? 0) * 1e4)} ha gospodarske i{" "}
-        {ha((zbroj.slobodno_po_zoni_ha.turizam ?? 0) * 1e4)} ha turističke namjene.
-      </p>
+      <section className="mt-12">
+        <h2 id="koliko" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
+          Koliko zemljišta obuhvaća
+        </h2>
+        <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200">
+          {[
+            [`${ha(zbroj.ukupno_ha * 1e4)} ha`, "zemljišta pod zabranom"],
+            [`${ha(zbroj.slobodno_ha * 1e4)} ha`, "slobodnog zemljišta za novu gradnju"],
+            [
+              zbroj.neizgradjene.cestice.toLocaleString("hr-HR"),
+              imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađena čestica", "neizgrađene čestice", "neizgrađenih čestica"]),
+            ],
+          ].map(([v, n]) => (
+            <div key={n} className="bg-white px-3 py-3 sm:px-4">
+              <p className="font-mono text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">{v}</p>
+              <p className="text-xs text-zinc-600 sm:text-sm">{n}</p>
+            </div>
+          ))}
+        </div>
 
-      <section className="mt-10">
+        <p className="mt-3 max-w-3xl text-sm text-zinc-600">
+          Zabrana ne dira ono što je već izgrađeno, nego zemljište na kojem bi se inače smjela graditi nova zgrada. Od{" "}
+          {ha(zbroj.slobodno_ha * 1e4)} ha takvog zemljišta pod zabranom {ha(zbroj.neizgradjene.ha * 1e4)} ha nalazi se na{" "}
+          {zbroj.neizgradjene.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(zbroj.neizgradjene.cestice, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}, a{" "}
+          {ha(zbroj.djelomicno.ha * 1e4)} ha na slobodnim dijelovima {zbroj.djelomicno.cestice.toLocaleString("hr-HR")}{" "}
+          {imenicaUz(zbroj.djelomicno.cestice, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])} (npr. veliko
+          dvorište ili neizgrađen dio poslovne čestice). Po namjeni:{" "}
+          {ha((zbroj.slobodno_po_zoni_ha.stanovanje ?? 0) * 1e4)} ha stambene i mješovite,{" "}
+          {ha((zbroj.slobodno_po_zoni_ha.gospodarstvo ?? 0) * 1e4)} ha gospodarske i{" "}
+          {ha((zbroj.slobodno_po_zoni_ha.turizam ?? 0) * 1e4)} ha turističke namjene.
+        </p>
+      </section>
+
+      <section className="mt-12">
         <h2 id="kako" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
           Kako bi zabrana stupila na snagu
         </h2>
@@ -324,43 +372,6 @@ export default async function ZabranaPage() {
             </Link>
             ).
           </p>
-        </div>
-      </section>
-
-      <section className="mt-12">
-        <h2 id="karta" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
-          Gdje bi zabrana vrijedila
-        </h2>
-        <p className="mt-3 max-w-3xl text-zinc-600">
-          Crvena je urbana sanacija, narančasta urbana preobrazba, a žut neuređeni dio građevinskog područja, unutar
-          obuhvata GUP-a. Narančastu i žutu preuzeli smo s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>{" "}
-          prijedloga; list sanaciju crta zeleno, kao da je ondje sve u redu, a i ona priječi novu gradnju. Izuzeta su područja
-          važećih planova jer se ondje i dalje gradi prema njima (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).
-          Dio obuhvata propisanog UPU-a koji nije obojen do donošenja UPU-a gradi se neposrednom provedbom GUP-a (
-          <Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
-        </p>
-        <p className="mt-3 max-w-3xl border-l-4 border-fuchsia-600 bg-fuchsia-50 px-4 py-3 text-zinc-800">
-          <strong>Ljubičastim kosim crtama precrtane su sporne oznake</strong>; izdaleka je sporna čestica puna
-          ljubičasta mrlja. {sporne.pristup.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(sporne.pristup.cestice, ["čestica", "čestice", "čestica"])} u neuređenom dijelu{" "}
-          {imenicaUz(sporne.pristup.cestice, ["graniči", "graniče", "graniči"])} s cestom čija
-          je katastarska čestica široka barem 4 m, a prema kriteriju iz obrazloženja prijedloga zemljište s pristupom
-          takvoj cesti nije neuređeno. U {plohaManjina} od {sporne.plohe.length} ploha urbane sanacije s barem 10 zgrada
-          rješenje o izvedenom stanju ima manje od polovine zgrada, iako zakon mjere urbane sanacije propisuje za područja
-          na kojima pretežu ozakonjene zgrade; u njima {imenicaUz(sporne.sanacija.cestice, ["je", "su", "je"])} još{" "}
-          {sporne.sanacija.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(sporne.sanacija.cestice, ["sporna čestica", "sporne čestice", "spornih čestica"])}. Tanak ljubičasti
-          rub ima još {sporne.cesta.cestice.toLocaleString("hr-HR")}{" "}
-          {imenicaUz(sporne.cesta.cestice, ["čestica", "čestice", "čestica"])} neuređenog dijela uz cestu koje nema u
-          gradskom registru ili joj se širina ne da izmjeriti: mogu biti sporne ako je cesta izvedena i javna. Kako smo to
-          provjerili i što se iz toga može tražiti, piše u{" "}
-          <Link href="/gup/analiza#oznake" className="fokus font-semibold text-emerald-700 underline">
-            analizi
-          </Link>
-          .
-        </p>
-        <div className="mt-4">
-          <ZabranaPrikaz poUpu={zbroj.po_upu} />
         </div>
       </section>
 
