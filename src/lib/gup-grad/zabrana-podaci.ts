@@ -128,6 +128,9 @@ export interface ZbrojSpornih {
   prazne_u_sanaciji: BrojCestica;
   prazne_u_sanaciji_uz_cestu: number;
   plohe: { ha: number; zgrade: number; udio: number; upu: number; manjina: boolean }[];
+  /** razred na listu PPUG-a (I izgrađeno, N neizgrađeno bez šrafure, U neuređeno) prema oznaci s lista 4.d,
+   *  za čestice od 250 m² u obuhvatima propisanih UPU-a izvan važećih planova */
+  ppug_4d: Record<"I" | "N" | "U", Record<"sanacija" | "preobrazba" | "neuredeno" | "bez", BrojCestica>>;
   po_upu: Record<string, { naziv: string | null; cestice: number; ha: number }>;
 }
 

@@ -300,6 +300,13 @@ export default async function AnalizaPage() {
   const manjina = plohe.filter((p) => p.manjina);
   const vecina = plohe.filter((p) => !p.manjina);
   const ploha = (upu: number) => manjina.find((p) => p.upu === upu);
+  const oznake4d = ["sanacija", "preobrazba", "neuredeno", "bez"] as const;
+  const ppug4d = (r: "I" | "N" | "U") => {
+    const red = sporne.ppug_4d[r];
+    const ukupno = oznake4d.reduce((z, o) => z + red[o].ha, 0);
+    const posto = (x: number) => (x === 0 ? "–" : x / ukupno < 0.005 ? "< 1 %" : `${Math.round((100 * x) / ukupno)} %`);
+    return { ukupno, cestice: oznake4d.reduce((z, o) => z + red[o].cestice, 0), posto: (o: (typeof oznake4d)[number]) => posto(red[o].ha) };
+  };
   const z = zemljiste[2025];
   const h = (x: number) => ha(x * 1e4);
   const neizgradjene = zbroj.neizgradjene.cestice;
@@ -315,7 +322,7 @@ export default async function AnalizaPage() {
         <Link href="/planovi" className="fokus underline">
           Planovi
         </Link>{" "}
-        · analiza, 27. rujna 2026., brojke osvježene 28. rujna 2026.
+        · analiza, 27. rujna 2026., brojke osvježene 29. rujna 2026.
       </p>
       <h1 className="mt-1 max-w-3xl text-2xl font-bold text-balance sm:text-3xl">
         Gradnju ne bi zaustavio novi zakon, nego nova oznaka na karti
@@ -724,6 +731,26 @@ export default async function AnalizaPage() {
         </ul>
         <p>
           Grad vlasnicima neuređenih čestica preporučuje i put mimo UPU-a: lokacijsku dozvolu za novu zgradu uz postojeću javnu cestu, s rješenjem odvodnje (novi ZPU, čl. 180. st. 2. t. 3.; <a href="#zakon" className="fokus text-emerald-700 underline">4. poglavlje</a>). U urbanoj sanaciji do donošenja UPU-a zakon dopušta samo rekonstrukciju i zamjenu (čl. 106. st. 3.), pa ta iznimka ondje, prema našem čitanju, ne pomaže.
+        </p>
+        <p>
+          Podjelu s lista PPUG-a slijedi i list 4.d. Za čestice od najmanje 250 m² u obuhvatima propisanih UPU-a izvan važećih planova usporedili smo razred na listu PPUG-a s oznakom na listu 4.d (udio površine):
+        </p>
+        <Tablica
+          sirina="min-w-[40rem]"
+          zaglavlje={["Na listu PPUG-a", "Čestica", "ha", "Urbana sanacija", "Urbana preobrazba", "Neuređeni dio", "Bez oznake"]}
+          redovi={(
+            [
+              ["I", "izgrađeno"],
+              ["N", "neizgrađeno, bez šrafure"],
+              ["U", "neuređeno (šrafirano)"],
+            ] as const
+          ).map(([r, naziv]) => {
+            const t = ppug4d(r);
+            return [naziv, broj(t.cestice), ha1(t.ukupno), ...oznake4d.map((o) => t.posto(o))];
+          })}
+        />
+        <p>
+          Urbanu sanaciju i preobrazbu list 4.d crta gotovo isključivo na zemljištu koje PPUG vodi kao izgrađeno, a neuređeni dio na onom koje PPUG šrafira. Ni izgrađeno nije svuda označeno: {ppug4d("I").posto("bez")} njegove površine u obuhvatima UPU-a nema oznake. Neizgrađeno zemljište bez šrafure oznake gotovo nikad nema, pa se na njemu, iako je u obuhvatu UPU-a, gradi neposrednom provedbom GUP-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>). Tako prazna čestica koju PPUG vodi kao neizgrađenu može ostati bez oznake, dok je susjedna čestica s ozakonjenom kućom u urbanoj sanaciji, gdje su do UPU-a dopuštene samo rekonstrukcija i zamjena. Je li čestica izgrađena, dakle, ne odlučuje GUP, nego PPUG, prema ortofoto snimci iz 2021.
         </p>
 
         <Podnaslov>Neuređeni dio: zemljište uz ceste na česticama širokim barem 4 m</Podnaslov>

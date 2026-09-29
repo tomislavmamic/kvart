@@ -50,6 +50,9 @@ kriterijima koji se mogu izmjeriti:
   Uz to se bilježe djelomično izgrađene čestice neuređenog dijela
   („izgradjena”): zakon neuređenim naziva dio neizgrađenog dijela.
 
+  Za usporedbu se broji i kako list 4.d označava čestice prema razredu na
+  listu PPUG-a (zbroj „ppug_4d”), u svim obuhvatima propisanih UPU-a.
+
 Broje se samo čestice na kojima zabrana stvarno pogađa novu gradnju
 (zabrana-cestice-2025.geojson, zabrana.py), od najmanje 250 m² (najmanja
 građevna čestica za stanovanje u GUP-u), i to one kojima je barem pola
@@ -121,19 +124,55 @@ NAJMANJE_ZGRADA = 10
 NAJMANJA_CESTICA_M2 = 250.0
 
 
-def udio_u(g, maska) -> float:
-    """Udio površine čestice u maski rešetke."""
+def pikseli(g, resetka) -> np.ndarray:
+    """Vrijednosti rešetke pod česticom."""
     minx, miny, maxx, maxy = g.bounds
     c0 = max(0, int((minx - R.MREZA_BBOX[0]) / R.KORAK))
     c1 = min(R.W, int((maxx - R.MREZA_BBOX[0]) / R.KORAK) + 1)
     r0 = max(0, int((R.MREZA_BBOX[3] - maxy) / R.KORAK))
     r1 = min(R.H, int((R.MREZA_BBOX[3] - miny) / R.KORAK) + 1)
     if c1 <= c0 or r1 <= r0:
-        return 0.0
+        return resetka[:0, :0].ravel()
     t = Z.Affine(R.KORAK, 0, R.MREZA_BBOX[0] + c0 * R.KORAK, 0, -R.KORAK, R.MREZA_BBOX[3] - r0 * R.KORAK)
     sub = features.rasterize([(g, 1)], out_shape=(r1 - r0, c1 - c0), transform=t, fill=0, dtype="uint8").astype(bool)
-    n = sub.sum()
-    return float(maska[r0:r1, c0:c1][sub].sum() / n) if n else 0.0
+    return resetka[r0:r1, c0:c1][sub]
+
+
+def udio_u(g, maska) -> float:
+    """Udio površine čestice u maski rešetke."""
+    v = pikseli(g, maska)
+    return float(v.mean()) if v.size else 0.0
+
+
+# bitovi iz planski-rezim.py
+VAZECI, OBVEZA = 1, 2
+
+
+def ppug_prema_4d(ppug: dict) -> dict:
+    """Razred čestice na listu PPUG-a prema oznaci s lista 4.d, za čestice od
+    250 m² u obuhvatima propisanih UPU-a izvan važećih planova. Pokazuje po
+    čemu list 4.d crta oznake: sanaciju i preobrazbu na izgrađenom dijelu
+    PPUG-a, neuređeni dio na šrafiranom, a neizgrađeno bez šrafure ostavlja
+    bez oznake (gradi se neposrednom provedbom GUP-a)."""
+    b = np.load(Z.REZIM)
+    out = {r: {o: [0, 0.0] for o in ("sanacija", "preobrazba", "neuredeno", "bez")} for r in ("I", "N", "U")}
+    for put in sorted(glob.glob(os.path.join(Z.PLOCICE, "*.json"))):
+        for f in json.load(open(put))["features"]:
+            p = f["properties"]
+            r = ppug.get(f"{p['ko']}|{p['kc']}")
+            if r not in out:
+                continue
+            g = stransform(Z.U_HTRS, shape(f["geometry"]))
+            if g.area < NAJMANJA_CESTICA_M2:
+                continue
+            v = pikseli(g, b)
+            if not v.size or (((v & OBVEZA) > 0) & ((v & VAZECI) == 0)).mean() < 0.5:
+                continue
+            o = next((ime for bit, ime in ((Z.SANACIJA, "sanacija"), (Z.NEUREDENO, "neuredeno"), (Z.PREOBRAZBA, "preobrazba"))
+                      if ((v & bit) > 0).mean() >= 0.5), "bez")
+            out[r][o][0] += 1
+            out[r][o][1] += g.area / 1e4
+    return {r: {o: {"cestice": n, "ha": round(h, 1)} for o, (n, h) in d.items()} for r, d in out.items()}
 
 
 def u_htrs(geoms):
@@ -467,6 +506,8 @@ def main() -> None:
     print("ceste km:", {k: round(sum(x.length for x in ls) / 1e3, 1) for k, ls in razredi.items()})
 
     okrugli = {k: ({"cestice": v[0], "ha": round(v[1], 1)} if isinstance(v, list) else v) for k, v in zbroj.items()}
+    okrugli["ppug_4d"] = ppug_prema_4d(ppug)
+    print("PPUG × 4.d:", okrugli["ppug_4d"])
     okrugli["plohe"] = [{k: f["properties"][k] for k in ("ha", "zgrade", "udio", "upu", "manjina")} for f in plohe_f]
     okrugli["po_upu"] = {}
     for f in sporne:
