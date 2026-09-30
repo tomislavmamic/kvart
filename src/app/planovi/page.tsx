@@ -35,7 +35,7 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
       },
       {
         href: "/gup/analiza",
-        naslov: "Zašto bi prijedlog zaustavio gradnju",
+        naslov: "Zašto izmjene GUP-a zaustavljaju gradnju",
         opis: "Analiza: što kažu važeći GUP i zakoni, koliko se u kvartu gradilo s dozvolom i što stanovnici mogu tražiti.",
         radnja: "Pročitaj analizu",
       },
@@ -62,9 +62,9 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
         opis: "Cijeli tekst odredbi i svi kartografski prikazi: plan na snazi, izvorni plan iz 2006. i prijedlog iz 2025.",
       },
       {
-        href: "/karta?pogled=nacrt-gupa",
-        naslov: "GUP na karti kvarta",
-        opis: "Namjena prostora prema planu na snazi i prema nacrtu, na karti Dračevca i Bilica.",
+        href: "/gup",
+        naslov: "GUP na karti",
+        opis: "Namjena prostora po planu iz 2006., prema planu na snazi i prema prijedlogu iz 2025., po česticama za cijeli grad.",
       },
     ],
   },
