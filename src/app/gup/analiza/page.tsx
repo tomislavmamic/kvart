@@ -759,11 +759,7 @@ export default async function AnalizaPage() {
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            Od {broj(sporne.neuredeno.cestice)} takvih čestica u neuređenom dijelu (s {ha1(sporne.neuredeno.ha)} ha slobodnog zemljišta) <strong>najmanje {broj(sporne.pristup.cestice)} ({ha1(sporne.pristup.ha)} ha) graniči s registriranom cestom čija je čestica široka barem 4 m</strong>. Ako je i sama cesta toliko široka i u funkciji, te čestice prema kriteriju Grada ne pripadaju neuređenom dijelu. Na manje od 15 m od {broj(sporne.pristup_kanal)} tih čestica prolazi i mješovita ili fekalna kanalizacija, što je važno jer zakon uz pristup traži i odvodnju. Još {broj(sporne.cesta.cestice)} čestica ({ha1(sporne.cesta.ha)} ha) graniči s cestom koje nema u registru, a ima je u drugim gradskim slojevima ili u OpenStreetMapu, ili s cestom iz registra kojoj se širina ne da izmjeriti; one su moguće sporne. Sve su označene na{" "}
-            <Link href="/gup/zabrana#karta" className="fokus text-emerald-700 underline">
-              karti zabrane
-            </Link>
-            .
+            Od {broj(sporne.neuredeno.cestice)} takvih čestica u neuređenom dijelu (s {ha1(sporne.neuredeno.ha)} ha slobodnog zemljišta) <strong>najmanje {broj(sporne.pristup.cestice)} ({ha1(sporne.pristup.ha)} ha) graniči s registriranom cestom čija je čestica široka barem 4 m</strong>. Ako je i sama cesta toliko široka i u funkciji, te čestice prema kriteriju Grada ne pripadaju neuređenom dijelu. Na manje od 15 m od {broj(sporne.pristup_kanal)} tih čestica prolazi i mješovita ili fekalna kanalizacija, što je važno jer zakon uz pristup traži i odvodnju. Još {broj(sporne.cesta.cestice)} čestica ({ha1(sporne.cesta.ha)} ha) graniči s cestom koje nema u registru, a ima je u drugim gradskim slojevima ili u OpenStreetMapu, ili s cestom iz registra kojoj se širina ne da izmjeriti; one su moguće sporne.
           </li>
           <li>
             U neuređenom je dijelu i <strong>{broj(sporne.izgradjena.cestice)} čestica na kojima već stoji zgrada</strong> (slobodnog je zemljišta na njima {ha1(sporne.izgradjena.ha)} ha). Zakon neuređeni dio određuje kao dio neizgrađenog dijela građevinskog područja, pa je upitno pripadaju li mu izgrađene čestice.
@@ -846,7 +842,7 @@ export default async function AnalizaPage() {
 
         <Podnaslov>Što se na temelju toga može tražiti</Podnaslov>
         <ul className="list-disc space-y-2 pl-5">
-          <li>da se neuređeni dio uskladi s kriterijem Grada, tako da se iz njega izuzmu čestice uz postojeću cestu široku barem 4 m i izgrađene čestice (izmjenom PPUG-a i GUP-a); popis je na karti zabrane;</li>
+          <li>da se neuređeni dio uskladi s kriterijem Grada, tako da se iz njega izuzmu čestice uz postojeću cestu široku barem 4 m i izgrađene čestice (izmjenom PPUG-a i GUP-a);</li>
           <li>da se iz urbane sanacije izuzmu plohe u kojima ozakonjene zgrade nisu većina (Harakovac, Mostine i Lovrinac);</li>
           <li>da se iz urbane sanacije izuzmu prazne čestice, barem one uz postojeću javnu cestu, jer sanacija služi uređenju ozakonjene gradnje, a na njima nje nema;</li>
           <li>za pojedinu česticu u neuređenom dijelu do koje već vodi izvedena cesta, da je Grad prebaci u uređeni dio; dokaz treba priložiti (fotografija ceste, podaci o priključku), jer je Grad takve primjedbe u raspravi o PPUG-u prihvaćao;</li>
@@ -1164,7 +1160,8 @@ export default async function AnalizaPage() {
           ])}
         />
         <p>
-          Karta tih područja i čestica, s tražilicom adresa, nalazi se na stranici{" "}
+          Karta privatnog zemljišta pod zabranom (urbana sanacija i urbana preobrazba stambenih i mješovitih zona), s
+          tražilicom adresa, nalazi se na stranici{" "}
           <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
             Zabrana nove gradnje do donošenja UPU-a
           </Link>

@@ -46,26 +46,15 @@ test("doRuba: metri do najbližeg ruba", () => {
   assert.ok(d > 10 && d < 12, `${d}`);
 });
 
-test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", () => {
+test("stanjeTocke: zabrana prije plana na snazi, izvan GUP-a, preporuka, GUP", () => {
   const upu = { ...oblik(poligon(kvadrat(16.4, 43.5, 0.02))), broj: 18, naziv: "UPU Dračevac 2" };
   const s: Slojevi = {
-    komadi: [{ ...oblik(poligon(kvadrat(16.4, 43.5, 0.005))), podrucje: "sanacija", upu: 18 }],
+    komadi: [
+      { ...oblik(poligon(kvadrat(16.4, 43.5, 0.005))), podrucje: "sanacija", upu: 18, fokus: true },
+      { ...oblik(poligon(kvadrat(16.41, 43.5, 0.003))), podrucje: "preobrazba", upu: 0, fokus: false, izvan: "gospodarska" },
+    ],
     negradivo: [{ ...oblik(poligon(kvadrat(16.406, 43.5, 0.003))), podrucje: "neuredeno", namjena: "promet", upu: 18 }],
-    cestice: [{ ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))), kc: "406/3", ko: "SPLIT", m2: 850, neizgradjena: true }],
-    sporne: [
-      {
-        ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))),
-        kc: "406/3",
-        ko: "SPLIT",
-        m2: 850,
-        podrucje: "sanacija",
-        razlozi: ["sanacija"],
-        udio: 12,
-      },
-    ],
-    plohe: [
-      { ...oblik(poligon(kvadrat(16.4, 43.5, 0.004))), ha: 8, zgrade: 25, sRjesenjem: 3, udio: 12, manjina: true },
-    ],
+    cestice: [{ ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))), kc: "406/3", ko: "SPLIT", m2: 850, neizgradjena: true, fokus: true }],
     ppug: [],
     ppugCestice: {},
     obris: oblik(poligon(kvadrat(16.4, 43.5, 0.005))),
@@ -79,16 +68,19 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
     assert.equal(z.podrucje, "sanacija");
     assert.equal(z.upu?.naziv, "UPU Dračevac 2");
     assert.equal(z.cestica?.kc, "406/3");
-    assert.deepEqual(z.sporna?.razlozi, ["sanacija"]);
-    assert.equal(z.ploha?.udio, 12);
+    assert.equal(z.fokus, true);
     // najbliži rub je 0,002° zemljopisne dužine zapadno ≈ 161 m
     assert.ok(z.doRuba > 150 && z.doRuba < 170, `${z.doRuba}`);
   }
   const bezCestice = stanjeTocke(s, 16.4045, 43.5045);
   assert.equal(bezCestice.rezim === "zabrana" && bezCestice.cestica, null);
-  assert.equal(bezCestice.rezim === "zabrana" && bezCestice.sporna, null);
-  // izvan plohe s brojem zgrada
-  assert.equal(bezCestice.rezim === "zabrana" && bezCestice.ploha, null);
+  // preobrazba gospodarske zone: i dalje zabrana, ali je karta ne boji
+  const gosp = stanjeTocke(s, 16.4115, 43.5015);
+  assert.equal(gosp.rezim, "zabrana");
+  if (gosp.rezim === "zabrana") {
+    assert.equal(gosp.fokus, false);
+    assert.equal(gosp.izvan, "gospodarska");
+  }
   const ng = stanjeTocke(s, 16.4075, 43.5015);
   assert.equal(ng.rezim, "negradivo");
   if (ng.rezim === "negradivo") {
@@ -96,7 +88,7 @@ test("stanjeTocke: crveno prije plana na snazi, izvan GUP-a, preporuka, GUP", ()
     assert.equal(ng.upu?.naziv, "UPU Dračevac 2");
   }
   assert.equal(stanjeTocke(s, 16.412, 43.512).rezim, "vazeci");
-  assert.equal(stanjeTocke(s, 16.418, 43.502).rezim, "preporuka");
+  assert.equal(stanjeTocke(s, 16.418, 43.508).rezim, "preporuka");
   assert.equal(stanjeTocke(s, 16.43, 43.53).rezim, "gup");
   assert.equal(stanjeTocke(s, 16.5, 43.6).rezim, "izvan");
 });
@@ -138,6 +130,21 @@ test("zabrana-cestice-2025.geojson: zbroj čestica jednak je iskazanom slobodnom
   assert.equal(c.length - neizg.length, z.djelomicno.cestice);
   const ha = c.reduce((s, f) => s + f.properties.m2, 0) / 1e4;
   assert.ok(Math.abs(ha - z.slobodno_ha) < 0.2, `${ha} vs ${z.slobodno_ha}`);
+  // ono što karta boji
+  const f = c.filter((x) => (x.properties as { fokus?: boolean }).fokus);
+  assert.equal(f.filter((x) => x.properties.neizgradjena).length, z.fokus.neizgradjene.cestice);
+  const haF = f.reduce((s, x) => s + x.properties.m2, 0) / 1e4;
+  assert.ok(Math.abs(haF - z.fokus.slobodno_ha) < 0.2, `${haF} vs ${z.fokus.slobodno_ha}`);
+  // po UPU-u su prebrojane sve čestice s karte (po njima se crtaju obuhvati)
+  const poUpu = z.po_upu as { fokus_cestice: number }[];
+  assert.equal(poUpu.reduce((s, r) => s + r.fokus_cestice, 0), f.length);
+  // karta boji izgrađene i neizgrađene čestice; neizgrađene s mjestom za zgradu su među njima
+  const k = citaj("zabrana-izgradjenost-2025.geojson").features as { properties: { kc: string; ko: string; izgradjena: boolean } }[];
+  assert.equal(k.length, z.fokus.na_karti.cestice);
+  assert.equal(k.filter((x) => !x.properties.izgradjena).length, z.fokus.na_karti.neizgradjene);
+  const naKarti = new Set(k.filter((x) => !x.properties.izgradjena).map((x) => `${x.properties.ko}|${x.properties.kc}`));
+  const sMjestom = f.filter((x) => x.properties.neizgradjena) as unknown as { properties: { kc: string; ko: string } }[];
+  assert.ok(sMjestom.every((x) => naKarti.has(`${x.properties.ko}|${x.properties.kc}`)));
 });
 
 test("zabrana-2025.geojson: komadi zbrojeni daju iskazanu površinu", () => {
@@ -150,6 +157,8 @@ test("zabrana-2025.geojson: komadi zbrojeni daju iskazanu površinu", () => {
   assert.ok(Math.abs(gradnja - d.zbroj.gradnja_ukupno_ha) / d.zbroj.gradnja_ukupno_ha < 0.005, `${gradnja} vs ${d.zbroj.gradnja_ukupno_ha}`);
   assert.ok(Math.abs(sve - d.zbroj.ukupno_ha) / d.zbroj.ukupno_ha < 0.01, `${sve} vs ${d.zbroj.ukupno_ha}`);
   assert.equal(d.features.filter((f: { properties: { vrsta: string } }) => f.properties.vrsta === "gup").length, 1);
+  const fokus = d.features.filter((f: { properties: { fokus?: boolean } }) => f.properties.fokus).reduce((s: number, f: K) => s + f.properties.ha, 0);
+  assert.ok(Math.abs(fokus - d.zbroj.fokus.gradnja_ukupno_ha) / d.zbroj.fokus.gradnja_ukupno_ha < 0.005, `${fokus} vs ${d.zbroj.fokus.gradnja_ukupno_ha}`);
 });
 
 test("imenicaUz: jednina, dvojina i množina uz broj", () => {

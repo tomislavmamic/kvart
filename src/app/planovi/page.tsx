@@ -11,7 +11,7 @@ import { createPageMetadata } from "@/lib/metadata";
 export const metadata = createPageMetadata({
   title: "Planovi: GUP i njegove izmjene",
   description:
-    "Sve o prostornim planovima za Dračevac i Bilice na jednom mjestu: gdje bi i zašto prijedlog izmjena GUP-a zaustavio gradnju, što nacrt izmjena iz 2024. mijenja u kvartu te cijeli tekst plana.",
+    "Sve o prostornim planovima za Dračevac i Bilice na jednom mjestu: gdje će i zašto izmjene GUP-a zaustaviti gradnju, što nacrt izmjena iz 2024. mijenja u kvartu te cijeli tekst plana.",
 });
 
 interface Stranica {
@@ -25,12 +25,12 @@ interface Stranica {
 const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
   {
     naslov: "Prijedlog izmjena GUP-a",
-    uvod: "Grad mijenja GUP. Prijedlog iz travnja 2025. još nije usvojen. Ako se usvoji, na većem bi dijelu kvarta nova gradnja stala do donošenja urbanističkog plana uređenja (UPU).",
+    uvod: "Grad mijenja GUP. Prijedlog iz travnja 2025. još nije usvojen. Kad se usvoji, na većem će dijelu kvarta nova gradnja stati do donošenja urbanističkog plana uređenja (UPU).",
     stranice: [
       {
         href: "/gup/zabrana",
         naslov: "Zabrana nove gradnje do donošenja UPU-a",
-        opis: "Karta područja na kojima se bez UPU-a ne bi smjelo graditi, s površinom neizgrađenog zemljišta koje bi to pogodilo.",
+        opis: "Karta privatnog zemljišta na kojem se bez UPU-a neće smjeti graditi nova zgrada, s površinom slobodnog zemljišta koje to pogađa.",
         radnja: "Provjeri svoju adresu",
       },
       {
