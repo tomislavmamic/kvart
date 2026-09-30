@@ -176,7 +176,7 @@ export const NAVODI: Record<string, SpecNavoda> = {
     opis: "oznake Z6 otisnute na listu 2025. (Bačvice)",
   },
 
-  // ---- /gup/analiza: zašto bi prijedlog 2025. zaustavio gradnju do UPU-a
+  // ---- /gup/analiza: zašto prijedlog 2025. zaustavlja gradnju do UPU-a
 
   "clanak-104-2015": { dok: "55-14", clanak: "cl-104", opis: "zahvati u konsolidiranim i niskokonsolidiranim područjima" },
   "clanak-105-2015": {

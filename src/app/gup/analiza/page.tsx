@@ -1,5 +1,5 @@
 /**
- * Analiza: zašto bi prijedlog izmjena GUP-a iz 2025. zaustavio novu gradnju
+ * Analiza: zašto izmjene GUP-a iz 2025. zaustavljaju novu gradnju
  * do donošenja UPU-a, iako i važeći GUP ondje propisuje UPU. Hrvatska inačica
  * izvješća reports/UPU building ban in sanation areas.md.
  *
@@ -8,7 +8,7 @@
  * tom mjestu (/gup/dokument) i izvornik na split.hr. Navodi su u
  * src/lib/gup-dokument/navodi.ts.
  *
- * Brojke o zemljištu na kojem se bez UPU-a ne bi smjelo graditi čitaju se iz istih podataka kao
+ * Brojke o zemljištu na kojem se bez UPU-a neće smjeti graditi čitaju se iz istih podataka kao
  * /gup/zabrana; ostale brojke (usporedba listova, nove zgrade, dozvole) iz
  * izvješća i bilježaka u research_notes/.
  */
@@ -21,9 +21,9 @@ import { ucitajSporne, ucitajZbrojZabrane, zemljisteZaStanovanje } from "@/lib/g
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
-  title: "Zašto bi prijedlog GUP-a zaustavio gradnju do donošenja UPU-a",
+  title: "Zašto izmjene GUP-a zaustavljaju gradnju do donošenja UPU-a",
   description:
-    "Analiza: važeći GUP već propisuje UPU za istočni Split, a ondje se ipak gradi. Zabrana gradnje ne bi proizašla iz novog zakona, nego iz nove oznake urbane sanacije u prijedlogu izmjena GUP-a iz 2025.",
+    "Analiza: važeći GUP već propisuje UPU za istočni Split, a ondje se ipak gradi. Zabrana gradnje ne proizlazi iz novog zakona, nego iz nove oznake urbane sanacije u prijedlogu izmjena GUP-a iz 2025.",
 });
 
 const ha = (m2: number) => Math.round(m2 / 1e4).toLocaleString("hr-HR");
@@ -82,9 +82,9 @@ const SADRZAJ: [string, string][] = [
   ["oznake", "2. Što znače oznake na listu 4.d i jesu li dobro ucrtane?"],
   ["vazeci-gup", "3. Što kaže važeći GUP?"],
   ["zakon", "4. Je li se promijenio zakon?"],
-  ["prijedlog", "5. Što bi prijedlog promijenio?"],
+  ["prijedlog", "5. Što prijedlog mijenja?"],
   ["gradnja", "6. Je li se gradilo?"],
-  ["zasto", "7. Zašto bi sada nastala zabrana?"],
+  ["zasto", "7. Zašto zabrana nastaje sada?"],
   ["sto-uciniti", "Što stanovnici mogu učiniti"],
   ["otvorena-pitanja", "Otvorena pitanja"],
   ["izvori", "Izvori i način izračuna"],
@@ -325,10 +325,10 @@ export default async function AnalizaPage() {
         · analiza, 27. rujna 2026., brojke osvježene 29. rujna 2026.
       </p>
       <h1 className="mt-1 max-w-3xl text-2xl font-bold text-balance sm:text-3xl">
-        Gradnju ne bi zaustavio novi zakon, nego nova oznaka na karti
+        Gradnju ne zaustavlja novi zakon, nego nova oznaka na karti
       </h1>
       <p className="mt-3 max-w-3xl text-lg text-zinc-600">
-        Zašto bi prijedlog izmjena GUP-a iz 2025. zabranio novu gradnju u istočnom Splitu kad i važeći GUP ondje propisuje UPU, a
+        Zašto prijedlog izmjena GUP-a iz 2025. zabranjuje novu gradnju u istočnom Splitu kad i važeći GUP ondje propisuje UPU, a
         posljednjih se godina ipak gradilo s dozvolama?
       </p>
       <p className="mt-3 max-w-3xl text-sm text-zinc-500">
@@ -341,7 +341,7 @@ export default async function AnalizaPage() {
         <p className="font-semibold text-zinc-900">Ukratko</p>
         <ul className="mt-2 list-disc space-y-2 pl-5">
           <li>
-            <strong>Zabranu ne bi donio novi zakon, nego nova oznaka na karti.</strong> Prijedlog izmjena GUP-a iz travnja 2025. označava istočni Split kao područje urbane sanacije ili neuređeni dio građevinskog područja.
+            <strong>Zabranu ne donosi novi zakon, nego nova oznaka na karti.</strong> Prijedlog izmjena GUP-a iz travnja 2025. označava istočni Split kao područje urbane sanacije ili neuređeni dio građevinskog područja.
           </li>
           <li>
             <strong>Na tako označenom zemljištu zakon ne dopušta nove zgrade dok se ne donese UPU.</strong> To pravilo vrijedi od 2014., a zadržava ga i novi zakon, na snazi od 1. siječnja 2026. U neuređenom dijelu iznimka je lokacijska dozvola za zgradu uz postojeću javnu cestu, s rješenjem odvodnje.
@@ -353,7 +353,7 @@ export default async function AnalizaPage() {
             <strong>Gradilo se, ali manje nego što se čini.</strong> Oko 4 % zgrada na tom području nastalo je nakon 2017., a većina kuća koje se doimaju novima stajala je već 2011. i poslije je ozakonjena.
           </li>
           <li>
-            <strong>U cijelom gradu zabrana bi pogodila {h(zbroj.slobodno_ha)} ha slobodnog zemljišta</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
+            <strong>U cijelom gradu zabrana će pogoditi {h(zbroj.slobodno_ha)} ha slobodnog zemljišta</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
           </li>
           <li>
             <strong>Oznake nisu ucrtane dosljedno ni prema kriteriju samoga Grada ni prema zakonu.</strong> Najmanje {broj(sporne.pristup.cestice)} čestica uz ceste čija je čestica široka barem 4 m označeno je kao neuređeni dio, a u trima plohama urbane sanacije ozakonjene zgrade prema registru nisu većina.
@@ -512,7 +512,7 @@ export default async function AnalizaPage() {
           ]}
           legenda={PODLOGA}
         >
-          <strong>Slika 2.</strong> Zabrana gradnje do donošenja UPU-a vrijedila bi samo na područjima s prvih triju karata. Četvrta karta prikazuje ostatak obuhvata, u kojem je UPU samo preporučen.
+          <strong>Slika 2.</strong> Zabrana gradnje do donošenja UPU-a vrijedit će samo na područjima s prvih triju karata. Četvrta karta prikazuje ostatak obuhvata, u kojem je UPU samo preporučen.
         </ParKarata>
         <ParKarata
           karte={[
@@ -613,7 +613,7 @@ export default async function AnalizaPage() {
 
         <Podnaslov>Koliko se poklapaju</Podnaslov>
         <p>
-          <strong>Važeći GUP već propisuje UPU za 93 % zemljišta na kojem bi ga za gradnju tražio i prijedlog.</strong> Ondje gdje se karte razlikuju, prijedlog je blaži: na oko 21,7 ha za koje važeći GUP propisuje UPU samo ga preporučuje, a novu obvezu UPU-a uvodi na tek 7,8 ha, gotovo isključivo uz rub Karepovca.
+          <strong>Važeći GUP već propisuje UPU za 93 % zemljišta na kojem ga za gradnju traži i prijedlog.</strong> Ondje gdje se karte razlikuju, prijedlog je blaži: na oko 21,7 ha za koje važeći GUP propisuje UPU samo ga preporučuje, a novu obvezu UPU-a uvodi na tek 7,8 ha, gotovo isključivo uz rub Karepovca.
         </p>
         <Tablica
           zaglavlje={["Područje", "UPU potreban prema važećem GUP-u (ha)", "UPU potreban prema prijedlogu (ha)", "Prema obama planovima (ha)", "U prijedlogu: sanacija / neuređeno (ha)"]}
@@ -629,10 +629,10 @@ export default async function AnalizaPage() {
             Sva su tri lista iz PDF-ova Grada prenesena na rešetku od 2 m. Od službenih granica planova odstupaju za 4 do 7 m (medijan), a pomak bilo kojeg od njih za 10 m mijenja udjele u nastavku za najviše dva postotna boda.
           </p>
           <p>
-            Promatrano područje (187,3 ha) obuhvaća kvartove Dračevac i Bilice te UPU 17 Mostine, UPU 18 Dračevac 2 i UPU 19 Harakovac iz prijedloga. Ondje se obuhvati UPU-a iz važećeg GUP-a i iz prijedloga gotovo potpuno poklapaju: <strong>Jaccardov indeks je 0,98</strong> (presjek podijeljen unijom, pri čemu 1 znači potpuno poklapanje), odnosno od 137,3 ha i 140,1 ha zajedničko je 137,2 ha. <strong>Važeći GUP već propisuje UPU za 93 % zemljišta na kojem bi ga za gradnju tražio i prijedlog.</strong> <strong>99,4 % urbane sanacije iz prijedloga nalazi se unutar obuhvata za koji važeći GUP već propisuje UPU</strong>, a na 74 % te površine primjenjuje se urbano pravilo 3.1. U UPU-u Dračevac 2 iz prijedloga pravilo 3.1 primjenjuje se na 97 % zemljišta.
+            Promatrano područje (187,3 ha) obuhvaća kvartove Dračevac i Bilice te UPU 17 Mostine, UPU 18 Dračevac 2 i UPU 19 Harakovac iz prijedloga. Ondje se obuhvati UPU-a iz važećeg GUP-a i iz prijedloga gotovo potpuno poklapaju: <strong>Jaccardov indeks je 0,98</strong> (presjek podijeljen unijom, pri čemu 1 znači potpuno poklapanje), odnosno od 137,3 ha i 140,1 ha zajedničko je 137,2 ha. <strong>Važeći GUP već propisuje UPU za 93 % zemljišta na kojem ga za gradnju traži i prijedlog.</strong> <strong>99,4 % urbane sanacije iz prijedloga nalazi se unutar obuhvata za koji važeći GUP već propisuje UPU</strong>, a na 74 % te površine primjenjuje se urbano pravilo 3.1. U UPU-u Dračevac 2 iz prijedloga pravilo 3.1 primjenjuje se na 97 % zemljišta.
           </p>
           <p>
-            Ondje gdje se karte razlikuju, prijedlog obvezu češće ukida nego što je uvodi. <strong>Prijedlog samo preporučuje UPU na oko 21,7 ha za koje ga važeći GUP propisuje</strong>, pa bi se ondje gradilo neposrednom provedbom GUP-a. Prema namjeni s lista 1 to su većinom gospodarske zone (I, K) u Mostinama i Harakovcu; taj udio još nije provjeren prema tumaču znakova. <strong>Novu obvezu UPU-a prijedlog uvodi na samo 7,8 ha</strong>, gotovo sve uz rub gradskog projekta Karepovac. U cijelom se gradu karte razlikuju mnogo više (Jaccardov indeks 0,51): prijedlog ukida obvezu na oko 350 ha konsolidiranog grada, a dodaje veliko područje urbane preobrazbe na zemljištu gradskih projekata poput Kopilice i brodogradilišta. Ipak, i na razini cijelog grada važeći GUP već propisuje UPU za 99 % područja urbane sanacije iz prijedloga koja su izvan važećih planova.
+            Ondje gdje se karte razlikuju, prijedlog obvezu češće ukida nego što je uvodi. <strong>Prijedlog samo preporučuje UPU na oko 21,7 ha za koje ga važeći GUP propisuje</strong>, pa će se ondje graditi neposrednom provedbom GUP-a. Prema namjeni s lista 1 to su većinom gospodarske zone (I, K) u Mostinama i Harakovcu; taj udio još nije provjeren prema tumaču znakova. <strong>Novu obvezu UPU-a prijedlog uvodi na samo 7,8 ha</strong>, gotovo sve uz rub gradskog projekta Karepovac. U cijelom se gradu karte razlikuju mnogo više (Jaccardov indeks 0,51): prijedlog ukida obvezu na oko 350 ha konsolidiranog grada, a dodaje veliko područje urbane preobrazbe na zemljištu gradskih projekata poput Kopilice i brodogradilišta. Ipak, i na razini cijelog grada važeći GUP već propisuje UPU za 99 % područja urbane sanacije iz prijedloga koja su izvan važećih planova.
           </p>
           <Slika
             src="/gup/analiza/rezim-istok.webp"
@@ -755,7 +755,7 @@ export default async function AnalizaPage() {
 
         <Podnaslov>Neuređeni dio: zemljište uz ceste na česticama širokim barem 4 m</Podnaslov>
         <p>
-          Za neuređeni dio Grad je naveo jasan kriterij, koji se može provjeriti. Za svaku cestu iz gradskog registra nerazvrstanih cesta i za državnu cestu izmjerili smo širinu katastarske čestice na kojoj leži, a zatim utvrdili koje čestice u neuređenom dijelu graniče s tom cestom. Brojali smo samo čestice od najmanje 250 m² na kojima bi zabrana pogodila novu gradnju, u cijelom obuhvatu GUP-a.
+          Za neuređeni dio Grad je naveo jasan kriterij, koji se može provjeriti. Za svaku cestu iz gradskog registra nerazvrstanih cesta i za državnu cestu izmjerili smo širinu katastarske čestice na kojoj leži, a zatim utvrdili koje čestice u neuređenom dijelu graniče s tom cestom. Brojali smo samo čestice od najmanje 250 m² na kojima zabrana pogađa novu gradnju, u cijelom obuhvatu GUP-a.
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
@@ -807,10 +807,10 @@ export default async function AnalizaPage() {
             U {vecina.length} od {plohe.length} ploha urbane sanacije s barem 10 zgrada rješenje o izvedenom stanju ima {Math.min(...vecina.map((p) => p.udio))} do {Math.max(...vecina.map((p) => p.udio))} % zgrada.
           </li>
           <li>
-            <strong>U preostalim trima plohama nije tako.</strong> U plohi u Harakovcu ({ha1(ploha(19)?.ha ?? 0)} ha, {ploha(19)?.zgrade} zgrada) rješenje o izvedenom stanju ima {ploha(19)?.udio} % zgrada, u plohi u Mostinama ({ha1(ploha(17)?.ha ?? 0)} ha, {ploha(17)?.zgrade} zgrada, među njima velike poslovne hale) {ploha(17)?.udio} %, a u plohi u obuhvatu UPU-a proširenja groblja Lovrinac ({ha1(ploha(21)?.ha ?? 0)} ha, {ploha(21)?.zgrade} zgrada) {ploha(21)?.udio} %. Prema podacima iz registra, u tim plohama zakonski uvjet za urbanu sanaciju nije ispunjen. Na njima je {broj(sporne.sanacija.cestice)} čestica na kojima bi zabrana pogodila novu gradnju.
+            <strong>U preostalim trima plohama nije tako.</strong> U plohi u Harakovcu ({ha1(ploha(19)?.ha ?? 0)} ha, {ploha(19)?.zgrade} zgrada) rješenje o izvedenom stanju ima {ploha(19)?.udio} % zgrada, u plohi u Mostinama ({ha1(ploha(17)?.ha ?? 0)} ha, {ploha(17)?.zgrade} zgrada, među njima velike poslovne hale) {ploha(17)?.udio} %, a u plohi u obuhvatu UPU-a proširenja groblja Lovrinac ({ha1(ploha(21)?.ha ?? 0)} ha, {ploha(21)?.zgrade} zgrada) {ploha(21)?.udio} %. Prema podacima iz registra, u tim plohama zakonski uvjet za urbanu sanaciju nije ispunjen. Na njima je {broj(sporne.sanacija.cestice)} čestica na kojima zabrana pogađa novu gradnju.
           </li>
           <li>
-            <strong>U plohama urbane sanacije je i {broj(sporne.prazne_u_sanaciji.cestice)} praznih čestica ({ha1(sporne.prazne_u_sanaciji.ha)} ha)</strong>, od toga {broj(sporne.prazne_u_sanaciji_uz_cestu)} uz postojeću cestu. GUP sanaciju crta kao jednu plohu preko cijelog izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenog bloka, sve do ceste, vodi kao izgrađeni dio. Na takvoj se čestici do UPU-a ne bi smjelo graditi ništa. Na jednakoj praznoj čestici u neuređenom dijelu uz postojeću javnu cestu može se dobiti lokacijska dozvola, a na onoj bez oznake gradi se odmah. Na sjevernom rubu Dračevca 2 tako je prazan maslinik s unutarnje strane zavoja ceste u sanaciji, a jednake prazne čestice iste gospodarske zone preko ceste nisu.
+            <strong>U plohama urbane sanacije je i {broj(sporne.prazne_u_sanaciji.cestice)} praznih čestica ({ha1(sporne.prazne_u_sanaciji.ha)} ha)</strong>, od toga {broj(sporne.prazne_u_sanaciji_uz_cestu)} uz postojeću cestu. GUP sanaciju crta kao jednu plohu preko cijelog izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenog bloka, sve do ceste, vodi kao izgrađeni dio. Na takvoj se čestici do UPU-a neće smjeti graditi ništa. Na jednakoj praznoj čestici u neuređenom dijelu uz postojeću javnu cestu može se dobiti lokacijska dozvola, a na onoj bez oznake gradi se odmah. Na sjevernom rubu Dračevca 2 tako je prazan maslinik s unutarnje strane zavoja ceste u sanaciji, a jednake prazne čestice iste gospodarske zone preko ceste nisu.
           </li>
           <li>
             <strong>I u ostatku obuhvata većina zgrada ima rješenje o izvedenom stanju (66 %), a oznake urbane sanacije ondje nema.</strong> Oznaka dakle ne prati samo udio ozakonjenih zgrada: zemljište sa sličnim udjelom na jednom je mjestu pod zabranom, a na drugome nije.
@@ -1068,7 +1068,7 @@ export default async function AnalizaPage() {
         </Detaljnije>
       </Poglavlje>
 
-      <Poglavlje id="prijedlog" naslov="5. Što bi prijedlog promijenio? Izričite oznake i manje iznimaka, po odluci Grada">
+      <Poglavlje id="prijedlog" naslov="5. Što prijedlog mijenja? Izričite oznake i manje iznimaka, po odluci Grada">
         <Odgovor>
           Prijedlog označava istočni Split kao područje urbane sanacije ili neuređeni dio građevinskog područja, pa zabrana gradnje novih zgrada do donošenja UPU-a proizlazi izravno iz zakona. Prijedlog usto ukida iznimke koje važeći GUP daje postojećim kućama. Samu oznaku bira Grad.
         </Odgovor>
@@ -1147,7 +1147,7 @@ export default async function AnalizaPage() {
           </p>
 
         </Detaljnije>
-        <Podnaslov>Koliko bi zemljišta za gradnju oznake blokirale</Podnaslov>
+        <Podnaslov>Koliko zemljišta za gradnju oznake blokiraju</Podnaslov>
         <p>
           Zabrana ne dira ono što je već izgrađeno, nego slobodno zemljište na kojem bi se inače smjela graditi nova zgrada. U cijelom gradu to je <strong>{h(zbroj.slobodno_ha)} ha</strong>, od čega {h(zbroj.neizgradjene.ha)} ha na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["neizgrađenoj čestici", "neizgrađene čestice", "neizgrađenih čestica"])}.
         </p>
@@ -1169,13 +1169,13 @@ export default async function AnalizaPage() {
         </p>
         <Detaljnije naslov="Kako smo računali i koliko je zemljišta za stanovanje">
           <p>
-            Zabrana ne dira ono što je već izgrađeno. Oznake iz prijedloga u cijelom gradu obuhvaćaju <strong>{h(zbroj.ukupno_ha)} ha</strong> ({h(zbroj.ha.sanacija)} ha urbane sanacije, {h(zbroj.ha.preobrazba)} ha urbane preobrazbe i {h(zbroj.ha.neuredeno)} ha neuređenih dijelova građevinskog područja), računajući samo ispunu koja se na listu vidi, unutar obuhvata GUP-a i izvan važećih planova. U zonama za gradnju (stambenoj, mješovitoj, gospodarskoj i turističkoj) od toga je {h(zbroj.gradnja_ukupno_ha)} ha, a ostalo su ulice, infrastruktura te javna, športska i zelena namjena, na kojima se privatna zgrada ne gradi ni bez zabrane. I u zonama za gradnju velik je dio izgrađen: ozakonjene kuće, brodogradilište. Zabrana bi pogodila zemljište koje je još slobodno za novu zgradu. Ova ga stranica broji čestica po čestica, istim izračunom kao <Link href="/gup?prikaz=grafikon" className="fokus text-emerald-700 underline">grafikon GUP-a</Link>, bez čestica kojima je većina na ulici ili javnoj, športskoj i zelenoj namjeni (primjerice u koridoru planirane ceste). Slobodno je zemljište koje ne zauzima zgrada s česticom koju joj odredbe propisuju, ni ulica, ni parkiralište ni park, a mora biti dovoljno veliko da na njega, zajedno sa slobodnim susjednim zemljištem, stane nova građevna čestica. Čestica koju zgrada troši računa se iz njezina tlocrta i bruto površine kroz najveći koeficijent izgrađenosti (kig) i iskoristivosti (kis) za to područje, a ne manje od najmanje građevne čestice. Za stambenu i mješovitu namjenu to su vrijednosti iz urbanih pravila; za gospodarsku i turističku namjenu, za razliku od grafikona, iz posebnih pravila urbanih pravila 3.1 i 3.2 (<Navod id="kig-gospodarska-2025">primjerice kig 0,4 i kisN+kisO 1,6 za poslovnu namjenu u pravilu 3.1</Navod>), gdje leži gotovo sva takva zemlja pod zabranom. Gradski projekti imaju samo ukupnu kvotu bruto površine, pa ondje zgrada troši cijeli komad čestice, osim ako pokriva manje od 3 % njega. Zone javne i društvene namjene nisu uključene jer se javne zgrade smiju graditi i prije UPU-a.
+            Zabrana ne dira ono što je već izgrađeno. Oznake iz prijedloga u cijelom gradu obuhvaćaju <strong>{h(zbroj.ukupno_ha)} ha</strong> ({h(zbroj.ha.sanacija)} ha urbane sanacije, {h(zbroj.ha.preobrazba)} ha urbane preobrazbe i {h(zbroj.ha.neuredeno)} ha neuređenih dijelova građevinskog područja), računajući samo ispunu koja se na listu vidi, unutar obuhvata GUP-a i izvan važećih planova. U zonama za gradnju (stambenoj, mješovitoj, gospodarskoj i turističkoj) od toga je {h(zbroj.gradnja_ukupno_ha)} ha, a ostalo su ulice, infrastruktura te javna, športska i zelena namjena, na kojima se privatna zgrada ne gradi ni bez zabrane. I u zonama za gradnju velik je dio izgrađen: ozakonjene kuće, brodogradilište. Zabrana pogađa zemljište koje je još slobodno za novu zgradu. Ova ga stranica broji čestica po čestica, istim izračunom kao <Link href="/gup?prikaz=grafikon" className="fokus text-emerald-700 underline">grafikon GUP-a</Link>, bez čestica kojima je većina na ulici ili javnoj, športskoj i zelenoj namjeni (primjerice u koridoru planirane ceste). Slobodno je zemljište koje ne zauzima zgrada s česticom koju joj odredbe propisuju, ni ulica, ni parkiralište ni park, a mora biti dovoljno veliko da na njega, zajedno sa slobodnim susjednim zemljištem, stane nova građevna čestica. Čestica koju zgrada troši računa se iz njezina tlocrta i bruto površine kroz najveći koeficijent izgrađenosti (kig) i iskoristivosti (kis) za to područje, a ne manje od najmanje građevne čestice. Za stambenu i mješovitu namjenu to su vrijednosti iz urbanih pravila; za gospodarsku i turističku namjenu, za razliku od grafikona, iz posebnih pravila urbanih pravila 3.1 i 3.2 (<Navod id="kig-gospodarska-2025">primjerice kig 0,4 i kisN+kisO 1,6 za poslovnu namjenu u pravilu 3.1</Navod>), gdje leži gotovo sva takva zemlja pod zabranom. Gradski projekti imaju samo ukupnu kvotu bruto površine, pa ondje zgrada troši cijeli komad čestice, osim ako pokriva manje od 3 % njega. Zone javne i društvene namjene nisu uključene jer se javne zgrade smiju graditi i prije UPU-a.
           </p>
           <p>
-            Prema tom izračunu, <strong>na {h(zbroj.slobodno_ha)} ha slobodnog zemljišta nove se zgrade ne bi smjele graditi bez UPU-a</strong>. Od toga <strong>{h(zbroj.neizgradjene.ha)} ha nalazi se na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["čestici na kojoj", "čestice na kojima", "čestica na kojima"])} ništa nije izgrađeno</strong> (nema zgrade, okućnice ni gradilišta), a {h(zbroj.djelomicno.ha)} ha na slobodnim dijelovima {djelomicno.toLocaleString("hr-HR")} {imenicaUz(djelomicno, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])}, primjerice na velikim dvorištima ili neizgrađenim dijelovima poslovnih čestica. Po namjeni je {h(zbroj.slobodno_po_zoni_ha.gospodarstvo ?? 0)} ha gospodarsko, {h(zbroj.slobodno_po_zoni_ha.stanovanje ?? 0)} ha stambeno i mješovito, a {h(zbroj.slobodno_po_zoni_ha.turizam ?? 0)} ha turističko zemljište.
+            Prema tom izračunu, <strong>na {h(zbroj.slobodno_ha)} ha slobodnog zemljišta nove se zgrade neće smjeti graditi bez UPU-a</strong>. Od toga <strong>{h(zbroj.neizgradjene.ha)} ha nalazi se na {neizgradjene.toLocaleString("hr-HR")} {imenicaUz(neizgradjene, ["čestici na kojoj", "čestice na kojima", "čestica na kojima"])} ništa nije izgrađeno</strong> (nema zgrade, okućnice ni gradilišta), a {h(zbroj.djelomicno.ha)} ha na slobodnim dijelovima {djelomicno.toLocaleString("hr-HR")} {imenicaUz(djelomicno, ["izgrađene čestice", "izgrađene čestice", "izgrađenih čestica"])}, primjerice na velikim dvorištima ili neizgrađenim dijelovima poslovnih čestica. Po namjeni je {h(zbroj.slobodno_po_zoni_ha.gospodarstvo ?? 0)} ha gospodarsko, {h(zbroj.slobodno_po_zoni_ha.stanovanje ?? 0)} ha stambeno i mješovito, a {h(zbroj.slobodno_po_zoni_ha.turizam ?? 0)} ha turističko zemljište.
           </p>
           <p>
-            Za stanovanje: stambene i mješovite zone prijedloga (S, M, K5) zauzimaju {ha(z.ukupno)} ha, od čega je {ha(z.neiskoristeno)} ha neiskorišteno. <strong>Na {ha(z.ceka)} ha tog neiskorištenog zemljišta ({posto(z.ceka, z.neiskoristeno)}) nove se zgrade ne bi smjele graditi bez UPU-a.</strong> {ha(z.poPlanu)} ha je u obuhvatu važećih planova, na {ha(z.poGupu)} ha moglo bi se graditi neposrednom provedbom GUP-a, a {ha(z.nijeZaGradnju)} ha premalo je za građevnu česticu ili ga isključuju odredbe zone. Pročitan doslovno, i važeći GUP već {ha(zemljiste[2015].ceka)} ha takvog zemljišta veže uz planove koji nikad nisu doneseni; kao što pokazuje 6. poglavlje, Grad je ondje ipak izdavao dozvole.
+            Za stanovanje: stambene i mješovite zone prijedloga (S, M, K5) zauzimaju {ha(z.ukupno)} ha, od čega je {ha(z.neiskoristeno)} ha neiskorišteno. <strong>Na {ha(z.ceka)} ha tog neiskorištenog zemljišta ({posto(z.ceka, z.neiskoristeno)}) nove se zgrade neće smjeti graditi bez UPU-a.</strong> {ha(z.poPlanu)} ha je u obuhvatu važećih planova, na {ha(z.poGupu)} ha moći će se graditi neposrednom provedbom GUP-a, a {ha(z.nijeZaGradnju)} ha premalo je za građevnu česticu ili ga isključuju odredbe zone. Pročitan doslovno, i važeći GUP već {ha(zemljiste[2015].ceka)} ha takvog zemljišta veže uz planove koji nikad nisu doneseni; kao što pokazuje 6. poglavlje, Grad je ondje ipak izdavao dozvole.
           </p>
         </Detaljnije>
       </Poglavlje>
@@ -1219,7 +1219,7 @@ export default async function AnalizaPage() {
             Izvor: <V href={IZVOR.ispu}>ISPU</V>.
           </p>
           <p>
-            Izdavane su i dozvole za proširenja izvan „postojećih gabarita”: drugi kat na dvojnoj kući, čime su nastala tri stana (UP/I-361-03/22-01/000029, 29. 12. 2022.), i uređenje potkrovlja (UP/I-361-03/21-01/000054, 9. 10. 2023.). Blaže se tumačenje dakle primjenjuje i na proširenja, a ne samo na nove kuće. Jedan zahtjev za novu gradnju (UP/I-361-03/25-01/000080) je u obradi. Tri od šest dozvola u Dračevcu odnose se na zemljište koje prijedlog unutar granice UPU-a ostavlja bez ispune, pa bi se ondje i dalje moglo graditi neposrednom provedbom GUP-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod> prijedloga). Ostale tri i zahtjev u obradi odnose se na zemljište koje prijedlog označava kao sanaciju.
+            Izdavane su i dozvole za proširenja izvan „postojećih gabarita”: drugi kat na dvojnoj kući, čime su nastala tri stana (UP/I-361-03/22-01/000029, 29. 12. 2022.), i uređenje potkrovlja (UP/I-361-03/21-01/000054, 9. 10. 2023.). Blaže se tumačenje dakle primjenjuje i na proširenja, a ne samo na nove kuće. Jedan zahtjev za novu gradnju (UP/I-361-03/25-01/000080) je u obradi. Tri od šest dozvola u Dračevcu odnose se na zemljište koje prijedlog unutar granice UPU-a ostavlja bez ispune, pa će se ondje i dalje moći graditi neposrednom provedbom GUP-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod> prijedloga). Ostale tri i zahtjev u obradi odnose se na zemljište koje prijedlog označava kao sanaciju.
           </p>
           <p>
             Odbijeni zahtjevi ne upućuju na zabranu zbog UPU-a. U uzorku točaka najmanje 30 m unutar granice UPU-a iz prijedloga i najmanje 30 m od svakog važećeg plana nađeno je 10 odbijenih zahtjeva. <strong>Za pet čestica na kojima je zahtjev bio odbijen kasnije je izdana dozvola, a da u međuvremenu nije donesen nikakav UPU</strong>, pa se ta odbijanja nisu mogla temeljiti na nedonesenom planu. Jedini odbijeni zahtjev u Dračevcu je zahtjev za izdavanje lokacijske dozvole, odbijen 10. travnja 2025. (UP/I-350-05/23-01/000050) iz nepoznatih razloga, a novi zahtjev za isto zemljište je u obradi (<V href={IZVOR.ispu}>ISPU</V>). Nije nađen nijedan splitski sudski predmet u kojem bi presudan bio nedoneseni UPU (<V href={IZVOR.sudovi}>odluke.sudovi.hr</V>).
@@ -1291,32 +1291,32 @@ export default async function AnalizaPage() {
         </Detaljnije>
       </Poglavlje>
 
-      <Poglavlje id="zasto" naslov="7. Zašto bi onda sada nastala zabrana? Isto bi zemljište promijenilo pravnu kategoriju">
+      <Poglavlje id="zasto" naslov="7. Zašto onda zabrana nastaje sada? Isto zemljište mijenja pravnu kategoriju">
         <p>
-          <strong>Ne zato što se promijenio zakon.</strong> Isto bi zemljište prešlo iz obveze UPU-a koju propisuje GUP u obvezu koju propisuje zakon.
+          <strong>Ne zato što se promijenio zakon.</strong> Isto zemljište prelazi iz obveze UPU-a koju propisuje GUP u obvezu koju propisuje zakon.
         </p>
         <p>
-          Danas obvezu UPU-a propisuje sam GUP, a odjel koji izdaje dozvole tumači njegov tekst blago i ondje ih izdaje. Kad bi izmjene s oznakama iz prijedloga stupile na snagu, sam bi zakon priječio izdavanje dozvole, a zakon se ne može zaobići tumačenjem. <strong>Isto zemljište, drugi pravni temelj zabrane.</strong>
+          Danas obvezu UPU-a propisuje sam GUP, a odjel koji izdaje dozvole tumači njegov tekst blago i ondje ih izdaje. Kad izmjene s oznakama iz prijedloga stupe na snagu, sam će zakon priječiti izdavanje dozvole, a zakon se ne može zaobići tumačenjem. <strong>Isto zemljište, drugi pravni temelj zabrane.</strong>
         </p>
-        <p>Rizik je u tome što bi zabrana mogla dugo trajati: zakon joj ne određuje rok, a prijedlog ne predviđa ni rok ni sredstva za izradu propisanih UPU-a.</p>
+        <p>Rizik je u tome što zabrana može dugo trajati: zakon joj ne određuje rok, a prijedlog ne predviđa ni rok ni sredstva za izradu propisanih UPU-a.</p>
         <Detaljnije naslov="Tekst, praksa i rizici: cijelo obrazloženje">
           <p>
-            <strong>Ne zato što se 2026. promijenio zakon.</strong> NN 155/25 nastavlja pravilo iz 2014. i čak dodaje malu iznimku za čestice uz postojeće ceste. Zabrana bi nastala <strong>premještanjem istog zemljišta iz jedne vrste obveze UPU-a u drugu</strong>.
+            <strong>Ne zato što se 2026. promijenio zakon.</strong> NN 155/25 nastavlja pravilo iz 2014. i čak dodaje malu iznimku za čestice uz postojeće ceste. Zabrana nastaje <strong>premještanjem istog zemljišta iz jedne vrste obveze UPU-a u drugu</strong>.
           </p>
           <p>
-            Od 2006. stambeni istočni Split živi pod obvezom koju je propisao <strong>plan</strong>: granicom s lista 4.c, iza koje stoji samo tekst GUP-a. Odjel koji izdaje dozvole taj je tekst čitao blago, bilo preko izraza <Navod id="pravilo-3-1-2015">„a za ostalo temeljem ovog Plana”</Navod> iz pravila 3.1, bilo preko <Navod id="clanak-49-dogradnja-2015">rečenice o dogradnji bez ograde</Navod>, bilo preko obojega. Prijedlog bi isto zemljište stavio u kategoriju koju propisuje <strong>zakon</strong>, označivši ga kao „planirano za urbanu sanaciju” ili „neuređeno”.
+            Od 2006. stambeni istočni Split živi pod obvezom koju je propisao <strong>plan</strong>: granicom s lista 4.c, iza koje stoji samo tekst GUP-a. Odjel koji izdaje dozvole taj je tekst čitao blago, bilo preko izraza <Navod id="pravilo-3-1-2015">„a za ostalo temeljem ovog Plana”</Navod> iz pravila 3.1, bilo preko <Navod id="clanak-49-dogradnja-2015">rečenice o dogradnji bez ograde</Navod>, bilo preko obojega. Prijedlog isto zemljište stavlja u kategoriju koju propisuje <strong>zakon</strong>, označivši ga kao „planirano za urbanu sanaciju” ili „neuređeno”.
           </p>
           <p>
             Kad se to dogodi, Zakon o gradnji kao uvjet za dozvolu traži da je UPU donesen (novi ZoG, čl. 73. st. 1. t. 6.; novi ZPU, čl. 180. st. 1. t. 4.), a službenik to ne može zaobići drukčijim tumačenjem neke rečenice GUP-a. Jedine su iznimke rekonstrukcija i zamjena postojeće građevine te, samo u neuređenom dijelu, lokacijska dozvola za novu zgradu uz postojeću javnu cestu. Lokacijsku dozvolu stranka smije zatražiti za svaku zgradu (novi ZPU, čl. 154. st. 1. t. 13.), a građevinska se dozvola tada izdaje prema njoj, bez provjere UPU-a (novi ZoG, čl. 74.), pa je taj put otvoren i obiteljskim kućama. Isti prijedlog ukida odredbe GUP-a o dogradnji legalnih kuća, a rekonstrukciju veže uz uvjete za novu gradnju, koje mnoge ozakonjene kuće ne mogu ispuniti. <strong>Isto zemljište, drugi pravni temelj zabrane.</strong> Grad u § 2.1.1.4 Obrazloženja i sam upravo tako razgraničava: zakonska obveza znači da se dozvole ne mogu izdati, a planska preporuka da mogu.
           </p>
           <p>
-            <strong>Nesklad teksta i prakse razriješen je jednostavno: Grad zabranu nije provodio.</strong> Na papiru je „zabranjeno” uvjerljivije tumačenje važećeg GUP-a za novu kuću na čestici s pravilom 3.1 unutar granice s lista 4.c, a isto proizlazi i iz Obrazloženja Grada iz travnja 2025. Ipak, registar pokazuje oko 57 izdanih dozvola, šest u Dračevcu, i dozvole za proširenja izvan postojećih gabarita, a nijedan zahtjev odbijen iz tog razloga. I odgovor Grada na primjedbu br. 73 parametre pravila 3.1 shvaća kao pravila za gradnju do donošenja planova. Stanovnici se ravnaju prema praksi. Ta praksa, međutim, počiva na spornom tumačenju, a ne na jasnom pravilu: traje dok odjel tekst tako tumači, a prestala bi sama od sebe čim stupe na snagu izmjene s oznakama iz prijedloga.
+            <strong>Nesklad teksta i prakse razriješen je jednostavno: Grad zabranu nije provodio.</strong> Na papiru je „zabranjeno” uvjerljivije tumačenje važećeg GUP-a za novu kuću na čestici s pravilom 3.1 unutar granice s lista 4.c, a isto proizlazi i iz Obrazloženja Grada iz travnja 2025. Ipak, registar pokazuje oko 57 izdanih dozvola, šest u Dračevcu, i dozvole za proširenja izvan postojećih gabarita, a nijedan zahtjev odbijen iz tog razloga. I odgovor Grada na primjedbu br. 73 parametre pravila 3.1 shvaća kao pravila za gradnju do donošenja planova. Stanovnici se ravnaju prema praksi. Ta praksa, međutim, počiva na spornom tumačenju, a ne na jasnom pravilu: traje dok odjel tekst tako tumači, a prestat će sama od sebe čim stupe na snagu izmjene s oznakama iz prijedloga.
           </p>
           <p>
             <strong>Je li zakonska zabrana vrijedila već od 2014. do 2025., nije razriješeno.</strong> Najuvjerljivije tumačenje starog ZPU-a zabranu ograničava na zemljište koje plan označi, a važeći GUP u istočnom Splitu ništa tako ne označava. No čl. 201. st. 3. područja „urbane obnove” izjednačio je s preobrazbom, a pravilo 3.1 službeno se zove <Navod id="pravilo-3-1-naslov-2015">„…urbana obnova…”</Navod>. Ako je ta pretpostavka obuhvaćala područja s pravilom 3.1, mnoge su ondje dozvole od 2014. do 2025. izdane protivno zakonu. Nijedan sud ni ministarstvo to nije reklo, a Grad ih je svejedno izdavao.
           </p>
           <p>
-            <strong>Zašto bi se Grad za to odlučio?</strong> Kao razloge navodi 15.000 ozakonjenih „novih postojećih” građevina i ciljeve koje prijedlog u <Navod id="clanak-106-sanacija-2025">čl. 106. st. 2.</Navod> postavlja UPU-ima urbane sanacije: ulice, komunalnu infrastrukturu, javne prostore i pravila za ozakonjene kuće, uključujući „uklanjanje (uz mogućnost nove gradnje) neuvjetnih građevina”. Ti su ciljevi legitimni.
+            <strong>Zašto se Grad za to odlučio?</strong> Kao razloge navodi 15.000 ozakonjenih „novih postojećih” građevina i ciljeve koje prijedlog u <Navod id="clanak-106-sanacija-2025">čl. 106. st. 2.</Navod> postavlja UPU-ima urbane sanacije: ulice, komunalnu infrastrukturu, javne prostore i pravila za ozakonjene kuće, uključujući „uklanjanje (uz mogućnost nove gradnje) neuvjetnih građevina”. Ti su ciljevi legitimni.
           </p>
           <p>
             Rizik je u trajanju. Od 2014. zakonska zabrana nema rok, za razliku od privremene zabrane iz zakona iz 2007., koja je mogla trajati najdulje dvije godine i još jednu (<V href={IZVOR.zpug}>ZPUG, NN 76/07</V>), a prijedlog propisanim UPU-ima ne daje ni sredstva ni rokove. Visoki upravni sud ukidao je odredbe planova koje su gradnju uvjetovale budućim UPU-om „čije je donošenje neizvjesno”, pozivajući se na pravnu sigurnost (<V href={IZVOR.vus}>VUS, Usoz-73/16, NN 46/2017</V>). Prema praksi Europskog suda za ljudska prava duge zabrane gradnje bez preispitivanja i naknade mogu povrijediti pravo vlasništva (<V href={IZVOR.sporrong}>Sporrong i Lönnroth protiv Švedske</V>). Odredba plana iz koje zabrana izravno proizlazi ne može se u ocjeni zakonitosti ukinuti kao „protivna zakonu”, ali se izbor oznake i dalje može osporavati kao nerazmjeran.
@@ -1350,7 +1350,7 @@ export default async function AnalizaPage() {
             <strong>Zahtjevom za pristup informacijama doznati na što se odjel koji izdaje dozvole oslanja</strong>, tražeći obrazloženja nekoliko dozvola izdanih u Dračevcu.
           </li>
           <li>
-            <strong>Vlasnici koji imaju projekt na zemljištu koje prijedlog označava kao sanaciju trebali bi potražiti pravni savjet</strong>: danas postoji put do dozvole, a prijedlog bi ga zatvorio.
+            <strong>Vlasnici koji imaju projekt na zemljištu koje prijedlog označava kao sanaciju trebaju potražiti pravni savjet</strong>: danas postoji put do dozvole, a izmjene će ga zatvoriti.
           </li>
         </ol>
         <Detaljnije naslov="Obrazloženje i rješenja koja treba navesti u zahtjevu">
@@ -1364,7 +1364,7 @@ export default async function AnalizaPage() {
             <strong>Drugo, treba doznati na što se odjel koji izdaje dozvole zapravo oslanja.</strong> To bi razriješio zahtjev za pristup informacijama Gradu Splitu. U njemu treba tražiti obrazloženja rješenja UP/I-361-03/20-01/000010 (17. ožujka 2021., nova zgrada na zemljištu sanacije iz prijedloga), UP/I-361-03/19-01/000158 (4. svibnja 2023., tri stana na zemljištu sanacije iz prijedloga) i UP/I-361-03/22-01/000029 (29. prosinca 2022., dograđen drugi kat) te razloge odbijanja zahtjeva za lokacijsku dozvolu u Dračevcu od 10. travnja 2025. (UP/I-350-05/23-01/000050). Ako se odjel poziva na „za ostalo” iz pravila 3.1 ili na rečenicu o dogradnji u niskokonsolidiranom području, stanovnici bi imali pisani dokaz da se važeći GUP u praksi primjenjuje kao plan koji gradnju dopušta, a ne zabranjuje, i konkretan razlog da traže da prijedlog te odredbe zadrži.
           </p>
           <p>
-            <strong>Treće, vlasnici koji imaju projekt na zemljištu sanacije iz prijedloga trebaju znati</strong> da u sadašnjoj praksi postoji put koji bi prijedlog zatvorio. Tu je važan pravni savjet, jer nije utvrđeno što biva sa zahtjevom koji je još u obradi kad izmjene stupe na snagu.
+            <strong>Treće, vlasnici koji imaju projekt na zemljištu sanacije iz prijedloga trebaju znati</strong> da u sadašnjoj praksi postoji put koji će izmjene zatvoriti. Tu je važan pravni savjet, jer nije utvrđeno što biva sa zahtjevom koji je još u obradi kad izmjene stupe na snagu.
           </p>
         </Detaljnije>
       </Poglavlje>
@@ -1388,7 +1388,7 @@ export default async function AnalizaPage() {
               ],
               [
                 "Obuhvaća li čl. 106. st. 2. t. 1. novog ZPU-a (neizgrađeno i neopremljeno) prazne čestice i prema važećem GUP-u? Priznaje li upravno tijelo iznimku za pristup cesti iz čl. 180. st. 2. t. 3. i kad GUP do UPU-a dopušta samo zahvate s popisa iz čl. 105. st. 5.?",
-                "O tome ovisi jesu li neke čestice već pod zabranom i bi li čestice uz postojeće ceste izbjegle buduću zabranu",
+                "O tome ovisi jesu li neke čestice već pod zabranom i hoće li čestice uz postojeće ceste izbjeći buduću zabranu",
                 "Mišljenje Ministarstva; obrazloženja novih zakona",
               ],
               [
