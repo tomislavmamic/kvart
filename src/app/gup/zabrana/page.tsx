@@ -146,28 +146,47 @@ export default async function ZabranaPage() {
             poUpu={zbroj.po_upu}
             objasnjenje={
               <>
-                <div className="max-w-3xl space-y-3 text-zinc-600">
-                  <p>
-                    Crvenom je bojom označena urbana sanacija, a narančastom urbana preobrazba stambenih i mješovitih zona.
-                    Obje su oznake preuzete s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> prijedloga; na njemu je
-                    sanacija zelena, kao da je ondje sve u redu. Neizgrađene su čestice tamnije, a izgrađene svjetlije: na
-                    izgrađenima se postojeća zgrada smije obnoviti ili zamijeniti, ali se na slobodnom dijelu ne smije graditi
-                    nova. Plavi rub omeđuje obuhvat UPU-a u kojem su te čestice.
-                  </p>
-                  <p>
-                    Ostale oznake s lista 4.d nisu obojene. U neuređenom dijelu dozvola za novu zgradu uz postojeću javnu
-                    cestu može se dobiti i prije UPU-a (
-                    <a href={ZPU_2025} className={vanjska}>
-                      ZPU
-                    </a>
-                    , čl. 180. st. 2. t. 3.), a bez ceste se ionako ne gradi. Urbanom preobrazbom gospodarskih zona i
-                    gradskih projekata (brodogradilište, Kopilica, Karepovac, luka) preuređuju se cijela područja, a ne
-                    pojedinačne privatne čestice. Na ulicama te javnim, športskim i zelenim površinama privatna se zgrada ne
-                    gradi ni bez zabrane. Gdje je na snazi plan užeg područja (sivo), gradi se prema njemu (
-                    <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Klikom na kartu vidi se što vrijedi na pojedinom
-                    mjestu.
-                  </p>
-                </div>
+                <figure>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        ["/gup/zabrana/list-4d-istok.webp", "List 4.d prijedloga", "Izrez lista 4.d prijedloga GUP-a za Mostine, Dračevac 2, Harakovac, Kilu i Karepovac: zelena, žuta i narančasta ispuna ispod plave mreže obuhvata UPU-a."],
+                        ["/gup/zabrana/karta-istok.webp", "Isto područje na karti iznad", "Isto područje na karti ove stranice: crveno su obojene samo čestice urbane sanacije, tamnije neizgrađene, a svjetlije izgrađene."],
+                      ] as const
+                    ).map(([src, naslov, opis]) => (
+                      <div key={src}>
+                        <p className="mb-1 text-sm font-semibold text-zinc-900">{naslov}</p>
+                        <a href={src} className="fokus block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={src}
+                            width={1100}
+                            height={632}
+                            alt={opis}
+                            loading="lazy"
+                            className="h-auto w-full rounded-lg border border-zinc-200"
+                          />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                  <figcaption className="mt-3 max-w-3xl space-y-2 text-sm text-zinc-600">
+                    <p>
+                      <strong className="text-zinc-900">
+                        Na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> prijedloga
+                      </strong>{" "}
+                      za Mostine (17), Dračevac 2 (18), Harakovac (19), Kilu (20) i Karepovac (25) zeleno je urbana
+                      sanacija, žuto neuređeni dio, a narančasto urbana preobrazba. Plavom su mrežom označeni obuhvati
+                      UPU-a, a crvenim prugama planovi na snazi.
+                    </p>
+                    <p>
+                      <strong className="text-zinc-900">Na karti ove stranice</strong> obojeno je samo privatno zemljište na
+                      kojem se zamrzava gradnja: urbana sanacija crveno, a urbana preobrazba stambenih i mješovitih zona
+                      narančasto. Neuređeni dio nije obojen jer se ondje uz postojeću javnu cestu dozvola za novu zgradu može
+                      dobiti i prije UPU-a, a Karepovac zato što je gradski projekt.
+                    </p>
+                  </figcaption>
+                </figure>
 
                 <h3 id="koliko" className="mt-8 scroll-mt-20 font-bold text-zinc-900">
                   Koliko zemljišta obuhvaća
