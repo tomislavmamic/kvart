@@ -53,18 +53,13 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
       {
         href: "/gup",
         naslov: "Split po GUP-u",
-        opis: "Koliko je zemljišta po planu već iskorišteno i što se smije graditi na pojedinoj čestici, s kartom čestica za cijeli grad.",
+        opis: "Karta čestica cijelog grada: namjena po planu iz 2006., planu na snazi i prijedlogu iz 2025., koliko je zemljišta iskorišteno i što se na pojedinoj čestici smije graditi.",
         radnja: "Pronađi česticu",
       },
       {
         href: "/gup/dokument",
         naslov: "GUP: tekst i karte",
         opis: "Cijeli tekst odredbi i svi kartografski prikazi: plan na snazi, izvorni plan iz 2006. i prijedlog iz 2025.",
-      },
-      {
-        href: "/gup",
-        naslov: "GUP na karti",
-        opis: "Namjena prostora po planu iz 2006., prema planu na snazi i prema prijedlogu iz 2025., po česticama za cijeli grad.",
       },
     ],
   },

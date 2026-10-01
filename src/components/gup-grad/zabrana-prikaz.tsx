@@ -701,8 +701,8 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
 
       <h3 className="mt-8 font-bold text-zinc-900">Po planovima koji još nisu doneseni</h3>
       <p className="mt-1 text-sm text-zinc-600">
-        Za svaki plan: slobodno zemljište za novu gradnju (ha) i broj neizgrađenih čestica na kojima se do njegova donošenja neće smjeti graditi. Klikom na redak
-        obuhvat plana prikazuje se na karti.
+        Za svaki plan slobodno zemljište za novu zgradu (ha) i broj neizgrađenih čestica s mjestom za zgradu. Klik na redak
+        pokazuje obuhvat plana na karti.
       </p>
       <ul className="mt-2 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
         <li className="grid grid-cols-[1fr_auto_auto] gap-4 px-3 py-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
