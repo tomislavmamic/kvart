@@ -10,7 +10,7 @@ import { createPageMetadata } from "@/lib/metadata";
 export const metadata = createPageMetadata({
   title: "Zabrana nove gradnje do donošenja UPU-a",
   description:
-    "Karta privatnog zemljišta u Splitu na kojem prijedlog izmjena i dopuna GUP-a iz 2025. ne dopušta gradnju nove zgrade do donošenja urbanističkog plana uređenja, uz provjeru adrese.",
+    "Karta privatnog zemljišta u Splitu na kojem novi GUP ne dopušta gradnju nove zgrade do donošenja urbanističkog plana uređenja, uz provjeru adrese.",
 });
 
 const ha = (m2: number) => Math.round(m2 / 1e4).toLocaleString("hr-HR");
@@ -87,7 +87,7 @@ export default async function ZabranaPage() {
     },
     {
       kada: "Travanj 2025.",
-      sto: "Prijedlog izmjena i dopuna GUP-a",
+      sto: "Prijedlog novog GUP-a",
       kljucni: true,
       tekst: (
         <>
@@ -114,10 +114,10 @@ export default async function ZabranaPage() {
     },
     {
       kada: "Sljedeći korak",
-      sto: "Donošenje izmjena i dopuna",
+      sto: "Donošenje novog GUP-a",
       kljucni: true,
       buduci: true,
-      tekst: <>Zabrana počinje vrijediti čim izmjene stupe na snagu, a prijedlog ne predviđa ni rok ni novac za izradu UPU-a.</>,
+      tekst: <>Zabrana počinje vrijediti čim novi GUP stupi na snagu, a u njemu nema ni roka ni novca za izradu UPU-a.</>,
     },
   ];
 
@@ -127,14 +127,14 @@ export default async function ZabranaPage() {
         <Link href="/planovi" className="fokus underline">
           Planovi
         </Link>{" "}
-        · prijedlog izmjena i dopuna iz travnja 2025.
+        · novi GUP, prijedlog izmjena i dopuna iz travnja 2025.
       </p>
       <h1 className="mt-1 text-2xl font-bold">Zabrana nove gradnje do donošenja UPU-a</h1>
       <p className="mt-3 max-w-3xl text-zinc-600">
-        Kad Gradsko vijeće donese izmjene GUP-a predložene u travnju 2025., na zemljištu obojenom na karti neće se moći
-        dobiti dozvola za novu zgradu dok se za to područje ne donese urbanistički plan uređenja (UPU). Postojeće će se
-        zgrade i dalje smjeti obnoviti ili zamijeniti. Prijedlog ne predviđa ni rok ni novac za izradu tih planova, pa
-        zabrana može potrajati.
+        Kad Gradsko vijeće donese novi GUP (izmjene i dopune predložene u travnju 2025.), na zemljištu obojenom na karti
+        neće se moći dobiti dozvola za novu zgradu dok se za to područje ne donese urbanistički plan uređenja (UPU).
+        Postojeće će se zgrade i dalje smjeti obnoviti ili zamijeniti. Novi GUP ne predviđa ni rok ni novac za izradu tih
+        planova, pa zabrana može potrajati.
       </p>
 
       <section className="mt-8">
@@ -150,7 +150,7 @@ export default async function ZabranaPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     {(
                       [
-                        ["/gup/zabrana/list-4d-dracevac.webp", "List 4.d prijedloga", "Izrez lista 4.d prijedloga GUP-a za Dračevac 2: zelena ispuna urbane sanacije i žuta neuređenog dijela ispod plave mreže obuhvata UPU-a."],
+                        ["/gup/zabrana/list-4d-dracevac.webp", "List 4.d novog GUP-a", "Izrez lista 4.d novog GUP-a za Dračevac 2: zelena ispuna urbane sanacije i žuta neuređenog dijela ispod plave mreže obuhvata UPU-a."],
                         ["/gup/zabrana/karta-dracevac.webp", "Isto područje na karti iznad", "Dračevac 2 na karti ove stranice: crveno su obojene samo čestice urbane sanacije, tamnije neizgrađene, a svjetlije izgrađene."],
                       ] as const
                     ).map(([src, naslov, opis]) => (
@@ -173,7 +173,7 @@ export default async function ZabranaPage() {
                   <figcaption className="mt-3 max-w-3xl space-y-2 text-sm text-zinc-600">
                     <p>
                       <strong className="text-zinc-900">
-                        Na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> prijedloga
+                        Na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> novog GUP-a
                       </strong>{" "}
                       za Dračevac 2 zeleno je urbana sanacija, a žuto neuređeni dio. Plavom je mrežom označen obuhvat UPU-a,
                       a crvenim prugama planovi na snazi. List je u mjerilu 1:10.000 i ne razlikuje čestice.
@@ -239,7 +239,7 @@ export default async function ZabranaPage() {
         </ol>
         <p className="mt-6 max-w-3xl border-l-4 border-red-700 bg-white px-4 py-3 text-zinc-800">
           <strong>Isto zemljište, nova oznaka.</strong> Po važećem GUP-u Grad na tim područjima izdaje dozvole. Kad ih
-          izmjene označe kao urbanu sanaciju, urbanu preobrazbu ili neuređeni dio građevinskog područja, izdavanje dozvole za
+          novi GUP označi kao urbanu sanaciju, urbanu preobrazbu ili neuređeni dio građevinskog područja, izdavanje dozvole za
           novu zgradu do donošenja UPU-a priječi sam zakon. Koje će područje dobiti tu oznaku ipak odlučuje Grad: zakon
           dopušta i to da GUP sam propiše uvjete gradnje s detaljnošću UPU-a (NN 155/25, čl. 106. st. 4.).
         </p>
@@ -258,7 +258,7 @@ export default async function ZabranaPage() {
         </h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <li>
-            Oznake s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> i namjena zona s lista 1 prijedloga prenesene su,
+            Oznake s <Navod id="list-planske-mjere-2025">lista 4.d</Navod> i namjena zona s lista 1 novog GUP-a prenesene su,
             kao i na stranici{" "}
             <Link href="/gup#kako-je-izracunato" className="fokus text-emerald-700 underline">
               Split po GUP-u
@@ -275,7 +275,7 @@ export default async function ZabranaPage() {
           </li>
           <li>
             Dozvole od 2016.: javni registar akata Ministarstva prostornoga uređenja, graditeljstva i državne imovine (ISPU).
-            Pravila: <Navod id="obveza-plana-2025">čl. 103.</Navod> i <Navod id="do-plana-2025">čl. 105.</Navod> prijedloga te{" "}
+            Pravila: <Navod id="obveza-plana-2025">čl. 103.</Navod> i <Navod id="do-plana-2025">čl. 105.</Navod> novog GUP-a te{" "}
             <a href={ZPU_2025} className={vanjska}>
               Zakon o prostornom uređenju (NN 155/25)
             </a>

@@ -62,7 +62,7 @@ export default async function GupPage() {
         . Točkasto podcrtano ispod otvara doslovno ono mjesto u planu na koje se pozivamo.
       </p>
       <p className="mt-2 max-w-3xl text-zinc-600">
-        Na kojim će područjima prijedlog iz 2025. zaustaviti novu gradnju do donošenja UPU-a i koje će adrese to
+        Na kojim će područjima novi GUP zaustaviti novu gradnju do donošenja UPU-a i koje će adrese to
         pogoditi, pogledaj na stranici{" "}
         <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
           Zabrana nove gradnje do donošenja UPU-a
