@@ -10,9 +10,9 @@ na snazi i obuhvati UPU-a s obojenim česticama.
 
 Ortofoto se čita kroz posrednik aplikacije, pa mora raditi razvojni poslužitelj:
     npx next dev -p 3107
-    python3 scripts/gup-grad/zabrana-slika.py
+    python3 scripts/gup-grad/zabrana-slika.py [zapad jug istok sjever [mapa]]
 
-Izlaz: public/gup/zabrana/list-4d-istok.webp i karta-istok.webp
+Izlaz: public/gup/zabrana/list-4d-dracevac.webp i karta-dracevac.webp
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ import io
 import json
 import math
 import os
+import sys
 import urllib.request
 
 import numpy as np
@@ -30,8 +31,8 @@ from shapely.geometry import shape
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 WEB = os.environ.get("KVART_WEB", "http://localhost:3107")
 IZLAZ = os.path.join(ROOT, "public", "gup", "zabrana")
-# Mostine, Dračevac 2, Harakovac, Kila i Karepovac
-OKVIR = (16.481, 43.513, 16.517, 43.528)
+# Dračevac 2: dovoljno izbliza da se vide pojedine čestice
+OKVIR = (16.4993, 43.5233, 16.5072, 43.5280)
 SIRINA = 1100
 Z = 16  # posrednik na z=15 daje pločice od 512 px, što je razlučivost zuma 16
 
@@ -123,13 +124,16 @@ def karta(zapad, jug, istok, sjever) -> Image.Image:
 
 
 def main() -> None:
-    os.makedirs(IZLAZ, exist_ok=True)
-    desno = karta(*OKVIR)
+    # za isprobavanje: zapad jug istok sjever [predmetak imena]
+    okvir = tuple(float(v) for v in sys.argv[1:5]) if len(sys.argv) >= 5 else OKVIR
+    izlaz = sys.argv[5] if len(sys.argv) >= 6 else IZLAZ
+    os.makedirs(izlaz, exist_ok=True)
+    desno = karta(*okvir)
     visina = round(desno.height * SIRINA / desno.width)
     desno = desno.resize((SIRINA, visina), Image.LANCZOS)
-    lijevo = list_4d(*OKVIR).resize((SIRINA, visina), Image.LANCZOS)
-    for ime, s in (("list-4d-istok.webp", lijevo), ("karta-istok.webp", desno)):
-        put = os.path.join(IZLAZ, ime)
+    lijevo = list_4d(*okvir).resize((SIRINA, visina), Image.LANCZOS)
+    for ime, s in (("list-4d-dracevac.webp", lijevo), ("karta-dracevac.webp", desno)):
+        put = os.path.join(izlaz, ime)
         s.save(put, "WEBP", quality=80, method=6)
         print(put, s.size, f"{os.path.getsize(put) / 1024:.0f} kB")
 

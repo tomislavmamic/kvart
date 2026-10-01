@@ -150,8 +150,8 @@ export default async function ZabranaPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     {(
                       [
-                        ["/gup/zabrana/list-4d-istok.webp", "List 4.d prijedloga", "Izrez lista 4.d prijedloga GUP-a za Mostine, Dračevac 2, Harakovac, Kilu i Karepovac: zelena, žuta i narančasta ispuna ispod plave mreže obuhvata UPU-a."],
-                        ["/gup/zabrana/karta-istok.webp", "Isto područje na karti iznad", "Isto područje na karti ove stranice: crveno su obojene samo čestice urbane sanacije, tamnije neizgrađene, a svjetlije izgrađene."],
+                        ["/gup/zabrana/list-4d-dracevac.webp", "List 4.d prijedloga", "Izrez lista 4.d prijedloga GUP-a za Dračevac 2: zelena ispuna urbane sanacije i žuta neuređenog dijela ispod plave mreže obuhvata UPU-a."],
+                        ["/gup/zabrana/karta-dracevac.webp", "Isto područje na karti iznad", "Dračevac 2 na karti ove stranice: crveno su obojene samo čestice urbane sanacije, tamnije neizgrađene, a svjetlije izgrađene."],
                       ] as const
                     ).map(([src, naslov, opis]) => (
                       <div key={src}>
@@ -161,7 +161,7 @@ export default async function ZabranaPage() {
                           <img
                             src={src}
                             width={1100}
-                            height={632}
+                            height={903}
                             alt={opis}
                             loading="lazy"
                             className="h-auto w-full rounded-lg border border-zinc-200"
@@ -175,15 +175,13 @@ export default async function ZabranaPage() {
                       <strong className="text-zinc-900">
                         Na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> prijedloga
                       </strong>{" "}
-                      za Mostine (17), Dračevac 2 (18), Harakovac (19), Kilu (20) i Karepovac (25) zeleno je urbana
-                      sanacija, žuto neuređeni dio, a narančasto urbana preobrazba. Plavom su mrežom označeni obuhvati
-                      UPU-a, a crvenim prugama planovi na snazi.
+                      za Dračevac 2 zeleno je urbana sanacija, a žuto neuređeni dio. Plavom je mrežom označen obuhvat UPU-a,
+                      a crvenim prugama planovi na snazi. List je u mjerilu 1:10.000 i ne razlikuje čestice.
                     </p>
                     <p>
-                      <strong className="text-zinc-900">Na karti ove stranice</strong> obojeno je samo privatno zemljište na
-                      kojem se zamrzava gradnja: urbana sanacija crveno, a urbana preobrazba stambenih i mješovitih zona
-                      narančasto. Neuređeni dio nije obojen jer se ondje uz postojeću javnu cestu dozvola za novu zgradu može
-                      dobiti i prije UPU-a, a Karepovac zato što je gradski projekt.
+                      <strong className="text-zinc-900">Na karti ove stranice</strong> obojena je svaka čestica na kojoj se
+                      zamrzava gradnja: tamnije neizgrađene, a svjetlije izgrađene. Neuređeni dio nije obojen jer se ondje uz
+                      postojeću javnu cestu dozvola za novu zgradu može dobiti i prije UPU-a.
                     </p>
                   </figcaption>
                 </figure>
