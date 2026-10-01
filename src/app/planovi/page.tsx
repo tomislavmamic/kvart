@@ -24,8 +24,8 @@ interface Stranica {
 
 const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
   {
-    naslov: "Prijedlog izmjena GUP-a",
-    uvod: "Grad mijenja GUP. Prijedlog iz travnja 2025. još nije usvojen. Kad se usvoji, na većem će dijelu kvarta nova gradnja stati do donošenja urbanističkog plana uređenja (UPU).",
+    naslov: "Novi GUP",
+    uvod: "Grad donosi novi GUP: izmjene i dopune predložene u travnju 2025. Kad ga Gradsko vijeće usvoji, na većem će dijelu kvarta nova gradnja stati do donošenja urbanističkog plana uređenja (UPU).",
     stranice: [
       {
         href: "/gup/zabrana",
@@ -53,18 +53,13 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
       {
         href: "/gup",
         naslov: "Split po GUP-u",
-        opis: "Koliko je zemljišta po planu već iskorišteno i što se smije graditi na pojedinoj čestici, s kartom čestica za cijeli grad.",
+        opis: "Karta čestica cijelog grada: namjena po planu iz 2006., planu na snazi i novom GUP-u, koliko je zemljišta iskorišteno i što se na pojedinoj čestici smije graditi.",
         radnja: "Pronađi česticu",
       },
       {
         href: "/gup/dokument",
         naslov: "GUP: tekst i karte",
-        opis: "Cijeli tekst odredbi i svi kartografski prikazi: plan na snazi, izvorni plan iz 2006. i prijedlog iz 2025.",
-      },
-      {
-        href: "/gup",
-        naslov: "GUP na karti",
-        opis: "Namjena prostora po planu iz 2006., prema planu na snazi i prema prijedlogu iz 2025., po česticama za cijeli grad.",
+        opis: "Cijeli tekst odredbi i svi kartografski prikazi: plan na snazi, izvorni plan iz 2006. i novi GUP",
       },
     ],
   },

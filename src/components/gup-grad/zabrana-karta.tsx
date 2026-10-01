@@ -80,20 +80,18 @@ export function ZabranaKarta(props: {
   /** brojevi UPU-a čiji se obuhvat crta: oni u kojima su obojene čestice */
   upuNaKarti: number[];
   prikaziZabranu: boolean;
-  odabraniUpu: number | null;
   cilj: CiljKarte | null;
   oznaka: OznakaKarte | null;
   /** karta preko cijelog zaslona: nema stranice ispod, pa kotačić zumira */
   punZaslon?: boolean;
   onKlik: (lng: number, lat: number) => void;
 }) {
-  const { zabrana, planovi, izgradjenost, upuNaKarti, prikaziZabranu, odabraniUpu, cilj, oznaka, punZaslon = false, onKlik } = props;
+  const { zabrana, planovi, izgradjenost, upuNaKarti, prikaziZabranu, cilj, oznaka, punZaslon = false, onKlik } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
   const slojCestica = useRef<LeafletNS.GeoJSON | null>(null);
   const slojZgrada = useRef<LeafletNS.GeoJSON | null>(null);
-  const isticanje = useRef<LeafletNS.GeoJSON | null>(null);
   const tocka = useRef<LeafletNS.CircleMarker | null>(null);
   const klik = useRef(onKlik);
   const zabranaVidljiva = useRef(prikaziZabranu);
@@ -212,20 +210,6 @@ export function ZabranaKarta(props: {
     if (punZaslon) kotacic?.enable();
     else kotacic?.disable();
   }, [punZaslon]);
-
-  useEffect(() => {
-    const map = mapa.current, L = LRef.current;
-    if (!map || !L) return;
-    isticanje.current?.remove();
-    isticanje.current = null;
-    if (odabraniUpu === null) return;
-    const f = planovi.features.filter((x) => x.properties?.vrsta === "propisan" && x.properties?.broj === odabraniUpu);
-    if (!f.length) return;
-    isticanje.current = L.geoJSON(zbirka(f), {
-      interactive: false,
-      style: { color: BOJE_ZABRANE.upu, weight: 3.5, fill: false },
-    }).addTo(map);
-  }, [odabraniUpu, planovi]);
 
   useEffect(() => {
     const map = mapa.current;
