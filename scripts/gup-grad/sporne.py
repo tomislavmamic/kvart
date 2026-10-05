@@ -170,11 +170,12 @@ def ppug_prema_4d(ppug: dict, upu: list) -> tuple[dict, dict]:
     bez oznake (gradi se neposrednom provedbom GUP-a).
 
     Drugi rezultat je ta „rupa” u zabrani po UPU-u: čestice koje PPUG vodi
-    kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake. upu je popis
+    kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake, s popisom
+    njihovih ključeva „k.o.|k.č.” za karticu na karti. upu je popis
     (broj, naziv, pripremljen oblik u HTRS96)."""
     b = np.load(Z.REZIM)
     out = {r: {o: [0, 0.0] for o in ("sanacija", "preobrazba", "neuredeno", "bez")} for r in ("I", "N", "U")}
-    rupa = {}
+    rupa, kljucevi = {}, []
     for put in sorted(glob.glob(os.path.join(Z.PLOCICE, "*.json"))):
         for f in json.load(open(put))["features"]:
             p = f["properties"]
@@ -188,6 +189,7 @@ def ppug_prema_4d(ppug: dict, upu: list) -> tuple[dict, dict]:
             out[r][o][0] += 1
             out[r][o][1] += g.area / 1e4
             if r == "N" and o == "bez":
+                kljucevi.append(f"{p['ko']}|{p['kc']}")
                 t = g.representative_point()
                 broj, naziv = next(((br, nz) for br, nz, pg in upu if pg.contains(t)), (0, None))
                 z = rupa.setdefault(broj, {"broj": broj, "naziv": naziv, "cestice": 0, "ha": 0.0})
@@ -196,7 +198,7 @@ def ppug_prema_4d(ppug: dict, upu: list) -> tuple[dict, dict]:
     tablica = {r: {o: {"cestice": n, "ha": round(h, 1)} for o, (n, h) in d.items()} for r, d in out.items()}
     po_upu = sorted(({**z, "ha": round(z["ha"], 1)} for z in rupa.values()), key=lambda z: -z["ha"])
     return tablica, {"cestice": sum(z["cestice"] for z in po_upu), "ha": round(sum(z["ha"] for z in rupa.values()), 1),
-                     "po_upu": po_upu}
+                     "po_upu": po_upu, "kljucevi": sorted(set(kljucevi))}
 
 
 def u_htrs(geoms):

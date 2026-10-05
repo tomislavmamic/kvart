@@ -13,9 +13,10 @@ Ortofoto se čita kroz posrednik aplikacije, pa mora raditi razvojni poslužitel
     npx next dev -p 3107
     python3 scripts/gup-grad/zabrana-slika.py [zapad jug istok sjever [mapa]]
 
-Izlaz: public/gup/zabrana/list-4d-dracevac.webp, karta-dracevac.webp i
-rupa-dracevac.webp (rupa u zabrani: čestice bez oznake na listu 4.d prema
-sporne.oznaka_4d).
+Izlaz: public/gup/zabrana/list-4d-dracevac.webp, karta-dracevac.webp i, za
+rupu u zabrani, rupa-ppug-4-4.webp, rupa-gup-4d.webp i rupa-ortofoto.webp:
+isto područje na oba lista i na ortofotu, s česticama bez oznake na listu
+4.d (sporne.oznaka_4d) obrubljenima na sva tri.
 """
 from __future__ import annotations
 
@@ -199,16 +200,15 @@ def karta(zapad, jug, istok, sjever) -> Image.Image:
     return pl.slika.convert("RGB")
 
 
-# Rupa u zabrani, izbliza oko neizgrađenih čestica Dračevca 2
-OKVIR_RUPE = (16.5012, 43.5242, 16.5064, 43.5281)
+# Rupa u zabrani: zabrana (sve oznake lista 4.d) crveno, rupa ljubičasto
 ZABRANA = "#ef4444"
 
 
-def slika_rupe(zapad, jug, istok, sjever, sirina: int = 900) -> Image.Image:
+def slika_rupe(zapad, jug, istok, sjever, sirina: int = 900, z: int = 18) -> Image.Image:
     """Jedna slika: gdje vrijedi zabrana (sve oznake lista 4.d, crveno), rupa (čestice bez oznake
     prema sporne.oznaka_4d, ljubičasto), obuhvat UPU-a (plavo) i čestice (tanko). Čestica u rupi
     većinom je bez oznake, pa se rub oznake koji je dotiče ne crta preko nje."""
-    pl = Platno(zapad, jug, istok, sjever, z=18)
+    pl = Platno(zapad, jug, istok, sjever, z=z)
     sve = []
     for put in sorted(glob.glob(os.path.join(ROOT, "public", "geo", "gup-grad", "cestice", "*.json"))):
         for f in json.load(open(put))["features"]:
@@ -232,6 +232,31 @@ def slika_rupe(zapad, jug, istok, sjever, sirina: int = 900) -> Image.Image:
     return pl.gotovo(sirina)
 
 
+def obrubi(slika: Image.Image, u_izrez, mjerilo: tuple[float, float], oblici: list, debljina: int = 4) -> Image.Image:
+    """Ljubičasti rub oblika (WGS84) na izrezu lista, preslikan kao i izrez."""
+    s = slika.copy()
+    d = ImageDraw.Draw(s)
+    for g in oblici:
+        for poli in g.geoms if g.geom_type == "MultiPolygon" else [g]:
+            pr = [(x * mjerilo[0], y * mjerilo[1]) for x, y in (u_izrez(*c) for c in poli.exterior.coords)]
+            d.line(pr + [pr[0]], fill=rgb(RUPA), width=debljina, joint="curve")
+    return s
+
+
+def slike_rupe(zapad, jug, istok, sjever, sirina: int = 760) -> dict[str, Image.Image]:
+    """Isto područje na listu 4.4 PPUG-a, na listu 4.d novog GUP-a i na ortofotu, s istim česticama u rupi
+    obrubljenima na sva tri, za usporedbu s planovima."""
+    okvir = (zapad, jug, istok, sjever)
+    rupe_ovdje = rupe(*okvir)
+    orto = slika_rupe(*okvir, sirina=sirina, z=17)
+    out = {"rupa-ortofoto.webp": orto}
+    for ime, lid in (("rupa-ppug-4-4.webp", "ppug-podrucja-istok-2025"), ("rupa-gup-4d.webp", "planske-mjere-2025")):
+        izrez, u_izrez = izrez_lista(lid, *okvir)
+        mjerilo = (orto.width / izrez.width, orto.height / izrez.height)
+        out[ime] = obrubi(izrez.resize(orto.size, Image.LANCZOS), u_izrez, mjerilo, rupe_ovdje)
+    return out
+
+
 def main() -> None:
     # za isprobavanje: zapad jug istok sjever [predmetak imena]
     okvir = tuple(float(v) for v in sys.argv[1:5]) if len(sys.argv) >= 5 else OKVIR
@@ -241,7 +266,7 @@ def main() -> None:
     visina = round(desno.height * SIRINA / desno.width)
     desno = desno.resize((SIRINA, visina), Image.LANCZOS)
     lijevo = izrez_lista("planske-mjere-2025", *okvir)[0].resize((SIRINA, visina), Image.LANCZOS)
-    slike = {"list-4d-dracevac.webp": lijevo, "karta-dracevac.webp": desno, "rupa-dracevac.webp": slika_rupe(*OKVIR_RUPE)}
+    slike = {"list-4d-dracevac.webp": lijevo, "karta-dracevac.webp": desno, **slike_rupe(*OKVIR)}
     for ime, s in slike.items():
         put = os.path.join(izlaz, ime)
         s.save(put, "WEBP", quality=80, method=6)
