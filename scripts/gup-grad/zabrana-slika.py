@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Slika za /gup/zabrana: isto područje na listu 4.d prijedloga i na karti stranice.
+"""Slike za /gup/zabrana: isto područje na listovima plana i na karti stranice.
 
-Lijevo je izrez lista 4.d iz pločica preglednika (public/gup/listovi), uklopljen
-koeficijentima „uklapanje” iz data/gup-grad/dokument/listovi.json (HTRS96 → udio
-lista). Desno je isto područje kako ga crta karta na /gup/zabrana: siva ortofoto
+Izrezi listova (4.d novog GUP-a i 4.4 PPUG-a) su iz pločica preglednika
+(public/gup/listovi), uklopljeni koeficijentima „uklapanje” iz
+data/gup-grad/dokument/listovi.json (HTRS96 → udio lista). Karta je isto
+područje kako ga crta karta na /gup/zabrana: siva ortofoto
 podloga (isti filter kao .podloga-siva u globals.css), čestice iz
 zabrana-izgradjenost-2025.geojson u bojama BOJE_ZABRANE i TAMNE_ZABRANE, planovi
 na snazi i obuhvati UPU-a s obojenim česticama.
@@ -12,7 +13,8 @@ Ortofoto se čita kroz posrednik aplikacije, pa mora raditi razvojni poslužitel
     npx next dev -p 3107
     python3 scripts/gup-grad/zabrana-slika.py [zapad jug istok sjever [mapa]]
 
-Izlaz: public/gup/zabrana/list-4d-dracevac.webp i karta-dracevac.webp
+Izlaz: public/gup/zabrana/list-4d-dracevac.webp, karta-dracevac.webp i
+ppug-4-4-dracevac.webp (rupa u zabrani: neizgrađeno bez šrafure na PPUG-u)
 """
 from __future__ import annotations
 
@@ -47,8 +49,8 @@ def rgb(h: str) -> tuple[int, int, int]:
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def list_4d(zapad, jug, istok, sjever) -> Image.Image:
-    lst = json.load(open(os.path.join(ROOT, "data", "gup-grad", "dokument", "listovi.json")))["listovi"]["planske-mjere-2025"]
+def izrez_lista(lid: str, zapad, jug, istok, sjever) -> Image.Image:
+    lst = json.load(open(os.path.join(ROOT, "data", "gup-grad", "dokument", "listovi.json")))["listovi"][lid]
     a, b, c, d, e, f = lst["uklapanje"]
 
     def px(lng, lat):
@@ -61,7 +63,7 @@ def list_4d(zapad, jug, istok, sjever) -> Image.Image:
     platno = Image.new("RGB", (int(x1) - int(x0) + 1, int(y1) - int(y0) + 1), "white")
     for tx in range(int(x0) // 512, int(x1) // 512 + 1):
         for ty in range(int(y0) // 512, int(y1) // 512 + 1):
-            put = os.path.join(ROOT, "public", "gup", "listovi", "planske-mjere-2025", str(lst["maksZum"]), f"{tx}_{ty}.avif")
+            put = os.path.join(ROOT, "public", "gup", "listovi", lid, str(lst["maksZum"]), f"{tx}_{ty}.avif")
             if os.path.exists(put):
                 platno.paste(Image.open(put).convert("RGB"), (tx * 512 - int(x0), ty * 512 - int(y0)))
     return platno
@@ -131,8 +133,9 @@ def main() -> None:
     desno = karta(*okvir)
     visina = round(desno.height * SIRINA / desno.width)
     desno = desno.resize((SIRINA, visina), Image.LANCZOS)
-    lijevo = list_4d(*okvir).resize((SIRINA, visina), Image.LANCZOS)
-    for ime, s in (("list-4d-dracevac.webp", lijevo), ("karta-dracevac.webp", desno)):
+    lijevo = izrez_lista("planske-mjere-2025", *okvir).resize((SIRINA, visina), Image.LANCZOS)
+    ppug = izrez_lista("ppug-podrucja-istok-2025", *okvir).resize((SIRINA, visina), Image.LANCZOS)
+    for ime, s in (("list-4d-dracevac.webp", lijevo), ("karta-dracevac.webp", desno), ("ppug-4-4-dracevac.webp", ppug)):
         put = os.path.join(izlaz, ime)
         s.save(put, "WEBP", quality=80, method=6)
         print(put, s.size, f"{os.path.getsize(put) / 1024:.0f} kB")

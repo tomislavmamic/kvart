@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Navod } from "@/components/gup-dokument/navod";
 import { ZabranaPrikaz } from "@/components/gup-grad/zabrana-prikaz";
 import { imenicaUz } from "@/lib/gup-grad/zabrana";
-import { ucitajZbrojZabrane } from "@/lib/gup-grad/zabrana-podaci";
+import { ucitajSporne, ucitajZbrojZabrane } from "@/lib/gup-grad/zabrana-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -31,7 +31,8 @@ interface Korak {
 }
 
 export default async function ZabranaPage() {
-  const zbroj = await ucitajZbrojZabrane();
+  const [zbroj, sporne] = await Promise.all([ucitajZbrojZabrane(), ucitajSporne()]);
+  const rupa = sporne.ppug_rupa;
   const f = zbroj.fokus;
   const ostalaNamjena = (f.slobodno_po_zoni_ha.gospodarstvo ?? 0) + (f.slobodno_po_zoni_ha.turizam ?? 0);
 
@@ -250,6 +251,72 @@ export default async function ZabranaPage() {
           </Link>
           .
         </p>
+      </section>
+
+      <section className="mt-12">
+        <h2 id="rupa" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
+          Ima li u zabrani rupa?
+        </h2>
+        <div className="mt-3 max-w-3xl space-y-3 text-zinc-600">
+          <p>
+            Ima. Ostavlja je <Navod id="istok-ppug-2025">list 4.4 „Građevinska područja – Split istok, Kamen, Stobreč”</Navod>{" "}
+            prijedloga izmjena PPUG-a, u mjerilu 1:5000. Na njemu je građevinsko područje po česticama podijeljeno na
+            izgrađeno, neizgrađeno i neuređeno (šrafirano). Novi GUP na svoj list 4.d preuzima samo neuređeno. Neizgrađene
+            čestice bez šrafure zato na listu 4.d ostaju bez oznake, pa se na njima i u obuhvatu UPU-a gradi neposrednom
+            provedbom GUP-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
+          </p>
+          <p>
+            U obuhvatima UPU-a bez plana na snazi takvih je {broj(rupa.cestice)}{" "}
+            {imenicaUz(rupa.cestice, ["čestica", "čestice", "čestica"])} od najmanje 250 m², ukupno {ha1(rupa.ha)} ha.
+            Većinom su to pojasi uz postojeće ceste; u javnoj raspravi o PPUG-u Grad je onamo prebacivao i čestice vlasnika
+            koji su dokazali da je cesta do njih izvedena. U urbanoj sanaciji takve rupe gotovo nema: PPUG ondje i prazne
+            čestice unutar izgrađenog bloka vodi kao izgrađene, pa one ostaju pod zabranom.
+          </p>
+        </div>
+
+        <figure className="mt-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["/gup/zabrana/ppug-4-4-dracevac.webp", "List 4.4 PPUG-a", "Izrez lista 4.4 PPUG-a za Dračevac 2: žuto izgrađeno, šrafirano neuređeno i nekoliko svijetložutih neizgrađenih čestica bez šrafure."],
+                ["/gup/zabrana/list-4d-dracevac.webp", "List 4.d novog GUP-a", "Isto područje na listu 4.d novog GUP-a: na mjestu svijetložutih čestica nema oznake, iako su u obuhvatu UPU-a."],
+              ] as const
+            ).map(([src, naslov, opis]) => (
+              <div key={src}>
+                <p className="mb-1 text-sm font-semibold text-zinc-900">{naslov}</p>
+                <a href={src} className="fokus block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} width={1100} height={903} alt={opis} loading="lazy" className="h-auto w-full rounded-lg border border-zinc-200" />
+                </a>
+              </div>
+            ))}
+          </div>
+          <figcaption className="mt-3 max-w-3xl text-sm text-zinc-600">
+            Dračevac 2: svijetložute čestice bez šrafure s lista PPUG-a na listu 4.d novog GUP-a nemaju oznaku, iako su
+            unutar obuhvata UPU-a.
+          </figcaption>
+        </figure>
+
+        <div className="mt-5 max-w-3xl overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-300 text-zinc-500">
+                <th className="py-2 pr-3 font-semibold">Plan užeg područja</th>
+                <th className="py-2 pr-3 text-right font-semibold">čestice</th>
+                <th className="py-2 text-right font-semibold">ha</th>
+              </tr>
+            </thead>
+            <tbody className="text-zinc-800">
+              {rupa.po_upu.map((r) => (
+                <tr key={r.broj} className="border-b border-zinc-200">
+                  <td className="py-1.5 pr-3">{r.naziv ?? "izvan ucrtanih obuhvata UPU-a"}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono tabular-nums">{broj(r.cestice)}</td>
+                  <td className="py-1.5 text-right font-mono tabular-nums">{ha1(r.ha)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="mt-12 max-w-3xl text-sm leading-relaxed text-zinc-700">

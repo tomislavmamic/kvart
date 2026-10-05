@@ -189,6 +189,8 @@ export interface ZbrojSpornih {
   /** razred na listu PPUG-a (I izgrađeno, N neizgrađeno bez šrafure, U neuređeno) prema oznaci s lista 4.d,
    *  za čestice od 250 m² u obuhvatima propisanih UPU-a izvan važećih planova */
   ppug_4d: Record<"I" | "N" | "U", Record<"sanacija" | "preobrazba" | "neuredeno" | "bez", BrojCestica>>;
+  /** rupa u zabrani: čestice koje PPUG vodi kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake, po UPU-u */
+  ppug_rupa: BrojCestica & { po_upu: { broj: number; naziv: string | null; cestice: number; ha: number }[] };
   po_upu: Record<string, { naziv: string | null; cestice: number; ha: number }>;
 }
 
