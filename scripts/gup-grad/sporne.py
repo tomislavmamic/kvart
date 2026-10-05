@@ -149,6 +149,19 @@ def udio_u(g, maska) -> float:
 VAZECI, OBVEZA = 1, 2
 
 
+def oznaka_4d(g, b: np.ndarray) -> str | None:
+    """Oznaka s lista 4.d pod česticom od najmanje 250 m² (HTRS96): sanacija,
+    neuređeno, preobrazba ili „bez”; None ako čestica nije većinom u obuhvatu
+    propisanog UPU-a izvan važećih planova, pa je zabrana se ne tiče."""
+    if g.area < NAJMANJA_CESTICA_M2:
+        return None
+    v = pikseli(g, b)
+    if not v.size or (((v & OBVEZA) > 0) & ((v & VAZECI) == 0)).mean() < 0.5:
+        return None
+    return next((ime for bit, ime in ((Z.SANACIJA, "sanacija"), (Z.NEUREDENO, "neuredeno"), (Z.PREOBRAZBA, "preobrazba"))
+                 if ((v & bit) > 0).mean() >= 0.5), "bez")
+
+
 def ppug_prema_4d(ppug: dict, upu: list) -> tuple[dict, dict]:
     """Razred čestice na listu PPUG-a prema oznaci s lista 4.d, za čestice od
     250 m² u obuhvatima propisanih UPU-a izvan važećih planova. Pokazuje po
@@ -169,13 +182,9 @@ def ppug_prema_4d(ppug: dict, upu: list) -> tuple[dict, dict]:
             if r not in out:
                 continue
             g = stransform(Z.U_HTRS, shape(f["geometry"]))
-            if g.area < NAJMANJA_CESTICA_M2:
+            o = oznaka_4d(g, b)
+            if o is None:
                 continue
-            v = pikseli(g, b)
-            if not v.size or (((v & OBVEZA) > 0) & ((v & VAZECI) == 0)).mean() < 0.5:
-                continue
-            o = next((ime for bit, ime in ((Z.SANACIJA, "sanacija"), (Z.NEUREDENO, "neuredeno"), (Z.PREOBRAZBA, "preobrazba"))
-                      if ((v & bit) > 0).mean() >= 0.5), "bez")
             out[r][o][0] += 1
             out[r][o][1] += g.area / 1e4
             if r == "N" and o == "bez":

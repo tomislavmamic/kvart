@@ -258,19 +258,21 @@ export default async function ZabranaPage() {
           Ima li u zabrani rupa?
         </h2>
         <div className="mt-3 max-w-3xl space-y-3 text-zinc-600">
-          <p>
-            Ima. Ostavlja je <Navod id="istok-ppug-2025">list 4.4 „Građevinska područja – Split istok, Kamen, Stobreč”</Navod>{" "}
-            prijedloga izmjena PPUG-a, u mjerilu 1:5000. Na njemu je građevinsko područje po česticama podijeljeno na
-            izgrađeno, neizgrađeno i neuređeno (šrafirano). Novi GUP na svoj list 4.d preuzima samo neuređeno. Neizgrađene
-            čestice bez šrafure zato na listu 4.d ostaju bez oznake, pa se na njima i u obuhvatu UPU-a gradi neposrednom
-            provedbom GUP-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
+          <p className="text-zinc-900">
+            <strong>Ima.</strong> Na dijelu praznih čestica unutar obuhvata UPU-a moći će se graditi i bez UPU-a, odmah po
+            novom GUP-u.
           </p>
           <p>
-            U obuhvatima UPU-a bez plana na snazi takvih je {broj(rupa.cestice)}{" "}
-            {imenicaUz(rupa.cestice, ["čestica", "čestice", "čestica"])} od najmanje 250 m², ukupno {ha1(rupa.ha)} ha.
-            Većinom su to pojasi uz postojeće ceste; u javnoj raspravi o PPUG-u Grad je onamo prebacivao i čestice vlasnika
-            koji su dokazali da je cesta do njih izvedena. U urbanoj sanaciji takve rupe gotovo nema: PPUG ondje i prazne
-            čestice unutar izgrađenog bloka vodi kao izgrađene, pa one ostaju pod zabranom.
+            Zabrana ne vrijedi za cijeli obuhvat UPU-a, nego samo za zemljište koje novi GUP na listu 4.d označi kao urbanu
+            sanaciju, urbanu preobrazbu ili neuređeni dio. Neuređeni dio GUP ne određuje sam, nego ga preuzima iz PPUG-a, s{" "}
+            <Navod id="istok-ppug-2025">lista 4.4 „Građevinska područja – Split istok, Kamen, Stobreč”</Navod>. Taj list za
+            svaku česticu određuje je li izgrađena, neizgrađena ili neuređena. Neuređena je prazna čestica do koje
+            nisu izvedene cesta i odvodnja; neizgrađena je prazna čestica do koje jesu, obično uz postojeću cestu.
+          </p>
+          <p>
+            Novi GUP preuzima samo neuređene čestice. Neizgrađena čestica zato na njegovu listu 4.d ostaje bez ikakve oznake,
+            a bez oznake nema ni zabrane: na njoj se gradi prema uvjetima samog GUP-a, kao i drugdje u gradu, iako je unutar
+            obuhvata UPU-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
           </p>
         </div>
 
@@ -278,8 +280,8 @@ export default async function ZabranaPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {(
               [
-                ["/gup/zabrana/ppug-4-4-dracevac.webp", "List 4.4 PPUG-a", "Izrez lista 4.4 PPUG-a za Dračevac 2: žuto izgrađeno, šrafirano neuređeno i nekoliko svijetložutih neizgrađenih čestica bez šrafure."],
-                ["/gup/zabrana/list-4d-dracevac.webp", "List 4.d novog GUP-a", "Isto područje na listu 4.d novog GUP-a: na mjestu svijetložutih čestica nema oznake, iako su u obuhvatu UPU-a."],
+                ["/gup/zabrana/rupa-ppug-dracevac.webp", "List 4.4 PPUG-a", "Izrez lista 4.4 PPUG-a za Dračevac 2: žuto izgrađeno, šrafirano neuređeno, a ljubičasto obrubljene svijetložute neizgrađene čestice."],
+                ["/gup/zabrana/rupa-4d-dracevac.webp", "List 4.d novog GUP-a", "Isto područje na listu 4.d novog GUP-a: ljubičasto obrubljene čestice nemaju oznaku, iako su unutar obuhvata UPU-a."],
               ] as const
             ).map(([src, naslov, opis]) => (
               <div key={src}>
@@ -292,10 +294,25 @@ export default async function ZabranaPage() {
             ))}
           </div>
           <figcaption className="mt-3 max-w-3xl text-sm text-zinc-600">
-            Dračevac 2: svijetložute čestice bez šrafure s lista PPUG-a na listu 4.d novog GUP-a nemaju oznaku, iako su
-            unutar obuhvata UPU-a.
+            Dračevac 2. Ljubičasto su obrubljene čestice koje su na listu 4.4 PPUG-a svijetložute, dakle neizgrađene. Na
+            listu 4.d novog GUP-a na njihovu mjestu nema oznake, iako su unutar plavog obuhvata UPU-a, pa se na njima smije
+            graditi.
           </figcaption>
         </figure>
+
+        <div className="mt-5 max-w-3xl space-y-3 text-zinc-600">
+          <p>
+            U obuhvatima UPU-a bez plana na snazi takvih je {broj(rupa.cestice)}{" "}
+            {imenicaUz(rupa.cestice, ["čestica", "čestice", "čestica"])} od najmanje 250 m², ukupno {ha1(rupa.ha)} ha. U
+            javnoj raspravi o PPUG-u Grad je među njih prebacivao i čestice vlasnika koji su dokazali da je cesta do njih
+            izvedena. U urbanoj sanaciji takve rupe gotovo nema: PPUG ondje i prazne čestice unutar izgrađenog bloka vodi kao
+            izgrađene, pa one ostaju pod zabranom.
+          </p>
+          <p>
+            Je li tvoja čestica u rupi, provjeri klikom na nju na karti iznad: ako piše „Gradnja je moguća”, zabrana na nju ne
+            djeluje.
+          </p>
+        </div>
 
         <div className="mt-5 max-w-3xl overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm">

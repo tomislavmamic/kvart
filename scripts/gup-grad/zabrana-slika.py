@@ -14,10 +14,13 @@ Ortofoto se čita kroz posrednik aplikacije, pa mora raditi razvojni poslužitel
     python3 scripts/gup-grad/zabrana-slika.py [zapad jug istok sjever [mapa]]
 
 Izlaz: public/gup/zabrana/list-4d-dracevac.webp, karta-dracevac.webp i
-ppug-4-4-dracevac.webp (rupa u zabrani: neizgrađeno bez šrafure na PPUG-u)
+ppug-4-4-dracevac.webp. Na izrezima listova 4.4 i 4.d za pitanje o rupi u
+zabrani (rupa-*.webp) ljubičasto su obrubljene čestice koje PPUG vodi kao
+neizgrađene bez šrafure, a list 4.d ostavlja bez oznake (sporne.oznaka_4d).
 """
 from __future__ import annotations
 
+import glob
 import io
 import json
 import math
@@ -29,6 +32,11 @@ import numpy as np
 from PIL import Image, ImageDraw
 from pyproj import Transformer
 from shapely.geometry import shape
+from shapely.ops import transform as stransform
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import sporne as SP  # noqa: E402
+import zabrana as ZB  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 WEB = os.environ.get("KVART_WEB", "http://localhost:3107")
@@ -41,6 +49,7 @@ Z = 16  # posrednik na z=15 daje pločice od 512 px, što je razlučivost zuma 1
 BOJE = {"sanacija": "#ef4444", "preobrazba": "#fb923c"}
 TAMNE = {"sanacija": "#dc2626", "preobrazba": "#ea580c"}
 VAZECI, UPU, CESTICA = "#71717a", "#2563eb", "#3f3f46"
+RUPA = "#c026d3"
 U_HTRS = Transformer.from_crs(4326, 3765, always_xy=True).transform
 
 
@@ -49,7 +58,8 @@ def rgb(h: str) -> tuple[int, int, int]:
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def izrez_lista(lid: str, zapad, jug, istok, sjever) -> Image.Image:
+def izrez_lista(lid: str, zapad, jug, istok, sjever):
+    """Izrez lista i preslikavanje (lng, lat) → piksel izreza."""
     lst = json.load(open(os.path.join(ROOT, "data", "gup-grad", "dokument", "listovi.json")))["listovi"][lid]
     a, b, c, d, e, f = lst["uklapanje"]
 
@@ -66,7 +76,41 @@ def izrez_lista(lid: str, zapad, jug, istok, sjever) -> Image.Image:
             put = os.path.join(ROOT, "public", "gup", "listovi", lid, str(lst["maksZum"]), f"{tx}_{ty}.avif")
             if os.path.exists(put):
                 platno.paste(Image.open(put).convert("RGB"), (tx * 512 - int(x0), ty * 512 - int(y0)))
-    return platno
+
+    def u_izrez(lng, lat):
+        x, y = px(lng, lat)
+        return x - int(x0), y - int(y0)
+
+    return platno, u_izrez
+
+
+def rupe(zapad, jug, istok, sjever) -> list:
+    """Čestice u okviru koje PPUG vodi kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake (WGS84)."""
+    ppug = json.load(open(os.path.join(ROOT, "data", "gup-grad", "ppug-2025.json")))["cestice"]
+    b = np.load(ZB.REZIM)
+    out = []
+    for put in sorted(glob.glob(os.path.join(ROOT, "public", "geo", "gup-grad", "cestice", "*.json"))):
+        for f in json.load(open(put))["features"]:
+            p = f["properties"]
+            if ppug.get(f"{p['ko']}|{p['kc']}") != "N":
+                continue
+            g = shape(f["geometry"])
+            x0, y0, x1, y1 = g.bounds
+            if x1 < zapad or x0 > istok or y1 < jug or y0 > sjever:
+                continue
+            if SP.oznaka_4d(stransform(ZB.U_HTRS, g), b) == "bez":
+                out.append(g)
+    return out
+
+
+def obrubi(slika: Image.Image, u_izrez, mjerilo: tuple[float, float], oblici: list) -> Image.Image:
+    s = slika.copy()
+    d = ImageDraw.Draw(s)
+    for g in oblici:
+        for poli in g.geoms if g.geom_type == "MultiPolygon" else [g]:
+            pr = [(x * mjerilo[0], y * mjerilo[1]) for x, y in (u_izrez(*c) for c in poli.exterior.coords)]
+            d.line(pr + [pr[0]], fill=rgb(RUPA) + (255,) if s.mode == "RGBA" else rgb(RUPA), width=5, joint="curve")
+    return s
 
 
 def svijet(lng, lat):
@@ -133,9 +177,17 @@ def main() -> None:
     desno = karta(*okvir)
     visina = round(desno.height * SIRINA / desno.width)
     desno = desno.resize((SIRINA, visina), Image.LANCZOS)
-    lijevo = izrez_lista("planske-mjere-2025", *okvir).resize((SIRINA, visina), Image.LANCZOS)
-    ppug = izrez_lista("ppug-podrucja-istok-2025", *okvir).resize((SIRINA, visina), Image.LANCZOS)
-    for ime, s in (("list-4d-dracevac.webp", lijevo), ("karta-dracevac.webp", desno), ("ppug-4-4-dracevac.webp", ppug)):
+    izrezi = {}
+    for lid in ("planske-mjere-2025", "ppug-podrucja-istok-2025"):
+        slika, u_izrez = izrez_lista(lid, *okvir)
+        izrezi[lid] = (slika.resize((SIRINA, visina), Image.LANCZOS), u_izrez, (SIRINA / slika.width, visina / slika.height))
+    lijevo = izrezi["planske-mjere-2025"][0]
+    rupe_ovdje = rupe(*okvir)
+    print(f"rupa: {len(rupe_ovdje)} čestica u okviru")
+    rupa_4d = obrubi(*izrezi["planske-mjere-2025"], rupe_ovdje)
+    rupa_ppug = obrubi(*izrezi["ppug-podrucja-istok-2025"], rupe_ovdje)
+    for ime, s in (("list-4d-dracevac.webp", lijevo), ("karta-dracevac.webp", desno),
+                   ("rupa-ppug-dracevac.webp", rupa_ppug), ("rupa-4d-dracevac.webp", rupa_4d)):
         put = os.path.join(izlaz, ime)
         s.save(put, "WEBP", quality=80, method=6)
         print(put, s.size, f"{os.path.getsize(put) / 1024:.0f} kB")
