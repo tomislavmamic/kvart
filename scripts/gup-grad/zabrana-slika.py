@@ -13,10 +13,10 @@ Ortofoto se čita kroz posrednik aplikacije, pa mora raditi razvojni poslužitel
     npx next dev -p 3107
     python3 scripts/gup-grad/zabrana-slika.py [zapad jug istok sjever [mapa]]
 
-Izlaz: public/gup/zabrana/list-4d-dracevac.webp, karta-dracevac.webp i
-ppug-4-4-dracevac.webp. Na izrezima listova 4.4 i 4.d za pitanje o rupi u
-zabrani (rupa-*.webp) ljubičasto su obrubljene čestice koje PPUG vodi kao
-neizgrađene bez šrafure, a list 4.d ostavlja bez oznake (sporne.oznaka_4d).
+Izlaz: public/gup/zabrana/list-4d-dracevac.webp, karta-dracevac.webp,
+rupa-1-ppug.webp, rupa-2-gup.webp i rupa-3-rupa.webp: rupa u zabrani u tri
+koraka (razredi čestica na listu 4.4 PPUG-a, oznake lista 4.d, čestice bez
+oznake prema sporne.oznaka_4d).
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ import sys
 import urllib.request
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw
 from pyproj import Transformer
 from shapely.geometry import shape
 from shapely.ops import transform as stransform
@@ -103,70 +103,148 @@ def rupe(zapad, jug, istok, sjever) -> list:
     return out
 
 
-def obrubi(slika: Image.Image, u_izrez, mjerilo: tuple[float, float], oblici: list) -> Image.Image:
-    s = slika.copy()
-    d = ImageDraw.Draw(s)
-    for g in oblici:
-        for poli in g.geoms if g.geom_type == "MultiPolygon" else [g]:
-            pr = [(x * mjerilo[0], y * mjerilo[1]) for x, y in (u_izrez(*c) for c in poli.exterior.coords)]
-            d.line(pr + [pr[0]], fill=rgb(RUPA) + (255,) if s.mode == "RGBA" else rgb(RUPA), width=5, joint="curve")
-    return s
-
-
-def svijet(lng, lat):
-    n = 256 * 2 ** Z
+def svijet(lng, lat, z: int = Z):
+    n = 256 * 2 ** z
     s = math.sin(math.radians(lat))
     return (lng + 180) / 360 * n, (0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * n
 
 
-def karta(zapad, jug, istok, sjever) -> Image.Image:
-    x0, y0 = svijet(zapad, sjever)
-    x1, y1 = svijet(istok, jug)
-    w, h = int(x1 - x0), int(y1 - y0)
-    pod = Image.new("RGB", (w, h), "white")
-    for tx in range(int(x0) // 512, int(x1) // 512 + 1):
-        for ty in range(int(y0) // 512, int(y1) // 512 + 1):
-            with urllib.request.urlopen(f"{WEB}/api/podloga/dof-2025/15/{tx}/{ty}") as r:
-                pod.paste(Image.open(io.BytesIO(r.read())).convert("RGB"), (tx * 512 - int(x0), ty * 512 - int(y0)))
-    # grayscale(1) contrast(0.6) brightness(1.3), kao .podloga-siva
-    g = (np.asarray(pod).astype(float) / 255) @ np.array([0.2126, 0.7152, 0.0722])
-    g = np.clip(((g - 0.5) * 0.6 + 0.5) * 1.3, 0, 1)
-    slika = Image.fromarray((np.dstack([g, g, g]) * 255).astype("uint8")).convert("RGBA")
+class Platno:
+    """Siva ortofoto podloga okvira (kao .podloga-siva u globals.css) i crtanje slojeva po njoj.
+    Posrednik na zumu z−1 daje pločice od 512 px, što je razlučivost zuma z."""
 
-    def prsteni(geom):
-        g = shape(geom)
+    def __init__(self, zapad, jug, istok, sjever, z: int = Z):
+        self.z = z
+        self.x0, self.y0 = svijet(zapad, sjever, z)
+        x1, y1 = svijet(istok, jug, z)
+        self.w, self.h = int(x1 - self.x0), int(y1 - self.y0)
+        pod = Image.new("RGB", (self.w, self.h), "white")
+        for tx in range(int(self.x0) // 512, int(x1) // 512 + 1):
+            for ty in range(int(self.y0) // 512, int(y1) // 512 + 1):
+                with urllib.request.urlopen(f"{WEB}/api/podloga/dof-2025/{z - 1}/{tx}/{ty}") as r:
+                    pod.paste(Image.open(io.BytesIO(r.read())).convert("RGB"), (tx * 512 - int(self.x0), ty * 512 - int(self.y0)))
+        g = (np.asarray(pod).astype(float) / 255) @ np.array([0.2126, 0.7152, 0.0722])
+        g = np.clip(((g - 0.5) * 0.6 + 0.5) * 1.3, 0, 1)
+        self.slika = Image.fromarray((np.dstack([g, g, g]) * 255).astype("uint8")).convert("RGBA")
+
+    def kopija(self) -> "Platno":
+        k = object.__new__(Platno)
+        k.__dict__.update(self.__dict__)
+        k.slika = self.slika.copy()
+        return k
+
+    def prsteni(self, geom):
+        g = shape(geom) if isinstance(geom, dict) else geom
         for p in g.geoms if g.geom_type == "MultiPolygon" else [g]:
-            yield [(lx - x0, ly - y0) for lx, ly in (svijet(*c) for c in p.exterior.coords)]
+            yield [(lx - self.x0, ly - self.y0) for lx, ly in (svijet(*c, self.z) for c in p.exterior.coords)]
 
-    def sloj(znacajke, boja: str, neprozirnost: float, rub: int = 0):
-        nonlocal slika
-        l = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    def sloj(self, oblici, boja: str, neprozirnost: float = 1.0, rub: int = 0, srafura: int = 0):
+        """Ispuna, rub (debljina u px) ili šrafura (razmak crta u px) oblika (GeoJSON ili shapely, WGS84)."""
+        l = Image.new("RGBA", (self.w, self.h), (0, 0, 0, 0))
         d = ImageDraw.Draw(l)
-        for f in znacajke:
-            for pr in prsteni(f["geometry"]):
-                if rub:
-                    d.line(pr + [pr[0]], fill=rgb(boja) + (255,), width=rub)
-                else:
-                    d.polygon(pr, fill=rgb(boja) + (255,))
+        if srafura:
+            maska = Image.new("L", (self.w, self.h), 0)
+            dm = ImageDraw.Draw(maska)
+            for g in oblici:
+                for pr in self.prsteni(g):
+                    dm.polygon(pr, fill=255)
+            for k in range(-self.h, self.w, srafura):
+                d.line([(k, self.h), (k + self.h, 0)], fill=rgb(boja) + (255,), width=max(1, srafura // 5))
+            l.putalpha(ImageChops.multiply(l.getchannel("A"), maska))
+        else:
+            for g in oblici:
+                for pr in self.prsteni(g):
+                    if rub:
+                        d.line(pr + [pr[0]], fill=rgb(boja) + (255,), width=rub, joint="curve")
+                    else:
+                        d.polygon(pr, fill=rgb(boja) + (255,))
         l.putalpha(l.getchannel("A").point(lambda v: int(v * neprozirnost)))
-        slika = Image.alpha_composite(slika, l)
+        self.slika = Image.alpha_composite(self.slika, l)
 
-    geo = os.path.join(ROOT, "public", "geo", "gup-grad")
-    planovi = json.load(open(os.path.join(geo, "planski-rezim-2025.geojson")))["features"]
-    zbroj = json.load(open(os.path.join(geo, "zabrana-2025.geojson")))["zbroj"]
+    def gotovo(self, sirina: int) -> Image.Image:
+        s = self.slika.convert("RGB")
+        return s.resize((sirina, round(s.height * sirina / s.width)), Image.LANCZOS)
+
+
+def geo(ime: str) -> dict:
+    return json.load(open(os.path.join(ROOT, "public", "geo", "gup-grad", ime)))
+
+
+def karta(zapad, jug, istok, sjever) -> Image.Image:
+    pl = Platno(zapad, jug, istok, sjever)
+    planovi = geo("planski-rezim-2025.geojson")["features"]
+    zbroj = geo("zabrana-2025.geojson")["zbroj"]
     na_karti = {r["broj"] for r in zbroj["po_upu"] if r["broj"] and r["fokus_cestice"] > 0 and r["fokus_slobodno_ha"] >= 0.05}
-    cestice = json.load(open(os.path.join(geo, "zabrana-izgradjenost-2025.geojson")))["features"]
-
-    vazeci = [f for f in planovi if f["properties"]["vrsta"] == "vazeci"]
-    sloj(vazeci, VAZECI, 0.35)
-    sloj(vazeci, VAZECI, 1.0, rub=2)
+    cestice = geo("zabrana-izgradjenost-2025.geojson")["features"]
+    vazeci = [f["geometry"] for f in planovi if f["properties"]["vrsta"] == "vazeci"]
+    pl.sloj(vazeci, VAZECI, 0.35)
+    pl.sloj(vazeci, VAZECI, 1.0, rub=2)
     for vrsta in ("sanacija", "preobrazba"):
         ove = [f for f in cestice if f["properties"]["vrsta"] == vrsta]
-        sloj([f for f in ove if f["properties"]["izgradjena"]], BOJE[vrsta], 0.4)
-        sloj([f for f in ove if not f["properties"]["izgradjena"]], TAMNE[vrsta], 0.85)
-    sloj(cestice, CESTICA, 0.5, rub=1)
-    sloj([f for f in planovi if f["properties"]["vrsta"] == "propisan" and f["properties"].get("broj") in na_karti], UPU, 1.0, rub=3)
-    return slika.convert("RGB")
+        pl.sloj([f["geometry"] for f in ove if f["properties"]["izgradjena"]], BOJE[vrsta], 0.4)
+        pl.sloj([f["geometry"] for f in ove if not f["properties"]["izgradjena"]], TAMNE[vrsta], 0.85)
+    pl.sloj([f["geometry"] for f in cestice], CESTICA, 0.5, rub=1)
+    pl.sloj([f["geometry"] for f in planovi if f["properties"]["vrsta"] == "propisan" and f["properties"].get("broj") in na_karti],
+            UPU, 1.0, rub=3)
+    return pl.slika.convert("RGB")
+
+
+# Rupa u zabrani u tri koraka, izbliza oko neizgrađenih čestica Dračevca 2
+OKVIR_RUPE = (16.5012, 43.5242, 16.5064, 43.5281)
+PPUG_BOJE = {"I": "#facc15", "N": "#fef9c3", "U": "#fef9c3"}
+SRAFURA_BOJA = "#44403c"
+NEUREDENO = "#fde047"
+
+
+def koraci_rupe(zapad, jug, istok, sjever, sirina: int = 640) -> dict[str, Image.Image]:
+    """1. razredi čestica na listu 4.4 PPUG-a, 2. oznake lista 4.d novog GUP-a, 3. čestice bez oznake (rupa)."""
+    osnova = Platno(zapad, jug, istok, sjever, z=18)
+    ppug = json.load(open(os.path.join(ROOT, "data", "gup-grad", "ppug-2025.json")))["cestice"]
+    po_razredu = {"I": [], "N": [], "U": []}
+    sve = []
+    for put in sorted(glob.glob(os.path.join(ROOT, "public", "geo", "gup-grad", "cestice", "*.json"))):
+        for f in json.load(open(put))["features"]:
+            g = shape(f["geometry"])
+            x0, y0, x1, y1 = g.bounds
+            if x1 < zapad or x0 > istok or y1 < jug or y0 > sjever:
+                continue
+            sve.append(g)
+            r = ppug.get(f"{f['properties']['ko']}|{f['properties']['kc']}")
+            if r in po_razredu:
+                po_razredu[r].append(g)
+    planovi = geo("planski-rezim-2025.geojson")["features"]
+    upu = [f["geometry"] for f in planovi if f["properties"]["vrsta"] == "propisan"]
+    vazeci = [f["geometry"] for f in planovi if f["properties"]["vrsta"] == "vazeci"]
+    komadi = geo("zabrana-2025.geojson")["features"]
+    oznaka = {o: [f["geometry"] for f in komadi
+                  if (f["properties"]["vrsta"] == o) or (f["properties"]["vrsta"] == "negradivo" and f["properties"].get("podrucje") == o)]
+              for o in ("sanacija", "preobrazba", "neuredeno")}
+    rupe_ovdje = rupe(zapad, jug, istok, sjever)
+
+    def zavrsi(pl: Platno, s_cesticama: bool = True) -> Image.Image:
+        if s_cesticama:
+            pl.sloj(sve, "#57534e", 0.45, rub=1)
+        pl.sloj(vazeci, VAZECI, 0.35)
+        pl.sloj(upu, UPU, 1.0, rub=4)
+        return pl.gotovo(sirina)
+
+    p1 = osnova.kopija()
+    p1.sloj(po_razredu["I"], PPUG_BOJE["I"], 0.6)
+    p1.sloj(po_razredu["N"] + po_razredu["U"], PPUG_BOJE["N"], 0.9)
+    p1.sloj(po_razredu["U"], SRAFURA_BOJA, 0.8, srafura=10)
+
+    p2 = osnova.kopija()
+    p2.sloj(oznaka["sanacija"], BOJE["sanacija"], 0.55)
+    p2.sloj(oznaka["preobrazba"], BOJE["preobrazba"], 0.55)
+    p2.sloj(oznaka["neuredeno"], NEUREDENO, 0.55)
+    p2.sloj(oznaka["neuredeno"], SRAFURA_BOJA, 0.8, srafura=10)
+
+    p3 = osnova.kopija()
+    p3.sloj(rupe_ovdje, RUPA, 0.6)
+    p3.sloj(rupe_ovdje, RUPA, 1.0, rub=4)
+
+    print(f"koraci rupe: {len(sve)} čestica u okviru, {len(rupe_ovdje)} u rupi")
+    return {"rupa-1-ppug.webp": zavrsi(p1), "rupa-2-gup.webp": zavrsi(p2, False), "rupa-3-rupa.webp": zavrsi(p3)}
 
 
 def main() -> None:
@@ -177,17 +255,9 @@ def main() -> None:
     desno = karta(*okvir)
     visina = round(desno.height * SIRINA / desno.width)
     desno = desno.resize((SIRINA, visina), Image.LANCZOS)
-    izrezi = {}
-    for lid in ("planske-mjere-2025", "ppug-podrucja-istok-2025"):
-        slika, u_izrez = izrez_lista(lid, *okvir)
-        izrezi[lid] = (slika.resize((SIRINA, visina), Image.LANCZOS), u_izrez, (SIRINA / slika.width, visina / slika.height))
-    lijevo = izrezi["planske-mjere-2025"][0]
-    rupe_ovdje = rupe(*okvir)
-    print(f"rupa: {len(rupe_ovdje)} čestica u okviru")
-    rupa_4d = obrubi(*izrezi["planske-mjere-2025"], rupe_ovdje)
-    rupa_ppug = obrubi(*izrezi["ppug-podrucja-istok-2025"], rupe_ovdje)
-    for ime, s in (("list-4d-dracevac.webp", lijevo), ("karta-dracevac.webp", desno),
-                   ("rupa-ppug-dracevac.webp", rupa_ppug), ("rupa-4d-dracevac.webp", rupa_4d)):
+    lijevo = izrez_lista("planske-mjere-2025", *okvir)[0].resize((SIRINA, visina), Image.LANCZOS)
+    slike = {"list-4d-dracevac.webp": lijevo, "karta-dracevac.webp": desno, **koraci_rupe(*OKVIR_RUPE)}
+    for ime, s in slike.items():
         put = os.path.join(izlaz, ime)
         s.save(put, "WEBP", quality=80, method=6)
         print(put, s.size, f"{os.path.getsize(put) / 1024:.0f} kB")
