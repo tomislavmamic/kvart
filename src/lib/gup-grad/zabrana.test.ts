@@ -57,6 +57,7 @@ test("stanjeTocke: zabrana prije plana na snazi, izvan GUP-a, preporuka, GUP", (
     cestice: [{ ...oblik(poligon(kvadrat(16.401, 43.501, 0.002))), kc: "406/3", ko: "SPLIT", m2: 850, neizgradjena: true, fokus: true }],
     ppug: [],
     ppugCestice: {},
+    rupa: new Set(),
     obris: oblik(poligon(kvadrat(16.4, 43.5, 0.005))),
     vazeci: [{ ...oblik(poligon(kvadrat(16.41, 43.51, 0.005))), naziv: "DPU radne zone Dračevac", glasnik: "8/03" }],
     propisani: [upu],

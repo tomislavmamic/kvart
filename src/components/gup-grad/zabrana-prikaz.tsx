@@ -102,7 +102,11 @@ function Znacka({ boja, children }: { boja: Kartica["boja"]; children: ReactNode
   return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${klasa}`}>{children}</span>;
 }
 
-const RAZRED_PPUG = { U: "šrafirana kao neuređena", I: "u izgrađenom dijelu", N: "u neizgrađenom, ali uređenom dijelu" } as const;
+const RAZRED_PPUG = {
+  I: "u izgrađenom dijelu",
+  N: "u neizgrađenom uređenom dijelu",
+  U: "u neizgrađenom neuređenom dijelu (šrafirano)",
+} as const;
 
 function karticaStanja(
   s: Stanje,
@@ -178,12 +182,12 @@ function karticaStanja(
               <p className="mb-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-zinc-900">
                 {s.cestica.neizgradjena ? (
                   <>
-                    <strong>Neizgrađena čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na oko{" "}
+                    <strong>Prazna čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na oko{" "}
                     {okrugloM2(s.cestica.m2)} m² nova će se zgrada smjeti graditi tek nakon donošenja UPU-a.
                   </>
                 ) : (
                   <>
-                    <strong>Djelomično izgrađena čestica</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na
+                    <strong>Čestica sa zgradom</strong> k.č. {s.cestica.kc} (k.o. {naslovno(s.cestica.ko)}): na
                     slobodnom dijelu od oko {okrugloM2(s.cestica.m2)} m² nova će se zgrada smjeti graditi tek nakon donošenja UPU-a.
                   </>
                 )}
@@ -197,9 +201,10 @@ function karticaStanja(
             {s.podrucje === "sanacija" && s.cestica?.neizgradjena && (
               <p className="mt-2">
                 <strong>Čestica je prazna, a ipak je u urbanoj sanaciji.</strong> GUP tu oznaku ne crta po česticama, nego kao
-                jednu plohu preko cijelog izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenog bloka vodi kao
-                izgrađeni dio. Za razliku od neuređenog dijela, ovdje do UPU-a nema iznimke za čestice uz postojeću cestu, pa
-                se na njoj neće smjeti graditi ništa novo.
+                jednu plohu preko izgrađenog dijela naselja, a PPUG i prazne čestice unutar izgrađenih blokova vodi kao
+                izgrađeni dio. Za urbanu sanaciju zakon do UPU-a predviđa samo rekonstrukciju i zamjenu (Zakon o prostornom
+                uređenju, čl. 106. st. 3.), pa se na praznoj čestici do UPU-a neće smjeti graditi nova stambena ni poslovna
+                zgrada. Iznimka za česticu uz postojeću cestu (čl. 180. st. 2. t. 3.) ovdje, prema našem čitanju, ne vrijedi.
               </p>
             )}
             {rub}
@@ -249,8 +254,9 @@ function karticaStanja(
         tijelo: (
           <>
             <p>
-              Novi GUP ovdje propisuje izradu UPU-a, ali ovo zemljište nije područje urbane sanacije ni urbane
-              preobrazbe, a ni neuređeni dio građevinskog područja, pa se do donošenja UPU-a gradi neposrednom provedbom
+              Ovo je u obuhvatu UPU-a, ali na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> nije ni područje urbane
+              sanacije ni urbane preobrazbe ni neuređeni dio. Na takvom je zemljištu UPU samo preporučen (
+              <Navod id="legenda-4d-2025">tumač lista 4.d</Navod>), pa se do njegova donošenja gradi neposrednom provedbom
               GUP-a (<Navod id="obuhvat-izvan-cekanja-2025">čl. 103. st. 3.</Navod>).
             </p>
             {rub}
@@ -631,6 +637,20 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
                   k.č. {cesticaKlika.kc}, k.o. {naslovno(cesticaKlika.ko)}
                 </p>
               )}
+              {oznaka && cesticaKlika && podaci?.slojevi.rupa.has(`${cesticaKlika.ko}|${cesticaKlika.kc}`) && (
+                <p className="mt-2 rounded-lg bg-fuchsia-50 px-2.5 py-1.5 text-fuchsia-950">
+                  <strong>Zabrana ne obuhvaća ovu česticu, iako je u obuhvatu UPU-a.</strong> Na{" "}
+                  <Navod id="istok-ppug-2025">listu 4.4 PPUG-a</Navod> čestica je u neizgrađenom uređenom dijelu (svijetložuto,
+                  bez šrafure), a na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> nema nijedne od triju oznaka. PPUG
+                  na njoj gradnju dopušta samo uz prometnu površinu u funkciji široku najmanje 4 m ili uz izdanu građevinsku
+                  dozvolu za nju, uz mogućnost priključka na odvodnju i niskonaponsku mrežu i uz koridor za proširenje ceste (
+                  <Navod id="odredba-ppug-83-2025">čl. 83. st. 5.</Navod>). Vidi{" "}
+                  <a href="#izvan-zabrane" className="fokus underline">
+                    objašnjenje ispod karte
+                  </a>
+                  .
+                </p>
+              )}
               <div className="mt-2">{kartica.tijelo}</div>
             </div>
           )}
@@ -641,13 +661,13 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
         <Skupina naslov="Nova gradnja tek nakon UPU-a" vidljivo={prikaziZabranu} promijeni={setPrikaziZabranu}>
           {(
             [
-              ["sanacija", "urbanu sanaciju"],
-              ["preobrazba", "urbanu preobrazbu"],
+              ["sanacija", "u području urbane sanacije"],
+              ["preobrazba", "u području urbane preobrazbe"],
             ] as const
-          ).flatMap(([p, za]) =>
+          ).flatMap(([p, gdje]) =>
             [true, false].map((izgradjena) => (
               <Stavka key={`${p}-${izgradjena}`} stil={{ background: ton(p, izgradjena) }}>
-                {izgradjena ? "izgrađene" : "neizgrađene"} čestice određene za {za}
+                {izgradjena ? "čestice sa zgradom" : "prazne čestice"} {gdje}
               </Stavka>
             )),
           )}

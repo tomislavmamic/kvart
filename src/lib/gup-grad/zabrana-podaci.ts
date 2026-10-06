@@ -189,12 +189,32 @@ export interface ZbrojSpornih {
   /** razred na listu PPUG-a (I izgrađeno, N neizgrađeno bez šrafure, U neuređeno) prema oznaci s lista 4.d,
    *  za čestice od 250 m² u obuhvatima propisanih UPU-a izvan važećih planova */
   ppug_4d: Record<"I" | "N" | "U", Record<"sanacija" | "preobrazba" | "neuredeno" | "bez", BrojCestica>>;
+  /** rupa u zabrani: čestice koje PPUG vodi kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake, po UPU-u */
+  ppug_rupa: BrojCestica & { po_upu: { broj: number; naziv: string | null; cestice: number; ha: number }[] };
   po_upu: Record<string, { naziv: string | null; cestice: number; ha: number }>;
 }
 
 export async function ucitajSporne(): Promise<ZbrojSpornih> {
   const put = path.join(process.cwd(), "public", "geo", "gup-grad", "sporne-2025.geojson");
   return JSON.parse(await readFile(put, "utf8")).zbroj as ZbrojSpornih;
+}
+
+/** Čestice na karti zabrane po stanju (prazna ili sa zgradom) i razredu PPUG-a (`?` bez pretežitog razreda). */
+export type StanjePremaPpug = Record<"prazna" | "saZgradom", Record<"I" | "N" | "U" | "?", number>>;
+
+/** Stanje čestice i dio građevinskog područja nisu isto: koliko se praznih čestica na karti na PPUG-u vodi kao izgrađeni dio. */
+export async function ucitajStanjePremaPpug(): Promise<StanjePremaPpug> {
+  const [karta, ppug] = await Promise.all([
+    readFile(path.join(process.cwd(), "public", "geo", "gup-grad", "zabrana-izgradjenost-2025.geojson"), "utf8"),
+    readFile(path.join(process.cwd(), "data", "gup-grad", "ppug-2025.json"), "utf8"),
+  ]);
+  const razred = (JSON.parse(ppug) as { cestice: Record<string, "I" | "N" | "U"> }).cestice;
+  const out: StanjePremaPpug = { prazna: { I: 0, N: 0, U: 0, "?": 0 }, saZgradom: { I: 0, N: 0, U: 0, "?": 0 } };
+  for (const f of (JSON.parse(karta) as { features: { properties: { ko: string; kc: string; izgradjena: boolean } }[] }).features) {
+    const p = f.properties;
+    out[p.izgradjena ? "saZgradom" : "prazna"][razred[`${p.ko}|${p.kc}`] ?? "?"] += 1;
+  }
+  return out;
 }
 
 /** Zemljište stambenih i mješovitih zona jedne godine plana, u m². */
