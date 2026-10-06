@@ -633,12 +633,13 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
               )}
               {oznaka && cesticaKlika && podaci?.slojevi.rupa.has(`${cesticaKlika.ko}|${cesticaKlika.kc}`) && (
                 <p className="mt-2 rounded-lg bg-fuchsia-50 px-2.5 py-1.5 text-fuchsia-950">
-                  <strong>Čestica je u rupi zabrane.</strong> Na{" "}
-                  <Navod id="istok-ppug-2025">listu 4.4 PPUG-a</Navod> neizgrađena je, bez šrafure neuređenog dijela, a na{" "}
-                  <Navod id="list-planske-mjere-2025">listu 4.d</Navod> nema nijedne od triju oznaka. Vidi{" "}
-                  <a href="#rupa" className="fokus underline">
-                    Ima li u zabrani rupa?
+                  <strong>Zabrana ne obuhvaća ovu česticu, iako je u obuhvatu UPU-a.</strong> Na{" "}
+                  <Navod id="istok-ppug-2025">listu 4.4 PPUG-a</Navod> neizgrađena je i bez šrafure neuređenog dijela, dakle
+                  „uređena”, a na <Navod id="list-planske-mjere-2025">listu 4.d</Navod> nema nijedne od triju oznaka. Vidi{" "}
+                  <a href="#izvan-zabrane" className="fokus underline">
+                    objašnjenje ispod karte
                   </a>
+                  .
                 </p>
               )}
               <div className="mt-2">{kartica.tijelo}</div>
