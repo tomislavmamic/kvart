@@ -73,8 +73,6 @@ export function DozvoleKarta(props: {
         maxZoom: 19,
         maxBounds: SIRI_OBUHVAT_KARTE,
         zoomSnap: 0.25,
-        // karta je usred stranice: kotačić lista stranicu, zum je na gumbima i prstima
-        scrollWheelZoom: false,
       });
       mapa.current = map;
       const promatrac = new ResizeObserver(() => map.invalidateSize());
