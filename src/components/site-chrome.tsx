@@ -29,6 +29,14 @@ const PUNI_PROZOR: ReadonlySet<string> = new Set(["/karta"]);
  */
 const BEZ_OKVIRA: ReadonlySet<string> = new Set(["/igra", "/karepovac/sim"]);
 
+/**
+ * Rute s kartom preko cijele širine ispod trake i pločom uz rub: traka ostaje
+ * (to su stranice koje se čitaju i do kojih se dolazi iz izbornika), ali bez
+ * stupca od 5xl i bez podnožja. Na širokom zaslonu sadržaj ispunjava prozor do
+ * dna, na uskom se lista.
+ */
+const SIROKA_KARTA: ReadonlySet<string> = new Set(["/planovi/dozvole"]);
+
 export function SiteChrome({
   children,
   podnozje,
@@ -44,6 +52,14 @@ export function SiteChrome({
         <PlutajuciIzbornik />
         {children}
       </>
+    );
+  }
+  if (SIROKA_KARTA.has(pathname)) {
+    return (
+      <div className="flex flex-col lg:h-svh">
+        <SiteHeader />
+        <main className="min-h-0 flex-1">{children}</main>
+      </div>
     );
   }
   const homepage = pathname === "/";

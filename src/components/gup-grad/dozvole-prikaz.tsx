@@ -1,13 +1,17 @@
 "use client";
 
 /**
- * /planovi/dozvole: karta, odabir (ishod, vrsta dozvole, UPU, izmjene) i
- * popis predmeta. Podatke (dozvole-sanacija-2025.geojson) učita jednom;
- * karta (dozvole-karta.tsx) samo crta i javlja klik na česticu, a učitava se
- * bez SSR-a.
+ * /planovi/dozvole: karta preko cijele širine s legendom na sebi i ploča uz
+ * desni rub (na uskom zaslonu ispod karte) s naslovom, brojkama, grafikonom
+ * po godinama, odabirom (ishod, vrsta dozvole, UPU, izmjene) i popisom
+ * predmeta. Tekst uvoda i izvora iscrtava poslužitelj (page.tsx) i dolazi
+ * kao propovi. Podatke (dozvole-sanacija-2025.geojson) učita jednom; karta
+ * (dozvole-karta.tsx) samo crta i javlja klik na česticu, a učitava se bez
+ * SSR-a.
  */
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Geometry, Position } from "geojson";
 
 import type { CiljDozvola } from "@/components/gup-grad/dozvole-karta";
@@ -29,10 +33,12 @@ import {
 
 const DozvoleKarta = dynamic(() => import("@/components/gup-grad/dozvole-karta").then((m) => m.DozvoleKarta), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse bg-zinc-100" />,
+  loading: () => <div className="h-full w-full animate-pulse bg-zinc-200" />,
 });
 
-function granice(g: Geometry): CiljDozvola["granice"] {
+type Granice = CiljDozvola["granice"];
+
+function granice(g: Geometry): Granice {
   let s = 90, j = -90, z = 180, i = -180;
   const prodji = (c: Position | Position[] | Position[][] | Position[][][]) => {
     if (typeof c[0] === "number") {
@@ -50,7 +56,12 @@ function granice(g: Geometry): CiljDozvola["granice"] {
   ];
 }
 
-function Cip({ aktivan, onClick, boja, children }: { aktivan: boolean; onClick: () => void; boja?: string; children: React.ReactNode }) {
+const spojiGranice = (g: Granice[]): Granice => [
+  [Math.min(...g.map((x) => x[0][0])), Math.min(...g.map((x) => x[0][1]))],
+  [Math.max(...g.map((x) => x[1][0])), Math.max(...g.map((x) => x[1][1]))],
+];
+
+function Cip({ aktivan, onClick, boja, children }: { aktivan: boolean; onClick: () => void; boja?: string; children: ReactNode }) {
   return (
     <button
       type="button"
@@ -69,9 +80,7 @@ function OpisPredmeta({ p }: { p: Predmet }) {
     <div className="text-sm">
       <div className="flex flex-wrap items-baseline gap-x-2">
         <strong style={{ color: BOJE_ISHODA[p.ishod] }}>{ishodTekst(p)}</strong>
-        <span className="text-zinc-600">
-          {p.datum ? `riješeno ${datum(p.datum)}` : `zaprimljeno ${datum(p.zaprimljeno)}`}
-        </span>
+        <span className="text-zinc-600">{p.datum ? `riješeno ${datum(p.datum)}` : `zaprimljeno ${datum(p.zaprimljeno)}`}</span>
       </div>
       <div className="font-mono text-xs text-zinc-800">{p.klasa}</div>
       <div className="text-zinc-800">
@@ -89,7 +98,47 @@ function OpisPredmeta({ p }: { p: Predmet }) {
   );
 }
 
-export function DozvolePrikaz() {
+/** Stupci po godini (rješenja, a neriješeni po zaprimanju), složeni po ishodu. */
+function Godine({ predmeti }: { predmeti: Predmet[] }) {
+  const god = new Map<string, Partial<Record<Ishod, number>>>();
+  for (const p of predmeti) {
+    const g = kad(p).slice(0, 4);
+    if (!g) continue;
+    const r = god.get(g) ?? {};
+    r[p.ishod] = (r[p.ishod] ?? 0) + 1;
+    god.set(g, r);
+  }
+  const godine = [...god.keys()].sort();
+  const zbroj = (g: string) => Object.values(god.get(g)!).reduce((a, b) => a + (b ?? 0), 0);
+  const najvise = Math.max(1, ...godine.map(zbroj));
+  const VISINA = 44;
+  return (
+    <figure>
+      <figcaption className="text-xs text-zinc-500">Zahtjevi po godini rješavanja ili zaprimanja</figcaption>
+      <div className="mt-1.5 flex items-end gap-[3px]" style={{ height: VISINA + 16 }}>
+        {godine.map((g) => {
+          const r = god.get(g)!;
+          return (
+            <div
+              key={g}
+              className="flex min-w-0 flex-1 flex-col items-center gap-0.5"
+              title={`${g}.: ${ISHODI.filter((i) => r[i]).map((i) => `${r[i]} ${i}`).join(", ")}`}
+            >
+              <div className="flex w-full flex-col-reverse">
+                {ISHODI.filter((i) => r[i]).map((i) => (
+                  <span key={i} className="block w-full" style={{ height: ((r[i] ?? 0) / najvise) * VISINA, background: BOJE_ISHODA[i] }} />
+                ))}
+              </div>
+              <span className="text-[9.5px] tabular-nums text-zinc-500">{g.slice(2)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </figure>
+  );
+}
+
+export function DozvolePrikaz({ uvod, izvori }: { uvod: ReactNode; izvori: ReactNode }) {
   const [podaci, setPodaci] = useState<PodaciDozvola | null>(null);
   const [greska, setGreska] = useState(false);
   const [ishodi, setIshodi] = useState<Set<Ishod>>(new Set(ISHODI));
@@ -151,12 +200,18 @@ export function DozvolePrikaz() {
     set(n);
   };
 
+  const pomakni = (g: Granice) => setCilj((c) => ({ kljuc: (c?.kljuc ?? 0) + 1, granice: g }));
+
   const pokaziPredmet = (klasa: string) => {
     const f = poKlasi.get(klasa);
     if (!f) return;
     const i = cestice.findIndex((c, j) => boje[j] && c.properties.klase.includes(klasa));
     setOdabrana(i >= 0 ? i : null);
-    setCilj((c) => ({ kljuc: (c?.kljuc ?? 0) + 1, granice: granice(f.geometry) }));
+    pomakni(granice(f.geometry));
+    // na uskom zaslonu karta je iznad popisa
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      document.getElementById("dozvole-karta")?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const odabranaCestica = odabrana !== null ? cestice[odabrana] : null;
@@ -164,9 +219,11 @@ export function DozvolePrikaz() {
     ? odabranaCestica.properties.klase.map((k) => poKlasi.get(k)!.properties).sort((a, b) => kad(a).localeCompare(kad(b)))
     : [];
 
+  const n = (f: (p: Predmet) => boolean) => osnovni.filter(f).length;
+
   return (
-    <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="relative h-[65svh] min-h-[380px] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 lg:h-[720px]">
+    <div className="flex flex-col lg:h-full lg:flex-row">
+      <div id="dozvole-karta" className="relative h-[62svh] min-h-[360px] bg-zinc-200 lg:h-full lg:min-w-0 lg:flex-1">
         {podaci ? (
           <DozvoleKarta
             podaci={podaci}
@@ -183,21 +240,63 @@ export function DozvolePrikaz() {
             {greska ? "Karta se nije učitala. Osvježi stranicu." : "Karta se učitava…"}
           </div>
         )}
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] max-w-[15rem] rounded-lg bg-white/95 px-3 py-2 text-xs leading-relaxed text-zinc-800 shadow">
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="h-3 w-3 rounded-sm border-[1.5px] border-green-600 bg-green-600/25" />
+            urbana sanacija (novi GUP)
+          </div>
+          {ISHODI.slice(0, 5).map((i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: BOJE_ISHODA[i] }} />
+              {i}
+            </div>
+          ))}
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="h-3 w-3 rounded-sm border border-dashed border-zinc-500" />
+            obuhvat zahvata iz akta
+          </div>
+          <p className="mt-1 text-[11px] leading-snug text-zinc-500">Čestica s više predmeta nosi boju prvog ishoda po ovom redu.</p>
+        </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3 lg:h-[720px]">
-        <div className="flex flex-col gap-2.5 rounded-xl border border-zinc-200 bg-white p-3">
+      <aside className="flex min-w-0 flex-col border-zinc-200 bg-white lg:w-[420px] lg:shrink-0 lg:overflow-y-auto lg:border-l">
+        <div className="flex flex-col gap-3.5 border-b border-zinc-200 px-4 pb-4 pt-4 sm:px-5">
+          <p className="text-sm">
+            <Link href="/planovi" className="fokus text-emerald-700 underline">
+              Planovi
+            </Link>
+          </p>
+          <h1 className="text-xl font-bold leading-tight text-zinc-900 [text-wrap:balance]">
+            Zahtjevi za dozvolu po važećem GUP-u na zemljištu koje novi GUP stavlja u urbanu sanaciju
+          </h1>
+          <div className="text-sm text-zinc-600">{uvod}</div>
+          <dl className="grid grid-cols-4 gap-2">
+            {(
+              [
+                [n((p) => p.ishod === "izdana"), "izdanih dozvola"],
+                [n((p) => p.ishod === "odbijena"), "odbijenih zahtjeva"],
+                [n((p) => p.ishod === "obustavljena" || p.ishod === "proslijeđena"), "obustavljenih ili proslijeđenih"],
+                [n((p) => p.ishod === "u obradi"), "u obradi"],
+              ] as const
+            ).map(([b, s]) => (
+              <div key={s} className="flex flex-col">
+                <dt className="order-2 text-[11.5px] leading-tight text-zinc-500">{s}</dt>
+                <dd className="order-1 text-2xl font-bold tabular-nums text-zinc-900">{podaci ? b : "–"}</dd>
+              </div>
+            ))}
+          </dl>
+          {podaci && <Godine predmeti={osnovni} />}
           <div className="flex flex-wrap gap-1.5">
             {ISHODI.map((i) => (
               <Cip key={i} aktivan={ishodi.has(i)} boja={BOJE_ISHODA[i]} onClick={() => prebaci(ishodi, i, setIshodi)}>
-                {i} <span className="tabular-nums text-zinc-500">{osnovni.filter((p) => p.ishod === i).length}</span>
+                {i} <span className="tabular-nums text-zinc-500">{n((p) => p.ishod === i)}</span>
               </Cip>
             ))}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {POSTUPCI.map((p) => (
               <Cip key={p} aktivan={postupci.has(p)} onClick={() => prebaci(postupci, p, setPostupci)}>
-                {p} <span className="tabular-nums text-zinc-500">{osnovni.filter((x) => x.postupak === p).length}</span>
+                {p} <span className="tabular-nums text-zinc-500">{n((x) => x.postupak === p)}</span>
               </Cip>
             ))}
           </div>
@@ -211,23 +310,14 @@ export function DozvolePrikaz() {
                 setUpu(u);
                 setOdabrana(null);
                 const fs = predmeti.filter((f) => !u || f.properties.upu === u);
-                if (fs.length) {
-                  const g = fs.map((f) => granice(f.geometry));
-                  setCilj((c) => ({
-                    kljuc: (c?.kljuc ?? 0) + 1,
-                    granice: [
-                      [Math.min(...g.map((x) => x[0][0])), Math.min(...g.map((x) => x[0][1]))],
-                      [Math.max(...g.map((x) => x[1][0])), Math.max(...g.map((x) => x[1][1]))],
-                    ],
-                  }));
-                }
+                if (fs.length) pomakni(spojiGranice(fs.map((f) => granice(f.geometry))));
               }}
               className="fokus min-w-0 flex-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-900"
             >
               <option value="">sva područja</option>
-              {upui.map(([u, n]) => (
+              {upui.map(([u, b]) => (
                 <option key={u} value={u}>
-                  {u} ({n})
+                  {u} ({b})
                 </option>
               ))}
             </select>
@@ -245,11 +335,11 @@ export function DozvolePrikaz() {
         </div>
 
         {odabranaCestica && (
-          <div className="rounded-xl border border-zinc-900 bg-white p-3">
+          <div className="border-b-2 border-zinc-900 bg-zinc-50 px-4 py-3 sm:px-5">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-zinc-900">
+              <h2 className="font-semibold text-zinc-900">
                 k.č. {odabranaCestica.properties.kc}, k.o. {odabranaCestica.properties.ko}
-              </h3>
+              </h2>
               <button type="button" onClick={() => setOdabrana(null)} className="fokus text-sm text-zinc-500 hover:text-zinc-900">
                 Zatvori
               </button>
@@ -258,9 +348,9 @@ export function DozvolePrikaz() {
               {predmetiCestice.length} {predmetiCestice.length === 1 ? "predmet" : "predmeta"} ·{" "}
               {odabranaCestica.properties.izgradjena ? "na snimci izgrađena" : "na snimci neizgrađena"}
             </p>
-            <ul className="mt-2 max-h-72 space-y-2.5 overflow-y-auto">
+            <ul className="mt-2 space-y-2.5">
               {predmetiCestice.map((p) => (
-                <li key={p.klasa} className="border-t border-zinc-100 pt-2">
+                <li key={p.klasa} className="border-t border-zinc-200 pt-2">
                   <OpisPredmeta p={p} />
                 </li>
               ))}
@@ -268,12 +358,15 @@ export function DozvolePrikaz() {
           </div>
         )}
 
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-zinc-200 bg-white max-lg:max-h-[70svh]">
-          <p className="sticky top-0 border-b border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
-            {podaci ? `${popis.length} ${popis.length === 1 ? "predmet" : "predmeta"}, najnoviji prvi. ` : ""}Klik pokazuje predmet na karti.
+        <div>
+          <p className="border-b border-zinc-200 px-4 py-2 text-xs text-zinc-500 sm:px-5">
+            {podaci ? `${popis.length} ${popis.length === 1 ? "predmet" : "predmeta"}, najnoviji prvi. ` : ""}Klik pokazuje
+            predmet na karti.
           </p>
           {popis.length === 0 && (
-            <p className="px-3 py-4 text-sm text-zinc-500">{podaci ? "Nijedan predmet ne odgovara odabiru." : "Predmeti se učitavaju…"}</p>
+            <p className="px-4 py-4 text-sm text-zinc-500 sm:px-5">
+              {podaci ? "Nijedan predmet ne odgovara odabiru." : "Predmeti se učitavaju…"}
+            </p>
           )}
           <ul>
             {popis.map((p) => (
@@ -281,12 +374,14 @@ export function DozvolePrikaz() {
                 <button
                   type="button"
                   onClick={() => pokaziPredmet(p.klasa)}
-                  className="fokus grid w-full grid-cols-[10px_minmax(0,1fr)_auto] gap-x-2.5 gap-y-0.5 border-b border-zinc-100 px-3 py-2.5 text-left hover:bg-zinc-50"
+                  className="fokus grid w-full grid-cols-[10px_minmax(0,1fr)_auto] gap-x-2.5 gap-y-0.5 border-b border-zinc-100 px-4 py-2.5 text-left hover:bg-zinc-50 sm:px-5"
                 >
                   <span aria-hidden className="mt-1.5 h-2.5 w-2.5 rounded-sm" style={{ background: BOJE_ISHODA[p.ishod] }} />
                   <span className="font-mono text-xs text-zinc-900">
                     {p.klasa}
-                    {p.izmjena && <span className="ml-1 rounded border border-zinc-200 px-1 font-sans text-[10px] uppercase text-zinc-500">izmjena</span>}
+                    {p.izmjena && (
+                      <span className="ml-1 rounded border border-zinc-200 px-1 font-sans text-[10px] uppercase text-zinc-500">izmjena</span>
+                    )}
                   </span>
                   <span className="text-xs tabular-nums text-zinc-500">{datum(kad(p))}</span>
                   <span className="col-span-2 col-start-2 text-xs text-zinc-600 [overflow-wrap:anywhere]">
@@ -301,7 +396,9 @@ export function DozvolePrikaz() {
             ))}
           </ul>
         </div>
-      </div>
+
+        <div className="border-t border-zinc-200 px-4 py-4 text-xs leading-relaxed text-zinc-600 sm:px-5">{izvori}</div>
+      </aside>
     </div>
   );
 }

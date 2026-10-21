@@ -244,6 +244,14 @@ export default async function ZabranaPage() {
           dopušta i to da GUP sam propiše uvjete gradnje s detaljnošću UPU-a (NN 155/25, čl. 106. st. 4.).
         </p>
         <p className="mt-3 max-w-3xl text-zinc-600">
+          Koje je dozvole Grad od 2006. izdao, odbio ili još rješava na zemljištu koje novi GUP stavlja u urbanu sanaciju,
+          po česticama, pokazuje{" "}
+          <Link href="/planovi/dozvole" className="fokus font-semibold text-emerald-700 underline">
+            karta dozvola u urbanoj sanaciji
+          </Link>
+          .
+        </p>
+        <p className="mt-3 max-w-3xl text-zinc-600">
           Što o tome kažu važeći GUP i zakoni od 1994. naovamo, koliko se gradilo i što stanovnici mogu tražiti, piše u{" "}
           <Link href="/gup/analiza" className="fokus font-semibold text-emerald-700 underline">
             analizi zabrane
@@ -274,7 +282,12 @@ export default async function ZabranaPage() {
             zgrade, okućnice ni gradilišta.
           </li>
           <li>
-            Dozvole od 2016.: javni registar akata Ministarstva prostornoga uređenja, graditeljstva i državne imovine (ISPU).
+            Dozvole od 2016.: javni registar akata Ministarstva prostornoga uređenja, graditeljstva i državne imovine (ISPU);
+            svi predmeti u urbanoj sanaciji su na{" "}
+            <Link href="/planovi/dozvole" className="fokus text-emerald-700 underline">
+              karti dozvola
+            </Link>
+            .
             Pravila: <Navod id="obveza-plana-2025">čl. 103.</Navod> i <Navod id="do-plana-2025">čl. 105.</Navod> novog GUP-a te{" "}
             <a href={ZPU_2025} className={vanjska}>
               Zakon o prostornom uređenju (NN 155/25)
