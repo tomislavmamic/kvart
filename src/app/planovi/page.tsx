@@ -34,6 +34,12 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
         radnja: "Provjeri svoju adresu",
       },
       {
+        href: "/planovi/dozvole",
+        naslov: "Dozvole na zemljištu urbane sanacije",
+        opis: "Karta svih zahtjeva za građevinsku i lokacijsku dozvolu od 2006. na zemljištu koje novi GUP stavlja u urbanu sanaciju: izdane, odbijene, obustavljene i one u obradi.",
+        radnja: "Pogledaj kartu",
+      },
+      {
         href: "/gup/analiza",
         naslov: "Zašto izmjene GUP-a zaustavljaju gradnju",
         opis: "Analiza: što kažu važeći GUP i zakoni, koliko se u kvartu gradilo s dozvolom i što stanovnici mogu tražiti.",
