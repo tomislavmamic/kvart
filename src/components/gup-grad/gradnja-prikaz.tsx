@@ -27,6 +27,7 @@ import { BOJA_STAMBENE_ZONE } from "@/components/gup-grad/gradnja-karta";
 import type { CiljKarte } from "@/components/gup-grad/zabrana-karta";
 import {
   KATEGORIJE,
+  KATEGORIJA_PO_ID,
   KATEGORIJA_PO_KODU,
   OPIS_ZONE,
   SKUPINE_GRADNJE,
@@ -192,8 +193,19 @@ function provjere(
     ishod: !zona ? "nevazno" : zona === "stambena" ? "da" : "ne",
     odgovor: klasa ? (
       <>
-        {navod(navodNamjena(2025, klasa.kod), <strong>{klasa.naziv}</strong>)} {klasa.kod !== "P" && `(${klasa.kod})`} — {OPIS_ZONE[zona!]}
-        {zona === "nestambena" && " (stambenu zgradu ne)"}. Vidi{" "}
+        {klasa.kod === "P" ? (
+          <>
+            <strong>Neobojeno na listu</strong> — rezervirano za ulice, prugu, groblja i infrastrukturu
+          </>
+        ) : (
+          <>
+            {navod(navodNamjena(2025, klasa.kod), <strong>{klasa.naziv}</strong>)} ({klasa.kod}) — {OPIS_ZONE[zona!]}
+          </>
+        )}
+        {zona === "nestambena" && " (stambenu zgradu ne)"}.
+        {u?.kategorija === KATEGORIJA_PO_ID.koridor.kod &&
+          " Na listu ovo nije obojeno nijednom zonom: to je pojas ulice između blokova, koji smo s lista izdvojili zasebno."}{" "}
+        Vidi{" "}
         <NaListu list="namjena-2025" navod="list-namjena-2025" tocka={tocka} listovi={listovi}>
           ovo mjesto na listu 1
         </NaListu>

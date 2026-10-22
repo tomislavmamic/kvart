@@ -3,8 +3,10 @@
  * ništa novo, a gdje ništa stambeno (src/lib/gup-grad/gradnja.ts).
  *
  * Ulaz su pločice „dijelova čestice” za GUP 2025. i način brojanja „po
- * odredbama” (scripts/gup-grad/regije.py) i neuređeni dijelovi s lista 4.d
- * (public/geo/gup-grad/zabrana-2025.geojson, scripts/gup-grad/zabrana.py).
+ * odredbama” (scripts/gup-grad/regije.py), neuređeni dijelovi s lista 4.d
+ * (public/geo/gup-grad/zabrana-2025.geojson, scripts/gup-grad/zabrana.py) i
+ * koridori ulica koje list 1 ne boji (data/gup-grad/koridori-2025,
+ * scripts/gup-grad/koridori.py): ondje klasa postaje P, kao na listu.
  * Pikseli koji čekaju UPU dijele se na neuređeno (uz postojeću cestu gradi se
  * i prije UPU-a) i ostalo istim oblicima kojima klik na karti kaže u kojem je
  * području (stanjeTocke u zabrana.ts).
@@ -16,15 +18,15 @@
  *   data/gup-grad/gradnja-2025.json                  hektari po kategoriji,
  *       po skupini i po namjeni
  *
- * Pokretanje (poslije regije.py i zabrana.py):  npx tsx scripts/gup-grad/gradnja.ts
+ * Pokretanje (poslije regije.py, zabrana.py i koridori.py):  npx tsx scripts/gup-grad/gradnja.ts
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import path from "path";
 import { PNG } from "pngjs";
 import type { FeatureCollection } from "geojson";
 
 import { KATEGORIJE, KATEGORIJA_PO_KODU, kategorija, ZONA_GRADNJE, type IdKategorije, type Skupina } from "../../src/lib/gup-grad/gradnja";
-import { KLASA_PO_INDEKSU, type KodKlase } from "../../src/lib/gup-grad/model";
+import { KLASA_PO_INDEKSU, KLASE, type KodKlase } from "../../src/lib/gup-grad/model";
 import { REGIJE } from "../../src/lib/gup-grad/regije";
 import { oblik, uObliku, type Geometrija, type Oblik } from "../../src/lib/gup-grad/zabrana";
 
@@ -33,6 +35,8 @@ const JAVNO = path.join(KORIJEN, "public");
 const IZLAZ = path.join(JAVNO, "geo", "gup-grad", "gradnja");
 const INACICA = "gradevna";
 const GODINA = "2025";
+const KORIDORI = path.join(KORIJEN, "data", "gup-grad", "koridori-2025");
+const P = KLASE.find((k) => k.kod === "P")!.indeks;
 
 interface Plocica {
   url: string;
@@ -61,6 +65,9 @@ function main() {
   for (const p of indeks.inacice[INACICA][GODINA]) {
     const png = PNG.sync.read(readFileSync(path.join(JAVNO, p.url)));
     const { width: w, height: h, data: d } = png;
+    // maska koridora (koridori.py), 1-bitni PNG iste mreže; nema je gdje koridora nema
+    const putKoridora = path.join(KORIDORI, path.basename(p.url));
+    const kor = existsSync(putKoridora) ? PNG.sync.read(readFileSync(putKoridora)).data : null;
     const [[jug, zapad], [sjever, istok]] = p.granice;
     const y0 = mercY(sjever), y1 = mercY(jug);
     for (let r = 0; r < h; r++) {
@@ -70,9 +77,11 @@ function main() {
       for (let c = 0; c < w; c++) {
         const i = (r * w + c) * 4;
         if (d[i + 3] !== 255) continue;
+        const koridor = kor !== null && kor[i] > 127;
+        if (koridor) d[i] = P;
         const klasa = d[i], regija = d[i + 1];
         const lng = zapad + ((c + 0.5) / w) * (istok - zapad);
-        const k = kategorija(klasa, regija, regija === REGIJE.ceka && neuredeno.some((o) => uObliku(o, lng, lat)));
+        const k = kategorija(klasa, regija, regija === REGIJE.ceka && neuredeno.some((o) => uObliku(o, lng, lat)), koridor);
         d[i + 2] = k;
         if (!k) {
           d[i + 3] = 0;

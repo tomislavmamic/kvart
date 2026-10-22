@@ -9,7 +9,8 @@ točno prati boje karte.
 
 Pločice pokrivaju samo katastarske čestice, pa se maska prije
 vektorizacije zatvori za ~10 m (neupisani putovi i rubovi), a otočići i
-rupe manji od praga izbace.
+rupe manji od praga izbace. Ulice koje plan ne boji (klasa P, i koridori
+iz koridori.py) poslije zatvaranja opet se izrežu, da obris ide uz njih.
 
 Ulaz:   public/geo/gup-grad/gradnja.json i pločice (scripts/gup-grad/gradnja.ts)
 Izlaz:  public/geo/gup-grad/gradnja-zone-2025.geojson
@@ -36,6 +37,7 @@ IZLAZ = os.path.join(JAVNO, "geo", "gup-grad", "gradnja-zone-2025.geojson")
 PLOCICA = 512
 # indeksi klasa u src/lib/gup-grad/model.ts
 STAMBENE = (1, 2)  # S, M/K5
+P = 15
 ZATVORI_PX = 4  # ~10 m Web Mercatora
 NAJMANJE_M2 = 400  # manji otočići i rupe su šum rešetke, ne zona
 POJEDNOSTAVI_M = 2.5
@@ -59,13 +61,15 @@ def main() -> None:
     h = (max(r for r, _, _ in plocice) + 1) * PLOCICA
     w = (max(c for _, c, _ in plocice) + 1) * PLOCICA
     maska = np.zeros((h, w), bool)
+    ulica = np.zeros((h, w), bool)
     for r, c, p in plocice:
         a = np.array(Image.open(os.path.join(JAVNO, p["url"].lstrip("/"))))
         m = (a[..., 3] == 255) & np.isin(a[..., 0], STAMBENE)
         maska[r * PLOCICA:r * PLOCICA + m.shape[0], c * PLOCICA:c * PLOCICA + m.shape[1]] = m
+        ulica[r * PLOCICA:r * PLOCICA + m.shape[0], c * PLOCICA:c * PLOCICA + m.shape[1]] = (a[..., 3] == 255) & (a[..., 0] == P)
 
     krug = ndimage.generate_binary_structure(2, 1)
-    maska = ndimage.binary_closing(maska, krug, iterations=ZATVORI_PX)
+    maska = ndimage.binary_closing(maska, krug, iterations=ZATVORI_PX) & ~ulica
     transform = Affine(korak, 0, mx0, 0, -korak, my1)
     oblici = [shape(g) for g, v in features.shapes(maska.astype("uint8"), mask=maska, transform=transform) if v == 1]
     zona = unary_union(oblici).buffer(0)

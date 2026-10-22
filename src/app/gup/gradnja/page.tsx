@@ -29,7 +29,7 @@ export default async function GradnjaPage() {
   const s = zbroj.po_skupini_ha;
   const udio = (v: number) => v / zbroj.ukupno_ha;
   const zauzeto = k.zgrada + k.okucnica + k.koristeno + k.ulica;
-  const planNeDopusta = k["rezerva-prometa"] + k["bez-zgrada"] + k["samo-rekonstrukcija"] + k.neizgradivo;
+  const planNeDopusta = k["rezerva-prometa"] + k.koridor + k["bez-zgrada"] + k["samo-rekonstrukcija"] + k.neizgradivo;
   const stambenoMjesovito = zbroj.po_namjeni_ha["M/K5"]?.stambeno ?? 0;
 
   return (
@@ -85,7 +85,8 @@ export default async function GradnjaPage() {
         <p className="mt-3">
           Najveći dio je već zauzet: {ha(zauzeto)} ha ({posto(udio(zauzeto))}) čine zgrade s dvorištima koja im pripadaju, ulice,
           parkirališta, parkovi, igrališta i okoliš škola. Na još {ha(planNeDopusta)} ha slobodnog zemljišta plan zgrade ne predviđa ili dopušta samo
-          obnovu postojećih: parkovi, zaštitno zelenilo, rekreacija i plaže, rezerve za ulice i groblja.
+          obnovu postojećih: parkovi, zaštitno zelenilo, rekreacija i plaže, rezerve za ulice i groblja, te {ha(k.koridor)} ha u
+          koridorima ulica koje list ostavlja neobojenima između blokova.
         </p>
         <p className="mt-2">
           Za novu stambenu zgradu ostaje {ha(s.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim zonama.
@@ -117,7 +118,9 @@ export default async function GradnjaPage() {
             <strong className="text-zinc-900">Predviđa li namjena zgrade.</strong> Prema{" "}
             <Navod id="list-namjena-2025">listu 1</Navod> novog GUP-a: u parku, zaštitnom zelenilu, rekreaciji i na plaži ne
             (osim manjih pratećih građevina), a zemljište koje plan ne boji namjenom rezervirano je za ulice, prugu, groblja i
-            infrastrukturu.
+            infrastrukturu. To vrijedi i za uske neobojene pojaseve ulica između blokova, koje čitanje lista po boji upije u
+            susjednu zonu: njih izdvajamo iz samog crteža lista, gdje je svaka zona zasebna ploha, a ulica praznina između
+            ploha.
           </li>
           <li>
             <strong className="text-zinc-900">Dopuštaju li odredbe novu zgradu.</strong> U stambenim i mješovitim zonama

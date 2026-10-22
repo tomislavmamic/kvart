@@ -44,6 +44,16 @@ test("odredbe, UPU i veličina", () => {
   assert.equal(id("D", REGIJE.ceka), "nestambeno");
 });
 
+test("neobojeni koridor ulice s lista 1: slobodno nije za gradnju, zauzeto ostaje zauzeto", () => {
+  const koridor = (klasa: KodKlase, regija: number) => KATEGORIJA_PO_KODU.get(kategorija(indeks(klasa), regija, false, true))?.id;
+  assert.equal(koridor("M/K5", REGIJE.slobodno), "koridor");
+  assert.equal(koridor("S", REGIJE.ceka), "koridor");
+  assert.equal(koridor("I/K", REGIJE.premalo), "koridor");
+  assert.equal(koridor("M/K5", REGIJE.zgrada), "zgrada");
+  assert.equal(koridor("S", REGIJE.ulica), "ulica");
+  assert.equal(kategorija(0, REGIJE.slobodno, false, true), 0);
+});
+
 test("piksel bez čestice ili nepoznate klase nema kategoriju", () => {
   assert.equal(kategorija(0, REGIJE.slobodno, false), 0);
   assert.equal(kategorija(indeks("S"), 0, false), 0);

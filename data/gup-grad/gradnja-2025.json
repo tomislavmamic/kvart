@@ -7,81 +7,83 @@
   "koristeno": 277.35,
   "ulica": 499.86,
   "rezerva-prometa": 77.96,
+  "koridor": 13.47,
   "bez-zgrada": 379.02,
-  "samo-rekonstrukcija": 7.35,
+  "samo-rekonstrukcija": 7.15,
   "neizgradivo": 0,
-  "premalo": 24.28,
-  "ceka-upu": 70.09,
-  "uz-cestu": 143.96,
-  "nestambeno": 201.52,
-  "stambeno": 95.92
+  "premalo": 22.99,
+  "ceka-upu": 69.15,
+  "uz-cestu": 141.38,
+  "nestambeno": 197.24,
+  "stambeno": 91.73
  },
  "po_skupini_ha": {
-  "nista": 2258.57,
-  "uvjetno": 143.96,
-  "nestambeno": 201.52,
-  "stambeno": 95.92
+  "nista": 2269.61,
+  "uvjetno": 141.38,
+  "nestambeno": 197.24,
+  "stambeno": 91.73
  },
  "po_namjeni_ha": {
   "I/K": {
-   "okucnica": 122.92,
-   "zgrada": 88.22,
-   "ceka-upu": 52.54,
-   "ulica": 52.83,
-   "nestambeno": 56.29,
-   "premalo": 4.4,
-   "koristeno": 10.77,
-   "uz-cestu": 88.28
+   "okucnica": 120.84,
+   "zgrada": 87.57,
+   "ceka-upu": 51.79,
+   "ulica": 46.12,
+   "nestambeno": 53.76,
+   "premalo": 4.06,
+   "koristeno": 10.73,
+   "uz-cestu": 86.44
   },
   "P": {
    "rezerva-prometa": 77.96,
-   "ulica": 122.43,
-   "koristeno": 35.11,
-   "zgrada": 11.34,
-   "okucnica": 19.19
+   "ulica": 186.32,
+   "koristeno": 37.05,
+   "koridor": 13.47,
+   "zgrada": 15.42,
+   "okucnica": 27.32
   },
   "N": {
    "premalo": 0.76,
-   "nestambeno": 37.79,
-   "ulica": 3.82,
-   "koristeno": 3.73,
+   "nestambeno": 37.77,
+   "ulica": 3.78,
+   "koristeno": 3.72,
    "zgrada": 0.66,
    "okucnica": 0.64
   },
   "L": {
-   "premalo": 1.54,
-   "nestambeno": 1.6,
-   "zgrada": 1.24,
-   "koristeno": 4.34,
-   "ulica": 3.39,
-   "okucnica": 2.23
+   "premalo": 1.41,
+   "nestambeno": 1.26,
+   "zgrada": 1.19,
+   "koristeno": 4.14,
+   "ulica": 2.93,
+   "okucnica": 2.15
   },
   "M/K5": {
-   "ulica": 202.82,
-   "okucnica": 221.62,
-   "ceka-upu": 16.81,
-   "zgrada": 263.28,
-   "premalo": 11.73,
-   "koristeno": 76.48,
-   "stambeno": 92.04,
-   "samo-rekonstrukcija": 6.86,
-   "uz-cestu": 46.07
+   "ulica": 163.35,
+   "okucnica": 216.71,
+   "ceka-upu": 16.61,
+   "zgrada": 260.43,
+   "premalo": 11.3,
+   "koristeno": 75.55,
+   "stambeno": 87.97,
+   "samo-rekonstrukcija": 6.7,
+   "uz-cestu": 45.33
   },
   "D": {
-   "premalo": 3.08,
-   "nestambeno": 36.41,
-   "ulica": 29.64,
-   "okucnica": 27.71,
-   "zgrada": 40.91,
-   "koristeno": 50.27
+   "premalo": 2.92,
+   "nestambeno": 35.32,
+   "ulica": 24.07,
+   "okucnica": 27.48,
+   "zgrada": 40.69,
+   "koristeno": 49.71
   },
   "R1": {
-   "okucnica": 5.52,
-   "premalo": 0.74,
-   "koristeno": 24.43,
-   "zgrada": 8.55,
-   "nestambeno": 13.53,
-   "ulica": 6.2
+   "okucnica": 5.51,
+   "premalo": 0.69,
+   "koristeno": 24.31,
+   "zgrada": 8.49,
+   "nestambeno": 13.52,
+   "ulica": 5.32
   },
   "Z1": {
    "zgrada": 4.98,
@@ -105,12 +107,12 @@
    "koristeno": 4.91
   },
   "T": {
-   "premalo": 1,
-   "ulica": 10.55,
-   "koristeno": 2.88,
-   "zgrada": 11.62,
-   "nestambeno": 23.6,
-   "okucnica": 14.76,
+   "premalo": 0.92,
+   "ulica": 7.39,
+   "koristeno": 2.85,
+   "zgrada": 11.53,
+   "nestambeno": 23.3,
+   "okucnica": 14.6,
    "uz-cestu": 9.61,
    "ceka-upu": 0.74
   },
@@ -128,14 +130,14 @@
    "okucnica": 0.85
   },
   "S": {
-   "ulica": 15.76,
-   "okucnica": 23.73,
-   "zgrada": 20.87,
-   "premalo": 0.95,
-   "stambeno": 3.89,
-   "koristeno": 2.25,
+   "ulica": 8.17,
+   "okucnica": 23.06,
+   "zgrada": 20.7,
+   "premalo": 0.86,
+   "stambeno": 3.77,
+   "koristeno": 2.19,
    "ceka-upu": 0,
-   "samo-rekonstrukcija": 0.48
+   "samo-rekonstrukcija": 0.45
   },
   "Z6": {
    "ulica": 2.29,

@@ -12,7 +12,9 @@
  *  1. je li mjesto već zauzeto (zgrada, dvorište zgrade, ulica, parkiralište,
  *     park, igralište, okoliš škole, infrastruktura)
  *  2. predviđa li namjena GUP-a ondje zgrade uopće (zelenilo, rekreacija,
- *     plaže ne; ulice, pruga i groblja su rezervirani za sebe)
+ *     plaže ne; ulice, pruga i groblja su rezervirani za sebe, kao i
+ *     koridori ulica koje list 1 ostavlja neobojenima između zona —
+ *     scripts/gup-grad/koridori.py)
  *  3. dopuštaju li odredbe urbanog pravila novu zgradu (ili samo
  *     rekonstrukciju), je li teren izgradiv
  *  4. čeka li gradnja UPU (list 4.d, čl. 103.) — u neuređenom dijelu uz
@@ -91,6 +93,7 @@ export type IdKategorije =
   | "koristeno"
   | "ulica"
   | "rezerva-prometa"
+  | "koridor"
   | "bez-zgrada"
   | "samo-rekonstrukcija"
   | "neizgradivo"
@@ -166,6 +169,16 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Rezervirano za ulicu, prugu ili groblje",
     razlog: "Zemljište je slobodno, ali ga GUP ne boji nijednom namjenom za gradnju: rezervirano je za ulicu, prugu, groblje ili infrastrukturni koridor.",
+    boja: "#a1a1aa",
+    alfa: 0.6,
+  },
+  {
+    kod: 14,
+    id: "koridor",
+    skupina: "nista",
+    naziv: "Koridor ulice između zona (neobojen na listu 1)",
+    razlog:
+      "Zemljište je slobodno, ali je na listu 1 novog GUP-a ovo neobojeni pojas između zona: koridor postojeće ili planirane ulice, na kojem se ne gradi.",
     boja: "#a1a1aa",
     alfa: 0.6,
   },
@@ -261,11 +274,14 @@ export function zonaKlase(klasa: number): ZonaGradnje | null {
 
 /**
  * Jedan razlog za piksel: `klasa` i `regija` iz pločice dijelova čestice
- * (R, G), `neuredeno` je li mjesto u neuređenom dijelu s lista 4.d. Vraća
- * kod kategorije ili 0 kad piksel nije na čestici u obuhvatu.
+ * (R, G), `neuredeno` je li mjesto u neuređenom dijelu s lista 4.d, a
+ * `koridor` je li u neobojenom koridoru ulice s lista 1 koji je rasterizacija
+ * upila u zonu (koridori.py). Vraća kod kategorije ili 0 kad piksel nije na
+ * čestici u obuhvatu.
  */
-export function kategorija(klasa: number, regija: number, neuredeno: boolean): number {
-  const zona = zonaKlase(klasa);
+export function kategorija(klasa: number, regija: number, neuredeno: boolean, koridor = false): number {
+  const z = zonaKlase(klasa);
+  const zona = z && koridor ? "promet" : z;
   if (!zona || regija <= 0) return 0;
   const K = KATEGORIJA_PO_ID;
   // 1. zauzeto
@@ -285,7 +301,7 @@ export function kategorija(klasa: number, regija: number, neuredeno: boolean): n
       return K.ulica.kod;
   }
   // 2. slobodno, ali namjena ne predviđa zgrade
-  if (zona === "promet") return K["rezerva-prometa"].kod;
+  if (zona === "promet") return koridor ? K.koridor.kod : K["rezerva-prometa"].kod;
   if (zona === "bez-zgrada") return K["bez-zgrada"].kod;
   // 3.–5. razlog iz izračuna po komadu
   switch (regija) {
