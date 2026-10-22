@@ -71,7 +71,7 @@ const GradnjaKarta = dynamic(() => import("@/components/gup-grad/gradnja-karta")
 const ha = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: v < 10 ? 1 : 0 });
 /** Površina iz rešetke od ~2 m, zaokružena na 5 m². */
 const m2 = (v: number) => `${(Math.round(v / 5) * 5).toLocaleString("hr-HR")} m²`;
-const SKUPINE: Skupina[] = ["nista", "nestambeno", "uvjetno", "stambeno"];
+const SKUPINE: Skupina[] = ["nista", "nestambeno", "stambeno"];
 
 // ------------------------------------------------------------- čestica pod klikom
 
@@ -109,6 +109,31 @@ function dohvacacCestica() {
 }
 
 // ------------------------------------------------------------- provjere
+
+/** Čestica koju gradnja-skupine.py proglašava putom (public/geo/gup-grad/putovi-2025.json). */
+interface PutCestice {
+  ko: string;
+  kc: string;
+  sirina_m: number;
+  duljina_m: number;
+  susjeda: number;
+  osm_udio: number;
+  uz_ulicu: number;
+  razlog: "OSM put uzduž" | "graniči s mnogo čestica" | "dugom stranom uz ulicu";
+}
+type Putovi = ReadonlyMap<string, PutCestice>;
+const kljucPuta = (ko: string, kc: string) => `${ko}|${kc}`;
+
+const broj1 = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: 1 });
+
+/** Zašto je čestica put, rečenicom. */
+function zastoPut(p: PutCestice): string {
+  const mjere = `široka je najviše ${broj1(p.sirina_m)} m, a duga oko ${p.duljina_m} m`;
+  if (p.razlog === "OSM put uzduž")
+    return `${mjere}, i njome prolazi put ucrtan u OpenStreetMap (${Math.round(Math.min(1, p.osm_udio) * 100)} % njezine duljine)`;
+  if (p.razlog === "graniči s mnogo čestica") return `${mjere}, i graniči s ${p.susjeda} različitih čestica kojima služi kao prolaz`;
+  return `${mjere}, i dugom stranom leži uz ulicu (${Math.round(p.uz_ulicu * 100)} % ruba) — rub ceste ili nogostup`;
+}
 
 type Ishod = "da" | "ne" | "uvjet" | "nevazno";
 
@@ -175,6 +200,7 @@ function provjere(
   c: CesticaKlika | null,
   o: OdredbeGradnje,
   listovi: Record<string, List> | null,
+  putovi: Putovi | null,
 ): Provjera[] {
   const navod = (id: string, tekst: ReactNode) => (o.navodi.includes(id) ? <Navod id={id}>{tekst}</Navod> : tekst);
   const klasa: Klasa | undefined = u ? KLASA_PO_INDEKSU.get(u.klasa) : undefined;
@@ -343,7 +369,30 @@ function provjere(
   }
   out.push(rezim);
 
-  // 5. veličina i širina
+  // 5. put
+  const katId = KATEGORIJA_PO_KODU.get(u.kategorija)?.id;
+  const put = c ? putovi?.get(kljucPuta(c.svojstva.ko, c.svojstva.kc)) : undefined;
+  if (slobodno && (zona === "stambena" || zona === "nestambena")) {
+    out.push(
+      katId === "put"
+        ? {
+            pitanje: "Je li čestica u praksi put",
+            ishod: "ne",
+            odgovor: put ? (
+              <>Da: {zastoPut(put)}. Na putu se ne gradi, a susjedne se čestice preko njega ne mogu spojiti.</>
+            ) : (
+              "Da: uska je i dugačka i služi kao put, pa se na njoj ne gradi."
+            ),
+          }
+        : {
+            pitanje: "Je li čestica u praksi put",
+            ishod: "da",
+            odgovor: "Ne: nije uska izdužena čestica kojom prolazi put, koja služi mnogim susjedima ili leži uz ulicu.",
+          },
+    );
+  }
+
+  // 6. veličina i širina
   const vrsta = zona === "stambena" ? "stanovanje" : klasa.kod === "D" ? "javna" : klasa.kod === "I/K" ? "gospodarska" : null;
   const najmanja = vrsta && kod ? o.ppmin[kod]?.[vrsta] : undefined;
   const najmanjaTekst = najmanja ? (
@@ -351,8 +400,12 @@ function provjere(
       najmanja građevna čestica ovdje je {navod(navodPpmin(2025, kod!), m2(najmanja.m2))} (vrsta „{TIP_GRADNJE[najmanja.tip] ?? najmanja.tip}”)
     </>
   ) : null;
-  if (!slobodno || zona === "bez-zgrada" || zona === "promet") {
-    out.push({ pitanje: "Je li slobodno dovoljno za novu česticu", ishod: "nevazno", odgovor: "Ne odnosi se: mjesto nije slobodno ili namjena ne predviđa zgrade." });
+  if (!slobodno || zona === "bez-zgrada" || zona === "promet" || katId === "put") {
+    out.push({
+      pitanje: "Je li slobodno dovoljno za novu česticu",
+      ishod: "nevazno",
+      odgovor: katId === "put" ? "Ne odnosi se: na putu se ne gradi." : "Ne odnosi se: mjesto nije slobodno ili namjena ne predviđa zgrade.",
+    });
   } else if (u.regija === REGIJE.usko) {
     out.push({
       pitanje: "Je li slobodno dovoljno za novu česticu",
@@ -370,19 +423,29 @@ function provjere(
         </>
       ),
     });
+  } else if (katId === "premalo") {
+    out.push({
+      pitanje: "Je li slobodno dovoljno za novu česticu",
+      ishod: "ne",
+      odgovor:
+        "Ne: ni zajedno sa slobodnim susjedima iste namjene ovdje ne stane tlocrt širok 10 m na barem 250 m² — ovo je pojas uz put, ostatak dvorišta ili prolaz između zgrada.",
+    });
   } else if (u.regija === REGIJE.slobodno || u.regija === REGIJE.ceka) {
     out.push({
       pitanje: "Je li slobodno dovoljno za novu česticu",
       ishod: "da",
       odgovor: najmanjaTekst ? (
-        <>Da: {najmanjaTekst}, a slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko i šire je od ~9 m.</>
+        <>
+          Da: {najmanjaTekst}, a slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko i u nj stane
+          tlocrt širok 10 m.
+        </>
       ) : (
-        "Da: slobodni komad širi je od ~9 m, a odredbe ovdje ne propisuju najmanju građevnu česticu."
+        "Da: u slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, stane tlocrt širok 10 m na barem 250 m²."
       ),
     });
   }
 
-  // 6. teren, samo kad je pregledom označen
+  // 7. teren, samo kad je pregledom označen
   if (u.regija === REGIJE.neizgradivo) {
     out.push({ pitanje: "Može li se teren graditi", ishod: "ne", odgovor: "Ne: pregled ortofota pokazao je da se ovaj teren ne može graditi." });
   }
@@ -445,7 +508,8 @@ function SastavCestice({ sastav, ukupno }: { sastav: Map<number, number>; ukupno
   );
 }
 
-function TumacKlika({ k, odredbe, listovi }: { k: Kartica; odredbe: OdredbeGradnje; listovi: Record<string, List> | null }) {
+function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Record<string, List> | null; putovi: Putovi | null }) {
+  const { k, odredbe, listovi, putovi } = props;
   if (k.stanje.rezim === "izvan") {
     return (
       <>
@@ -458,7 +522,7 @@ function TumacKlika({ k, odredbe, listovi }: { k: Kartica; odredbe: OdredbeGradn
     );
   }
   const kat = k.uzorak ? KATEGORIJA_PO_KODU.get(k.uzorak.kategorija) : undefined;
-  const lista = provjere(k.tocka, k.uzorak, k.stanje, k.cestica, odredbe, listovi);
+  const lista = provjere(k.tocka, k.uzorak, k.stanje, k.cestica, odredbe, listovi, putovi);
   const c = k.cestica?.svojstva;
   const ukupno = k.sastav ? [...k.sastav.values()].reduce((a, b) => a + b, 0) : 0;
   return (
@@ -533,6 +597,8 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
   const [cilj, setCilj] = useState<CiljKarte | null>(null);
   const [kartica, setKartica] = useState<Kartica | null>(null);
   const [listovi, setListovi] = useState<Record<string, List> | null>(null);
+  const [putovi, setPutovi] = useState<Putovi | null>(null);
+  const putoviRef = useRef<Promise<Putovi> | null>(null);
   const dohvatiCesticu = useRef(dohvacacCestica());
   const zadnjiKlik = useRef(0);
   const kljuc = useRef(0);
@@ -567,6 +633,18 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
     const n = ++zadnjiKlik.current;
     const stanje = stanjeTocke(podaci.slojevi, lng, lat);
     void listoviKlijent().then((l) => setListovi(l));
+    // putovi (~100 kB) tek uz prvi klik, kao i listovi
+    putoviRef.current ??= fetch("/geo/gup-grad/putovi-2025.json")
+      .then((r) => (r.ok ? (r.json() as Promise<{ putovi: PutCestice[] }>) : { putovi: [] }))
+      .then((d) => {
+        const m = new Map(d.putovi.map((p) => [kljucPuta(p.ko, p.kc), p]));
+        setPutovi(m);
+        return m;
+      })
+      .catch(() => {
+        putoviRef.current = null;
+        return new Map();
+      });
     const [uzorak, cestica] = await Promise.all([
       uzorakUTocki(lng, lat).catch(() => null),
       stanje.rezim === "izvan" ? Promise.resolve(null) : dohvatiCesticu.current(lng, lat).catch(() => null),
@@ -676,7 +754,7 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
               >
                 ×
               </button>
-              <TumacKlika k={kartica} odredbe={odredbe} listovi={listovi} />
+              <TumacKlika k={kartica} odredbe={odredbe} listovi={listovi} putovi={putovi} />
             </div>
           )}
         </div>

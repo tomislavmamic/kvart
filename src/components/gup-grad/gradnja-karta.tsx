@@ -39,7 +39,7 @@ const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16
 const BOJE = new Map(
   [...KATEGORIJA_PO_KODU].map(([kod, k]) => [
     kod,
-    { rgb: hex(k.boja), a: Math.round(k.alfa * 255), skupina: k.skupina, pruge: k.pruge ? hex(k.pruge) : null },
+    { rgb: hex(k.boja), a: Math.round(k.alfa * 255), skupina: k.skupina, pruge: k.pruge ? hex(k.pruge) : null, mreza: !!k.mreza },
   ]),
 );
 /** Razmak i debljina kosih pruga uvjetne gradnje, u pikselima pločice (~1,8 m). */
@@ -55,7 +55,10 @@ async function obojaj(kodovi: ImageData, skrivene: ReadonlySet<Skupina>): Promis
       if (d[i + 3] !== 255) continue;
       const b = BOJE.get(d[i + 2]);
       if (!b || skrivene.has(b.skupina)) continue;
-      const [r, g, bl, a] = b.pruge && (x + y) % PRUGE.razmak < PRUGE.debljina ? [...b.pruge, 230] : [...b.rgb, b.a];
+      const pruga =
+        b.pruge &&
+        ((x + y) % PRUGE.razmak < PRUGE.debljina || (b.mreza && (x - y + PRUGE.razmak * w) % PRUGE.razmak < PRUGE.debljina));
+      const [r, g, bl, a] = pruga ? [...b.pruge!, 230] : [...b.rgb, b.a];
       o[i] = r;
       o[i + 1] = g;
       o[i + 2] = bl;
