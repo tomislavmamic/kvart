@@ -13,14 +13,15 @@
   "neizgradivo": 0,
   "premalo": 22.99,
   "ceka-upu": 69.15,
-  "uz-cestu": 141.38,
+  "uz-cestu-stambeno": 45.33,
+  "uz-cestu-nestambeno": 96.05,
   "nestambeno": 197.24,
   "stambeno": 91.73
  },
  "po_skupini_ha": {
   "nista": 2269.61,
-  "uvjetno": 141.38,
-  "nestambeno": 197.24,
+  "uvjetno": 45.33,
+  "nestambeno": 293.29,
   "stambeno": 91.73
  },
  "po_namjeni_ha": {
@@ -32,7 +33,7 @@
    "nestambeno": 53.76,
    "premalo": 4.06,
    "koristeno": 10.73,
-   "uz-cestu": 86.44
+   "uz-cestu-nestambeno": 86.44
   },
   "P": {
    "rezerva-prometa": 77.96,
@@ -67,7 +68,7 @@
    "koristeno": 75.55,
    "stambeno": 87.97,
    "samo-rekonstrukcija": 6.7,
-   "uz-cestu": 45.33
+   "uz-cestu-stambeno": 45.33
   },
   "D": {
    "premalo": 2.92,
@@ -113,7 +114,7 @@
    "zgrada": 11.53,
    "nestambeno": 23.3,
    "okucnica": 14.6,
-   "uz-cestu": 9.61,
+   "uz-cestu-nestambeno": 9.61,
    "ceka-upu": 0.74
   },
   "R4": {

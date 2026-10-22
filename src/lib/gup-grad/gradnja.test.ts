@@ -38,7 +38,10 @@ test("odredbe, UPU i veličina", () => {
   assert.equal(id("M/K5", REGIJE.premalo), "premalo");
   assert.equal(id("I/K", REGIJE.usko), "premalo");
   assert.equal(id("M/K5", REGIJE.ceka), "ceka-upu");
-  assert.equal(id("M/K5", REGIJE.ceka, true), "uz-cestu");
+  assert.equal(id("M/K5", REGIJE.ceka, true), "uz-cestu-stambeno");
+  assert.equal(id("S", REGIJE.ceka, true), "uz-cestu-stambeno");
+  assert.equal(id("I/K", REGIJE.ceka, true), "uz-cestu-nestambeno");
+  assert.equal(id("T", REGIJE.ceka, true), "uz-cestu-nestambeno");
   assert.equal(id("I/K", REGIJE.ceka), "ceka-upu");
   // javne i društvene zgrade smiju se graditi i prije UPU-a (čl. 105. st. 5.)
   assert.equal(id("D", REGIJE.ceka), "nestambeno");

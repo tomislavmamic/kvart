@@ -29,8 +29,10 @@ import {
   KATEGORIJE,
   KATEGORIJA_PO_ID,
   KATEGORIJA_PO_KODU,
+  istiIzgled,
   OPIS_ZONE,
   SKUPINE_GRADNJE,
+  uzorakKategorije,
   ZONA_GRADNJE,
   type Kategorija,
   type Skupina,
@@ -69,15 +71,7 @@ const GradnjaKarta = dynamic(() => import("@/components/gup-grad/gradnja-karta")
 const ha = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: v < 10 ? 1 : 0 });
 /** Površina iz rešetke od ~2 m, zaokružena na 5 m². */
 const m2 = (v: number) => `${(Math.round(v / 5) * 5).toLocaleString("hr-HR")} m²`;
-const SKUPINE: Skupina[] = ["nista", "uvjetno", "nestambeno", "stambeno"];
-
-/** Uzorak boje kategorije kakav je na karti (na svijetlosivoj podlozi). */
-export function uzorakKategorije(k: Kategorija): CSSProperties {
-  const ton = `color-mix(in srgb, ${k.boja} ${Math.round(k.alfa * 100)}%, #e4e4e7)`;
-  return k.tockice
-    ? { backgroundColor: ton, backgroundImage: "radial-gradient(#27272a 1px, transparent 1.3px)", backgroundSize: "4px 4px" }
-    : { backgroundColor: ton };
-}
+const SKUPINE: Skupina[] = ["nista", "nestambeno", "uvjetno", "stambeno"];
 
 // ------------------------------------------------------------- čestica pod klikom
 
@@ -699,14 +693,20 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
                   onChange={(e) => prebaciSkupinu(s, e.target.checked)}
                   className="h-4 w-4 accent-zinc-900"
                 />
+                <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna])} />
                 <span className="flex-1">{SKUPINE_GRADNJE[s].naslov}</span>
                 <span className="tabular-nums font-normal text-zinc-500">{ha(zbroj.po_skupini_ha[s])} ha</span>
               </label>
             </legend>
-            <ul className={`mt-1.5 space-y-1.5 pl-6 ${skrivene.has(s) ? "opacity-40" : ""}`}>
+            {/* razlozi pod jednim uzorkom skupine; svoj uzorak ima samo ono što na karti izgleda drukčije */}
+            <ul className={`mt-1.5 space-y-1 pl-6 ${skrivene.has(s) ? "opacity-40" : ""}`}>
               {kategorijePoSkupini[s].map((k) => (
-                <li key={k.id} className="flex items-center gap-2">
-                  <UzorakBoje stil={uzorakKategorije(k)} />
+                <li key={k.id} className="flex items-center gap-2 text-zinc-600">
+                  {istiIzgled(k, KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna]) ? (
+                    <span aria-hidden className="w-6 shrink-0" />
+                  ) : (
+                    <UzorakBoje stil={uzorakKategorije(k)} />
+                  )}
                   <span className="flex-1">{k.naziv}</span>
                   <span className="tabular-nums text-zinc-500">{ha(zbroj.po_kategoriji_ha[k.id])} ha</span>
                 </li>
@@ -717,7 +717,7 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
         <ul className="space-y-1.5 sm:col-span-2">
           <li className="flex items-center gap-2">
             <Crta boja={BOJA_STAMBENE_ZONE} />
-            <span>zona stambene ili mješovite namjene (S, M1–M3, K5): ondje novi GUP predviđa stanovanje</span>
+            <span>zona stambene ili mješovite namjene (S, M1–M3, K5), od zuma 15: ondje novi GUP predviđa stanovanje</span>
           </li>
           <li className="flex items-center gap-2">
             <Crta boja="#18181b" crtice="7 5" />

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Navod } from "@/components/gup-dokument/navod";
 import { GradnjaPrikaz } from "@/components/gup-grad/gradnja-prikaz";
-import { SKUPINE_GRADNJE, type Skupina } from "@/lib/gup-grad/gradnja";
+import { KATEGORIJA_PO_ID, SKUPINE_GRADNJE, uzorakKategorije } from "@/lib/gup-grad/gradnja";
 import { ucitajOdredbeGradnje, ucitajZbrojGradnje } from "@/lib/gup-grad/gradnja-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -16,12 +16,6 @@ const ha = (v: number) => Math.round(v).toLocaleString("hr-HR");
 const posto = (v: number) => `${Math.round(v * 100).toLocaleString("hr-HR")} %`;
 const vanjska = "fokus text-emerald-700 underline";
 
-const BOJA_SKUPINE: Record<Skupina, string> = {
-  nista: "#27272a",
-  uvjetno: "#ca8a04",
-  nestambeno: "#0891b2",
-  stambeno: "#15803d",
-};
 
 export default async function GradnjaPage() {
   const [zbroj, odredbe] = await Promise.all([ucitajZbrojGradnje(), ucitajOdredbeGradnje()]);
@@ -53,10 +47,15 @@ export default async function GradnjaPage() {
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-4">
-        {(["nista", "uvjetno", "nestambeno", "stambeno"] as const).map((sk) => (
+        {(["nista", "nestambeno", "uvjetno", "stambeno"] as const).map((sk) => (
           <div key={sk} className="bg-white px-3 py-3 sm:px-4">
             <p className="flex items-center gap-2 font-mono text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">
-              <span aria-hidden className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: BOJA_SKUPINE[sk] }} />
+              {/* isti uzorak kao u tumaču i na karti */}
+              <span
+                aria-hidden
+                className="inline-block h-3.5 w-3.5 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
+                style={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].glavna])}
+              />
               {ha(s[sk])} ha
             </p>
             <p className="text-xs text-zinc-600 sm:text-sm">
@@ -91,7 +90,9 @@ export default async function GradnjaPage() {
         <p className="mt-2">
           Za novu stambenu zgradu ostaje {ha(s.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim zonama.
           Novi GUP pritom zaustavlja gradnju na {ha(k["ceka-upu"])} ha slobodnog zemljišta urbane sanacije i preobrazbe dok se
-          ne donese UPU, a na {ha(s.uvjetno)} ha neuređenog dijela do UPU-a se može graditi samo uz postojeću javnu cestu. Koja
+          ne donese UPU. Na {ha(k["uz-cestu-stambeno"] + k["uz-cestu-nestambeno"])} ha slobodnog zemljišta u neuređenom dijelu
+          do UPU-a se može graditi samo uz postojeću javnu cestu; od toga je stambeno ili mješovito {ha(k["uz-cestu-stambeno"])}{" "}
+          ha, a {ha(k["uz-cestu-nestambeno"])} ha je gospodarska ili turistička zona, gdje stambene zgrade nema ni poslije UPU-a. Koja
           su to područja i zašto, objašnjava stranica{" "}
           <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
             Zabrana nove gradnje do donošenja UPU-a

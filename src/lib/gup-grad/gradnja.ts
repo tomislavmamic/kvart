@@ -77,14 +77,19 @@ export const OPIS_ZONE: Record<ZonaGradnje, string> = {
   promet: "rezervirana je za ulice, prugu, groblja i infrastrukturu",
 };
 
-/** Odgovor na pitanje „mogu li ovdje graditi?”, od najstrožeg. */
-export type Skupina = "nista" | "uvjetno" | "nestambeno" | "stambeno";
+/**
+ * Odgovor na pitanje „mogu li ovdje graditi?”, od najstrožeg. Neuređeni dio
+ * (do UPU-a gradi se samo uz postojeću javnu cestu) dijeli se po namjeni:
+ * gdje namjena ne dopušta stanovanje, ono je „nestambeno” kao i ostalo
+ * takvo zemljište; gdje dopušta, stanovanje je moguće samo uz cestu.
+ */
+export type Skupina = "nista" | "nestambeno" | "uvjetno" | "stambeno";
 
-export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string }> = {
-  nista: { naslov: "Ne može se graditi ništa novo", kratko: "Ništa novo" },
-  uvjetno: { naslov: "Do UPU-a samo uz postojeću javnu cestu", kratko: "Samo uz cestu" },
-  nestambeno: { naslov: "Može se graditi, ali ne stambeno", kratko: "Nije za stanovanje" },
-  stambeno: { naslov: "Stambena ili stambeno-poslovna gradnja moguća", kratko: "Stambeno moguće" },
+export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string; glavna: IdKategorije }> = {
+  nista: { naslov: "Ne može se graditi ništa novo", kratko: "Ništa novo", glavna: "zgrada" },
+  nestambeno: { naslov: "Može se graditi, ali ne stambeno", kratko: "Nije za stanovanje", glavna: "nestambeno" },
+  uvjetno: { naslov: "Stambeno do UPU-a samo uz postojeću javnu cestu", kratko: "Stambeno samo uz cestu", glavna: "uz-cestu-stambeno" },
+  stambeno: { naslov: "Stambena ili stambeno-poslovna gradnja moguća", kratko: "Stambeno moguće", glavna: "stambeno" },
 };
 
 export type IdKategorije =
@@ -99,7 +104,8 @@ export type IdKategorije =
   | "neizgradivo"
   | "premalo"
   | "ceka-upu"
-  | "uz-cestu"
+  | "uz-cestu-stambeno"
+  | "uz-cestu-nestambeno"
   | "nestambeno"
   | "stambeno";
 
@@ -115,15 +121,17 @@ export interface Kategorija {
   boja: string;
   /** Neprozirnost ispune, 0–1. */
   alfa: number;
-  /** Točkice preko boje: slobodno, ali premalo ili preusko. */
-  tockice?: boolean;
+  /** Kose pruge te boje preko ispune: gradnja samo uz uvjet (neuređeni dio, uz postojeću cestu). */
+  pruge?: string;
 }
 
 /**
- * Boje su provjerene za razlučivost i daltonizam (dataviz validator, svih pet
- * obojenih parova): zeleno stambeno, cijan nestambeno, jantar uz cestu,
- * crveno čeka UPU (kao na /gup/zabrana), ljubičasto plan ne dopušta.
- * Zauzeto je sivo: tamno zgrada, svjetlije ono što ide uz nju i ulice.
+ * Boja nosi odgovor, ne razlog: četiri odgovora imaju četiri izgleda, a
+ * razlog kaže klik i tumač. „Ništa novo” je bijela koprena koja izblijedi
+ * snimku (osim čekanja na UPU, crvene pruge kao na /gup/zabrana); plavo je
+ * nestambeno, jantar stambeno samo uz cestu, zeleno stambeno. Kose pruge znače
+ * „ovisi o UPU-u”. Boje su provjerene validatorom (dataviz) i kako izgledaju
+ * stopljene sa sivom snimkom (#747474–#cdcdcd), ne samo kao čiste boje.
  */
 export const KATEGORIJE: readonly Kategorija[] = [
   {
@@ -132,8 +140,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Zgrada ili gradilište",
     razlog: "Na ovom mjestu već stoji zgrada (ili se gradi). Smije se obnoviti ili zamijeniti, ali nova se ne može dodati.",
-    boja: "#27272a",
-    alfa: 0.72,
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 2,
@@ -142,8 +150,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Dvorište postojeće zgrade",
     razlog:
       "Zemljište pripada postojećoj zgradi: odredbe joj propisuju ovoliko čestice (tlocrt kroz najveći koeficijent izgrađenosti, a ne manje od najmanje građevne čestice), pa nova zgrada ovdje ne stane.",
-    boja: "#52525b",
-    alfa: 0.5,
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 3,
@@ -151,8 +159,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Parkiralište, park, igralište, okoliš škole",
     razlog: "Mjesto je već uređeno za drugu upotrebu: parkiralište, održavani park, igralište, trg, groblje ili okoliš javne ustanove.",
-    boja: "#52525b",
-    alfa: 0.5,
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 4,
@@ -160,8 +168,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Ulica, pruga ili infrastruktura",
     razlog: "Ovo je postojeća ulica, put, pruga ili infrastrukturna građevina (trafostanica, vodosprema, crpka).",
-    boja: "#a1a1aa",
-    alfa: 0.6,
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 5,
@@ -169,8 +177,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Rezervirano za ulicu, prugu ili groblje",
     razlog: "Zemljište je slobodno, ali ga GUP ne boji nijednom namjenom za gradnju: rezervirano je za ulicu, prugu, groblje ili infrastrukturni koridor.",
-    boja: "#a1a1aa",
-    alfa: 0.6,
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 14,
@@ -179,8 +187,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Koridor ulice između zona (neobojen na listu 1)",
     razlog:
       "Zemljište je slobodno, ali je na listu 1 novog GUP-a ovo neobojeni pojas između zona: koridor postojeće ili planirane ulice, na kojem se ne gradi.",
-    boja: "#a1a1aa",
-    alfa: 0.6,
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 6,
@@ -188,7 +196,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Zelenilo, rekreacija i plaže",
     razlog: "Namjena je park, zaštitno zelenilo, rekreacija ili plaža, gdje GUP ne predviđa zgrade (osim manjih pratećih).",
-    boja: "#7e22ce",
+    boja: "#ffffff",
     alfa: 0.55,
   },
   {
@@ -197,7 +205,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Odredbe dopuštaju samo obnovu postojećeg",
     razlog: "Zemljište je slobodno i u stambenoj zoni, ali odredbe za ovo područje urbanog pravila ne dopuštaju novu stambenu zgradu, samo rekonstrukciju i zamjenu postojećih.",
-    boja: "#7e22ce",
+    boja: "#ffffff",
     alfa: 0.55,
   },
   {
@@ -206,7 +214,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Teren se ne može graditi",
     razlog: "Pregled ortofota pokazao je da se ovaj teren ne može graditi (strmina, stijena, korito).",
-    boja: "#7e22ce",
+    boja: "#ffffff",
     alfa: 0.55,
   },
   {
@@ -218,7 +226,6 @@ export const KATEGORIJE: readonly Kategorija[] = [
       "Slobodno je, ali premalo za najmanju građevnu česticu koju odredbe ovdje traže, ili uže od ~9 m (put, stube, pojas uz među), a nema slobodnog susjeda s kojim bi se spojilo.",
     boja: "#ffffff",
     alfa: 0.55,
-    tockice: true,
   },
   {
     kod: 10,
@@ -227,18 +234,30 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Nova gradnja čeka UPU",
     razlog:
       "Područje urbane sanacije ili preobrazbe s lista 4.d: gradi se samo na temelju UPU-a, a do njega su dopuštene samo rekonstrukcija i zamjena postojećih zgrada.",
-    boja: "#dc2626",
-    alfa: 0.6,
+    boja: "#ffffff",
+    alfa: 0.45,
+    pruge: "#dc2626",
   },
   {
     kod: 11,
-    id: "uz-cestu",
+    id: "uz-cestu-stambeno",
     skupina: "uvjetno",
-    naziv: "Neuređeni dio: do UPU-a samo uz postojeću cestu",
+    naziv: "Neuređeni dio, stambena ili mješovita zona: do UPU-a samo uz postojeću cestu",
     razlog:
-      "Neuređeni dio građevinskog područja: GUP propisuje UPU, ali do njega se dozvola za novu zgradu može dobiti ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
-    boja: "#ca8a04",
-    alfa: 0.62,
+      "Neuređeni dio građevinskog područja u zoni koja dopušta stanovanje: GUP propisuje UPU, ali do njega se dozvola za novu stambenu zgradu može dobiti ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
+    boja: "#f59e0b",
+    alfa: 0.8,
+  },
+  {
+    kod: 15,
+    id: "uz-cestu-nestambeno",
+    skupina: "nestambeno",
+    naziv: "Neuređeni dio, nestambena zona: do UPU-a samo uz postojeću cestu",
+    razlog:
+      "Neuređeni dio građevinskog područja u zoni koja ne dopušta stanovanje: stambena zgrada ne može se graditi ni poslije UPU-a, a nestambena do njega samo ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
+    boja: "#2563eb",
+    alfa: 0.25,
+    pruge: "#2563eb",
   },
   {
     kod: 12,
@@ -246,8 +265,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nestambeno",
     naziv: "Slobodno za javnu, gospodarsku, turističku ili športsku gradnju",
     razlog: "Zemljište je slobodno i za gradnju, ali namjena ne dopušta stambenu zgradu.",
-    boja: "#0891b2",
-    alfa: 0.6,
+    boja: "#2563eb",
+    alfa: 0.65,
   },
   {
     kod: 13,
@@ -256,7 +275,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Slobodno za stambenu ili stambeno-poslovnu zgradu",
     razlog: "Slobodno, dovoljno veliko i široko, u stambenoj ili mješovitoj zoni koja dopušta novu zgradu.",
     boja: "#15803d",
-    alfa: 0.68,
+    alfa: 0.85,
   },
 ];
 
@@ -311,7 +330,8 @@ export function kategorija(klasa: number, regija: number, neuredeno: boolean, ko
       return K.neizgradivo.kod;
     case REGIJE.ceka:
       if (KLASA_PO_INDEKSU.get(klasa)?.kod === "D") return K.nestambeno.kod;
-      return neuredeno ? K["uz-cestu"].kod : K["ceka-upu"].kod;
+      if (!neuredeno) return K["ceka-upu"].kod;
+      return zona === "stambena" ? K["uz-cestu-stambeno"].kod : K["uz-cestu-nestambeno"].kod;
     case REGIJE.usko:
     case REGIJE.premalo:
       return K.premalo.kod;
@@ -319,3 +339,20 @@ export function kategorija(klasa: number, regija: number, neuredeno: boolean, ko
   // 6. slobodno za gradnju
   return zona === "stambena" ? K.stambeno.kod : K.nestambeno.kod;
 }
+
+/** Srednje siva snimke pod kartom (siva podloga u globals.css): na njoj se boje gledaju u tumaču. */
+const SIVA_SNIMKE = "#a6a6a6";
+
+/**
+ * Uzorak kategorije za tumač i brojke kakav je na karti: boja stopljena sa
+ * sivom snimkom, i iste pruge. Vraća CSS svojstva (bez Reacta, za poslužitelj i klijent).
+ */
+export function uzorakKategorije(k: Kategorija): { backgroundColor: string; backgroundImage?: string } {
+  const ton = `color-mix(in srgb, ${k.boja} ${Math.round(k.alfa * 100)}%, ${SIVA_SNIMKE})`;
+  return k.pruge
+    ? { backgroundColor: ton, backgroundImage: `repeating-linear-gradient(45deg, ${k.pruge} 0 2px, transparent 2px 6px)` }
+    : { backgroundColor: ton };
+}
+
+/** Isti izgled na karti: kategoriju nije potrebno posebno crtati u tumaču. */
+export const istiIzgled = (a: Kategorija, b: Kategorija) => a.boja === b.boja && a.alfa === b.alfa && a.pruge === b.pruge;
