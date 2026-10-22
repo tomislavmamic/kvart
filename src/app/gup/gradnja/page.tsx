@@ -9,7 +9,7 @@ import { createPageMetadata } from "@/lib/metadata";
 export const metadata = createPageMetadata({
   title: "Gdje se po novom GUP-u neće moći graditi",
   description:
-    "Karta Splita u obuhvatu GUP-a: gdje se po novom GUP-u neće moći graditi ništa novo, a gdje ništa stambeno — i zašto, za svaku točku: izgrađeno, ulica, namjena, odredbe, čekanje na UPU, premalo zemljište.",
+    "Karta Splita unutar granice GUP-a: gdje se po novom GUP-u neće moći graditi ništa novo, gdje se može graditi, ali ne stambena zgrada, a gdje i stambena. Za svako mjesto i razlog.",
 });
 
 const ha = (v: number) => Math.round(v).toLocaleString("hr-HR");
@@ -32,19 +32,97 @@ export default async function GradnjaPage() {
         <Link href="/planovi" className="fokus underline">
           Planovi
         </Link>{" "}
-        · novi GUP, prijedlog izmjena i dopuna iz travnja 2025.
+        · novi GUP (prijedlog izmjena i dopuna, travanj 2025.)
       </p>
       <h1 className="mt-1 text-2xl font-bold">Gdje se po novom GUP-u neće moći graditi</h1>
-      <p className="mt-3 max-w-3xl text-zinc-600">
-        Karta pokazuje, za svako mjesto u obuhvatu GUP-a Splita, može li se ondje nakon donošenja novog GUP-a graditi nova
-        zgrada: <strong className="text-zinc-900">nikakva</strong> (jer je mjesto već izgrađeno ili zauzeto ulicom, jer
-        namjena ne predviđa zgrade, jer odredbe dopuštaju samo obnovu, jer nova gradnja čeka UPU ili jer je slobodni komad
-        premalen), <strong className="text-zinc-900">nikakva stambena</strong> (namjena dopušta samo javnu, gospodarsku,
-        turističku ili športsku gradnju) ili stambena i stambeno-poslovna.
-      </p>
-      <p className="mt-2 max-w-3xl text-zinc-600">
-        Klik na bilo koje mjesto kaže što je za tu točku provjereno, što ondje priječi gradnju i koliko je čega na čestici.
-      </p>
+      <div className="mt-3 max-w-3xl text-zinc-600">
+        <p>Kad Gradsko vijeće donese novi GUP, za svako mjesto unutar granice GUP-a vrijedit će jedan od tri odgovora:</p>
+        <ul className="mt-2 space-y-1.5">
+          {(
+            [
+              [
+                "nista",
+                <>
+                  <strong className="text-zinc-900">Ne može se graditi ništa novo.</strong> Mjesto je već izgrađeno, ulica je,
+                  park ili plaža, pravila dopuštaju samo obnovu postojećih zgrada, čeka se UPU ili je slobodni komad premalen.
+                </>,
+              ],
+              [
+                "nestambeno",
+                <>
+                  <strong className="text-zinc-900">Može se graditi, ali ne stambena zgrada.</strong> Smjet će se graditi npr.
+                  škola, hotel, radionica ili dvorana, ali ne kuća ni zgrada sa stanovima.
+                </>,
+              ],
+              [
+                "stambeno",
+                <>
+                  <strong className="text-zinc-900">Može se graditi i stambena zgrada</strong>, sama ili s poslovnim prostorom.
+                </>,
+              ],
+            ] as const
+          ).map(([sk, tekst]) => (
+            <li key={sk} className="flex gap-2.5">
+              <span
+                aria-hidden
+                className="mt-1 inline-block h-3.5 w-3.5 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
+                style={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].glavna])}
+              />
+              <span>{tekst}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 flex gap-2.5">
+          <span
+            aria-hidden
+            className="mt-1 inline-block h-3.5 w-3.5 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
+            style={uzorakKategorije(KATEGORIJA_PO_ID["uz-cestu-stambeno"])}
+          />
+          <span>
+            <strong className="text-zinc-900">Šrafirano</strong> znači: može, ali samo uz uvjet. To je neuređeno područje: GUP
+            ondje traži UPU, ali dok ga nema, dozvola se može dobiti ako do čestice vodi postojeća javna cesta i ako se riješi
+            odvodnja.
+          </span>
+        </p>
+        <p className="mt-3">Dodirni bilo koje mjesto na karti: vidjet ćeš odgovor, razlog i sve što smo za to mjesto provjerili.</p>
+        <details className="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm">
+          <summary className="fokus cursor-pointer font-semibold text-zinc-900">Što znače pojmovi</summary>
+          <dl className="mt-2 space-y-2">
+            {(
+              [
+                ["Namjena", "Za što je zemljište predviđeno: stanovanje, poslovanje, park, ulica… Vidi se na listu 1 novog GUP-a, karti namjene."],
+                [
+                  "UPU (urbanistički plan uređenja)",
+                  "Detaljniji plan za jedan dio grada: ulice, čestice, pravila gradnje. Donosi ga Grad. Gdje ga GUP traži, nova gradnja čeka taj plan.",
+                ],
+                [
+                  "Neuređeno područje",
+                  "U planu: neuređeni dio građevinskog područja. Zemljište predviđeno za gradnju na kojem još nisu izgrađene ulice i odvodnja koje plan predviđa. GUP ondje traži UPU, a do tada se dozvola može dobiti samo ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
+                ],
+                [
+                  "Urbana sanacija i preobrazba",
+                  "Dijelovi grada koje GUP želi urediti (sanacija) ili temeljito preoblikovati (preobrazba). Ondje nove zgrade neće biti dok se ne donese UPU.",
+                ],
+                [
+                  "Urbano pravilo",
+                  "Pravila gradnje za jedan dio grada: visina, koliko čestice smije biti pod zgradom, najmanja čestica. Neka dopuštaju samo obnovu postojećih zgrada.",
+                ],
+                ["Najmanja čestica za gradnju", "U planu: najmanja građevna čestica. Najmanja površina na kojoj pravila dopuštaju novu zgradu."],
+                [
+                  "Rekonstrukcija i zamjena",
+                  "Radovi na postojećoj zgradi, ili nova zgrada umjesto nje na istom mjestu. Na karti: „obnova ili zamjena”.",
+                ],
+                ["List 1, list 4.d", "Pojedini crteži novog GUP-a. Poveznice vode na to mjesto na listu."],
+              ] as const
+            ).map(([pojam, znacenje]) => (
+              <div key={pojam}>
+                <dt className="font-semibold text-zinc-900">{pojam}</dt>
+                <dd>{znacenje}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      </div>
 
       <div className="mt-6 grid gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-3">
         {(["nista", "nestambeno", "stambeno"] as const).map((sk) => (
@@ -68,14 +146,14 @@ export default async function GradnjaPage() {
                   className="inline-block h-3 w-3 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
                   style={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].uvjetna!])}
                 />
-                od toga {ha(k[SKUPINE_GRADNJE[sk].uvjetna!])} ha samo uz postojeću cestu
+                od toga {ha(k[SKUPINE_GRADNJE[sk].uvjetna!])} ha samo ako do čestice vodi javna cesta
               </p>
             )}
           </div>
         ))}
       </div>
       <p className="mt-2 text-sm text-zinc-500">
-        Od {ha(zbroj.ukupno_ha)} ha katastarskih čestica u obuhvatu GUP-a, bez mora.
+        Ukupno {ha(zbroj.ukupno_ha)} ha: sve katastarske čestice unutar granice GUP-a, bez mora.
       </p>
 
       <section className="mt-8">
@@ -92,19 +170,28 @@ export default async function GradnjaPage() {
           Što karta kaže
         </h2>
         <p className="mt-3">
-          Najveći dio je već zauzet: {ha(zauzeto)} ha ({posto(udio(zauzeto))}) čine zgrade s dvorištima koja im pripadaju, ulice,
-          parkirališta, parkovi, igrališta i okoliš škola. Na još {ha(planNeDopusta)} ha slobodnog zemljišta plan zgrade ne predviđa ili dopušta samo
-          obnovu postojećih: parkovi, zaštitno zelenilo, rekreacija i plaže, rezerve za ulice i groblja, te {ha(k.koridor)} ha u
-          koridorima ulica koje list ostavlja neobojenima između blokova.
+          Većina je već zauzeta. {ha(zauzeto)} ha ({posto(udio(zauzeto))}) čine zgrade s pripadajućim dvorištima, ulice,
+          parkirališta, parkovi, igrališta i okoliš škola. Na još {ha(planNeDopusta)} ha slobodnog zemljišta novi GUP neće
+          dopustiti novu zgradu. Ondje su parkovi, zaštitno zelenilo, rekreacija i plaže, zemljište koje se čuva za ulice i
+          groblja, dijelovi gdje se postojeće zgrade smiju samo obnoviti, teren na kojem se ne može graditi i {ha(k.koridor)} ha
+          pojaseva ulica između blokova.
         </p>
         <p className="mt-2">
-          Za novu stambenu zgradu danas ostaje {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim
-          zonama, i još {ha(k["uz-cestu-stambeno"])} ha u neuređenom dijelu, samo uz postojeću cestu.
-          Novi GUP pritom zaustavlja gradnju na {ha(k["ceka-upu"])} ha slobodnog zemljišta urbane sanacije i preobrazbe dok se
-          ne donese UPU. Na {ha(k["uz-cestu-stambeno"] + k["uz-cestu-nestambeno"])} ha slobodnog zemljišta u neuređenom dijelu
-          do UPU-a se može graditi samo uz postojeću javnu cestu; od toga je stambeno ili mješovito {ha(k["uz-cestu-stambeno"])}{" "}
-          ha, a {ha(k["uz-cestu-nestambeno"])} ha je gospodarska ili turistička zona, gdje stambene zgrade nema ni poslije UPU-a. Koja
-          su to područja i zašto, objašnjava stranica{" "}
+          Za novu stambenu zgradu ostat će {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim zonama,
+          gdje se stanovanje miješa s poslovanjem.
+        </p>
+        <p className="mt-2">
+          Na {ha(k["ceka-upu"])} ha slobodnog zemljišta u područjima urbane sanacije i preobrazbe novi GUP zaustavit će novu
+          gradnju dok Grad ne donese UPU.
+        </p>
+        <p className="mt-2">
+          U neuređenom području GUP također traži UPU, ali se do tada smije graditi ako do čestice vodi postojeća javna cesta i
+          ako se riješi odvodnja. To je {ha(k["uz-cestu-stambeno"] + k["uz-cestu-nestambeno"])} ha:{" "}
+          {ha(k["uz-cestu-stambeno"])} ha u zonama za stanovanje i {ha(k["uz-cestu-nestambeno"])} ha u gospodarskim i
+          turističkim zonama, gdje stambene zgrade neće biti ni nakon UPU-a.
+        </p>
+        <p className="mt-2">
+          Koja su to područja i zašto, pročitaj na stranici{" "}
           <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
             Zabrana nove gradnje do donošenja UPU-a
           </Link>
@@ -114,57 +201,60 @@ export default async function GradnjaPage() {
 
       <section className="mt-12 max-w-3xl text-zinc-700">
         <h2 id="kako" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
-          Što se provjerava, i kojim redom
+          Kako karta odlučuje
         </h2>
         <p className="mt-3">
-          Svako mjesto dobiva jedan razlog, prvi koji gradnju priječi, redom kojim bi to pitao onaj tko želi graditi:
+          Za svako mjesto karta postavlja ista pitanja, redom kojim bi ih postavio netko tko želi graditi. Boju i razlog određuje
+          prva zapreka na koju naiđe.
         </p>
         <ol className="mt-3 list-decimal space-y-2 pl-5">
           <li>
-            <strong className="text-zinc-900">Je li mjesto već zauzeto.</strong> Zgrade iz katastra i gradskog 3D modela,
-            gradilišta, ulice, parkirališta, javne ustanove, igrališta, trgovi, groblja i parkovi. Zgradi pripada i dvorište:
-            onoliko čestice koliko joj odredbe propisuju (tlocrt kroz najveći koeficijent izgrađenosti, a ne manje od najmanje
-            građevne čestice). Postojeća se zgrada smije obnoviti ili zamijeniti, ali nova se uz nju ne može dodati.
+            <strong className="text-zinc-900">Je li mjesto već zauzeto?</strong> Zgrade (iz katastra i gradskog 3D modela),
+            gradilišta, ulice, parkirališta, javne ustanove, igrališta, trgovi, groblja i parkovi. Uz svaku zgradu ide i njezino
+            dvorište: onoliko čestice koliko pravila za nju traže. To je tlocrt zgrade podijeljen s najvećim dopuštenim udjelom
+            izgrađenosti, a nikad manje od najmanje čestice za gradnju. Postojeća zgrada smjet će se obnoviti ili zamijeniti, ali
+            uz nju se nova neće moći dodati.
           </li>
           <li>
-            <strong className="text-zinc-900">Predviđa li namjena zgrade.</strong> Prema{" "}
-            <Navod id="list-namjena-2025">listu 1</Navod> novog GUP-a: u parku, zaštitnom zelenilu, rekreaciji i na plaži ne
-            (osim manjih pratećih građevina), a zemljište koje plan ne boji namjenom rezervirano je za ulice, prugu, groblja i
-            infrastrukturu. To vrijedi i za uske neobojene pojaseve ulica između blokova, koje čitanje lista po boji upije u
-            susjednu zonu: njih izdvajamo iz samog crteža lista, gdje je svaka zona zasebna ploha, a ulica praznina između
-            ploha.
+            <strong className="text-zinc-900">Predviđa li plan ondje zgrade?</strong> Po{" "}
+            <Navod id="list-namjena-2025">listu 1</Navod> novog GUP-a (karti namjene): u parku, zaštitnom zelenilu, zoni
+            rekreacije i na plaži ne, osim manjih pratećih građevina. Zemljište koje list ne boji nijednom bojom čuva se za ulice,
+            prugu, groblja i infrastrukturu. Isto vrijedi za uske neobojene pojaseve ulica između blokova. Njih smo izdvojili iz
+            samog crteža lista, jer bi ih čitanje po boji pripisalo susjednoj zoni.
           </li>
           <li>
-            <strong className="text-zinc-900">Dopuštaju li odredbe novu zgradu.</strong> U stambenim i mješovitim zonama
-            područje urbanog pravila (<Navod id="list-urbana-pravila-2025">list urbanih pravila</Navod>) u dovršenim naseljima
-            dopušta samo rekonstrukciju i zamjenu postojećih zgrada. Ondje gdje je ručni pregled ortofota pokazao da se teren
-            ne može graditi, ne može.
+            <strong className="text-zinc-900">Dopuštaju li pravila gradnje novu zgradu?</strong> U zonama za stanovanje GUP
+            svakom dijelu grada daje vlastita pravila gradnje (<Navod id="list-urbana-pravila-2025">list urbanih pravila</Navod>
+            ). U dovršenim naseljima ta pravila dopuštaju samo obnovu ili zamjenu postojećih zgrada. Gdje se na snimci iz zraka
+            (ortofotu) vidi da se teren ne može graditi, karta kaže da se ne može.
           </li>
           <li>
-            <strong className="text-zinc-900">Čeka li gradnja UPU.</strong> U područjima urbane sanacije i preobrazbe s{" "}
-            <Navod id="list-planske-mjere-2025">lista 4.d</Navod> gradi se samo na temelju UPU-a (
-            <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>), a do njega samo rekonstrukcija i zamjena. U neuređenom dijelu
-            nova zgrada smije se i prije UPU-a ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja (Zakon o
-            prostornom uređenju, NN 155/25, čl. 180. st. 2. t. 3.); karta to ne može provjeriti za svaku česticu, pa to
-            zemljište boji zasebno. Javne i društvene zgrade smiju se graditi i prije UPU-a (
-            <Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>).
+            <strong className="text-zinc-900">Može li se graditi bez čekanja na UPU?</strong> U područjima urbane sanacije i
+            preobrazbe (<Navod id="list-planske-mjere-2025">list 4.d</Navod>) gradit će se samo po UPU-u (
+            <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>). Dok ga nema, postojeće zgrade smiju se samo obnoviti ili
+            zamijeniti. U neuređenom području GUP također traži UPU, ali i prije njega nova zgrada smije se graditi ako do čestice
+            vodi postojeća javna cesta i ako se riješi odvodnja (Zakon o prostornom uređenju, NN 155/25, čl. 180. st. 2. t. 3.).
+            Cestu i odvodnju karta ne može provjeriti za svaku česticu, pa to zemljište boji šrafirano. Javne i društvene zgrade
+            (škole, vrtići, domovi zdravlja) smiju se graditi i prije UPU-a (<Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>).
           </li>
           <li>
-            <strong className="text-zinc-900">Nije li čestica u praksi put.</strong> Uska (najviše 9 m) i dugačka čestica je
-            put ako njome prolazi put ucrtan u OpenStreetMap, ako graniči s barem 10 čestica kojima služi kao prolaz, ili ako
-            dugom stranom leži uz ulicu (rub ceste, nogostup). Na njoj se ne gradi, a susjedne se čestice preko nje ne spajaju.
-            Poljske trake jedna uz drugu nisu put: imaju po nekoliko susjeda i spajanjem bočno postaju gradilište. Pravila su
-            provjerena na ortofotu, na slučajnom uzorku čestica proglašenih putom i na najvećima koje to nisu.
+            <strong className="text-zinc-900">Je li čestica zapravo put?</strong> Uska (najviše 9 m) i duga čestica smatra se
+            putom ako njome prolazi put ucrtan u OpenStreetMap, ako graniči s barem 10 čestica kojima služi kao prilaz, ili ako
+            dugom stranom leži uz ulicu (rub ceste, nogostup). Na putu se neće graditi, a susjedne čestice ne mogu se preko
+            njega spojiti. Poljske trake jedna uz drugu nisu put: svaka ima tek nekoliko susjeda, a spojene bočno postaju
+            gradilište. Pravila smo provjerili na ortofotu: na slučajnom uzorku čestica koje je karta proglasila putom i na
+            najvećima koje nije.
           </li>
           <li>
-            <strong className="text-zinc-900">Je li slobodno dovoljno za novu česticu.</strong> Slobodni komad mora biti barem
-            velik kao najmanja građevna čestica koju odredbe propisuju za to područje (ili to doseći sa slobodnim susjedom iste
-            namjene), a u nj, zajedno sa slobodnim susjedima, mora stati tlocrt širok 10 m na barem 250 m². Tako otpadaju pojasevi
-            uz putove, ostaci dvorišta i prolazi između zgrada, i kad im je zbroj površine dovoljan.
+            <strong className="text-zinc-900">Ima li dovoljno mjesta za novu česticu?</strong> Slobodni komad mora biti barem
+            velik kao najmanja čestica za gradnju koju pravila traže za taj dio grada. To smije doseći i zajedno sa slobodnim
+            susjedom iste namjene. Uz to mora imati dio koji je posvuda širok barem 10 m i velik barem 250 m². Zato otpadaju
+            pojasevi uz putove, ostaci dvorišta i prolazi između zgrada, i kad bi zbrojeni bili dovoljno veliki.
           </li>
           <li>
-            <strong className="text-zinc-900">Dopušta li namjena stanovanje.</strong> Stambena (S), mješovita (M1–M3) i
-            poslovna sa stanovanjem (K5) da; javna i društvena, gospodarska, poslovna, turistička, športska, lučka i posebna ne.
+            <strong className="text-zinc-900">Dopušta li plan ondje stanovanje?</strong> Da u stambenim zonama (S), mješovitim
+            zonama (M1–M3) i poslovnim zonama sa stanovanjem (K5). Ne u zonama javne i društvene, gospodarske, poslovne,
+            turističke, športske, lučke i posebne namjene.
           </li>
         </ol>
       </section>
@@ -175,29 +265,31 @@ export default async function GradnjaPage() {
         </h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <li>
-            Karta je izvedena iz istog izračuna kao{" "}
+            Karta koristi isti izračun kao stranica{" "}
             <Link href="/gup#kako-je-izracunato" className={vanjska}>
               Split po GUP-u
             </Link>{" "}
-            (način brojanja „po odredbama”), na rešetki od oko 2 m: namjena i urbana pravila pročitani su s PDF listova
-            prijedloga GUP-a iz travnja 2025., zgrade su iz katastra DGU-a i gradskog 3D modela, ulice, parkirališta i parkovi
-            iz gradskih podataka i OpenStreetMapa, uz ručni pregled ortofota. Zelena crta obrubljuje stambene i mješovite zone
-            iste rešetke (zatvorene preko neupisanih putova), pa točno prati boje karte. Uz granicu zone pogreška je 5–10 m, pa je za
-            česticu uz rub mjerodavan sam list.
+            (način brojanja „po odredbama”). Područje je podijeljeno na kvadratiće od oko 2 m. Namjenu i pravila gradnje
+            pročitali smo s PDF listova prijedloga GUP-a iz travnja 2025. Zgrade su iz katastra (DGU) i gradskog 3D modela.
+            Ulice, parkirališta i parkovi su iz gradskih podataka i OpenStreetMapa, a dio smo ručno provjerili na ortofotu.
+            Tamna crta obrubljuje zone za stanovanje i prati iste kvadratiće kao boje karte (preko neupisanih putova je
+            zatvorena). Uz granicu zone pogreška može biti 5–10 m, pa za česticu uz granicu vrijedi ono što piše na samom listu.
           </li>
           <li>
-            Područja sanacije, preobrazbe i neuređenog dijela su s <Navod id="list-planske-mjere-2025">lista 4.d</Navod>, a
-            obuhvati planova užeg područja na snazi s ISPU-a. Gdje je plan na snazi, gradi se po njemu; njegove odredbe ovdje
-            nisu provjerene.
+            Granice sanacije, preobrazbe i neuređenog područja precrtane su s{" "}
+            <Navod id="list-planske-mjere-2025">lista 4.d</Navod>. Granice detaljnijih planova koji su već na snazi preuzete su
+            s ISPU-a, državnog sustava prostornih planova. Gdje takav plan vrijedi, gradit će se po njemu. Njegova pravila ovdje
+            nismo provjerili.
           </li>
           <li>
-            Karta ne provjerava vlasništvo ni pristup na cestu, nagib i tlo, zaštitu kulturne baštine i krajobraza, pojas uz
-            more i vodotoke ni posebne uvjete javnopravnih tijela. Ništa od toga ne može mjesto pretvoriti iz „ne može” u
-            „može”, ali može obrnuto. Za odluku o kupnji ili gradnji zatraži lokacijsku informaciju od Grada.
+            Karta ne provjerava vlasništvo, vodi li do čestice javna cesta, priključke, nagib i tlo, zaštitu kulturne baštine i
+            krajobraza, pojas uz more i vodotoke, ni posebne uvjete nadležnih tijela. Ništa od toga ne može „ne može” pretvoriti
+            u „može”, ali može obrnuto. Prije kupnje ili gradnje zatraži od Grada lokacijsku informaciju: službeni podatak o tome
+            koji planovi i koja namjena vrijede za tvoju česticu.
           </li>
           <li>
-            Karta pokriva obuhvat GUP-a (iscrtkana granica). Ostatak Grada ide po Prostornom planu uređenja Grada Splita i
-            ovdje nije obojen.
+            Karta pokriva samo područje GUP-a (unutar iscrtkane granice). Za ostatak Splita vrijedi Prostorni plan uređenja
+            Grada Splita, i ondje karta ništa ne boji.
           </li>
         </ul>
       </section>

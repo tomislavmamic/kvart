@@ -30,7 +30,7 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
       {
         href: "/gup/gradnja",
         naslov: "Gdje se po novom GUP-u neće moći graditi",
-        opis: "Karta cijelog GUP-a: gdje se neće moći graditi ništa novo, a gdje ništa stambeno, i zašto — izgrađeno, ulica, namjena, odredbe, čekanje na UPU, premalo zemljište.",
+        opis: "Karta cijelog GUP-a: gdje se neće moći graditi ništa novo, gdje se može graditi, ali ne stambena zgrada, a gdje i stambena. Dodirni mjesto i vidjet ćeš razlog.",
         radnja: "Klikni na mjesto",
       },
       {

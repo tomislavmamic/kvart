@@ -39,14 +39,41 @@ const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16
 const BOJE = new Map(
   [...KATEGORIJA_PO_KODU].map(([kod, k]) => [
     kod,
-    { rgb: hex(k.boja), a: Math.round(k.alfa * 255), skupina: k.skupina, pruge: k.pruge ? hex(k.pruge) : null, mreza: !!k.mreza },
+    {
+      rgb: hex(k.boja),
+      a: Math.round(k.alfa * 255),
+      skupina: k.skupina,
+      pruge: k.pruge ? hex(k.pruge) : null,
+      prugeA: Math.round((k.prugeAlfa ?? 0.9) * 255),
+      mreza: !!k.mreza,
+    },
   ]),
 );
-/** Razmak i debljina kosih pruga uvjetne gradnje, u pikselima pločice (~1,8 m). */
-const PRUGE = { razmak: 6, debljina: 2 };
+/** Strana pločice u pikselima (scripts/gup-grad/regije.py, PLOCICA). */
+const PLOCICA = 512;
 
-async function obojaj(kodovi: ImageData, skrivene: ReadonlySet<Skupina>): Promise<string | null> {
+/**
+ * Razmak i debljina pruga u pikselima pločice (~1,8 m) za zum. Pruge od 6 px
+ * izdaleka su uže od piksela zaslona i preglednik ih zagladi u jednoličnu
+ * boju, pa se šrafirano ne bi razlikovalo od punog. Zato razmak raste s
+ * udaljenošću, da pruge na zaslonu ostanu ~6 px jedna od druge.
+ */
+export function prugeZaZum(zum: number): { razmak: number; debljina: number; debljinaMreze: number; razina: number } {
+  const razina = Math.min(16, Math.max(13, Math.round(zum)));
+  const razmak = 6 * 2 ** (16 - razina);
+  return { razmak, debljina: Math.max(2, Math.round(razmak / 3)), debljinaMreze: Math.max(2, Math.round(razmak / 4)), razina };
+}
+
+/** Red i stupac pločice iz njezina imena (`…/<red>_<stupac>.png`): pruge se crtaju u koordinatama cijele mreže, bez šava. */
+function polozaj(url: string): [number, number] {
+  const m = /(\d+)_(\d+)\.png$/.exec(url);
+  return m ? [Number(m[1]) * PLOCICA, Number(m[2]) * PLOCICA] : [0, 0];
+}
+
+async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<Skupina>, zum: number): Promise<string | null> {
   const { width: w, height: h, data: d } = kodovi;
+  const { razmak, debljina, debljinaMreze } = prugeZaZum(zum);
+  const [y0, x0] = polozaj(url);
   const out = new ImageData(w, h);
   const o = out.data;
   for (let y = 0; y < h; y++) {
@@ -55,10 +82,13 @@ async function obojaj(kodovi: ImageData, skrivene: ReadonlySet<Skupina>): Promis
       if (d[i + 3] !== 255) continue;
       const b = BOJE.get(d[i + 2]);
       if (!b || skrivene.has(b.skupina)) continue;
+      const gx = x0 + x, gy = y0 + y;
       const pruga =
         b.pruge &&
-        ((x + y) % PRUGE.razmak < PRUGE.debljina || (b.mreza && (x - y + PRUGE.razmak * w) % PRUGE.razmak < PRUGE.debljina));
-      const [r, g, bl, a] = pruga ? [...b.pruge!, 230] : [...b.rgb, b.a];
+        (b.mreza
+          ? (gx + gy) % razmak < debljinaMreze || (gx - gy + razmak * 1e4) % razmak < debljinaMreze
+          : (gx + gy) % razmak < debljina);
+      const [r, g, bl, a] = pruga ? [...b.pruge!, b.prugeA] : [...b.rgb, b.a];
       o[i] = r;
       o[i + 1] = g;
       o[i + 2] = bl;
@@ -76,6 +106,20 @@ async function obojaj(kodovi: ImageData, skrivene: ReadonlySet<Skupina>): Promis
 interface Ucitana {
   sloj: LeafletNS.ImageOverlay;
   url: string | null;
+}
+
+/** Ponovno oboji sve učitane pločice; prekida se kad ga stigne novije bojenje (`jos` vrati false). */
+async function prebojaj(ucitane: Map<string, Ucitana>, skrivene: ReadonlySet<Skupina>, zum: number, jos: () => boolean) {
+  for (const [kljuc, u] of ucitane) {
+    const url = await obojaj(kljuc, await procitaj(kljuc), skrivene, zum);
+    if (!jos() || !url) {
+      if (url) URL.revokeObjectURL(url);
+      return;
+    }
+    if (u.url) URL.revokeObjectURL(u.url);
+    u.url = url;
+    u.sloj.setUrl(url);
+  }
 }
 
 const uGranice = (o: Okvir): LeafletNS.LatLngBoundsExpression => [
@@ -104,6 +148,9 @@ export function GradnjaKarta(props: {
   const obris = useRef<LeafletNS.LayerGroup | null>(null);
   const ucitane = useRef(new Map<string, Ucitana>());
   const skriveneRef = useRef(skrivene);
+  /** Razina pruga po kojoj su pločice obojane (prugeZaZum) i redni broj bojenja. */
+  const razinaRef = useRef(0);
+  const bojenje = useRef(0);
   const klik = useRef(onKlik);
   useEffect(() => {
     klik.current = onKlik;
@@ -161,6 +208,16 @@ export function GradnjaKarta(props: {
       const osvjezi = async () => {
         if (otkazano) return;
         okno.classList.toggle("gup-regije-daleko", map.getZoom() < ZUM_OSTRIH_PIKSELA);
+        // druga razina pruga: učitane pločice prebojaju se s novim razmakom
+        const razina = prugeZaZum(map.getZoom()).razina;
+        if (razina !== razinaRef.current) {
+          const prva = razinaRef.current === 0;
+          razinaRef.current = razina;
+          if (!prva) {
+            const n = ++bojenje.current;
+            void prebojaj(mapaPlocica, skriveneRef.current, razina, () => !otkazano && n === bojenje.current);
+          }
+        }
         const vidi = map.getBounds().pad(0.25);
         const trebaju: PlocicaGradnje[] = ind.plocice.filter((p) => vidi.intersects(L.latLngBounds(p.granice)));
         for (const p of trebaju) {
@@ -168,7 +225,7 @@ export function GradnjaKarta(props: {
           try {
             const kodovi = await procitaj(p.url);
             if (otkazano || mapaPlocica.has(p.url)) continue;
-            const url = await obojaj(kodovi, skriveneRef.current);
+            const url = await obojaj(p.url, kodovi, skriveneRef.current, razinaRef.current);
             if (otkazano || !url) continue;
             const sloj = L.imageOverlay(url, p.granice, { pane: "gradnja", interactive: false, className: "gup-regije" }).addTo(map);
             mapaPlocica.set(p.url, { sloj, url });
@@ -194,20 +251,10 @@ export function GradnjaKarta(props: {
 
   // skupina ugašena ili upaljena u tumaču: učitane pločice samo se prebojaju
   useEffect(() => {
+    if (skriveneRef.current === skrivene) return;
     skriveneRef.current = skrivene;
-    let ziv = true;
-    void (async () => {
-      for (const [kljuc, u] of ucitane.current) {
-        const url = await obojaj(await procitaj(kljuc), skrivene);
-        if (!ziv || !url) return;
-        if (u.url) URL.revokeObjectURL(u.url);
-        u.url = url;
-        u.sloj.setUrl(url);
-      }
-    })();
-    return () => {
-      ziv = false;
-    };
+    const n = ++bojenje.current;
+    void prebojaj(ucitane.current, skrivene, razinaRef.current, () => n === bojenje.current);
   }, [skrivene]);
 
   useEffect(() => {

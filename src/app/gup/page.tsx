@@ -74,8 +74,8 @@ export default async function GupPage() {
         .
       </p>
       <p className="mt-2 max-w-3xl text-zinc-600">
-        Gdje se po novom GUP-u neće moći graditi ništa novo, a gdje ništa stambeno, i što to na pojedinom mjestu priječi,
-        pokazuje karta{" "}
+        Gdje se po novom GUP-u neće moći graditi ništa novo, gdje se može graditi, ali ne stambena zgrada, a gdje i stambena,
+        i zašto, pokazuje karta{" "}
         <Link href="/gup/gradnja" className="fokus font-semibold text-emerald-700 underline">
           Gdje se po novom GUP-u neće moći graditi
         </Link>

@@ -43,6 +43,7 @@ import type { SvojstvaCestice } from "@/lib/gup-grad/provjera";
 import { REGIJE } from "@/lib/gup-grad/regije";
 import {
   BLIZU_RUBA_M,
+  imenicaUz,
   NAZIV_PODRUCJA,
   naslovno,
   oblik,
@@ -130,9 +131,10 @@ const broj1 = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: 
 function zastoPut(p: PutCestice): string {
   const mjere = `široka je najviše ${broj1(p.sirina_m)} m, a duga oko ${p.duljina_m} m`;
   if (p.razlog === "OSM put uzduž")
-    return `${mjere}, i njome prolazi put ucrtan u OpenStreetMap (${Math.round(Math.min(1, p.osm_udio) * 100)} % njezine duljine)`;
-  if (p.razlog === "graniči s mnogo čestica") return `${mjere}, i graniči s ${p.susjeda} različitih čestica kojima služi kao prolaz`;
-  return `${mjere}, i dugom stranom leži uz ulicu (${Math.round(p.uz_ulicu * 100)} % ruba) — rub ceste ili nogostup`;
+    return `${mjere}, a njome prolazi put ucrtan u OpenStreetMap (${Math.round(Math.min(1, p.osm_udio) * 100)} % njezine duljine)`;
+  if (p.razlog === "graniči s mnogo čestica")
+    return `${mjere}, a graniči s ${p.susjeda} ${imenicaUz(p.susjeda, ["česticom", "čestice", "čestica"])} kojima služi kao prilaz`;
+  return `${mjere}, a dugom stranom leži uz ulicu (${Math.round(p.uz_ulicu * 100)} % ruba): to je rub ceste ili nogostup`;
 }
 
 type Ishod = "da" | "ne" | "uvjet" | "nevazno";
@@ -143,41 +145,43 @@ interface Provjera {
   odgovor: ReactNode;
 }
 
+/** Svako je pitanje postavljeno tako da je „da” u redu (✓). */
 const ZNAK: Record<Ishod, { znak: string; klasa: string; naziv: string }> = {
-  da: { znak: "✓", klasa: "bg-emerald-100 text-emerald-800", naziv: "ne priječi" },
-  ne: { znak: "✕", klasa: "bg-red-100 text-red-800", naziv: "priječi" },
+  da: { znak: "✓", klasa: "bg-emerald-100 text-emerald-800", naziv: "u redu" },
+  ne: { znak: "✕", klasa: "bg-red-100 text-red-800", naziv: "zapreka" },
   uvjet: { znak: "!", klasa: "bg-amber-100 text-amber-900", naziv: "uz uvjet" },
   nevazno: { znak: "–", klasa: "bg-zinc-100 text-zinc-500", naziv: "ne odnosi se" },
 };
 
 /** Što na mjestu stoji, po regiji iz pločice. */
 const NA_MJESTU: Record<number, string> = {
-  [REGIJE.zgrada]: "zgrada (iz katastra ili gradskog 3D modela 2025.)",
+  [REGIJE.zgrada]: "zgrada (iz katastra ili gradskog 3D modela iz 2025.)",
   [REGIJE.gradiliste]: "gradilište",
   [REGIJE.ulica]: "ulica, put ili nogostup",
   [REGIJE.parkiraliste]: "parkiralište",
   [REGIJE.javna]: "okoliš javne ustanove (škola, vrtić, bolnica, crkva)",
   [REGIJE.uredjeno]: "igralište, športski teren, trg ili groblje",
-  [REGIJE.infrastruktura]: "infrastrukturna građevina (trafostanica, vodosprema, pruga, benzinska postaja)",
-  [REGIJE.zelenilo]: "park ili zelenilo koje održava Grad",
-  [REGIJE.okucnica]: "dvorište postojeće zgrade: zemljište koje joj odredbe propisuju uz tlocrt",
+  [REGIJE.infrastruktura]: "pruga ili komunalna građevina (trafostanica, vodosprema, benzinska postaja)",
+  [REGIJE.zelenilo]: "park ili zelena površina koju održava Grad",
+  [REGIJE.okucnica]: "dvorište postojeće zgrade (zemljište koje pravila propisuju uz zgradu)",
 };
 
 const NOVA_STAMBENA: Record<string, { ishod: Ishod; tekst: string }> = {
   da: { ishod: "da", tekst: "nova stambena zgrada je dopuštena" },
-  interpolacija: { ishod: "uvjet", tekst: "nova stambena zgrada samo kao interpolacija, između dvije izgrađene čestice" },
-  upu: { ishod: "uvjet", tekst: "nova stambena gradnja samo kroz propisani UPU ili DPU" },
-  rekonstrukcija: { ishod: "ne", tekst: "samo rekonstrukcija i zamjena postojećih zgrada, nova stambena zgrada nije dopuštena" },
+  interpolacija: { ishod: "uvjet", tekst: "nova stambena zgrada samo između dviju već izgrađenih čestica (interpolacija)" },
+  upu: { ishod: "uvjet", tekst: "nova stambena zgrada tek po UPU-u ili DPU-u koji pravila traže" },
+  rekonstrukcija: { ishod: "ne", tekst: "nova stambena zgrada nije dopuštena; postojeće se smiju samo obnoviti ili zamijeniti" },
   ne: { ishod: "ne", tekst: "stambena gradnja nije dopuštena" },
-  gp: { ishod: "uvjet", tekst: "gradski projekt: gradi se u ukupnoj kvoti bruto površine za cijeli projekt" },
+  gp: { ishod: "uvjet", tekst: "gradski projekt: gradi se u okviru ukupne površine zgrada zadane za cijeli projekt" },
 };
 
+/** Za koju vrstu zgrade vrijedi najmanja čestica („za slobodnostojeću zgradu”); prazno kad je pravila ne navode. */
 const TIP_GRADNJE: Record<string, string> = {
-  slobodnostojeca: "slobodnostojeća",
-  dvojna: "dvojna",
-  interpolacija: "interpolacija",
-  opcenito: "bez navedene vrste",
-  niz: "u nizu",
+  slobodnostojeca: "slobodnostojeću zgradu",
+  dvojna: "dvojnu zgradu",
+  interpolacija: "zgradu između dviju izgrađenih",
+  niz: "zgradu u nizu",
+  opcenito: "",
 };
 
 /** Mjesto klika na službenom listu, ako list ima uklapanje; inače navod cijelog lista. */
@@ -205,34 +209,34 @@ function provjere(
   const navod = (id: string, tekst: ReactNode) => (o.navodi.includes(id) ? <Navod id={id}>{tekst}</Navod> : tekst);
   const klasa: Klasa | undefined = u ? KLASA_PO_INDEKSU.get(u.klasa) : undefined;
   const zona = klasa ? ZONA_GRADNJE[klasa.kod] : null;
+  const katId = u ? KATEGORIJA_PO_KODU.get(u.kategorija)?.id : undefined;
+  const koridor = katId === "koridor";
   const out: Provjera[] = [];
 
   // 1. namjena
   out.push({
-    pitanje: "Namjena po novom GUP-u",
-    ishod: !zona ? "nevazno" : zona === "stambena" ? "da" : "ne",
+    pitanje: "Dopušta li novi GUP ovdje stanovanje?",
+    ishod: !zona ? "nevazno" : zona === "stambena" && !koridor ? "da" : "ne",
     odgovor: klasa ? (
       <>
         {klasa.kod === "P" ? (
           <>
-            <strong>Neobojeno na listu</strong> — rezervirano za ulice, prugu, groblja i infrastrukturu
+            <strong>Neobojeno na karti namjene</strong>: {OPIS_ZONE.promet}.
           </>
         ) : (
           <>
-            {navod(navodNamjena(2025, klasa.kod), <strong>{klasa.naziv}</strong>)} ({klasa.kod}) — {OPIS_ZONE[zona!]}
+            {navod(navodNamjena(2025, klasa.kod), <strong>{klasa.naziv}</strong>)} ({klasa.kod}): {OPIS_ZONE[zona!]}.
           </>
         )}
-        {zona === "nestambena" && " (stambenu zgradu ne)"}.
-        {u?.kategorija === KATEGORIJA_PO_ID.koridor.kod &&
-          " Na listu ovo nije obojeno nijednom zonom: to je pojas ulice između blokova, koji smo s lista izdvojili zasebno."}{" "}
-        Vidi{" "}
+        {koridor && " Ovo mjesto zapravo nije obojeno: to je pojas ulice između blokova, koji smo izdvojili sa samog lista."}{" "}
+        Pogledaj{" "}
         <NaListu list="namjena-2025" navod="list-namjena-2025" tocka={tocka} listovi={listovi}>
           ovo mjesto na listu 1
         </NaListu>
         .
       </>
     ) : (
-      "Na ovom mjestu nema katastarske čestice kojoj GUP daje namjenu (more, lučko područje ili neupisano)."
+      "Ovdje nema katastarske čestice kojoj GUP daje namjenu (more, lučko područje ili neupisano zemljište)."
     ),
   });
   if (!u || !klasa) return out;
@@ -240,42 +244,46 @@ function provjere(
   // 2. što stoji
   const slobodno = u.regija >= REGIJE.slobodno;
   out.push({
-    pitanje: "Je li mjesto slobodno",
+    pitanje: "Je li mjesto slobodno?",
     ishod: slobodno ? "da" : "ne",
     odgovor: slobodno ? (
-      "Da: nema zgrade, ulice, parkirališta ni uređene površine, i ne pripada dvorištu postojeće zgrade."
+      "Da. Nema zgrade, ulice, parkirališta ni uređene površine, a nije ni dvorište postojeće zgrade."
     ) : (
-      <>Ne, ovdje je {NA_MJESTU[u.regija] ?? "nešto izgrađeno"}.</>
+      <>Ne. Ovdje je {NA_MJESTU[u.regija] ?? "nešto izgrađeno"}.</>
     ),
   });
 
-  // 3. odredbe urbanog pravila
+  // 3. pravila gradnje (urbano pravilo)
   const kod = c?.svojstva.u?.["2025"];
   const pravilo = kod ? o.gradnja[kod] : undefined;
   const nazivPravila = kod ? (
     <>
-      {navod(navodGradnja(2025, kod), <>područje urbanog pravila {kod}</>)}
-      {o.nazivi[kod] ? <> („{o.nazivi[kod]}”)</> : null}
+      {navod(navodGradnja(2025, kod), <>Urbano pravilo {kod}</>)}
+      {o.nazivi[kod] ? <> „{o.nazivi[kod]}”</> : null}
     </>
   ) : null;
   if (zona === "stambena") {
     const ns = pravilo ? NOVA_STAMBENA[pravilo.nova_stambena] : undefined;
     out.push({
-      pitanje: "Dopuštaju li odredbe novu stambenu zgradu",
+      pitanje: "Dopuštaju li pravila gradnje novu stambenu zgradu?",
       ishod: ns?.ishod ?? "da",
       odgovor: kod ? (
         <>
-          {nazivPravila}: {ns?.tekst ?? "odredbe ne ograničavaju novu stambenu gradnju"}.
+          {nazivPravila}: {ns?.tekst ?? "pravila ne ograničavaju novu stambenu zgradu"}.
         </>
       ) : (
-        "Za ovo mjesto list urbanih pravila nema područja, pa odredbe novu gradnju posebno ne ograničavaju."
+        "Za ovo mjesto list urbanih pravila ne određuje posebna pravila, pa nova stambena zgrada nije dodatno ograničena."
       ),
     });
   } else {
     out.push({
-      pitanje: "Dopuštaju li odredbe novu stambenu zgradu",
+      pitanje: "Dopuštaju li pravila gradnje novu stambenu zgradu?",
       ishod: "nevazno",
-      odgovor: <>Odredbe urbanih pravila razlikuju stambenu gradnju samo u stambenim i mješovitim zonama{kod ? <>; ovo je {nazivPravila}</> : null}.</>,
+      odgovor: (
+        <>
+          Ne odnosi se: ta pravila razlikuju stambenu gradnju samo u zonama za stanovanje.{kod ? <> Ovdje vrijedi {nazivPravila}.</> : null}
+        </>
+      ),
     });
   }
 
@@ -285,6 +293,7 @@ function provjere(
       {t}
     </NaListu>
   );
+  const pitanjeUpu = "Može li se graditi bez čekanja na UPU?";
   let rezim: Provjera;
   switch (s.rezim) {
     case "zabrana":
@@ -292,42 +301,43 @@ function provjere(
       const upu = s.upu ? s.upu.naziv : "UPU";
       if (s.rezim === "negradivo") {
         rezim = {
-          pitanje: "Čeka li gradnja UPU",
+          pitanje: pitanjeUpu,
           ishod: "nevazno",
-          odgovor: <>Mjesto je u {list4d(NAZIV_PODRUCJA[s.podrucje])}, ali ondje ionako nije namjena za privatnu gradnju.</>,
+          odgovor: <>Ne odnosi se. Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}, ali namjena ovdje ionako ne dopušta privatnu gradnju.</>,
         };
       } else if (s.podrucje === "neuredeno") {
         rezim = {
-          pitanje: "Čeka li gradnja UPU",
+          pitanje: pitanjeUpu,
           ishod: "uvjet",
           odgovor: (
             <>
-              Ovo je {list4d(NAZIV_PODRUCJA.neuredeno)}: gradi se po {upu} (<Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>), a
-              do njega nova zgrada samo ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja (Zakon o prostornom
-              uređenju, NN 155/25, čl. 180. st. 2. t. 3.).
+              Samo uz uvjet. Ovo je {list4d(NAZIV_PODRUCJA.neuredeno)}: GUP ovdje traži {upu} (
+              <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>). Dok ga nema, nova zgrada moći će se graditi samo ako do čestice
+              vodi postojeća javna cesta i ako se riješi odvodnja (Zakon o prostornom uređenju, NN 155/25, čl. 180. st. 2. t. 3.). To
+              karta ne može provjeriti.
             </>
           ),
         };
       } else if (klasa.kod === "D") {
         rezim = {
-          pitanje: "Čeka li gradnja UPU",
+          pitanje: pitanjeUpu,
           ishod: "uvjet",
           odgovor: (
             <>
-              Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}, gdje se gradi po {upu}, ali javne i društvene zgrade smiju se graditi i
-              prije njega (<Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>).
+              Za javne i društvene zgrade da. Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}, gdje se inače gradi po {upu}, ali javne i
+              društvene zgrade smiju se graditi i prije njega (<Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>).
             </>
           ),
         };
       } else {
         rezim = {
-          pitanje: "Čeka li gradnja UPU",
+          pitanje: pitanjeUpu,
           ishod: "ne",
           odgovor: (
             <>
-              Da. Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}: gradi se samo po {upu} (
-              <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>), a do njega su dopuštene samo rekonstrukcija i zamjena
-              postojećih zgrada. Novi GUP ne daje ni rok ni novac za taj plan.
+              Ne. Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}: nova zgrada moći će se graditi samo po {upu} (
+              <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>). Do tada se postojeće zgrade smiju samo obnoviti ili zamijeniti.
+              Novi GUP ne daje ni rok ni novac za taj plan.
             </>
           ),
         };
@@ -336,13 +346,13 @@ function provjere(
     }
     case "vazeci":
       rezim = {
-        pitanje: "Čeka li gradnja UPU",
+        pitanje: pitanjeUpu,
         ishod: "uvjet",
         odgovor: (
           <>
-            Ne, ali ovdje je na snazi {s.plan.naziv}
-            {s.plan.glasnik ? ` („Službeni glasnik Grada Splita”, br. ${s.plan.glasnik})` : ""}, pa se gradi po njemu (
-            <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Njegove odredbe mogu biti strože od GUP-a, a ovdje ih nismo
+            Da, ali po planu koji je ovdje već na snazi: {s.plan.naziv}
+            {s.plan.glasnik ? ` („Službeni glasnik Grada Splita”, br. ${s.plan.glasnik})` : ""} (
+            <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Njegova pravila mogu biti stroža od GUP-a, a ovdje ih nismo
             provjerili.
           </>
         ),
@@ -350,11 +360,11 @@ function provjere(
       break;
     case "preporuka":
       rezim = {
-        pitanje: "Čeka li gradnja UPU",
+        pitanje: pitanjeUpu,
         ishod: "da",
         odgovor: (
           <>
-            Ne. Za ovo područje GUP preporučuje {s.upu.naziv}, ali do njega se gradi po GUP-u (
+            Da. GUP za ovo područje preporučuje {s.upu.naziv}, ali dok ga nema, gradi se po GUP-u (
             <Navod id="preporuka-plana-2025">čl. 103. st. 4.</Navod>).
           </>
         ),
@@ -362,32 +372,31 @@ function provjere(
       break;
     default:
       rezim = {
-        pitanje: "Čeka li gradnja UPU",
+        pitanje: pitanjeUpu,
         ishod: "da",
-        odgovor: <>Ne: na {list4d("listu 4.d")} ovo mjesto nije ni u području koje čeka UPU ni u planu na snazi, pa se gradi po GUP-u.</>,
+        odgovor: <>Da. Na {list4d("listu 4.d")} ovo mjesto nije u području koje čeka UPU ni u planu koji je već na snazi, pa se gradi po GUP-u.</>,
       };
   }
   out.push(rezim);
 
   // 5. put
-  const katId = KATEGORIJA_PO_KODU.get(u.kategorija)?.id;
   const put = c ? putovi?.get(kljucPuta(c.svojstva.ko, c.svojstva.kc)) : undefined;
-  if (slobodno && (zona === "stambena" || zona === "nestambena")) {
+  if (slobodno && (zona === "stambena" || zona === "nestambena") && !koridor) {
     out.push(
       katId === "put"
         ? {
-            pitanje: "Je li čestica u praksi put",
+            pitanje: "Je li čestica zemljište za gradnju, a ne put?",
             ishod: "ne",
             odgovor: put ? (
-              <>Da: {zastoPut(put)}. Na putu se ne gradi, a susjedne se čestice preko njega ne mogu spojiti.</>
+              <>Ne, to je put: {zastoPut(put)}. Na putu se neće graditi, a susjedne čestice ne mogu se preko njega spojiti.</>
             ) : (
-              "Da: uska je i dugačka i služi kao put, pa se na njoj ne gradi."
+              "Ne, to je put: uska je i duga i služi kao prilaz, pa se na njoj neće graditi."
             ),
           }
         : {
-            pitanje: "Je li čestica u praksi put",
+            pitanje: "Je li čestica zemljište za gradnju, a ne put?",
             ishod: "da",
-            odgovor: "Ne: nije uska izdužena čestica kojom prolazi put, koja služi mnogim susjedima ili leži uz ulicu.",
+            odgovor: "Da. Nije uska, duga čestica kojom prolazi put, koja služi mnogim susjedima ili leži uz ulicu.",
           },
     );
   }
@@ -395,59 +404,66 @@ function provjere(
   // 6. veličina i širina
   const vrsta = zona === "stambena" ? "stanovanje" : klasa.kod === "D" ? "javna" : klasa.kod === "I/K" ? "gospodarska" : null;
   const najmanja = vrsta && kod ? o.ppmin[kod]?.[vrsta] : undefined;
+  const tip = najmanja ? (TIP_GRADNJE[najmanja.tip] ?? najmanja.tip) : "";
   const najmanjaTekst = najmanja ? (
     <>
-      najmanja građevna čestica ovdje je {navod(navodPpmin(2025, kod!), m2(najmanja.m2))} (vrsta „{TIP_GRADNJE[najmanja.tip] ?? najmanja.tip}”)
+      najmanja čestica za gradnju ovdje je {navod(navodPpmin(2025, kod!), m2(najmanja.m2))}
+      {tip ? <> za {tip}</> : null}
     </>
   ) : null;
+  const pitanjeMjesta = "Ima li dovoljno mjesta za novu česticu?";
   if (!slobodno || zona === "bez-zgrada" || zona === "promet" || katId === "put") {
     out.push({
-      pitanje: "Je li slobodno dovoljno za novu česticu",
+      pitanje: pitanjeMjesta,
       ishod: "nevazno",
       odgovor: katId === "put" ? "Ne odnosi se: na putu se ne gradi." : "Ne odnosi se: mjesto nije slobodno ili namjena ne predviđa zgrade.",
     });
   } else if (u.regija === REGIJE.usko) {
     out.push({
-      pitanje: "Je li slobodno dovoljno za novu česticu",
+      pitanje: pitanjeMjesta,
       ishod: "ne",
-      odgovor: "Ne: slobodni pojas uži je od ~9 m (put, stube, rub uz među), a odredbe traže česticu široku barem 10 m.",
+      odgovor: "Ne. Slobodni pojas uži je od oko 9 m (put, stube, rub uz među), a pravila traže česticu široku barem 10 m.",
     });
   } else if (u.regija === REGIJE.premalo) {
     out.push({
-      pitanje: "Je li slobodno dovoljno za novu česticu",
+      pitanje: pitanjeMjesta,
       ishod: "ne",
       odgovor: (
         <>
-          Ne: slobodni komad manji je od najmanje građevne čestice{najmanjaTekst ? <> ({najmanjaTekst})</> : null}, a nema slobodnog
+          Ne. Slobodni komad manji je od najmanje čestice za gradnju{najmanjaTekst ? <> ({najmanjaTekst})</> : null}, a nema slobodnog
           susjeda iste namjene s kojim bi to dosegao.
         </>
       ),
     });
   } else if (katId === "premalo") {
     out.push({
-      pitanje: "Je li slobodno dovoljno za novu česticu",
+      pitanje: pitanjeMjesta,
       ishod: "ne",
       odgovor:
-        "Ne: ni zajedno sa slobodnim susjedima iste namjene ovdje ne stane tlocrt širok 10 m na barem 250 m² — ovo je pojas uz put, ostatak dvorišta ili prolaz između zgrada.",
+        "Ne. Ni zajedno sa slobodnim susjedima iste namjene ovdje nema dijela širokog barem 10 m i velikog barem 250 m². Ovo je pojas uz put, ostatak dvorišta ili prolaz između zgrada.",
     });
   } else if (u.regija === REGIJE.slobodno || u.regija === REGIJE.ceka) {
     out.push({
-      pitanje: "Je li slobodno dovoljno za novu česticu",
+      pitanje: pitanjeMjesta,
       ishod: "da",
       odgovor: najmanjaTekst ? (
         <>
-          Da: {najmanjaTekst}, a slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko i u nj stane
-          tlocrt širok 10 m.
+          Da: {najmanjaTekst}. Slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko, i dovoljno je
+          široko (barem 10 m).
         </>
       ) : (
-        "Da: u slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, stane tlocrt širok 10 m na barem 250 m²."
+        "Da: slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, ima dio širok barem 10 m i velik barem 250 m²."
       ),
     });
   }
 
   // 7. teren, samo kad je pregledom označen
   if (u.regija === REGIJE.neizgradivo) {
-    out.push({ pitanje: "Može li se teren graditi", ishod: "ne", odgovor: "Ne: pregled ortofota pokazao je da se ovaj teren ne može graditi." });
+    out.push({
+      pitanje: "Može li se na ovom terenu graditi?",
+      ishod: "ne",
+      odgovor: "Ne. Na snimci iz zraka (ortofotu) vidi se da se ovaj teren ne može graditi.",
+    });
   }
   return out;
 }
@@ -490,7 +506,7 @@ function SastavCestice({ sastav, ukupno }: { sastav: Map<number, number>; ukupno
   if (!redovi.length || ukupno <= 0) return null;
   return (
     <div className="mt-2">
-      <div className="flex h-3 w-full gap-[2px] overflow-hidden rounded" role="img" aria-label="Sastav čestice po razlogu">
+      <div className="flex h-3 w-full gap-[2px] overflow-hidden rounded" role="img" aria-label="Od čega se sastoji čestica">
         {redovi.map(({ k, v }) => (
           <span key={k.kod} style={{ ...uzorakKategorije(k), width: `${(v / ukupno) * 100}%` }} />
         ))}
@@ -513,10 +529,10 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
   if (k.stanje.rezim === "izvan") {
     return (
       <>
-        <h3 className="pr-8 text-base font-bold leading-snug text-zinc-900">Izvan obuhvata GUP-a</h3>
+        <h3 className="pr-8 text-base font-bold leading-snug text-zinc-900">Izvan područja GUP-a</h3>
         {k.podnaslov && <p className="font-mono text-xs text-zinc-500">{k.podnaslov}</p>}
         <p className="mt-2">
-          Ovdje vrijedi Prostorni plan uređenja Grada Splita, a ova karta sudi samo o području GUP-a (iscrtkana granica).
+          Ovdje vrijedi Prostorni plan uređenja Grada Splita. Ova karta pokriva samo područje GUP-a, unutar iscrtkane granice.
         </p>
       </>
     );
@@ -533,11 +549,20 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
           {SKUPINE_GRADNJE[kat.skupina].kratko}
         </span>
       ) : null}
-      <h3 className="mt-2 pr-8 text-base font-bold leading-snug text-zinc-900">{kat ? kat.naziv : "Nema čestice u obuhvatu"}</h3>
+      <h3 className="mt-2 pr-8 text-base font-bold leading-snug text-zinc-900">{kat ? kat.naziv : "Ovdje nema katastarske čestice"}</h3>
       {k.podnaslov && <p className="font-mono text-xs text-zinc-500">{k.podnaslov}</p>}
       {kat && <p className="mt-1.5 text-zinc-800">{kat.razlog}</p>}
 
-      <h4 className="mt-3 text-xs font-bold uppercase tracking-wide text-zinc-500">Što je provjereno za ovu točku</h4>
+      <h4 className="mt-3 text-xs font-bold uppercase tracking-wide text-zinc-500">Što smo provjerili za ovo mjesto</h4>
+      {/* mobitel nema oblačić (title), pa je ključ oznaka vidljiv */}
+      <p className="mt-1 text-xs text-zinc-500">
+        {(["da", "ne", "uvjet", "nevazno"] as const).map((i, n) => (
+          <span key={i}>
+            {n > 0 && " · "}
+            {ZNAK[i].znak} {ZNAK[i].naziv}
+          </span>
+        ))}
+      </p>
       <ol className="mt-1.5 space-y-2">
         {lista.map((p) => (
           <li key={p.pitanje} className="flex gap-2.5">
@@ -557,8 +582,8 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
       </ol>
       {"doRuba" in k.stanje && k.stanje.doRuba < BLIZU_RUBA_M && (
         <p className="mt-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-zinc-800">
-          Mjesto je oko {Math.max(1, Math.round(k.stanje.doRuba))} m od ruba područja s lista 4.d, koje je precrtano sa skeniranog
-          lista: za česticu uz rub provjeri sam list.
+          Ovo mjesto je samo oko {Math.max(1, Math.round(k.stanje.doRuba))} m od granice područja s lista 4.d. Granicu smo precrtali
+          sa skeniranog lista, pa za česticu uz granicu provjeri sam list.
         </p>
       )}
 
@@ -568,22 +593,24 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
             Čestica k.č. {c.kc}, k.o. {naslovno(c.ko)}{" "}
             <span className="font-normal text-zinc-500">· {c.a.toLocaleString("hr-HR")} m² u katastru</span>
           </p>
-          {k.sastav ? <SastavCestice sastav={k.sastav} ukupno={ukupno} /> : <p className="text-xs text-zinc-500">Broji se…</p>}
+          <p className="mt-1 text-xs font-semibold text-zinc-600">Od čega se sastoji cijela čestica</p>
+          {k.sastav ? <SastavCestice sastav={k.sastav} ukupno={ukupno} /> : <p className="text-xs text-zinc-500">Računa se…</p>}
         </div>
       )}
 
       <details className="mt-3 border-t border-zinc-200 pt-2.5">
         <summary className="fokus cursor-pointer font-semibold text-zinc-900">Što karta ne provjerava</summary>
         <ul className="mt-1.5 list-disc space-y-1 pl-5 text-zinc-600">
-          <li>vlasništvo, pristup čestice na javnu cestu i priključke (voda, odvodnja, struja)</li>
-          <li>nagib, stijenu i tlo, osim mjesta koja su ručnim pregledom ortofota označena kao neizgradiva</li>
-          <li>zaštitu kulturne baštine i krajobraza (konzervatorski uvjeti), pojas uz more i vodotoke</li>
-          <li>posebne uvjete javnopravnih tijela i infrastrukturne koridore koji nisu ucrtani kao ulica</li>
-          {k.stanje.rezim === "vazeci" && <li>odredbe plana užeg područja koji je ovdje na snazi</li>}
+          <li>vlasništvo</li>
+          <li>vodi li do čestice javna cesta i ima li priključke (voda, odvodnja, struja)</li>
+          <li>nagib, stijenu i tlo, osim mjesta koja smo na ortofotu označili kao neizgradiva</li>
+          <li>zaštitu kulturne baštine i krajobraza (uvjete konzervatora), pojas uz more i vodotoke</li>
+          <li>posebne uvjete nadležnih tijela (npr. Hrvatskih voda, HEP-a) i infrastrukturne koridore koji nisu ucrtani kao ulica</li>
+          {k.stanje.rezim === "vazeci" && <li>pravila detaljnijeg plana koji ovdje već vrijedi</li>}
         </ul>
         <p className="mt-1.5 text-zinc-600">
-          Namjena je pročitana s PDF lista u rešetki od 2 m; uz granicu zone pogreška je 5–10 m. Za odluku o kupnji ili gradnji
-          zatraži lokacijsku informaciju od Grada.
+          Namjenu smo pročitali s PDF lista, u kvadratićima od oko 2 m, pa uz granicu zone pogreška može biti 5–10 m. Prije kupnje
+          ili gradnje zatraži od Grada lokacijsku informaciju.
         </p>
       </details>
     </>
@@ -698,7 +725,7 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
           id="gradnja-adresa"
           natpis="Provjeri adresu"
           sakrijNatpis={puno}
-          podnaslov={puno ? undefined : "Ili klikni bilo gdje na karti: reći će što je provjereno i što ondje priječi gradnju."}
+          podnaslov={puno ? undefined : "Ili dodirni bilo koje mjesto na karti: vidjet ćeš što se ondje smije graditi i zašto."}
           onOdaberi={odaberi}
         />
 
@@ -795,11 +822,11 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
         <ul className="space-y-1.5 sm:col-span-2">
           <li className="flex items-center gap-2">
             <Crta boja={BOJA_STAMBENE_ZONE} />
-            <span>zona stambene ili mješovite namjene (S, M1–M3, K5), od zuma 15: ondje novi GUP predviđa stanovanje</span>
+            <span>rub zona u kojima novi GUP dopušta stanovanje (S, M1–M3, K5); vidi se kad približiš kartu</span>
           </li>
           <li className="flex items-center gap-2">
             <Crta boja="#18181b" crtice="7 5" />
-            <span>granica GUP-a; izvan nje karta ne sudi</span>
+            <span>granica GUP-a; izvan nje karta ništa ne boji</span>
           </li>
         </ul>
       </div>
