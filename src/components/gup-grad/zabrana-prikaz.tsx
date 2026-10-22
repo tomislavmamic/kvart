@@ -15,6 +15,7 @@ import type { FeatureCollection } from "geojson";
 
 import { Navod } from "@/components/gup-dokument/navod";
 import { navodTocke } from "@/lib/gup-dokument/id";
+import { IkonaZaslona, TrazilicaAdrese, useCijeliZaslon } from "@/components/gup-grad/karta-alati";
 import type { CiljKarte, OznakaKarte } from "@/components/gup-grad/zabrana-karta";
 import type { RedUpu } from "@/lib/gup-grad/zabrana-podaci";
 import {
@@ -29,15 +30,12 @@ import {
   NAZIV_PODRUCJA,
   naslovno,
   plociceZaTocku,
-  pripremiAdrese,
   slojeviIzGeojsona,
   spojiOkvire,
   stanjeTocke,
-  trazi,
   type Adrese,
   type Podrucje,
   type Prijedlog,
-  type SiroveAdrese,
   type ListPpug,
   type PlocicaCestica,
   type Slojevi,
@@ -323,18 +321,6 @@ function Skupina(props: { naslov: string; vidljivo?: boolean; promijeni?: (v: bo
   );
 }
 
-/** Strelice prema kutovima (proširi) ili prema sredini (vrati). */
-function IkonaZaslona({ puno }: { puno: boolean }) {
-  const d = puno
-    ? "M7 2v5H2M11 2v5h5M7 16v-5H2M11 16v-5h5"
-    : "M2 7V2h5M16 7V2h-5M2 11v5h5M16 11v5h-5";
-  return (
-    <svg aria-hidden viewBox="0 0 18 18" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d={d} />
-    </svg>
-  );
-}
-
 /**
  * Tražilica i karta, a ispod njih tumač i `objasnjenje`. Gumb
  * na karti širi tražilicu i kartu preko cijelog zaslona: pravi cijeli zaslon
@@ -354,36 +340,7 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
   const kljuc = useRef(0);
   const okvirKarte = useRef<HTMLDivElement>(null);
   const cijeli = useRef<HTMLDivElement>(null);
-  const [puno, setPuno] = useState(false);
-  const prebaciZaslon = () => {
-    if (puno) {
-      setPuno(false);
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      return;
-    }
-    setPuno(true);
-    cijeli.current?.requestFullscreen?.()?.catch(() => {});
-  };
-  useEffect(() => {
-    if (!puno) return;
-    // Esc u pravom cijelom zaslonu hvata preglednik i javlja fullscreenchange
-    const izlaz = () => {
-      if (!document.fullscreenElement) setPuno(false);
-    };
-    const tipka = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !document.fullscreenElement && (e.target as HTMLElement | null)?.tagName !== "INPUT") setPuno(false);
-    };
-    const html = document.documentElement;
-    const staro = html.style.overflow;
-    html.style.overflow = "hidden";
-    document.addEventListener("fullscreenchange", izlaz);
-    document.addEventListener("keydown", tipka);
-    return () => {
-      html.style.overflow = staro;
-      document.removeEventListener("fullscreenchange", izlaz);
-      document.removeEventListener("keydown", tipka);
-    };
-  }, [puno]);
+  const [puno, prebaciZaslon] = useCijeliZaslon(cijeli);
 
   useEffect(() => {
     const dohvati = (u: string) => fetch(u).then((r) => (r.ok ? (r.json() as Promise<FeatureCollection>) : Promise.reject(new Error(u))));
@@ -430,26 +387,8 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
       .catch(() => {});
   };
 
-  // ---------------------------------------------------------------- tražilica
-  const [adrese, setAdrese] = useState<Adrese | null>(null);
-  const [upit, setUpit] = useState("");
-  const [otvoreno, setOtvoreno] = useState(false);
-  const [aktivni, setAktivni] = useState(0);
-  const ucitavam = useRef(false);
-  const ucitajAdrese = () => {
-    if (adrese || ucitavam.current) return;
-    ucitavam.current = true;
-    fetch("/geo/gup-grad/kucni-brojevi.json")
-      .then((r) => r.json() as Promise<SiroveAdrese>)
-      .then((a) => setAdrese(pripremiAdrese(a)))
-      .catch(() => (ucitavam.current = false));
-  };
-  const prijedlozi = useMemo(() => (adrese ? trazi(adrese, upit) : []), [adrese, upit]);
-
-  const odaberi = (p: Prijedlog) => {
-    setOtvoreno(false);
-    setUpit(p.naziv);
-    if (!podaci || !adrese) return;
+  const odaberi = (p: Prijedlog, adrese: Adrese) => {
+    if (!podaci) return;
     if (p.vrsta === "adresa") {
       pokaziTocku(p.adresa.lng, p.adresa.lat, `${p.naziv} · ${p.kotar}`);
       pomakni({ tocka: [p.adresa.lng, p.adresa.lat] });
@@ -495,79 +434,13 @@ export function ZabranaPrikaz({ poUpu, objasnjenje }: { poUpu: RedUpu[]; objasnj
             : ""
         }
       >
-        <div className="relative max-w-md">
-          <label htmlFor="zabrana-adresa" className={puno ? "sr-only" : "block font-semibold text-zinc-900"}>
-            Provjeri adresu
-          </label>
-          <input
-            id="zabrana-adresa"
-            type="search"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="npr. Put Mostina 12"
-            role="combobox"
-            aria-expanded={otvoreno && upit.trim().length > 0}
-            aria-controls="zabrana-prijedlozi"
-            aria-autocomplete="list"
-            aria-activedescendant={otvoreno && prijedlozi[aktivni] ? `zabrana-p-${aktivni}` : undefined}
-            value={upit}
-            onFocus={() => {
-              ucitajAdrese();
-              setOtvoreno(true);
-            }}
-            onBlur={() => setTimeout(() => setOtvoreno(false), 120)}
-            onChange={(e) => {
-              ucitajAdrese();
-              setUpit(e.target.value);
-              setAktivni(0);
-              setOtvoreno(true);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown" && prijedlozi.length) {
-                setAktivni((a) => (a + 1) % prijedlozi.length);
-                e.preventDefault();
-              } else if (e.key === "ArrowUp" && prijedlozi.length) {
-                setAktivni((a) => (a - 1 + prijedlozi.length) % prijedlozi.length);
-                e.preventDefault();
-              } else if (e.key === "Enter") {
-                if (prijedlozi[aktivni]) odaberi(prijedlozi[aktivni]);
-                e.preventDefault();
-              } else if (e.key === "Escape") setOtvoreno(false);
-            }}
-            className="fokus mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900"
-          />
-          {otvoreno && upit.trim().length > 0 && (
-            <ul
-              id="zabrana-prijedlozi"
-              role="listbox"
-              className="absolute inset-x-0 top-full z-[1100] mt-1 max-h-80 overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
-            >
-              {prijedlozi.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-zinc-500">
-                  {adrese ? "Te ulice nema u gradskom adresnom registru" : "Adrese se učitavaju…"}
-                </li>
-              ) : (
-                prijedlozi.map((p, i) => (
-                  <li
-                    key={`${p.naziv}-${p.kotar}-${i}`}
-                    id={`zabrana-p-${i}`}
-                    role="option"
-                    aria-selected={i === aktivni}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      odaberi(p);
-                    }}
-                    className={`flex cursor-pointer justify-between gap-3 px-3 py-2 text-sm ${i === aktivni ? "bg-zinc-100" : "hover:bg-zinc-50"}`}
-                  >
-                    <span className="text-zinc-900">{p.naziv}</span>
-                    <span className="shrink-0 text-zinc-500">{p.kotar}</span>
-                  </li>
-                ))
-              )}
-            </ul>
-          )}
-          {!puno && <p className="mt-1 text-sm text-zinc-500">Ili klikni bilo gdje na karti.</p>}
-        </div>
+        <TrazilicaAdrese
+          id="zabrana-adresa"
+          natpis="Provjeri adresu"
+          sakrijNatpis={puno}
+          podnaslov={puno ? undefined : "Ili klikni bilo gdje na karti."}
+          onOdaberi={odaberi}
+        />
 
         <div
           ref={okvirKarte}

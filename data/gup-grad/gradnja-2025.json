@@ -1,0 +1,174 @@
+{
+ "opis": "Izvedeno skriptom scripts/gup-grad/gradnja.ts iz pločica dijelova čestice (regije.py, „po odredbama”, GUP 2025.) i neuređenih dijelova lista 4.d (zabrana.py).",
+ "ukupno_ha": 2699.96,
+ "po_kategoriji_ha": {
+  "zgrada": 460.88,
+  "okucnica": 461.78,
+  "koristeno": 277.35,
+  "ulica": 499.86,
+  "rezerva-prometa": 77.96,
+  "bez-zgrada": 379.02,
+  "samo-rekonstrukcija": 7.35,
+  "neizgradivo": 0,
+  "premalo": 24.28,
+  "ceka-upu": 70.09,
+  "uz-cestu": 143.96,
+  "nestambeno": 201.52,
+  "stambeno": 95.92
+ },
+ "po_skupini_ha": {
+  "nista": 2258.57,
+  "uvjetno": 143.96,
+  "nestambeno": 201.52,
+  "stambeno": 95.92
+ },
+ "po_namjeni_ha": {
+  "I/K": {
+   "okucnica": 122.92,
+   "zgrada": 88.22,
+   "ceka-upu": 52.54,
+   "ulica": 52.83,
+   "nestambeno": 56.29,
+   "premalo": 4.4,
+   "koristeno": 10.77,
+   "uz-cestu": 88.28
+  },
+  "P": {
+   "rezerva-prometa": 77.96,
+   "ulica": 122.43,
+   "koristeno": 35.11,
+   "zgrada": 11.34,
+   "okucnica": 19.19
+  },
+  "N": {
+   "premalo": 0.76,
+   "nestambeno": 37.79,
+   "ulica": 3.82,
+   "koristeno": 3.73,
+   "zgrada": 0.66,
+   "okucnica": 0.64
+  },
+  "L": {
+   "premalo": 1.54,
+   "nestambeno": 1.6,
+   "zgrada": 1.24,
+   "koristeno": 4.34,
+   "ulica": 3.39,
+   "okucnica": 2.23
+  },
+  "M/K5": {
+   "ulica": 202.82,
+   "okucnica": 221.62,
+   "ceka-upu": 16.81,
+   "zgrada": 263.28,
+   "premalo": 11.73,
+   "koristeno": 76.48,
+   "stambeno": 92.04,
+   "samo-rekonstrukcija": 6.86,
+   "uz-cestu": 46.07
+  },
+  "D": {
+   "premalo": 3.08,
+   "nestambeno": 36.41,
+   "ulica": 29.64,
+   "okucnica": 27.71,
+   "zgrada": 40.91,
+   "koristeno": 50.27
+  },
+  "R1": {
+   "okucnica": 5.52,
+   "premalo": 0.74,
+   "koristeno": 24.43,
+   "zgrada": 8.55,
+   "nestambeno": 13.53,
+   "ulica": 6.2
+  },
+  "Z1": {
+   "zgrada": 4.98,
+   "koristeno": 53.31,
+   "bez-zgrada": 250.14,
+   "ulica": 36.06,
+   "okucnica": 7.31
+  },
+  "R2": {
+   "bez-zgrada": 6.62,
+   "ulica": 2.23,
+   "koristeno": 4.22,
+   "zgrada": 2.74,
+   "okucnica": 5.81
+  },
+  "Z5": {
+   "ulica": 8.73,
+   "bez-zgrada": 106.01,
+   "zgrada": 3.96,
+   "okucnica": 7.2,
+   "koristeno": 4.91
+  },
+  "T": {
+   "premalo": 1,
+   "ulica": 10.55,
+   "koristeno": 2.88,
+   "zgrada": 11.62,
+   "nestambeno": 23.6,
+   "okucnica": 14.76,
+   "uz-cestu": 9.61,
+   "ceka-upu": 0.74
+  },
+  "R4": {
+   "bez-zgrada": 2.67,
+   "ulica": 0.13,
+   "zgrada": 0.08,
+   "okucnica": 0.01
+  },
+  "R3": {
+   "bez-zgrada": 11.83,
+   "zgrada": 1.13,
+   "ulica": 2.49,
+   "koristeno": 1.37,
+   "okucnica": 0.85
+  },
+  "S": {
+   "ulica": 15.76,
+   "okucnica": 23.73,
+   "zgrada": 20.87,
+   "premalo": 0.95,
+   "stambeno": 3.89,
+   "koristeno": 2.25,
+   "ceka-upu": 0,
+   "samo-rekonstrukcija": 0.48
+  },
+  "Z6": {
+   "ulica": 2.29,
+   "bez-zgrada": 1.75,
+   "zgrada": 1.14,
+   "okucnica": 1.74,
+   "koristeno": 3.22
+  },
+  "R5": {
+   "nestambeno": 32.31,
+   "premalo": 0.07,
+   "okucnica": 0.56,
+   "zgrada": 0.17,
+   "ulica": 0.49,
+   "koristeno": 0.07
+  }
+ },
+ "zona_gradnje": {
+  "S": "stambena",
+  "M/K5": "stambena",
+  "D": "nestambena",
+  "I/K": "nestambena",
+  "T": "nestambena",
+  "L": "nestambena",
+  "R1": "nestambena",
+  "R5": "nestambena",
+  "N": "nestambena",
+  "R2": "bez-zgrada",
+  "R3": "bez-zgrada",
+  "R4": "bez-zgrada",
+  "Z1": "bez-zgrada",
+  "Z5": "bez-zgrada",
+  "Z6": "bez-zgrada",
+  "P": "promet"
+ }
+}

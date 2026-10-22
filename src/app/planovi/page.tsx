@@ -28,6 +28,12 @@ const SKUPINE: { naslov: string; uvod: string; stranice: Stranica[] }[] = [
     uvod: "Grad donosi novi GUP: izmjene i dopune predložene u travnju 2025. Kad ga Gradsko vijeće usvoji, na većem će dijelu kvarta nova gradnja stati do donošenja urbanističkog plana uređenja (UPU).",
     stranice: [
       {
+        href: "/gup/gradnja",
+        naslov: "Gdje se po novom GUP-u neće moći graditi",
+        opis: "Karta cijelog GUP-a: gdje se neće moći graditi ništa novo, a gdje ništa stambeno, i zašto — izgrađeno, ulica, namjena, odredbe, čekanje na UPU, premalo zemljište.",
+        radnja: "Klikni na mjesto",
+      },
+      {
         href: "/gup/zabrana",
         naslov: "Zabrana nove gradnje do donošenja UPU-a",
         opis: "Karta privatnog zemljišta na kojem se bez UPU-a neće smjeti graditi nova zgrada, s površinom slobodnog zemljišta koje to pogađa.",

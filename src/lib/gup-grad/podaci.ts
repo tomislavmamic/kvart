@@ -20,8 +20,8 @@ import {
   type UlazGodine,
 } from "./izracun";
 import type { Pravila } from "./pravila";
-import { najmanjaCestica, uvjetiGradnje, type TablicaGradnje, type TablicaPpmin } from "./odredbe";
-import { KLASA_PO_INDEKSU } from "./model";
+import { najmanjaCestica, uvjetiGradnje, VRSTA_ZA_KLASU, type NajmanjaCestica, type TablicaGradnje, type TablicaPpmin } from "./odredbe";
+import { KLASA_PO_INDEKSU, KLASE } from "./model";
 import { planskiRezim, type Rezim } from "./rezim";
 
 export interface PlanGodine {
@@ -161,4 +161,50 @@ export function izracunaj(d: SirovaMjerenja, p: Pravila, o: Odredbe): Record<God
 /** Ostaci i posuđene okućnice godine za kartu provjere (izracun.ts, `ostaciGodine`). */
 export function ostaci(d: SirovaMjerenja, g: Godina, p: Pravila, o: Odredbe) {
   return ostaciGodine(ulazGodine(d, g, p, o), p);
+}
+
+/** Što odredbe dopuštaju graditi u području urbanog pravila (za stambene i mješovite zone), za kartu. */
+export interface GradnjaKarte {
+  novaGradnja: boolean;
+  kig: number | null;
+  kis: number | null;
+  nova_stambena: string;
+  izvor: string;
+  citat: string;
+}
+
+/**
+ * Odredbe jedne godine plana kako ih trebaju karte: najmanja građevna čestica
+ * po području urbanog pravila i vrsti (stanovanje, gospodarska, javna) i što
+ * se ondje smije graditi — izabrano po istim pravilima kao /gup.
+ */
+export function odredbeZaKartu(
+  o: Odredbe,
+  godina: Godina,
+  p: Pravila,
+): { ppmin: Record<string, Partial<Record<string, NajmanjaCestica>>>; gradnja: Record<string, GradnjaKarte> } {
+  const ppmin: Record<string, Partial<Record<string, NajmanjaCestica>>> = {};
+  for (const kod of Object.keys(o.ppmin.godine[String(godina)] ?? {})) {
+    for (const kl of KLASE) {
+      const vrsta = VRSTA_ZA_KLASU[kl.kod];
+      if (!vrsta) continue;
+      const n = najmanjaCestica(o.ppmin, godina, kod, kl.kod, p);
+      if (n) (ppmin[kod] ??= {})[vrsta] = n;
+    }
+  }
+  const gradnja: Record<string, GradnjaKarte> = {};
+  for (const kod of Object.keys(o.gradnja.godine[String(godina)] ?? {})) {
+    const u = uvjetiGradnje(o.gradnja, godina, kod, "S", p);
+    if (u.pravilo) {
+      gradnja[kod] = {
+        novaGradnja: u.novaGradnja,
+        kig: u.kig,
+        kis: u.kis,
+        nova_stambena: u.pravilo.nova_stambena,
+        izvor: u.pravilo.izvor,
+        citat: u.pravilo.citat,
+      };
+    }
+  }
+  return { ppmin, gradnja };
 }

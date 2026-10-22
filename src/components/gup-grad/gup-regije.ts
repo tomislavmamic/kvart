@@ -15,6 +15,7 @@ import { useEffect, useRef } from "react";
 import type * as LeafletNS from "leaflet";
 
 import { KLASA_PO_INDEKSU } from "@/lib/gup-grad/model";
+import { REGIJE } from "@/lib/gup-grad/regije";
 import type { BojaKarte, GupPostavke } from "@/components/gup-grad/gup-provjera";
 
 /**
@@ -27,25 +28,8 @@ export const MIN_ZUM_REGIJA = 13;
 /** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi. */
 const ZUM_OSTRIH_PIKSELA = 15;
 
-/** Regije kako ih piše regije.py. */
-export const REGIJE = {
-  zgrada: 1,
-  gradiliste: 2,
-  ulica: 3,
-  parkiraliste: 4,
-  javna: 5,
-  uredjeno: 6,
-  infrastruktura: 7,
-  zelenilo: 8,
-  okucnica: 9,
-  slobodno: 10,
-  usko: 11,
-  premalo: 12,
-  zabranjeno: 13,
-  neizgradivo: 14,
-  /** Slobodno i široko, ali nova gradnja čeka propisani plan užeg područja (rezim.ts). */
-  ceka: 15,
-} as const;
+/** Regije kako ih piše regije.py (src/lib/gup-grad/regije.ts). */
+export { REGIJE };
 
 /** Vrijede li dijelovi čestice za ove postavke. */
 export function regijeVrijede(p: GupPostavke): boolean {
