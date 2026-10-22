@@ -23,7 +23,7 @@ import type { Feature, FeatureCollection } from "geojson";
 import { Navod } from "@/components/gup-dokument/navod";
 import { IkonaZaslona, TrazilicaAdrese, useCijeliZaslon } from "@/components/gup-grad/karta-alati";
 import { kategorijeUObliku, uzorakUTocki, type Uzorak } from "@/components/gup-grad/gradnja-plocice";
-import { BOJA_PLANA_NA_SNAZI } from "@/components/gup-grad/gradnja-karta";
+import { BOJA_STAMBENE_ZONE } from "@/components/gup-grad/gradnja-karta";
 import type { CiljKarte } from "@/components/gup-grad/zabrana-karta";
 import {
   KATEGORIJE,
@@ -398,7 +398,8 @@ interface Kartica {
 interface Podaci {
   slojevi: Slojevi;
   gup: Feature | null;
-  planovi: FeatureCollection;
+  /** stambene i mješovite zone (gradnja-zone-2025.geojson) */
+  zone: FeatureCollection;
 }
 
 function UzorakBoje({ stil }: { stil: CSSProperties }) {
@@ -406,10 +407,10 @@ function UzorakBoje({ stil }: { stil: CSSProperties }) {
 }
 
 /** Crta tumača kao na karti (iste crtice). */
-function Crta({ boja, crtice }: { boja: string; crtice: string }) {
+function Crta({ boja, crtice }: { boja: string; crtice?: string }) {
   return (
     <svg aria-hidden viewBox="0 0 24 16" className="h-4 w-6 shrink-0">
-      <line x1="0" y1="8" x2="24" y2="8" stroke={boja} strokeWidth="1.5" strokeDasharray={crtice} />
+      <line x1="0" y1="8" x2="24" y2="8" stroke={boja} strokeWidth={crtice ? 1.5 : 2} strokeDasharray={crtice} />
     </svg>
   );
 }
@@ -535,12 +536,16 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
 
   useEffect(() => {
     const dohvati = (u: string) => fetch(u).then((r) => (r.ok ? (r.json() as Promise<FeatureCollection>) : Promise.reject(new Error(u))));
-    Promise.all([dohvati("/geo/gup-grad/zabrana-2025.geojson"), dohvati("/geo/gup-grad/planski-rezim-2025.geojson")])
-      .then(([zabrana, planovi]) =>
+    Promise.all([
+      dohvati("/geo/gup-grad/zabrana-2025.geojson"),
+      dohvati("/geo/gup-grad/planski-rezim-2025.geojson"),
+      dohvati("/geo/gup-grad/gradnja-zone-2025.geojson"),
+    ])
+      .then(([zabrana, planovi, zone]) =>
         setPodaci({
           slojevi: slojeviIzGeojsona(zabrana, planovi),
           gup: zabrana.features.find((f) => f.properties?.vrsta === "gup") ?? null,
-          planovi: { type: "FeatureCollection", features: planovi.features.filter((f) => f.properties?.vrsta === "vazeci") },
+          zone,
         }),
       )
       .catch(() => setGreska(true));
@@ -624,7 +629,7 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
           {podaci ? (
             <GradnjaKarta
               gup={podaci.gup}
-              planovi={podaci.planovi}
+              zone={podaci.zone}
               skrivene={skrivene}
               cilj={cilj}
               oznaka={kartica ? { lng: kartica.tocka[0], lat: kartica.tocka[1] } : null}
@@ -699,8 +704,8 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
         ))}
         <ul className="space-y-1.5 sm:col-span-2">
           <li className="flex items-center gap-2">
-            <Crta boja={BOJA_PLANA_NA_SNAZI} crtice="2 4" />
-            <span>obuhvat plana užeg područja na snazi (ondje se gradi po njemu)</span>
+            <Crta boja={BOJA_STAMBENE_ZONE} />
+            <span>zona stambene ili mješovite namjene (S, M1–M3, K5): ondje novi GUP predviđa stanovanje</span>
           </li>
           <li className="flex items-center gap-2">
             <Crta boja="#18181b" crtice="7 5" />

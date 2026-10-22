@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Obrisi stambenih i mješovitih zona novog GUP-a za kartu /gup/gradnja.
+
+Karta boji razlog po pikselu, a namjenu pokazuje samo tumač klika. Da se
+vidi gdje je plan uopće predvidio stanovanje, ovdje se iz istih pločica
+(public/geo/gup-grad/gradnja, kanal R = klasa namjene) izvuku obrisi zona
+S (stambena) i M/K5 (mješovita i poslovna sa stanovanjem) — pa obris
+točno prati boje karte.
+
+Pločice pokrivaju samo katastarske čestice, pa se maska prije
+vektorizacije zatvori za ~10 m (neupisani putovi i rubovi), a otočići i
+rupe manji od praga izbace.
+
+Ulaz:   public/geo/gup-grad/gradnja.json i pločice (scripts/gup-grad/gradnja.ts)
+Izlaz:  public/geo/gup-grad/gradnja-zone-2025.geojson
+
+Pokretanje:  /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-zone.py
+"""
+from __future__ import annotations
+
+import json
+import os
+
+import numpy as np
+from PIL import Image
+from pyproj import Transformer
+from rasterio import features
+from rasterio.transform import Affine
+from scipy import ndimage
+from shapely.geometry import MultiPolygon, Polygon, mapping, shape
+from shapely.ops import transform as stransform, unary_union
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+JAVNO = os.path.join(ROOT, "public")
+IZLAZ = os.path.join(JAVNO, "geo", "gup-grad", "gradnja-zone-2025.geojson")
+PLOCICA = 512
+# indeksi klasa u src/lib/gup-grad/model.ts
+STAMBENE = (1, 2)  # S, M/K5
+ZATVORI_PX = 4  # ~10 m Web Mercatora
+NAJMANJE_M2 = 400  # manji otočići i rupe su šum rešetke, ne zona
+POJEDNOSTAVI_M = 2.5
+
+
+def main() -> None:
+    ind = json.load(open(os.path.join(JAVNO, "geo", "gup-grad", "gradnja.json")))
+    korak = ind["korak"]
+    u_3857 = Transformer.from_crs(4326, 3857, always_xy=True)
+    u_4326 = Transformer.from_crs(3857, 4326, always_xy=True)
+
+    plocice = []
+    for p in ind["plocice"]:
+        r, c = (int(x) for x in os.path.basename(p["url"]).removesuffix(".png").split("_"))
+        plocice.append((r, c, p))
+    # ishodište mreže iz sjeverozapadnog kuta prve pločice
+    r0, c0, p0 = plocice[0]
+    (_, zapad), (sjever, _) = p0["granice"]
+    x, y = u_3857.transform(zapad, sjever)
+    mx0, my1 = x - c0 * PLOCICA * korak, y + r0 * PLOCICA * korak
+    h = (max(r for r, _, _ in plocice) + 1) * PLOCICA
+    w = (max(c for _, c, _ in plocice) + 1) * PLOCICA
+    maska = np.zeros((h, w), bool)
+    for r, c, p in plocice:
+        a = np.array(Image.open(os.path.join(JAVNO, p["url"].lstrip("/"))))
+        m = (a[..., 3] == 255) & np.isin(a[..., 0], STAMBENE)
+        maska[r * PLOCICA:r * PLOCICA + m.shape[0], c * PLOCICA:c * PLOCICA + m.shape[1]] = m
+
+    krug = ndimage.generate_binary_structure(2, 1)
+    maska = ndimage.binary_closing(maska, krug, iterations=ZATVORI_PX)
+    transform = Affine(korak, 0, mx0, 0, -korak, my1)
+    oblici = [shape(g) for g, v in features.shapes(maska.astype("uint8"), mask=maska, transform=transform) if v == 1]
+    zona = unary_union(oblici).buffer(0)
+
+    # Web Mercator je na 43,5° razvučen za 1/cos φ: prag površine na tlu
+    prag = NAJMANJE_M2 / np.cos(np.radians(43.51)) ** 2
+    cisti = []
+    for p in getattr(zona, "geoms", [zona]):
+        if p.area < prag:
+            continue
+        rupe = [r for r in p.interiors if Polygon(r).area >= prag]
+        cisti.append(Polygon(p.exterior, rupe).simplify(POJEDNOSTAVI_M / np.cos(np.radians(43.51)), preserve_topology=True))
+    zona = MultiPolygon([p for p in cisti if not p.is_empty])
+
+    def zaokruzi(g):
+        return json.loads(json.dumps(mapping(g)), parse_float=lambda s: round(float(s), 6))
+
+    geo = stransform(lambda xs, ys: u_4326.transform(xs, ys), zona)
+    fc = {"type": "FeatureCollection",
+          "features": [{"type": "Feature", "properties": {"vrsta": "stambena-mjesovita"}, "geometry": zaokruzi(geo)}]}
+    with open(IZLAZ, "w") as f:
+        json.dump(fc, f, separators=(",", ":"))
+    print(len(zona.geoms), "poligona,", round(os.path.getsize(IZLAZ) / 1e3), "kB →", IZLAZ)
+
+
+if __name__ == "__main__":
+    main()

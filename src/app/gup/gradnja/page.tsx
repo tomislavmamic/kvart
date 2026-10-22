@@ -158,7 +158,8 @@ export default async function GradnjaPage() {
             </Link>{" "}
             (način brojanja „po odredbama”), na rešetki od oko 2 m: namjena i urbana pravila pročitani su s PDF listova
             prijedloga GUP-a iz travnja 2025., zgrade su iz katastra DGU-a i gradskog 3D modela, ulice, parkirališta i parkovi
-            iz gradskih podataka i OpenStreetMapa, uz ručni pregled ortofota. Uz granicu zone pogreška je 5–10 m, pa je za
+            iz gradskih podataka i OpenStreetMapa, uz ručni pregled ortofota. Zelena crta obrubljuje stambene i mješovite zone
+            iste rešetke (zatvorene preko neupisanih putova), pa točno prati boje karte. Uz granicu zone pogreška je 5–10 m, pa je za
             česticu uz rub mjerodavan sam list.
           </li>
           <li>

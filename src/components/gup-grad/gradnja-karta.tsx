@@ -7,8 +7,9 @@
  * public/geo/gup-grad/gradnja (gradnja-plocice.ts). Pločice nose brojeve,
  * pa ih preglednik boji sam i prebojava kad se skupina u tumaču ugasi.
  *
- * Uz to granica GUP-a (iscrtkano), obuhvati planova užeg područja na snazi
- * (ondje se gradi po njima) i obris čestice pod zadnjim klikom. Slojevi nisu
+ * Uz to granica GUP-a (iscrtkano), obrisi stambenih i mješovitih zona
+ * (scripts/gup-grad/gradnja-zone.py) — gdje je plan uopće predvidio
+ * stanovanje — i obris čestice pod zadnjim klikom. Slojevi nisu
  * interaktivni: klik bilo gdje ide karti, a što je ondje kaže GradnjaPrikaz.
  * Podloga je siva, da se boje čitaju. Učitava se bez SSR-a.
  */
@@ -26,7 +27,8 @@ import { procitaj, ucitajIndeks, type PlocicaGradnje } from "@/components/gup-gr
 
 /** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi (globals.css). */
 const ZUM_OSTRIH_PIKSELA = 15;
-export const BOJA_PLANA_NA_SNAZI = "#3f3f46";
+/** Obris stambenih i mješovitih zona: tamnija inačica zelene „stambeno”. */
+export const BOJA_STAMBENE_ZONE = "#14532d";
 
 const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const BOJE = new Map([...KATEGORIJA_PO_KODU].map(([kod, k]) => [kod, { rgb: hex(k.boja), a: Math.round(k.alfa * 255), skupina: k.skupina, tockice: k.tockice }]));
@@ -70,8 +72,8 @@ const uGranice = (o: Okvir): LeafletNS.LatLngBoundsExpression => [
 export function GradnjaKarta(props: {
   /** granica GUP-a */
   gup: Feature | null;
-  /** obuhvati planova užeg područja na snazi */
-  planovi: FeatureCollection;
+  /** stambene i mješovite zone (S, M1–M3, K5) */
+  zone: FeatureCollection;
   skrivene: ReadonlySet<Skupina>;
   cilj: CiljKarte | null;
   oznaka: { lng: number; lat: number } | null;
@@ -80,7 +82,7 @@ export function GradnjaKarta(props: {
   punZaslon?: boolean;
   onKlik: (lng: number, lat: number) => void;
 }) {
-  const { gup, planovi, skrivene, cilj, oznaka, cestica, punZaslon = false, onKlik } = props;
+  const { gup, zone, skrivene, cilj, oznaka, cestica, punZaslon = false, onKlik } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
@@ -123,7 +125,9 @@ export function GradnjaKarta(props: {
       okno.style.pointerEvents = "none";
 
       const netaknuto = { interactive: false } as const;
-      L.geoJSON(planovi, { ...netaknuto, style: { color: BOJA_PLANA_NA_SNAZI, weight: 1.5, dashArray: "2 4", fill: false } }).addTo(map);
+      // bijeli rub ispod tamnozelene crte: vidi se i preko zelene ispune i na tamnoj snimci
+      L.geoJSON(zone, { ...netaknuto, style: { color: "#ffffff", weight: 4, opacity: 0.85, fill: false } }).addTo(map);
+      L.geoJSON(zone, { ...netaknuto, style: { color: BOJA_STAMBENE_ZONE, weight: 2, fill: false } }).addTo(map);
       const granica = gup
         ? L.geoJSON(gup, { ...netaknuto, style: { color: "#18181b", weight: 1.5, dashArray: "7 5", fill: false } }).addTo(map)
         : null;
