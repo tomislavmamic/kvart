@@ -46,12 +46,12 @@ export interface OznakaKarte {
 
 // Isto kao /gup: DGU-ov ortofoto je zadan. CARTO-ova ulična karta sad bez
 // ključa vraća pločice s natpisom „API KEY REQUIRED”, pa je ovdje nema.
-const PODLOGE = [
+export const PODLOGE = [
   { id: "dof-2025", naziv: "Ortofoto 2025." },
   { id: "satelit", naziv: "Satelitska snimka (2023.)" },
 ] as const;
 
-function podloga(L: typeof LeafletNS, id: string): LeafletNS.TileLayer {
+export function podloga(L: typeof LeafletNS, id: string): LeafletNS.TileLayer {
   const b = BASE_LAYERS.find((x) => x.id === id)!;
   const zajednicko = { attribution: b.attribution, maxZoom: 19, bounds: SIRI_OBUHVAT_KARTE };
   // WMS ide kroz naš posrednik (src/app/api/podloga), kao na /gup i /karta

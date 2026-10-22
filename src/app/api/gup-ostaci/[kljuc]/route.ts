@@ -16,9 +16,8 @@
  * ondje dopuštaju graditi (za stambene i mješovite zone) — oboje treba karti
  * da presudi česticu isto kao /gup, i skočnom prozoru da kaže zašto.
  */
-import { GODINE, KLASE, type Godina } from "@/lib/gup-grad/model";
-import { najmanjaCestica, uvjetiGradnje, VRSTA_ZA_KLASU, type NajmanjaCestica } from "@/lib/gup-grad/odredbe";
-import { ostaci, ucitajMjerenja, ucitajOdredbe } from "@/lib/gup-grad/podaci";
+import { GODINE, type Godina } from "@/lib/gup-grad/model";
+import { odredbeZaKartu, ostaci, ucitajMjerenja, ucitajOdredbe } from "@/lib/gup-grad/podaci";
 import { INACICE } from "@/lib/gup-grad/pravila";
 import { imenaNavoda } from "@/lib/gup-dokument/navodi";
 
@@ -38,32 +37,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ kljuc: string 
     return Response.json({ error: "Nepoznata inačica ili godina." }, { status: 404 });
   }
   const [d, o] = await Promise.all([ucitajMjerenja(), ucitajOdredbe()]);
-  const ppmin: Record<string, Partial<Record<string, NajmanjaCestica>>> = {};
-  for (const kod of Object.keys(o.ppmin.godine[String(godina)] ?? {})) {
-    for (const kl of KLASE) {
-      const vrsta = VRSTA_ZA_KLASU[kl.kod];
-      if (!vrsta) continue;
-      const n = najmanjaCestica(o.ppmin, godina, kod, kl.kod, inacica.pravila);
-      if (n) (ppmin[kod] ??= {})[vrsta] = n;
-    }
-  }
-  const gradnja: Record<
-    string,
-    { novaGradnja: boolean; kig: number | null; kis: number | null; nova_stambena: string; izvor: string; citat: string }
-  > = {};
-  for (const kod of Object.keys(o.gradnja.godine[String(godina)] ?? {})) {
-    const u = uvjetiGradnje(o.gradnja, godina, kod, "S", inacica.pravila);
-    if (u.pravilo) {
-      gradnja[kod] = {
-        novaGradnja: u.novaGradnja,
-        kig: u.kig,
-        kis: u.kis,
-        nova_stambena: u.pravilo.nova_stambena,
-        izvor: u.pravilo.izvor,
-        citat: u.pravilo.citat,
-      };
-    }
-  }
+  const { ppmin, gradnja } = odredbeZaKartu(o, godina, inacica.pravila);
   // Skočni prozor čestice povezuje izvor odredbe s njezinim tekstom (navod GUP-a)
   // samo ako taj navod postoji — pa mu treba popis, a sam ga ne može znati.
   const navodi = (await imenaNavoda()).filter((id) => /^(ppmin|gradnja|namjena)-(\d{4})-/.exec(id)?.[2] === String(godina));

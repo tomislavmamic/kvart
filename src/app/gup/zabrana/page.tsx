@@ -258,6 +258,14 @@ export default async function ZabranaPage() {
           </Link>
           .
         </p>
+        <p className="mt-3 max-w-3xl text-zinc-600">
+          Zabrana je samo jedan od razloga zbog kojih se negdje ne može graditi. Svi razlozi zajedno (izgrađeno, ulica,
+          namjena, odredbe, premalo zemljište) za cijeli GUP su na karti{" "}
+          <Link href="/gup/gradnja" className="fokus font-semibold text-emerald-700 underline">
+            Gdje se po novom GUP-u neće moći graditi
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="mt-12 max-w-3xl text-sm leading-relaxed text-zinc-700">

@@ -53,6 +53,7 @@
     "gup-grad:regije": "tsx scripts/gup-grad/regije.ts && /opt/homebrew/bin/python3 scripts/gup-grad/regije.py",
     "gup-grad:dokument": "/opt/homebrew/bin/python3 scripts/gup-grad/dokument.py",
     "gup-grad:zabrana": "tsx scripts/gup-grad/zabrana-cestice.ts && /opt/homebrew/bin/python3 scripts/gup-grad/zabrana.py",
+    "gup-grad:gradnja": "/opt/homebrew/bin/python3 scripts/gup-grad/koridori.py && tsx scripts/gup-grad/gradnja.ts && /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-zone.py",
     "izvezi-dojave": "tsx --env-file=.env.local scripts/izvezi-dojave.ts",
     "hindcast": "tsx scripts/hindcast/pokreni.ts",
     "hindcast:ulazi": "tsx scripts/hindcast/ulazi.ts",
@@ -82,6 +83,7 @@
     "@types/d3-hierarchy": "^3.1.7",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
+    "@types/pngjs": "^6.0.5",
     "@types/proj4": "^2.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -91,6 +93,7 @@
     "eslint-config-next": "16.2.10",
     "mapshaper": "^0.7.48",
     "osmtogeojson": "^3.0.0-beta.5",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
     "typescript": "^5"
