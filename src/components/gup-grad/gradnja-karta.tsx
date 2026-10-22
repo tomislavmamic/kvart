@@ -27,12 +27,23 @@ import { procitaj, ucitajIndeks, type PlocicaGradnje } from "@/components/gup-gr
 
 /** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi (globals.css). */
 const ZUM_OSTRIH_PIKSELA = 15;
-/** Obris stambenih i mješovitih zona: tamnija inačica zelene „stambeno”. */
-export const BOJA_STAMBENE_ZONE = "#14532d";
+/**
+ * Obris stambenih i mješovitih zona: tanka tamna crta, ne zelena — zelena je
+ * odgovor „stambeno moguće”, a 244 obrisa preko grada čitala bi se kao on.
+ */
+export const BOJA_STAMBENE_ZONE = "#27272a";
+/** Izdaleka bi obrisi blokova prekrili boje; vide se tek od ovog zuma. */
+export const OBRISI_OD_ZUMA = 15;
 
 const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-const BOJE = new Map([...KATEGORIJA_PO_KODU].map(([kod, k]) => [kod, { rgb: hex(k.boja), a: Math.round(k.alfa * 255), skupina: k.skupina, tockice: k.tockice }]));
-const TOCKICA: [number, number, number, number] = [39, 39, 42, 220];
+const BOJE = new Map(
+  [...KATEGORIJA_PO_KODU].map(([kod, k]) => [
+    kod,
+    { rgb: hex(k.boja), a: Math.round(k.alfa * 255), skupina: k.skupina, pruge: k.pruge ? hex(k.pruge) : null, mreza: !!k.mreza },
+  ]),
+);
+/** Razmak i debljina kosih pruga uvjetne gradnje, u pikselima pločice (~1,8 m). */
+const PRUGE = { razmak: 6, debljina: 2 };
 
 async function obojaj(kodovi: ImageData, skrivene: ReadonlySet<Skupina>): Promise<string | null> {
   const { width: w, height: h, data: d } = kodovi;
@@ -44,7 +55,10 @@ async function obojaj(kodovi: ImageData, skrivene: ReadonlySet<Skupina>): Promis
       if (d[i + 3] !== 255) continue;
       const b = BOJE.get(d[i + 2]);
       if (!b || skrivene.has(b.skupina)) continue;
-      const [r, g, bl, a] = b.tockice && x % 3 === 0 && y % 3 === 0 ? TOCKICA : [...b.rgb, b.a];
+      const pruga =
+        b.pruge &&
+        ((x + y) % PRUGE.razmak < PRUGE.debljina || (b.mreza && (x - y + PRUGE.razmak * w) % PRUGE.razmak < PRUGE.debljina));
+      const [r, g, bl, a] = pruga ? [...b.pruge!, 230] : [...b.rgb, b.a];
       o[i] = r;
       o[i + 1] = g;
       o[i + 2] = bl;
@@ -125,14 +139,22 @@ export function GradnjaKarta(props: {
       okno.style.pointerEvents = "none";
 
       const netaknuto = { interactive: false } as const;
-      // bijeli rub ispod tamnozelene crte: vidi se i preko zelene ispune i na tamnoj snimci
-      L.geoJSON(zone, { ...netaknuto, style: { color: "#ffffff", weight: 4, opacity: 0.85, fill: false } }).addTo(map);
-      L.geoJSON(zone, { ...netaknuto, style: { color: BOJA_STAMBENE_ZONE, weight: 2, fill: false } }).addTo(map);
+      // tanak bijeli rub ispod tamne crte, da se vidi i na tamnoj snimci
+      const obrisiZona = L.layerGroup([
+        L.geoJSON(zone, { ...netaknuto, style: { color: "#ffffff", weight: 2, opacity: 0.5, fill: false } }),
+        L.geoJSON(zone, { ...netaknuto, style: { color: BOJA_STAMBENE_ZONE, weight: 1, opacity: 0.7, fill: false } }),
+      ]);
+      const obrisiPoZumu = () => {
+        if (map.getZoom() >= OBRISI_OD_ZUMA) obrisiZona.addTo(map);
+        else obrisiZona.remove();
+      };
+      map.on("zoomend", obrisiPoZumu);
       const granica = gup
         ? L.geoJSON(gup, { ...netaknuto, style: { color: "#18181b", weight: 1.5, dashArray: "7 5", fill: false } }).addTo(map)
         : null;
       if (granica) map.fitBounds(granica.getBounds(), { padding: [8, 8] });
       else map.setView([43.515, 16.47], 13);
+      obrisiPoZumu();
 
       const ind = await ucitajIndeks().catch(() => null);
       if (otkazano || !ind) return;

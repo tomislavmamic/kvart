@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Navod } from "@/components/gup-dokument/navod";
 import { GradnjaPrikaz } from "@/components/gup-grad/gradnja-prikaz";
-import { SKUPINE_GRADNJE, type Skupina } from "@/lib/gup-grad/gradnja";
+import { KATEGORIJA_PO_ID, SKUPINE_GRADNJE, uzorakKategorije } from "@/lib/gup-grad/gradnja";
 import { ucitajOdredbeGradnje, ucitajZbrojGradnje } from "@/lib/gup-grad/gradnja-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -16,12 +16,6 @@ const ha = (v: number) => Math.round(v).toLocaleString("hr-HR");
 const posto = (v: number) => `${Math.round(v * 100).toLocaleString("hr-HR")} %`;
 const vanjska = "fokus text-emerald-700 underline";
 
-const BOJA_SKUPINE: Record<Skupina, string> = {
-  nista: "#27272a",
-  uvjetno: "#ca8a04",
-  nestambeno: "#0891b2",
-  stambeno: "#15803d",
-};
 
 export default async function GradnjaPage() {
   const [zbroj, odredbe] = await Promise.all([ucitajZbrojGradnje(), ucitajOdredbeGradnje()]);
@@ -52,16 +46,31 @@ export default async function GradnjaPage() {
         Klik na bilo koje mjesto kaže što je za tu točku provjereno, što ondje priječi gradnju i koliko je čega na čestici.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-4">
-        {(["nista", "uvjetno", "nestambeno", "stambeno"] as const).map((sk) => (
+      <div className="mt-6 grid gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-3">
+        {(["nista", "nestambeno", "stambeno"] as const).map((sk) => (
           <div key={sk} className="bg-white px-3 py-3 sm:px-4">
             <p className="flex items-center gap-2 font-mono text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">
-              <span aria-hidden className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: BOJA_SKUPINE[sk] }} />
+              {/* isti uzorak kao u tumaču i na karti */}
+              <span
+                aria-hidden
+                className="inline-block h-3.5 w-3.5 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
+                style={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].glavna])}
+              />
               {ha(s[sk])} ha
             </p>
             <p className="text-xs text-zinc-600 sm:text-sm">
               {SKUPINE_GRADNJE[sk].naslov} · {posto(udio(s[sk]))}
             </p>
+            {SKUPINE_GRADNJE[sk].uvjetna && (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+                <span
+                  aria-hidden
+                  className="inline-block h-3 w-3 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
+                  style={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].uvjetna!])}
+                />
+                od toga {ha(k[SKUPINE_GRADNJE[sk].uvjetna!])} ha samo uz postojeću cestu
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -89,9 +98,12 @@ export default async function GradnjaPage() {
           koridorima ulica koje list ostavlja neobojenima između blokova.
         </p>
         <p className="mt-2">
-          Za novu stambenu zgradu ostaje {ha(s.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim zonama.
+          Za novu stambenu zgradu danas ostaje {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim
+          zonama, i još {ha(k["uz-cestu-stambeno"])} ha u neuređenom dijelu, samo uz postojeću cestu.
           Novi GUP pritom zaustavlja gradnju na {ha(k["ceka-upu"])} ha slobodnog zemljišta urbane sanacije i preobrazbe dok se
-          ne donese UPU, a na {ha(s.uvjetno)} ha neuređenog dijela do UPU-a se može graditi samo uz postojeću javnu cestu. Koja
+          ne donese UPU. Na {ha(k["uz-cestu-stambeno"] + k["uz-cestu-nestambeno"])} ha slobodnog zemljišta u neuređenom dijelu
+          do UPU-a se može graditi samo uz postojeću javnu cestu; od toga je stambeno ili mješovito {ha(k["uz-cestu-stambeno"])}{" "}
+          ha, a {ha(k["uz-cestu-nestambeno"])} ha je gospodarska ili turistička zona, gdje stambene zgrade nema ni poslije UPU-a. Koja
           su to područja i zašto, objašnjava stranica{" "}
           <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
             Zabrana nove gradnje do donošenja UPU-a
@@ -138,9 +150,17 @@ export default async function GradnjaPage() {
             <Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>).
           </li>
           <li>
+            <strong className="text-zinc-900">Nije li čestica u praksi put.</strong> Uska (najviše 9 m) i dugačka čestica je
+            put ako njome prolazi put ucrtan u OpenStreetMap, ako graniči s barem 10 čestica kojima služi kao prolaz, ili ako
+            dugom stranom leži uz ulicu (rub ceste, nogostup). Na njoj se ne gradi, a susjedne se čestice preko nje ne spajaju.
+            Poljske trake jedna uz drugu nisu put: imaju po nekoliko susjeda i spajanjem bočno postaju gradilište. Pravila su
+            provjerena na ortofotu, na slučajnom uzorku čestica proglašenih putom i na najvećima koje to nisu.
+          </li>
+          <li>
             <strong className="text-zinc-900">Je li slobodno dovoljno za novu česticu.</strong> Slobodni komad mora biti barem
             velik kao najmanja građevna čestica koju odredbe propisuju za to područje (ili to doseći sa slobodnim susjedom iste
-            namjene) i širi od ~9 m.
+            namjene), a u nj, zajedno sa slobodnim susjedima, mora stati tlocrt širok 10 m na barem 250 m². Tako otpadaju pojasevi
+            uz putove, ostaci dvorišta i prolazi između zgrada, i kad im je zbroj površine dovoljan.
           </li>
           <li>
             <strong className="text-zinc-900">Dopušta li namjena stanovanje.</strong> Stambena (S), mješovita (M1–M3) i

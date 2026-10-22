@@ -6,7 +6,9 @@
  * odredbama” (scripts/gup-grad/regije.py), neuređeni dijelovi s lista 4.d
  * (public/geo/gup-grad/zabrana-2025.geojson, scripts/gup-grad/zabrana.py) i
  * koridori ulica koje list 1 ne boji (data/gup-grad/koridori-2025,
- * scripts/gup-grad/koridori.py): ondje klasa postaje P, kao na listu.
+ * scripts/gup-grad/koridori.py): ondje klasa postaje P, kao na listu, te
+ * putovi i preusko zemljište (data/gup-grad/skupine-2025,
+ * scripts/gup-grad/gradnja-skupine.py).
  * Pikseli koji čekaju UPU dijele se na neuređeno (uz postojeću cestu gradi se
  * i prije UPU-a) i ostalo istim oblicima kojima klik na karti kaže u kojem je
  * području (stanjeTocke u zabrana.ts).
@@ -18,7 +20,7 @@
  *   data/gup-grad/gradnja-2025.json                  hektari po kategoriji,
  *       po skupini i po namjeni
  *
- * Pokretanje (poslije regije.py, zabrana.py i koridori.py):  npx tsx scripts/gup-grad/gradnja.ts
+ * Pokretanje (poslije regije.py, zabrana.py, koridori.py i gradnja-skupine.py):  npx tsx scripts/gup-grad/gradnja.ts
  */
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import path from "path";
@@ -36,6 +38,7 @@ const IZLAZ = path.join(JAVNO, "geo", "gup-grad", "gradnja");
 const INACICA = "gradevna";
 const GODINA = "2025";
 const KORIDORI = path.join(KORIJEN, "data", "gup-grad", "koridori-2025");
+const SKUPINE = path.join(KORIJEN, "data", "gup-grad", "skupine-2025");
 const P = KLASE.find((k) => k.kod === "P")!.indeks;
 
 interface Plocica {
@@ -68,6 +71,9 @@ function main() {
     // maska koridora (koridori.py), 1-bitni PNG iste mreže; nema je gdje koridora nema
     const putKoridora = path.join(KORIDORI, path.basename(p.url));
     const kor = existsSync(putKoridora) ? PNG.sync.read(readFileSync(putKoridora)).data : null;
+    // putovi (1) i preusko (2) iz gradnja-skupine.py, sivi PNG iste mreže
+    const putSkupina = path.join(SKUPINE, path.basename(p.url));
+    const sku = existsSync(putSkupina) ? PNG.sync.read(readFileSync(putSkupina)).data : null;
     const [[jug, zapad], [sjever, istok]] = p.granice;
     const y0 = mercY(sjever), y1 = mercY(jug);
     for (let r = 0; r < h; r++) {
@@ -81,7 +87,13 @@ function main() {
         if (koridor) d[i] = P;
         const klasa = d[i], regija = d[i + 1];
         const lng = zapad + ((c + 0.5) / w) * (istok - zapad);
-        const k = kategorija(klasa, regija, regija === REGIJE.ceka && neuredeno.some((o) => uObliku(o, lng, lat)), koridor);
+        const s = sku ? sku[i] : 0;
+        const k = kategorija(klasa, regija, {
+          neuredeno: regija === REGIJE.ceka && neuredeno.some((o) => uObliku(o, lng, lat)),
+          koridor,
+          put: s === 1,
+          preusko: s === 2,
+        });
         d[i + 2] = k;
         if (!k) {
           d[i + 3] = 0;
