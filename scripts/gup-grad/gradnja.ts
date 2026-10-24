@@ -8,7 +8,10 @@
  * koridori ulica koje list 1 ne boji (data/gup-grad/koridori-2025,
  * scripts/gup-grad/koridori.py): ondje klasa postaje P, kao na listu, te
  * putovi i preusko zemljište (data/gup-grad/skupine-2025,
- * scripts/gup-grad/gradnja-skupine.py).
+ * scripts/gup-grad/gradnja-skupine.py), te javno zemljište i gradski
+ * projekti (data/gup-grad/javno-2025, scripts/gup-grad/gradnja-javno.py).
+ * Javno zemljište ne mijenja razlog nego mu dodaje vlasnika (kodPiksela u
+ * gradnja.ts); u zbrojevima se broji kao javno, a ne po razlogu.
  * Pikseli koji čekaju UPU dijele se na neuređeno (uz postojeću cestu gradi se
  * i prije UPU-a) i ostalo istim oblicima kojima klik na karti kaže u kojem je
  * području (stanjeTocke u zabrana.ts).
@@ -27,7 +30,7 @@ import path from "path";
 import { PNG } from "pngjs";
 import type { FeatureCollection } from "geojson";
 
-import { KATEGORIJE, KATEGORIJA_PO_KODU, kategorija, ZONA_GRADNJE, type IdKategorije, type Skupina } from "../../src/lib/gup-grad/gradnja";
+import { KATEGORIJE, KATEGORIJA_PO_ID, KATEGORIJA_PO_KODU, kategorija, kodPiksela, ZONA_GRADNJE, type IdKategorije, type Skupina } from "../../src/lib/gup-grad/gradnja";
 import { KLASA_PO_INDEKSU, KLASE, type KodKlase } from "../../src/lib/gup-grad/model";
 import { REGIJE } from "../../src/lib/gup-grad/regije";
 import { oblik, uObliku, type Geometrija, type Oblik } from "../../src/lib/gup-grad/zabrana";
@@ -39,7 +42,10 @@ const INACICA = "gradevna";
 const GODINA = "2025";
 const KORIDORI = path.join(KORIJEN, "data", "gup-grad", "koridori-2025");
 const SKUPINE = path.join(KORIJEN, "data", "gup-grad", "skupine-2025");
+const JAVNE = path.join(KORIJEN, "data", "gup-grad", "javno-2025");
 const P = KLASE.find((k) => k.kod === "P")!.indeks;
+const VOJSKA = KATEGORIJA_PO_ID.vojska.kod;
+const JAVNO_ZEMLJISTE = KATEGORIJA_PO_ID.javno.kod;
 
 interface Plocica {
   url: string;
@@ -63,6 +69,8 @@ function main() {
   rmSync(IZLAZ, { recursive: true, force: true });
   mkdirSync(IZLAZ, { recursive: true });
   const m2 = new Map<number, number>();
+  /** Razlog ispod javnog zemljišta: koliko bi ga inače bilo za gradnju. */
+  const ispodJavnog = new Map<IdKategorije, number>();
   const poZoni = new Map<string, number>();
   const plocice: Plocica[] = [];
   for (const p of indeks.inacice[INACICA][GODINA]) {
@@ -74,6 +82,9 @@ function main() {
     // putovi (1) i preusko (2) iz gradnja-skupine.py, sivi PNG iste mreže
     const putSkupina = path.join(SKUPINE, path.basename(p.url));
     const sku = existsSync(putSkupina) ? PNG.sync.read(readFileSync(putSkupina)).data : null;
+    // vlasnik javnog (bitovi 0–1) i gradski projekt (bit 2) iz gradnja-javno.py
+    const putJavnog = path.join(JAVNE, path.basename(p.url));
+    const jav = existsSync(putJavnog) ? PNG.sync.read(readFileSync(putJavnog)).data : null;
     const [[jug, zapad], [sjever, istok]] = p.granice;
     const y0 = mercY(sjever), y1 = mercY(jug);
     for (let r = 0; r < h; r++) {
@@ -88,18 +99,28 @@ function main() {
         const klasa = d[i], regija = d[i + 1];
         const lng = zapad + ((c + 0.5) / w) * (istok - zapad);
         const s = sku ? sku[i] : 0;
+        const jv = jav ? jav[i] : 0;
         const k = kategorija(klasa, regija, {
           neuredeno: regija === REGIJE.ceka && neuredeno.some((o) => uObliku(o, lng, lat)),
           koridor,
           put: s === 1,
           preusko: s === 2,
+          odmaci: s === 3,
+          gradskiProjekt: (jv & 4) > 0,
         });
-        d[i + 2] = k;
+        const vlasnik = jv & 3;
+        d[i + 2] = kodPiksela(k, vlasnik);
         if (!k) {
           d[i + 3] = 0;
           continue;
         }
-        m2.set(k, (m2.get(k) ?? 0) + pikselM2);
+        // javno se broji kao javno; vojna zona ostaje svoja kategorija
+        const brojiSe = vlasnik && k !== VOJSKA ? JAVNO_ZEMLJISTE : k;
+        m2.set(brojiSe, (m2.get(brojiSe) ?? 0) + pikselM2);
+        if (brojiSe === JAVNO_ZEMLJISTE) {
+          const id = KATEGORIJA_PO_KODU.get(k)!.id;
+          ispodJavnog.set(id, (ispodJavnog.get(id) ?? 0) + pikselM2);
+        }
         const kod = KLASA_PO_INDEKSU.get(klasa)!.kod;
         const kljuc = `${kod}|${KATEGORIJA_PO_KODU.get(k)!.id}`;
         poZoni.set(kljuc, (poZoni.get(kljuc) ?? 0) + pikselM2);
@@ -123,6 +144,7 @@ function main() {
   const zbroj = {
     opis: "Izvedeno skriptom scripts/gup-grad/gradnja.ts iz pločica dijelova čestice (regije.py, „po odredbama”, GUP 2025.) i neuređenih dijelova lista 4.d (zabrana.py).",
     ukupno_ha: ha([...m2.values()].reduce((a, b) => a + b, 0)),
+    ispod_javnog_ha: Object.fromEntries([...ispodJavnog].map(([id, v]) => [id, ha(v)])),
     po_kategoriji_ha: poKategoriji,
     po_skupini_ha: poSkupini,
     po_namjeni_ha: zone,

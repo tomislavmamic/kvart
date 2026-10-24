@@ -31,9 +31,11 @@ import {
   KATEGORIJA_PO_KODU,
   istiIzgled,
   OPIS_ZONE,
+  VLASNIK_JAVNOG,
   SKUPINE_GRADNJE,
   uzorakKategorije,
   ZONA_GRADNJE,
+  type IdKategorije,
   type Kategorija,
   type Skupina,
 } from "@/lib/gup-grad/gradnja";
@@ -72,7 +74,7 @@ const GradnjaKarta = dynamic(() => import("@/components/gup-grad/gradnja-karta")
 const ha = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: v < 10 ? 1 : 0 });
 /** Površina iz rešetke od ~2 m, zaokružena na 5 m². */
 const m2 = (v: number) => `${(Math.round(v / 5) * 5).toLocaleString("hr-HR")} m²`;
-const SKUPINE: Skupina[] = ["nista", "nestambeno", "stambeno"];
+const SKUPINE: Skupina[] = ["nista", "nestambeno", "stambeno", "javno"];
 
 // ------------------------------------------------------------- čestica pod klikom
 
@@ -172,7 +174,7 @@ const NOVA_STAMBENA: Record<string, { ishod: Ishod; tekst: string }> = {
   upu: { ishod: "uvjet", tekst: "nova stambena zgrada tek po UPU-u ili DPU-u koji pravila traže" },
   rekonstrukcija: { ishod: "ne", tekst: "nova stambena zgrada nije dopuštena; postojeće se smiju samo obnoviti ili zamijeniti" },
   ne: { ishod: "ne", tekst: "stambena gradnja nije dopuštena" },
-  gp: { ishod: "uvjet", tekst: "gradski projekt: gradi se u okviru ukupne površine zgrada zadane za cijeli projekt" },
+  gp: { ishod: "ne", tekst: "gradski projekt: gradit će se tek po odobrenom projektu za cijelo područje, i samo ono što projekt predvidi" },
 };
 
 /** Za koju vrstu zgrade vrijedi najmanja čestica („za slobodnostojeću zgradu”); prazno kad je pravila ne navode. */
@@ -212,6 +214,20 @@ function provjere(
   const katId = u ? KATEGORIJA_PO_KODU.get(u.kategorija)?.id : undefined;
   const koridor = katId === "koridor";
   const out: Provjera[] = [];
+
+  // 0. vlasnik: javno zemljište i vojna zona nisu za gradnju građana
+  if (u) {
+    const vojska = katId === "vojska";
+    out.push({
+      pitanje: "Je li zemljište u privatnom vlasništvu?",
+      ishod: u.vlasnik || vojska ? "ne" : "da",
+      odgovor: vojska
+        ? "Ne. Ovo je vojna zona (posebna namjena): zemljište za potrebe obrane."
+        : u.vlasnik
+          ? `Ne. Prema evidenciji Grada Splita vlasnik je ${VLASNIK_JAVNOG[u.vlasnik as 1 | 2 | 3]}.`
+          : "Prema evidenciji Grada Splita vlasnik nije država, Grad ni županija. Ta evidencija za mnoge čestice ne navodi vlasnika, pa to nije potvrda.",
+    });
+  }
 
   // 1. namjena
   out.push({
@@ -262,7 +278,13 @@ function provjere(
       {o.nazivi[kod] ? <> „{o.nazivi[kod]}”</> : null}
     </>
   ) : null;
-  if (zona === "stambena") {
+  if (kod === "GP") {
+    out.push({
+      pitanje: "Dopuštaju li pravila gradnje novu zgradu?",
+      ishod: "ne",
+      odgovor: <>{nazivPravila}: {NOVA_STAMBENA.gp.tekst}. Dok projekta nema, na slobodnom zemljištu neće se moći graditi.</>,
+    });
+  } else if (zona === "stambena") {
     const ns = pravilo ? NOVA_STAMBENA[pravilo.nova_stambena] : undefined;
     out.push({
       pitanje: "Dopuštaju li pravila gradnje novu stambenu zgradu?",
@@ -435,6 +457,13 @@ function provjere(
         </>
       ),
     });
+  } else if (katId === "odmaci") {
+    out.push({
+      pitanje: pitanjeMjesta,
+      ishod: "ne",
+      odgovor:
+        "Ne. Zemljište je dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica, i kad se ti odmaci oduzmu, ne stane ni zgrada široka 6 m s tlocrtom od 60 m².",
+    });
   } else if (katId === "premalo") {
     out.push({
       pitanje: pitanjeMjesta,
@@ -448,11 +477,11 @@ function provjere(
       ishod: "da",
       odgovor: najmanjaTekst ? (
         <>
-          Da: {najmanjaTekst}. Slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko, i dovoljno je
-          široko (barem 10 m).
+          Da: {najmanjaTekst}. Slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko, široko je barem
+          10 m, a uz odmake od ulice (5 m) i susjeda (3 m) u njega stane zgrada široka barem 6 m.
         </>
       ) : (
-        "Da: slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, ima dio širok barem 10 m i velik barem 250 m²."
+        "Da: slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, ima dio širok barem 10 m i velik barem 250 m², a u njemu i uz odmake od ulice (5 m) i susjeda (3 m) stane zgrada široka barem 6 m."
       ),
     });
   }
@@ -537,7 +566,10 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
       </>
     );
   }
-  const kat = k.uzorak ? KATEGORIJA_PO_KODU.get(k.uzorak.kategorija) : undefined;
+  // javno zemljište: presuda je „javno”, a razlog ispod njega ostaje za objašnjenje
+  const ispod = k.uzorak ? KATEGORIJA_PO_KODU.get(k.uzorak.kategorija) : undefined;
+  const javno = !!k.uzorak?.vlasnik && ispod?.id !== "vojska";
+  const kat = javno ? KATEGORIJA_PO_ID.javno : ispod;
   const lista = provjere(k.tocka, k.uzorak, k.stanje, k.cestica, odredbe, listovi, putovi);
   const c = k.cestica?.svojstva;
   const ukupno = k.sastav ? [...k.sastav.values()].reduce((a, b) => a + b, 0) : 0;
@@ -551,7 +583,17 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
       ) : null}
       <h3 className="mt-2 pr-8 text-base font-bold leading-snug text-zinc-900">{kat ? kat.naziv : "Ovdje nema katastarske čestice"}</h3>
       {k.podnaslov && <p className="font-mono text-xs text-zinc-500">{k.podnaslov}</p>}
-      {kat && <p className="mt-1.5 text-zinc-800">{kat.razlog}</p>}
+      {kat && (
+        <p className="mt-1.5 text-zinc-800">
+          {javno ? <>Prema evidenciji Grada Splita vlasnik je {VLASNIK_JAVNOG[k.uzorak!.vlasnik as 1 | 2 | 3]}. </> : null}
+          {kat.razlog}
+        </p>
+      )}
+      {javno && ispod && (
+        <p className="mt-1.5 text-zinc-600">
+          Da nije javno, ovdje bi bilo: <strong className="text-zinc-800">{ispod.naziv}</strong>.
+        </p>
+      )}
 
       <h4 className="mt-3 text-xs font-bold uppercase tracking-wide text-zinc-500">Što smo provjerili za ovo mjesto</h4>
       {/* mobitel nema oblačić (title), pa je ključ oznaka vidljiv */}
@@ -620,7 +662,7 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
 export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe: OdredbeGradnje }) {
   const [podaci, setPodaci] = useState<Podaci | null>(null);
   const [greska, setGreska] = useState(false);
-  const [skrivene, setSkrivene] = useState<ReadonlySet<Skupina>>(new Set());
+  const [skrivene, setSkrivene] = useState<ReadonlySet<IdKategorije>>(new Set());
   const [cilj, setCilj] = useState<CiljKarte | null>(null);
   const [kartica, setKartica] = useState<Kartica | null>(null);
   const [listovi, setListovi] = useState<Record<string, List> | null>(null);
@@ -698,11 +740,14 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
     doKarte();
   };
 
-  const prebaciSkupinu = (s: Skupina, vidi: boolean) =>
+  /** Pali ili gasi kategorije na karti (skupina = sve njezine kategorije odjednom). */
+  const prebaci = (ids: readonly IdKategorije[], vidi: boolean) =>
     setSkrivene((stare) => {
       const nove = new Set(stare);
-      if (vidi) nove.delete(s);
-      else nove.add(s);
+      for (const id of ids) {
+        if (vidi) nove.delete(id);
+        else nove.add(id);
+      }
       return nove;
     });
 
@@ -788,37 +833,58 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
       </div>
 
       <div className="mt-4 grid gap-x-8 gap-y-5 text-sm text-zinc-700 sm:grid-cols-2">
-        {SKUPINE.map((s) => (
-          <fieldset key={s}>
-            <legend className="w-full">
-              <label className="flex cursor-pointer items-center gap-2 font-semibold text-zinc-900">
-                <input
-                  type="checkbox"
-                  checked={!skrivene.has(s)}
-                  onChange={(e) => prebaciSkupinu(s, e.target.checked)}
-                  className="h-4 w-4 accent-zinc-900"
-                />
-                <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna])} />
-                <span className="flex-1">{SKUPINE_GRADNJE[s].naslov}</span>
-                <span className="tabular-nums font-normal text-zinc-500">{ha(zbroj.po_skupini_ha[s])} ha</span>
-              </label>
-            </legend>
-            {/* razlozi pod jednim uzorkom skupine; svoj uzorak ima samo ono što na karti izgleda drukčije */}
-            <ul className={`mt-1.5 space-y-1 pl-6 ${skrivene.has(s) ? "opacity-40" : ""}`}>
-              {kategorijePoSkupini[s].map((k) => (
-                <li key={k.id} className="flex items-center gap-2 text-zinc-600">
-                  {istiIzgled(k, KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna]) ? (
-                    <span aria-hidden className="w-6 shrink-0" />
-                  ) : (
-                    <UzorakBoje stil={uzorakKategorije(k)} />
-                  )}
-                  <span className="flex-1">{k.naziv}</span>
-                  <span className="tabular-nums text-zinc-500">{ha(zbroj.po_kategoriji_ha[k.id])} ha</span>
-                </li>
-              ))}
-            </ul>
-          </fieldset>
-        ))}
+        {SKUPINE.map((s) => {
+          const ids = kategorijePoSkupini[s].map((k) => k.id);
+          const vidljivih = ids.filter((id) => !skrivene.has(id)).length;
+          return (
+            <fieldset key={s}>
+              <legend className="w-full">
+                <label className="flex cursor-pointer items-center gap-2 font-semibold text-zinc-900">
+                  <input
+                    type="checkbox"
+                    checked={vidljivih > 0}
+                    ref={(el) => {
+                      if (el) el.indeterminate = vidljivih > 0 && vidljivih < ids.length;
+                    }}
+                    onChange={(e) => prebaci(ids, e.target.checked)}
+                    className="h-4 w-4 accent-zinc-900"
+                  />
+                  <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna])} />
+                  <span className="flex-1">{SKUPINE_GRADNJE[s].naslov}</span>
+                  <span className="tabular-nums font-normal text-zinc-500">{ha(zbroj.po_skupini_ha[s] ?? 0)} ha</span>
+                </label>
+              </legend>
+              {/* svaki razlog ima svoj prekidač; svoj uzorak ima samo ono što na karti izgleda drukčije od skupine */}
+              <ul className="mt-1.5 space-y-1 pl-6">
+                {kategorijePoSkupini[s].map((k) => (
+                  <li key={k.id}>
+                    <label className={`flex cursor-pointer items-center gap-2 text-zinc-600 ${skrivene.has(k.id) ? "opacity-40" : ""}`}>
+                      <input
+                        type="checkbox"
+                        checked={!skrivene.has(k.id)}
+                        onChange={(e) => prebaci([k.id], e.target.checked)}
+                        className="h-3.5 w-3.5 shrink-0 accent-zinc-700"
+                      />
+                      {istiIzgled(k, KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna]) ? (
+                        <span aria-hidden className="w-6 shrink-0" />
+                      ) : (
+                        <UzorakBoje stil={uzorakKategorije(k)} />
+                      )}
+                      <span className="flex-1">{k.naziv}</span>
+                      <span className="tabular-nums text-zinc-500">{ha(zbroj.po_kategoriji_ha[k.id] ?? 0)} ha</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              {s === "javno" && (
+                <p className="mt-1.5 pl-6 text-xs text-zinc-500">
+                  Isključi li javno zemljište, na karti se vidi što je ispod njega. Vlasnik je iz evidencije Grada, koja ga za većinu
+                  čestica ne navodi, pa javnog zemljišta ima i više.
+                </p>
+              )}
+            </fieldset>
+          );
+        })}
         <ul className="space-y-1.5 sm:col-span-2">
           <li className="flex items-center gap-2">
             <Crta boja={BOJA_STAMBENE_ZONE} />

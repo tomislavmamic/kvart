@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { KATEGORIJA_PO_KODU, KATEGORIJE, ZONA_GRADNJE, kategorija } from "./gradnja";
+import { KATEGORIJA_PO_KODU, KATEGORIJE, ZONA_GRADNJE, kategorija, kodPiksela, razlozi } from "./gradnja";
 import { KLASE, type KodKlase } from "./model";
 import { REGIJE } from "./regije";
 
@@ -70,6 +70,30 @@ test("put i preusko: slobodno nije za gradnju, zauzeto i namjena bez zgrada osta
   // preusko ne mijenja ono što ionako nije za gradnju
   assert.equal(sa("M/K5", REGIJE.ceka, { preusko: true }), "ceka-upu");
   assert.equal(sa("S", REGIJE.zabranjeno, { preusko: true }), "samo-rekonstrukcija");
+});
+
+test("vojna zona, gradski projekt, golf i odmaci", () => {
+  const sa = (klasa: KodKlase, regija: number, u: Parameters<typeof kategorija>[2] = {}) =>
+    KATEGORIJA_PO_KODU.get(kategorija(indeks(klasa), regija, u))?.id;
+  // vojna zona cijela, i izgrađena
+  assert.equal(sa("N", REGIJE.slobodno), "vojska");
+  assert.equal(sa("N", REGIJE.zgrada), "vojska");
+  // gradski projekt: slobodno čeka projekt, izgrađeno ostaje izgrađeno
+  assert.equal(sa("M/K5", REGIJE.slobodno, { gradskiProjekt: true }), "gradski-projekt");
+  assert.equal(sa("I/K", REGIJE.ceka, { gradskiProjekt: true }), "gradski-projekt");
+  assert.equal(sa("M/K5", REGIJE.zgrada, { gradskiProjekt: true }), "zgrada");
+  // golf: igralište bez smještaja, ne zemljište za zgrade
+  assert.equal(sa("R5", REGIJE.slobodno), "bez-zgrada");
+  // zgrada ne stane uz odmake samo gdje bi se inače gradilo
+  assert.equal(sa("S", REGIJE.slobodno, { odmaci: true }), "odmaci");
+  assert.equal(sa("S", REGIJE.ceka, { odmaci: true, neuredeno: true }), "odmaci");
+  assert.equal(sa("M/K5", REGIJE.ceka, { odmaci: true }), "ceka-upu");
+});
+
+test("bajt pločice nosi razlog i vlasnika javnog zemljišta", () => {
+  for (const k of KATEGORIJE)
+    for (const v of [0, 1, 2, 3]) assert.deepEqual(razlozi(kodPiksela(k.kod, v)), { kategorija: k.kod, vlasnik: v });
+  assert.ok(KATEGORIJE.every((k) => k.kod < 32));
 });
 
 test("piksel bez čestice ili nepoznate klase nema kategoriju", () => {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Navod } from "@/components/gup-dokument/navod";
 import { GradnjaPrikaz } from "@/components/gup-grad/gradnja-prikaz";
 import { KATEGORIJA_PO_ID, SKUPINE_GRADNJE, uzorakKategorije } from "@/lib/gup-grad/gradnja";
-import { ucitajOdredbeGradnje, ucitajZbrojGradnje } from "@/lib/gup-grad/gradnja-podaci";
+import { ucitajMjestaGradnje, ucitajOdredbeGradnje, ucitajZbrojGradnje } from "@/lib/gup-grad/gradnja-podaci";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -14,11 +14,12 @@ export const metadata = createPageMetadata({
 
 const ha = (v: number) => Math.round(v).toLocaleString("hr-HR");
 const posto = (v: number) => `${Math.round(v * 100).toLocaleString("hr-HR")} %`;
+const broj = (v: number) => v.toLocaleString("hr-HR");
 const vanjska = "fokus text-emerald-700 underline";
 
 
 export default async function GradnjaPage() {
-  const [zbroj, odredbe] = await Promise.all([ucitajZbrojGradnje(), ucitajOdredbeGradnje()]);
+  const [zbroj, odredbe, mjesta] = await Promise.all([ucitajZbrojGradnje(), ucitajOdredbeGradnje(), ucitajMjestaGradnje()]);
   const k = zbroj.po_kategoriji_ha;
   const s = zbroj.po_skupini_ha;
   const udio = (v: number) => v / zbroj.ukupno_ha;
@@ -36,7 +37,10 @@ export default async function GradnjaPage() {
       </p>
       <h1 className="mt-1 text-2xl font-bold">Gdje se po novom GUP-u neće moći graditi</h1>
       <div className="mt-3 max-w-3xl text-zinc-600">
-        <p>Kad Gradsko vijeće donese novi GUP, za svako mjesto unutar granice GUP-a vrijedit će jedan od tri odgovora:</p>
+        <p>
+          Kad Gradsko vijeće donese novi GUP, za svako privatno mjesto unutar granice GUP-a vrijedit će jedan od tri odgovora.
+          Javno zemljište karta pokazuje zasebno.
+        </p>
         <ul className="mt-2 space-y-1.5">
           {(
             [
@@ -58,6 +62,13 @@ export default async function GradnjaPage() {
                 "stambeno",
                 <>
                   <strong className="text-zinc-900">Može se graditi i stambena zgrada</strong>, sama ili s poslovnim prostorom.
+                </>,
+              ],
+              [
+                "javno",
+                <>
+                  <strong className="text-zinc-900">Javno zemljište.</strong> Vlasnik je država, Grad ili županija, ili je to vojna
+                  zona. Ne broji se ni u jedan od tri odgovora, bilo izgrađeno ili ne.
                 </>,
               ],
             ] as const
@@ -124,8 +135,8 @@ export default async function GradnjaPage() {
         </details>
       </div>
 
-      <div className="mt-6 grid gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-3">
-        {(["nista", "nestambeno", "stambeno"] as const).map((sk) => (
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-4">
+        {(["nista", "nestambeno", "stambeno", "javno"] as const).map((sk) => (
           <div key={sk} className="bg-white px-3 py-3 sm:px-4">
             <p className="flex items-center gap-2 font-mono text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">
               {/* isti uzorak kao u tumaču i na karti */}
@@ -147,6 +158,13 @@ export default async function GradnjaPage() {
                   style={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].uvjetna!])}
                 />
                 od toga {ha(k[SKUPINE_GRADNJE[sk].uvjetna!])} ha samo ako do čestice vodi javna cesta
+              </p>
+            )}
+            {sk === "javno" && <p className="mt-1 text-xs text-zinc-500">od toga {ha(k.vojska)} ha vojna zona</p>}
+            {sk === "stambeno" && (
+              <p className="mt-1 text-xs text-zinc-500">
+                {broj(mjesta.stambeno.od_250_m2)} mjesta za gradnju bez uvjeta, od toga {broj(mjesta.stambeno.od_500_m2)} od barem
+                500 m²
               </p>
             )}
           </div>
@@ -178,7 +196,16 @@ export default async function GradnjaPage() {
         </p>
         <p className="mt-2">
           Za novu stambenu zgradu ostat će {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim zonama,
-          gdje se stanovanje miješa s poslovanjem.
+          gdje se stanovanje miješa s poslovanjem. To je zemljište na kojem stane i zgrada uz propisane odmake od ulice i susjeda,
+          a nije u vlasništvu države, Grada ni županije. Kad se susjedne slobodne čestice spoje u jedno gradilište, to je{" "}
+          {broj(mjesta.stambeno.od_250_m2)} mjesta za gradnju, od toga {broj(mjesta.stambeno.od_500_m2)} od barem 500 m² (koliko
+          GUP obično traži za slobodnostojeću kuću) i {broj(mjesta.stambeno.od_1000_m2)} od barem 1.000 m². Još{" "}
+          {broj(mjesta["uz-cestu-stambeno"].od_250_m2)} mjesta je u neuređenom području, samo ako do njih vodi javna cesta.
+        </p>
+        <p className="mt-2">
+          {ha(s.javno)} ha je javno zemljište: {ha(k.javno)} ha u vlasništvu države, Grada ili županije (prema evidenciji Grada) i{" "}
+          {ha(k.vojska)} ha vojne zone. Na {ha(k["gradski-projekt"])} ha slobodnog zemljišta u gradskim projektima (Kopilica,
+          Poljud, Karepovac, Duilovo, obala…) neće se graditi dok se projekt ne odobri, a onda samo ono što projekt predvidi.
         </p>
         <p className="mt-2">
           Na {ha(k["ceka-upu"])} ha slobodnog zemljišta u područjima urbane sanacije i preobrazbe novi GUP zaustavit će novu
@@ -209,6 +236,12 @@ export default async function GradnjaPage() {
         </p>
         <ol className="mt-3 list-decimal space-y-2 pl-5">
           <li>
+            <strong className="text-zinc-900">Je li zemljište privatno?</strong> Ako je prema evidenciji Grada Splita vlasnik
+            država, Grad ili županija, ili je to vojna zona (posebna namjena, npr. Lora), karta ga boji kao javno zemljište i ne
+            broji ga ni u jedan odgovor. Evidencija vlasnika za većinu čestica nema podatak, pa javnog zemljišta ima i više nego
+            što karta pokazuje.
+          </li>
+          <li>
             <strong className="text-zinc-900">Je li mjesto već zauzeto?</strong> Zgrade (iz katastra i gradskog 3D modela),
             gradilišta, ulice, parkirališta, javne ustanove, igrališta, trgovi, groblja i parkovi. Uz svaku zgradu ide i njezino
             dvorište: onoliko čestice koliko pravila za nju traže. To je tlocrt zgrade podijeljen s najvećim dopuštenim udjelom
@@ -219,14 +252,16 @@ export default async function GradnjaPage() {
             <strong className="text-zinc-900">Predviđa li plan ondje zgrade?</strong> Po{" "}
             <Navod id="list-namjena-2025">listu 1</Navod> novog GUP-a (karti namjene): u parku, zaštitnom zelenilu, zoni
             rekreacije i na plaži ne, osim manjih pratećih građevina. Zemljište koje list ne boji nijednom bojom čuva se za ulice,
-            prugu, groblja i infrastrukturu. Isto vrijedi za uske neobojene pojaseve ulica između blokova. Njih smo izdvojili iz
+            prugu, groblja i infrastrukturu. Golf igralište (R5) je bez zgrada, osim pratećih. Isto vrijedi za uske neobojene
+            pojaseve ulica između blokova. Njih smo izdvojili iz
             samog crteža lista, jer bi ih čitanje po boji pripisalo susjednoj zoni.
           </li>
           <li>
             <strong className="text-zinc-900">Dopuštaju li pravila gradnje novu zgradu?</strong> U zonama za stanovanje GUP
             svakom dijelu grada daje vlastita pravila gradnje (<Navod id="list-urbana-pravila-2025">list urbanih pravila</Navod>
             ). U dovršenim naseljima ta pravila dopuštaju samo obnovu ili zamjenu postojećih zgrada. Gdje se na snimci iz zraka
-            (ortofotu) vidi da se teren ne može graditi, karta kaže da se ne može.
+            (ortofotu) vidi da se teren ne može graditi, karta kaže da se ne može. U gradskim projektima (urbano pravilo GP)
+            gradit će se tek po odobrenom projektu za cijelo područje, i samo ono što projekt predvidi.
           </li>
           <li>
             <strong className="text-zinc-900">Može li se graditi bez čekanja na UPU?</strong> U područjima urbane sanacije i
@@ -249,7 +284,9 @@ export default async function GradnjaPage() {
             <strong className="text-zinc-900">Ima li dovoljno mjesta za novu česticu?</strong> Slobodni komad mora biti barem
             velik kao najmanja čestica za gradnju koju pravila traže za taj dio grada. To smije doseći i zajedno sa slobodnim
             susjedom iste namjene. Uz to mora imati dio koji je posvuda širok barem 10 m i velik barem 250 m². Zato otpadaju
-            pojasevi uz putove, ostaci dvorišta i prolazi između zgrada, i kad bi zbrojeni bili dovoljno veliki.
+            pojasevi uz putove, ostaci dvorišta i prolazi između zgrada, i kad bi zbrojeni bili dovoljno veliki. Na kraju, zgrada
+            mora biti 5 m od javne ulice i 3 m od susjednih čestica: kad se ti odmaci oduzmu, mora stati zgrada široka barem 6 m
+            s tlocrtom od barem 60 m² (tu najmanju zgradu pretpostavili smo mi; GUP je ne propisuje).
           </li>
           <li>
             <strong className="text-zinc-900">Dopušta li plan ondje stanovanje?</strong> Da u stambenim zonama (S), mješovitim
@@ -282,7 +319,12 @@ export default async function GradnjaPage() {
             nismo provjerili.
           </li>
           <li>
-            Karta ne provjerava vlasništvo, vodi li do čestice javna cesta, priključke, nagib i tlo, zaštitu kulturne baštine i
+            Vlasnik je iz GIS izvoza Grada Splita (stanje 3. 10. 2025.), iz kojeg karta uzima samo je li vlasnik država, Grad ili
+            županija. Za oko 60 % zemljišta u granici GUP-a izvoz vlasnika ne navodi, a za vojnu zonu na Lori ne navodi državu, pa
+            je karta prepoznaje po namjeni.
+          </li>
+          <li>
+            Karta ne provjerava privatne vlasnike i suvlasnike, vodi li do čestice javna cesta, priključke, nagib i tlo, zaštitu kulturne baštine i
             krajobraza, pojas uz more i vodotoke, ni posebne uvjete nadležnih tijela. Ništa od toga ne može „ne može” pretvoriti
             u „može”, ali može obrnuto. Prije kupnje ili gradnje zatraži od Grada lokacijsku informaciju: službeni podatak o tome
             koji planovi i koja namjena vrijede za tvoju česticu.

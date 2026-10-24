@@ -12,8 +12,13 @@ vektorizacije zatvori za ~10 m (neupisani putovi i rubovi), a otočići i
 rupe manji od praga izbace. Ulice koje plan ne boji (klasa P, i koridori
 iz koridori.py) poslije zatvaranja opet se izrežu, da obris ide uz njih.
 
+Uz to broji mjesta za gradnju: povezane mrlje zemljišta „stambeno” (i
+„stambeno samo ako vodi javna cesta”), dakle susjedne slobodne čestice
+spojene u jedno gradilište, jer hektari ne kažu koliko je prilika za kuću.
+
 Ulaz:   public/geo/gup-grad/gradnja.json i pločice (scripts/gup-grad/gradnja.ts)
 Izlaz:  public/geo/gup-grad/gradnja-zone-2025.geojson
+        data/gup-grad/gradnja-mjesta-2025.json   broj mjesta po veličini
 
 Pokretanje:  /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-zone.py
 """
@@ -62,11 +67,25 @@ def main() -> None:
     w = (max(c for _, c, _ in plocice) + 1) * PLOCICA
     maska = np.zeros((h, w), bool)
     ulica = np.zeros((h, w), bool)
+    razlog = np.zeros((h, w), np.uint8)
     for r, c, p in plocice:
         a = np.array(Image.open(os.path.join(JAVNO, p["url"].lstrip("/"))))
         m = (a[..., 3] == 255) & np.isin(a[..., 0], STAMBENE)
         maska[r * PLOCICA:r * PLOCICA + m.shape[0], c * PLOCICA:c * PLOCICA + m.shape[1]] = m
         ulica[r * PLOCICA:r * PLOCICA + m.shape[0], c * PLOCICA:c * PLOCICA + m.shape[1]] = (a[..., 3] == 255) & (a[..., 0] == P)
+        # razlog bez vlasnika (gradnja.ts, kodPiksela); javno zemljište nije mjesto za gradnju
+        razlog[r * PLOCICA:r * PLOCICA + m.shape[0], c * PLOCICA:c * PLOCICA + m.shape[1]] = np.where(
+            (a[..., 3] == 255) & ((a[..., 2] >> 5) == 0), a[..., 2] & 31, 0)
+
+    m2 = (korak * np.cos(np.radians(43.51))) ** 2
+    mjesta = {}
+    for ime, kod in (("stambeno", 13), ("uz-cestu-stambeno", 11)):
+        oznake, n = ndimage.label(razlog == kod, structure=np.ones((3, 3)))
+        vel = ndimage.sum_labels(np.ones_like(oznake), oznake, index=np.arange(1, n + 1)) * m2 if n else np.array([])
+        mjesta[ime] = {f"od_{p}_m2": int((vel >= p).sum()) for p in (250, 500, 1000)}
+    with open(os.path.join(ROOT, "data", "gup-grad", "gradnja-mjesta-2025.json"), "w") as f:
+        json.dump({"opis": "Mjesta za gradnju: povezane mrlje kategorije na karti (gradnja-zone.py).", "mjesta": mjesta}, f, indent=1)
+    print("mjesta:", mjesta)
 
     krug = ndimage.generate_binary_structure(2, 1)
     maska = ndimage.binary_closing(maska, krug, iterations=ZATVORI_PX) & ~ulica

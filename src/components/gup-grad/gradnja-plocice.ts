@@ -7,6 +7,10 @@
  * sliku karta boji, a klik iz nje čita što je pod točkom i zbraja čestice.
  */
 import type { Geometrija } from "@/lib/gup-grad/zabrana";
+import { KATEGORIJA_PO_ID, razlozi } from "@/lib/gup-grad/gradnja";
+
+const JAVNO = KATEGORIJA_PO_ID.javno.kod;
+const VOJSKA = KATEGORIJA_PO_ID.vojska.kod;
 
 export interface PlocicaGradnje {
   url: string;
@@ -67,7 +71,10 @@ function pikselTocke(p: PlocicaGradnje, w: number, h: number, lng: number, lat: 
 export interface Uzorak {
   klasa: number;
   regija: number;
+  /** razlog (kod kategorije), i na javnom zemljištu */
   kategorija: number;
+  /** vlasnik javnog zemljišta (VLASNIK_JAVNOG), 0 = nije javno ili se ne zna */
+  vlasnik: number;
 }
 
 /** Što pločica kaže o točki; null izvan čestica u obuhvatu GUP-a. */
@@ -82,7 +89,7 @@ export async function uzorakUTocki(lng: number, lat: number): Promise<Uzorak | n
     const i = (px[1] * slika.width + px[0]) * 4;
     const d = slika.data;
     if (d[i + 3] !== 255) return null;
-    return { klasa: d[i], regija: d[i + 1], kategorija: d[i + 2] };
+    return { klasa: d[i], regija: d[i + 1], ...razlozi(d[i + 2]) };
   }
   return null;
 }
@@ -134,7 +141,9 @@ export async function kategorijeUObliku(g: Geometrija): Promise<Map<number, numb
       for (let c = c0; c <= c1; c++) {
         const lng = zapad + ((c + 0.5) / w) * (istok - zapad);
         if (!uGeometriji(g, lng, lat)) continue;
-        const k = d[(r * w + c) * 4 + 3] === 255 ? d[(r * w + c) * 4 + 2] : 0;
+        // javno zemljište broji se kao javno, kao na karti i u zbrojevima
+        const raz = razlozi(d[(r * w + c) * 4 + 2]);
+        const k = d[(r * w + c) * 4 + 3] !== 255 ? 0 : raz.vlasnik && raz.kategorija !== VOJSKA ? JAVNO : raz.kategorija;
         out.set(k, (out.get(k) ?? 0) + m2);
       }
     }
