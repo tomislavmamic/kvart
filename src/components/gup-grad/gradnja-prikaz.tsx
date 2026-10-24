@@ -37,6 +37,7 @@ import {
   ZONA_GRADNJE,
   type IdKategorije,
   type Kategorija,
+  type KodVlasnika,
   type Skupina,
 } from "@/lib/gup-grad/gradnja";
 import type { OdredbeGradnje, ZbrojGradnje } from "@/lib/gup-grad/gradnja-podaci";
@@ -224,7 +225,7 @@ function provjere(
       odgovor: vojska
         ? "Ne. Ovo je vojna zona (posebna namjena): zemljište za potrebe obrane."
         : u.vlasnik
-          ? `Ne. Prema evidenciji Grada Splita vlasnik je ${VLASNIK_JAVNOG[u.vlasnik as 1 | 2 | 3]}.`
+          ? `Ne. Prema evidenciji Grada Splita vlasnik je ${VLASNIK_JAVNOG[u.vlasnik as KodVlasnika]}.`
           : "Prema evidenciji Grada Splita vlasnik nije država, Grad ni županija. Ta evidencija za mnoge čestice ne navodi vlasnika, pa to nije potvrda.",
     });
   }
@@ -457,6 +458,13 @@ function provjere(
         </>
       ),
     });
+  } else if (katId === "odmak") {
+    out.push({
+      pitanje: "Smije li zgrada stajati baš na ovom mjestu?",
+      ishod: "ne",
+      odgovor:
+        "Ne. Gradilište je dovoljno veliko, ali ovo je njegov odmak: zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica. Ovdje može biti dvorište ili prilaz; mjesto za zgradu na karti je obojeno.",
+    });
   } else if (katId === "odmaci") {
     out.push({
       pitanje: pitanjeMjesta,
@@ -585,7 +593,7 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
       {k.podnaslov && <p className="font-mono text-xs text-zinc-500">{k.podnaslov}</p>}
       {kat && (
         <p className="mt-1.5 text-zinc-800">
-          {javno ? <>Prema evidenciji Grada Splita vlasnik je {VLASNIK_JAVNOG[k.uzorak!.vlasnik as 1 | 2 | 3]}. </> : null}
+          {javno ? <>Prema evidenciji Grada Splita vlasnik je {VLASNIK_JAVNOG[k.uzorak!.vlasnik as KodVlasnika]}. </> : null}
           {kat.razlog}
         </p>
       )}

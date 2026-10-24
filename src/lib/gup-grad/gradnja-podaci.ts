@@ -27,7 +27,7 @@ export function ucitajZbrojGradnje(): Promise<ZbrojGradnje> {
 }
 
 /** Broj mjesta za gradnju (spojenih slobodnih čestica) po veličini, iz scripts/gup-grad/gradnja-zone.py. */
-export type MjestaGradnje = Record<"stambeno" | "uz-cestu-stambeno", Record<"od_250_m2" | "od_500_m2" | "od_1000_m2", number>>;
+export type MjestaGradnje = Record<"stambeno" | "uz-cestu-stambeno", Record<"od_250_m2" | "od_500_m2" | "od_1000_m2" | "ha", number>>;
 
 export function ucitajMjestaGradnje(): Promise<MjestaGradnje> {
   return readFile(path.join(process.cwd(), "data", "gup-grad", "gradnja-mjesta-2025.json"), "utf8").then(

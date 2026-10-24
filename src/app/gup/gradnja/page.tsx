@@ -163,8 +163,8 @@ export default async function GradnjaPage() {
             {sk === "javno" && <p className="mt-1 text-xs text-zinc-500">od toga {ha(k.vojska)} ha vojna zona</p>}
             {sk === "stambeno" && (
               <p className="mt-1 text-xs text-zinc-500">
-                {broj(mjesta.stambeno.od_250_m2)} mjesta za gradnju bez uvjeta, od toga {broj(mjesta.stambeno.od_500_m2)} od barem
-                500 m²
+                {broj(mjesta.stambeno.od_250_m2)} gradilišta bez uvjeta ({ha(mjesta.stambeno.ha)} ha s odmacima), od toga{" "}
+                {broj(mjesta.stambeno.od_500_m2)} od barem 500 m²
               </p>
             )}
           </div>
@@ -195,12 +195,14 @@ export default async function GradnjaPage() {
           pojaseva ulica između blokova.
         </p>
         <p className="mt-2">
-          Za novu stambenu zgradu ostat će {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u mješovitim zonama,
-          gdje se stanovanje miješa s poslovanjem. To je zemljište na kojem stane i zgrada uz propisane odmake od ulice i susjeda,
-          a nije u vlasništvu države, Grada ni županije. Kad se susjedne slobodne čestice spoje u jedno gradilište, to je{" "}
-          {broj(mjesta.stambeno.od_250_m2)} mjesta za gradnju, od toga {broj(mjesta.stambeno.od_500_m2)} od barem 500 m² (koliko
-          GUP obično traži za slobodnostojeću kuću) i {broj(mjesta.stambeno.od_1000_m2)} od barem 1.000 m². Još{" "}
-          {broj(mjesta["uz-cestu-stambeno"].od_250_m2)} mjesta je u neuređenom području, samo ako do njih vodi javna cesta.
+          Nova stambena zgrada bez uvjeta moći će stajati na {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u
+          mješovitim zonama, gdje se stanovanje miješa s poslovanjem. Zeleno na karti je samo ono mjesto na kojem zgrada smije
+          stajati: 5 m od ulice i 3 m od susjeda. Zajedno s tim odmacima (dvorištem, prilazom) i kad se susjedne slobodne čestice
+          spoje u jedno gradilište, to je {broj(mjesta.stambeno.od_250_m2)} gradilišta od ukupno {ha(mjesta.stambeno.ha)} ha, od
+          toga {broj(mjesta.stambeno.od_500_m2)} od barem 500 m² (koliko GUP obično traži za slobodnostojeću kuću) i{" "}
+          {broj(mjesta.stambeno.od_1000_m2)} od barem 1.000 m². Ništa od toga nije u vlasništvu države, Grada, županije ni
+          njihovih tvrtki, prema evidenciji Grada. Još {broj(mjesta["uz-cestu-stambeno"].od_250_m2)} gradilišta je u neuređenom
+          području, samo ako do njih vodi javna cesta.
         </p>
         <p className="mt-2">
           {ha(s.javno)} ha je javno zemljište: {ha(k.javno)} ha u vlasništvu države, Grada ili županije (prema evidenciji Grada) i{" "}
@@ -286,7 +288,8 @@ export default async function GradnjaPage() {
             susjedom iste namjene. Uz to mora imati dio koji je posvuda širok barem 10 m i velik barem 250 m². Zato otpadaju
             pojasevi uz putove, ostaci dvorišta i prolazi između zgrada, i kad bi zbrojeni bili dovoljno veliki. Na kraju, zgrada
             mora biti 5 m od javne ulice i 3 m od susjednih čestica: kad se ti odmaci oduzmu, mora stati zgrada široka barem 6 m
-            s tlocrtom od barem 60 m² (tu najmanju zgradu pretpostavili smo mi; GUP je ne propisuje).
+            s tlocrtom od barem 60 m² (tu najmanju zgradu pretpostavili smo mi; GUP je ne propisuje). Karta boji samo mjesto na
+            kojem zgrada smije stajati; odmak oko njega je dvorište ili prilaz, a ne mjesto za zgradu.
           </li>
           <li>
             <strong className="text-zinc-900">Dopušta li plan ondje stanovanje?</strong> Da u stambenim zonama (S), mješovitim

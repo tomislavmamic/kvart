@@ -118,6 +118,7 @@ export type IdKategorije =
   | "premalo"
   | "put"
   | "odmaci"
+  | "odmak"
   | "gradski-projekt"
   | "vojska"
   | "javno"
@@ -261,6 +262,16 @@ export const KATEGORIJE: readonly Kategorija[] = [
     alfa: 0.55,
   },
   {
+    kod: 21,
+    id: "odmak",
+    skupina: "nista",
+    naziv: "Odmak od ulice i susjeda (dvorište nove zgrade)",
+    razlog:
+      "Ovo je dio slobodnog zemljišta na kojem se može graditi, ali zgrada ovdje ne smije stajati: mora biti 5 m od javne ulice i 3 m od susjednih čestica. Ovdje može biti dvorište, prilaz ili parkiralište nove zgrade.",
+    boja: "#ffffff",
+    alfa: 0.55,
+  },
+  {
     kod: 20,
     id: "odmaci",
     skupina: "nista",
@@ -332,9 +343,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 12,
     id: "nestambeno",
     skupina: "nestambeno",
-    naziv: "Slobodno za gradnju, ali ne stambenu",
+    naziv: "Mjesto za nestambenu zgradu",
     razlog:
-      "Zemljište je slobodno i može se graditi, ali novi GUP ovdje predviđa javnu, gospodarsku, turističku ili športsku namjenu, pa stambena zgrada neće biti dopuštena.",
+      "Ovdje može stajati nova zgrada, dovoljno daleko od ulice (5 m) i susjeda (3 m), ali novi GUP ovdje predviđa javnu, gospodarsku, turističku ili športsku namjenu, pa stambena zgrada neće biti dopuštena.",
     boja: "#2563eb",
     alfa: 0.8,
   },
@@ -342,9 +353,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 13,
     id: "stambeno",
     skupina: "stambeno",
-    naziv: "Slobodno za stambenu zgradu",
+    naziv: "Mjesto za stambenu zgradu",
     razlog:
-      "Slobodno je, dovoljno veliko i široko, u zoni gdje novi GUP dopušta stanovanje i novu zgradu. Moći će se graditi stambena ili stambeno-poslovna zgrada, ako to dopuste i uvjeti koje karta ne provjerava.",
+      "Ovdje može stajati nova stambena ili stambeno-poslovna zgrada: zemljište je slobodno, dovoljno veliko, u zoni gdje novi GUP dopušta stanovanje, i dovoljno daleko od ulice (5 m) i susjeda (3 m). Vrijedi ako to dopuste i uvjeti koje karta ne provjerava.",
     boja: "#15803d",
     alfa: 0.85,
   },
@@ -352,7 +363,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 19,
     id: "javno",
     skupina: "javno",
-    naziv: "Zemljište Grada, države ili županije",
+    naziv: "Zemljište Grada, države, županije ili njihovih ustanova i tvrtki",
     razlog:
       "Na javnom zemljištu ne gradi građanin, pa se ono ne broji ni u jedan od tri odgovora, bilo izgrađeno ili ne.",
     boja: "#ca8a04",
@@ -372,13 +383,19 @@ export const KATEGORIJE: readonly Kategorija[] = [
 
 /**
  * Bajt kategorije u pločici (kanal B): donjih 5 bitova je razlog
- * (`kod` kategorije), gornja dva vlasnik javnog zemljišta (1 RH, 2 Grad,
- * 3 županija; 0 nije javno ili se ne zna). Javno zemljište tako zadrži i
- * razlog ispod sebe, za tumač klika i kad se skupina „Javno” ugasi.
+ * (`kod` kategorije), gornja tri vlasnik javnog zemljišta (VLASNIK_JAVNOG;
+ * 0 nije javno ili se ne zna). Javno zemljište tako zadrži i razlog ispod
+ * sebe, za tumač klika i kad se stavka „Javno” ugasi.
  */
-export const VLASNIK_JAVNOG = { 1: "Republika Hrvatska", 2: "Grad Split", 3: "Splitsko-dalmatinska županija" } as const;
-export const kodPiksela = (kategorija: number, vlasnik: number) => (kategorija & 31) | ((vlasnik & 3) << 5);
-export const razlozi = (bajt: number) => ({ kategorija: bajt & 31, vlasnik: (bajt >> 5) & 3 });
+export const VLASNIK_JAVNOG = {
+  1: "Republika Hrvatska",
+  2: "Grad Split",
+  3: "Splitsko-dalmatinska županija",
+  4: "javna ustanova ili tvrtka države ili Grada",
+} as const;
+export type KodVlasnika = keyof typeof VLASNIK_JAVNOG;
+export const kodPiksela = (kategorija: number, vlasnik: number) => (kategorija & 31) | ((vlasnik & 7) << 5);
+export const razlozi = (bajt: number) => ({ kategorija: bajt & 31, vlasnik: (bajt >> 5) & 7 });
 
 export const KATEGORIJA_PO_KODU: ReadonlyMap<number, Kategorija> = new Map(KATEGORIJE.map((k) => [k.kod, k]));
 export const KATEGORIJA_PO_ID: Record<IdKategorije, Kategorija> = Object.fromEntries(KATEGORIJE.map((k) => [k.id, k])) as Record<
@@ -404,6 +421,8 @@ export interface UvjetiPiksela {
   preusko?: boolean;
   /** slobodno i široko, ali zgrada uz odmake od ulice i međa ne stane (gradnja-skupine.py) */
   odmaci?: boolean;
+  /** dio gradilišta u odmaku od ulice ili međa: zgrada ovdje ne smije stajati (gradnja-skupine.py) */
+  odmak?: boolean;
   /** na čestici s urbanim pravilom GP — gradski projekt (gradnja-javno.py) */
   gradskiProjekt?: boolean;
 }
@@ -417,7 +436,8 @@ const GRADIVE: readonly IdKategorije[] = ["stambeno", "nestambeno", "uz-cestu-st
  * ili 0 kad piksel nije na čestici u obuhvatu.
  */
 export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela = {}): number {
-  const { neuredeno = false, koridor = false, put = false, preusko = false, odmaci = false, gradskiProjekt = false } = uvjeti;
+  const { neuredeno = false, koridor = false, put = false, preusko = false, odmaci = false, odmak = false, gradskiProjekt = false } =
+    uvjeti;
   const z = zonaKlase(klasa);
   const zona = z && koridor ? "promet" : z;
   if (!zona || regija <= 0) return 0;
@@ -448,7 +468,7 @@ export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela 
   // 3.–5. razlog iz izračuna po komadu
   const k = razlogKomada(klasa, regija, zona, neuredeno);
   if (!GRADIVE.includes(KATEGORIJA_PO_KODU.get(k)!.id)) return k;
-  return preusko ? K.premalo.kod : odmaci ? K.odmaci.kod : k;
+  return preusko ? K.premalo.kod : odmaci ? K.odmaci.kod : odmak ? K.odmak.kod : k;
 }
 
 function razlogKomada(klasa: number, regija: number, zona: ZonaGradnje, neuredeno: boolean): number {

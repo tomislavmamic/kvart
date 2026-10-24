@@ -12,9 +12,9 @@ vektorizacije zatvori za ~10 m (neupisani putovi i rubovi), a otočići i
 rupe manji od praga izbace. Ulice koje plan ne boji (klasa P, i koridori
 iz koridori.py) poslije zatvaranja opet se izrežu, da obris ide uz njih.
 
-Uz to broji mjesta za gradnju: povezane mrlje zemljišta „stambeno” (i
-„stambeno samo ako vodi javna cesta”), dakle susjedne slobodne čestice
-spojene u jedno gradilište, jer hektari ne kažu koliko je prilika za kuću.
+Uz to broji gradilišta: povezano mjesto za zgradu s pripadajućim odmakom
+u stambenoj ili mješovitoj zoni (susjedne slobodne čestice spojene u jedno
+gradilište), jer hektari ne kažu koliko je prilika za kuću.
 
 Ulaz:   public/geo/gup-grad/gradnja.json i pločice (scripts/gup-grad/gradnja.ts)
 Izlaz:  public/geo/gup-grad/gradnja-zone-2025.geojson
@@ -78,11 +78,18 @@ def main() -> None:
             (a[..., 3] == 255) & ((a[..., 2] >> 5) == 0), a[..., 2] & 31, 0)
 
     m2 = (korak * np.cos(np.radians(43.51))) ** 2
+    # gradilište = mjesto za zgradu i njegov odmak (gradnja-skupine.py), u stambenoj ili mješovitoj zoni;
+    # broji se ono na kojem je barem jedno mjesto za zgradu, veličina je cijelo gradilište
+    gradiliste = maska & np.isin(razlog, (11, 13, 21))
+    oznake, n = ndimage.label(gradiliste, structure=np.ones((3, 3)))
+    idx = np.arange(1, n + 1)
+    vel = ndimage.sum_labels(np.ones_like(oznake), oznake, index=idx) * m2
+    ima13 = ndimage.maximum(razlog == 13, oznake, index=idx).astype(bool)
+    ima11 = ndimage.maximum(razlog == 11, oznake, index=idx).astype(bool)
     mjesta = {}
-    for ime, kod in (("stambeno", 13), ("uz-cestu-stambeno", 11)):
-        oznake, n = ndimage.label(razlog == kod, structure=np.ones((3, 3)))
-        vel = ndimage.sum_labels(np.ones_like(oznake), oznake, index=np.arange(1, n + 1)) * m2 if n else np.array([])
-        mjesta[ime] = {f"od_{p}_m2": int((vel >= p).sum()) for p in (250, 500, 1000)}
+    for ime, koja in (("stambeno", ima13), ("uz-cestu-stambeno", ima11 & ~ima13)):
+        v = vel[koja]
+        mjesta[ime] = {**{f"od_{p}_m2": int((v >= p).sum()) for p in (250, 500, 1000)}, "ha": round(float(v.sum()) / 1e4, 1)}
     with open(os.path.join(ROOT, "data", "gup-grad", "gradnja-mjesta-2025.json"), "w") as f:
         json.dump({"opis": "Mjesta za gradnju: povezane mrlje kategorije na karti (gradnja-zone.py).", "mjesta": mjesta}, f, indent=1)
     print("mjesta:", mjesta)

@@ -16,15 +16,24 @@ projektu i samo ono što projekt kaže, pa slobodno zemljište ondje nije za
 gradnju dok projekta nema. Čestice s pravilom GP su iz pločica čestica
 (cestice.py, `u`).
 
-Oboje se precrta na istu mrežu kao pločice dijelova čestice (regije.py), po
-obliku čestice — izvoz Grada ima svoju podjelu na čestice, pa se ne spaja
-po broju nego po mjestu.
+Uz državu, Grad i županiju javne su i njihove ustanove i tvrtke (Vodovod i
+kanalizacija, Hrvatske ceste, institut…), prepoznate po imenu vlasnika koji
+je pravna osoba (registar data/public-entities.json i JAVNE_PRAVNE), te
+čestice kojima je javno vlasništvo potvrđeno ciljanom provjerom u
+zemljišnim knjigama (ciljana-provjera-vlasnistva.geojson, kvart).
+
+Izvoz Grada ima svoju, stariju podjelu na čestice, pa se vlasnik ne spaja po
+broju nego po mjestu, i to po CIJELOJ katastarskoj čestici DGU-a: čestica je
+javna ako je barem pola njezine površine javno u izvozu. Tako na rubu javne
+čestice ne ostanu krhotine „slobodnog” zemljišta zbog pomaka između dviju
+podjela.
 
 Ulaz:  Split Export/SPLIT_EXPORT_BAZA/KOMUNALNA_INFRASTRUKTURA/KatastarskeCestice.shp
        (lokalno, nije u gitu), public/geo/gup-grad/regije.json i pločice,
        public/geo/gup-grad/cestice
-Izlaz: data/gup-grad/javno-2025/<red>_<stupac>.png — bitovi 0–1 vlasnik
-       (1 RH, 2 Grad, 3 županija), bit 2 gradski projekt; čita ih gradnja.ts
+Izlaz: data/gup-grad/javno-2025/<red>_<stupac>.png — bitovi 0–2 vlasnik
+       (1 RH, 2 Grad, 3 županija, 4 javna ustanova ili tvrtka), bit 3
+       gradski projekt; čita ih gradnja.ts
 
 Pokretanje (prije gradnja.ts):  /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-javno.py
 """
@@ -57,7 +66,21 @@ if not os.path.isdir(IZVOZ):
     IZVOZ = os.path.join(os.path.expanduser("~"), "projects", "kvart", "data", "sources", "Split Export")
 VLASNISTVO = os.path.join(IZVOZ, "SPLIT_EXPORT_BAZA", "KOMUNALNA_INFRASTRUKTURA", "KatastarskeCestice.shp")
 VLASNIK = {"RH": 1, "JLS": 2, "DNŽ": 3}
-GRADSKI_PROJEKT = 4
+JAVNA_TVRTKA = 4  # javna ustanova ili tvrtka države ili Grada (po imenu vlasnika, vidi JAVNE_PRAVNE)
+GRADSKI_PROJEKT = 8
+REGISTAR = os.path.join(R.ROOT, "data", "public-entities.json")
+PROVJERA = os.path.join(JAVNO, "geo", "analiza", "ciljana-provjera-vlasnistva.geojson")
+# Pravne osobe koje su država ili njezine ustanove i tvrtke, uz gradske iz registra
+# (data/public-entities.json). Uspoređuje se samo ime vlasnika PRAVNE osobe;
+# imena fizičkih osoba se ne čitaju.
+JAVNE_PRAVNE = (
+    "REPUBLIKA HRVATSKA", "HRVATSKE CESTE", "HRVATSKA UPRAVA ZA CESTE", "HRVATSKE AUTOCESTE", "HRVATSKE ŠUME",
+    "HRVATSKE VODE", "HRVATSKE ŽELJEZNICE", "HŽ INFRASTRUKTURA", "HEP", "HRVATSKA ELEKTROPRIVREDA",
+    "LUČKA UPRAVA", "SVEUČILIŠTE U SPLITU", "KLINIČKI BOLNIČKI CENTAR", "INSTITUT ZA JADRANSKE KULTURE",
+    "MINISTARSTVO", "MORH", "AGENCIJA ZA UPRAVLJANJE DRŽAVNOM IMOVINOM", "DRŽAVNA AGENCIJA",
+)
+# udio katastarske čestice (DGU) pod javnim zemljištem iz izvoza od kojeg je cijela čestica javna
+VECINA = 0.5
 
 
 def main() -> None:
@@ -75,27 +98,72 @@ def main() -> None:
     x, y = Transformer.from_crs(4326, 3857, always_xy=True).transform(zapad, sjever)
     transform = Affine(korak, 0, x - c0 * PLOCICA * korak, 0, -korak, y + r0 * PLOCICA * korak)
 
-    # vlasnik: samo RH, JLS, DNŽ; ostali stupci se ne čitaju
-    df = pyogrio.read_dataframe(VLASNISTVO, columns=["zku_status"])
-    df = df[df["zku_status"].isin(list(VLASNIK))]
+    # vlasnik: RH, JLS, DNŽ, i javne pravne osobe po imenu; ime fizičke osobe se ne čita
+    df = pyogrio.read_dataframe(VLASNISTVO, columns=["zku_status", "zku_vlasni"])
+    registar = json.load(open(REGISTAR))
+    po_kategoriji = {"city": 2, "state": 1, "county": 3}
+    imena = [(a.upper(), po_kategoriji.get(e["category"], JAVNA_TVRTKA)) for e in registar for a in e["aliases"]]
+    imena += [(a, JAVNA_TVRTKA) for a in JAVNE_PRAVNE]
+
+    def kod_vlasnika(status, ime) -> int:
+        if status in VLASNIK:
+            return VLASNIK[status]
+        if status in ("Pravna osoba", "Ostalo") and isinstance(ime, str):
+            ime = ime.upper()
+            return next((k for a, k in imena if ime.startswith(a) or f" {a}" in ime), 0)
+        return 0
+
+    kodovi = [kod_vlasnika(s, i) for s, i in zip(df["zku_status"], df["zku_vlasni"])]
+    del df["zku_vlasni"]
     u_3857 = Transformer.from_crs(int(df.crs.to_epsg()), 3857, always_xy=True).transform
-    vlasnik = features.rasterize(
-        ((stransform(u_3857, g), VLASNIK[s]) for g, s in zip(df.geometry, df["zku_status"]) if g is not None),
+    izvoz = features.rasterize(
+        ((stransform(u_3857, g), k) for g, k in zip(df.geometry, kodovi) if g is not None and k),
         out_shape=(H, W), transform=transform, fill=0, dtype="uint8",
     )
+    # ciljana provjera u zemljišnim knjigama (kvart): potvrđeno javne čestice
+    if os.path.exists(PROVJERA):
+        u_4326_3857 = Transformer.from_crs(4326, 3857, always_xy=True).transform
+        potvrdene = []
+        for ft in json.load(open(PROVJERA))["features"]:
+            p = ft["properties"]
+            if p.get("verification_status") in ("confirmed_public", "cadastre_public", "mixed_public") and ft["geometry"]:
+                kat = (p.get("public_entities") or [{}])[0].get("category")
+                potvrdene.append((stransform(u_4326_3857, shape(ft["geometry"])), po_kategoriji.get(kat, JAVNA_TVRTKA)))
+        if potvrdene:
+            p_ras = features.rasterize(potvrdene, out_shape=(H, W), transform=transform, fill=0, dtype="uint8")
+            izvoz = np.where(p_ras > 0, p_ras, izvoz)
 
     # gradski projekt: čestice s urbanim pravilom GP 2025.
     u_4326 = Transformer.from_crs(4326, 3857, always_xy=True).transform
-    gp, vidjene = [], set()
+    gp, vidjene, cestice_dgu = [], set(), []
     for f in glob.glob(os.path.join(JAVNO, "geo", "gup-grad", "cestice", "*.json")):
         for ft in json.load(open(f))["features"]:
             p = ft["properties"]
             if p["i"] in vidjene or not ft["geometry"]:
                 continue
             vidjene.add(p["i"])
+            g = stransform(u_4326, shape(ft["geometry"]))
+            cestice_dgu.append(g)
             if (p.get("u") or {}).get("2025") == "GP":
-                gp.append(stransform(u_4326, shape(ft["geometry"])))
+                gp.append(g)
     projekt = features.rasterize(((g, 1) for g in gp), out_shape=(H, W), transform=transform, fill=0, dtype="uint8") > 0
+
+    # vlasnik po cijeloj čestici DGU-a: javna ako je barem pola pod javnim, s najčešćim vlasnikom
+    rid = features.rasterize(((g, n + 1) for n, g in enumerate(cestice_dgu)), out_shape=(H, W), transform=transform, fill=0, dtype="int32")
+    n = len(cestice_dgu) + 1
+    ukupno = np.bincount(rid.ravel(), minlength=n)
+    vlasnik_cestice = np.zeros(n, np.uint8)
+    najvise = np.zeros(n, np.int64)
+    for kod in range(1, 5):
+        broj = np.bincount(rid[izvoz == kod], minlength=n)
+        bolji = broj > najvise
+        vlasnik_cestice[bolji] = kod
+        najvise[bolji] = broj[bolji]
+    javnih = np.bincount(rid[izvoz > 0], minlength=n)
+    vlasnik_cestice[javnih < VECINA * np.maximum(ukupno, 1)] = 0
+    vlasnik_cestice[0] = 0
+    # izvan čestica DGU-a (more, rubovi) ostaje izvoz kakav jest
+    vlasnik = np.where(rid > 0, vlasnik_cestice[rid], izvoz).astype(np.uint8)
 
     oznaka = vlasnik | np.where(projekt, GRADSKI_PROJEKT, 0).astype(np.uint8)
     if os.path.isdir(IZLAZ):
@@ -107,7 +175,7 @@ def main() -> None:
             Image.fromarray(t, "L").save(os.path.join(IZLAZ, os.path.basename(p["url"])), optimize=True)
     m2 = (korak * np.cos(np.radians(43.51))) ** 2
     print(f"javno: RH {(vlasnik == 1).sum() * m2 / 1e4:.1f} ha, Grad {(vlasnik == 2).sum() * m2 / 1e4:.1f} ha, "
-          f"županija {(vlasnik == 3).sum() * m2 / 1e4:.1f} ha; gradski projekt {len(gp)} čestica, {projekt.sum() * m2 / 1e4:.1f} ha → {IZLAZ}")
+          f"županija {(vlasnik == 3).sum() * m2 / 1e4:.1f} ha, javne ustanove i tvrtke {(vlasnik == 4).sum() * m2 / 1e4:.1f} ha; gradski projekt {len(gp)} čestica, {projekt.sum() * m2 / 1e4:.1f} ha → {IZLAZ}")
 
 
 if __name__ == "__main__":
