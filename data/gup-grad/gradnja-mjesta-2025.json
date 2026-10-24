@@ -2,14 +2,16 @@
  "opis": "Mjesta za gradnju: povezane mrlje kategorije na karti (gradnja-zone.py).",
  "mjesta": {
   "stambeno": {
-   "od_250_m2": 424,
-   "od_500_m2": 293,
-   "od_1000_m2": 185
+   "od_250_m2": 297,
+   "od_500_m2": 270,
+   "od_1000_m2": 189,
+   "ha": 101.2
   },
   "uz-cestu-stambeno": {
-   "od_250_m2": 73,
-   "od_500_m2": 63,
-   "od_1000_m2": 45
+   "od_250_m2": 38,
+   "od_500_m2": 34,
+   "od_1000_m2": 23,
+   "ha": 14.2
   }
  }
 }

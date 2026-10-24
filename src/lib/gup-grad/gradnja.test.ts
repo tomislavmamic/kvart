@@ -88,11 +88,13 @@ test("vojna zona, gradski projekt, golf i odmaci", () => {
   assert.equal(sa("S", REGIJE.slobodno, { odmaci: true }), "odmaci");
   assert.equal(sa("S", REGIJE.ceka, { odmaci: true, neuredeno: true }), "odmaci");
   assert.equal(sa("M/K5", REGIJE.ceka, { odmaci: true }), "ceka-upu");
+  assert.equal(sa("S", REGIJE.slobodno, { odmak: true }), "odmak");
+  assert.equal(sa("I/K", REGIJE.slobodno, { odmak: true }), "odmak");
 });
 
 test("bajt pločice nosi razlog i vlasnika javnog zemljišta", () => {
   for (const k of KATEGORIJE)
-    for (const v of [0, 1, 2, 3]) assert.deepEqual(razlozi(kodPiksela(k.kod, v)), { kategorija: k.kod, vlasnik: v });
+    for (const v of [0, 1, 2, 3, 4]) assert.deepEqual(razlozi(kodPiksela(k.kod, v)), { kategorija: k.kod, vlasnik: v });
   assert.ok(KATEGORIJE.every((k) => k.kod < 32));
 });
 

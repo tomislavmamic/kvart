@@ -82,7 +82,7 @@ function main() {
     // putovi (1) i preusko (2) iz gradnja-skupine.py, sivi PNG iste mreže
     const putSkupina = path.join(SKUPINE, path.basename(p.url));
     const sku = existsSync(putSkupina) ? PNG.sync.read(readFileSync(putSkupina)).data : null;
-    // vlasnik javnog (bitovi 0–1) i gradski projekt (bit 2) iz gradnja-javno.py
+    // vlasnik javnog (bitovi 0–2) i gradski projekt (bit 3) iz gradnja-javno.py
     const putJavnog = path.join(JAVNE, path.basename(p.url));
     const jav = existsSync(putJavnog) ? PNG.sync.read(readFileSync(putJavnog)).data : null;
     const [[jug, zapad], [sjever, istok]] = p.granice;
@@ -105,10 +105,11 @@ function main() {
           koridor,
           put: s === 1,
           preusko: s === 2,
-          odmaci: s === 3,
-          gradskiProjekt: (jv & 4) > 0,
+          odmak: s === 3,
+          odmaci: s === 4,
+          gradskiProjekt: (jv & 8) > 0,
         });
-        const vlasnik = jv & 3;
+        const vlasnik = jv & 7;
         d[i + 2] = kodPiksela(k, vlasnik);
         if (!k) {
           d[i + 3] = 0;

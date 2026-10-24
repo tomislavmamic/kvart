@@ -39,11 +39,13 @@ Ovdje, u dva koraka:
    čestica koju plan igdje propisuje za stanovanje). Ostalo je preusko.
    Stambene zone (S, M/K5) spajaju se međusobno, ostale svaka za sebe.
 
-3. ODMACI. Zgrada mora biti 5 m od javne ulice (postojeće, planirane,
-   koridora i puta) i 3 m od ostalih međa spojene čestice. Gradilište iz
-   koraka 2 ostaje samo ako mu nakon tih odmaka ostane mjesta za zgradu
-   široku barem 6 m s tlocrtom od barem 60 m²; inače je „nema mjesta uz
-   odmake”.
+3. MJESTO ZA ZGRADU. Zgrada mora biti 5 m od javne ulice (postojeće,
+   planirane, koridora i puta) i 3 m od ostalih međa spojene čestice.
+   „Mjesto za zgradu” je samo ono unutar tih odmaka u što stane zgrada
+   široka barem 6 m, s tlocrtom od barem 60 m². Karta zeleno (ili plavo)
+   boji samo to; ostatak gradilišta je „odmak” (dvorište, prilaz nove
+   zgrade), a gradilište u koje zgrada uz odmake uopće ne stane je „zgrada
+   ne stane”. Tako ne ostaju zelene ni uske trake ni rubovi uz tuđe zgrade.
 
 Ulaz:  public/geo/gup-grad/regije.json i pločice („po odredbama”, 2025.),
        data/gup-grad/koridori-2025 (koridori.py), data/gup-grad/javno-2025
@@ -51,7 +53,7 @@ Ulaz:  public/geo/gup-grad/regije.json i pločice („po odredbama”, 2025.),
        public/geo/gup-grad/cestice, OSM ceste .cache/gup-grad/osm-ceste.json
        (osm.py; bez njih samo pravilo susjeda)
 Izlaz: data/gup-grad/skupine-2025/<red>_<stupac>.png — 1 = put, 2 = preusko,
-       3 = zgrada ne stane uz odmake;
+       3 = odmak na gradilištu, 4 = zgrada ne stane uz odmake;
        čita ih scripts/gup-grad/gradnja.ts
        public/geo/gup-grad/putovi-2025.json — čestice proglašene putom, s
        mjerama i razlogom (tumač klika na karti ih navodi)
@@ -283,21 +285,23 @@ def main() -> None:
         zadrzano |= jezgra
     preusko = gradivo & ~zadrzano
 
-    # ---- 3. odmaci -------------------------------------------------------
+    # ---- 3. mjesto za zgradu i odmaci -------------------------------------
+    # Udaljenosti se mjere od ruba piksela (EDT daje udaljenost do središta
+    # susjednog piksela, pa se oduzme pola piksela).
     javna_ulica = (regija == 3) | (klasa == 15) | koridor | put
-    do_ulice = ndimage.distance_transform_edt(~javna_ulica) * m_po_px
-    rz = ZGRADA_M / 2 / m_po_px
-    nz = int(math.ceil(rz))
-    yy, xx = np.mgrid[-nz:nz + 1, -nz:nz + 1]
-    krug_zgrade = xx * xx + yy * yy <= rz * rz
-    bez_odmaka = np.zeros(klasa.shape, bool)
+    do_ulice = (ndimage.distance_transform_edt(~javna_ulica) - 0.5) * m_po_px
+    mjesto = np.zeros(klasa.shape, bool)
+    odmak = np.zeros(klasa.shape, bool)
+    ne_stane = np.zeros(klasa.shape, bool)
     for kl in skupine:
         cestica = zadrzano & np.isin(klasa, kl)
         if not cestica.any():
             continue
-        do_mede = ndimage.distance_transform_edt(cestica) * m_po_px
+        do_mede = (ndimage.distance_transform_edt(cestica) - 0.5) * m_po_px
         unutra = cestica & (do_ulice >= ODMAK_ULICA_M) & (do_mede >= ODMAK_MEDA_M)
-        zgrada = ndimage.binary_opening(unutra, structure=krug_zgrade)
+        # zgrada široka ZGRADA_M: središta u koja stane krug toga promjera, i sve što takvi krugovi pokriju
+        sredista = unutra & ((ndimage.distance_transform_edt(unutra) - 0.5) * m_po_px >= ZGRADA_M / 2)
+        zgrada = unutra & (ndimage.distance_transform_edt(~sredista) * m_po_px <= ZGRADA_M / 2)
         oz, nzg = ndimage.label(zgrada)
         if nzg:
             vel = ndimage.sum_labels(np.ones_like(oz), oz, index=np.arange(1, nzg + 1)) * m_po_px ** 2
@@ -306,14 +310,15 @@ def main() -> None:
         ima = np.zeros(nc + 1, bool)
         ima[np.unique(oc[zgrada])] = True
         ima[0] = False
-        bez_odmaka |= cestica & ~ima[oc]
-    zadrzano &= ~bez_odmaka
+        mjesto |= zgrada
+        odmak |= cestica & ~zgrada & ima[oc]
+        ne_stane |= cestica & ~ima[oc]
 
     # ---- izlaz -------------------------------------------------------------
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     os.makedirs(IZLAZ)
-    oznaka = np.where(put, 1, np.where(preusko, 2, np.where(bez_odmaka, 3, 0))).astype(np.uint8)
+    oznaka = np.select([put, preusko, odmak, ne_stane], [1, 2, 3, 4], 0).astype(np.uint8)
     for r0, c0, p in plocice:
         h, w = velicina[(r0, c0)]
         t = oznaka[r0 * PLOCICA:r0 * PLOCICA + h, c0 * PLOCICA:c0 * PLOCICA + w]
@@ -326,8 +331,8 @@ def main() -> None:
     ha = lambda m: round(float(m.sum()) * m_po_px ** 2 / 1e4, 1)  # noqa: E731
     from collections import Counter
     print(f"putovi: {len(putovi)} čestica, {ha(put & slobodno)} ha slobodnog na njima", dict(Counter(d["razlog"] for d in opis)))
-    print(f"slobodno zone za gradnju {ha(slobodno)} ha → gradivo {ha(zadrzano)} ha, preusko {ha(preusko)} ha, "
-          f"zgrada ne stane uz odmake {ha(bez_odmaka)} ha")
+    print(f"slobodno zone za gradnju {ha(slobodno)} ha → gradilišta {ha(zadrzano)} ha (mjesto za zgradu {ha(mjesto)} ha, "
+          f"odmak {ha(odmak)} ha, zgrada ne stane {ha(ne_stane)} ha), preusko {ha(preusko)} ha")
 
 
 if __name__ == "__main__":
