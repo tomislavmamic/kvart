@@ -278,7 +278,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     skupina: "nista",
     naziv: "Zgrada ne stane uz propisane odmake",
     razlog:
-      "Slobodno je i dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica. Kad se ti odmaci oduzmu, ne ostaje mjesta ni za zgradu široku 6 m s tlocrtom od 60 m².",
+      "Slobodno je i dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica. Kad se ti odmaci oduzmu, ne ostaje 150 m² mjesta za zgradu široku barem 8 m.",
     boja: "#ffffff",
     alfa: 0.55,
   },

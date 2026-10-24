@@ -35,14 +35,16 @@ Ovdje, u dva koraka:
 2. TLOCRT. Slobodno zemljište zone za gradnju, bez putova i koridora ulica,
    spaja se preko međa (susjedne slobodne čestice smiju se spojiti), ali
    gradilište je samo ono u što stane krug od 10 m (odredbe: građevna
-   čestica široka barem 10 m) i čiji je takav dio barem 250 m² (najmanja
-   čestica koju plan igdje propisuje za stanovanje). Ostalo je preusko.
+   čestica široka barem 10 m) i čiji je takav dio barem 400 m² (najmanja
+   čestica koju plan u većini područja traži za dvojnu kuću; 300 m² vrijedi
+   samo za interpolaciju između dviju izgrađenih). Ostalo je preusko.
    Stambene zone (S, M/K5) spajaju se međusobno, ostale svaka za sebe.
 
 3. MJESTO ZA ZGRADU. Zgrada mora biti 5 m od javne ulice (postojeće,
    planirane, koridora i puta) i 3 m od ostalih međa spojene čestice.
    „Mjesto za zgradu” je samo ono unutar tih odmaka u što stane zgrada
-   široka barem 6 m, s tlocrtom od barem 60 m². Karta zeleno (ili plavo)
+   široka barem 8 m, a mjesta za nju ima barem 150 m² (na čestici od
+   400–500 m² s odmacima od 3 i 5 m to je uobičajeno 150–250 m²). Karta zeleno (ili plavo)
    boji samo to; ostatak gradilišta je „odmak” (dvorište, prilaz nove
    zgrade), a gradilište u koje zgrada uz odmake uopće ne stane je „zgrada
    ne stane”. Tako ne ostaju zelene ni uske trake ni rubovi uz tuđe zgrade.
@@ -107,16 +109,16 @@ DODIR_M = 0.3
 NIJE_PUT = {"platform", "proposed", "construction", "corridor", "elevator", "raceway", "bus_stop"}
 
 TLOCRT_M = 10.0
-NAJMANJE_M2 = 250.0
+NAJMANJE_M2 = 400.0
 # odmaci zgrade (odredbe GUP-a): od javne prometne površine 5 m, od ostalih međa
 # građevne čestice 3 m. Međa je rub spojene skupine slobodnih čestica, ne
 # međa svake katastarske čestice u njoj (spojene čestice čine jednu građevnu).
 ODMAK_ULICA_M = 5.0
 ODMAK_MEDA_M = 3.0
 # najmanja zgrada koja mora stati unutar odmaka (naša pretpostavka, ne odredba):
-# široka barem 6 m, tlocrta barem 60 m²
-ZGRADA_M = 6.0
-ZGRADA_M2 = 60.0
+# široka barem 8 m, s barem 150 m² mjesta za nju
+ZGRADA_M = 8.0
+ZGRADA_M2 = 150.0
 
 
 def mozaik():
