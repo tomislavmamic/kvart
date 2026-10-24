@@ -248,6 +248,8 @@ export interface Slojevi {
   ppug: ListPpug[];
   /** razred čestice pod zabranom po PPUG-u, po „k.o.|k.č.” */
   ppugCestice: Record<string, "U" | "I" | "N">;
+  /** rupa u zabrani: „k.o.|k.č.” čestica koje PPUG vodi kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake */
+  rupa: Set<string>;
   /** Sve što karta boji kao jedan oblik — za udaljenost do ruba. */
   obris: Oblik | null;
   vazeci: PlanNaSnazi[];
@@ -318,6 +320,7 @@ export function slojeviIzGeojsona(
       ([id, l]) => ({ id, broj: l.broj, udio: l.udio as ListPpug["udio"], kartaDo: l.karta_do }),
     ),
     ppugCestice: ((ppugIzvor as unknown as { ppug_cestice?: Record<string, "U" | "I" | "N"> })?.ppug_cestice) ?? {},
+    rupa: new Set((ppugIzvor as unknown as { zbroj?: { ppug_rupa?: { kljucevi?: string[] } } })?.zbroj?.ppug_rupa?.kljucevi ?? []),
     obris: jedan("obris"),
     gup: jedan("gup"),
     vazeci: planovi.features

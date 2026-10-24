@@ -51,7 +51,8 @@ kriterijima koji se mogu izmjeriti:
   („izgradjena”): zakon neuređenim naziva dio neizgrađenog dijela.
 
   Za usporedbu se broji i kako list 4.d označava čestice prema razredu na
-  listu PPUG-a (zbroj „ppug_4d”), u svim obuhvatima propisanih UPU-a.
+  listu PPUG-a (zbroj „ppug_4d”), u svim obuhvatima propisanih UPU-a, i po UPU-u
+  čestice neizgrađene bez šrafure koje list 4.d ostavlja bez oznake (zbroj „ppug_rupa”).
 
 Broje se samo čestice na kojima zabrana stvarno pogađa novu gradnju
 (zabrana-cestice-2025.geojson, zabrana.py), od najmanje 250 m² (najmanja
@@ -148,14 +149,33 @@ def udio_u(g, maska) -> float:
 VAZECI, OBVEZA = 1, 2
 
 
-def ppug_prema_4d(ppug: dict) -> dict:
+def oznaka_4d(g, b: np.ndarray) -> str | None:
+    """Oznaka s lista 4.d pod česticom od najmanje 250 m² (HTRS96): sanacija,
+    neuređeno, preobrazba ili „bez”; None ako čestica nije većinom u obuhvatu
+    propisanog UPU-a izvan važećih planova, pa je zabrana se ne tiče."""
+    if g.area < NAJMANJA_CESTICA_M2:
+        return None
+    v = pikseli(g, b)
+    if not v.size or (((v & OBVEZA) > 0) & ((v & VAZECI) == 0)).mean() < 0.5:
+        return None
+    return next((ime for bit, ime in ((Z.SANACIJA, "sanacija"), (Z.NEUREDENO, "neuredeno"), (Z.PREOBRAZBA, "preobrazba"))
+                 if ((v & bit) > 0).mean() >= 0.5), "bez")
+
+
+def ppug_prema_4d(ppug: dict, upu: list) -> tuple[dict, dict]:
     """Razred čestice na listu PPUG-a prema oznaci s lista 4.d, za čestice od
     250 m² u obuhvatima propisanih UPU-a izvan važećih planova. Pokazuje po
     čemu list 4.d crta oznake: sanaciju i preobrazbu na izgrađenom dijelu
     PPUG-a, neuređeni dio na šrafiranom, a neizgrađeno bez šrafure ostavlja
-    bez oznake (gradi se neposrednom provedbom GUP-a)."""
+    bez oznake (gradi se neposrednom provedbom GUP-a).
+
+    Drugi rezultat je ta „rupa” u zabrani po UPU-u: čestice koje PPUG vodi
+    kao neizgrađene bez šrafure, a list 4.d ostavlja bez oznake, s popisom
+    njihovih ključeva „k.o.|k.č.” za karticu na karti. upu je popis
+    (broj, naziv, pripremljen oblik u HTRS96)."""
     b = np.load(Z.REZIM)
     out = {r: {o: [0, 0.0] for o in ("sanacija", "preobrazba", "neuredeno", "bez")} for r in ("I", "N", "U")}
+    rupa, kljucevi = {}, []
     for put in sorted(glob.glob(os.path.join(Z.PLOCICE, "*.json"))):
         for f in json.load(open(put))["features"]:
             p = f["properties"]
@@ -163,16 +183,22 @@ def ppug_prema_4d(ppug: dict) -> dict:
             if r not in out:
                 continue
             g = stransform(Z.U_HTRS, shape(f["geometry"]))
-            if g.area < NAJMANJA_CESTICA_M2:
+            o = oznaka_4d(g, b)
+            if o is None:
                 continue
-            v = pikseli(g, b)
-            if not v.size or (((v & OBVEZA) > 0) & ((v & VAZECI) == 0)).mean() < 0.5:
-                continue
-            o = next((ime for bit, ime in ((Z.SANACIJA, "sanacija"), (Z.NEUREDENO, "neuredeno"), (Z.PREOBRAZBA, "preobrazba"))
-                      if ((v & bit) > 0).mean() >= 0.5), "bez")
             out[r][o][0] += 1
             out[r][o][1] += g.area / 1e4
-    return {r: {o: {"cestice": n, "ha": round(h, 1)} for o, (n, h) in d.items()} for r, d in out.items()}
+            if r == "N" and o == "bez":
+                kljucevi.append(f"{p['ko']}|{p['kc']}")
+                t = g.representative_point()
+                broj, naziv = next(((br, nz) for br, nz, pg in upu if pg.contains(t)), (0, None))
+                z = rupa.setdefault(broj, {"broj": broj, "naziv": naziv, "cestice": 0, "ha": 0.0})
+                z["cestice"] += 1
+                z["ha"] += g.area / 1e4
+    tablica = {r: {o: {"cestice": n, "ha": round(h, 1)} for o, (n, h) in d.items()} for r, d in out.items()}
+    po_upu = sorted(({**z, "ha": round(z["ha"], 1)} for z in rupa.values()), key=lambda z: -z["ha"])
+    return tablica, {"cestice": sum(z["cestice"] for z in po_upu), "ha": round(sum(z["ha"] for z in rupa.values()), 1),
+                     "po_upu": po_upu, "kljucevi": sorted(set(kljucevi))}
 
 
 def u_htrs(geoms):
@@ -506,8 +532,11 @@ def main() -> None:
     print("ceste km:", {k: round(sum(x.length for x in ls) / 1e3, 1) for k, ls in razredi.items()})
 
     okrugli = {k: ({"cestice": v[0], "ha": round(v[1], 1)} if isinstance(v, list) else v) for k, v in zbroj.items()}
-    okrugli["ppug_4d"] = ppug_prema_4d(ppug)
+    upu_oblici = [(f["properties"]["broj"], f["properties"]["naziv"], prep(stransform(Z.U_HTRS, shape(f["geometry"])).buffer(0)))
+                  for f in pr["features"] if f["properties"]["vrsta"] == "propisan"]
+    okrugli["ppug_4d"], okrugli["ppug_rupa"] = ppug_prema_4d(ppug, upu_oblici)
     print("PPUG × 4.d:", okrugli["ppug_4d"])
+    print("rupa (PPUG neizgrađeno bez oznake na 4.d):", okrugli["ppug_rupa"])
     okrugli["plohe"] = [{k: f["properties"][k] for k in ("ha", "zgrade", "udio", "upu", "manjina")} for f in plohe_f]
     okrugli["po_upu"] = {}
     for f in sporne:
