@@ -52,7 +52,7 @@ NAJUZE_M = 5.0
 # manja zatvorena praznina usred zone je rupa u crtežu, ne ulica
 NAJMANJE_M2 = 150.0
 # indeksi klasa (src/lib/gup-grad/model.ts) u kojima je koridor novost: zone za gradnju
-GRADEVNE = (1, 2, 3, 4, 5, 6, 7, 12, 14)  # S, M/K5, D, I/K, T, L, R1, N, R5
+GRADEVNE = (1, 2, 3, 4, 5, 6, 7, 12)  # S, M/K5, D, I/K, T, L, R1, N
 P = 15
 # rub zone uz već prepoznatu ulicu (vidi gore), m na tlu
 UZ_ULICU_M = 6.0

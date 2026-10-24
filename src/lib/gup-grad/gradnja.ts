@@ -46,7 +46,9 @@ export type ZonaGradnje =
  * Prema dopuštenim vrstama u pravila.ts (`dopusteno`, s citatima odredbi):
  *  - D, I/K, T, L, R1, N: stambena zgrada nije dopuštena (u I/K stan samo
  *    uz posao na čestici od 2000 m², što ovdje nije stambena gradnja);
- *  - R5 golf je izdvojeno građevinsko područje za golf i njegove sadržaje;
+ *  - R5 golf: „golf igralište s 18 polja i prateći sadržaji bez smještajnih
+ *    kapaciteta” (odredbe 2025.) — igralište, ne zemljište za zgrade, pa je
+ *    kao rekreacija;
  *  - R2, R3: samo manji ugostiteljski i pomoćni sadržaji uz rekreaciju i
  *    kupalište, R4 prirodna plaža bez ikakve gradnje, Z1 park samo paviljoni
  *    i sanitarni čvorovi, Z5 ništa, Z6 samo postojeće kuće.
@@ -59,7 +61,7 @@ export const ZONA_GRADNJE: Record<KodKlase, ZonaGradnje> = {
   T: "nestambena",
   L: "nestambena",
   R1: "nestambena",
-  R5: "nestambena",
+  R5: "bez-zgrada",
   N: "nestambena",
   R2: "bez-zgrada",
   R3: "bez-zgrada",
@@ -83,7 +85,7 @@ export const OPIS_ZONE: Record<ZonaGradnje, string> = {
  * (do UPU-a gradi se samo uz postojeću javnu cestu) ide u skupinu svoje
  * namjene — nestambeno ili stambeno — istom bojom, ali šrafirano.
  */
-export type Skupina = "nista" | "nestambeno" | "stambeno";
+export type Skupina = "nista" | "nestambeno" | "stambeno" | "javno";
 
 export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string; glavna: IdKategorije; uvjetna?: IdKategorije }> = {
   nista: { naslov: "Ne može se graditi ništa novo", kratko: "Ništa novo", glavna: "zgrada" },
@@ -99,6 +101,8 @@ export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string; 
     glavna: "stambeno",
     uvjetna: "uz-cestu-stambeno",
   },
+  // javno zemljište i vojska nisu zemljište na kojem građanin gradi, pa se ne broje ni u jedan od tri odgovora
+  javno: { naslov: "Javno zemljište", kratko: "Javno zemljište", glavna: "javno" },
 };
 
 export type IdKategorije =
@@ -113,6 +117,10 @@ export type IdKategorije =
   | "neizgradivo"
   | "premalo"
   | "put"
+  | "odmaci"
+  | "gradski-projekt"
+  | "vojska"
+  | "javno"
   | "ceka-upu"
   | "uz-cestu-stambeno"
   | "uz-cestu-nestambeno"
@@ -216,9 +224,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 6,
     id: "bez-zgrada",
     skupina: "nista",
-    naziv: "Park, zelenilo, rekreacija ili plaža",
+    naziv: "Park, zelenilo, rekreacija, golf ili plaža",
     razlog:
-      "Novi GUP ovdje predviđa park, zaštitno zelenilo, rekreaciju ili plažu. Zgrade se neće graditi, osim manjih pratećih (paviljon, sanitarni čvor, kiosk).",
+      "Novi GUP ovdje predviđa park, zaštitno zelenilo, rekreaciju, golf igralište ili plažu. Zgrade se neće graditi, osim manjih pratećih (paviljon, sanitarni čvor, kiosk, klupska kuća golfa).",
     boja: "#ffffff",
     alfa: 0.55,
   },
@@ -253,6 +261,16 @@ export const KATEGORIJE: readonly Kategorija[] = [
     alfa: 0.55,
   },
   {
+    kod: 20,
+    id: "odmaci",
+    skupina: "nista",
+    naziv: "Zgrada ne stane uz propisane odmake",
+    razlog:
+      "Slobodno je i dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica. Kad se ti odmaci oduzmu, ne ostaje mjesta ni za zgradu široku 6 m s tlocrtom od 60 m².",
+    boja: "#ffffff",
+    alfa: 0.55,
+  },
+  {
     kod: 16,
     id: "put",
     skupina: "nista",
@@ -269,6 +287,19 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Ništa novo dok se ne donese UPU",
     razlog:
       "Ovo je područje urbane sanacije ili preobrazbe (list 4.d novog GUP-a). Nova zgrada moći će se graditi tek po UPU-u, detaljnijem planu koji mora donijeti Grad. Do tada se postojeće zgrade smiju samo obnoviti ili zamijeniti.",
+    boja: "#ffffff",
+    alfa: 0.45,
+    pruge: "#52525b",
+    prugeAlfa: 0.8,
+    mreza: true,
+  },
+  {
+    kod: 17,
+    id: "gradski-projekt",
+    skupina: "nista",
+    naziv: "Gradski projekt: ništa novo dok se ne odobri",
+    razlog:
+      "Ovo je područje gradskog projekta (urbano pravilo GP na listu 4.c novog GUP-a). Ondje se gradi samo po odobrenom projektu za cijelo područje, i samo ono što projekt predvidi. Dok projekta nema, na slobodnom zemljištu neće se moći graditi.",
     boja: "#ffffff",
     alfa: 0.45,
     pruge: "#52525b",
@@ -317,7 +348,37 @@ export const KATEGORIJE: readonly Kategorija[] = [
     boja: "#15803d",
     alfa: 0.85,
   },
+  {
+    kod: 19,
+    id: "javno",
+    skupina: "javno",
+    naziv: "Zemljište Grada, države ili županije",
+    razlog:
+      "Na javnom zemljištu ne gradi građanin, pa se ono ne broji ni u jedan od tri odgovora, bilo izgrađeno ili ne.",
+    boja: "#ca8a04",
+    alfa: 0.8,
+  },
+  {
+    kod: 18,
+    id: "vojska",
+    skupina: "javno",
+    naziv: "Vojna zona (posebna namjena)",
+    razlog:
+      "Novi GUP ovdje predviđa posebnu namjenu: zemljište za potrebe obrane (npr. Lora). Ondje se ne gradi za stanovanje ni za tržište, pa se ne broji ni u jedan od tri odgovora.",
+    boja: "#ca8a04",
+    alfa: 0.8,
+  },
 ];
+
+/**
+ * Bajt kategorije u pločici (kanal B): donjih 5 bitova je razlog
+ * (`kod` kategorije), gornja dva vlasnik javnog zemljišta (1 RH, 2 Grad,
+ * 3 županija; 0 nije javno ili se ne zna). Javno zemljište tako zadrži i
+ * razlog ispod sebe, za tumač klika i kad se skupina „Javno” ugasi.
+ */
+export const VLASNIK_JAVNOG = { 1: "Republika Hrvatska", 2: "Grad Split", 3: "Splitsko-dalmatinska županija" } as const;
+export const kodPiksela = (kategorija: number, vlasnik: number) => (kategorija & 31) | ((vlasnik & 3) << 5);
+export const razlozi = (bajt: number) => ({ kategorija: bajt & 31, vlasnik: (bajt >> 5) & 3 });
 
 export const KATEGORIJA_PO_KODU: ReadonlyMap<number, Kategorija> = new Map(KATEGORIJE.map((k) => [k.kod, k]));
 export const KATEGORIJA_PO_ID: Record<IdKategorije, Kategorija> = Object.fromEntries(KATEGORIJE.map((k) => [k.id, k])) as Record<
@@ -341,6 +402,10 @@ export interface UvjetiPiksela {
   put?: boolean;
   /** slobodno, ali ni sa slobodnim susjedima u njega ne stane tlocrt (gradnja-skupine.py) */
   preusko?: boolean;
+  /** slobodno i široko, ali zgrada uz odmake od ulice i međa ne stane (gradnja-skupine.py) */
+  odmaci?: boolean;
+  /** na čestici s urbanim pravilom GP — gradski projekt (gradnja-javno.py) */
+  gradskiProjekt?: boolean;
 }
 
 /** Ishodi u kojima bi se moglo graditi — samo njih poništava preusko zemljište. */
@@ -352,11 +417,13 @@ const GRADIVE: readonly IdKategorije[] = ["stambeno", "nestambeno", "uz-cestu-st
  * ili 0 kad piksel nije na čestici u obuhvatu.
  */
 export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela = {}): number {
-  const { neuredeno = false, koridor = false, put = false, preusko = false } = uvjeti;
+  const { neuredeno = false, koridor = false, put = false, preusko = false, odmaci = false, gradskiProjekt = false } = uvjeti;
   const z = zonaKlase(klasa);
   const zona = z && koridor ? "promet" : z;
   if (!zona || regija <= 0) return 0;
   const K = KATEGORIJA_PO_ID;
+  // vojna zona cijela, izgrađena ili ne: u izvozu vlasnika Grada nije upisana kao državna
+  if (KLASA_PO_INDEKSU.get(klasa)?.kod === "N") return K.vojska.kod;
   // 1. zauzeto
   switch (regija) {
     case REGIJE.zgrada:
@@ -377,9 +444,11 @@ export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela 
   if (zona === "promet") return koridor ? K.koridor.kod : K["rezerva-prometa"].kod;
   if (zona === "bez-zgrada") return K["bez-zgrada"].kod;
   if (put) return K.put.kod;
+  if (gradskiProjekt) return K["gradski-projekt"].kod;
   // 3.–5. razlog iz izračuna po komadu
   const k = razlogKomada(klasa, regija, zona, neuredeno);
-  return preusko && GRADIVE.includes(KATEGORIJA_PO_KODU.get(k)!.id) ? K.premalo.kod : k;
+  if (!GRADIVE.includes(KATEGORIJA_PO_KODU.get(k)!.id)) return k;
+  return preusko ? K.premalo.kod : odmaci ? K.odmaci.kod : k;
 }
 
 function razlogKomada(klasa: number, regija: number, zona: ZonaGradnje, neuredeno: boolean): number {

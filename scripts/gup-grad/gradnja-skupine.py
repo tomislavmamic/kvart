@@ -39,16 +39,24 @@ Ovdje, u dva koraka:
    čestica koju plan igdje propisuje za stanovanje). Ostalo je preusko.
    Stambene zone (S, M/K5) spajaju se međusobno, ostale svaka za sebe.
 
+3. ODMACI. Zgrada mora biti 5 m od javne ulice (postojeće, planirane,
+   koridora i puta) i 3 m od ostalih međa spojene čestice. Gradilište iz
+   koraka 2 ostaje samo ako mu nakon tih odmaka ostane mjesta za zgradu
+   široku barem 6 m s tlocrtom od barem 60 m²; inače je „nema mjesta uz
+   odmake”.
+
 Ulaz:  public/geo/gup-grad/regije.json i pločice („po odredbama”, 2025.),
-       data/gup-grad/koridori-2025 (koridori.py), čestice
+       data/gup-grad/koridori-2025 (koridori.py), data/gup-grad/javno-2025
+       (gradnja-javno.py: javno i gradski projekti ne ulaze u spajanje), čestice
        public/geo/gup-grad/cestice, OSM ceste .cache/gup-grad/osm-ceste.json
        (osm.py; bez njih samo pravilo susjeda)
-Izlaz: data/gup-grad/skupine-2025/<red>_<stupac>.png — 1 = put, 2 = preusko;
+Izlaz: data/gup-grad/skupine-2025/<red>_<stupac>.png — 1 = put, 2 = preusko,
+       3 = zgrada ne stane uz odmake;
        čita ih scripts/gup-grad/gradnja.ts
        public/geo/gup-grad/putovi-2025.json — čestice proglašene putom, s
        mjerama i razlogom (tumač klika na karti ih navodi)
 
-Pokretanje (poslije koridori.py, prije gradnja.ts):
+Pokretanje (poslije koridori.py i gradnja-javno.py, prije gradnja.ts):
   /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-skupine.py
 """
 from __future__ import annotations
@@ -75,6 +83,7 @@ import rasteriziraj as R  # noqa: E402
 
 JAVNO = os.path.join(R.ROOT, "public")
 KORIDORI = os.path.join(R.ROOT, "data", "gup-grad", "koridori-2025")
+JAVNE = os.path.join(R.ROOT, "data", "gup-grad", "javno-2025")
 IZLAZ = os.path.join(R.ROOT, "data", "gup-grad", "skupine-2025")
 IZLAZ_PUTOVA = os.path.join(JAVNO, "geo", "gup-grad", "putovi-2025.json")
 OSM_CESTE = os.path.join(R.OUT, "osm-ceste.json")
@@ -82,7 +91,7 @@ PLOCICA = 512
 
 # klase (src/lib/gup-grad/model.ts): zone za gradnju i koje se smiju spajati
 STAMBENE = (1, 2)  # S, M/K5
-GRADEVNE = (1, 2, 3, 4, 5, 6, 7, 12, 14)  # + D, I/K, T, L, R1, N, R5
+GRADEVNE = (1, 2, 3, 4, 5, 6, 7)  # + D, I/K, T, L, R1 (N je vojna zona, R5 golf bez zgrada)
 # regije (src/lib/gup-grad/regije.ts): slobodno i slobodni ostaci koji se mogu spojiti, i čeka plan
 SLOBODNE_REGIJE = (10, 11, 12, 15)
 
@@ -97,6 +106,15 @@ NIJE_PUT = {"platform", "proposed", "construction", "corridor", "elevator", "rac
 
 TLOCRT_M = 10.0
 NAJMANJE_M2 = 250.0
+# odmaci zgrade (odredbe GUP-a): od javne prometne površine 5 m, od ostalih međa
+# građevne čestice 3 m. Međa je rub spojene skupine slobodnih čestica, ne
+# međa svake katastarske čestice u njoj (spojene čestice čine jednu građevnu).
+ODMAK_ULICA_M = 5.0
+ODMAK_MEDA_M = 3.0
+# najmanja zgrada koja mora stati unutar odmaka (naša pretpostavka, ne odredba):
+# široka barem 6 m, tlocrta barem 60 m²
+ZGRADA_M = 6.0
+ZGRADA_M2 = 60.0
 
 
 def mozaik():
@@ -112,6 +130,8 @@ def mozaik():
     klasa = np.zeros((H, W), np.uint8)
     regija = np.zeros((H, W), np.uint8)
     koridor = np.zeros((H, W), bool)
+    # javno zemljište i gradski projekti (gradnja-javno.py): ne spajaju se u privatnu građevnu česticu
+    nije_privatno = np.zeros((H, W), bool)
     velicina = {}
     for r, c, p in plocice:
         a = np.array(Image.open(os.path.join(JAVNO, p["url"].lstrip("/"))))
@@ -124,12 +144,15 @@ def mozaik():
         kp = os.path.join(KORIDORI, os.path.basename(p["url"]))
         if os.path.exists(kp):
             koridor[y0:y0 + h, x0:x0 + w] = np.array(Image.open(kp).convert("L")) > 127
+        jp = os.path.join(JAVNE, os.path.basename(p["url"]))
+        if os.path.exists(jp):
+            nije_privatno[y0:y0 + h, x0:x0 + w] = np.array(Image.open(jp)) > 0
     # ishodište iz sjeverozapadnog kuta prve pločice
     r0, c0, p0 = plocice[0]
     (_, zapad), (sjever, _) = p0["granice"]
     x, y = Transformer.from_crs(4326, 3857, always_xy=True).transform(zapad, sjever)
     transform = Affine(korak, 0, x - c0 * PLOCICA * korak, 0, -korak, y + r0 * PLOCICA * korak)
-    return klasa, regija, koridor, transform, korak, plocice, velicina
+    return klasa, regija, koridor, nije_privatno, transform, korak, plocice, velicina
 
 
 def cestice():
@@ -187,8 +210,8 @@ def _pikseli(rid: np.ndarray, oznaka: int):
 
 
 def main() -> None:
-    klasa, regija, koridor, transform, korak, plocice, velicina = mozaik()
-    slobodno = (regija > 0) & np.isin(regija, SLOBODNE_REGIJE) & np.isin(klasa, GRADEVNE) & ~koridor
+    klasa, regija, koridor, nije_privatno, transform, korak, plocice, velicina = mozaik()
+    slobodno = (regija > 0) & np.isin(regija, SLOBODNE_REGIJE) & np.isin(klasa, GRADEVNE) & ~koridor & ~nije_privatno
     # postojeća ulica, ulica plana i koridor; napuhnuto za ~2 m, da je dodiruje i susjedna međa
     ulica = ndimage.binary_dilation((regija == 3) | (klasa == 15) | koridor, iterations=1)
 
@@ -260,11 +283,37 @@ def main() -> None:
         zadrzano |= jezgra
     preusko = gradivo & ~zadrzano
 
+    # ---- 3. odmaci -------------------------------------------------------
+    javna_ulica = (regija == 3) | (klasa == 15) | koridor | put
+    do_ulice = ndimage.distance_transform_edt(~javna_ulica) * m_po_px
+    rz = ZGRADA_M / 2 / m_po_px
+    nz = int(math.ceil(rz))
+    yy, xx = np.mgrid[-nz:nz + 1, -nz:nz + 1]
+    krug_zgrade = xx * xx + yy * yy <= rz * rz
+    bez_odmaka = np.zeros(klasa.shape, bool)
+    for kl in skupine:
+        cestica = zadrzano & np.isin(klasa, kl)
+        if not cestica.any():
+            continue
+        do_mede = ndimage.distance_transform_edt(cestica) * m_po_px
+        unutra = cestica & (do_ulice >= ODMAK_ULICA_M) & (do_mede >= ODMAK_MEDA_M)
+        zgrada = ndimage.binary_opening(unutra, structure=krug_zgrade)
+        oz, nzg = ndimage.label(zgrada)
+        if nzg:
+            vel = ndimage.sum_labels(np.ones_like(oz), oz, index=np.arange(1, nzg + 1)) * m_po_px ** 2
+            zgrada[np.isin(oz, np.flatnonzero(vel < ZGRADA_M2) + 1)] = False
+        oc, nc = ndimage.label(cestica)
+        ima = np.zeros(nc + 1, bool)
+        ima[np.unique(oc[zgrada])] = True
+        ima[0] = False
+        bez_odmaka |= cestica & ~ima[oc]
+    zadrzano &= ~bez_odmaka
+
     # ---- izlaz -------------------------------------------------------------
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     os.makedirs(IZLAZ)
-    oznaka = np.where(put, 1, np.where(preusko, 2, 0)).astype(np.uint8)
+    oznaka = np.where(put, 1, np.where(preusko, 2, np.where(bez_odmaka, 3, 0))).astype(np.uint8)
     for r0, c0, p in plocice:
         h, w = velicina[(r0, c0)]
         t = oznaka[r0 * PLOCICA:r0 * PLOCICA + h, c0 * PLOCICA:c0 * PLOCICA + w]
@@ -277,7 +326,8 @@ def main() -> None:
     ha = lambda m: round(float(m.sum()) * m_po_px ** 2 / 1e4, 1)  # noqa: E731
     from collections import Counter
     print(f"putovi: {len(putovi)} čestica, {ha(put & slobodno)} ha slobodnog na njima", dict(Counter(d["razlog"] for d in opis)))
-    print(f"slobodno zone za gradnju {ha(slobodno)} ha → gradivo {ha(zadrzano)} ha, preusko {ha(preusko)} ha")
+    print(f"slobodno zone za gradnju {ha(slobodno)} ha → gradivo {ha(zadrzano)} ha, preusko {ha(preusko)} ha, "
+          f"zgrada ne stane uz odmake {ha(bez_odmaka)} ha")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,15 @@ export function ucitajZbrojGradnje(): Promise<ZbrojGradnje> {
   return readFile(path.join(process.cwd(), "data", "gup-grad", "gradnja-2025.json"), "utf8").then((t) => JSON.parse(t) as ZbrojGradnje);
 }
 
+/** Broj mjesta za gradnju (spojenih slobodnih čestica) po veličini, iz scripts/gup-grad/gradnja-zone.py. */
+export type MjestaGradnje = Record<"stambeno" | "uz-cestu-stambeno", Record<"od_250_m2" | "od_500_m2" | "od_1000_m2", number>>;
+
+export function ucitajMjestaGradnje(): Promise<MjestaGradnje> {
+  return readFile(path.join(process.cwd(), "data", "gup-grad", "gradnja-mjesta-2025.json"), "utf8").then(
+    (t) => (JSON.parse(t) as { mjesta: MjestaGradnje }).mjesta,
+  );
+}
+
 /** Odredbe 2025. za tumač klika na /gup/gradnja. */
 export interface OdredbeGradnje {
   /** po kodu urbanog pravila: najmanja građevna čestica po vrsti (stanovanje, gospodarska, javna) */

@@ -20,7 +20,7 @@ import type * as LeafletNS from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 
 import { SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
-import { KATEGORIJA_PO_KODU, type Skupina } from "@/lib/gup-grad/gradnja";
+import { KATEGORIJA_PO_ID, KATEGORIJA_PO_KODU, razlozi, type IdKategorije } from "@/lib/gup-grad/gradnja";
 import type { Geometrija, Okvir } from "@/lib/gup-grad/zabrana";
 import { PODLOGE, podloga, type CiljKarte } from "@/components/gup-grad/zabrana-karta";
 import { procitaj, ucitajIndeks, type PlocicaGradnje } from "@/components/gup-grad/gradnja-plocice";
@@ -42,7 +42,7 @@ const BOJE = new Map(
     {
       rgb: hex(k.boja),
       a: Math.round(k.alfa * 255),
-      skupina: k.skupina,
+      id: k.id,
       pruge: k.pruge ? hex(k.pruge) : null,
       prugeA: Math.round((k.prugeAlfa ?? 0.9) * 255),
       mreza: !!k.mreza,
@@ -70,7 +70,9 @@ function polozaj(url: string): [number, number] {
   return m ? [Number(m[1]) * PLOCICA, Number(m[2]) * PLOCICA] : [0, 0];
 }
 
-async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<Skupina>, zum: number): Promise<string | null> {
+const JAVNO = KATEGORIJA_PO_ID.javno.kod;
+
+async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<IdKategorije>, zum: number): Promise<string | null> {
   const { width: w, height: h, data: d } = kodovi;
   const { razmak, debljina, debljinaMreze } = prugeZaZum(zum);
   const [y0, x0] = polozaj(url);
@@ -80,8 +82,11 @@ async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<Skup
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (d[i + 3] !== 255) continue;
-      const b = BOJE.get(d[i + 2]);
-      if (!b || skrivene.has(b.skupina)) continue;
+      // javno zemljište boji se kao javno; kad je ta stavka ugašena, vidi se razlog ispod
+      const { kategorija, vlasnik } = razlozi(d[i + 2]);
+      const javno = vlasnik > 0 && !skrivene.has("javno");
+      const b = BOJE.get(javno ? JAVNO : kategorija);
+      if (!b || (!javno && skrivene.has(b.id))) continue;
       const gx = x0 + x, gy = y0 + y;
       const pruga =
         b.pruge &&
@@ -109,7 +114,7 @@ interface Ucitana {
 }
 
 /** Ponovno oboji sve učitane pločice; prekida se kad ga stigne novije bojenje (`jos` vrati false). */
-async function prebojaj(ucitane: Map<string, Ucitana>, skrivene: ReadonlySet<Skupina>, zum: number, jos: () => boolean) {
+async function prebojaj(ucitane: Map<string, Ucitana>, skrivene: ReadonlySet<IdKategorije>, zum: number, jos: () => boolean) {
   for (const [kljuc, u] of ucitane) {
     const url = await obojaj(kljuc, await procitaj(kljuc), skrivene, zum);
     if (!jos() || !url) {
@@ -132,7 +137,8 @@ export function GradnjaKarta(props: {
   gup: Feature | null;
   /** stambene i mješovite zone (S, M1–M3, K5) */
   zone: FeatureCollection;
-  skrivene: ReadonlySet<Skupina>;
+  /** kategorije ugašene u tumaču */
+  skrivene: ReadonlySet<IdKategorije>;
   cilj: CiljKarte | null;
   oznaka: { lng: number; lat: number } | null;
   /** čestica pod zadnjim klikom */
