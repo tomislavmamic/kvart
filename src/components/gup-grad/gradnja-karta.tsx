@@ -82,11 +82,12 @@ async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<IdKa
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (d[i + 3] !== 255) continue;
-      // javno zemljište boji se kao javno; kad je ta stavka ugašena, vidi se razlog ispod
+      // javno zemljište boji se kao javno, a kad je ta stavka ugašena, nestane s karte: razlog
+      // ispod njega nije prošao provjere širine i odmaka (javno se ne spaja u gradilište), pa
+      // bi se ondje pokazale tanke „zelene” trake uz ceste
       const { kategorija, vlasnik } = razlozi(d[i + 2]);
-      const javno = vlasnik > 0 && !skrivene.has("javno");
-      const b = BOJE.get(javno ? JAVNO : kategorija);
-      if (!b || (!javno && skrivene.has(b.id))) continue;
+      const b = BOJE.get(vlasnik > 0 ? JAVNO : kategorija);
+      if (!b || skrivene.has(b.id)) continue;
       const gx = x0 + x, gy = y0 + y;
       const pruga =
         b.pruge &&

@@ -33,7 +33,8 @@ Ulaz:  Split Export/SPLIT_EXPORT_BAZA/KOMUNALNA_INFRASTRUKTURA/KatastarskeCestic
        public/geo/gup-grad/cestice
 Izlaz: data/gup-grad/javno-2025/<red>_<stupac>.png — bitovi 0–2 vlasnik
        (1 RH, 2 Grad, 3 županija, 4 javna ustanova ili tvrtka), bit 3
-       gradski projekt; čita ih gradnja.ts
+       gradski projekt, bit 4 javno uže od 10 m (ulica, rub ceste, put);
+       čita ih gradnja.ts
 
 Pokretanje (prije gradnja.ts):  /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-javno.py
 """
@@ -51,6 +52,7 @@ from PIL import Image
 from pyproj import Transformer
 from rasterio import features
 from rasterio.transform import Affine
+from scipy import ndimage
 from shapely.geometry import shape
 from shapely.ops import transform as stransform
 
@@ -68,6 +70,11 @@ VLASNISTVO = os.path.join(IZVOZ, "SPLIT_EXPORT_BAZA", "KOMUNALNA_INFRASTRUKTURA"
 VLASNIK = {"RH": 1, "JLS": 2, "DNŽ": 3}
 JAVNA_TVRTKA = 4  # javna ustanova ili tvrtka države ili Grada (po imenu vlasnika, vidi JAVNE_PRAVNE)
 GRADSKI_PROJEKT = 8
+# javno uže od ovoga (rub ceste, put, prolaz, ostatak uz cestu) je „uski javni pojas”:
+# javno je, ali bi ga jantarna boja crtala kao mrežu tankih traka preko karte
+USKO_JAVNO = 16
+USKO_JAVNO_M = 10.0
+USKO_JAVNO_MIN_M2 = 300.0
 REGISTAR = os.path.join(R.ROOT, "data", "public-entities.json")
 PROVJERA = os.path.join(JAVNO, "geo", "analiza", "ciljana-provjera-vlasnistva.geojson")
 # Pravne osobe koje su država ili njezine ustanove i tvrtke, uz gradske iz registra
@@ -165,7 +172,19 @@ def main() -> None:
     # izvan čestica DGU-a (more, rubovi) ostaje izvoz kakav jest
     vlasnik = np.where(rid > 0, vlasnik_cestice[rid], izvoz).astype(np.uint8)
 
-    oznaka = vlasnik | np.where(projekt, GRADSKI_PROJEKT, 0).astype(np.uint8)
+    # uski javni pojas: dio javnog u koji ne stane krug od USKO_JAVNO_M (otvaranje preko udaljenosti)
+    m_po_px = korak * np.cos(np.radians(43.51))
+    javno = vlasnik > 0
+    sredista = (ndimage.distance_transform_edt(javno) - 0.5) * m_po_px >= USKO_JAVNO_M / 2
+    siroko = javno & (ndimage.distance_transform_edt(~sredista) * m_po_px <= USKO_JAVNO_M / 2)
+    # i mrvice širokog (krug na križanju uskih pojaseva) idu u uski pojas
+    oz, n = ndimage.label(siroko)
+    if n:
+        vel = ndimage.sum_labels(np.ones_like(oz), oz, index=np.arange(1, n + 1)) * m_po_px ** 2
+        siroko[np.isin(oz, np.flatnonzero(vel < USKO_JAVNO_MIN_M2) + 1)] = False
+    usko = javno & ~siroko
+
+    oznaka = vlasnik | np.where(projekt, GRADSKI_PROJEKT, 0).astype(np.uint8) | np.where(usko, USKO_JAVNO, 0).astype(np.uint8)
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     os.makedirs(IZLAZ)
@@ -175,7 +194,8 @@ def main() -> None:
             Image.fromarray(t, "L").save(os.path.join(IZLAZ, os.path.basename(p["url"])), optimize=True)
     m2 = (korak * np.cos(np.radians(43.51))) ** 2
     print(f"javno: RH {(vlasnik == 1).sum() * m2 / 1e4:.1f} ha, Grad {(vlasnik == 2).sum() * m2 / 1e4:.1f} ha, "
-          f"županija {(vlasnik == 3).sum() * m2 / 1e4:.1f} ha, javne ustanove i tvrtke {(vlasnik == 4).sum() * m2 / 1e4:.1f} ha; gradski projekt {len(gp)} čestica, {projekt.sum() * m2 / 1e4:.1f} ha → {IZLAZ}")
+          f"županija {(vlasnik == 3).sum() * m2 / 1e4:.1f} ha, javne ustanove i tvrtke {(vlasnik == 4).sum() * m2 / 1e4:.1f} ha "
+          f"(od toga uski pojasevi {usko.sum() * m2 / 1e4:.1f} ha); gradski projekt {len(gp)} čestica, {projekt.sum() * m2 / 1e4:.1f} ha → {IZLAZ}")
 
 
 if __name__ == "__main__":
