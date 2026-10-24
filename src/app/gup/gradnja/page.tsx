@@ -285,10 +285,10 @@ export default async function GradnjaPage() {
           <li>
             <strong className="text-zinc-900">Ima li dovoljno mjesta za novu česticu?</strong> Slobodni komad mora biti barem
             velik kao najmanja čestica za gradnju koju pravila traže za taj dio grada. To smije doseći i zajedno sa slobodnim
-            susjedom iste namjene. Uz to mora imati dio koji je posvuda širok barem 10 m i velik barem 250 m². Zato otpadaju
+            susjedom iste namjene. Uz to mora imati dio koji je posvuda širok barem 10 m i velik barem 400 m² (koliko GUP u većini područja traži za dvojnu kuću). Zato otpadaju
             pojasevi uz putove, ostaci dvorišta i prolazi između zgrada, i kad bi zbrojeni bili dovoljno veliki. Na kraju, zgrada
-            mora biti 5 m od javne ulice i 3 m od susjednih čestica: kad se ti odmaci oduzmu, mora stati zgrada široka barem 6 m
-            s tlocrtom od barem 60 m² (tu najmanju zgradu pretpostavili smo mi; GUP je ne propisuje). Karta boji samo mjesto na
+            mora biti 5 m od javne ulice i 3 m od susjednih čestica: kad se ti odmaci oduzmu, mora ostati barem 150 m² mjesta za zgradu
+            široku barem 8 m (tu najmanju kuću pretpostavili smo mi; GUP je ne propisuje). Karta boji samo mjesto na
             kojem zgrada smije stajati; odmak oko njega je dvorište ili prilaz, a ne mjesto za zgradu.
           </li>
           <li>
