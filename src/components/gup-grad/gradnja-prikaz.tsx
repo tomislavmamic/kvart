@@ -221,9 +221,11 @@ function provjere(
     const vojska = katId === "vojska";
     out.push({
       pitanje: "Je li zemljište u privatnom vlasništvu?",
-      ishod: u.vlasnik || vojska ? "ne" : "da",
+      ishod: u.vlasnik || vojska || katId === "javni-pojas" ? "ne" : "da",
       odgovor: vojska
         ? "Ne. Ovo je vojna zona (posebna namjena): zemljište za potrebe obrane."
+        : katId === "javni-pojas"
+          ? "Ne. Ovo je uski pojas javnog zemljišta (rub ceste, put ili prolaz)."
         : u.vlasnik
           ? `Ne. Prema evidenciji Grada Splita vlasnik je ${VLASNIK_JAVNOG[u.vlasnik as KodVlasnika]}.`
           : "Prema evidenciji Grada Splita vlasnik nije država, Grad ni županija. Ta evidencija za mnoge čestice ne navodi vlasnika, pa to nije potvrda.",
@@ -597,11 +599,7 @@ function TumacKlika(props: { k: Kartica; odredbe: OdredbeGradnje; listovi: Recor
           {kat.razlog}
         </p>
       )}
-      {javno && ispod && (
-        <p className="mt-1.5 text-zinc-600">
-          Da nije javno, ovdje bi bilo: <strong className="text-zinc-800">{ispod.naziv}</strong>.
-        </p>
-      )}
+
 
       <h4 className="mt-3 text-xs font-bold uppercase tracking-wide text-zinc-500">Što smo provjerili za ovo mjesto</h4>
       {/* mobitel nema oblačić (title), pa je ključ oznaka vidljiv */}
@@ -886,8 +884,8 @@ export function GradnjaPrikaz({ zbroj, odredbe }: { zbroj: ZbrojGradnje; odredbe
               </ul>
               {s === "javno" && (
                 <p className="mt-1.5 pl-6 text-xs text-zinc-500">
-                  Isključi li javno zemljište, na karti se vidi što je ispod njega. Vlasnik je iz evidencije Grada, koja ga za većinu
-                  čestica ne navodi, pa javnog zemljišta ima i više.
+                  Vlasnik je iz evidencije Grada, koja ga za većinu čestica ne navodi, pa javnog zemljišta ima i više. Javno uže od
+                  10 m (ulice, rubovi cesta, putovi) karta ne boji jantarno.
                 </p>
               )}
             </fieldset>

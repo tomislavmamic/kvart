@@ -46,6 +46,7 @@ const JAVNE = path.join(KORIJEN, "data", "gup-grad", "javno-2025");
 const P = KLASE.find((k) => k.kod === "P")!.indeks;
 const VOJSKA = KATEGORIJA_PO_ID.vojska.kod;
 const JAVNO_ZEMLJISTE = KATEGORIJA_PO_ID.javno.kod;
+const USKI_JAVNI = KATEGORIJA_PO_ID["javni-pojas"].kod;
 
 interface Plocica {
   url: string;
@@ -109,14 +110,17 @@ function main() {
           odmaci: s === 4,
           gradskiProjekt: (jv & 8) > 0,
         });
-        const vlasnik = jv & 7;
-        d[i + 2] = kodPiksela(k, vlasnik);
+        // uski javni pojas (gradnja-javno.py, bit 16): javno, ali bez jantarne boje
+        const uskoJavno = (jv & 16) > 0 && (jv & 7) > 0 && k !== VOJSKA;
+        const kat = uskoJavno ? USKI_JAVNI : k;
+        const vlasnik = uskoJavno ? 0 : jv & 7;
+        d[i + 2] = kodPiksela(kat, vlasnik);
         if (!k) {
           d[i + 3] = 0;
           continue;
         }
         // javno se broji kao javno; vojna zona ostaje svoja kategorija
-        const brojiSe = vlasnik && k !== VOJSKA ? JAVNO_ZEMLJISTE : k;
+        const brojiSe = vlasnik && k !== VOJSKA ? JAVNO_ZEMLJISTE : kat;
         m2.set(brojiSe, (m2.get(brojiSe) ?? 0) + pikselM2);
         if (brojiSe === JAVNO_ZEMLJISTE) {
           const id = KATEGORIJA_PO_KODU.get(k)!.id;

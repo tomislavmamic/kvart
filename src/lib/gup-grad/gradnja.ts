@@ -122,6 +122,7 @@ export type IdKategorije =
   | "gradski-projekt"
   | "vojska"
   | "javno"
+  | "javni-pojas"
   | "ceka-upu"
   | "uz-cestu-stambeno"
   | "uz-cestu-nestambeno"
@@ -368,6 +369,16 @@ export const KATEGORIJE: readonly Kategorija[] = [
       "Na javnom zemljištu ne gradi građanin, pa se ono ne broji ni u jedan od tri odgovora, bilo izgrađeno ili ne.",
     boja: "#ca8a04",
     alfa: 0.8,
+  },
+  {
+    kod: 22,
+    id: "javni-pojas",
+    skupina: "javno",
+    naziv: "Uski pojas javnog zemljišta (ulica, rub ceste, put)",
+    razlog:
+      "Ovo je javno zemljište uže od 10 m: ulica, rub ceste, put, prolaz ili ostatak uz cestu, u vlasništvu države, Grada ili njihovih tvrtki. Na njemu se ne gradi. Karta ga ne boji jantarno, da tanke trake ne prekriju kartu.",
+    boja: "#ffffff",
+    alfa: 0.55,
   },
   {
     kod: 18,
