@@ -472,14 +472,14 @@ function provjere(
       pitanje: pitanjeMjesta,
       ishod: "ne",
       odgovor:
-        "Ne. Zemljište je dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica, i kad se ti odmaci oduzmu, ne stane ni zgrada široka 6 m s tlocrtom od 60 m².",
+        "Ne. Zemljište je dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica, i kad se ti odmaci oduzmu, ne ostaje 150 m² mjesta za zgradu široku 8 m.",
     });
   } else if (katId === "premalo") {
     out.push({
       pitanje: pitanjeMjesta,
       ishod: "ne",
       odgovor:
-        "Ne. Ni zajedno sa slobodnim susjedima iste namjene ovdje nema dijela širokog barem 10 m i velikog barem 250 m². Ovo je pojas uz put, ostatak dvorišta ili prolaz između zgrada.",
+        "Ne. Ni zajedno sa slobodnim susjedima iste namjene ovdje nema dijela širokog barem 10 m i velikog barem 400 m². Ovo je pojas uz put, ostatak dvorišta ili prolaz između zgrada.",
     });
   } else if (u.regija === REGIJE.slobodno || u.regija === REGIJE.ceka) {
     out.push({
@@ -488,10 +488,10 @@ function provjere(
       odgovor: najmanjaTekst ? (
         <>
           Da: {najmanjaTekst}. Slobodnog zemljišta, zajedno sa slobodnim susjedima iste namjene, ima barem toliko, široko je barem
-          10 m, a uz odmake od ulice (5 m) i susjeda (3 m) u njega stane zgrada široka barem 6 m.
+          10 m, a uz odmake od ulice (5 m) i susjeda (3 m) u njemu ostaje barem 150 m² mjesta za zgradu široku barem 8 m.
         </>
       ) : (
-        "Da: slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, ima dio širok barem 10 m i velik barem 250 m², a u njemu i uz odmake od ulice (5 m) i susjeda (3 m) stane zgrada široka barem 6 m."
+        "Da: slobodno zemljište, zajedno sa slobodnim susjedima iste namjene, ima dio širok barem 10 m i velik barem 400 m², a u njemu i uz odmake od ulice (5 m) i susjeda (3 m) ostaje barem 150 m² mjesta za zgradu široku barem 8 m."
       ),
     });
   }
