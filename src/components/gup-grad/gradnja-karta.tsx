@@ -325,10 +325,10 @@ export function GradnjaKarta(props: {
         maxBounds: SIRI_OBUHVAT_KARTE,
         maxBoundsViscosity: 1,
         preferCanvas: true,
-        // zum bez stepenica: kotačić i dodirnik mijenjaju zum glatko, ne u koracima od četvrtine razine
+        // zum bez stepenica; kotačić i dodirnik vodi glatkiKotacic (dolje), ne Leafletov korak po korak
         zoomSnap: 0,
         zoomDelta: 0.5,
-        wheelPxPerZoomLevel: 110,
+        scrollWheelZoom: false,
         bounceAtZoomLimits: false,
         zoomControl: false,
         // dvoklik zumira; odabir čeka da se vidi je li bio dvoklik
@@ -354,6 +354,7 @@ export function GradnjaKarta(props: {
       L.control.scale({ imperial: false, position: "bottomright" }).addTo(map);
       L.control.zoom({ position: "bottomright", zoomInTitle: "Približi", zoomOutTitle: "Udalji" }).addTo(map);
       dodajMojuLokaciju(L, map);
+      glatkiKotacic(L, map);
       dodajPodlogu(L, map, PODLOGE.map((p) => ({ naziv: p.naziv, sloj: podloge[p.naziv] })));
       map.attributionControl.setPrefix(false);
 
@@ -646,6 +647,72 @@ export function GradnjaKarta(props: {
       aria-label="Karta: gdje se po novom GUP-u može graditi. Strelicama pomakni kartu, plus i minus zumiraju, Enter odabire sredinu karte."
     />
   );
+}
+
+/**
+ * Zum kotačićem i dodirnikom kao na Google kartama (prema Leaflet.SmoothWheelZoom, MIT): svaki pomak kotačića
+ * pomakne ciljani zum, a karta mu se svake sličice približi oko točke pod mišem, bez animacije. Leaflet bi inače
+ * pokrete skupljao 40 ms i zumirao korak po korak, svaki put s cijelim krajem zuma (pločice, obrisi, točke, maske),
+ * pa je zum dodirnikom bio spor i trzav. Kraj zuma (zoomend, moveend) ovdje je jednom, kad kotačić stane; dok
+ * se vrti, uzorci su skriveni (globals.css, .gup-zumira).
+ */
+function glatkiKotacic(L: typeof LeafletNS, map: LeafletNS.Map) {
+  const kontejner = map.getContainer();
+  /** Razina zuma po pikselu pomaka: zarez kotačića miša (~100 px) je pola razine; dodirnik daje male pomake. */
+  const PO_PIKSELU = 1 / 200;
+  /** Pinch na dodirniku (ctrl + kotačić) daje male pomake, pa je jači. */
+  const PINCH = 8;
+  let cilj = 0;
+  let tocka = L.point(0, 0);
+  // karta još nema pogled kad se ovo poziva: točka se postavi na prvi pomak kotačića
+  let latlngPodMisem = L.latLng(0, 0);
+  let okvir = 0;
+  let kraj: ReturnType<typeof setTimeout> | null = null;
+  let pokrenuto = false;
+
+  const korak = () => {
+    const z = map.getZoom();
+    const novi = Math.abs(cilj - z) < 0.002 ? cilj : z + (cilj - z) * 0.35;
+    // točka pod mišem ostaje pod mišem
+    const pomak = tocka.subtract(map.getSize().divideBy(2));
+    const sredina = map.unproject(map.project(latlngPodMisem, novi).subtract(pomak), novi);
+    if (!pokrenuto) {
+      (map as unknown as { _moveStart: (z: boolean, n: boolean) => void })._moveStart(true, false);
+      pokrenuto = true;
+    }
+    (map as unknown as { _move: (c: LeafletNS.LatLng, z: number) => void })._move(sredina, novi);
+    okvir = novi === cilj ? 0 : requestAnimationFrame(korak);
+  };
+
+  const zavrsi = () => {
+    kraj = null;
+    if (okvir) cancelAnimationFrame(okvir);
+    okvir = 0;
+    kontejner.classList.remove("gup-zumira");
+    if (pokrenuto) (map as unknown as { _moveEnd: (z: boolean) => void })._moveEnd(true);
+    pokrenuto = false;
+  };
+
+  L.DomEvent.on(kontejner, "wheel", (e) => {
+    const ev = e as WheelEvent;
+    L.DomEvent.preventDefault(ev);
+    L.DomEvent.stopPropagation(ev);
+    if (!kraj) {
+      // početak okretaja: zaustavi animacije, zapamti točku pod mišem
+      (map as unknown as { _stop: () => void })._stop();
+      cilj = map.getZoom();
+      kontejner.classList.add("gup-zumira");
+    }
+    tocka = map.mouseEventToContainerPoint(ev);
+    latlngPodMisem = map.containerPointToLatLng(tocka);
+    // pomak u pikselima (redci i stranice preračunati), prema gore je približavanje
+    const px = ev.deltaY * (ev.deltaMode === 1 ? 40 : ev.deltaMode === 2 ? 800 : 1);
+    const d = -px * PO_PIKSELU * (ev.ctrlKey ? PINCH : 1);
+    cilj = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), cilj + Math.max(-1, Math.min(1, d))));
+    if (!okvir) okvir = requestAnimationFrame(korak);
+    if (kraj) clearTimeout(kraj);
+    kraj = setTimeout(zavrsi, 180);
+  });
 }
 
 /** Prvi pogled karte: istok grada (Žnjan, Sirobuja, Stobreč, Dračevac), gdje je najviše zemljišta za stambenu gradnju. */

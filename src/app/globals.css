@@ -1315,6 +1315,7 @@ path.gup-odredba:focus {
 }
 /* Za animacije zuma maske se ne preračunavaju za svaku sličicu (to je zum činilo
  * trzavim): uzorci se sakriju dok Leaflet animira, a puna boja ostaje. */
-.leaflet-zoom-anim .gup-uzorak {
+.leaflet-zoom-anim .gup-uzorak,
+.gup-zumira .gup-uzorak {
   visibility: hidden;
 }
