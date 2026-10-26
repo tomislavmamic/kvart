@@ -160,16 +160,21 @@ export interface Kategorija {
 }
 
 /**
- * Boja nosi odgovor, ne razlog: tri odgovora, tri boje, a razlog kaže klik i
- * tumač. „Ništa novo” je bijela koprena koja izblijedi snimku; plavo je
- * nestambeno, zeleno stambeno. Puna jaka boja: gradi se danas; blijeda
- * inačica iste boje s prugama: neuređeni dio, do UPU-a samo uz postojeću
- * cestu. Blijedo i jako razlikuju se svjetlinom (ΔE ~15 i stopljeno sa
- * snimkom), pa se razlikuju i izdaleka, gdje preglednik pruge zagladi; uz to
- * karta pruge izdaleka razmiče (gradnja-karta.tsx, prugeZaZum). Čekanje na UPU
- * je siva mreža na koprenama — crvena bi se daltonistima stopila sa zelenom
- * šrafurom. Provjereno validatorom na bojama stopljenim sa sivom snimkom
- * (#747474–#cdcdcd).
+ * Boja nosi odgovor, ne razlog: razlog kaže klik i tumač. Što se ne može
+ * graditi, karta zatamni (crna koprena 30 %), pa se ističe ono što se može.
+ * Stambeno je zeleno, nestambeno plavo, javno zlatno s tamnijim točkama
+ * (tiše od zelene, a točke su i druga oznaka, jer je zlatna daltonistima
+ * blizu srednje zelene: deutan ΔE 6,3). Unutar zelene i plave
+ * svjetlina je redoslijed, od svijetlog prema tamnom: nedostaje ulica ili
+ * kanalizacija (najsvjetlije, šrafirano), mjesto za zgradu, zatražena
+ * dozvola, izdana dozvola (najtamnije). Šrafura neuređenog je i druga oznaka
+ * uz boju: svijetli kraj zelene i plave inače su preblizu. Čekanje na UPU i
+ * gradski projekt su svijetla mreža na zatamnjenom, a „odlučuje plan na
+ * snazi” samo tamne pruge. Provjereno validatorom (dataviz) na bojama
+ * stopljenim sa sivom snimkom (#a6a6a6): zelena i plava ljestvica prolaze
+ * redoslijed (svjetlina raste, koraci vidljivi, svijetli kraj odvojen od
+ * snimke), a sve skupa razdvajanje za daltoniste (ΔE ≥ 8) i za normalan
+ * vid (ΔE ≥ 15).
  */
 export const KATEGORIJE: readonly Kategorija[] = [
   {
@@ -179,8 +184,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Zgrada ili gradilište",
     razlog:
       "Ovdje već stoji zgrada ili se gradi. Smjet će se obnoviti ili zamijeniti, ali uz nju se nova neće moći dodati.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 2,
@@ -189,8 +194,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Dvorište postojeće zgrade",
     razlog:
       "Ovo zemljište pripada postojećoj zgradi. Pravila svakoj zgradi propisuju koliko čestice mora imati oko sebe, pa nova zgrada ovdje ne stane.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 3,
@@ -199,8 +204,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Parkiralište, park, igralište ili okoliš škole",
     razlog:
       "Mjesto se već koristi za nešto drugo: parkiralište, park koji održava Grad, igralište, trg, groblje ili okoliš javne ustanove.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 4,
@@ -209,8 +214,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Postojeća ulica, pruga ili infrastruktura",
     razlog:
       "Ovdje je postojeća ulica, put, pruga ili komunalna građevina (trafostanica, vodosprema, crpka).",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 5,
@@ -219,8 +224,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Čuva se za ulicu, prugu ili groblje",
     razlog:
       "Zemljište je slobodno, ali ga novi GUP ne daje za gradnju: čuva ga za ulicu, prugu, groblje ili infrastrukturu.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 14,
@@ -229,8 +234,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Pojas ulice između blokova",
     razlog:
       "Zemljište je slobodno, ali je na karti namjene (list 1 novog GUP-a) ovo neobojeni pojas između zona: prostor za postojeću ili buduću ulicu. Na njemu se neće graditi.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 6,
@@ -239,8 +244,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Park, zelenilo, rekreacija, golf ili plaža",
     razlog:
       "Novi GUP ovdje predviđa park, zaštitno zelenilo, rekreaciju, golf igralište ili plažu. Zgrade se neće graditi, osim manjih pratećih (paviljon, sanitarni čvor, kiosk, klupska kuća golfa).",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 7,
@@ -249,8 +254,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Samo obnova postojećih zgrada",
     razlog:
       "Zemljište je slobodno i u zoni za stanovanje, ali pravila gradnje za ovaj dio grada neće dopustiti novu stambenu zgradu. Postojeće zgrade smiju se samo obnoviti ili zamijeniti (rekonstrukcija i zamjena).",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 8,
@@ -259,8 +264,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Teren nije za gradnju",
     razlog:
       "Na snimci iz zraka (ortofotu) vidi se da se ovdje ne može graditi: strmina, stijena ili korito.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 9,
@@ -269,8 +274,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Premalo ili preusko za gradnju",
     razlog:
       "Slobodno je, ali nova zgrada ne stane. Komad je manji od najmanje čestice za gradnju koju ovdje traže pravila, ili je preuzak: ni sa slobodnim susjedima nema dijela širokog barem 10 m. Obično je to pojas uz put, stube ili rub uz među.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 23,
@@ -279,8 +284,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Ostatak čestice uz postojeću zgradu",
     razlog:
       "Na ovoj čestici već stoji zgrada, a ona troši česticu. Nova zgrada smjela bi se graditi samo kad bi se ostatak mogao odvojiti u vlastitu građevnu česticu od barem 400 m², široku barem 10 m. Ovaj ostatak to nije.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 21,
@@ -289,8 +294,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Odmak od ulice i susjeda (dvorište nove zgrade)",
     razlog:
       "Ovo je dio slobodnog zemljišta na kojem se može graditi, ali zgrada ovdje ne smije stajati: mora biti 5 m od javne ulice i 3 m od susjednih čestica. Ovdje može biti dvorište, prilaz ili parkiralište nove zgrade.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 20,
@@ -299,8 +304,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Zgrada ne stane uz propisane odmake",
     razlog:
       "Slobodno je i dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica. Kad se ti odmaci oduzmu, ne ostaje 150 m² mjesta za zgradu široku barem 8 m.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 16,
@@ -309,8 +314,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Uska duga čestica, zapravo put",
     razlog:
       "Čestica je uska i duga i služi kao put: njome prolazi ucrtani put (OpenStreetMap), ili graniči s mnogo čestica kojima služi kao prilaz, ili cijelom dugom stranom leži uz ulicu (rub ceste, nogostup). Na putu se neće graditi, a susjedne čestice ne mogu se preko njega spojiti.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 10,
@@ -319,10 +324,10 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Ništa novo dok se ne donese UPU",
     razlog:
       "Ovo je područje urbane sanacije ili preobrazbe (list 4.d novog GUP-a). Nova zgrada moći će se graditi tek po UPU-u, detaljnijem planu koji mora donijeti Grad. Do tada se postojeće zgrade smiju samo obnoviti ili zamijeniti.",
-    boja: "#ffffff",
-    alfa: 0.45,
-    pruge: "#52525b",
-    prugeAlfa: 0.8,
+    boja: "#000000",
+    alfa: 0.3,
+    pruge: "#f4f4f5",
+    prugeAlfa: 0.6,
     mreza: true,
   },
   {
@@ -332,10 +337,10 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Gradski projekt: ništa novo dok se ne odobri",
     razlog:
       "Ovo je područje gradskog projekta (urbano pravilo GP na listu 4.c novog GUP-a). Ondje se gradi samo po odobrenom projektu za cijelo područje, i samo ono što projekt predvidi. Dok projekta nema, na slobodnom zemljištu neće se moći graditi.",
-    boja: "#ffffff",
-    alfa: 0.45,
-    pruge: "#52525b",
-    prugeAlfa: 0.8,
+    boja: "#000000",
+    alfa: 0.3,
+    pruge: "#f4f4f5",
+    prugeAlfa: 0.6,
     mreza: true,
   },
   {
@@ -345,9 +350,10 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Stambeno, ali nedostaje ulica ili kanalizacija",
     razlog:
       "Ovo je neuređeno područje: ulica i kanalizacija koje plan ovdje predviđa još nisu izgrađene. Novi GUP traži UPU. Dok ga nema, dozvola za novu stambenu zgradu može se dobiti tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje (za pristupnu ulicu pojas od 10 m s kolnikom od barem 5,5 m) i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
-    boja: "#a1ccb1",
-    alfa: 0.65,
-    pruge: "#15803d",
+    boja: "#d9f99d",
+    alfa: 1,
+    pruge: "#16a34a",
+    prugeAlfa: 0.9,
   },
   {
     kod: 15,
@@ -356,9 +362,10 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Nestambeno, ali nedostaje ulica ili kanalizacija",
     razlog:
       "Ovo je neuređeno područje u zoni bez stanovanja: ulica i kanalizacija koje plan predviđa još nisu izgrađene. Stambena zgrada neće se moći graditi ni nakon UPU-a. Nestambena će se do UPU-a moći graditi tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
-    boja: "#a8c1f7",
-    alfa: 0.65,
+    boja: "#e0f2fe",
+    alfa: 1,
     pruge: "#2563eb",
+    prugeAlfa: 0.9,
   },
   {
     kod: 12,
@@ -367,8 +374,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Mjesto za nestambenu zgradu",
     razlog:
       "Ovdje može stajati nova zgrada, dovoljno daleko od ulice (5 m) i susjeda (3 m), ali novi GUP ovdje predviđa javnu, gospodarsku, turističku ili športsku namjenu, pa stambena zgrada neće biti dopuštena.",
-    boja: "#2563eb",
-    alfa: 0.8,
+    boja: "#60a5fa",
+    alfa: 0.9,
   },
   {
     kod: 13,
@@ -377,8 +384,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Mjesto za stambenu zgradu",
     razlog:
       "Ovdje može stajati nova stambena ili stambeno-poslovna zgrada: zemljište je slobodno, dovoljno veliko, u zoni gdje novi GUP dopušta stanovanje, i dovoljno daleko od ulice (5 m) i susjeda (3 m). Vrijedi ako to dopuste i uvjeti koje karta ne provjerava.",
-    boja: "#15803d",
-    alfa: 0.85,
+    boja: "#4ade80",
+    alfa: 0.9,
   },
   {
     kod: 25,
@@ -387,10 +394,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Stambeno: zatražena dozvola",
     razlog:
       "Za novu stambenu zgradu ovdje je predan zahtjev za lokacijsku ili građevinsku dozvolu, i u obradi je. Sve čestice iz zahtjeva karta računa zajedno, kao jednu građevnu česticu.",
-    boja: "#a1ccb1",
-    alfa: 0.65,
-    pruge: "#15803d",
-    mreza: true,
+    boja: "#16a34a",
+    alfa: 0.9,
   },
   {
     kod: 26,
@@ -400,9 +405,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     razlog:
       "Za novu stambenu zgradu ovdje je od 2020. izdana lokacijska ili građevinska dozvola: gradnja je odobrena ili već teče. Sve čestice iz dozvole karta računa zajedno, kao jednu građevnu česticu.",
     boja: "#14532d",
-    alfa: 0.85,
-    pruge: "#bbf7d0",
-    tocke: true,
+    alfa: 0.9,
   },
   {
     kod: 27,
@@ -411,10 +414,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Nestambeno: zatražena dozvola",
     razlog:
       "Za novu nestambenu zgradu ovdje je predan zahtjev za lokacijsku ili građevinsku dozvolu, i u obradi je. Sve čestice iz zahtjeva karta računa zajedno, kao jednu građevnu česticu.",
-    boja: "#a8c1f7",
-    alfa: 0.65,
-    pruge: "#2563eb",
-    mreza: true,
+    boja: "#2563eb",
+    alfa: 0.9,
   },
   {
     kod: 28,
@@ -424,9 +425,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     razlog:
       "Za novu nestambenu zgradu ovdje je od 2020. izdana lokacijska ili građevinska dozvola: gradnja je odobrena ili već teče. Sve čestice iz dozvole karta računa zajedno, kao jednu građevnu česticu.",
     boja: "#1e3a8a",
-    alfa: 0.85,
-    pruge: "#bfdbfe",
-    tocke: true,
+    alfa: 0.9,
   },
   {
     kod: 19,
@@ -435,8 +434,11 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Zemljište Grada, države, županije ili njihovih ustanova i tvrtki",
     razlog:
       "Na javnom zemljištu ne gradi građanin, pa se ono ne broji ni u jedan od tri odgovora, bilo izgrađeno ili ne.",
-    boja: "#ca8a04",
-    alfa: 0.8,
+    boja: "#eab308",
+    alfa: 0.6,
+    pruge: "#a16207",
+    prugeAlfa: 0.85,
+    tocke: true,
   },
   {
     kod: 22,
@@ -445,8 +447,8 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Uski pojas javnog zemljišta (ulica, rub ceste, put)",
     razlog:
       "Ovo je javno zemljište uže od 10 m: ulica, rub ceste, put, prolaz ili ostatak uz cestu, u vlasništvu države, Grada ili njihovih tvrtki. Na njemu se ne gradi. Karta ga ne boji jantarno, da tanke trake ne prekriju kartu.",
-    boja: "#ffffff",
-    alfa: 0.55,
+    boja: "#000000",
+    alfa: 0.3,
   },
   {
     kod: 24,
@@ -455,10 +457,10 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Slobodno, a gradi se po detaljnijem planu na snazi (DPU, UPU)",
     razlog:
       "Ovdje je na snazi detaljniji plan (DPU ili UPU), a novi GUP kaže da se na takvom području gradi samo po tom planu. Što se smije graditi, odlučuje taj plan, a ne namjena GUP-a s ove karte.",
-    boja: "#ffffff",
-    alfa: 0.2,
-    pruge: "#27272a",
-    prugeAlfa: 0.4,
+    boja: "#000000",
+    alfa: 0.08,
+    pruge: "#18181b",
+    prugeAlfa: 0.5,
   },
   {
     kod: 18,
@@ -467,8 +469,11 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Vojna zona (posebna namjena)",
     razlog:
       "Novi GUP ovdje predviđa posebnu namjenu: zemljište za potrebe obrane (npr. Lora). Ondje se ne gradi za stanovanje ni za tržište, pa se ne broji ni u jedan od tri odgovora.",
-    boja: "#ca8a04",
-    alfa: 0.8,
+    boja: "#eab308",
+    alfa: 0.6,
+    pruge: "#a16207",
+    prugeAlfa: 0.85,
+    tocke: true,
   },
 ];
 
