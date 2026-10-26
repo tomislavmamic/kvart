@@ -489,6 +489,12 @@ function PopisTumaca(props: {
       ))}
       <ul className="space-y-1 border-t border-zinc-200 pt-2 text-xs text-zinc-600">
         <li className="flex items-center gap-2">
+          <span className="flex w-6 shrink-0 justify-center">
+            <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-emerald-400 ring-1 ring-white" />
+          </span>
+          <span>izdaleka: malo gradilište, točkom u boji svoje stavke</span>
+        </li>
+        <li className="flex items-center gap-2">
           <Crta boja="#18181b" crtice="5 4" />
           <span>granica DPU-a na snazi</span>
         </li>

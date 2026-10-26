@@ -69,6 +69,9 @@ const KORACI = [
   { ime: "8-mobitel-cestica-pola", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=17/43.50889/16.48686&t=16.486858,43.508894", klik: ["Povećaj karticu"] },
   { ime: "9-mobitel-tumac", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900", klik: ["Tumač"] },
   { ime: "10-mobitel-pregled", w: 390, h: 844, mob: true, url: "/gup/gradnja" },
+  { ime: "11-racunalo-sraf-blizu", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=18.5/43.51500/16.50294&s=11.13.25.26.29.19.10.17" },
+  { ime: "12-racunalo-tocke-daleko", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=13/43.5100/16.4700" },
+  { ime: "13-racunalo-slika", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=17/43.51500/16.50294&s=11.13.25.26.29.19.10.17", klik: ["Podijeli sliku"], cekaj: 6000 },
 ];
 
 for (const k of KORACI) {
@@ -78,7 +81,7 @@ for (const k of KORACI) {
   await cekaj(9000);
   for (const o of k.klik ?? []) {
     await klikni(o);
-    await cekaj(1500);
+    await cekaj(k.cekaj ?? 1500);
   }
   const { result } = await cdp("Page.captureScreenshot", { format: "png" });
   writeFileSync(path.join(izlaz, `${k.ime}.png`), Buffer.from(result.data, "base64"));

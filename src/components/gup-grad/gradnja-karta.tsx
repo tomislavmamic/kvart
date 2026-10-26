@@ -54,6 +54,8 @@ export const BOJA_STAMBENE_ZONE = "#27272a";
 export const OBRISI_OD_ZUMA = 15;
 /** Ostali slojevi uz odabranu zapreku: vide se, ali ne natječu se s njom. */
 const ALFA_UZ_PREPREKU = 0.4;
+/** Mrlja zemljišta za gradnju uža od ovoga na zaslonu (px) dobije točku, da se izdaleka ne izgubi. */
+const MRLJA_VIDLJIVA_PX = 7;
 /** Od ovog zuma vide se međe unutar skupine čestica jednog akta. */
 const DOZVOLE_OBRISI_OD_ZUMA = 16;
 /** Tinta dozvola: tamna, jer zelena, plava, jantarna i ljubičasta već nešto znače. */
@@ -68,27 +70,16 @@ const rgba = ([r, g, b]: [number, number, number], a: number) => ((Math.round(a)
 const BOJA_ISTAKNUTOG = rgba(hex(BOJA_PREPREKE), ALFA_PREPREKE * 255);
 /** Po indeksu klase (kanal R): 1 gdje namjena dopušta stanovanje. */
 const STAMBENE_KLASE = Uint8Array.from({ length: 256 }, (_, i) => (zonaKlase(i) === "stambena" ? 1 : 0));
-/** Strana pločice u pikselima (scripts/gup-grad/regije.py, PLOCICA). */
-const PLOCICA = 512;
 
 /**
- * Razmak i debljina pruga u pikselima pločice (~1,8 m) za zum. Pruge od 6 px
- * izdaleka su uže od piksela zaslona i preglednik ih zagladi u jednoličnu
- * boju, pa se šrafirano ne bi razlikovalo od punog. Zato razmak raste s
- * udaljenošću, da pruge na zaslonu ostanu ~6 px jedna od druge.
+ * Uzorci (kose pruge, mreža, točke) ne crtaju se u pikselima pločice (~1,8 m), koji su izbliza veliki i
+ * nazubljeni, nego ih preglednik iscrta CSS maskom u pikselima zaslona (globals.css, .gup-uzorak-N): pločica
+ * ima platno pune boje i po jedno platno boje pruge za svaku vrstu uzorka, koje maska pretvori u pruge. Maska
+ * je pomaknuta za položaj pločice u sloju (maskaNaMjestu), pa se pruge nastavljaju preko šavova pločica, a
+ * razmak im je na zaslonu isti na svakom zumu.
  */
-export function prugeZaZum(zum: number): { razmak: number; debljina: number; debljinaMreze: number; razina: number } {
-  const razina = Math.min(16, Math.max(13, Math.round(zum)));
-  const razmak = 6 * 2 ** (16 - razina);
-  return { razmak, debljina: Math.max(2, Math.round(razmak / 3)), debljinaMreze: Math.max(2, Math.round(razmak / 4)), razina };
-}
-
-/** Red i stupac pločice iz njezina imena (`…/<red>_<stupac>.png`): pruge se crtaju u koordinatama cijele mreže, bez šava. */
-function polozaj(url: string): [number, number] {
-  const m = /(\d+)_(\d+)\.png$/.exec(url);
-  return m ? [Number(m[1]) * PLOCICA, Number(m[2]) * PLOCICA] : [0, 0];
-}
-
+export const VRSTE_UZORKA = [1, 2, 3] as const;
+export type VrstaUzorka = (typeof VRSTE_UZORKA)[number];
 
 /** Što je na karti vidljivo i istaknuto. */
 export interface Prikaz {
@@ -134,76 +125,122 @@ function paletaZa(prikaz: Prikaz): Paleta {
   return p;
 }
 
-/** Oboji pločicu u njezino platno; vraća ima li na njoj pruga (samo takve se prebojavaju kad se promijeni zum). */
-function obojaj(platno: HTMLCanvasElement, url: string, kodovi: ImageData, prikaz: Prikaz, zum: number): boolean {
+/**
+ * Oboji pločicu: puna boja u `platna[0]`, boja pruge za uzorak vrste N u `platna[N]` (na pikselima koji ga imaju).
+ * Vraća vrste uzoraka koje na pločici postoje.
+ */
+function obojaj(platna: HTMLCanvasElement[], kodovi: ImageData, prikaz: Prikaz): Set<VrstaUzorka> {
   const { width: w, height: h, data: d } = kodovi;
-  const { razmak, debljina, debljinaMreze } = prugeZaZum(zum);
-  const [y0, x0] = polozaj(url);
   const { boja, pruga, vrsta, istaknuto } = paletaZa(prikaz);
   const ulaz = new Uint32Array(d.buffer, d.byteOffset, w * h);
-  const out = new ImageData(w, h);
-  const izlaz = new Uint32Array(out.data.buffer);
-  const pomak = razmak * 1e4;
-  let imaPruga = false;
-  for (let y = 0, i = 0; y < h; y++) {
-    const gy = y0 + y;
-    for (let x = 0; x < w; x++, i++) {
-      const v = ulaz[i];
-      if (v >>> 24 !== 255) continue;
-      const bajt = (v >>> 16) & 255;
-      if (istaknuto[bajt] && STAMBENE_KLASE[v & 255]) {
-        izlaz[i] = BOJA_ISTAKNUTOG;
-        continue;
-      }
-      const vr = vrsta[bajt];
-      if (vr === 0) {
-        izlaz[i] = boja[bajt];
-        continue;
-      }
-      imaPruga = true;
-      const gx = x0 + x;
-      const naPrugi =
-        vr === 1
-          ? (gx + gy) % razmak < debljina
-          : vr === 2
-            ? (gx + gy) % razmak < debljinaMreze || (gx - gy + pomak) % razmak < debljinaMreze
-            : gx % razmak < debljina && gy % razmak < debljina;
-      izlaz[i] = naPrugi ? pruga[bajt] : boja[bajt];
+  const puna = new ImageData(w, h);
+  const izlaz = new Uint32Array(puna.data.buffer);
+  const uzorci: (Uint32Array | null)[] = [null, null, null, null];
+  const slike: (ImageData | null)[] = [null, null, null, null];
+  for (let i = 0; i < w * h; i++) {
+    const v = ulaz[i];
+    if (v >>> 24 !== 255) continue;
+    const bajt = (v >>> 16) & 255;
+    if (istaknuto[bajt] && STAMBENE_KLASE[v & 255]) {
+      izlaz[i] = BOJA_ISTAKNUTOG;
+      continue;
     }
+    izlaz[i] = boja[bajt];
+    const vr = vrsta[bajt];
+    if (vr === 0) continue;
+    if (!uzorci[vr]) {
+      slike[vr] = new ImageData(w, h);
+      uzorci[vr] = new Uint32Array(slike[vr]!.data.buffer);
+    }
+    uzorci[vr]![i] = pruga[bajt];
   }
-  if (platno.width !== w) platno.width = w;
-  if (platno.height !== h) platno.height = h;
-  platno.getContext("2d")!.putImageData(out, 0, 0);
-  return imaPruga;
+  const ima = new Set<VrstaUzorka>();
+  for (let n = 0; n < 4; n++) {
+    const platno = platna[n];
+    if (!platno) continue;
+    if (platno.width !== w) platno.width = w;
+    if (platno.height !== h) platno.height = h;
+    const ctx = platno.getContext("2d")!;
+    if (n === 0) ctx.putImageData(puna, 0, 0);
+    else if (slike[n]) ctx.putImageData(slike[n]!, 0, 0);
+    else ctx.clearRect(0, 0, w, h);
+  }
+  for (const vr of VRSTE_UZORKA) if (slike[vr]) ima.add(vr);
+  return ima;
 }
 
 interface Ucitana {
-  sloj: LeafletNS.SVGOverlay;
-  platno: HTMLCanvasElement;
   granice: LeafletNS.LatLngBounds;
-  imaPruga: boolean;
+  /** [puna boja, kose pruge, mreža, točke]; platno uzorka postoji samo ako je ikad trebalo */
+  platna: (HTMLCanvasElement | null)[];
+  slojevi: (LeafletNS.SVGOverlay | null)[];
+}
+
+/** Maska uzorka počinje u ishodištu sloja, ne u kutu pločice: pruge se nastavljaju preko šavova. */
+function maskaNaMjestu(map: LeafletNS.Map, u: Ucitana) {
+  const nw = map.latLngToLayerPoint(u.granice.getNorthWest()).round();
+  for (let n = 1; n < 4; n++) {
+    const el = u.platna[n];
+    if (!el) continue;
+    el.style.maskPosition = `${-nw.x}px ${-nw.y}px`;
+    el.style.setProperty("-webkit-mask-position", `${-nw.x}px ${-nw.y}px`);
+  }
+}
+
+/** Pločica s karte: platno pune boje i, po potrebi, platna uzoraka iznad njega. */
+function dodajPlocicu(L: typeof LeafletNS, map: LeafletNS.Map, granice: LeafletNS.LatLngBounds, kodovi: ImageData, prikaz: Prikaz): Ucitana {
+  const u: Ucitana = { granice, platna: [document.createElement("canvas"), null, null, null], slojevi: [null, null, null, null] };
+  osvjeziPlocicu(L, map, u, kodovi, prikaz);
+  return u;
+}
+
+/** Prebojaj pločicu i dodaj platna uzoraka koja su postala potrebna. */
+function osvjeziPlocicu(L: typeof LeafletNS, map: LeafletNS.Map, u: Ucitana, kodovi: ImageData, prikaz: Prikaz) {
+  // najprije vidi koje vrste trebaju, pa platna za njih
+  const ima = obojaj(u.platna as HTMLCanvasElement[], kodovi, prikaz);
+  let novo = false;
+  for (const vr of ima)
+    if (!u.platna[vr]) {
+      u.platna[vr] = document.createElement("canvas");
+      novo = true;
+    }
+  if (novo) obojaj(u.platna as HTMLCanvasElement[], kodovi, prikaz);
+  for (let n = 0; n < 4; n++) {
+    const el = u.platna[n];
+    if (!el || u.slojevi[n]) continue;
+    // svgOverlay drži bilo koji element: ovdje platno, koje se prebojava bez kodiranja u PNG
+    u.slojevi[n] = L.svgOverlay(el as unknown as SVGElement, u.granice, {
+      pane: "gradnja",
+      interactive: false,
+      className: n === 0 ? "gup-regije" : `gup-regije gup-uzorak gup-uzorak-${n}`,
+    }).addTo(map);
+  }
+  maskaNaMjestu(map, u);
+}
+
+function ukloniPlocicu(u: Ucitana) {
+  for (const s of u.slojevi) s?.remove();
+  for (const p of u.platna) if (p) p.width = 0;
 }
 
 /**
  * Ponovno oboji učitane pločice, one u pogledu prve, nekoliko po sličici, da
- * karta ostane živa; prekida se kad ga stigne novije bojenje (`jos` vrati
- * false). `samoPruge`: promijenio se samo razmak pruga, pa pločice bez pruga ostaju.
+ * karta ostane živa; prekida se kad ga stigne novije bojenje (`jos` vrati false).
  */
 async function prebojaj(
+  L: typeof LeafletNS,
+  map: LeafletNS.Map,
   ucitane: Map<string, Ucitana>,
   prikaz: Prikaz,
-  zum: number,
   jos: () => boolean,
-  pogled: LeafletNS.LatLngBounds | null,
-  samoPruge = false,
 ) {
-  const red = [...ucitane].filter(([, u]) => !samoPruge || u.imaPruga);
-  if (pogled) red.sort(([, a], [, b]) => Number(pogled.intersects(b.granice)) - Number(pogled.intersects(a.granice)));
+  const pogled = map.getBounds();
+  const red = [...ucitane].sort(([, a], [, b]) => Number(pogled.intersects(b.granice)) - Number(pogled.intersects(a.granice)));
   let pocetak = performance.now();
   for (const [kljuc, u] of red) {
     const kodovi = await procitaj(kljuc);
     if (!jos()) return;
-    u.imaPruga = obojaj(u.platno, kljuc, kodovi, prikaz, zum);
+    osvjeziPlocicu(L, map, u, kodovi, prikaz);
     // pusti preglednik da iscrta i odgovori na dodir kad se nakupi posla za jednu sličicu
     if (performance.now() - pocetak > 12) {
       await new Promise((r) => setTimeout(r));
@@ -266,8 +303,7 @@ export function GradnjaKarta(props: {
   const ucitane = useRef(new Map<string, Ucitana>());
   const prikazRef = useRef(prikaz);
   const zaklonRef = useRef(zaklon);
-  /** Razina pruga po kojoj su pločice obojane (prugeZaZum) i redni broj bojenja. */
-  const razinaRef = useRef(0);
+  /** Redni broj bojenja: starije bojenje stane kad krene novije. */
   const bojenje = useRef(0);
   /** Leaflet se učitava asinkrono: što stigne prije (cilj tražilice, čestica iz poveznice) primijeni se kad karta postoji. */
   const [spremna, setSpremna] = useState(false);
@@ -383,24 +419,13 @@ export function GradnjaKarta(props: {
         const sredina = map.getCenter();
         povratni.current.onPomak({ zum: map.getZoom(), lat: sredina.lat, lng: sredina.lng });
         okno.classList.toggle("gup-regije-daleko", map.getZoom() < ZUM_OSTRIH_PIKSELA);
-        // druga razina pruga: učitane pločice prebojaju se s novim razmakom
-        const razina = prugeZaZum(map.getZoom()).razina;
-        if (razina !== razinaRef.current) {
-          const prva = razinaRef.current === 0;
-          razinaRef.current = razina;
-          if (!prva) {
-            const n = ++bojenje.current;
-            void prebojaj(mapaPlocica, prikazRef.current, razina, () => !otkazano && n === bojenje.current, map.getBounds(), true);
-          }
-        }
         const vidi = map.getBounds().pad(0.25);
         // otpusti pločice daleko od pogleda
         if (mapaPlocica.size > NAJVISE_PLOCICA) {
           const daleko = map.getBounds().pad(1.5);
           for (const [url, u] of mapaPlocica)
             if (!daleko.intersects(u.granice)) {
-              u.sloj.remove();
-              u.platno.width = 0;
+              ukloniPlocicu(u);
               mapaPlocica.delete(url);
             }
         }
@@ -410,27 +435,22 @@ export function GradnjaKarta(props: {
           try {
             const kodovi = await procitaj(p.url);
             if (otkazano || mapaPlocica.has(p.url)) continue;
-            const platno = document.createElement("canvas");
-            const imaPruga = obojaj(platno, p.url, kodovi, prikazRef.current, razinaRef.current);
-            const granice = L.latLngBounds(p.granice);
-            // svgOverlay drži bilo koji element: ovdje platno, koje se prebojava bez kodiranja u PNG
-            const sloj = L.svgOverlay(platno as unknown as SVGElement, granice, {
-              pane: "gradnja",
-              interactive: false,
-              className: "gup-regije",
-            }).addTo(map);
-            mapaPlocica.set(p.url, { sloj, platno, granice, imaPruga });
+            mapaPlocica.set(p.url, dodajPlocicu(L, map, L.latLngBounds(p.granice), kodovi, prikazRef.current));
           } catch {
             // pločica se nije učitala; pokušat će se pri sljedećem pomaku karte
           }
         }
       };
       map.on("moveend", osvjezi);
+      // nova razina zuma: pločice su na novom mjestu u sloju, pa i maske uzoraka
+      map.on("zoomend viewreset", () => {
+        for (const u of mapaPlocica.values()) maskaNaMjestu(map, u);
+      });
       void osvjezi();
     })();
     return () => {
       otkazano = true;
-      for (const u of mapaPlocica.values()) u.platno.width = 0;
+      for (const u of mapaPlocica.values()) ukloniPlocicu(u);
       mapaPlocica.clear();
       povratni.current.onSpremna(null);
       mapa.current?.remove();
@@ -444,8 +464,10 @@ export function GradnjaKarta(props: {
   useEffect(() => {
     if (prikazRef.current === prikaz) return;
     prikazRef.current = prikaz;
+    const map = mapa.current, L = LRef.current;
+    if (!map || !L) return;
     const n = ++bojenje.current;
-    void prebojaj(ucitane.current, prikaz, razinaRef.current, () => n === bojenje.current, mapa.current?.getBounds() ?? null);
+    void prebojaj(L, map, ucitane.current, prikaz, () => n === bojenje.current);
   }, [prikaz]);
 
   // gumbi karte izmiču tražilici i kartici
@@ -514,6 +536,44 @@ export function GradnjaKarta(props: {
       L.geoJSON(f, { interactive: false, style: { color: "#111111", weight: 2.5, fill: false } }),
     ]).addTo(map);
   }, [cestica, spremna]);
+
+  // izdaleka su mala gradilišta manja od piksela: točka u boji kategorije pokaže da postoje
+  // (mrlje iz gradnja-zone.py; samo upaljene kategorije, i ne dok se ističe zapreka)
+  useEffect(() => {
+    const map = mapa.current, L = LRef.current;
+    if (!map || !L || prikaz.prepreka) return;
+    let otkazano = false;
+    const sloj = L.layerGroup().addTo(map);
+    let mrlje: [number, number, number, number][] = [];
+    const crtaj = () => {
+      sloj.clearLayers();
+      const zum = map.getZoom();
+      for (const [lng, lat, kod, m2] of mrlje) {
+        const k = KATEGORIJA_PO_KODU.get(kod);
+        if (!k || prikaz.skrivene.has(k.id)) continue;
+        // promjer mrlje na zaslonu: krug iste površine, u pikselima na ovom zumu
+        const mPoPx = (156543.03 * Math.cos((lat * Math.PI) / 180)) / 2 ** zum;
+        if ((2 * Math.sqrt(m2 / Math.PI)) / mPoPx >= MRLJA_VIDLJIVA_PX) continue;
+        sloj.addLayer(
+          L.circleMarker([lat, lng], { radius: 3.5, weight: 1, color: "#ffffff", fillColor: k.boja, fillOpacity: 1, interactive: false }),
+        );
+      }
+    };
+    fetch("/geo/gup-grad/gradnja-mrlje-2025.json")
+      .then((r) => (r.ok ? (r.json() as Promise<{ mrlje: [number, number, number, number][] }>) : { mrlje: [] }))
+      .then((d) => {
+        if (otkazano) return;
+        mrlje = d.mrlje;
+        crtaj();
+      })
+      .catch(() => {});
+    map.on("zoomend", crtaj);
+    return () => {
+      otkazano = true;
+      map.off("zoomend", crtaj);
+      sloj.remove();
+    };
+  }, [prikaz, spremna]);
 
   // čestice zahtjeva i dozvola: tanka međa unutar skupine, izbliza, dok je koja kategorija dozvole na karti
   // (sama površina je u pločicama: „zatražena dozvola”, „izdana dozvola”)

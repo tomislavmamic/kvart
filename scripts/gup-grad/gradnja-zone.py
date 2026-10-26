@@ -19,6 +19,9 @@ gradilište), jer hektari ne kažu koliko je prilika za kuću.
 Ulaz:   public/geo/gup-grad/gradnja.json i pločice (scripts/gup-grad/gradnja.ts)
 Izlaz:  public/geo/gup-grad/gradnja-zone-2025.geojson
         data/gup-grad/gradnja-mjesta-2025.json   broj mjesta po veličini
+        public/geo/gup-grad/gradnja-mrlje-2025.json  svaka povezana mrlja zemljišta za gradnju
+            (stambeno, nestambeno, zahtjev, dozvola, po DPU-u): [dužina, širina, kod, m²], da ih karta
+            izdaleka, kad su manje od piksela, pokaže točkom
 
 Pokretanje:  /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-zone.py
 """
@@ -39,6 +42,10 @@ from shapely.ops import transform as stransform, unary_union
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 JAVNO = os.path.join(ROOT, "public")
 IZLAZ = os.path.join(JAVNO, "geo", "gup-grad", "gradnja-zone-2025.geojson")
+MRLJE_IZLAZ = os.path.join(JAVNO, "geo", "gup-grad", "gradnja-mrlje-2025.json")
+# kategorije zemljišta za gradnju (gradnja.ts): uz cestu, nestambeno, stambeno, zahtjevi i dozvole, po DPU-u
+MRLJE = (11, 12, 13, 15, 25, 26, 27, 28, 29)
+NAJMANJA_MRLJA_M2 = 20.0
 PLOCICA = 512
 # indeksi klasa u src/lib/gup-grad/model.ts
 STAMBENE = (1, 2)  # S, M/K5
@@ -94,6 +101,25 @@ def main() -> None:
     with open(os.path.join(ROOT, "data", "gup-grad", "gradnja-mjesta-2025.json"), "w") as f:
         json.dump({"opis": "Mjesta za gradnju: povezane mrlje kategorije na karti (gradnja-zone.py).", "mjesta": mjesta}, f, indent=1)
     print("mjesta:", mjesta)
+
+    # mrlje po kategoriji: središte, kod i površina (gradnja.ts: 11, 12, 13, 15, 25–29)
+    mrlje = []
+    for kod in MRLJE:
+        oz, nm = ndimage.label(razlog == kod, structure=np.ones((3, 3)))
+        if not nm:
+            continue
+        ix = np.arange(1, nm + 1)
+        povrsina = ndimage.sum_labels(np.ones_like(oz), oz, index=ix) * m2
+        sredista = ndimage.center_of_mass(np.ones_like(oz), oz, ix)
+        for (ry, rx), a in zip(sredista, povrsina):
+            if a < NAJMANJA_MRLJA_M2:
+                continue
+            lon, lat = u_4326.transform(mx0 + (rx + 0.5) * korak, my1 - (ry + 0.5) * korak)
+            mrlje.append([round(lon, 5), round(lat, 5), kod, round(float(a))])
+    with open(MRLJE_IZLAZ, "w") as f:
+        json.dump({"opis": "Mrlje zemljišta za gradnju po kategoriji: [dužina, širina, kod, m²] (gradnja-zone.py).", "mrlje": mrlje},
+                  f, separators=(",", ":"))
+    print(len(mrlje), "mrlja →", MRLJE_IZLAZ)
 
     krug = ndimage.generate_binary_structure(2, 1)
     maska = ndimage.binary_closing(maska, krug, iterations=ZATVORI_PX) & ~ulica
