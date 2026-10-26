@@ -33,7 +33,7 @@ import {
   provjere,
   ZNAK,
   type CesticaKlika,
-  type Ishod,
+  type Provjera,
   type PutCestice,
   type Putovi,
 } from "@/components/gup-grad/gradnja-provjere";
@@ -75,7 +75,7 @@ const ha = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: v <
 const posto = (v: number) => `${Math.round(v * 100).toLocaleString("hr-HR")} %`;
 /** Redom kojim ih karta nudi: odgovor na koji stranica odgovara prvi. */
 const SKUPINE: Skupina[] = ["stambeno", "nestambeno", "nista", "javno", "plan"];
-const KRATKO: Record<Skupina, string> = { stambeno: "Stambeno", nestambeno: "Nestambeno", nista: "Ništa novo", javno: "Javno", plan: "Po DPU-u" };
+const KRATKO: Record<Skupina, string> = { stambeno: "Stambeno", nestambeno: "Nestambeno", nista: "Ništa novo", javno: "Javno", plan: "DPU" };
 const SIROKO = "(min-width: 640px)";
 /** Kategorije zahtjeva i dozvola (gradnja.ts): dok je koja na karti, vide se i međe unutar njihovih skupina. */
 const DOZVOLE: readonly IdKategorije[] = ["stambeno-zahtjev", "stambeno-dozvola", "nestambeno-zahtjev", "nestambeno-dozvola"];
@@ -106,6 +106,8 @@ interface Podaci {
   gup: Feature | null;
   /** stambene i mješovite zone (gradnja-zone-2025.geojson) */
   zone: FeatureCollection;
+  /** detaljni planovi na snazi (DPU, PUP) iz planski-rezim-2025.geojson */
+  dpu: FeatureCollection;
 }
 
 function UzorakBoje({ stil, malo = false }: { stil: CSSProperties; malo?: boolean }) {
@@ -161,20 +163,6 @@ function presuda(u: Uzorak | null): { kat: Kategorija | undefined; javno: boolea
 }
 
 /** Vrh kartice: presuda, naslov, adresa i čestica, zbroj provjera. Na mobitelu to je sve što se vidi dok se kartica ne raširi. */
-/** Oznaka dozvole na vrhu kartice: puna (izdana) ili iscrtkana (u obradi), kao na karti. */
-function OznakaDozvole({ a }: { a: AktGradnje }) {
-  const izdana = a.ishod === "izdana";
-  return (
-    <span
-      className={`ml-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${
-        izdana ? "bg-zinc-900 text-white" : "border-2 border-dashed border-zinc-900 text-zinc-900"
-      }`}
-    >
-      {izdana ? (a.postupak === "građevinska" ? "Građevinska dozvola" : "Lokacijska dozvola") : "Traži se dozvola"}
-    </span>
-  );
-}
-
 /** Dugi popis čestica akta: prvih nekoliko i koliko ih je još. */
 function skratiPopis(kc: string, najvise = 6): string {
   const [popis, ko] = kc.split(/\s+(?=k\.o\.)/);
@@ -222,7 +210,11 @@ function DozvoleKlika({ akti }: { akti: AktGradnje[] }) {
   );
 }
 
-function ZaglavljeKlika({ k, ishodi }: { k: KarticaSDozvolama; ishodi: Ishod[] }) {
+/**
+ * Vrh kartice: presuda kao traka u boji kategorije (isti uzorak kao na karti), adresa i čestica, pa imenovane
+ * zapreke i uvjeti. Na mobitelu je to sve što se vidi dok se kartica ne raširi.
+ */
+function ZaglavljeKlika({ k, lista, saZaprekama }: { k: KarticaSDozvolama; lista: Provjera[]; saZaprekama: boolean }) {
   if (k.stanje.rezim === "izvan")
     return (
       <>
@@ -232,33 +224,45 @@ function ZaglavljeKlika({ k, ishodi }: { k: KarticaSDozvolama; ishodi: Ishod[] }
     );
   const { kat } = presuda(k.uzorak);
   const c = k.cestica?.svojstva;
-  const ne = ishodi.filter((i) => i === "ne").length;
-  const uvjet = ishodi.filter((i) => i === "uvjet").length;
   const mjesto = [k.podnaslov, c ? `k.č. ${c.kc}, k.o. ${naslovno(c.ko)}` : null].filter(Boolean).join(" · ");
+  const vazno = lista.filter((p) => p.ishod === "ne" || p.ishod === "uvjet");
+  // dozvola i zapreka zajedno: podnaslov kaže oboje, da zeleno „može” i crvena zapreka ne proturječe
+  const akt = k.akti.find((a) => a.ishod === "izdana") ?? k.akti[0];
+  const prvaZapreka = lista.find((p) => p.ishod === "ne");
+  const podnaslov = akt
+    ? [
+        akt.ishod === "izdana" ? `Gradnja odobrena ${datumHr(akt.rijeseno)}` : `Dozvola zatražena ${datumHr(akt.zaprimljeno)}`,
+        prvaZapreka ? (prvaZapreka.sazetak ?? prvaZapreka.pitanje) : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : kat
+      ? SKUPINE_GRADNJE[kat.skupina].naslov
+      : null;
   return (
     <>
-      {kat && (
-        <span className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-          <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white/60" style={uzorakKategorije(kat)} />
-          {SKUPINE_GRADNJE[kat.skupina].kratko}
-        </span>
-      )}
-      {k.akti.length > 0 && <OznakaDozvole a={k.akti.reduce((a, b) => ((b.ishod === "izdana") > (a.ishod === "izdana") ? b : a))} />}
-      <h2 className="mt-1.5 text-base font-bold leading-snug text-zinc-900">{kat ? punNaziv(kat) : "Ovdje nema katastarske čestice"}</h2>
-      {mjesto && <p className="text-xs text-zinc-500">{mjesto}</p>}
-      {(ne > 0 || uvjet > 0) && (
-        <p className="mt-1 flex flex-wrap gap-x-3 text-xs font-semibold">
-          {ne > 0 && (
-            <span className="text-red-800">
-              ✕ {ne} {ne === 1 ? "zapreka" : ne < 5 ? "zapreke" : "zapreka"}
-            </span>
-          )}
-          {uvjet > 0 && (
-            <span className="text-amber-900">
-              ! {uvjet} {uvjet === 1 ? "uvjet" : "uvjeta"}
-            </span>
-          )}
-        </p>
+      <div className="flex items-start gap-3">
+        {kat && <span aria-hidden className="mt-0.5 h-9 w-9 shrink-0 rounded-lg ring-1 ring-inset ring-black/10" style={uzorakKategorije(kat)} />}
+        <div className="min-w-0">
+          <h2 className="text-base font-bold leading-snug text-zinc-900">{kat ? punNaziv(kat) : "Ovdje nema katastarske čestice"}</h2>
+          {podnaslov && <p className="text-sm leading-snug text-zinc-600">{podnaslov}</p>}
+        </div>
+      </div>
+      {mjesto && <p className="mt-1.5 text-xs text-zinc-500">{mjesto}</p>}
+      {saZaprekama && vazno.length > 0 && (
+        <ul className="mt-1.5 space-y-0.5 text-sm">
+          {vazno.map((p) => (
+            <li key={p.pitanje} className={`flex gap-1.5 ${p.ishod === "ne" ? "text-red-800" : "text-amber-900"}`}>
+              <span aria-hidden className="w-3 shrink-0 font-bold">
+                {ZNAK[p.ishod].znak}
+              </span>
+              <span>
+                <span className="sr-only">{ZNAK[p.ishod].naziv}: </span>
+                {p.sazetak ?? p.pitanje}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </>
   );
@@ -279,7 +283,8 @@ function TijeloKlika(props: {
     );
   const { kat, javno, ispod } = presuda(k.uzorak);
   const lista = provjere(k.tocka, k.uzorak, k.stanje, k.cestica, odredbe, listovi, putovi);
-  const vazne = lista.filter((p) => p.ishod !== "nevazno");
+  const problemi = lista.filter((p) => p.ishod === "ne" || p.ishod === "uvjet");
+  const uRedu = lista.filter((p) => p.ishod === "da");
   const nevazne = lista.filter((p) => p.ishod === "nevazno");
   const c = k.cestica?.svojstva;
   const ukupno = k.sastav ? [...k.sastav.values()].reduce((a, b) => a + b, 0) : 0;
@@ -297,8 +302,31 @@ function TijeloKlika(props: {
   );
   return (
     <>
+      {skriveno && (
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-zinc-700">
+          Ovaj sloj je na karti skriven.
+          <button type="button" onClick={onPrikazi} className="fokus meta font-semibold text-zinc-900 underline">
+            Prikaži ga
+          </button>
+        </p>
+      )}
+      {problemi.length > 0 && <ol className="mt-3 space-y-2">{problemi.map(red)}</ol>}
+      {uRedu.length > 0 && (
+        <details className="mt-2">
+          <summary className="fokus meta cursor-pointer text-sm font-semibold text-emerald-800">
+            ✓ {uRedu.length} {uRedu.length === 1 ? "provjera" : uRedu.length < 5 ? "provjere" : "provjera"} u redu
+          </summary>
+          <ol className="mt-1.5 space-y-2">{uRedu.map(red)}</ol>
+        </details>
+      )}
+      {nevazne.length > 0 && (
+        <details className="mt-1">
+          <summary className="fokus meta cursor-pointer text-sm font-semibold text-zinc-500">Ne odnosi se ({nevazne.length})</summary>
+          <ol className="mt-1.5 space-y-2">{nevazne.map(red)}</ol>
+        </details>
+      )}
       {kat && (
-        <p className="mt-2 text-zinc-800">
+        <p className="mt-3 border-t border-zinc-200 pt-2.5 text-zinc-800">
           {javno ? <>Prema evidenciji Grada Splita vlasnik je {VLASNIK_JAVNOG[k.uzorak!.vlasnik as KodVlasnika]}. </> : null}
           {kat.razlog}
         </p>
@@ -321,23 +349,6 @@ function TijeloKlika(props: {
             </p>
           )}
         </div>
-      )}
-      {skriveno && (
-        <p className="mt-2 flex flex-wrap items-center gap-x-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-zinc-700">
-          Ovaj sloj je na karti skriven.
-          <button type="button" onClick={onPrikazi} className="fokus meta font-semibold text-zinc-900 underline">
-            Prikaži ga
-          </button>
-        </p>
-      )}
-
-      <h3 className="mt-3 text-xs font-bold uppercase tracking-wide text-zinc-500">Što smo provjerili</h3>
-      <ol className="mt-1.5 space-y-2">{vazne.map(red)}</ol>
-      {nevazne.length > 0 && (
-        <details className="mt-2">
-          <summary className="fokus meta cursor-pointer text-xs font-semibold text-zinc-500">Ne odnosi se ({nevazne.length})</summary>
-          <ol className="mt-1.5 space-y-2">{nevazne.map(red)}</ol>
-        </details>
       )}
       {"doRuba" in k.stanje && k.stanje.doRuba < BLIZU_RUBA_M && (
         <p className="mt-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-zinc-800">
@@ -384,146 +395,156 @@ function stanjeSkupine(s: Skupina, ids: readonly IdKategorije[], skrivene: Reado
   return vidljivih === 0 ? "nista" : vidljivih === ids.length ? "sve" : "dio";
 }
 
-function Cip(props: { upaljen: boolean; onClick: () => void; children: ReactNode; oznaka?: string; otvara?: boolean }) {
-  const { upaljen, onClick, children, oznaka, otvara } = props;
+/**
+ * Čip sloja: upaljen je bijel s punim uzorkom i kvačicom, ugašen proziran sa sivim tekstom i blijedim uzorkom,
+ * djelomično upaljen s napola punim uzorkom. Boja skupine tako ostaje vidljiva i kad je čip upaljen.
+ */
+function Cip(props: { stanje: "sve" | "dio" | "nista"; onClick: () => void; children: ReactNode; oznaka?: string }) {
+  const { stanje, onClick, children, oznaka } = props;
+  const upaljen = stanje !== "nista";
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-pressed={otvara ? undefined : upaljen}
-      aria-expanded={otvara ? upaljen : undefined}
+      aria-pressed={stanje === "dio" ? "mixed" : upaljen}
       aria-label={oznaka}
-      className={`fokus inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-semibold shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 ring-black/10 ${
-        upaljen ? "bg-zinc-900 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50"
-      }`}
+      className={`fokus inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 [@media(pointer:coarse)]:h-11 ${
+        upaljen ? "bg-white font-semibold text-zinc-900 ring-black/15" : "bg-white/85 font-medium text-zinc-600 ring-black/10 [&>span:first-child]:opacity-50"
+      } ${stanje === "dio" ? "[&>span:first-child]:[clip-path:inset(0_50%_0_0)]" : ""}`}
     >
       {children}
+      {upaljen && (
+        <span aria-hidden className="text-xs text-zinc-900">
+          ✓
+        </span>
+      )}
     </button>
   );
 }
 
-function PopisSlojeva(props: {
-  zbroj: ZbrojGradnje;
+/**
+ * Tumač je i upravljanje slojevima (kao na Feltu i Mapboxu): za svaku upaljenu skupinu njezine stavke s uzorkom kao
+ * na karti, svaku s kvačicom. Skupine se pale čipovima gore; hektari su u pregledu.
+ */
+function PopisTumaca(props: {
   kategorijePoSkupini: Record<Skupina, Kategorija[]>;
   skrivene: ReadonlySet<IdKategorije>;
   prebaci: (ids: readonly IdKategorije[], vidi: boolean) => void;
+  prepreka: IdPrepreke | null;
+  onUkloniPrepreku: () => void;
 }) {
-  const { zbroj, kategorijePoSkupini, skrivene, prebaci } = props;
+  const { kategorijePoSkupini, skrivene, prebaci, prepreka, onUkloniPrepreku } = props;
+  const upaljene = SKUPINE.filter((s) => kategorijePoSkupini[s].some((k) => !skrivene.has(k.id)));
   return (
-    <div className="space-y-4">
-      {SKUPINE.map((s) => {
-        const ids = kategorijePoSkupini[s].map((k) => k.id);
-        const st = stanjeSkupine(s, ids, skrivene);
-        return (
-          <fieldset key={s}>
-            <legend className="w-full">
-              <label className="meta flex cursor-pointer items-center gap-2.5 py-1 font-semibold text-zinc-900">
-                <input
-                  type="checkbox"
-                  checked={st !== "nista"}
-                  ref={(el) => {
-                    if (el) el.indeterminate = st === "dio";
-                  }}
-                  onChange={(e) => prebaci(ids, e.target.checked)}
-                  className="h-5 w-5 shrink-0 accent-zinc-900"
-                />
-                <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna])} />
-                <span className="flex-1">{SKUPINE_GRADNJE[s].naslov}</span>
-                <span className="tabular-nums font-normal text-zinc-500">{ha(zbroj.po_skupini_ha[s] ?? 0)} ha</span>
-              </label>
-            </legend>
-            {/* svaki razlog ima svoj prekidač; svoj uzorak ima samo ono što na karti izgleda drukčije od skupine */}
-            <ul className="pl-7">
+    <div className="space-y-2.5 text-sm">
+      {prepreka && (
+        <div className="rounded-lg bg-violet-50 p-2 ring-1 ring-violet-200">
+          <p className="text-xs font-bold uppercase tracking-wide text-violet-900">Ističe se</p>
+          <div className="mt-0.5 flex items-start gap-2 text-zinc-800">
+            <span className="mt-0.5">
+              <UzorakBoje stil={STIL_PREPREKE} />
+            </span>
+            <span className="flex-1">{PREPREKA_PO_ID[prepreka].naziv} (u zonama za stanovanje)</span>
+            <button
+              type="button"
+              onClick={onUkloniPrepreku}
+              aria-label="Ukloni isticanje"
+              className="fokus -mr-1 -mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-lg text-zinc-500 hover:bg-violet-100"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      {upaljene.length === 0 && <p className="text-zinc-500">Upali sloj gore (Stambeno, Nestambeno…).</p>}
+      {upaljene.map((s) => (
+        <div key={s}>
+          <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">{KRATKO[s]}</p>
+          {kategorijePoSkupini[s].length === 1 || s === "nista" ? (
+            <p className="mt-0.5 flex items-center gap-2 text-zinc-700">
+              <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna])} />
+              {s === "nista" ? "zgrade, ulice, parkovi, premalo, čeka UPU…" : SKUPINE_GRADNJE[s].naslov}
+            </p>
+          ) : (
+            <ul className="mt-0.5">
               {kategorijePoSkupini[s].map((k) => (
                 <li key={k.id}>
-                  <label className={`meta flex cursor-pointer items-center gap-2.5 py-0.5 text-sm text-zinc-600 ${skrivene.has(k.id) ? "opacity-50" : ""}`}>
+                  <label className={`meta flex cursor-pointer items-center gap-2 py-0.5 ${skrivene.has(k.id) ? "text-zinc-400" : "text-zinc-700"}`}>
                     <input
                       type="checkbox"
                       checked={!skrivene.has(k.id)}
                       onChange={(e) => prebaci([k.id], e.target.checked)}
-                      className="h-4 w-4 shrink-0 accent-zinc-700"
+                      className="h-4 w-4 shrink-0 accent-zinc-900"
                     />
-                    {istiIzgled(k, KATEGORIJA_PO_ID[SKUPINE_GRADNJE[s].glavna]) ? (
-                      <span aria-hidden className="w-6 shrink-0" />
-                    ) : (
+                    <span className={skrivene.has(k.id) ? "opacity-40" : ""}>
                       <UzorakBoje stil={uzorakKategorije(k)} />
-                    )}
-                    <span className="flex-1">{k.naziv}</span>
-                    <span className="tabular-nums text-zinc-500">{ha(zbroj.po_kategoriji_ha[k.id] ?? 0)} ha</span>
+                    </span>
+                    <span>{k.naziv}</span>
                   </label>
                 </li>
               ))}
             </ul>
-            {s === "javno" && (
-              <p className="mt-1 pl-7 text-xs text-zinc-500">
-                Vlasnik je iz evidencije Grada, koja ga za većinu čestica ne navodi, pa javnog zemljišta ima i više. Javno uže od 10 m
-                (ulice, rubovi cesta, putovi) karta ne boji jantarno.
-              </p>
-            )}
-          </fieldset>
-        );
-      })}
-      <ul className="space-y-1.5 border-t border-zinc-200 pt-3 text-sm text-zinc-600">
+          )}
+        </div>
+      ))}
+      <ul className="space-y-1 border-t border-zinc-200 pt-2 text-xs text-zinc-600">
         <li className="flex items-center gap-2">
-          <Crta boja={BOJA_STAMBENE_ZONE} />
-          <span>rub zona za stanovanje (S, M1–M3, K5); vidi se kad približiš kartu</span>
+          <Crta boja="#18181b" crtice="5 4" />
+          <span>granica DPU-a na snazi</span>
         </li>
         <li className="flex items-center gap-2">
-          <Crta boja="#18181b" crtice="7 5" />
-          <span>granica GUP-a; izvan nje karta ništa ne boji</span>
+          <Crta boja={BOJA_STAMBENE_ZONE} />
+          <span>rub zona za stanovanje (izbliza)</span>
         </li>
         <li className="flex items-center gap-2">
           <Crta boja="#18181b" />
-          <span>tanka međa: čestice jednog zahtjeva ili dozvole, koje karta računa kao jednu građevnu česticu</span>
+          <span>granica GUP-a (s bijelim rubom)</span>
         </li>
       </ul>
     </div>
   );
 }
 
-const haPrepreke = (zbroj: ZbrojGradnje, id: IdPrepreke) =>
-  PREPREKA_PO_ID[id].kategorije.reduce((a, k) => a + (zbroj.u_stambenim_zonama_ha[k] ?? 0), 0);
-
-function PopisPrepreka(props: { zbroj: ZbrojGradnje; prepreka: IdPrepreke | null; onOdaberi: (p: IdPrepreke | null) => void }) {
-  const { zbroj, prepreka, onOdaberi } = props;
-  const red = (id: IdPrepreke | null, naziv: string, opis: string, v?: number) => (
-    <li key={id ?? "nista"}>
-      <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg px-1 py-2 hover:bg-zinc-50">
-        <input
-          type="radio"
-          name="gradnja-prepreka"
-          checked={prepreka === id}
-          onChange={() => onOdaberi(id)}
-          className="mt-0.5 h-5 w-5 shrink-0 accent-zinc-900"
-        />
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-zinc-900">{naziv}</span>
-          <span className="block text-xs text-zinc-500">{opis}</span>
-        </span>
-        {v !== undefined && <span className="shrink-0 tabular-nums text-sm text-zinc-600">{ha(v)} ha</span>}
-      </label>
-    </li>
-  );
+/** Tumač na računalu: sklopiva kartica dolje lijevo. */
+function TumacKarte(props: {
+  kategorijePoSkupini: Record<Skupina, Kategorija[]>;
+  skrivene: ReadonlySet<IdKategorije>;
+  prebaci: (ids: readonly IdKategorije[], vidi: boolean) => void;
+  prepreka: IdPrepreke | null;
+  onUkloniPrepreku: () => void;
+  otvoren: boolean;
+  onOtvori: (o: boolean) => void;
+  style: CSSProperties;
+}) {
+  const { otvoren, onOtvori, style, ...popis } = props;
   return (
-    <>
-      <p className="text-sm text-zinc-600">
-        Samo u zonama u kojima novi GUP dopušta stanovanje (S, M1–M3, K5). Odabrani razlog karta oboji{" "}
-        <span className="inline-flex items-center gap-1 align-middle font-semibold text-zinc-900">
-          <UzorakBoje stil={STIL_PREPREKE} malo /> ljubičasto
+    <section
+      aria-label="Tumač karte"
+      className="absolute z-[1010] w-[260px] rounded-xl bg-white text-zinc-700 shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)] ring-1 ring-black/10"
+      style={style}
+    >
+      <button
+        type="button"
+        onClick={() => onOtvori(!otvoren)}
+        aria-expanded={otvoren}
+        className="fokus flex h-10 w-full items-center justify-between rounded-xl px-3 text-sm font-bold text-zinc-900"
+      >
+        Tumač{popis.prepreka ? " · ističe se" : ""}
+        <span aria-hidden className="text-base leading-none text-zinc-500">
+          {otvoren ? "▾" : "▴"}
         </span>
-        , a ostali upaljeni slojevi izblijede.
-      </p>
-      <ul className="mt-2">
-        {red(null, "Ništa ne ističi", "Karta pokazuje samo upaljene slojeve.")}
-        {PREPREKE.map((p) => red(p.id, p.naziv, p.opis, haPrepreke(zbroj, p.id)))}
-      </ul>
-      <p className="mt-2 border-t border-zinc-200 pt-2 text-xs text-zinc-500">
-        U tim zonama za stambenu zgradu ostaje {ha((zbroj.u_stambenim_zonama_ha.stambeno ?? 0) + (zbroj.u_stambenim_zonama_ha["uz-cestu-stambeno"] ?? 0))}{" "}
-        ha, od toga {ha(zbroj.u_stambenim_zonama_ha["uz-cestu-stambeno"] ?? 0)} ha tek kad do čestice dođu ulica i kanalizacija.
-      </p>
-    </>
+      </button>
+      {otvoren && (
+        <div className="max-h-[45vh] overflow-y-auto overscroll-contain px-3 pb-3 [mask-image:linear-gradient(to_bottom,black_calc(100%-16px),transparent)]">
+          <PopisTumaca {...popis} />
+        </div>
+      )}
+    </section>
   );
 }
+
+const haPrepreke = (zbroj: ZbrojGradnje, id: IdPrepreke) =>
+  PREPREKA_PO_ID[id].kategorije.reduce((a, k) => a + (zbroj.u_stambenim_zonama_ha[k] ?? 0), 0);
 
 // ------------------------------------------------------------- prikaz
 
@@ -553,8 +574,11 @@ export function GradnjaPrikaz(props: {
   const [cilj, setCilj] = useState<CiljKarte | null>(null);
   const [kartica, setKartica] = useState<Kartica | null>(null);
   /** Ploča odozdo na mobitelu: najprije samo vrh (presuda i zbroj provjera), da se čestica vidi; dodir je raširi. */
-  const [rasireno, setRasireno] = useState(false);
-  const [ploha, setPloha] = useState<null | "prepreke" | "slojevi">(null);
+  const [visina, setVisina] = useState<Visina>("malo");
+  /** Na mobitelu: ploča tumača odozdo. */
+  const [ploha, setPloha] = useState<null | "tumac">(null);
+  /** Na računalu: kartica tumača dolje lijevo, zadano otvorena. */
+  const [tumacOtvoren, setTumacOtvoren] = useState(true);
   const [listovi, setListovi] = useState<Record<string, List> | null>(null);
   const [putovi, setPutovi] = useState<Putovi | null>(null);
   const [dozvole, setDozvole] = useState<PodaciDozvola | null>(null);
@@ -661,6 +685,10 @@ export function GradnjaPrikaz(props: {
           slojevi: slojeviIzGeojsona(zabrana, planovi),
           gup: zabrana.features.find((f) => f.properties?.vrsta === "gup") ?? null,
           zone,
+          dpu: {
+            type: "FeatureCollection",
+            features: planovi.features.filter((f) => f.properties?.vrsta === "vazeci" && !String(f.properties?.ispu ?? "").startsWith("UPU")),
+          },
         }),
       )
       .catch(() => setGreska(true));
@@ -889,7 +917,8 @@ export function GradnjaPrikaz(props: {
       });
     }
     if ((mapa.current?.getZoom() ?? 0) >= OBRISI_OD_ZUMA) out.push({ naziv: "rub zona za stanovanje", crta: { boja: BOJA_STAMBENE_ZONE, debljina: 2 } });
-    out.push({ naziv: "granica GUP-a", crta: { boja: "#18181b", crtice: [10, 7], debljina: 2 } });
+    out.push({ naziv: "granica GUP-a", crta: { boja: "#18181b", debljina: 2 } });
+    out.push({ naziv: "granica DPU-a na snazi", crta: { boja: "#18181b", crtice: [8, 6], debljina: 2 } });
     if (kartica?.cestica) out.push({ naziv: `odabrana čestica k.č. ${kartica.cestica.svojstva.kc}`, crta: { boja: "#111111", debljina: 3 } });
     return out;
   };
@@ -942,7 +971,7 @@ export function GradnjaPrikaz(props: {
     const akti = [...new Set(naCestici.flatMap((i) => dozvole!.cestice[i].akti))].map((i) => dozvole!.akti[i]);
     return { ...kartica, akti, skupina: [...new Set(akti.flatMap((a) => a.cestice))] };
   }, [kartica, dozvole]);
-  const ishodi = k && podaci ? provjere(k.tocka, k.uzorak, k.stanje, k.cestica, odredbe, listovi, putovi).map((p) => p.ishod) : [];
+  const listaKartice = k && podaci ? provjere(k.tocka, k.uzorak, k.stanje, k.cestica, odredbe, listovi, putovi) : [];
   const skrivenoKliknuto = (() => {
     const { kat } = presuda(k?.uzorak ?? null);
     return !!kat && skrivene.has(kat.id) && !(prepreka && PREPREKA_PO_ID[prepreka].kategorije.includes(kat.id));
@@ -1059,6 +1088,7 @@ export function GradnjaPrikaz(props: {
               <GradnjaKarta
                 gup={podaci.gup}
                 zone={podaci.zone}
+                dpu={podaci.dpu}
                 prikaz={prikaz}
                 cilj={cilj}
                 oznaka={k ? { lng: k.tocka[0], lat: k.tocka[1] } : null}
@@ -1079,83 +1109,121 @@ export function GradnjaPrikaz(props: {
             )}
           </div>
 
-          {/* vrh: prekidač, tražilica, slojevi */}
+          {/* vrh: na računalu jedan red (tražilica, slojevi | pregled, dijeljenje), na mobitelu dva */}
           <div
             ref={vrh}
-            className="pointer-events-none absolute inset-x-0 top-0 z-[1010] flex flex-col gap-2 px-2 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex-row sm:items-start sm:gap-3 sm:px-3 sm:pt-3"
+            className={`pointer-events-none absolute inset-x-0 top-0 z-[1010] flex flex-col gap-2 px-2 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:pt-3 ${
+              !siroko && k && visina === "puno" ? "invisible" : ""
+            }`}
           >
-            <div className="pointer-events-auto flex items-center gap-2 sm:order-last sm:ml-auto">
-              <Prekidac prozor="karta" onPregled={otvoriPregled} onKarta={otvoriKartu} plutajuci />
-              <span className="flex-1 sm:hidden" />
-              <button
-                type="button"
-                onClick={() => void napraviSliku()}
-                className="fokus inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-zinc-900 shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 ring-black/10 hover:bg-zinc-50"
-              >
-                <IkonaDijeljenja /> Podijeli
-              </button>
-            </div>
-            <div className="pointer-events-auto sm:w-[400px] sm:shrink-0 [&_input]:mt-0 [&_input]:h-11 [&_input]:rounded-full [&_input]:border-black/10 [&_input]:px-4 [&_input]:shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] [&>div]:max-w-none">
-              <TrazilicaAdrese id="gradnja-adresa-karta" natpis="Provjeri adresu" sakrijNatpis onOdaberi={odaberi} />
-            </div>
-            <div className="pointer-events-auto -mx-2 flex min-w-0 gap-2 overflow-x-auto px-2 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-              {SKUPINE.map((sk) => {
-                const ids = kategorijePoSkupini[sk].map((x) => x.id);
-                const st = stanjeSkupine(sk, ids, skrivene);
-                return (
-                  <Cip key={sk} upaljen={st !== "nista"} onClick={() => prebaci(ids, st === "nista")} oznaka={`${SKUPINE_GRADNJE[sk].naslov}: ${st === "nista" ? "skriveno" : "na karti"}`}>
-                    <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].glavna])} malo />
-                    {KRATKO[sk]}
-                    {st === "dio" && <span className="text-xs font-normal opacity-75">(dio)</span>}
-                  </Cip>
-                );
-              })}
-              <Cip upaljen={ploha === "prepreke" || !!prepreka} otvara onClick={() => setPloha((p) => (p === "prepreke" ? null : "prepreke"))}>
-                {prepreka ? (
-                  <>
-                    <UzorakBoje stil={STIL_PREPREKE} malo />
-                    <span className="max-w-[12rem] truncate">{PREPREKA_PO_ID[prepreka].naziv}</span>
-                  </>
-                ) : (
-                  "Što priječi gradnju?"
-                )}
-                <span aria-hidden>▾</span>
-              </Cip>
-              {prepreka && (
-                <Cip upaljen={false} onClick={() => setPrepreka(null)} oznaka="Ukloni istaknuti razlog">
-                  ×
-                </Cip>
+            <div className="pointer-events-auto flex items-center gap-2 sm:contents">
+              {!siroko && (
+                <button
+                  type="button"
+                  onClick={otvoriPregled}
+                  aria-label="Pregled: brojke i objašnjenja"
+                  className="fokus grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-zinc-900 shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 ring-black/10"
+                >
+                  <IkonaPregleda />
+                </button>
               )}
-              <Cip upaljen={ploha === "slojevi"} otvara onClick={() => setPloha((p) => (p === "slojevi" ? null : "slojevi"))} oznaka="Svi slojevi i tumač">
-                <IkonaSlojeva /> <span className="hidden sm:inline">Slojevi</span>
-              </Cip>
+              <div className="relative min-w-0 flex-1 sm:w-[340px] sm:flex-none [&_input]:mt-0 [&_input]:h-11 [&_input]:rounded-full [&_input]:border-black/10 [&_input]:pl-10 [&_input]:pr-4 [&_input]:shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] [&>div]:relative [&>div]:max-w-none">
+                <TrazilicaAdrese id="gradnja-adresa-karta" natpis="Provjeri adresu" sakrijNatpis onOdaberi={odaberi} />
+                <span aria-hidden className="pointer-events-none absolute left-3.5 top-[13px] text-zinc-500">
+                  <IkonaPovecala />
+                </span>
+              </div>
+              {!siroko && (
+                <button
+                  type="button"
+                  onClick={() => void napraviSliku()}
+                  aria-label="Podijeli sliku karte"
+                  className="fokus grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-zinc-900 shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 ring-black/10"
+                >
+                  <IkonaDijeljenja />
+                </button>
+              )}
             </div>
+            <div className="pointer-events-auto relative -mx-2 min-w-0 sm:mx-0 sm:flex-1">
+              <div className="flex gap-1.5 overflow-x-auto px-2 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+                {SKUPINE.map((sk) => {
+                  const ids = kategorijePoSkupini[sk].map((x) => x.id);
+                  const st = stanjeSkupine(sk, ids, skrivene);
+                  return (
+                    <Cip key={sk} stanje={st} onClick={() => prebaci(ids, st === "nista")} oznaka={`${SKUPINE_GRADNJE[sk].naslov}: ${st === "nista" ? "skriveno" : "na karti"}`}>
+                      <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID[SKUPINE_GRADNJE[sk].glavna])} malo />
+                      {KRATKO[sk]}
+                    </Cip>
+                  );
+                })}
+              </div>
+              {/* na mobitelu se čipovi listaju vodoravno: blijeđenje desno kaže da ih ima još */}
+              <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-zinc-900/45 to-transparent sm:hidden" />
+            </div>
+            {siroko && (
+              <div className="pointer-events-auto flex items-center gap-2">
+                <Prekidac prozor="karta" onPregled={otvoriPregled} onKarta={otvoriKartu} plutajuci />
+                <button
+                  type="button"
+                  onClick={() => void napraviSliku()}
+                  aria-label="Podijeli sliku karte"
+                  title="Podijeli sliku karte"
+                  className="fokus grid h-11 w-11 place-items-center rounded-full bg-white text-zinc-900 shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 ring-black/10 hover:bg-zinc-50"
+                >
+                  <IkonaDijeljenja />
+                </button>
+              </div>
+            )}
           </div>
 
-          {ploha && (
+          {/* tumač: na računalu kartica dolje lijevo (desno od kartice mjesta), na mobitelu gumb koji otvara ploču */}
+          {siroko ? (
+            // dok je kartica mjesta otvorena, tumač je skupljen uz nju, da ne prekrije odabranu česticu
+            <TumacKarte
+              kategorijePoSkupini={kategorijePoSkupini}
+              skrivene={skrivene}
+              prebaci={prebaci}
+              prepreka={prepreka}
+              onUkloniPrepreku={() => setPrepreka(null)}
+              otvoren={tumacOtvoren && !k}
+              onOtvori={setTumacOtvoren}
+              style={{ left: k ? STUPAC + 2 * RAZMAK : RAZMAK, bottom: RAZMAK }}
+            />
+          ) : (
+            !k && (
+              <button
+                type="button"
+                onClick={() => setPloha((p) => (p ? null : "tumac"))}
+                aria-expanded={ploha === "tumac"}
+                className="fokus absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-[1010] inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-zinc-900 shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] ring-1 ring-black/10"
+              >
+                <IkonaSlojeva /> Tumač
+                {prepreka && <span className="h-2.5 w-2.5 rounded-full bg-violet-600" aria-label="ističe se razlog" />}
+              </button>
+            )
+          )}
+
+          {ploha === "tumac" && !siroko && (
             <section
-              aria-label={ploha === "prepreke" ? "Što priječi gradnju" : "Slojevi i tumač"}
-              className="absolute inset-x-0 bottom-0 z-[1030] max-h-[75dvh] overflow-y-auto overscroll-contain rounded-t-2xl bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-zinc-700 shadow-[0_-4px_16px_rgb(0_0_0/0.15)] sm:bottom-auto sm:left-auto sm:right-3 sm:max-h-[calc(100dvh-6rem)] sm:w-[400px] sm:rounded-xl sm:shadow-lg"
-              style={siroko ? { top: gore + 4 } : undefined}
+              aria-label="Tumač karte"
+              className="absolute inset-x-0 bottom-0 z-[1030] max-h-[45dvh] overflow-y-auto overscroll-contain rounded-t-2xl bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-zinc-700 shadow-[0_-4px_16px_rgb(0_0_0/0.15)]"
             >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h2 className="font-bold text-zinc-900">{ploha === "prepreke" ? "Što priječi gradnju stambene zgrade?" : "Slojevi na karti"}</h2>
+              <button type="button" aria-label="Zatvori tumač" onClick={() => setPloha(null)} className="fokus flex h-7 w-full items-center justify-center">
+                <span aria-hidden className="h-1.5 w-10 rounded-full bg-zinc-300" />
+              </button>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <h2 className="font-bold text-zinc-900">Tumač</h2>
                 <button type="button" aria-label="Zatvori" onClick={() => setPloha(null)} className="fokus grid h-11 w-11 place-items-center rounded-full text-xl text-zinc-500 hover:bg-zinc-100">
                   ×
                 </button>
               </div>
-              {ploha === "prepreke" ? (
-                <PopisPrepreka
-                  zbroj={zbroj}
-                  prepreka={prepreka}
-                  onOdaberi={(p) => {
-                    setPrepreka(p);
-                    if (!siroko) setPloha(null);
-                  }}
-                />
-              ) : (
-                <PopisSlojeva zbroj={zbroj} kategorijePoSkupini={kategorijePoSkupini} skrivene={skrivene} prebaci={prebaci} />
-              )}
+              <PopisTumaca
+                kategorijePoSkupini={kategorijePoSkupini}
+                skrivene={skrivene}
+                prebaci={prebaci}
+                prepreka={prepreka}
+                onUkloniPrepreku={() => setPrepreka(null)}
+              />
             </section>
           )}
 
@@ -1164,19 +1232,12 @@ export function GradnjaPrikaz(props: {
               ref={karticaEl}
               aria-label="Odabrano mjesto"
               className={`absolute inset-x-0 bottom-0 z-[1020] flex flex-col rounded-t-2xl bg-white text-sm leading-relaxed text-zinc-700 shadow-[0_-4px_16px_rgb(0_0_0/0.15)] sm:bottom-3 sm:left-3 sm:right-auto sm:w-[400px] sm:rounded-xl sm:shadow-lg ${
-                rasireno ? "max-h-[50dvh]" : ""
+                visina === "pola" ? "max-h-[50dvh]" : visina === "puno" ? "max-h-[92dvh]" : ""
               } sm:max-h-none`}
               style={siroko ? { top: gore + 4 } : undefined}
             >
-              {!siroko && (
-                <RucicaKartice
-                  rasireno={rasireno}
-                  onRasiri={() => setRasireno(true)}
-                  onSkupi={() => setRasireno(false)}
-                  onZatvori={zatvoriKarticu}
-                />
-              )}
-              <div className="relative shrink-0 px-4 pb-2 pt-1 sm:pt-4">
+              {!siroko && <RucicaKartice visina={visina} onVisina={setVisina} onZatvori={zatvoriKarticu} />}
+              <div className="relative shrink-0 px-4 pb-3 pt-1 sm:pt-4">
                 <button
                   type="button"
                   aria-label="Zatvori"
@@ -1188,26 +1249,18 @@ export function GradnjaPrikaz(props: {
                 <div
                   className="pr-10"
                   onClick={() => {
-                    if (!siroko && !rasireno) setRasireno(true);
+                    if (!siroko && visina === "malo") setVisina("pola");
                   }}
                 >
-                  <ZaglavljeKlika k={k} ishodi={ishodi} />
+                  {/* zapreke i uvjeti u vrhu samo dok je kartica skupljena; raširena ih ima s odgovorima */}
+                  <ZaglavljeKlika k={k} lista={listaKartice} saZaprekama={!siroko && visina === "malo"} />
                 </div>
-                {!siroko && !rasireno && (
-                  <button
-                    type="button"
-                    onClick={() => setRasireno(true)}
-                    className="fokus mt-1.5 inline-flex h-11 items-center gap-1.5 rounded-full bg-zinc-100 px-4 text-sm font-semibold text-zinc-900"
-                  >
-                    Sve provjere i čestica <span aria-hidden>▴</span>
-                  </button>
-                )}
                 <p className="sr-only" aria-live="polite">
-                  {presuda(k.uzorak).kat?.naziv ?? ""}
+                  {presuda(k.uzorak).kat ? punNaziv(presuda(k.uzorak).kat!) : ""}
                 </p>
               </div>
-              {(siroko || rasireno) && (
-                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              {(siroko || visina !== "malo") && (
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t border-zinc-100 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   <TijeloKlika
                     k={k}
                     odredbe={odredbe}
@@ -1355,16 +1408,22 @@ function Prekidac({ prozor, onPregled, onKarta, plutajuci = false }: { prozor: P
   );
 }
 
-/** Ručica ploče odozdo: dodir raširi ili skupi, povlačenje gore raširi, dolje skupi pa zatvori. */
-function RucicaKartice(props: { rasireno: boolean; onRasiri: () => void; onSkupi: () => void; onZatvori: () => void }) {
-  const { rasireno, onRasiri, onSkupi, onZatvori } = props;
+/** Visina ploče odozdo na mobitelu: vrh (presuda i zapreke), pola zaslona, gotovo cijeli zaslon. */
+type Visina = "malo" | "pola" | "puno";
+const VISINE: Visina[] = ["malo", "pola", "puno"];
+
+/** Ručica ploče odozdo: dodir je podigne za korak (s vrha vrati na najnižu), povlačenje gore ili dolje za korak; ispod najniže zatvori. */
+function RucicaKartice(props: { visina: Visina; onVisina: (v: Visina) => void; onZatvori: () => void }) {
+  const { visina, onVisina, onZatvori } = props;
   const pocetak = useRef<number | null>(null);
+  /** Povlačenje je već odlučilo: klik koji slijedi ne mijenja visinu još jednom. */
+  const povuceno = useRef(false);
+  const i = VISINE.indexOf(visina);
   return (
     <button
       type="button"
-      aria-label={rasireno ? "Skupi karticu" : "Raširi karticu"}
-      aria-expanded={rasireno}
-      className="fokus flex h-6 w-full shrink-0 touch-none items-center justify-center"
+      aria-label={visina === "puno" ? "Smanji karticu" : "Povećaj karticu"}
+      className="fokus flex h-7 w-full shrink-0 touch-none items-center justify-center"
       onPointerDown={(e) => {
         pocetak.current = e.clientY;
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -1372,12 +1431,20 @@ function RucicaKartice(props: { rasireno: boolean; onRasiri: () => void; onSkupi
       onPointerUp={(e) => {
         const dy = pocetak.current === null ? 0 : e.clientY - pocetak.current;
         pocetak.current = null;
-        if (dy < -24) onRasiri();
+        povuceno.current = Math.abs(dy) > 24;
+        if (dy < -24) onVisina(VISINE[Math.min(2, i + 1)]);
         else if (dy > 24) {
-          if (rasireno) onSkupi();
-          else onZatvori();
-        } else if (rasireno) onSkupi();
-        else onRasiri();
+          if (i === 0) onZatvori();
+          else onVisina(VISINE[i - 1]);
+        }
+      }}
+      // dodir i tipkovnica: korak gore, s vrha natrag na najnižu
+      onClick={() => {
+        if (povuceno.current) {
+          povuceno.current = false;
+          return;
+        }
+        onVisina(VISINE[(i + 1) % 3]);
       }}
     >
       <span aria-hidden className="h-1.5 w-10 rounded-full bg-zinc-300" />
@@ -1429,6 +1496,23 @@ function IkonaDijeljenja() {
   return (
     <svg aria-hidden viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M10 13V3M6 7l4-4 4 4M4 11v5h12v-5" />
+    </svg>
+  );
+}
+
+function IkonaPregleda() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <path d="M4 5h12M4 10h12M4 15h8" />
+    </svg>
+  );
+}
+
+function IkonaPovecala() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <circle cx="8.5" cy="8.5" r="5.5" />
+      <path d="M13 13l4 4" />
     </svg>
   );
 }

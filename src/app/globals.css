@@ -1226,12 +1226,45 @@ path.gup-odredba:focus {
   transition: top 0.2s, bottom 0.2s, left 0.2s;
 }
 .gradnja-karta .leaflet-container {
-  background: #e4e4e7;
+  /* izvan snimke (more, rub obuhvata) siva kao snimka, ne bijela */
+  background: #8f8f8f;
 }
+/* izvor podloge u jednom retku (licenca traži da se vidi), skraćen s trotočjem */
 .gradnja-karta .leaflet-control-attribution {
   margin-bottom: 0 !important;
-  max-width: 60vw;
+  max-width: min(60vw, 420px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 10px;
+}
+/* gumbi karte okrugli i plutajući, 44 px, jedan ispod drugoga (kao na Google kartama) */
+.gradnja-karta .leaflet-bar {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.gradnja-karta .leaflet-bar a,
+.gradnja-karta .leaflet-bar a:first-child,
+.gradnja-karta .leaflet-bar a:last-child {
+  display: grid;
+  place-items: center;
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  margin-top: 8px;
+  border: none !important;
+  border-radius: 9999px !important;
+  background: #ffffff;
+  color: #18181b;
+  font-size: 22px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+/* na mobitelu se zumira prstima: + i − bi samo zauzimali mjesto */
+@media (max-width: 639px) {
+  .gradnja-karta .leaflet-control-zoom {
+    display: none;
+  }
 }
 .leaflet-bar a.gup-lokacija {
   display: grid;

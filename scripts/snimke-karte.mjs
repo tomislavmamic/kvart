@@ -61,13 +61,13 @@ const klikni = (oznaka) =>
 const KORACI = [
   { ime: "1-racunalo-pocetak", w: 1366, h: 850, url: "/gup/gradnja?v=karta" },
   { ime: "2-racunalo-cestica", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=17/43.50889/16.48686&t=16.486858,43.508894" },
-  { ime: "3-racunalo-slojevi", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900", klik: ["Svi slojevi"] },
-  { ime: "4-racunalo-prijeci", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900", klik: ["Što priječi"] },
+  { ime: "3-racunalo-dpu", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=17/43.5186/16.4850&t=16.485632,43.518577" },
+  { ime: "4-racunalo-prijeci", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900&p=izgradjeno" },
   { ime: "5-racunalo-svi-slojevi", w: 1366, h: 850, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900&s=1.2.3.4.5.14.6.7.8.9.23.21.20.16.10.17.11.15.12.13.25.26.27.28.19.22.18.24" },
   { ime: "6-mobitel-pocetak", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta" },
   { ime: "7-mobitel-cestica", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=17/43.50889/16.48686&t=16.486858,43.508894" },
-  { ime: "8-mobitel-cestica-rasireno", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=17/43.50889/16.48686&t=16.486858,43.508894", klik: ["Sve provjere"] },
-  { ime: "9-mobitel-slojevi", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900", klik: ["Svi slojevi"] },
+  { ime: "8-mobitel-cestica-pola", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=17/43.50889/16.48686&t=16.486858,43.508894", klik: ["Povećaj karticu"] },
+  { ime: "9-mobitel-tumac", w: 390, h: 844, mob: true, url: "/gup/gradnja?v=karta&c=16/43.5100/16.4900", klik: ["Tumač"] },
   { ime: "10-mobitel-pregled", w: 390, h: 844, mob: true, url: "/gup/gradnja" },
 ];
 

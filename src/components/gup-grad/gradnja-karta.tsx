@@ -236,6 +236,8 @@ export function GradnjaKarta(props: {
   gup: Feature | null;
   /** stambene i mješovite zone (S, M1–M3, K5) */
   zone: FeatureCollection;
+  /** detaljni planovi na snazi (DPU, PUP): iscrtkana granica, jer ondje odlučuje plan */
+  dpu: FeatureCollection;
   prikaz: Prikaz;
   cilj: CiljKarte | null;
   oznaka: { lng: number; lat: number } | null;
@@ -255,7 +257,7 @@ export function GradnjaKarta(props: {
   /** karta je spremna (za sliku za dijeljenje) */
   onSpremna: (map: LeafletNS.Map | null) => void;
 }) {
-  const { gup, zone, prikaz, cilj, oznaka, cestica, zaklon, pocetak, dozvole, vidiDozvole, skupina, onKlik, onPomak, onSpremna } = props;
+  const { gup, zone, dpu, prikaz, cilj, oznaka, cestica, zaklon, pocetak, dozvole, vidiDozvole, skupina, onKlik, onPomak, onSpremna } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
@@ -310,10 +312,12 @@ export function GradnjaKarta(props: {
         }),
       );
       podloge[PODLOGE[0].naziv].addTo(map);
+      // dolje desno, odozdo prema gore kao na Google kartama: mjerilo, zum (na mobitelu skriven, ondje su prsti),
+      // moja lokacija, podloga; dolje lijevo je tumač
+      L.control.scale({ imperial: false, position: "bottomright" }).addTo(map);
       L.control.zoom({ position: "bottomright", zoomInTitle: "Približi", zoomOutTitle: "Udalji" }).addTo(map);
       dodajMojuLokaciju(L, map);
-      L.control.layers(podloge, undefined, { position: "bottomleft" }).addTo(map);
-      L.control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
+      dodajPodlogu(L, map, PODLOGE.map((p) => ({ naziv: p.naziv, sloj: podloge[p.naziv] })));
       map.attributionControl.setPrefix(false);
 
       // kategorije ispod obrisa, iznad podloge
@@ -332,14 +336,18 @@ export function GradnjaKarta(props: {
         else obrisiZona.remove();
       };
       map.on("zoomend", obrisiPoZumu);
-      const granica = gup
-        ? L.geoJSON(gup, { ...netaknuto, style: { color: "#18181b", weight: 1.5, dashArray: "7 5", fill: false } }).addTo(map)
-        : null;
+      // granica GUP-a puna, s bijelim rubom; iscrtkane su samo granice DPU-a
+      if (gup) {
+        L.geoJSON(gup, { ...netaknuto, style: { color: "#ffffff", weight: 3.5, opacity: 0.8, fill: false } }).addTo(map);
+        L.geoJSON(gup, { ...netaknuto, style: { color: "#18181b", weight: 1.25, fill: false } }).addTo(map);
+      }
+      // granice DPU-a: bijeli rub ispod tamne iscrtkane crte
+      L.geoJSON(dpu, { ...netaknuto, style: { color: "#ffffff", weight: 3, opacity: 0.6, fill: false } }).addTo(map);
+      L.geoJSON(dpu, { ...netaknuto, style: { color: "#18181b", weight: 1.5, dashArray: "5 4", fill: false } }).addTo(map);
       const z = zaklonRef.current;
+      // prvi pogled: istok grada, gdje je najviše zemljišta za stambenu gradnju, a ne cijeli GUP, na kojem se zeleno ne vidi
       if (pocetak) map.setView([pocetak.lat, pocetak.lng], pocetak.zum);
-      else if (granica)
-        map.fitBounds(granica.getBounds(), { paddingTopLeft: [z.lijevo + 8, z.gore + 8], paddingBottomRight: [z.desno + 8, z.dolje + 8] });
-      else map.setView([43.515, 16.47], 13);
+      else map.fitBounds(map.getSize().x < 640 ? PRVI_POGLED_MOBITEL : PRVI_POGLED, { paddingTopLeft: [z.lijevo + 8, z.gore + 8], paddingBottomRight: [z.desno + 8, z.dolje + 8] });
       obrisiPoZumu();
       povratni.current.onSpremna(map);
       setSpremna(true);
@@ -577,6 +585,46 @@ export function GradnjaKarta(props: {
       aria-label="Karta: gdje se po novom GUP-u može graditi. Strelicama pomakni kartu, plus i minus zumiraju, Enter odabire sredinu karte."
     />
   );
+}
+
+/** Prvi pogled karte: istok grada (Žnjan, Sirobuja, Stobreč, Dračevac), gdje je najviše zemljišta za stambenu gradnju. */
+const PRVI_POGLED: [[number, number], [number, number]] = [
+  [43.5005, 16.468],
+  [43.5285, 16.526],
+];
+/** Na uskom zaslonu uži pogled istoka, bez mora, da zelenog bude dovoljno izbliza. */
+const PRVI_POGLED_MOBITEL: [[number, number], [number, number]] = [
+  [43.5095, 16.482],
+  [43.5295, 16.512],
+];
+
+/** Gumb podloge iznad „Moja lokacije”: izmjenjuje ortofoto i satelitsku snimku (umjesto Leafletova popisa). */
+function dodajPodlogu(L: typeof LeafletNS, map: LeafletNS.Map, podloge: { naziv: string; sloj: LeafletNS.TileLayer }[]) {
+  let i = 0;
+  const Kontrola = L.Control.extend({
+    onAdd() {
+      const okvir = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const gumb = L.DomUtil.create("a", "gup-lokacija gup-podloga", okvir);
+      gumb.href = "#";
+      gumb.role = "button";
+      const opis = () => `Podloga: ${podloge[i].naziv} (promijeni u ${podloge[(i + 1) % podloge.length].naziv})`;
+      gumb.title = opis();
+      gumb.setAttribute("aria-label", opis());
+      gumb.innerHTML =
+        '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="3.5" width="15" height="13" rx="2"/><path d="M2.5 13.5l4.5-4.5 4 4 2.5-2.5 4 4"/><circle cx="13.5" cy="7.5" r="1.3"/></svg>';
+      L.DomEvent.disableClickPropagation(okvir);
+      L.DomEvent.on(gumb, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        map.removeLayer(podloge[i].sloj);
+        i = (i + 1) % podloge.length;
+        podloge[i].sloj.addTo(map);
+        gumb.title = opis();
+        gumb.setAttribute("aria-label", opis());
+      });
+      return okvir;
+    },
+  });
+  new Kontrola({ position: "bottomright" }).addTo(map);
 }
 
 /** Gumb „Moja lokacija” iznad zuma: plava točka i karta na mjestu gdje je korisnik. */
