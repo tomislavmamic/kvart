@@ -17,8 +17,8 @@
  *     scripts/gup-grad/koridori.py)
  *  3. dopuštaju li odredbe urbanog pravila novu zgradu (ili samo
  *     rekonstrukciju), je li teren izgradiv
- *  4. čeka li gradnja UPU (list 4.d, čl. 103.) — u neuređenom dijelu uz
- *     postojeću javnu cestu ne čeka, a javne i društvene zgrade (D) smiju se
+ *  4. čeka li gradnja UPU (list 4.d, čl. 103.) — u neuređenom dijelu ne
+ *     čeka kad do čestice vodi ulica u punoj planiranoj širini i ima kanalizacije, a javne i društvene zgrade (D) smiju se
  *     graditi i prije UPU-a (čl. 105. st. 5.)
  *  5. je li slobodno dovoljno veliko i široko za građevnu česticu, i nije li
  *     čestica u praksi put (scripts/gup-grad/gradnja-skupine.py)
@@ -82,7 +82,7 @@ export const OPIS_ZONE: Record<ZonaGradnje, string> = {
 
 /**
  * Odgovor na pitanje „mogu li ovdje graditi?”, od najstrožeg. Neuređeni dio
- * (do UPU-a gradi se samo uz postojeću javnu cestu) ide u skupinu svoje
+ * (do UPU-a gradi se tek uz ulicu u punoj širini i kanalizaciju) ide u skupinu svoje
  * namjene — nestambeno ili stambeno — istom bojom, ali šrafirano.
  */
 export type Skupina = "nista" | "nestambeno" | "stambeno" | "javno";
@@ -142,7 +142,7 @@ export interface Kategorija {
   boja: string;
   /** Neprozirnost ispune, 0–1. */
   alfa: number;
-  /** Kose pruge te boje preko ispune: gradnja samo uz uvjet (neuređeni dio, uz postojeću cestu). */
+  /** Kose pruge te boje preko ispune: gradnja samo uz uvjet (neuređeni dio: nedostaju ulica ili kanalizacija). */
   pruge?: string;
   /** Pruge u oba smjera (mreža): čeka UPU — drukčiji uzorak od uvjetne gradnje, ne samo drukčija boja. */
   mreza?: boolean;
@@ -333,9 +333,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 11,
     id: "uz-cestu-stambeno",
     skupina: "stambeno",
-    naziv: "Stambena zgrada, ali samo ako do čestice vodi javna cesta",
+    naziv: "Stambeno, ali nedostaje ulica ili kanalizacija",
     razlog:
-      "Ovo je neuređeno područje: zemljište za gradnju na kojem još nema ulica i odvodnje koje plan predviđa. Novi GUP ovdje traži UPU. Dok ga nema, dozvola za novu stambenu zgradu moći će se dobiti samo ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
+      "Ovo je neuređeno područje: ulica i kanalizacija koje plan ovdje predviđa još nisu izgrađene. Novi GUP traži UPU. Dok ga nema, dozvola za novu stambenu zgradu može se dobiti tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje (za pristupnu ulicu pojas od 10 m s kolnikom od barem 5,5 m) i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
     boja: "#a1ccb1",
     alfa: 0.65,
     pruge: "#15803d",
@@ -344,9 +344,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 15,
     id: "uz-cestu-nestambeno",
     skupina: "nestambeno",
-    naziv: "Nestambena zgrada, ali samo ako do čestice vodi javna cesta",
+    naziv: "Nestambeno, ali nedostaje ulica ili kanalizacija",
     razlog:
-      "Ovo je neuređeno područje u zoni bez stanovanja. Stambena zgrada neće se moći graditi ni nakon UPU-a. Nestambena će se do UPU-a moći graditi samo ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
+      "Ovo je neuređeno područje u zoni bez stanovanja: ulica i kanalizacija koje plan predviđa još nisu izgrađene. Stambena zgrada neće se moći graditi ni nakon UPU-a. Nestambena će se do UPU-a moći graditi tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
     boja: "#a8c1f7",
     alfa: 0.65,
     pruge: "#2563eb",

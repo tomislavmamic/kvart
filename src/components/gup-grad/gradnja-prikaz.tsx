@@ -217,7 +217,7 @@ function TijeloKlika(props: {
       </span>
       <div className="min-w-0">
         <p className="font-semibold text-zinc-900">{p.pitanje}</p>
-        <p>{p.odgovor}</p>
+        <div>{p.odgovor}</div>
       </div>
     </li>
   );
@@ -267,7 +267,7 @@ function TijeloKlika(props: {
         <summary className="fokus meta cursor-pointer font-semibold text-zinc-900">Što karta ne provjerava</summary>
         <ul className="mt-1.5 list-disc space-y-1 pl-5 text-zinc-600">
           <li>vlasništvo privatnih čestica</li>
-          <li>vodi li do čestice javna cesta i ima li priključke (voda, odvodnja, struja)</li>
+          <li>vodi li do čestice ulica dovoljne širine i može li se priključiti na vodu, kanalizaciju i struju</li>
           <li>nagib, stijenu i tlo, osim mjesta koja smo na ortofotu označili kao neizgradiva</li>
           <li>zaštitu kulturne baštine i krajobraza (uvjete konzervatora), pojas uz more i vodotoke</li>
           <li>posebne uvjete nadležnih tijela (npr. Hrvatskih voda, HEP-a) i infrastrukturne koridore koji nisu ucrtani kao ulica</li>
@@ -420,7 +420,7 @@ function PopisPrepreka(props: { zbroj: ZbrojGradnje; prepreka: IdPrepreke | null
       </ul>
       <p className="mt-2 border-t border-zinc-200 pt-2 text-xs text-zinc-500">
         U tim zonama za stambenu zgradu ostaje {ha((zbroj.u_stambenim_zonama_ha.stambeno ?? 0) + (zbroj.u_stambenim_zonama_ha["uz-cestu-stambeno"] ?? 0))}{" "}
-        ha, od toga {ha(zbroj.u_stambenim_zonama_ha["uz-cestu-stambeno"] ?? 0)} ha samo ako do čestice vodi javna cesta.
+        ha, od toga {ha(zbroj.u_stambenim_zonama_ha["uz-cestu-stambeno"] ?? 0)} ha tek kad do čestice dođu ulica i kanalizacija.
       </p>
     </>
   );
@@ -848,8 +848,8 @@ export function GradnjaPrikaz(props: { zbroj: ZbrojGradnje; odredbe: OdredbeGrad
                     <span className="block font-semibold text-zinc-900">{SKUPINE_GRADNJE[sk].naslov}</span>
                     <span className="block text-xs text-zinc-500">
                       {sk === "stambeno" &&
-                        `${mjesta.stambeno.od_500_m2.toLocaleString("hr-HR")} gradilišta od barem 500 m² bez uvjeta; ${ha(zbroj.po_kategoriji_ha["uz-cestu-stambeno"])} ha samo ako do čestice vodi javna cesta`}
-                      {sk === "nestambeno" && `od toga ${ha(zbroj.po_kategoriji_ha["uz-cestu-nestambeno"])} ha samo ako do čestice vodi javna cesta`}
+                        `${mjesta.stambeno.od_500_m2.toLocaleString("hr-HR")} gradilišta od barem 500 m² bez uvjeta; ${ha(zbroj.po_kategoriji_ha["uz-cestu-stambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
+                      {sk === "nestambeno" && `od toga ${ha(zbroj.po_kategoriji_ha["uz-cestu-nestambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
                       {sk === "nista" && "zgrade s dvorištima, ulice, parkovi, premalo zemljišta, čeka UPU…"}
                       {sk === "javno" && `država, Grad, županija; od toga ${ha(zbroj.po_kategoriji_ha.vojska)} ha vojna zona`}
                     </span>

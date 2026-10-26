@@ -125,9 +125,10 @@ function karticaStanja(
             <>
               <p>
                 Novi GUP i ovdje propisuje {s.upu ? s.upu.naziv : "UPU"} (<Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>),
-                ali ako do čestice vodi postojeća javna cesta i ako se odvodnja može riješiti, dozvola za novu zgradu može se
-                dobiti i prije njega: najprije lokacijska, a prema njoj građevinska (Zakon o prostornom uređenju, čl. 154. st.
-                1. t. 13. i čl. 180. st. 2. t. 3.; Zakon o gradnji, čl. 74.). Bez ceste se ionako ne gradi, pa ovo zemljište na
+                ali kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje (
+                <Navod id="kolni-pristup-2025">čl. 49.f st. 1.</Navod>) i kad se čestica može priključiti na kanalizaciju, dozvola za
+                novu zgradu može se dobiti i prije njega: najprije lokacijska, a prema njoj građevinska (Zakon o prostornom uređenju, čl. 154. st.
+                1. t. 13. i čl. 180. st. 2. t. 3.; Zakon o gradnji, čl. 74.). Bez ulice se ionako ne gradi, pa ovo zemljište na
                 karti nije obojeno.
               </p>
               <p className="mt-2 text-zinc-600">

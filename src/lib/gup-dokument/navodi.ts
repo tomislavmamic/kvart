@@ -115,6 +115,42 @@ export const NAVODI: Record<string, SpecNavoda> = {
     ],
     opis: "prijedlog 2025., čl. 103. st. 1: gdje gradnja čeka plan užeg područja",
   },
+  "neuredeno-infrastruktura-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      {
+        t: "To su područja na kojima nije izgrađena planirana osnovna infrastruktura: građevina za odvodnju otpadnih voda (kojom se omogućava priključenje građevne čestice na javni ili vlastiti sustav odvodnje otpadnih voda) i prometna površina preko koje se osigurava pristup do građevne čestice sukladno odredbama ovog Plana.",
+        s: 145,
+      },
+    ],
+    opis: "prijedlog 2025., čl. 106. st. 1: neuređenom području nedostaju ulica i odvodnja",
+  },
+  "kolni-pristup-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      {
+        t: "Svaka pojedina građevna čestica mora imati osiguran neposredni kolni pristup (priključenje) na prometnu površinu izgrađenu u svom punom planiranom profilu.",
+        s: 57,
+      },
+    ],
+    opis: "prijedlog 2025., čl. 49.f st. 1: kolni pristup s ulice izgrađene u punoj planiranoj širini",
+  },
+  "pristup-iznimke-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      { t: "neposredni pristup građevne čestice je moguće ostvariti na prometnu površinu minimalne širine 3,0 m", s: 57 },
+      { t: "pristupnim putom u vlasništvu vlasnika građevne čestice, najmanje širine 3,0 m i najveće dužine 50 m", s: 57 },
+    ],
+    opis: "prijedlog 2025., čl. 49.f st. 4. i 5.: iznimke za uže prilaze",
+  },
+  "profil-pristupne-ulice-2025": {
+    dok: "prijedlog-2025",
+    citati: [
+      { t: "za pristupnu ulicu najmanje 10,0 m.", s: 30 },
+      { t: "a za pristupne ulice 5,5 m", s: 31 },
+    ],
+    opis: "prijedlog 2025., čl. 32. st. 11. i 15.: pojas i kolnik pristupne ulice",
+  },
   "preporuka-plana-2025": {
     dok: "prijedlog-2025",
     citati: [

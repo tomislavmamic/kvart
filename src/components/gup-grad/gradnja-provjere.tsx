@@ -293,10 +293,20 @@ export function provjere(
           ishod: "uvjet",
           odgovor: (
             <>
-              Samo uz uvjet. Ovo je {list4d(NAZIV_PODRUCJA.neuredeno)}: GUP ovdje traži {upu} (
-              <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>). Dok ga nema, nova zgrada moći će se graditi samo ako do čestice
-              vodi postojeća javna cesta i ako se riješi odvodnja (Zakon o prostornom uređenju, NN 155/25, čl. 180. st. 2. t. 3.). To
-              karta ne može provjeriti.
+              Samo uz uvjet. Ovo je {list4d(NAZIV_PODRUCJA.neuredeno)}: ulica i kanalizacija koje plan ovdje predviđa još nisu
+              izgrađene (<Navod id="neuredeno-infrastruktura-2025">čl. 106. st. 1.</Navod>), pa GUP traži {upu} (
+              <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>). Dok ga nema, dozvola za novu zgradu može se dobiti tek kad:
+              <ul className="mt-1 list-disc space-y-1 pl-5">
+                <li>
+                  do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje (
+                  <Navod id="kolni-pristup-2025">čl. 49.f st. 1.</Navod>). Za pristupnu ulicu to je pojas od 10 m s kolnikom od barem
+                  5,5 m (<Navod id="profil-pristupne-ulice-2025">čl. 32.</Navod>). Iznimno je dovoljan prilaz širok 3 m: ulica u već
+                  izgrađenom dijelu grada koja se ne može proširiti, ili vlastiti put do 50 m za najviše dvije niske stambene zgrade (
+                  <Navod id="pristup-iznimke-2025">čl. 49.f st. 4. i 5.</Navod>);
+                </li>
+                <li>čestica se može priključiti na kanalizaciju ili vlastiti sustav odvodnje otpadnih voda.</li>
+              </ul>
+              Isto traži i Zakon o prostornom uređenju (NN 155/25, čl. 180. st. 2. t. 3.). Ni ulicu ni kanalizaciju karta ne provjerava.
             </>
           ),
         };
