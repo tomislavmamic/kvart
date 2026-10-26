@@ -89,6 +89,8 @@ test("vojna zona, gradski projekt, golf i odmaci", () => {
   assert.equal(sa("S", REGIJE.ceka, { odmaci: true, neuredeno: true }), "odmaci");
   assert.equal(sa("M/K5", REGIJE.ceka, { odmaci: true }), "ceka-upu");
   assert.equal(sa("S", REGIJE.slobodno, { odmak: true }), "odmak");
+  assert.equal(sa("M/K5", REGIJE.slobodno, { ostatakKuce: true }), "ostatak-kuce");
+  assert.equal(sa("M/K5", REGIJE.zgrada, { ostatakKuce: true }), "zgrada");
   assert.equal(sa("I/K", REGIJE.slobodno, { odmak: true }), "odmak");
 });
 

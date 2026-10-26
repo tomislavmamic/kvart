@@ -1217,3 +1217,30 @@ body {
 path.gup-odredba:focus {
   outline: none;
 }
+
+/* Karta na /gup/gradnja (gradnja-karta.tsx): preko cijelog zaslona, gumbi
+ * izmiču tražilici i kartici (style.top/bottom iz React), pa im je pomak glatk.
+ * Gumb „Moja lokacija” je kao gumbi zuma, i jednako velik na dodir. */
+.gradnja-karta .leaflet-top,
+.gradnja-karta .leaflet-bottom {
+  transition: top 0.2s, bottom 0.2s, left 0.2s;
+}
+.gradnja-karta .leaflet-container {
+  background: #e4e4e7;
+}
+.gradnja-karta .leaflet-control-attribution {
+  margin-bottom: 0 !important;
+  max-width: 60vw;
+  font-size: 10px;
+}
+.leaflet-bar a.gup-lokacija {
+  display: grid;
+  place-items: center;
+  color: #18181b;
+}
+@media (pointer: coarse) {
+  .leaflet-bar a.gup-lokacija {
+    width: 44px;
+    height: 44px;
+  }
+}

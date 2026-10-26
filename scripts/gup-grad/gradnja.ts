@@ -73,6 +73,8 @@ function main() {
   /** Razlog ispod javnog zemljišta: koliko bi ga inače bilo za gradnju. */
   const ispodJavnog = new Map<IdKategorije, number>();
   const poZoni = new Map<string, number>();
+  /** U zonama za stanovanje, po kategoriji kakva je na karti (javno kao javno): za filtar „Što priječi”. */
+  const uStambenim = new Map<number, number>();
   const plocice: Plocica[] = [];
   for (const p of indeks.inacice[INACICA][GODINA]) {
     const png = PNG.sync.read(readFileSync(path.join(JAVNO, p.url)));
@@ -108,6 +110,7 @@ function main() {
           preusko: s === 2,
           odmak: s === 3,
           odmaci: s === 4,
+          ostatakKuce: s === 5,
           gradskiProjekt: (jv & 8) > 0,
         });
         // uski javni pojas (gradnja-javno.py, bit 16): javno, ali bez jantarne boje
@@ -126,6 +129,7 @@ function main() {
           const id = KATEGORIJA_PO_KODU.get(k)!.id;
           ispodJavnog.set(id, (ispodJavnog.get(id) ?? 0) + pikselM2);
         }
+        if (ZONA_GRADNJE[KLASA_PO_INDEKSU.get(klasa)!.kod] === "stambena") uStambenim.set(brojiSe, (uStambenim.get(brojiSe) ?? 0) + pikselM2);
         const kod = KLASA_PO_INDEKSU.get(klasa)!.kod;
         const kljuc = `${kod}|${KATEGORIJA_PO_KODU.get(k)!.id}`;
         poZoni.set(kljuc, (poZoni.get(kljuc) ?? 0) + pikselM2);
@@ -153,6 +157,9 @@ function main() {
     po_kategoriji_ha: poKategoriji,
     po_skupini_ha: poSkupini,
     po_namjeni_ha: zone,
+    u_stambenim_zonama_ha: Object.fromEntries(
+      KATEGORIJE.filter((k) => uStambenim.has(k.kod)).map((k) => [k.id, ha(uStambenim.get(k.kod)!)]),
+    ),
     zona_gradnje: ZONA_GRADNJE,
   };
   writeFileSync(path.join(KORIJEN, "data", "gup-grad", "gradnja-2025.json"), JSON.stringify(zbroj, null, 1) + "\n");

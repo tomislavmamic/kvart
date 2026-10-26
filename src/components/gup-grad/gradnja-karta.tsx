@@ -5,28 +5,44 @@
  * razlogom zbog kojeg se ondje po novom GUP-u ne može graditi ništa novo ili
  * ništa stambeno (src/lib/gup-grad/gradnja.ts), iz pločica
  * public/geo/gup-grad/gradnja (gradnja-plocice.ts). Pločice nose brojeve,
- * pa ih preglednik boji sam i prebojava kad se skupina u tumaču ugasi.
+ * pa ih preglednik boji sam, u <canvas> po pločici, i prebojava kad se sloj
+ * ugasi ili se odabere „Što priječi gradnju”.
  *
  * Uz to granica GUP-a (iscrtkano), obrisi stambenih i mješovitih zona
  * (scripts/gup-grad/gradnja-zone.py) — gdje je plan uopće predvidio
  * stanovanje — i obris čestice pod zadnjim klikom. Slojevi nisu
  * interaktivni: klik bilo gdje ide karti, a što je ondje kaže GradnjaPrikaz.
  * Podloga je siva, da se boje čitaju. Učitava se bez SSR-a.
+ *
+ * Upravljanje je kao na Google kartama: kotačić, povlačenje, dvoklik i
+ * tipkovnica; zum dolje desno, mjerilo dolje lijevo. Dijelovi zaslona pod
+ * tražilicom i karticom (`zaklon`) ne broje se kao vidljivi: odabrana
+ * čestica pomakne se u ostatak, a gumbi karte izmaknu se kartici.
  */
 import "leaflet/dist/leaflet.css";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type * as LeafletNS from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 
 import { SIRI_OBUHVAT_KARTE } from "@/lib/map-views";
-import { KATEGORIJA_PO_ID, KATEGORIJA_PO_KODU, razlozi, type IdKategorije } from "@/lib/gup-grad/gradnja";
+import {
+  ALFA_PREPREKE,
+  BOJA_PREPREKE,
+  KATEGORIJA_PO_ID,
+  KATEGORIJA_PO_KODU,
+  PREPREKA_PO_ID,
+  razlozi,
+  zonaKlase,
+  type IdKategorije,
+  type IdPrepreke,
+} from "@/lib/gup-grad/gradnja";
 import type { Geometrija, Okvir } from "@/lib/gup-grad/zabrana";
 import { PODLOGE, podloga, type CiljKarte } from "@/components/gup-grad/zabrana-karta";
 import { procitaj, ucitajIndeks, type PlocicaGradnje } from "@/components/gup-grad/gradnja-plocice";
 
 /** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi (globals.css). */
-const ZUM_OSTRIH_PIKSELA = 15;
+export const ZUM_OSTRIH_PIKSELA = 15;
 /**
  * Obris stambenih i mješovitih zona: tanka tamna crta, ne zelena — zelena je
  * odgovor „stambeno moguće”, a 244 obrisa preko grada čitala bi se kao on.
@@ -34,6 +50,10 @@ const ZUM_OSTRIH_PIKSELA = 15;
 export const BOJA_STAMBENE_ZONE = "#27272a";
 /** Izdaleka bi obrisi blokova prekrili boje; vide se tek od ovog zuma. */
 export const OBRISI_OD_ZUMA = 15;
+/** Ostali slojevi uz odabranu zapreku: vide se, ali ne natječu se s njom. */
+const ALFA_UZ_PREPREKU = 0.4;
+/** Više učitanih pločica od ovoga: one daleko od pogleda se otpuste (mobitel ima malo memorije). */
+const NAJVISE_PLOCICA = 48;
 
 const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const BOJE = new Map(
@@ -49,6 +69,9 @@ const BOJE = new Map(
     },
   ]),
 );
+const RGB_PREPREKE = hex(BOJA_PREPREKE);
+/** Indeksi klasa (kanal R) u kojima namjena dopušta stanovanje. */
+const STAMBENE_KLASE = new Set(Array.from({ length: 256 }, (_, i) => i).filter((i) => zonaKlase(i) === "stambena"));
 /** Strana pločice u pikselima (scripts/gup-grad/regije.py, PLOCICA). */
 const PLOCICA = 512;
 
@@ -71,11 +94,19 @@ function polozaj(url: string): [number, number] {
 }
 
 const JAVNO = KATEGORIJA_PO_ID.javno.kod;
+const VOJSKA = KATEGORIJA_PO_ID.vojska.kod;
 
-async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<IdKategorije>, zum: number): Promise<string | null> {
+/** Što je na karti vidljivo i istaknuto. */
+export interface Prikaz {
+  skrivene: ReadonlySet<IdKategorije>;
+  prepreka: IdPrepreke | null;
+}
+
+function obojaj(platno: HTMLCanvasElement, url: string, kodovi: ImageData, prikaz: Prikaz, zum: number) {
   const { width: w, height: h, data: d } = kodovi;
   const { razmak, debljina, debljinaMreze } = prugeZaZum(zum);
   const [y0, x0] = polozaj(url);
+  const istaknute = prikaz.prepreka ? new Set(PREPREKA_PO_ID[prikaz.prepreka].kategorije.map((id) => KATEGORIJA_PO_ID[id].kod)) : null;
   const out = new ImageData(w, h);
   const o = out.data;
   for (let y = 0; y < h; y++) {
@@ -86,8 +117,16 @@ async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<IdKa
       // ispod njega nije prošao provjere širine i odmaka (javno se ne spaja u gradilište), pa
       // bi se ondje pokazale tanke „zelene” trake uz ceste
       const { kategorija, vlasnik } = razlozi(d[i + 2]);
-      const b = BOJE.get(vlasnik > 0 ? JAVNO : kategorija);
-      if (!b || skrivene.has(b.id)) continue;
+      const kod = vlasnik > 0 && kategorija !== VOJSKA ? JAVNO : kategorija;
+      if (istaknute?.has(kod) && STAMBENE_KLASE.has(d[i])) {
+        o[i] = RGB_PREPREKE[0];
+        o[i + 1] = RGB_PREPREKE[1];
+        o[i + 2] = RGB_PREPREKE[2];
+        o[i + 3] = Math.round(ALFA_PREPREKE * 255);
+        continue;
+      }
+      const b = BOJE.get(kod);
+      if (!b || prikaz.skrivene.has(b.id)) continue;
       const gx = x0 + x, gy = y0 + y;
       const pruga =
         b.pruge &&
@@ -98,70 +137,86 @@ async function obojaj(url: string, kodovi: ImageData, skrivene: ReadonlySet<IdKa
       o[i] = r;
       o[i + 1] = g;
       o[i + 2] = bl;
-      o[i + 3] = a;
+      o[i + 3] = istaknute ? Math.round(a * ALFA_UZ_PREPREKU) : a;
     }
   }
-  const platno = document.createElement("canvas");
   platno.width = w;
   platno.height = h;
   platno.getContext("2d")!.putImageData(out, 0, 0);
-  const blob = await new Promise<Blob | null>((r) => platno.toBlob(r));
-  return blob ? URL.createObjectURL(blob) : null;
 }
 
 interface Ucitana {
-  sloj: LeafletNS.ImageOverlay;
-  url: string | null;
+  sloj: LeafletNS.SVGOverlay;
+  platno: HTMLCanvasElement;
+  granice: LeafletNS.LatLngBounds;
 }
 
-/** Ponovno oboji sve učitane pločice; prekida se kad ga stigne novije bojenje (`jos` vrati false). */
-async function prebojaj(ucitane: Map<string, Ucitana>, skrivene: ReadonlySet<IdKategorije>, zum: number, jos: () => boolean) {
-  for (const [kljuc, u] of ucitane) {
-    const url = await obojaj(kljuc, await procitaj(kljuc), skrivene, zum);
-    if (!jos() || !url) {
-      if (url) URL.revokeObjectURL(url);
-      return;
-    }
-    if (u.url) URL.revokeObjectURL(u.url);
-    u.url = url;
-    u.sloj.setUrl(url);
+/** Ponovno oboji sve učitane pločice, jednu po jednu; prekida se kad ga stigne novije bojenje (`jos` vrati false). */
+async function prebojaj(ucitane: Map<string, Ucitana>, prikaz: Prikaz, zum: number, jos: () => boolean) {
+  for (const [kljuc, u] of [...ucitane]) {
+    const kodovi = await procitaj(kljuc);
+    if (!jos()) return;
+    obojaj(u.platno, kljuc, kodovi, prikaz, zum);
+    // pusti preglednik da iscrta i odgovori na dodir između pločica
+    await new Promise((r) => setTimeout(r));
   }
 }
 
-const uGranice = (o: Okvir): LeafletNS.LatLngBoundsExpression => [
+const uGranice = (o: Okvir): [[number, number], [number, number]] => [
   [o[1], o[0]],
   [o[3], o[2]],
 ];
+
+/** Dijelovi karte prekriveni tražilicom i karticom, u pikselima zaslona. */
+export interface Zaklon {
+  gore: number;
+  dolje: number;
+  lijevo: number;
+  desno: number;
+}
+
+export interface Pogled {
+  zum: number;
+  lat: number;
+  lng: number;
+}
 
 export function GradnjaKarta(props: {
   /** granica GUP-a */
   gup: Feature | null;
   /** stambene i mješovite zone (S, M1–M3, K5) */
   zone: FeatureCollection;
-  /** kategorije ugašene u tumaču */
-  skrivene: ReadonlySet<IdKategorije>;
+  prikaz: Prikaz;
   cilj: CiljKarte | null;
   oznaka: { lng: number; lat: number } | null;
   /** čestica pod zadnjim klikom */
   cestica: Geometrija | null;
-  punZaslon?: boolean;
+  zaklon: Zaklon;
+  /** pogled iz poveznice; inače cijeli GUP */
+  pocetak: Pogled | null;
   onKlik: (lng: number, lat: number) => void;
+  onPomak: (p: Pogled) => void;
+  /** karta je spremna (za sliku za dijeljenje) */
+  onSpremna: (map: LeafletNS.Map | null) => void;
 }) {
-  const { gup, zone, skrivene, cilj, oznaka, cestica, punZaslon = false, onKlik } = props;
+  const { gup, zone, prikaz, cilj, oznaka, cestica, zaklon, pocetak, onKlik, onPomak, onSpremna } = props;
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<LeafletNS.Map | null>(null);
   const LRef = useRef<typeof LeafletNS | null>(null);
   const tocka = useRef<LeafletNS.CircleMarker | null>(null);
   const obris = useRef<LeafletNS.LayerGroup | null>(null);
   const ucitane = useRef(new Map<string, Ucitana>());
-  const skriveneRef = useRef(skrivene);
+  const prikazRef = useRef(prikaz);
+  const zaklonRef = useRef(zaklon);
   /** Razina pruga po kojoj su pločice obojane (prugeZaZum) i redni broj bojenja. */
   const razinaRef = useRef(0);
   const bojenje = useRef(0);
-  const klik = useRef(onKlik);
+  /** Leaflet se učitava asinkrono: što stigne prije (cilj tražilice, čestica iz poveznice) primijeni se kad karta postoji. */
+  const [spremna, setSpremna] = useState(false);
+  const povratni = useRef({ onKlik, onPomak, onSpremna });
   useEffect(() => {
-    klik.current = onKlik;
-  }, [onKlik]);
+    povratni.current = { onKlik, onPomak, onSpremna };
+  }, [onKlik, onPomak, onSpremna]);
 
   useEffect(() => {
     let otkazano = false;
@@ -174,10 +229,16 @@ export function GradnjaKarta(props: {
         minZoom: 12,
         maxZoom: 19,
         maxBounds: SIRI_OBUHVAT_KARTE,
+        maxBoundsViscosity: 1,
         preferCanvas: true,
         zoomSnap: 0.25,
-        // karta je usred stranice: kotačić lista stranicu, zum je na gumbima i prstima
-        scrollWheelZoom: false,
+        zoomDelta: 1,
+        wheelPxPerZoomLevel: 80,
+        bounceAtZoomLimits: false,
+        zoomControl: false,
+        // dvoklik zumira; odabir čeka da se vidi je li bio dvoklik
+        doubleClickZoom: true,
+        keyboard: true,
       });
       mapa.current = map;
       const promatrac = new ResizeObserver(() => map.invalidateSize());
@@ -185,7 +246,11 @@ export function GradnjaKarta(props: {
       map.on("unload", () => promatrac.disconnect());
       const podloge = Object.fromEntries(PODLOGE.map((p) => [p.naziv, podloga(L, p.id)]));
       podloge[PODLOGE[0].naziv].addTo(map);
-      L.control.layers(podloge, undefined, { position: "topright" }).addTo(map);
+      L.control.zoom({ position: "bottomright", zoomInTitle: "Približi", zoomOutTitle: "Udalji" }).addTo(map);
+      dodajMojuLokaciju(L, map);
+      L.control.layers(podloge, undefined, { position: "bottomleft" }).addTo(map);
+      L.control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
+      map.attributionControl.setPrefix(false);
 
       // kategorije ispod obrisa, iznad podloge
       const okno = map.createPane("gradnja");
@@ -206,14 +271,45 @@ export function GradnjaKarta(props: {
       const granica = gup
         ? L.geoJSON(gup, { ...netaknuto, style: { color: "#18181b", weight: 1.5, dashArray: "7 5", fill: false } }).addTo(map)
         : null;
-      if (granica) map.fitBounds(granica.getBounds(), { padding: [8, 8] });
+      const z = zaklonRef.current;
+      if (pocetak) map.setView([pocetak.lat, pocetak.lng], pocetak.zum);
+      else if (granica)
+        map.fitBounds(granica.getBounds(), { paddingTopLeft: [z.lijevo + 8, z.gore + 8], paddingBottomRight: [z.desno + 8, z.dolje + 8] });
       else map.setView([43.515, 16.47], 13);
       obrisiPoZumu();
+      povratni.current.onSpremna(map);
+      setSpremna(true);
+
+      // klik bira mjesto tek kad se vidi da nije prvi dio dvoklika (koji zumira)
+      let odgoda: ReturnType<typeof setTimeout> | null = null;
+      map.on("click", (e: LeafletNS.LeafletMouseEvent) => {
+        if (odgoda) {
+          clearTimeout(odgoda);
+          odgoda = null;
+          return;
+        }
+        odgoda = setTimeout(() => {
+          odgoda = null;
+          povratni.current.onKlik(e.latlng.lng, e.latlng.lat);
+        }, 250);
+      });
+      map.on("dblclick", () => {
+        if (odgoda) clearTimeout(odgoda);
+        odgoda = null;
+      });
+      // Enter ili razmaknica na karti s fokusom bira sredinu karte
+      map.on("keypress", (e: LeafletNS.LeafletKeyboardEvent) => {
+        if (e.originalEvent.key !== "Enter" && e.originalEvent.key !== " ") return;
+        const c = map.getCenter();
+        povratni.current.onKlik(c.lng, c.lat);
+      });
 
       const ind = await ucitajIndeks().catch(() => null);
       if (otkazano || !ind) return;
       const osvjezi = async () => {
         if (otkazano) return;
+        const sredina = map.getCenter();
+        povratni.current.onPomak({ zum: map.getZoom(), lat: sredina.lat, lng: sredina.lng });
         okno.classList.toggle("gup-regije-daleko", map.getZoom() < ZUM_OSTRIH_PIKSELA);
         // druga razina pruga: učitane pločice prebojaju se s novim razmakom
         const razina = prugeZaZum(map.getZoom()).razina;
@@ -222,20 +318,36 @@ export function GradnjaKarta(props: {
           razinaRef.current = razina;
           if (!prva) {
             const n = ++bojenje.current;
-            void prebojaj(mapaPlocica, skriveneRef.current, razina, () => !otkazano && n === bojenje.current);
+            void prebojaj(mapaPlocica, prikazRef.current, razina, () => !otkazano && n === bojenje.current);
           }
         }
         const vidi = map.getBounds().pad(0.25);
+        // otpusti pločice daleko od pogleda
+        if (mapaPlocica.size > NAJVISE_PLOCICA) {
+          const daleko = map.getBounds().pad(1.5);
+          for (const [url, u] of mapaPlocica)
+            if (!daleko.intersects(u.granice)) {
+              u.sloj.remove();
+              u.platno.width = 0;
+              mapaPlocica.delete(url);
+            }
+        }
         const trebaju: PlocicaGradnje[] = ind.plocice.filter((p) => vidi.intersects(L.latLngBounds(p.granice)));
         for (const p of trebaju) {
           if (mapaPlocica.has(p.url)) continue;
           try {
             const kodovi = await procitaj(p.url);
             if (otkazano || mapaPlocica.has(p.url)) continue;
-            const url = await obojaj(p.url, kodovi, skriveneRef.current, razinaRef.current);
-            if (otkazano || !url) continue;
-            const sloj = L.imageOverlay(url, p.granice, { pane: "gradnja", interactive: false, className: "gup-regije" }).addTo(map);
-            mapaPlocica.set(p.url, { sloj, url });
+            const platno = document.createElement("canvas");
+            obojaj(platno, p.url, kodovi, prikazRef.current, razinaRef.current);
+            const granice = L.latLngBounds(p.granice);
+            // svgOverlay drži bilo koji element: ovdje platno, koje se prebojava bez kodiranja u PNG
+            const sloj = L.svgOverlay(platno as unknown as SVGElement, granice, {
+              pane: "gradnja",
+              interactive: false,
+              className: "gup-regije",
+            }).addTo(map);
+            mapaPlocica.set(p.url, { sloj, platno, granice });
           } catch {
             // pločica se nije učitala; pokušat će se pri sljedećem pomaku karte
           }
@@ -243,12 +355,12 @@ export function GradnjaKarta(props: {
       };
       map.on("moveend", osvjezi);
       void osvjezi();
-      map.on("click", (e: LeafletNS.LeafletMouseEvent) => klik.current(e.latlng.lng, e.latlng.lat));
     })();
     return () => {
       otkazano = true;
-      for (const u of mapaPlocica.values()) if (u.url) URL.revokeObjectURL(u.url);
+      for (const u of mapaPlocica.values()) u.platno.width = 0;
       mapaPlocica.clear();
+      povratni.current.onSpremna(null);
       mapa.current?.remove();
       mapa.current = null;
     };
@@ -256,26 +368,60 @@ export function GradnjaKarta(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // skupina ugašena ili upaljena u tumaču: učitane pločice samo se prebojaju
+  // sloj ugašen ili upaljen, ili odabrana zapreka: učitane pločice samo se prebojaju
   useEffect(() => {
-    if (skriveneRef.current === skrivene) return;
-    skriveneRef.current = skrivene;
+    if (prikazRef.current === prikaz) return;
+    prikazRef.current = prikaz;
     const n = ++bojenje.current;
-    void prebojaj(ucitane.current, skrivene, razinaRef.current, () => n === bojenje.current);
-  }, [skrivene]);
+    void prebojaj(ucitane.current, prikaz, razinaRef.current, () => n === bojenje.current);
+  }, [prikaz]);
+
+  // gumbi karte izmiču tražilici i kartici
+  useEffect(() => {
+    zaklonRef.current = zaklon;
+    const el = div.current;
+    if (!el) return;
+    for (const c of el.querySelectorAll<HTMLElement>(".leaflet-top")) c.style.top = `${zaklon.gore}px`;
+    for (const c of el.querySelectorAll<HTMLElement>(".leaflet-bottom")) c.style.bottom = `${zaklon.dolje}px`;
+    for (const c of el.querySelectorAll<HTMLElement>(".leaflet-left")) c.style.left = `${zaklon.lijevo}px`;
+  }, [zaklon, spremna]);
 
   useEffect(() => {
-    const kotacic = mapa.current?.scrollWheelZoom;
-    if (punZaslon) kotacic?.enable();
-    else kotacic?.disable();
-  }, [punZaslon]);
+    const map = mapa.current, L = LRef.current;
+    if (!map || !L || !cilj) return;
+    const z = zaklonRef.current;
+    const okvir = cilj.okvir ? L.latLngBounds(uGranice(cilj.okvir)) : L.latLng(cilj.tocka![1], cilj.tocka![0]).toBounds(120);
+    map.flyToBounds(okvir, {
+      paddingTopLeft: [z.lijevo + 24, z.gore + 24],
+      paddingBottomRight: [z.desno + 24, z.dolje + 24],
+      maxZoom: 18,
+      duration: 0.6,
+    });
+  }, [cilj, spremna]);
 
+  // odabrana čestica i točka moraju biti u dijelu karte koji tražilica i kartica ne prekrivaju
   useEffect(() => {
-    const map = mapa.current;
-    if (!map || !cilj) return;
-    if (cilj.okvir) map.flyToBounds(uGranice(cilj.okvir), { padding: [24, 24], maxZoom: 17, duration: 0.6 });
-    else if (cilj.tocka) map.flyTo([cilj.tocka[1], cilj.tocka[0]], Math.max(map.getZoom(), 17), { duration: 0.6 });
-  }, [cilj]);
+    const map = mapa.current, L = LRef.current;
+    if (!map || !L || (!cestica && !oznaka)) return;
+    const z = zaklon;
+    const okvir = cestica
+      ? L.geoJSON({ type: "Feature", properties: {}, geometry: cestica } as Feature).getBounds()
+      : L.latLng(oznaka!.lat, oznaka!.lng).toBounds(10);
+    const vel = map.getSize();
+    const a = map.latLngToContainerPoint(okvir.getNorthWest());
+    const b = map.latLngToContainerPoint(okvir.getSouthEast());
+    const unutra = a.x >= z.lijevo + 8 && a.y >= z.gore + 8 && b.x <= vel.x - z.desno - 8 && b.y <= vel.y - z.dolje - 8;
+    if (unutra) return;
+    const slobodno = { x: vel.x - z.lijevo - z.desno - 32, y: vel.y - z.gore - z.dolje - 32 };
+    // premalo mjesta (npr. kartica raširena na niskom zaslonu): ne skači
+    if (slobodno.x < 80 || slobodno.y < 80) return;
+    map.flyToBounds(okvir, {
+      paddingTopLeft: [z.lijevo + 16, z.gore + 16],
+      paddingBottomRight: [z.desno + 16, z.dolje + 16],
+      maxZoom: Math.max(map.getZoom(), 17),
+      duration: 0.4,
+    });
+  }, [cestica, oznaka, zaklon, spremna]);
 
   useEffect(() => {
     const map = mapa.current, L = LRef.current;
@@ -285,13 +431,13 @@ export function GradnjaKarta(props: {
       obris.current = null;
       return;
     }
-    // bijela crta ispod iscrtkane crne: vidi se i na tamnoj zgradi i na svijetloj ulici
+    // bijeli rub ispod pune crne crte: vidi se i na tamnoj zgradi i na svijetloj ulici
     const f = { type: "Feature", properties: {}, geometry: cestica } as Feature;
     obris.current = L.layerGroup([
-      L.geoJSON(f, { interactive: false, style: { color: "#ffffff", weight: 3.5, fill: false } }),
-      L.geoJSON(f, { interactive: false, style: { color: "#18181b", weight: 1.5, fill: false, dashArray: "4 3" } }),
+      L.geoJSON(f, { interactive: false, style: { color: "#ffffff", weight: 5, opacity: 0.9, fill: false } }),
+      L.geoJSON(f, { interactive: false, style: { color: "#111111", weight: 2.5, fill: false } }),
     ]).addTo(map);
-  }, [cestica]);
+  }, [cestica, spremna]);
 
   useEffect(() => {
     const map = mapa.current, L = LRef.current;
@@ -308,14 +454,45 @@ export function GradnjaKarta(props: {
           pane: "markerPane",
         }).addTo(map)
       : null;
-  }, [oznaka]);
+  }, [oznaka, spremna]);
 
   return (
     <div
       ref={div}
       className="h-full w-full"
       role="application"
-      aria-label="Karta područja u kojima se po novom GUP-u ne može graditi ništa novo ili ništa stambeno"
+      aria-label="Karta: gdje se po novom GUP-u može graditi. Strelicama pomakni kartu, plus i minus zumiraju, Enter odabire sredinu karte."
     />
   );
+}
+
+/** Gumb „Moja lokacija” iznad zuma: plava točka i karta na mjestu gdje je korisnik. */
+function dodajMojuLokaciju(L: typeof LeafletNS, map: LeafletNS.Map) {
+  let tocka: LeafletNS.CircleMarker | null = null;
+  const Kontrola = L.Control.extend({
+    onAdd() {
+      const okvir = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const gumb = L.DomUtil.create("a", "gup-lokacija", okvir);
+      gumb.href = "#";
+      gumb.role = "button";
+      gumb.title = "Moja lokacija";
+      gumb.setAttribute("aria-label", "Moja lokacija");
+      gumb.innerHTML =
+        '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="4"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>';
+      L.DomEvent.disableClickPropagation(okvir);
+      L.DomEvent.on(gumb, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        map.locate({ setView: true, maxZoom: 17, enableHighAccuracy: true });
+      });
+      return okvir;
+    },
+  });
+  new Kontrola({ position: "bottomright" }).addTo(map);
+  map.on("locationfound", (e: LeafletNS.LocationEvent) => {
+    tocka?.remove();
+    tocka = L.circleMarker(e.latlng, { radius: 8, weight: 3, color: "#ffffff", fillColor: "#2563eb", fillOpacity: 1, interactive: false }).addTo(map);
+  });
+  map.on("locationerror", () => {
+    window.alert("Lokacija nije dostupna. Dopusti pregledniku pristup lokaciji ili potraži adresu.");
+  });
 }
