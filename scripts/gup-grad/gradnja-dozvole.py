@@ -68,7 +68,7 @@ SKUPINE = os.path.join(ROOT, "data", "gup-grad", "dozvole-skupine-2025.json")
 ISPU_AKTI = os.environ.get("ISPU_AKTI") or os.path.join(CACHE, "ispu-akti-zelene.csv")
 
 # stambeno, stambeno uz uvjet, i gradilišta iz zahtjeva i dozvola (stambeno i nestambeno; gradnja.ts)
-ZELENO = (13, 11, 25, 26, 27, 28)
+ZELENO = (13, 11, 25, 26, 27, 28, 29)
 PLAN_NA_SNAZI = 7  # gornja tri bita: slobodno pod DPU-om ili UPU-om na snazi (gradnja.ts)
 NAJMANJE_ZELENO_M2 = 20.0
 NAJVISE_CESTICA = 12

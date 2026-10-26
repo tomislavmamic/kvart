@@ -197,5 +197,28 @@
    "gup_ne_stambeno": 0,
    "primjeri": []
   }
+ },
+ "dpu_stambeni": [
+  "DPU11",
+  "DPU13",
+  "DPU21",
+  "DPU26",
+  "DPU35",
+  "DPU41",
+  "DPU57",
+  "DPU66"
+ ],
+ "nove_stambene_dozvole": {
+  "UPU13": 8,
+  "UPU7": 14,
+  "DPU21": 8,
+  "UPU9": 11,
+  "DPU13": 9,
+  "DPU35": 19,
+  "DPU26": 5,
+  "UPU10": 4,
+  "DPU66": 2,
+  "DPU11": 1,
+  "DPU57": 1
  }
 }

@@ -104,7 +104,7 @@ export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string; 
   // javno zemljište i vojska nisu zemljište na kojem građanin gradi, pa se ne broje ni u jedan od tri odgovora
   javno: { naslov: "Javno zemljište", kratko: "Javno zemljište", glavna: "javno" },
   // gdje je na snazi DPU ili UPU, gradi se samo po njemu (čl. 103. st. 5.): namjena GUP-a ondje ne odlučuje
-  plan: { naslov: "Odlučuje detaljniji plan na snazi", kratko: "Po planu na snazi", glavna: "po-planu" },
+  plan: { naslov: "Odlučuje DPU na snazi", kratko: "Po DPU-u", glavna: "po-planu" },
 };
 
 export type IdKategorije =
@@ -127,6 +127,7 @@ export type IdKategorije =
   | "javno"
   | "javni-pojas"
   | "po-planu"
+  | "po-dpu-stambeno"
   | "ceka-upu"
   | "uz-cestu-stambeno"
   | "uz-cestu-nestambeno"
@@ -454,13 +455,25 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 24,
     id: "po-planu",
     skupina: "plan",
-    naziv: "Slobodno, a gradi se po detaljnijem planu na snazi (DPU, UPU)",
+    naziv: "Slobodno, a gradi se po DPU-u na snazi",
     razlog:
-      "Ovdje je na snazi detaljniji plan (DPU ili UPU), a novi GUP kaže da se na takvom području gradi samo po tom planu. Što se smije graditi, odlučuje taj plan, a ne namjena GUP-a s ove karte.",
+      "Ovdje je na snazi detaljni plan uređenja (DPU), a novi GUP kaže da se na takvom području gradi samo po tom planu. DPU može dopustiti drukčiju namjenu od GUP-a, pa ovdje odlučuje on, a ne namjena GUP-a s ove karte.",
     boja: "#000000",
     alfa: 0.08,
     pruge: "#18181b",
     prugeAlfa: 0.5,
+  },
+  {
+    kod: 29,
+    id: "po-dpu-stambeno",
+    skupina: "stambeno",
+    naziv: "Po DPU-u (dopušta stanovanje)",
+    razlog:
+      "Ovdje je na snazi detaljni plan uređenja (DPU), a gradi se samo po njemu. Po tom su planu izdane dozvole za nove stambene zgrade, pa on stanovanje dopušta, i kad ga namjena novog GUP-a ovdje ne bi dopustila. Je li baš ova čestica za stambenu zgradu, kaže crtež plana; njega nismo pročitali.",
+    boja: "#4ade80",
+    alfa: 0.45,
+    pruge: "#14532d",
+    prugeAlfa: 0.6,
   },
   {
     kod: 18,
@@ -501,6 +514,11 @@ export const PO_PLANU: ReadonlySet<IdKategorije> = new Set<IdKategorije>([
   "nestambeno",
   "stambeno",
 ]);
+/**
+ * Slobodno zemljište u zoni za gradnju pod DPU-om koji dopušta stanovanje (planovi-dozvole.py,
+ * gradnja-javno.py bit 64): odlučuje plan, ali stanovanje je ondje moguće.
+ */
+export const PO_DPU_STAMBENO: IdKategorije = "po-dpu-stambeno";
 /** Gornja tri bita bajta kategorije: plan na snazi umjesto vlasnika (vlasnici su 1–4). */
 export const PLAN_NA_SNAZI = 7;
 export const jeJavno = (vlasnik: number) => vlasnik >= 1 && vlasnik <= 4;

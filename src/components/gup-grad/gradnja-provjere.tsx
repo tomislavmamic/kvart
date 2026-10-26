@@ -171,7 +171,8 @@ export function provjere(
   const zona = klasa ? ZONA_GRADNJE[klasa.kod] : null;
   const katId = u ? KATEGORIJA_PO_KODU.get(u.kategorija)?.id : undefined;
   const koridor = katId === "koridor";
-  const naPlanu = u?.vlasnik === PLAN_NA_SNAZI;
+  // pod DPU-om na snazi (i onim koji dopušta stanovanje) namjena GUP-a ne odlučuje
+  const naPlanu = u?.vlasnik === PLAN_NA_SNAZI || katId === "po-dpu-stambeno";
   const out: Provjera[] = [];
 
   // 0. vlasnik: javno zemljište i vojna zona nisu za gradnju građana
@@ -207,7 +208,7 @@ export function provjere(
           </>
         )}
         {koridor && " Ovo mjesto zapravo nije obojeno: to je pojas ulice između blokova, koji smo izdvojili sa samog lista."}
-        {naPlanu && zona !== "stambena" && " Ovdje ipak odlučuje detaljniji plan koji je na snazi, a on stanovanje može dopuštati."}{" "}
+        {naPlanu && zona !== "stambena" && " Ovdje ipak odlučuje DPU koji je na snazi, a on stanovanje može dopuštati."}{" "}
         Pogledaj{" "}
         <NaListu list="namjena-2025" navod="list-namjena-2025" tocka={tocka} listovi={listovi}>
           ovo mjesto na listu 1

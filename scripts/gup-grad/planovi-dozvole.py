@@ -8,6 +8,13 @@ na snazi (planski-rezim-2025.geojson). Izdani od GUP-a 2006., zahtjevi u obradi 
 (klasa namjene u pločicama gradnja.ts). Po planu ispisuje koliko je
 takvih akata i koliko ih je ondje gdje GUP stambeno ne bi dopustio.
 
+Uz to razvrsta detaljne planove (DPU, PUP; UPU-i namjenu GUP-a u pravilu ne
+mijenjaju, pa ondje vrijedi GUP): DPU u kojem je od 2006. izdana barem jedna
+dozvola za građenje nove stambene ili stambeno-poslovne zgrade, ili koji
+stanovanje ima u nazivu, „dopušta stanovanje” (dpu_stambeni). gradnja-javno.py
+po tome označi slobodno zemljište u njemu, a gradnja.ts ga u zoni za gradnju
+pokaže kao „Po DPU-u (dopušta stanovanje)”.
+
 Izlaz: data/gup-grad/planovi-dozvole-2025.json i ispis.
 Pokretanje (poslije gradnja-dozvole.py):  python3 scripts/gup-grad/planovi-dozvole.py
 """
@@ -31,6 +38,9 @@ IZLAZ = os.path.join(ROOT, "data", "gup-grad", "planovi-dozvole-2025.json")
 STAMBENO = re.compile(r"stamben", re.I)
 # namjene GUP-a u kojima je stanovanje dopušteno (model.ts: S, M1–M3 i K5); sve druge ga ne dopuštaju
 STAMBENE_KLASE = {"S", "M/K5"}
+# nova gradnja (ne obnova, uporaba, ozakonjenje) i plan koji stanovanje ima u nazivu
+NOVA = re.compile(r"^građenje", re.I)
+STANOVANJE_U_NAZIVU = re.compile(r"stanovanj|stambenog naselja", re.I)
 
 _spec = importlib.util.spec_from_file_location("ds", os.path.join(os.path.dirname(__file__), "dozvole-sanacija.py"))
 ds = importlib.util.module_from_spec(_spec)
@@ -66,6 +76,7 @@ def main() -> None:
                if f["properties"]["vrsta"] == "vazeci"]
     po_planu: dict[str, dict] = {}
     vidjeni = set()
+    nove_stambene: dict[str, int] = {}
     for r in csv.DictReader(open(CSV)):
         if r["klasa"] in vidjeni or not STAMBENO.search(r["namjena"]):
             continue
@@ -86,6 +97,8 @@ def main() -> None:
         plan = next((p for p, g in planovi if g.contains(t)), None)
         if not plan:
             continue
+        if ish == "izdana" and NOVA.search(r["vrsta_zahvata"]):
+            nove_stambene[plan["ispu"]] = nove_stambene.get(plan["ispu"], 0) + 1
         nm = namjena(t.x, t.y)
         z = po_planu.setdefault(plan["ispu"], {"naziv": plan["naziv"], "glasnik": plan["glasnik"], "akata": 0, "gup_ne_stambeno": 0, "primjeri": []})
         z["akata"] += 1
@@ -95,7 +108,11 @@ def main() -> None:
                 z["primjeri"].append({"klasa": r["klasa"], "akt": r["naziv_akta"] or "zahtjev", "datum": ds.iso(r["datum_rjesavanja"]) or ds.iso(r["datum_zaprimanja"]),
                                       "namjena": r["namjena"], "kc": r["katastarske_cestice"], "namjena_gup": nm})
     redovi = sorted(po_planu.items(), key=lambda t: -t[1]["gup_ne_stambeno"])
-    json.dump({"opis": __doc__.split("\n\n")[1].replace("\n", " "), "planovi": dict(redovi)}, open(IZLAZ, "w"), ensure_ascii=False, indent=1)
+    detaljni = [p for p, _ in planovi if not p["ispu"].startswith("UPU")]
+    dpu_stambeni = sorted(p["ispu"] for p in detaljni if nove_stambene.get(p["ispu"], 0) >= 1 or STANOVANJE_U_NAZIVU.search(p["naziv"]))
+    json.dump({"opis": __doc__.split("\n\n")[1].replace("\n", " "), "planovi": dict(redovi),
+               "dpu_stambeni": dpu_stambeni, "nove_stambene_dozvole": nove_stambene}, open(IZLAZ, "w"), ensure_ascii=False, indent=1)
+    print("DPU koji dopuštaju stanovanje:", ", ".join(f"{d} ({nove_stambene.get(d, 0)})" for d in dpu_stambeni))
     for k, z in redovi:
         print(f"{k:6} {z['akata']:3} stambenih akata, {z['gup_ne_stambeno']:3} gdje GUP stambeno ne bi dopustio  {z['naziv'][:70]}")
 
