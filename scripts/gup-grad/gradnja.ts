@@ -38,6 +38,7 @@ import {
   kodNaKarti,
   kodPiksela,
   PLAN_NA_SNAZI,
+  PO_DPU_STAMBENO,
   PO_PLANU,
   ZONA_GRADNJE,
   type IdKategorije,
@@ -131,10 +132,15 @@ function main() {
         });
         // uski javni pojas (gradnja-javno.py, bit 16): javno, ali bez jantarne boje
         const uskoJavno = (jv & 16) > 0 && (jv & 7) > 0 && k !== VOJSKA;
-        const kat = uskoJavno ? USKI_JAVNI : k;
+        let kat = uskoJavno ? USKI_JAVNI : k;
         let vlasnik = uskoJavno ? 0 : jv & 7;
-        // slobodno zemljište pod planom na snazi (gradnja-javno.py, bit 32): odlučuje plan
-        if ((jv & 32) > 0 && !vlasnik && kat && PO_PLANU.has(KATEGORIJA_PO_KODU.get(kat)!.id)) vlasnik = PLAN_NA_SNAZI;
+        // slobodno zemljište pod DPU-om na snazi (gradnja-javno.py, bit 32): odlučuje plan; ako DPU dopušta
+        // stanovanje (bit 64), zemljište u zoni za gradnju je „po DPU-u (dopušta stanovanje)”
+        if ((jv & 32) > 0 && !vlasnik && kat && PO_PLANU.has(KATEGORIJA_PO_KODU.get(kat)!.id)) {
+          const zona = ZONA_GRADNJE[KLASA_PO_INDEKSU.get(klasa)!.kod];
+          if ((jv & 64) > 0 && (zona === "stambena" || zona === "nestambena")) kat = KATEGORIJA_PO_ID[PO_DPU_STAMBENO].kod;
+          else vlasnik = PLAN_NA_SNAZI;
+        }
         d[i + 2] = kodPiksela(kat, vlasnik);
         if (!k) {
           d[i + 3] = 0;

@@ -75,7 +75,7 @@ const ha = (v: number) => v.toLocaleString("hr-HR", { maximumFractionDigits: v <
 const posto = (v: number) => `${Math.round(v * 100).toLocaleString("hr-HR")} %`;
 /** Redom kojim ih karta nudi: odgovor na koji stranica odgovara prvi. */
 const SKUPINE: Skupina[] = ["stambeno", "nestambeno", "nista", "javno", "plan"];
-const KRATKO: Record<Skupina, string> = { stambeno: "Stambeno", nestambeno: "Nestambeno", nista: "Ništa novo", javno: "Javno", plan: "Po planu" };
+const KRATKO: Record<Skupina, string> = { stambeno: "Stambeno", nestambeno: "Nestambeno", nista: "Ništa novo", javno: "Javno", plan: "Po DPU-u" };
 const SIROKO = "(min-width: 640px)";
 /** Kategorije zahtjeva i dozvola (gradnja.ts): dok je koja na karti, vide se i međe unutar njihovih skupina. */
 const DOZVOLE: readonly IdKategorije[] = ["stambeno-zahtjev", "stambeno-dozvola", "nestambeno-zahtjev", "nestambeno-dozvola"];
@@ -303,7 +303,7 @@ function TijeloKlika(props: {
           {kat.razlog}
         </p>
       )}
-      {kat?.id === "po-planu" && (
+      {(kat?.id === "po-planu" || kat?.id === "po-dpu-stambeno") && (
         <div className="mt-2 rounded-lg bg-zinc-100 px-2.5 py-2 text-zinc-800">
           {k.stanje.rezim === "vazeci" && (
             <p>
@@ -312,7 +312,7 @@ function TijeloKlika(props: {
               njemu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>); njegovu namjenu ovdje nismo provjerili.
             </p>
           )}
-          {ispod && (
+          {ispod && kat?.id === "po-planu" && (
             <p className="mt-1 flex items-center gap-2">
               <UzorakBoje stil={uzorakKategorije(ispod)} malo />
               <span>
@@ -993,7 +993,7 @@ export function GradnjaPrikaz(props: {
                       {sk === "nista" && "zgrade s dvorištima, ulice, parkovi, premalo zemljišta, čeka UPU…"}
                       {sk === "javno" && `država, Grad, županija; od toga ${ha(zbroj.po_kategoriji_ha.vojska)} ha vojna zona`}
                       {sk === "plan" &&
-                        `slobodno zemljište pod DPU-om ili UPU-om na snazi; po namjeni GUP-a bilo bi ondje ${ha((zbroj.ispod_plana_ha.stambeno ?? 0) + (zbroj.ispod_plana_ha["uz-cestu-stambeno"] ?? 0))} ha za stambenu zgradu`}
+                        `slobodno zemljište pod DPU-om na snazi; po namjeni GUP-a bilo bi ondje ${ha((zbroj.ispod_plana_ha.stambeno ?? 0) + (zbroj.ispod_plana_ha["uz-cestu-stambeno"] ?? 0))} ha za stambenu zgradu`}
                     </span>
                     <span className="mt-0.5 block text-xs font-semibold text-zinc-700">Prikaži na karti →</span>
                   </span>

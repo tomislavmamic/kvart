@@ -65,7 +65,7 @@ export default async function GradnjaPage() {
       <h1 className="mt-1 text-2xl font-bold">Gdje se po novom GUP-u neće moći graditi</h1>
       <p className="mt-2 max-w-3xl text-zinc-600">
         Kad Gradsko vijeće donese novi GUP, za svako mjesto unutar granice GUP-a vrijedit će jedan od odgovora: ne može se graditi
-        ništa novo, može se graditi ali ne stambena zgrada, može i stambena, javno je zemljište, ili ondje odlučuje detaljniji plan
+        ništa novo, može se graditi ali ne stambena zgrada, može i stambena, javno je zemljište, ili ondje odlučuje detaljni plan (DPU)
         koji je već na snazi. Karta za svako mjesto kaže odgovor i razlog.
       </p>
 
@@ -112,9 +112,10 @@ export default async function GradnjaPage() {
                   [
                     "plan",
                     <>
-                      <strong className="text-zinc-900">Odlučuje detaljniji plan.</strong> Na slobodnom zemljištu na kojem je već na snazi
-                      DPU ili UPU gradi se samo po tom planu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Što se ondje smije
-                      graditi, kaže taj plan, a ne namjena novog GUP-a.
+                      <strong className="text-zinc-900">Odlučuje DPU.</strong> Na slobodnom zemljištu na kojem je već na snazi detaljni plan
+                      uređenja (DPU) gradi se samo po tom planu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>), a on može
+                      dopustiti i drukčiju namjenu od GUP-a. Gdje po DPU-u već niču stambene zgrade, karta to zemljište ubraja u
+                      stambeno („Po DPU-u”).
                     </>,
                   ],
                 ] as const
@@ -235,12 +236,14 @@ export default async function GradnjaPage() {
               turističkim zonama, gdje stambene zgrade neće biti ni nakon UPU-a.
             </p>
             <p className="mt-2">
-              Na još {ha(s.plan)} ha slobodnog zemljišta već je na snazi detaljniji plan: 46 DPU-a i UPU-a, najveći za Sirobuju, Šine i
-              Vidovac, Stobreč, Bilice, Mejaše i Dragovode, te DPU-i oko Mall of Splita. Ondje se gradi samo po tim planovima, pa
-              ni namjena novog GUP-a ni njegova pravila ondje ne odlučuju. Po namjeni GUP-a od toga bi{" "}
-              {ha((zbroj.ispod_plana_ha.stambeno ?? 0) + (zbroj.ispod_plana_ha.odmak ?? 0))} ha bilo gradilište stambene zgrade,{" "}
-              {ha(zbroj.ispod_plana_ha.nestambeno ?? 0)} ha nestambene, a {ha(zbroj.ispod_plana_ha["bez-zgrada"] ?? 0)} ha park ili
-              zelenilo. Koliko od toga ti planovi doista dopuštaju, karta ne zna: njihove crteže nismo pročitali.
+              Dio grada već ima detaljniji plan na snazi, a novi GUP kaže da se ondje gradi samo po njemu. Urbanistički planovi
+              (UPU: Sirobuja, Šine i Vidovac, Stobreč, Bilice, Mejaši i Dragovode…) namjenu GUP-a u pravilu ne mijenjaju, pa ondje
+              karta pokazuje namjenu GUP-a. Detaljni planovi (DPU) je mogu mijenjati: uz Mall of Split, gdje GUP crta poslovnu
+              zonu, po DPU-u se grade stambene zgrade. Zato smo provjerili u kojim su DPU-ima izdane dozvole za nove stambene
+              zgrade. Takvih je osam (Žnjan sjeverno od Bračke, oko Gospe od Žnjana, Bračka i Velebitska, istočno od potoka
+              Radoševac, Duilovo, Križine, zona K5 sjeverno od Vukovarske i P26 uz Mall of Split), i u njima je{" "}
+              {ha(k["po-dpu-stambeno"])} ha slobodnog zemljišta u zonama za gradnju karta ubrojila u stambeno („Po DPU-u”). U
+              ostalim DPU-ima na {ha(s.plan)} ha odlučuje plan, a karta ne zna što dopušta: njihove crteže nismo pročitali.
             </p>
             <p className="mt-2">
               Koja su to područja i zašto, pročitaj na stranici{" "}
@@ -335,11 +338,13 @@ export default async function GradnjaPage() {
                 ili nestambena dozvola ide u svoju skupinu, kao „zatražena dozvola” ili „izdana dozvola”.
               </li>
               <li>
-                <strong className="text-zinc-900">Je li ondje na snazi detaljniji plan?</strong> Gdje je na snazi DPU ili UPU (
+                <strong className="text-zinc-900">Je li ondje na snazi detaljni plan?</strong> Gdje je na snazi plan užeg područja (
                 <Navod id="list-planske-mjere-2025">list 4.d</Navod>, granice s ISPU-a), gradi se samo po njemu (
-                <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Slobodno zemljište ondje karta zato ne boji po namjeni
-                GUP-a, nego tamnim prugama: odlučuje plan. U tumaču klika piše koji je to plan i što bi bilo po namjeni GUP-a.
-                Izgrađeno, javno zemljište, putovi i teren koji nije za gradnju ostaju svoji, jer ne ovise o planu.
+                <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). UPU-i namjenu GUP-a u pravilu ne mijenjaju, pa ondje
+                vrijedi namjena GUP-a. DPU je može mijenjati: slobodno zemljište pod DPU-om karta boji tamnim prugama („odlučuje
+                DPU”), osim u DPU-ima po kojima su izdane dozvole za nove stambene zgrade, gdje je zemljište u zonama za gradnju
+                zeleno s prugama („po DPU-u, dopušta stanovanje”). U tumaču klika piše koji je to plan. Izgrađeno, javno
+                zemljište, putovi i teren koji nije za gradnju ostaju svoji, jer ne ovise o planu.
               </li>
             </ol>
           </section>
