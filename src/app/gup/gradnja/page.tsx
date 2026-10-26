@@ -341,9 +341,9 @@ export default async function GradnjaPage() {
                 <strong className="text-zinc-900">Je li ondje na snazi detaljni plan?</strong> Gdje je na snazi plan užeg područja (
                 <Navod id="list-planske-mjere-2025">list 4.d</Navod>, granice s ISPU-a), gradi se samo po njemu (
                 <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). UPU-i namjenu GUP-a u pravilu ne mijenjaju, pa ondje
-                vrijedi namjena GUP-a. DPU je može mijenjati: slobodno zemljište pod DPU-om karta boji tamnim prugama („odlučuje
-                DPU”), osim u DPU-ima po kojima su izdane dozvole za nove stambene zgrade, gdje je zemljište u zonama za gradnju
-                zeleno s prugama („po DPU-u, dopušta stanovanje”). U tumaču klika piše koji je to plan. Izgrađeno, javno
+                vrijedi namjena GUP-a. DPU je može mijenjati: granicu DPU-a karta crta iscrtkano, a slobodno zemljište u njemu blago
+                posvijetli („odlučuje DPU”), osim u DPU-ima po kojima su izdane dozvole za nove stambene zgrade, gdje je
+                zemljište u zonama za gradnju prozirno zeleno („po DPU-u, dopušta stanovanje”). U tumaču klika piše koji je to plan. Izgrađeno, javno
                 zemljište, putovi i teren koji nije za gradnju ostaju svoji, jer ne ovise o planu.
               </li>
             </ol>

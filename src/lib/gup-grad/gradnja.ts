@@ -168,10 +168,11 @@ export interface Kategorija {
  * blizu srednje zelene: deutan ΔE 6,3). Unutar zelene i plave
  * svjetlina je redoslijed, od svijetlog prema tamnom: nedostaje ulica ili
  * kanalizacija (najsvjetlije, šrafirano), mjesto za zgradu, zatražena
- * dozvola, izdana dozvola (najtamnije). Šrafura neuređenog je i druga oznaka
- * uz boju: svijetli kraj zelene i plave inače su preblizu. Čekanje na UPU i
- * gradski projekt su svijetla mreža na zatamnjenom, a „odlučuje plan na
- * snazi” samo tamne pruge. Provjereno validatorom (dataviz) na bojama
+ * dozvola, izdana dozvola (najtamnije). Šrafura znači samo jedno, neuređeno, i
+ * druga je oznaka uz boju: svijetli kraj zelene i plave inače su preblizu.
+ * Čekanje na UPU i gradski projekt su svijetla mreža na zatamnjenom. Pod
+ * DPU-om je slobodno blago posvijetljeno (ili prozirno zeleno, ako DPU
+ * dopušta stanovanje), a granicu DPU-a karta crta iscrtkano. Provjereno validatorom (dataviz) na bojama
  * stopljenim sa sivom snimkom (#a6a6a6): zelena i plava ljestvica prolaze
  * redoslijed (svjetlina raste, koraci vidljivi, svijetli kraj odvojen od
  * snimke), a sve skupa razdvajanje za daltoniste (ΔE ≥ 8) i za normalan
@@ -436,9 +437,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     razlog:
       "Na javnom zemljištu ne gradi građanin, pa se ono ne broji ni u jedan od tri odgovora, bilo izgrađeno ili ne.",
     boja: "#eab308",
-    alfa: 0.6,
+    alfa: 0.35,
     pruge: "#a16207",
-    prugeAlfa: 0.85,
+    prugeAlfa: 0.8,
     tocke: true,
   },
   {
@@ -458,22 +459,18 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Slobodno, a gradi se po DPU-u na snazi",
     razlog:
       "Ovdje je na snazi detaljni plan uređenja (DPU), a novi GUP kaže da se na takvom području gradi samo po tom planu. DPU može dopustiti drukčiju namjenu od GUP-a, pa ovdje odlučuje on, a ne namjena GUP-a s ove karte.",
-    boja: "#000000",
-    alfa: 0.08,
-    pruge: "#18181b",
-    prugeAlfa: 0.5,
+    boja: "#ffffff",
+    alfa: 0.18,
   },
   {
     kod: 29,
     id: "po-dpu-stambeno",
     skupina: "stambeno",
-    naziv: "Po DPU-u (dopušta stanovanje)",
+    naziv: "Stanovanje po DPU-u",
     razlog:
       "Ovdje je na snazi detaljni plan uređenja (DPU), a gradi se samo po njemu. Po tom su planu izdane dozvole za nove stambene zgrade, pa on stanovanje dopušta, i kad ga namjena novog GUP-a ovdje ne bi dopustila. Je li baš ova čestica za stambenu zgradu, kaže crtež plana; njega nismo pročitali.",
     boja: "#4ade80",
-    alfa: 0.45,
-    pruge: "#14532d",
-    prugeAlfa: 0.6,
+    alfa: 0.5,
   },
   {
     kod: 18,
@@ -483,9 +480,9 @@ export const KATEGORIJE: readonly Kategorija[] = [
     razlog:
       "Novi GUP ovdje predviđa posebnu namjenu: zemljište za potrebe obrane (npr. Lora). Ondje se ne gradi za stanovanje ni za tržište, pa se ne broji ni u jedan od tri odgovora.",
     boja: "#eab308",
-    alfa: 0.6,
+    alfa: 0.35,
     pruge: "#a16207",
-    prugeAlfa: 0.85,
+    prugeAlfa: 0.8,
     tocke: true,
   },
 ];
@@ -736,7 +733,7 @@ export const PREPREKE: readonly { id: IdPrepreke; naziv: string; opis: string; k
 ];
 export const PREPREKA_PO_ID = Object.fromEntries(PREPREKE.map((p) => [p.id, p])) as Record<IdPrepreke, (typeof PREPREKE)[number]>;
 export const BOJA_PREPREKE = "#7c3aed";
-export const ALFA_PREPREKE = 0.85;
+export const ALFA_PREPREKE = 0.6;
 
 /**
  * Naziv izvan popisa svoje skupine (tumač klika, sastav čestice, slika): „Slobodno” ili „Izdana dozvola” postoje

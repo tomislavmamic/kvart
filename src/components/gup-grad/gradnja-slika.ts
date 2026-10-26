@@ -135,6 +135,68 @@ function uzorak(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, 
   ctx.stroke();
 }
 
+/**
+ * Pločica maske uzorka na mjerilu slike, ista kao CSS maska u globals.css (.gup-uzorak-N): kose pruge
+ * linear-gradient(45deg) na 8 px, mreža dvije takve na 10 px, točke radial-gradient na 6 px.
+ */
+function plocicaMaske(vrsta: number, mjerilo: number): HTMLCanvasElement {
+  const t = Math.max(2, Math.round((vrsta === 1 ? 8 : vrsta === 2 ? 10 : 6) * mjerilo));
+  const p = document.createElement("canvas");
+  p.width = p.height = t;
+  const ctx = p.getContext("2d")!;
+  const slika = ctx.createImageData(t, t);
+  for (let y = 0; y < t; y++)
+    for (let x = 0; x < t; x++) {
+      const cx = x + 0.5, cy = y + 0.5;
+      let a = 0;
+      if (vrsta === 3) {
+        const r = Math.hypot(cx - t / 2, cy - t / 2) / mjerilo;
+        a = r <= 1.3 ? 1 : r >= 1.7 ? 0 : (1.7 - r) / 0.4;
+      } else {
+        // položaj na crti gradijenta (0–1), kao u CSS-u: 45deg prema gore desno, -45deg prema gore lijevo
+        const t1 = (cx - cy) / (2 * t) + 0.5;
+        const unutra = (u: number, sirina: number) => (u >= 0 && u < sirina) || (u >= 0.5 && u < 0.5 + sirina);
+        if (vrsta === 1) a = unutra(t1, 0.25) ? 1 : 0;
+        else a = unutra(t1, 0.12) || unutra(1 - (cx + cy) / (2 * t), 0.12) ? 1 : 0;
+      }
+      slika.data[(y * t + x) * 4 + 3] = Math.round(a * 255);
+    }
+  ctx.putImageData(slika, 0, 0);
+  return p;
+}
+
+/** Platno uzorka (boja pruge) kroz masku uzorka, samo dio koji je na slici; maska počinje gdje i na karti. */
+function crtajUzorak(
+  kc: CanvasRenderingContext2D,
+  c: HTMLCanvasElement,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  vrsta: number,
+  mjerilo: number,
+  glatko: boolean,
+) {
+  const x0 = Math.max(0, Math.floor(dx)), y0 = Math.max(0, Math.floor(dy));
+  const x1 = Math.min(kc.canvas.width, Math.ceil(dx + dw)), y1 = Math.min(kc.canvas.height, Math.ceil(dy + dh));
+  if (x1 <= x0 || y1 <= y0) return;
+  const tmp = document.createElement("canvas");
+  tmp.width = x1 - x0;
+  tmp.height = y1 - y0;
+  const t = tmp.getContext("2d")!;
+  t.imageSmoothingEnabled = glatko;
+  t.drawImage(c, dx - x0, dy - y0, dw, dh);
+  t.globalCompositeOperation = "destination-in";
+  const uzorak = t.createPattern(plocicaMaske(vrsta, mjerilo), "repeat")!;
+  // maska na karti počinje na (maskPosition) od kuta pločice
+  const [mx, my] = (c.style.maskPosition || "0px 0px").split(" ").map((v) => parseFloat(v) || 0);
+  uzorak.setTransform(new DOMMatrix().translate(dx - x0 + mx * mjerilo, dy - y0 + my * mjerilo));
+  t.fillStyle = uzorak;
+  t.fillRect(0, 0, tmp.width, tmp.height);
+  kc.drawImage(tmp, x0, y0);
+  tmp.width = 0;
+}
+
 /** PNG pogleda karte s naslovom, tumačem i izvorima, 1080 px širok. */
 export async function slikaKarte(map: LeafletNS.Map, podrucje: Podrucje, opis: OpisSlike): Promise<Blob> {
   await document.fonts?.ready;
@@ -190,7 +252,9 @@ export async function slikaKarte(map: LeafletNS.Map, podrucje: Podrucje, opis: O
       if (!c.width || !c.height) continue;
       kc.imageSmoothingEnabled = c.classList.contains("gup-regije") ? !ostro : true;
       const [dx, dy, dw, dh] = naPlatnu(c);
-      kc.drawImage(c, dx, dy, dw, dh);
+      const vrsta = c.classList.contains("gup-uzorak-1") ? 1 : c.classList.contains("gup-uzorak-2") ? 2 : c.classList.contains("gup-uzorak-3") ? 3 : 0;
+      if (vrsta) crtajUzorak(kc, c, dx, dy, dw, dh, vrsta, s, !ostro);
+      else kc.drawImage(c, dx, dy, dw, dh);
     }
   kc.imageSmoothingEnabled = true;
 

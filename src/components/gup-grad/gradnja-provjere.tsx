@@ -103,6 +103,8 @@ export interface Provjera {
   pitanje: string;
   ishod: Ishod;
   odgovor: ReactNode;
+  /** Zapreka ili uvjet kratko, kao tvrdnja (vrh kartice): „Nova zgrada tek po UPU-u”. */
+  sazetak?: string;
 }
 
 /** Svako je pitanje postavljeno tako da je „da” u redu (✓). */
@@ -126,13 +128,25 @@ const NA_MJESTU: Record<number, string> = {
   [REGIJE.okucnica]: "dvorište postojeće zgrade (zemljište koje pravila propisuju uz zgradu)",
 };
 
-const NOVA_STAMBENA: Record<string, { ishod: Ishod; tekst: string }> = {
+const NOVA_STAMBENA: Record<string, { ishod: Ishod; tekst: string; sazetak?: string }> = {
   da: { ishod: "da", tekst: "nova stambena zgrada je dopuštena" },
-  interpolacija: { ishod: "uvjet", tekst: "nova stambena zgrada samo između dviju već izgrađenih čestica (interpolacija)" },
-  upu: { ishod: "uvjet", tekst: "nova stambena zgrada tek po UPU-u ili DPU-u koji pravila traže" },
-  rekonstrukcija: { ishod: "ne", tekst: "nova stambena zgrada nije dopuštena; postojeće se smiju samo obnoviti ili zamijeniti" },
-  ne: { ishod: "ne", tekst: "stambena gradnja nije dopuštena" },
-  gp: { ishod: "ne", tekst: "gradski projekt: gradit će se tek po odobrenom projektu za cijelo područje, i samo ono što projekt predvidi" },
+  interpolacija: {
+    ishod: "uvjet",
+    tekst: "nova stambena zgrada samo između dviju već izgrađenih čestica (interpolacija)",
+    sazetak: "Samo između dviju izgrađenih čestica",
+  },
+  upu: { ishod: "uvjet", tekst: "nova stambena zgrada tek po UPU-u ili DPU-u koji pravila traže", sazetak: "Nova zgrada tek po UPU-u ili DPU-u" },
+  rekonstrukcija: {
+    ishod: "ne",
+    tekst: "nova stambena zgrada nije dopuštena; postojeće se smiju samo obnoviti ili zamijeniti",
+    sazetak: "Pravila: samo obnova postojećih zgrada",
+  },
+  ne: { ishod: "ne", tekst: "stambena gradnja nije dopuštena", sazetak: "Pravila ne dopuštaju stanovanje" },
+  gp: {
+    ishod: "ne",
+    tekst: "gradski projekt: gradit će se tek po odobrenom projektu za cijelo područje, i samo ono što projekt predvidi",
+    sazetak: "Gradski projekt: čeka se odobrenje",
+  },
 };
 
 /** Za koju vrstu zgrade vrijedi najmanja čestica („za slobodnostojeću zgradu”); prazno kad je pravila ne navode. */
@@ -172,7 +186,8 @@ export function provjere(
   const katId = u ? KATEGORIJA_PO_KODU.get(u.kategorija)?.id : undefined;
   const koridor = katId === "koridor";
   // pod DPU-om na snazi (i onim koji dopušta stanovanje) namjena GUP-a ne odlučuje
-  const naPlanu = u?.vlasnik === PLAN_NA_SNAZI || katId === "po-dpu-stambeno";
+  const naPlanu =
+    u?.vlasnik === PLAN_NA_SNAZI || katId === "po-dpu-stambeno" || (s.rezim === "vazeci" && /^(DPU|PUP)/.test(s.plan.naziv));
   const out: Provjera[] = [];
 
   // 0. vlasnik: javno zemljište i vojna zona nisu za gradnju građana
@@ -181,6 +196,7 @@ export function provjere(
     out.push({
       pitanje: "Je li zemljište u privatnom vlasništvu?",
       ishod: jeJavno(u.vlasnik) || vojska || katId === "javni-pojas" ? "ne" : "da",
+      sazetak: vojska ? "Vojna zona" : "Javno zemljište",
       odgovor: vojska
         ? "Ne. Ovo je vojna zona (posebna namjena): zemljište za potrebe obrane."
         : katId === "javni-pojas"
@@ -196,6 +212,11 @@ export function provjere(
     pitanje: "Dopušta li novi GUP ovdje stanovanje?",
     // pod planom na snazi namjena GUP-a ne odlučuje: „ne” bi bio lažna zapreka
     ishod: !zona ? "nevazno" : zona === "stambena" && !koridor ? "da" : naPlanu ? "uvjet" : "ne",
+    sazetak: naPlanu
+      ? "Novi GUP ovdje ne stanovanje, ali odlučuje DPU"
+      : zona === "nestambena"
+        ? "Novi GUP: ovdje nema stanovanja"
+        : "Novi GUP: ovdje se ne gradi",
     odgovor: klasa ? (
       <>
         {klasa.kod === "P" ? (
@@ -226,6 +247,7 @@ export function provjere(
   out.push({
     pitanje: "Je li mjesto slobodno?",
     ishod: slobodno ? "da" : "ne",
+    sazetak: "Mjesto je već izgrađeno ili zauzeto",
     odgovor: slobodno ? (
       "Da. Nema zgrade, ulice, parkirališta ni uređene površine, a nije ni dvorište postojeće zgrade."
     ) : (
@@ -246,6 +268,7 @@ export function provjere(
     out.push({
       pitanje: "Dopuštaju li pravila gradnje novu zgradu?",
       ishod: "ne",
+      sazetak: NOVA_STAMBENA.gp.sazetak,
       odgovor: <>{nazivPravila}: {NOVA_STAMBENA.gp.tekst}. Dok projekta nema, na slobodnom zemljištu neće se moći graditi.</>,
     });
   } else if (zona === "stambena") {
@@ -253,6 +276,7 @@ export function provjere(
     out.push({
       pitanje: "Dopuštaju li pravila gradnje novu stambenu zgradu?",
       ishod: ns?.ishod ?? "da",
+      sazetak: ns?.sazetak,
       odgovor: kod ? (
         <>
           {nazivPravila}: {ns?.tekst ?? "pravila ne ograničavaju novu stambenu zgradu"}.
@@ -295,6 +319,7 @@ export function provjere(
         rezim = {
           pitanje: pitanjeUpu,
           ishod: "uvjet",
+          sazetak: "Treba pristupna cesta i kanalizacija",
           odgovor: (
             <>
               Samo uz uvjet. Ovo je {list4d(NAZIV_PODRUCJA.neuredeno)}: ulica i kanalizacija koje plan ovdje predviđa još nisu
@@ -318,6 +343,7 @@ export function provjere(
         rezim = {
           pitanje: pitanjeUpu,
           ishod: "uvjet",
+          sazetak: "Prije UPU-a samo javne i društvene zgrade",
           odgovor: (
             <>
               Za javne i društvene zgrade da. Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}, gdje se inače gradi po {upu}, ali javne i
@@ -329,6 +355,7 @@ export function provjere(
         rezim = {
           pitanje: pitanjeUpu,
           ishod: "ne",
+          sazetak: "Ništa novo dok se ne donese UPU",
           odgovor: (
             <>
               Ne. Ovo je {list4d(NAZIV_PODRUCJA[s.podrucje])}: nova zgrada moći će se graditi samo po {upu} (
@@ -344,6 +371,7 @@ export function provjere(
       rezim = {
         pitanje: pitanjeUpu,
         ishod: "uvjet",
+        sazetak: `Vrijedi ${s.plan.naziv.split(" ")[0]} na snazi; pravila nisu provjerena`,
         odgovor: (
           <>
             Da, ali po planu koji je ovdje već na snazi: {s.plan.naziv}
@@ -383,6 +411,7 @@ export function provjere(
         ? {
             pitanje: "Je li čestica zemljište za gradnju, a ne put?",
             ishod: "ne",
+            sazetak: "Čestica je zapravo put",
             odgovor: put ? (
               <>Ne, to je put: {zastoPut(put)}. Na putu se neće graditi, a susjedne čestice ne mogu se preko njega spojiti.</>
             ) : (
@@ -418,12 +447,14 @@ export function provjere(
     out.push({
       pitanje: pitanjeMjesta,
       ishod: "ne",
+      sazetak: "Preusko za građevnu česticu",
       odgovor: "Ne. Slobodni pojas uži je od oko 9 m (put, stube, rub uz među), a pravila traže česticu široku barem 10 m.",
     });
   } else if (u.regija === REGIJE.premalo) {
     out.push({
       pitanje: pitanjeMjesta,
       ishod: "ne",
+      sazetak: "Premalo za građevnu česticu",
       odgovor: (
         <>
           Ne. Slobodni komad manji je od najmanje čestice za gradnju{najmanjaTekst ? <> ({najmanjaTekst})</> : null}, a nema slobodnog
@@ -435,6 +466,7 @@ export function provjere(
     out.push({
       pitanje: "Može li se ostatak čestice odvojiti za novu zgradu?",
       ishod: "ne",
+      sazetak: "Ostatak čestice uz postojeću zgradu",
       odgovor:
         "Ne. Na ovoj čestici već stoji zgrada. Nova zgrada smjela bi se graditi samo kad bi se ostatak mogao odvojiti u vlastitu česticu od barem 400 m², široku posvuda barem 10 m. Slobodni dio oko postojeće zgrade to nije, a sa susjednim česticama ne spaja se.",
     });
@@ -442,6 +474,7 @@ export function provjere(
     out.push({
       pitanje: "Smije li zgrada stajati baš na ovom mjestu?",
       ishod: "ne",
+      sazetak: "Odmak od ulice i susjeda (dvorište)",
       odgovor:
         "Ne. Gradilište je dovoljno veliko, ali ovo je njegov odmak: zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica. Ovdje može biti dvorište ili prilaz; mjesto za zgradu na karti je obojeno.",
     });
@@ -449,6 +482,7 @@ export function provjere(
     out.push({
       pitanje: pitanjeMjesta,
       ishod: "ne",
+      sazetak: "Zgrada ne stane uz odmake",
       odgovor:
         "Ne. Zemljište je dovoljno široko za česticu, ali zgrada mora biti 5 m od javne ulice i 3 m od susjednih čestica, i kad se ti odmaci oduzmu, ne ostaje 150 m² mjesta za zgradu široku 8 m.",
     });
@@ -456,6 +490,7 @@ export function provjere(
     out.push({
       pitanje: pitanjeMjesta,
       ishod: "ne",
+      sazetak: "Premalo ili preusko za zgradu",
       odgovor:
         "Ne. Ni zajedno sa slobodnim susjedima iste namjene ovdje nema dijela širokog barem 10 m i velikog barem 400 m². Ovo je pojas uz put, ostatak dvorišta ili prolaz između zgrada.",
     });
@@ -479,6 +514,7 @@ export function provjere(
     out.push({
       pitanje: "Može li se na ovom terenu graditi?",
       ishod: "ne",
+      sazetak: "Teren nije za gradnju",
       odgovor: "Ne. Na snimci iz zraka (ortofotu) vidi se da se ovaj teren ne može graditi.",
     });
   }

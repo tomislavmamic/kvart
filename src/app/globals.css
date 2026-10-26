@@ -1226,12 +1226,45 @@ path.gup-odredba:focus {
   transition: top 0.2s, bottom 0.2s, left 0.2s;
 }
 .gradnja-karta .leaflet-container {
-  background: #e4e4e7;
+  /* izvan snimke (more, rub obuhvata) siva kao snimka, ne bijela */
+  background: #8f8f8f;
 }
+/* izvor podloge u jednom retku (licenca traži da se vidi), skraćen s trotočjem */
 .gradnja-karta .leaflet-control-attribution {
   margin-bottom: 0 !important;
-  max-width: 60vw;
+  max-width: min(60vw, 420px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 10px;
+}
+/* gumbi karte okrugli i plutajući, 44 px, jedan ispod drugoga (kao na Google kartama) */
+.gradnja-karta .leaflet-bar {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.gradnja-karta .leaflet-bar a,
+.gradnja-karta .leaflet-bar a:first-child,
+.gradnja-karta .leaflet-bar a:last-child {
+  display: grid;
+  place-items: center;
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  margin-top: 8px;
+  border: none !important;
+  border-radius: 9999px !important;
+  background: #ffffff;
+  color: #18181b;
+  font-size: 22px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+/* na mobitelu se zumira prstima: + i − bi samo zauzimali mjesto */
+@media (max-width: 639px) {
+  .gradnja-karta .leaflet-control-zoom {
+    display: none;
+  }
 }
 .leaflet-bar a.gup-lokacija {
   display: grid;
@@ -1243,4 +1276,40 @@ path.gup-odredba:focus {
     width: 44px;
     height: 44px;
   }
+}
+
+/* Uzorci na karti /gup/gradnja (gradnja-karta.tsx): platno boje pruge pod
+ * maskom u pikselima zaslona, pa su pruge oštre i jednako razmaknute na
+ * svakom zumu. Pločice od 8 px slažu se bez šava; položaj maske postavlja
+ * karta (maskaNaMjestu), da se pruge nastave preko susjednih pločica.
+ * 1 = kose pruge (neuređeno), 2 = mreža (čeka UPU, gradski projekt),
+ * 3 = točke (javno zemljište). Iste uzorke ponavlja slika za dijeljenje
+ * (gradnja-slika.ts). */
+.gup-uzorak {
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+.gup-uzorak-1 {
+  -webkit-mask-image: linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%);
+  mask-image: linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%);
+  -webkit-mask-size: 8px 8px;
+  mask-size: 8px 8px;
+}
+.gup-uzorak-2 {
+  -webkit-mask-image:
+    linear-gradient(45deg, #000 12%, transparent 12%, transparent 50%, #000 50%, #000 62%, transparent 62%),
+    linear-gradient(-45deg, #000 12%, transparent 12%, transparent 50%, #000 50%, #000 62%, transparent 62%);
+  mask-image:
+    linear-gradient(45deg, #000 12%, transparent 12%, transparent 50%, #000 50%, #000 62%, transparent 62%),
+    linear-gradient(-45deg, #000 12%, transparent 12%, transparent 50%, #000 50%, #000 62%, transparent 62%);
+  -webkit-mask-size: 10px 10px;
+  mask-size: 10px 10px;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+.gup-uzorak-3 {
+  -webkit-mask-image: radial-gradient(circle, #000 1.3px, transparent 1.7px);
+  mask-image: radial-gradient(circle, #000 1.3px, transparent 1.7px);
+  -webkit-mask-size: 6px 6px;
+  mask-size: 6px 6px;
 }
