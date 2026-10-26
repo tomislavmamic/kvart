@@ -1,7 +1,10 @@
+import { readFile } from "fs/promises";
+import path from "path";
 import Link from "next/link";
 
 import { Navod } from "@/components/gup-dokument/navod";
-import { GradnjaPrikaz } from "@/components/gup-grad/gradnja-prikaz";
+import { GradnjaPrikaz, type ZbrojDozvola } from "@/components/gup-grad/gradnja-prikaz";
+import type { PodaciDozvola } from "@/lib/gup-grad/gradnja-dozvole";
 import { KATEGORIJA_PO_ID, SKUPINE_GRADNJE, uzorakKategorije } from "@/lib/gup-grad/gradnja";
 import { ucitajMjestaGradnje, ucitajOdredbeGradnje, ucitajZbrojGradnje } from "@/lib/gup-grad/gradnja-podaci";
 import { createPageMetadata } from "@/lib/metadata";
@@ -18,8 +21,32 @@ const broj = (v: number) => v.toLocaleString("hr-HR");
 const vanjska = "fokus text-emerald-700 underline";
 
 
+/** Zbroj dozvola iz public/geo/gup-grad/gradnja-dozvole-2025.json (gradnja-dozvole.py); null ako ga nema. */
+async function zbrojDozvola(): Promise<ZbrojDozvola | null> {
+  try {
+    const d = JSON.parse(
+      await readFile(path.join(process.cwd(), "public", "geo", "gup-grad", "gradnja-dozvole-2025.json"), "utf8"),
+    ) as PodaciDozvola;
+    const izdane = d.akti.filter((a) => a.ishod === "izdana");
+    return {
+      izdanih: izdane.length,
+      gradjevinskih: izdane.filter((a) => a.postupak === "građevinska").length,
+      uObradi: d.akti.length - izdane.length,
+      cestica: d.cestice.filter((c) => c.akti.length && (c.zeleno_m2 > 0 || c.plan_m2 > 0)).length,
+      odDatuma: d.od_datuma,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default async function GradnjaPage() {
-  const [zbroj, odredbe, mjesta] = await Promise.all([ucitajZbrojGradnje(), ucitajOdredbeGradnje(), ucitajMjestaGradnje()]);
+  const [zbroj, odredbe, mjesta, dozvoleZbroj] = await Promise.all([
+    ucitajZbrojGradnje(),
+    ucitajOdredbeGradnje(),
+    ucitajMjestaGradnje(),
+    zbrojDozvola(),
+  ]);
   const k = zbroj.po_kategoriji_ha;
   const s = zbroj.po_skupini_ha;
   const udio = (v: number) => v / zbroj.ukupno_ha;
@@ -38,15 +65,15 @@ export default async function GradnjaPage() {
       <h1 className="mt-1 text-2xl font-bold">Gdje se po novom GUP-u neće moći graditi</h1>
       <p className="mt-2 max-w-3xl text-zinc-600">
         Kad Gradsko vijeće donese novi GUP, za svako mjesto unutar granice GUP-a vrijedit će jedan od odgovora: ne može se graditi
-        ništa novo, može se graditi ali ne stambena zgrada, može i stambena, ili je to javno zemljište. Karta za svako mjesto kaže
-        odgovor i razlog.
+        ništa novo, može se graditi ali ne stambena zgrada, može i stambena, javno je zemljište, ili ondje odlučuje detaljniji plan
+        koji je već na snazi. Karta za svako mjesto kaže odgovor i razlog.
       </p>
 
       <div className="mt-4">
-        <GradnjaPrikaz zbroj={zbroj} odredbe={odredbe} mjesta={mjesta}>
+        <GradnjaPrikaz zbroj={zbroj} odredbe={odredbe} mjesta={mjesta} dozvoleZbroj={dozvoleZbroj}>
           <section className="max-w-3xl text-zinc-600">
             <h2 id="odgovori" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
-              Četiri odgovora na karti
+              Pet odgovora na karti
             </h2>
             <p className="mt-3">
               Kad Gradsko vijeće donese novi GUP, za svako privatno mjesto unutar granice GUP-a vrijedit će jedan od tri odgovora.
@@ -80,6 +107,14 @@ export default async function GradnjaPage() {
                     <>
                       <strong className="text-zinc-900">Javno zemljište.</strong> Vlasnik je država, Grad ili županija, ili je to vojna
                       zona. Ne broji se ni u jedan od tri odgovora, bilo izgrađeno ili ne.
+                    </>,
+                  ],
+                  [
+                    "plan",
+                    <>
+                      <strong className="text-zinc-900">Odlučuje detaljniji plan.</strong> Na slobodnom zemljištu na kojem je već na snazi
+                      DPU ili UPU gradi se samo po tom planu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Što se ondje smije
+                      graditi, kaže taj plan, a ne namjena novog GUP-a.
                     </>,
                   ],
                 ] as const
@@ -184,6 +219,14 @@ export default async function GradnjaPage() {
               turističkim zonama, gdje stambene zgrade neće biti ni nakon UPU-a.
             </p>
             <p className="mt-2">
+              Na još {ha(s.plan)} ha slobodnog zemljišta već je na snazi detaljniji plan: 46 DPU-a i UPU-a, najveći za Sirobuju, Šine i
+              Vidovac, Stobreč, Bilice, Mejaše i Dragovode, te DPU-i oko Mall of Splita. Ondje se gradi samo po tim planovima, pa
+              ni namjena novog GUP-a ni njegova pravila ondje ne odlučuju. Po namjeni GUP-a od toga bi{" "}
+              {ha((zbroj.ispod_plana_ha.stambeno ?? 0) + (zbroj.ispod_plana_ha.odmak ?? 0))} ha bilo gradilište stambene zgrade,{" "}
+              {ha(zbroj.ispod_plana_ha.nestambeno ?? 0)} ha nestambene, a {ha(zbroj.ispod_plana_ha["bez-zgrada"] ?? 0)} ha park ili
+              zelenilo. Koliko od toga ti planovi doista dopuštaju, karta ne zna: njihove crteže nismo pročitali.
+            </p>
+            <p className="mt-2">
               Koja su to područja i zašto, pročitaj na stranici{" "}
               <Link href="/gup/zabrana" className="fokus font-semibold text-emerald-700 underline">
                 Zabrana nove gradnje do donošenja UPU-a
@@ -268,6 +311,13 @@ export default async function GradnjaPage() {
                 zonama (M1–M3) i poslovnim zonama sa stanovanjem (K5). Ne u zonama javne i društvene, gospodarske, poslovne,
                 turističke, športske, lučke i posebne namjene.
               </li>
+              <li>
+                <strong className="text-zinc-900">Je li ondje na snazi detaljniji plan?</strong> Gdje je na snazi DPU ili UPU (
+                <Navod id="list-planske-mjere-2025">list 4.d</Navod>, granice s ISPU-a), gradi se samo po njemu (
+                <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). Slobodno zemljište ondje karta zato ne boji po namjeni
+                GUP-a, nego tamnim prugama: odlučuje plan. U tumaču klika piše koji je to plan i što bi bilo po namjeni GUP-a.
+                Izgrađeno, javno zemljište, putovi i teren koji nije za gradnju ostaju svoji, jer ne ovise o planu.
+              </li>
             </ol>
           </section>
 
@@ -290,8 +340,16 @@ export default async function GradnjaPage() {
               <li>
                 Granice sanacije, preobrazbe i neuređenog područja precrtane su s{" "}
                 <Navod id="list-planske-mjere-2025">lista 4.d</Navod>. Granice detaljnijih planova koji su već na snazi preuzete su
-                s ISPU-a, državnog sustava prostornih planova. Gdje takav plan vrijedi, gradit će se po njemu. Njegova pravila ovdje
-                nismo provjerili.
+                s ISPU-a, državnog sustava prostornih planova. Gdje takav plan vrijedi, gradit će se po njemu. Njegovu namjenu i pravila
+                ovdje nismo provjerili, pa karta slobodno zemljište ondje pokazuje kao „odlučuje plan”.
+              </li>
+              <li>
+                Dozvole su iz registra akata na geoportalu ISPU (Ministarstvo prostornoga uređenja): sve lokacijske i građevinske
+                dozvole i zahtjevi koji diraju zelene čestice karte i slobodne čestice pod planom na snazi. Karta pokazuje one izdane od
+                2020. (starije su istekle ako gradnja nije počela) i zahtjeve u obradi. Čestice jednog akta su iz njegova popisa
+                katastarskih čestica, pa klik na bilo koju pokaže cijelu skupinu. Odbijeni i povučeni zahtjevi nisu na karti, kao ni
+                dozvole za ulice, kanalizaciju i drugu infrastrukturu: one obuhvaćaju desetke čestica, javnih i privatnih, a ne znače
+                da se na njima gradi kuća.
               </li>
               <li>
                 Vlasnik je iz GIS izvoza Grada Splita (stanje 3. 10. 2025.), iz kojeg karta uzima samo je li vlasnik država, Grad ili

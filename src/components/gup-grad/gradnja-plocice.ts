@@ -7,10 +7,7 @@
  * sliku karta boji, a klik iz nje čita što je pod točkom i zbraja čestice.
  */
 import type { Geometrija } from "@/lib/gup-grad/zabrana";
-import { KATEGORIJA_PO_ID, razlozi } from "@/lib/gup-grad/gradnja";
-
-const JAVNO = KATEGORIJA_PO_ID.javno.kod;
-const VOJSKA = KATEGORIJA_PO_ID.vojska.kod;
+import { kodNaKarti, razlozi } from "@/lib/gup-grad/gradnja";
 
 export interface PlocicaGradnje {
   url: string;
@@ -73,7 +70,7 @@ export interface Uzorak {
   regija: number;
   /** razlog (kod kategorije), i na javnom zemljištu */
   kategorija: number;
-  /** vlasnik javnog zemljišta (VLASNIK_JAVNOG), 0 = nije javno ili se ne zna */
+  /** vlasnik javnog zemljišta (VLASNIK_JAVNOG), 0 = nije javno ili se ne zna, PLAN_NA_SNAZI = slobodno pod planom na snazi */
   vlasnik: number;
 }
 
@@ -141,9 +138,9 @@ export async function kategorijeUObliku(g: Geometrija): Promise<Map<number, numb
       for (let c = c0; c <= c1; c++) {
         const lng = zapad + ((c + 0.5) / w) * (istok - zapad);
         if (!uGeometriji(g, lng, lat)) continue;
-        // javno zemljište broji se kao javno, kao na karti i u zbrojevima
+        // javno i „po planu” broje se kao na karti i u zbrojevima
         const raz = razlozi(d[(r * w + c) * 4 + 2]);
-        const k = d[(r * w + c) * 4 + 3] !== 255 ? 0 : raz.vlasnik && raz.kategorija !== VOJSKA ? JAVNO : raz.kategorija;
+        const k = d[(r * w + c) * 4 + 3] !== 255 ? 0 : kodNaKarti(raz.kategorija, raz.vlasnik);
         out.set(k, (out.get(k) ?? 0) + m2);
       }
     }

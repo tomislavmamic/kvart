@@ -30,7 +30,19 @@ import path from "path";
 import { PNG } from "pngjs";
 import type { FeatureCollection } from "geojson";
 
-import { KATEGORIJE, KATEGORIJA_PO_ID, KATEGORIJA_PO_KODU, kategorija, kodPiksela, ZONA_GRADNJE, type IdKategorije, type Skupina } from "../../src/lib/gup-grad/gradnja";
+import {
+  KATEGORIJE,
+  KATEGORIJA_PO_ID,
+  KATEGORIJA_PO_KODU,
+  kategorija,
+  kodNaKarti,
+  kodPiksela,
+  PLAN_NA_SNAZI,
+  PO_PLANU,
+  ZONA_GRADNJE,
+  type IdKategorije,
+  type Skupina,
+} from "../../src/lib/gup-grad/gradnja";
 import { KLASA_PO_INDEKSU, KLASE, type KodKlase } from "../../src/lib/gup-grad/model";
 import { REGIJE } from "../../src/lib/gup-grad/regije";
 import { oblik, uObliku, type Geometrija, type Oblik } from "../../src/lib/gup-grad/zabrana";
@@ -72,6 +84,8 @@ function main() {
   const m2 = new Map<number, number>();
   /** Razlog ispod javnog zemljišta: koliko bi ga inače bilo za gradnju. */
   const ispodJavnog = new Map<IdKategorije, number>();
+  /** Razlog po GUP-u ispod „po planu na snazi”: što bi karta rekla da plana nema. */
+  const ispodPlana = new Map<IdKategorije, number>();
   const poZoni = new Map<string, number>();
   /** U zonama za stanovanje, po kategoriji kakva je na karti (javno kao javno): za filtar „Što priječi”. */
   const uStambenim = new Map<number, number>();
@@ -116,14 +130,20 @@ function main() {
         // uski javni pojas (gradnja-javno.py, bit 16): javno, ali bez jantarne boje
         const uskoJavno = (jv & 16) > 0 && (jv & 7) > 0 && k !== VOJSKA;
         const kat = uskoJavno ? USKI_JAVNI : k;
-        const vlasnik = uskoJavno ? 0 : jv & 7;
+        let vlasnik = uskoJavno ? 0 : jv & 7;
+        // slobodno zemljište pod planom na snazi (gradnja-javno.py, bit 32): odlučuje plan
+        if ((jv & 32) > 0 && !vlasnik && kat && PO_PLANU.has(KATEGORIJA_PO_KODU.get(kat)!.id)) vlasnik = PLAN_NA_SNAZI;
         d[i + 2] = kodPiksela(kat, vlasnik);
         if (!k) {
           d[i + 3] = 0;
           continue;
         }
         // javno se broji kao javno; vojna zona ostaje svoja kategorija
-        const brojiSe = vlasnik && k !== VOJSKA ? JAVNO_ZEMLJISTE : kat;
+        const brojiSe = kodNaKarti(kat, vlasnik);
+        if (vlasnik === PLAN_NA_SNAZI) {
+          const id = KATEGORIJA_PO_KODU.get(kat)!.id;
+          ispodPlana.set(id, (ispodPlana.get(id) ?? 0) + pikselM2);
+        }
         m2.set(brojiSe, (m2.get(brojiSe) ?? 0) + pikselM2);
         if (brojiSe === JAVNO_ZEMLJISTE) {
           const id = KATEGORIJA_PO_KODU.get(k)!.id;
@@ -131,7 +151,8 @@ function main() {
         }
         if (ZONA_GRADNJE[KLASA_PO_INDEKSU.get(klasa)!.kod] === "stambena") uStambenim.set(brojiSe, (uStambenim.get(brojiSe) ?? 0) + pikselM2);
         const kod = KLASA_PO_INDEKSU.get(klasa)!.kod;
-        const kljuc = `${kod}|${KATEGORIJA_PO_KODU.get(k)!.id}`;
+        // po kategoriji kakva je na karti (javno, po planu), da zbroj po namjeni kaže isto što i karta
+        const kljuc = `${kod}|${KATEGORIJA_PO_KODU.get(brojiSe)!.id}`;
         poZoni.set(kljuc, (poZoni.get(kljuc) ?? 0) + pikselM2);
       }
     }
@@ -154,6 +175,7 @@ function main() {
     opis: "Izvedeno skriptom scripts/gup-grad/gradnja.ts iz pločica dijelova čestice (regije.py, „po odredbama”, GUP 2025.) i neuređenih dijelova lista 4.d (zabrana.py).",
     ukupno_ha: ha([...m2.values()].reduce((a, b) => a + b, 0)),
     ispod_javnog_ha: Object.fromEntries([...ispodJavnog].map(([id, v]) => [id, ha(v)])),
+    ispod_plana_ha: Object.fromEntries([...ispodPlana].map(([id, v]) => [id, ha(v)])),
     po_kategoriji_ha: poKategoriji,
     po_skupini_ha: poSkupini,
     po_namjeni_ha: zone,

@@ -20,7 +20,7 @@ import type { FeatureCollection } from "geojson";
 
 import { Navod } from "@/components/gup-dokument/navod";
 import type { Uzorak } from "@/components/gup-grad/gradnja-plocice";
-import { KATEGORIJA_PO_KODU, OPIS_ZONE, VLASNIK_JAVNOG, ZONA_GRADNJE, type KodVlasnika } from "@/lib/gup-grad/gradnja";
+import { jeJavno, KATEGORIJA_PO_KODU, OPIS_ZONE, PLAN_NA_SNAZI, VLASNIK_JAVNOG, ZONA_GRADNJE, type KodVlasnika } from "@/lib/gup-grad/gradnja";
 import type { OdredbeGradnje } from "@/lib/gup-grad/gradnja-podaci";
 import { KLASA_PO_INDEKSU, type Klasa } from "@/lib/gup-grad/model";
 import type { SvojstvaCestice } from "@/lib/gup-grad/provjera";
@@ -171,6 +171,7 @@ export function provjere(
   const zona = klasa ? ZONA_GRADNJE[klasa.kod] : null;
   const katId = u ? KATEGORIJA_PO_KODU.get(u.kategorija)?.id : undefined;
   const koridor = katId === "koridor";
+  const naPlanu = u?.vlasnik === PLAN_NA_SNAZI;
   const out: Provjera[] = [];
 
   // 0. vlasnik: javno zemljište i vojna zona nisu za gradnju građana
@@ -178,12 +179,12 @@ export function provjere(
     const vojska = katId === "vojska";
     out.push({
       pitanje: "Je li zemljište u privatnom vlasništvu?",
-      ishod: u.vlasnik || vojska || katId === "javni-pojas" ? "ne" : "da",
+      ishod: jeJavno(u.vlasnik) || vojska || katId === "javni-pojas" ? "ne" : "da",
       odgovor: vojska
         ? "Ne. Ovo je vojna zona (posebna namjena): zemljište za potrebe obrane."
         : katId === "javni-pojas"
           ? "Ne. Ovo je uski pojas javnog zemljišta (rub ceste, put ili prolaz)."
-        : u.vlasnik
+        : jeJavno(u.vlasnik)
           ? `Ne. Prema evidenciji Grada Splita vlasnik je ${VLASNIK_JAVNOG[u.vlasnik as KodVlasnika]}.`
           : "Prema evidenciji Grada Splita vlasnik nije država, Grad ni županija. Ta evidencija za mnoge čestice ne navodi vlasnika, pa to nije potvrda.",
     });
@@ -192,7 +193,8 @@ export function provjere(
   // 1. namjena
   out.push({
     pitanje: "Dopušta li novi GUP ovdje stanovanje?",
-    ishod: !zona ? "nevazno" : zona === "stambena" && !koridor ? "da" : "ne",
+    // pod planom na snazi namjena GUP-a ne odlučuje: „ne” bi bio lažna zapreka
+    ishod: !zona ? "nevazno" : zona === "stambena" && !koridor ? "da" : naPlanu ? "uvjet" : "ne",
     odgovor: klasa ? (
       <>
         {klasa.kod === "P" ? (
@@ -204,7 +206,8 @@ export function provjere(
             {navod(navodNamjena(2025, klasa.kod), <strong>{klasa.naziv}</strong>)} ({klasa.kod}): {OPIS_ZONE[zona!]}.
           </>
         )}
-        {koridor && " Ovo mjesto zapravo nije obojeno: to je pojas ulice između blokova, koji smo izdvojili sa samog lista."}{" "}
+        {koridor && " Ovo mjesto zapravo nije obojeno: to je pojas ulice između blokova, koji smo izdvojili sa samog lista."}
+        {naPlanu && zona !== "stambena" && " Ovdje ipak odlučuje detaljniji plan koji je na snazi, a on stanovanje može dopuštati."}{" "}
         Pogledaj{" "}
         <NaListu list="namjena-2025" navod="list-namjena-2025" tocka={tocka} listovi={listovi}>
           ovo mjesto na listu 1

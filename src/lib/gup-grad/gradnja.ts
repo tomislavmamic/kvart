@@ -85,7 +85,7 @@ export const OPIS_ZONE: Record<ZonaGradnje, string> = {
  * (do UPU-a gradi se tek uz ulicu u punoj širini i kanalizaciju) ide u skupinu svoje
  * namjene — nestambeno ili stambeno — istom bojom, ali šrafirano.
  */
-export type Skupina = "nista" | "nestambeno" | "stambeno" | "javno";
+export type Skupina = "nista" | "nestambeno" | "stambeno" | "javno" | "plan";
 
 export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string; glavna: IdKategorije; uvjetna?: IdKategorije }> = {
   nista: { naslov: "Ne može se graditi ništa novo", kratko: "Ništa novo", glavna: "zgrada" },
@@ -103,6 +103,8 @@ export const SKUPINE_GRADNJE: Record<Skupina, { naslov: string; kratko: string; 
   },
   // javno zemljište i vojska nisu zemljište na kojem građanin gradi, pa se ne broje ni u jedan od tri odgovora
   javno: { naslov: "Javno zemljište", kratko: "Javno zemljište", glavna: "javno" },
+  // gdje je na snazi DPU ili UPU, gradi se samo po njemu (čl. 103. st. 5.): namjena GUP-a ondje ne odlučuje
+  plan: { naslov: "Odlučuje detaljniji plan na snazi", kratko: "Po planu na snazi", glavna: "po-planu" },
 };
 
 export type IdKategorije =
@@ -124,6 +126,7 @@ export type IdKategorije =
   | "vojska"
   | "javno"
   | "javni-pojas"
+  | "po-planu"
   | "ceka-upu"
   | "uz-cestu-stambeno"
   | "uz-cestu-nestambeno"
@@ -392,6 +395,18 @@ export const KATEGORIJE: readonly Kategorija[] = [
     alfa: 0.55,
   },
   {
+    kod: 24,
+    id: "po-planu",
+    skupina: "plan",
+    naziv: "Slobodno, a gradi se po detaljnijem planu na snazi (DPU, UPU)",
+    razlog:
+      "Ovdje je na snazi detaljniji plan (DPU ili UPU), a novi GUP kaže da se na takvom području gradi samo po tom planu. Što se smije graditi, odlučuje taj plan, a ne namjena GUP-a s ove karte.",
+    boja: "#ffffff",
+    alfa: 0.2,
+    pruge: "#27272a",
+    prugeAlfa: 0.4,
+  },
+  {
     kod: 18,
     id: "vojska",
     skupina: "javno",
@@ -402,6 +417,34 @@ export const KATEGORIJE: readonly Kategorija[] = [
     alfa: 0.8,
   },
 ];
+
+/**
+ * Slobodno zemljište na kojem je na snazi detaljniji plan (DPU, UPU): ondje
+ * se gradi samo po tom planu (prijedlog 2025., čl. 103. st. 5.), pa
+ * odgovor po namjeni GUP-a ne vrijedi. U pločici je razlog po GUP-u i dalje
+ * zapisan, a gornja tri bita nose PLAN_NA_SNAZI umjesto vlasnika. Izgrađeno,
+ * zauzeto, javno, put i teren koji nije za gradnju ostaju svoji: to ne ovisi
+ * o planu.
+ */
+export const PO_PLANU: ReadonlySet<IdKategorije> = new Set<IdKategorije>([
+  "rezerva-prometa",
+  "koridor",
+  "bez-zgrada",
+  "samo-rekonstrukcija",
+  "premalo",
+  "odmaci",
+  "odmak",
+  "ostatak-kuce",
+  "gradski-projekt",
+  "ceka-upu",
+  "uz-cestu-stambeno",
+  "uz-cestu-nestambeno",
+  "nestambeno",
+  "stambeno",
+]);
+/** Gornja tri bita bajta kategorije: plan na snazi umjesto vlasnika (vlasnici su 1–4). */
+export const PLAN_NA_SNAZI = 7;
+export const jeJavno = (vlasnik: number) => vlasnik >= 1 && vlasnik <= 4;
 
 /**
  * Bajt kategorije u pločici (kanal B): donjih 5 bitova je razlog
@@ -424,6 +467,13 @@ export const KATEGORIJA_PO_ID: Record<IdKategorije, Kategorija> = Object.fromEnt
   IdKategorije,
   Kategorija
 >;
+
+/** Kategorija kakva je na karti i u zbrojevima: javno kao javno (osim vojske), slobodno na planu kao „po planu”. */
+export function kodNaKarti(kategorija: number, vlasnik: number): number {
+  if (vlasnik === PLAN_NA_SNAZI) return KATEGORIJA_PO_ID["po-planu"].kod;
+  if (jeJavno(vlasnik) && kategorija !== KATEGORIJA_PO_ID.vojska.kod) return KATEGORIJA_PO_ID.javno.kod;
+  return kategorija;
+}
 
 /** Zona gradnje za indeks klase iz pločice (R); null za nepoznatu klasu. */
 export function zonaKlase(klasa: number): ZonaGradnje | null {
@@ -543,7 +593,7 @@ export function uzorakKategorije(k: Kategorija): { backgroundColor: string; back
  * samo unutar tih zona; boja je provjerena validatorom uz zelenu i jantarnu
  * stopljene sa sivom snimkom (deutan ΔE 24).
  */
-export type IdPrepreke = "izgradjeno" | "zauzeto" | "javno" | "upu" | "pravila" | "velicina" | "odmak";
+export type IdPrepreke = "izgradjeno" | "zauzeto" | "javno" | "upu" | "pravila" | "velicina" | "plan" | "odmak";
 
 export const PREPREKE: readonly { id: IdPrepreke; naziv: string; opis: string; kategorije: readonly IdKategorije[] }[] = [
   {
@@ -581,6 +631,12 @@ export const PREPREKE: readonly { id: IdPrepreke; naziv: string; opis: string; k
     naziv: "Premalo ili preusko za kuću",
     opis: "Slobodno, ali premalo, preusko ili zgrada ne stane uz odmake.",
     kategorije: ["premalo", "odmaci"],
+  },
+  {
+    id: "plan",
+    naziv: "Odlučuje detaljniji plan na snazi",
+    opis: "Na snazi je DPU ili UPU: gradi se samo po njemu, pa namjena GUP-a ovdje ne odlučuje.",
+    kategorije: ["po-planu"],
   },
   {
     id: "odmak",

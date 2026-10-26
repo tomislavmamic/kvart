@@ -1,0 +1,201 @@
+{
+ "opis": "Za svaki stambeni ili stambeno-poslovni akt s geoportala ISPU (ispu-akti.py, isti CSV kao gradnja-dozvole.py), izdan ili u obradi, gleda se u kojem je planu na snazi (planski-rezim-2025.geojson). Izdani od GUP-a 2006., zahtjevi u obradi od 2020. i što bi ondje bilo po namjeni GUP-a (klasa namjene u pločicama gradnja.ts). Po planu ispisuje koliko je takvih akata i koliko ih je ondje gdje GUP stambeno ne bi dopustio.",
+ "planovi": {
+  "DPU57": {
+   "naziv": "DPU za istočni dio obuhvata Pojedinačnog zahvata P26 (istočno od Ulice Zbora narodne garde)",
+   "glasnik": "51/13",
+   "akata": 4,
+   "gup_ne_stambeno": 3,
+   "primjeri": [
+    {
+     "klasa": "UP/I-361-03/19-01/000295",
+     "akt": "Građevinska dozvola",
+     "datum": "2020-02-10",
+     "namjena": "mješovite namjene (stambeno poslovna)",
+     "kc": "2828/1, 2828/5, 2829/1, 2835/2, 2835/4 k.o. SPLIT",
+     "namjena_gup": "I/K"
+    },
+    {
+     "klasa": "UP/I-361-03/21-01/000283",
+     "akt": "Rješenje o izmjeni i dopuni građevinske dozvole",
+     "datum": "2022-03-18",
+     "namjena": "mješovite namjene (stambeno poslovna)",
+     "kc": "2828/5 k.o. SPLIT",
+     "namjena_gup": "I/K"
+    },
+    {
+     "klasa": "UP/I-361-03/23-01/000162",
+     "akt": "Građevinska dozvola",
+     "datum": "2024-05-29",
+     "namjena": "stambene namjene",
+     "kc": "2818/3, 2818/8, 2819/16, 2826/8, 2837/1, 2838/1, 2838/2, 2839/1, 2839/2, 2841/3, 2842/1, 2843/6, 3567/38, 3567/7 k.o. SPLIT",
+     "namjena_gup": "I/K"
+    }
+   ]
+  },
+  "UPU7": {
+   "naziv": "UPU područja dijela Mejaša i Dragovoda",
+   "glasnik": "21/06",
+   "akata": 42,
+   "gup_ne_stambeno": 1,
+   "primjeri": [
+    {
+     "klasa": "UP/I-361-03/26-01/000191",
+     "akt": "zahtjev",
+     "datum": "2026-09-11",
+     "namjena": "mješovite namjene (stambeno poslovna)",
+     "kc": "2861/1 k.o. SPLIT",
+     "namjena_gup": "Z1"
+    }
+   ]
+  },
+  "UPU1": {
+   "naziv": "UPU područja Bilice II Mostine",
+   "glasnik": "12/98",
+   "akata": 3,
+   "gup_ne_stambeno": 1,
+   "primjeri": [
+    {
+     "klasa": "UP/I 350-05/08-01/0929",
+     "akt": "zahtjev",
+     "datum": "2010-07-05",
+     "namjena": "mješovite namjene (stambeno poslovna)",
+     "kc": "645/4, 646/1 k.o. SPLIT",
+     "namjena_gup": "Z5"
+    }
+   ]
+  },
+  "DPU66": {
+   "naziv": "DPU zone poslovne namjene i stanovanja (K5) sjeverno od Vukovarske ulice",
+   "glasnik": "32/13, 92/23",
+   "akata": 3,
+   "gup_ne_stambeno": 1,
+   "primjeri": [
+    {
+     "klasa": "UP/I 361-03/05-01/00102",
+     "akt": "zahtjev",
+     "datum": "2007-01-18",
+     "namjena": "stambene namjene",
+     "kc": "3333/1 k.o. SPLIT",
+     "namjena_gup": "D"
+    }
+   ]
+  },
+  "UPU13": {
+   "naziv": "UPU stambenog naselja Stobreč",
+   "glasnik": "5/11",
+   "akata": 25,
+   "gup_ne_stambeno": 1,
+   "primjeri": [
+    {
+     "klasa": "UP/I-361-03/25-01/000302",
+     "akt": "zahtjev",
+     "datum": "2025-12-23",
+     "namjena": "stambene namjene",
+     "kc": "1539/1 k.o. STOBREČ",
+     "namjena_gup": "T"
+    }
+   ]
+  },
+  "UPU10": {
+   "naziv": "UPU područja Šine - Vidovac",
+   "glasnik": "23/11",
+   "akata": 28,
+   "gup_ne_stambeno": 1,
+   "primjeri": [
+    {
+     "klasa": "UP/I-361-03/22-01/000107",
+     "akt": "Građevinska dozvola",
+     "datum": "2023-12-08",
+     "namjena": "mješovite namjene (stambeno poslovna)",
+     "kc": "2096/1 k.o. KAMEN",
+     "namjena_gup": "P"
+    }
+   ]
+  },
+  "UPU14": {
+   "naziv": "UPU stambenog naselja Vrh Sućidra",
+   "glasnik": "10/03",
+   "akata": 1,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU13": {
+   "naziv": "DPU područja jugoistočno od raskrižja Bračke i Velebitske ulice",
+   "glasnik": "32/02, 32/06",
+   "akata": 19,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU21": {
+   "naziv": "DPU područja oko crkvice Gospe od Žnjana",
+   "glasnik": "1/08, 32/11, 54/16, 69/16-pročišćeni tekst",
+   "akata": 23,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU26": {
+   "naziv": "DPU istočno od potoka Radoševac",
+   "glasnik": "7/08",
+   "akata": 10,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU35": {
+   "naziv": "DPU prostora Žnjana u Splitu (prostor sjeverno od Bračke ulice)",
+   "glasnik": "12/01, 33/03, 23/07, 7/09",
+   "akata": 33,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "PUP2": {
+   "naziv": "PUP područja Pazdigrad u Splitu",
+   "glasnik": "3/85, 9/85, 37/87, 6-II/90, 7/96",
+   "akata": 3,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "UPU9": {
+   "naziv": "UPU područja Sirobuja",
+   "glasnik": "17/07",
+   "akata": 37,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU32": {
+   "naziv": "DPU priobalnog područja Trstenik-Radoševac",
+   "glasnik": "12/00, 8/07, 12/10, 41/14, 48/14-pročišćeni tekst, 54/16, 69/16-pročišćeni tekst, 61/18, 2/19-pročišćeni tekst odredbi i grafika",
+   "akata": 3,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU11": {
+   "naziv": "DPU istočnog dijela područja Duilovo u Splitu",
+   "glasnik": "5/98, 22/00, 52/13",
+   "akata": 2,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU39": {
+   "naziv": "DPU sjeverozapadnog dijela Kocunara",
+   "glasnik": "10/95",
+   "akata": 2,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU3": {
+   "naziv": "DPU jugoistočnog dijela područja Visoke u Splitu",
+   "glasnik": "3/96, 2/98, 16/08, 36/12",
+   "akata": 2,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  },
+  "DPU42": {
+   "naziv": "DPU Svačićeva ulica pojedinačni zahvat P1",
+   "glasnik": "15/07",
+   "akata": 1,
+   "gup_ne_stambeno": 0,
+   "primjeri": []
+  }
+ }
+}

@@ -33,7 +33,10 @@ Ulaz:  Split Export/SPLIT_EXPORT_BAZA/KOMUNALNA_INFRASTRUKTURA/KatastarskeCestic
        public/geo/gup-grad/cestice
 Izlaz: data/gup-grad/javno-2025/<red>_<stupac>.png — bitovi 0–2 vlasnik
        (1 RH, 2 Grad, 3 županija, 4 javna ustanova ili tvrtka), bit 3
-       gradski projekt, bit 4 javno uže od 10 m (ulica, rub ceste, put);
+       gradski projekt, bit 4 javno uže od 10 m (ulica, rub ceste, put),
+       bit 5 područje prostornog plana užeg područja na snazi (DPU, UPU;
+       planski-rezim-2025.geojson, vrsta „vazeci”): ondje se gradi samo po
+       tom planu (čl. 103. st. 5. prijedloga), a ne po namjeni GUP-a;
        čita ih gradnja.ts
 
 Pokretanje (prije gradnja.ts):  /opt/homebrew/bin/python3 scripts/gup-grad/gradnja-javno.py
@@ -73,6 +76,8 @@ GRADSKI_PROJEKT = 8
 # javno uže od ovoga (rub ceste, put, prolaz, ostatak uz cestu) je „uski javni pojas”:
 # javno je, ali bi ga jantarna boja crtala kao mrežu tankih traka preko karte
 USKO_JAVNO = 16
+PLAN_NA_SNAZI = 32
+PLANOVI = os.path.join(JAVNO, "geo", "gup-grad", "planski-rezim-2025.geojson")
 USKO_JAVNO_M = 10.0
 USKO_JAVNO_MIN_M2 = 300.0
 REGISTAR = os.path.join(R.ROOT, "data", "public-entities.json")
@@ -154,6 +159,9 @@ def main() -> None:
             if (p.get("u") or {}).get("2025") == "GP":
                 gp.append(g)
     projekt = features.rasterize(((g, 1) for g in gp), out_shape=(H, W), transform=transform, fill=0, dtype="uint8") > 0
+    planovi = [stransform(u_4326, shape(f["geometry"])) for f in json.load(open(PLANOVI))["features"]
+               if f["properties"].get("vrsta") == "vazeci"]
+    na_planu = features.rasterize(((g, 1) for g in planovi), out_shape=(H, W), transform=transform, fill=0, dtype="uint8") > 0
 
     # vlasnik po cijeloj čestici DGU-a: javna ako je barem pola pod javnim, s najčešćim vlasnikom
     rid = features.rasterize(((g, n + 1) for n, g in enumerate(cestice_dgu)), out_shape=(H, W), transform=transform, fill=0, dtype="int32")
@@ -184,7 +192,8 @@ def main() -> None:
         siroko[np.isin(oz, np.flatnonzero(vel < USKO_JAVNO_MIN_M2) + 1)] = False
     usko = javno & ~siroko
 
-    oznaka = vlasnik | np.where(projekt, GRADSKI_PROJEKT, 0).astype(np.uint8) | np.where(usko, USKO_JAVNO, 0).astype(np.uint8)
+    oznaka = (vlasnik | np.where(projekt, GRADSKI_PROJEKT, 0).astype(np.uint8) | np.where(usko, USKO_JAVNO, 0).astype(np.uint8)
+              | np.where(na_planu, PLAN_NA_SNAZI, 0).astype(np.uint8))
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     os.makedirs(IZLAZ)
@@ -195,7 +204,8 @@ def main() -> None:
     m2 = (korak * np.cos(np.radians(43.51))) ** 2
     print(f"javno: RH {(vlasnik == 1).sum() * m2 / 1e4:.1f} ha, Grad {(vlasnik == 2).sum() * m2 / 1e4:.1f} ha, "
           f"županija {(vlasnik == 3).sum() * m2 / 1e4:.1f} ha, javne ustanove i tvrtke {(vlasnik == 4).sum() * m2 / 1e4:.1f} ha "
-          f"(od toga uski pojasevi {usko.sum() * m2 / 1e4:.1f} ha); gradski projekt {len(gp)} čestica, {projekt.sum() * m2 / 1e4:.1f} ha → {IZLAZ}")
+          f"(od toga uski pojasevi {usko.sum() * m2 / 1e4:.1f} ha); gradski projekt {len(gp)} čestica, {projekt.sum() * m2 / 1e4:.1f} ha; "
+          f"planovi na snazi {len(planovi)}, {na_planu.sum() * m2 / 1e4:.1f} ha → {IZLAZ}")
 
 
 if __name__ == "__main__":

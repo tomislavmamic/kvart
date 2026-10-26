@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { KATEGORIJA_PO_KODU, KATEGORIJE, ZONA_GRADNJE, kategorija, kodPiksela, razlozi } from "./gradnja";
+import { KATEGORIJA_PO_ID, KATEGORIJA_PO_KODU, KATEGORIJE, PLAN_NA_SNAZI, ZONA_GRADNJE, kategorija, kodNaKarti, kodPiksela, razlozi } from "./gradnja";
 import { KLASE, type KodKlase } from "./model";
 import { REGIJE } from "./regije";
 
@@ -96,11 +96,19 @@ test("vojna zona, gradski projekt, golf i odmaci", () => {
 
 test("bajt pločice nosi razlog i vlasnika javnog zemljišta", () => {
   for (const k of KATEGORIJE)
-    for (const v of [0, 1, 2, 3, 4]) assert.deepEqual(razlozi(kodPiksela(k.kod, v)), { kategorija: k.kod, vlasnik: v });
+    for (const v of [0, 1, 2, 3, 4, PLAN_NA_SNAZI]) assert.deepEqual(razlozi(kodPiksela(k.kod, v)), { kategorija: k.kod, vlasnik: v });
   assert.ok(KATEGORIJE.every((k) => k.kod < 32));
 });
 
 test("piksel bez čestice ili nepoznate klase nema kategoriju", () => {
   assert.equal(kategorija(0, REGIJE.slobodno), 0);
   assert.equal(kategorija(indeks("S"), 0), 0);
+});
+
+test("na karti: javno kao javno (osim vojske), slobodno pod planom na snazi kao „po planu”", () => {
+  const K = KATEGORIJA_PO_ID;
+  assert.equal(kodNaKarti(K.stambeno.kod, 0), K.stambeno.kod);
+  assert.equal(kodNaKarti(K.stambeno.kod, 2), K.javno.kod);
+  assert.equal(kodNaKarti(K.vojska.kod, 1), K.vojska.kod);
+  assert.equal(kodNaKarti(K.nestambeno.kod, PLAN_NA_SNAZI), K["po-planu"].kod);
 });
