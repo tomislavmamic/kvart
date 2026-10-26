@@ -101,9 +101,10 @@ export default async function GradnjaPage() {
                 style={uzorakKategorije(KATEGORIJA_PO_ID["uz-cestu-stambeno"])}
               />
               <span>
-                <strong className="text-zinc-900">Šrafirano</strong> znači: može, ali samo uz uvjet. To je neuređeno područje: GUP
-                ondje traži UPU, ali dok ga nema, dozvola se može dobiti ako do čestice vodi postojeća javna cesta i ako se riješi
-                odvodnja.
+                <strong className="text-zinc-900">Šrafirano</strong> znači: može, ali samo uz uvjet. To je neuređeno područje: ulica i
+                kanalizacija koje plan ondje predviđa još nisu izgrađene. GUP traži UPU, ali dok ga nema, dozvola se može dobiti
+                kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje (za pristupnu ulicu pojas od 10 m s
+                kolnikom od barem 5,5 m) i kad se čestica može priključiti na kanalizaciju.
               </span>
             </p>
             <details className="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm">
@@ -118,7 +119,7 @@ export default async function GradnjaPage() {
                     ],
                     [
                       "Neuređeno područje",
-                      "U planu: neuređeni dio građevinskog područja. Zemljište predviđeno za gradnju na kojem još nisu izgrađene ulice i odvodnja koje plan predviđa. GUP ondje traži UPU, a do tada se dozvola može dobiti samo ako do čestice vodi postojeća javna cesta i ako se riješi odvodnja.",
+                      "U planu: neuređeni dio građevinskog područja. Zemljište predviđeno za gradnju na kojem još nisu izgrađene ulice i odvodnja koje plan predviđa. GUP ondje traži UPU, a do tada se dozvola može dobiti tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
                     ],
                     [
                       "Urbana sanacija i preobrazba",
@@ -164,7 +165,7 @@ export default async function GradnjaPage() {
               toga {broj(mjesta.stambeno.od_500_m2)} od barem 500 m² (koliko GUP obično traži za slobodnostojeću kuću) i{" "}
               {broj(mjesta.stambeno.od_1000_m2)} od barem 1.000 m². Ništa od toga nije u vlasništvu države, Grada, županije ni
               njihovih tvrtki, prema evidenciji Grada. Još {broj(mjesta["uz-cestu-stambeno"].od_250_m2)} gradilišta je u neuređenom
-              području, samo ako do njih vodi javna cesta. Ostatak čestica uz postojeće zgrade, premalen da se odvoji za novu
+              području, tek kad do njih dođu ulica i kanalizacija. Ostatak čestica uz postojeće zgrade, premalen da se odvoji za novu
               zgradu, ne broji se: to je {ha(k["ostatak-kuce"])} ha.
             </p>
             <p className="mt-2">
@@ -177,8 +178,8 @@ export default async function GradnjaPage() {
               gradnju dok Grad ne donese UPU.
             </p>
             <p className="mt-2">
-              U neuređenom području GUP također traži UPU, ali se do tada smije graditi ako do čestice vodi postojeća javna cesta i
-              ako se riješi odvodnja. To je {ha(k["uz-cestu-stambeno"] + k["uz-cestu-nestambeno"])} ha:{" "}
+              U neuređenom području GUP također traži UPU, ali se do tada smije graditi kad do čestice vodi ulica izgrađena u punoj
+              planiranoj širini i kad se čestica može priključiti na kanalizaciju. To je {ha(k["uz-cestu-stambeno"] + k["uz-cestu-nestambeno"])} ha:{" "}
               {ha(k["uz-cestu-stambeno"])} ha u zonama za stanovanje i {ha(k["uz-cestu-nestambeno"])} ha u gospodarskim i
               turističkim zonama, gdje stambene zgrade neće biti ni nakon UPU-a.
             </p>
@@ -235,9 +236,14 @@ export default async function GradnjaPage() {
                 <strong className="text-zinc-900">Može li se graditi bez čekanja na UPU?</strong> U područjima urbane sanacije i
                 preobrazbe (<Navod id="list-planske-mjere-2025">list 4.d</Navod>) gradit će se samo po UPU-u (
                 <Navod id="obveza-plana-2025">čl. 103. st. 1.</Navod>). Dok ga nema, postojeće zgrade smiju se samo obnoviti ili
-                zamijeniti. U neuređenom području GUP također traži UPU, ali i prije njega nova zgrada smije se graditi ako do čestice
-                vodi postojeća javna cesta i ako se riješi odvodnja (Zakon o prostornom uređenju, NN 155/25, čl. 180. st. 2. t. 3.).
-                Cestu i odvodnju karta ne može provjeriti za svaku česticu, pa to zemljište boji šrafirano. Javne i društvene zgrade
+                zamijeniti. U neuređenom području GUP također traži UPU, ali i prije njega nova zgrada smije se graditi kad do čestice
+                vodi ulica izgrađena u punoj širini koju joj plan određuje (<Navod id="kolni-pristup-2025">čl. 49.f st. 1.</Navod>;
+                za pristupnu ulicu pojas od 10 m s kolnikom od barem 5,5 m,{" "}
+                <Navod id="profil-pristupne-ulice-2025">čl. 32.</Navod>) i kad se čestica može priključiti na kanalizaciju ili vlastiti
+                sustav odvodnje (<Navod id="neuredeno-infrastruktura-2025">čl. 106. st. 1.</Navod>; Zakon o prostornom uređenju, NN
+                155/25, čl. 180. st. 2. t. 3.). Iznimno je dovoljan prilaz širok 3 m (
+                <Navod id="pristup-iznimke-2025">čl. 49.f st. 4. i 5.</Navod>). Ulicu i kanalizaciju karta ne može provjeriti za
+                svaku česticu, pa to zemljište boji šrafirano. Javne i društvene zgrade
                 (škole, vrtići, domovi zdravlja) smiju se graditi i prije UPU-a (<Navod id="clanak-105-popis-2025">čl. 105. st. 5.</Navod>).
               </li>
               <li>
@@ -293,7 +299,7 @@ export default async function GradnjaPage() {
                 je karta prepoznaje po namjeni.
               </li>
               <li>
-                Karta ne provjerava privatne vlasnike i suvlasnike, vodi li do čestice javna cesta, priključke, nagib i tlo, zaštitu kulturne baštine i
+                Karta ne provjerava privatne vlasnike i suvlasnike, vodi li do čestice ulica dovoljne širine, priključke, nagib i tlo, zaštitu kulturne baštine i
                 krajobraza, pojas uz more i vodotoke, ni posebne uvjete nadležnih tijela. Ništa od toga ne može „ne može” pretvoriti
                 u „može”, ali može obrnuto. Prije kupnje ili gradnje zatraži od Grada lokacijsku informaciju: službeni podatak o tome
                 koji planovi i koja namjena vrijede za tvoju česticu.
