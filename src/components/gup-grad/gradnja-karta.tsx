@@ -325,9 +325,10 @@ export function GradnjaKarta(props: {
         maxBounds: SIRI_OBUHVAT_KARTE,
         maxBoundsViscosity: 1,
         preferCanvas: true,
-        zoomSnap: 0.25,
-        zoomDelta: 1,
-        wheelPxPerZoomLevel: 80,
+        // zum bez stepenica: kotačić i dodirnik mijenjaju zum glatko, ne u koracima od četvrtine razine
+        zoomSnap: 0,
+        zoomDelta: 0.5,
+        wheelPxPerZoomLevel: 110,
         bounceAtZoomLimits: false,
         zoomControl: false,
         // dvoklik zumira; odabir čeka da se vidi je li bio dvoklik

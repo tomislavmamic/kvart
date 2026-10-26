@@ -23,6 +23,8 @@ export interface ZbrojGradnje {
   u_stambenim_zonama_ha: Partial<Record<IdKategorije, number>>;
   /** razlog po GUP-u na slobodnom zemljištu pod planom na snazi */
   ispod_plana_ha: Partial<Record<IdKategorije, number>>;
+  /** stambeno pod DPU-om koji dopušta stanovanje (vrijedi DPU, ne namjena GUP-a) */
+  stambeno_pod_dpu_ha: number;
   zona_gradnje: Record<KodKlase, ZonaGradnje>;
 }
 

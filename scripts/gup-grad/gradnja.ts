@@ -38,7 +38,6 @@ import {
   kodNaKarti,
   kodPiksela,
   PLAN_NA_SNAZI,
-  PO_DPU_STAMBENO,
   PO_PLANU,
   ZONA_GRADNJE,
   type IdKategorije,
@@ -60,6 +59,11 @@ const P = KLASE.find((k) => k.kod === "P")!.indeks;
 const VOJSKA = KATEGORIJA_PO_ID.vojska.kod;
 const JAVNO_ZEMLJISTE = KATEGORIJA_PO_ID.javno.kod;
 const USKI_JAVNI = KATEGORIJA_PO_ID["javni-pojas"].kod;
+/** Pod DPU-om koji dopušta stanovanje nestambeno je stambeno (vrijedi DPU, ne namjena GUP-a). */
+const PO_STAMBENOM_DPU = new Map<number, number>([
+  [KATEGORIJA_PO_ID.nestambeno.kod, KATEGORIJA_PO_ID.stambeno.kod],
+  [KATEGORIJA_PO_ID["uz-cestu-nestambeno"].kod, KATEGORIJA_PO_ID["uz-cestu-stambeno"].kod],
+]);
 
 interface Plocica {
   url: string;
@@ -87,6 +91,8 @@ function main() {
   const ispodJavnog = new Map<IdKategorije, number>();
   /** Razlog po GUP-u ispod „po planu na snazi”: što bi karta rekla da plana nema. */
   const ispodPlana = new Map<IdKategorije, number>();
+  /** Stambeno pod DPU-om koji stanovanje dopušta (planovi-dozvole.py): koliko je ondje karta ubrojila u stambeno. */
+  let uStambenomDpu = 0;
   const poZoni = new Map<string, number>();
   /** U zonama za stanovanje, po kategoriji kakva je na karti (javno kao javno): za filtar „Što priječi”. */
   const uStambenim = new Map<number, number>();
@@ -134,11 +140,12 @@ function main() {
         const uskoJavno = (jv & 16) > 0 && (jv & 7) > 0 && k !== VOJSKA;
         let kat = uskoJavno ? USKI_JAVNI : k;
         let vlasnik = uskoJavno ? 0 : jv & 7;
-        // slobodno zemljište pod DPU-om na snazi (gradnja-javno.py, bit 32): odlučuje plan; ako DPU dopušta
-        // stanovanje (bit 64), zemljište u zoni za gradnju je „po DPU-u (dopušta stanovanje)”
+        // slobodno zemljište pod DPU-om na snazi (gradnja-javno.py, bit 32): odlučuje plan, a ne namjena GUP-a.
+        // DPU po kojem su izdane dozvole za nove stambene zgrade (bit 64) stanovanje dopušta: u zoni za gradnju
+        // zemljište ostaje u svojim stavkama, ali nestambeno postaje stambeno. U ostalim DPU-ima „odlučuje DPU”.
         if ((jv & 32) > 0 && !vlasnik && kat && PO_PLANU.has(KATEGORIJA_PO_KODU.get(kat)!.id)) {
           const zona = ZONA_GRADNJE[KLASA_PO_INDEKSU.get(klasa)!.kod];
-          if ((jv & 64) > 0 && (zona === "stambena" || zona === "nestambena")) kat = KATEGORIJA_PO_ID[PO_DPU_STAMBENO].kod;
+          if ((jv & 64) > 0 && (zona === "stambena" || zona === "nestambena")) kat = PO_STAMBENOM_DPU.get(kat) ?? kat;
           else vlasnik = PLAN_NA_SNAZI;
         }
         d[i + 2] = kodPiksela(kat, vlasnik);
@@ -148,6 +155,7 @@ function main() {
         }
         // javno se broji kao javno; vojna zona ostaje svoja kategorija
         const brojiSe = kodNaKarti(kat, vlasnik);
+        if ((jv & 64) > 0 && KATEGORIJA_PO_KODU.get(brojiSe)?.skupina === "stambeno") uStambenomDpu += pikselM2;
         if (vlasnik === PLAN_NA_SNAZI) {
           const id = KATEGORIJA_PO_KODU.get(kat)!.id;
           ispodPlana.set(id, (ispodPlana.get(id) ?? 0) + pikselM2);
@@ -184,6 +192,7 @@ function main() {
     ukupno_ha: ha([...m2.values()].reduce((a, b) => a + b, 0)),
     ispod_javnog_ha: Object.fromEntries([...ispodJavnog].map(([id, v]) => [id, ha(v)])),
     ispod_plana_ha: Object.fromEntries([...ispodPlana].map(([id, v]) => [id, ha(v)])),
+    stambeno_pod_dpu_ha: ha(uStambenomDpu),
     po_kategoriji_ha: poKategoriji,
     po_skupini_ha: poSkupini,
     po_namjeni_ha: zone,

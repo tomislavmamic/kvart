@@ -187,7 +187,7 @@ export function provjere(
   const koridor = katId === "koridor";
   // pod DPU-om na snazi (i onim koji dopušta stanovanje) namjena GUP-a ne odlučuje
   const naPlanu =
-    u?.vlasnik === PLAN_NA_SNAZI || katId === "po-dpu-stambeno" || (s.rezim === "vazeci" && /^(DPU|PUP)/.test(s.plan.naziv));
+    u?.vlasnik === PLAN_NA_SNAZI || (s.rezim === "vazeci" && /^(DPU|PUP)/.test(s.plan.naziv));
   const out: Provjera[] = [];
 
   // 0. vlasnik: javno zemljište i vojna zona nisu za gradnju građana
