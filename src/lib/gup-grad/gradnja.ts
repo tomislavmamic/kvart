@@ -119,6 +119,7 @@ export type IdKategorije =
   | "put"
   | "odmaci"
   | "odmak"
+  | "ostatak-kuce"
   | "gradski-projekt"
   | "vojska"
   | "javno"
@@ -259,6 +260,16 @@ export const KATEGORIJE: readonly Kategorija[] = [
     naziv: "Premalo ili preusko za gradnju",
     razlog:
       "Slobodno je, ali nova zgrada ne stane. Komad je manji od najmanje čestice za gradnju koju ovdje traže pravila, ili je preuzak: ni sa slobodnim susjedima nema dijela širokog barem 10 m. Obično je to pojas uz put, stube ili rub uz među.",
+    boja: "#ffffff",
+    alfa: 0.55,
+  },
+  {
+    kod: 23,
+    id: "ostatak-kuce",
+    skupina: "nista",
+    naziv: "Ostatak čestice uz postojeću zgradu",
+    razlog:
+      "Na ovoj čestici već stoji zgrada, a ona troši česticu. Nova zgrada smjela bi se graditi samo kad bi se ostatak mogao odvojiti u vlastitu građevnu česticu od barem 400 m², široku barem 10 m. Ovaj ostatak to nije.",
     boja: "#ffffff",
     alfa: 0.55,
   },
@@ -434,6 +445,8 @@ export interface UvjetiPiksela {
   odmaci?: boolean;
   /** dio gradilišta u odmaku od ulice ili međa: zgrada ovdje ne smije stajati (gradnja-skupine.py) */
   odmak?: boolean;
+  /** ostatak čestice s kućom koji se ne može odvojiti u svoju građevnu česticu (gradnja-skupine.py) */
+  ostatakKuce?: boolean;
   /** na čestici s urbanim pravilom GP — gradski projekt (gradnja-javno.py) */
   gradskiProjekt?: boolean;
 }
@@ -447,8 +460,16 @@ const GRADIVE: readonly IdKategorije[] = ["stambeno", "nestambeno", "uz-cestu-st
  * ili 0 kad piksel nije na čestici u obuhvatu.
  */
 export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela = {}): number {
-  const { neuredeno = false, koridor = false, put = false, preusko = false, odmaci = false, odmak = false, gradskiProjekt = false } =
-    uvjeti;
+  const {
+    neuredeno = false,
+    koridor = false,
+    put = false,
+    preusko = false,
+    odmaci = false,
+    odmak = false,
+    ostatakKuce = false,
+    gradskiProjekt = false,
+  } = uvjeti;
   const z = zonaKlase(klasa);
   const zona = z && koridor ? "promet" : z;
   if (!zona || regija <= 0) return 0;
@@ -479,7 +500,7 @@ export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela 
   // 3.–5. razlog iz izračuna po komadu
   const k = razlogKomada(klasa, regija, zona, neuredeno);
   if (!GRADIVE.includes(KATEGORIJA_PO_KODU.get(k)!.id)) return k;
-  return preusko ? K.premalo.kod : odmaci ? K.odmaci.kod : odmak ? K.odmak.kod : k;
+  return ostatakKuce ? K["ostatak-kuce"].kod : preusko ? K.premalo.kod : odmaci ? K.odmaci.kod : odmak ? K.odmak.kod : k;
 }
 
 function razlogKomada(klasa: number, regija: number, zona: ZonaGradnje, neuredeno: boolean): number {
@@ -514,6 +535,63 @@ export function uzorakKategorije(k: Kategorija): { backgroundColor: string; back
   const pruga = (kut: number) => `repeating-linear-gradient(${kut}deg, ${k.pruge} 0 2px, transparent 2px 6px)`;
   return { backgroundColor: ton, backgroundImage: k.mreza ? `${pruga(45)}, ${pruga(-45)}` : pruga(45) };
 }
+
+/**
+ * „Što priječi gradnju”: razlozi zbog kojih se u zonama za stanovanje (S,
+ * M1–M3, K5) ne može graditi nova stambena zgrada, složeni u skupine koje
+ * čovjek razlikuje. Filtar karte boji jednu skupinu jakom ljubičastom,
+ * samo unutar tih zona; boja je provjerena validatorom uz zelenu i jantarnu
+ * stopljene sa sivom snimkom (deutan ΔE 24).
+ */
+export type IdPrepreke = "izgradjeno" | "zauzeto" | "javno" | "upu" | "pravila" | "velicina" | "odmak";
+
+export const PREPREKE: readonly { id: IdPrepreke; naziv: string; opis: string; kategorije: readonly IdKategorije[] }[] = [
+  {
+    id: "izgradjeno",
+    naziv: "Kuća ili zgrada sa svojim dvorištem",
+    opis: "Već stoji zgrada; uz nju ide dvorište, a ostatak čestice premalen je za drugu zgradu.",
+    kategorije: ["zgrada", "okucnica", "ostatak-kuce"],
+  },
+  {
+    id: "zauzeto",
+    naziv: "Ulica, put, parkiralište ili park",
+    opis: "Mjesto se već koristi za nešto drugo ili je čestica zapravo put.",
+    kategorije: ["ulica", "koridor", "put", "koristeno"],
+  },
+  {
+    id: "javno",
+    naziv: "Javno zemljište",
+    opis: "Vlasnik je država, Grad, županija ili njihova ustanova ili tvrtka.",
+    kategorije: ["javno", "javni-pojas"],
+  },
+  {
+    id: "upu",
+    naziv: "Čeka UPU ili gradski projekt",
+    opis: "Nova gradnja čeka plan ili projekt koji Grad još nije donio.",
+    kategorije: ["ceka-upu", "gradski-projekt"],
+  },
+  {
+    id: "pravila",
+    naziv: "Pravila dopuštaju samo obnovu",
+    opis: "Pravila gradnje ovdje dopuštaju samo obnovu postojećih zgrada, ili teren nije za gradnju.",
+    kategorije: ["samo-rekonstrukcija", "neizgradivo"],
+  },
+  {
+    id: "velicina",
+    naziv: "Premalo ili preusko za kuću",
+    opis: "Slobodno, ali premalo, preusko ili zgrada ne stane uz odmake.",
+    kategorije: ["premalo", "odmaci"],
+  },
+  {
+    id: "odmak",
+    naziv: "Odmak od ulice i susjeda",
+    opis: "Dio gradilišta na kojem zgrada ne smije stajati: tu je dvorište ili prilaz.",
+    kategorije: ["odmak"],
+  },
+];
+export const PREPREKA_PO_ID = Object.fromEntries(PREPREKE.map((p) => [p.id, p])) as Record<IdPrepreke, (typeof PREPREKE)[number]>;
+export const BOJA_PREPREKE = "#7c3aed";
+export const ALFA_PREPREKE = 0.85;
 
 /** Isti izgled na karti: kategoriju nije potrebno posebno crtati u tumaču. */
 export const istiIzgled = (a: Kategorija, b: Kategorija) =>

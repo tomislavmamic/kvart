@@ -55,7 +55,8 @@ Ulaz:  public/geo/gup-grad/regije.json i pločice („po odredbama”, 2025.),
        public/geo/gup-grad/cestice, OSM ceste .cache/gup-grad/osm-ceste.json
        (osm.py; bez njih samo pravilo susjeda)
 Izlaz: data/gup-grad/skupine-2025/<red>_<stupac>.png — 1 = put, 2 = preusko,
-       3 = odmak na gradilištu, 4 = zgrada ne stane uz odmake;
+       3 = odmak na gradilištu, 4 = zgrada ne stane uz odmake, 5 = ostatak
+       čestice s kućom koji se ne može odvojiti u svoju česticu;
        čita ih scripts/gup-grad/gradnja.ts
        public/geo/gup-grad/putovi-2025.json — čestice proglašene putom, s
        mjerama i razlogom (tumač klika na karti ih navodi)
@@ -113,6 +114,8 @@ NAJMANJE_M2 = 400.0
 # odmaci zgrade (odredbe GUP-a): od javne prometne površine 5 m, od ostalih međa
 # građevne čestice 3 m. Međa je rub spojene skupine slobodnih čestica, ne
 # međa svake katastarske čestice u njoj (spojene čestice čine jednu građevnu).
+# zgrada na čestici manja od ovoga je krhotina susjednog krova, ne kuća
+SITNA_ZGRADA_M2 = 20.0
 ODMAK_ULICA_M = 5.0
 ODMAK_MEDA_M = 3.0
 # najmanja zgrada koja mora stati unutar odmaka (naša pretpostavka, ne odredba):
@@ -273,6 +276,29 @@ def main() -> None:
     yy, xx = np.mgrid[-n_:n_ + 1, -n_:n_ + 1]
     krug = xx * xx + yy * yy <= r * r
     gradivo = slobodno & ~put
+
+    # Ostatak čestice s postojećom zgradom: zgrada troši česticu, pa se na
+    # ostatku smije graditi samo ako se on SAM može odvojiti u novu građevnu
+    # česticu (krug od TLOCRT_M, barem NAJMANJE_M2). Inače ostatak nije za
+    # gradnju i ne spaja se ni sa susjedima — tako ne ostaju zelene mrlje oko
+    # uglova kuća na malim česticama.
+    izgradjeno = np.isin(regija, (1, 2, 9))  # zgrada, gradilište, okućnica
+    s_kucom = np.bincount(rid[izgradjeno & (rid > 0)], minlength=rid.max() + 1) * m_po_px ** 2 >= SITNA_ZGRADA_M2
+    s_kucom[0] = False
+    na_cestici_s_kucom = gradivo & s_kucom[rid]
+    # međa između dviju čestica prekida ostatak, da se ostaci susjednih kuća ne zbroje
+    rub = np.zeros(rid.shape, bool)
+    rub[:-1] |= rid[:-1] != rid[1:]
+    rub[1:] |= rid[1:] != rid[:-1]
+    rub[:, :-1] |= rid[:, :-1] != rid[:, 1:]
+    rub[:, 1:] |= rid[:, 1:] != rid[:, :-1]
+    samostalno = ndimage.binary_opening(na_cestici_s_kucom & ~rub, structure=krug)
+    oznake, n = ndimage.label(samostalno)
+    if n:
+        vel = ndimage.sum_labels(np.ones_like(oznake), oznake, index=np.arange(1, n + 1)) * m_po_px ** 2
+        samostalno[np.isin(oznake, np.flatnonzero(vel < NAJMANJE_M2) + 1)] = False
+    ostatak_kuce = na_cestici_s_kucom & ~samostalno
+    gradivo &= ~ostatak_kuce
     zadrzano = np.zeros(klasa.shape, bool)
     skupine = [STAMBENE] + [(k,) for k in GRADEVNE if k not in STAMBENE]
     for kl in skupine:
@@ -320,7 +346,7 @@ def main() -> None:
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     os.makedirs(IZLAZ)
-    oznaka = np.select([put, preusko, odmak, ne_stane], [1, 2, 3, 4], 0).astype(np.uint8)
+    oznaka = np.select([put, ostatak_kuce, preusko, odmak, ne_stane], [1, 5, 2, 3, 4], 0).astype(np.uint8)
     for r0, c0, p in plocice:
         h, w = velicina[(r0, c0)]
         t = oznaka[r0 * PLOCICA:r0 * PLOCICA + h, c0 * PLOCICA:c0 * PLOCICA + w]
@@ -333,6 +359,7 @@ def main() -> None:
     ha = lambda m: round(float(m.sum()) * m_po_px ** 2 / 1e4, 1)  # noqa: E731
     from collections import Counter
     print(f"putovi: {len(putovi)} čestica, {ha(put & slobodno)} ha slobodnog na njima", dict(Counter(d["razlog"] for d in opis)))
+    print(f"ostatak čestice s kućom koji se ne može odvojiti: {ha(ostatak_kuce)} ha")
     print(f"slobodno zone za gradnju {ha(slobodno)} ha → gradilišta {ha(zadrzano)} ha (mjesto za zgradu {ha(mjesto)} ha, "
           f"odmak {ha(odmak)} ha, zgrada ne stane {ha(ne_stane)} ha), preusko {ha(preusko)} ha")
 
