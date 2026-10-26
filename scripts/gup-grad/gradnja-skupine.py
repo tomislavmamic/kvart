@@ -56,7 +56,9 @@ Ulaz:  public/geo/gup-grad/regije.json i pločice („po odredbama”, 2025.),
        (osm.py; bez njih samo pravilo susjeda)
 Izlaz: data/gup-grad/skupine-2025/<red>_<stupac>.png — 1 = put, 2 = preusko,
        3 = odmak na gradilištu, 4 = zgrada ne stane uz odmake, 5 = ostatak
-       čestice s kućom koji se ne može odvojiti u svoju česticu;
+       čestice s kućom koji se ne može odvojiti u svoju česticu, 6–9 = gradilište
+       iz zahtjeva ili dozvole za novu gradnju (čestice akta kao jedna):
+       6 zahtjev stambeno, 7 izdana stambeno, 8 zahtjev nestambeno, 9 izdana nestambeno;
        čita ih scripts/gup-grad/gradnja.ts
        public/geo/gup-grad/putovi-2025.json — čestice proglašene putom, s
        mjerama i razlogom (tumač klika na karti ih navodi)
@@ -91,6 +93,8 @@ KORIDORI = os.path.join(R.ROOT, "data", "gup-grad", "koridori-2025")
 JAVNE = os.path.join(R.ROOT, "data", "gup-grad", "javno-2025")
 IZLAZ = os.path.join(R.ROOT, "data", "gup-grad", "skupine-2025")
 IZLAZ_PUTOVA = os.path.join(JAVNO, "geo", "gup-grad", "putovi-2025.json")
+# čestice svakog akta (dozvola ili zahtjev za novu gradnju) kao jedna građevna čestica (gradnja-dozvole.py --skupine)
+DOZVOLE = os.path.join(R.ROOT, "data", "gup-grad", "dozvole-skupine-2025.json")
 OSM_CESTE = os.path.join(R.OUT, "osm-ceste.json")
 PLOCICA = 512
 
@@ -232,6 +236,27 @@ def main() -> None:
         out_shape=klasa.shape, transform=transform, fill=0, dtype="int32",
     )
     s_slobodnim = np.flatnonzero(np.bincount(rid[slobodno], minlength=len(kljucevi) + 1)[1:] > 0)
+
+    # Dozvola ili zahtjev za novu gradnju određuje građevnu česticu: njegove čestice računaju se
+    # zajedno, kao jedna. Ondje nema puta, ostatka uz zgradu ni „premalo” po čestici: sve slobodno
+    # zemljište zone za gradnju u skupini je gradilište (oznaka 6), a međe unutar nje karta crta tanko.
+    po_kljucu = {(sve[i][0].upper(), sve[i][1]): n + 1 for n, i in enumerate(kljucevi)}
+    # po čestici najjači akt: izdana (2) jača od zahtjeva (1); stambeno ako je ijedan takav akt stambeni
+    rang = np.zeros(len(kljucevi) + 1, np.uint8)
+    stambeni = np.zeros(len(kljucevi) + 1, bool)
+    if os.path.exists(DOZVOLE):
+        for sk in json.load(open(DOZVOLE))["skupine"]:
+            r_akta = 2 if sk["ishod"] == "izdana" else 1
+            for c in sk["cestice"]:
+                n = po_kljucu.get(tuple(c.split("|", 1)))
+                if n is None:
+                    continue
+                if r_akta > rang[n]:
+                    rang[n], stambeni[n] = r_akta, sk["stambeno"]
+                elif r_akta == rang[n]:
+                    stambeni[n] |= sk["stambeno"]
+    s_dozvolom = set(np.flatnonzero(rang).tolist())
+    u_dozvoli = rang[rid] > 0
     print(len(kljucevi), "čestica,", len(s_slobodnim), "sa slobodnim zemljištem zone za gradnju")
 
     # ---- 1. putovi -------------------------------------------------------
@@ -267,6 +292,8 @@ def main() -> None:
             opis.append({"ko": ko, "kc": kc, "sirina_m": round(sirina, 1), "duljina_m": round(duljina),
                          "susjeda": susjeda, "osm_udio": round(osm_udio, 2), "uz_ulicu": round(uz_ulicu, 2),
                          "razlog": razlog})
+    putovi -= s_dozvolom
+    opis = [o for o in opis if po_kljucu.get((o["ko"].upper(), o["kc"])) not in s_dozvolom]
     put = np.isin(rid, list(putovi)) & (rid > 0)
 
     # ---- 2. tlocrt -------------------------------------------------------
@@ -286,7 +313,7 @@ def main() -> None:
     izgradjeno = np.isin(regija, (1, 2, 9))  # zgrada, gradilište, okućnica
     s_kucom = np.bincount(rid[izgradjeno & (rid > 0)], minlength=rid.max() + 1) * m_po_px ** 2 >= SITNA_ZGRADA_M2
     s_kucom[0] = False
-    na_cestici_s_kucom = gradivo & s_kucom[rid]
+    na_cestici_s_kucom = gradivo & s_kucom[rid] & ~u_dozvoli
     # međa između dviju čestica prekida ostatak, da se ostaci susjednih kuća ne zbroje
     rub = np.zeros(rid.shape, bool)
     rub[:-1] |= rid[:-1] != rid[1:]
@@ -347,7 +374,10 @@ def main() -> None:
     if os.path.isdir(IZLAZ):
         shutil.rmtree(IZLAZ)
     os.makedirs(IZLAZ)
-    oznaka = np.select([put, ostatak_kuce, preusko, odmak, ne_stane], [1, 5, 2, 3, 4], 0).astype(np.uint8)
+    gradiliste_dozvole = slobodno & u_dozvoli & ~put
+    # 6 zahtjev stambeno, 7 izdana stambeno, 8 zahtjev nestambeno, 9 izdana nestambeno
+    kod_dozvole = np.where(stambeni[rid], 6, 8) + (rang[rid] == 2)
+    oznaka = np.select([gradiliste_dozvole, put, ostatak_kuce, preusko, odmak, ne_stane], [kod_dozvole, 1, 5, 2, 3, 4], 0).astype(np.uint8)
     for r0, c0, p in plocice:
         h, w = velicina[(r0, c0)]
         t = oznaka[r0 * PLOCICA:r0 * PLOCICA + h, c0 * PLOCICA:c0 * PLOCICA + w]
@@ -360,6 +390,7 @@ def main() -> None:
     ha = lambda m: round(float(m.sum()) * m_po_px ** 2 / 1e4, 1)  # noqa: E731
     from collections import Counter
     print(f"putovi: {len(putovi)} čestica, {ha(put & slobodno)} ha slobodnog na njima", dict(Counter(d["razlog"] for d in opis)))
+    print(f"čestice s dozvolom za novu gradnju: {len(s_dozvolom)}, slobodno u njima {ha(gradiliste_dozvole)} ha")
     print(f"ostatak čestice s kućom koji se ne može odvojiti: {ha(ostatak_kuce)} ha")
     print(f"slobodno zone za gradnju {ha(slobodno)} ha → gradilišta {ha(zadrzano)} ha (mjesto za zgradu {ha(mjesto)} ha, "
           f"odmak {ha(odmak)} ha, zgrada ne stane {ha(ne_stane)} ha), preusko {ha(preusko)} ha")

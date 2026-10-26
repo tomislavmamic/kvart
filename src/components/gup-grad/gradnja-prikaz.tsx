@@ -24,7 +24,7 @@ import type { Feature, FeatureCollection } from "geojson";
 import { Navod } from "@/components/gup-dokument/navod";
 import { TrazilicaAdrese } from "@/components/gup-grad/karta-alati";
 import { kategorijeUObliku, uzorakUTocki, type Uzorak } from "@/components/gup-grad/gradnja-plocice";
-import { BOJA_DOZVOLE, BOJA_STAMBENE_ZONE, DOGADAJ_SLIKE, OBRISI_OD_ZUMA, type Pogled, type Prikaz, type Zaklon } from "@/components/gup-grad/gradnja-karta";
+import { BOJA_STAMBENE_ZONE, OBRISI_OD_ZUMA, type Pogled, type Prikaz, type Zaklon } from "@/components/gup-grad/gradnja-karta";
 import { cesticeUTocki, datumHr, type AktGradnje, type PodaciDozvola } from "@/lib/gup-grad/gradnja-dozvole";
 import {
   dohvacacCestica,
@@ -76,6 +76,8 @@ const posto = (v: number) => `${Math.round(v * 100).toLocaleString("hr-HR")} %`;
 const SKUPINE: Skupina[] = ["stambeno", "nestambeno", "nista", "javno", "plan"];
 const KRATKO: Record<Skupina, string> = { stambeno: "Stambeno", nestambeno: "Nestambeno", nista: "Ništa novo", javno: "Javno", plan: "Po planu" };
 const SIROKO = "(min-width: 640px)";
+/** Kategorije zahtjeva i dozvola (gradnja.ts): dok je koja na karti, vide se i međe unutar njihovih skupina. */
+const DOZVOLE: readonly IdKategorije[] = ["stambeno-zahtjev", "stambeno-dozvola", "nestambeno-zahtjev", "nestambeno-dozvola"];
 /** Desni stupac kartice na računalu: širina i razmak od ruba. */
 const STUPAC = 400;
 const RAZMAK = 12;
@@ -470,12 +472,8 @@ function PopisSlojeva(props: {
           <span>granica GUP-a; izvan nje karta ništa ne boji</span>
         </li>
         <li className="flex items-center gap-2">
-          <span aria-hidden className="inline-block h-4 w-6 shrink-0 rounded-sm border-[2.5px] border-zinc-900 bg-zinc-900/20" />
-          <span>izdana lokacijska ili građevinska dozvola (od 2020.); izdaleka puna točka, trepće</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span aria-hidden className="inline-block h-4 w-6 shrink-0 rounded-sm border-[2.5px] border-dashed border-zinc-900" />
-          <span>zahtjev za dozvolu u obradi; izdaleka prazna točka</span>
+          <Crta boja="#18181b" />
+          <span>tanka međa: čestice jednog zahtjeva ili dozvole, koje karta računa kao jednu građevnu česticu</span>
         </li>
       </ul>
     </div>
@@ -559,7 +557,6 @@ export function GradnjaPrikaz(props: {
   const [listovi, setListovi] = useState<Record<string, List> | null>(null);
   const [putovi, setPutovi] = useState<Putovi | null>(null);
   const [dozvole, setDozvole] = useState<PodaciDozvola | null>(null);
-  const [vidiDozvole, setVidiDozvole] = useState(true);
   const [siroko, setSiroko] = useState(false);
   const [gore, setGore] = useState(120);
   const [visinaKartice, setVisinaKartice] = useState(0);
@@ -793,7 +790,16 @@ export function GradnjaPrikaz(props: {
   );
 
   const kategorijePoSkupini = useMemo(
-    () => Object.fromEntries(SKUPINE.map((s) => [s, KATEGORIJE.filter((k) => k.skupina === s && (zbroj.po_kategoriji_ha[k.id] ?? 0) > 0)])),
+    () =>
+      Object.fromEntries(
+        SKUPINE.map((s) => [
+          s,
+          // glavna kategorija skupine prva (npr. „Mjesto za stambenu zgradu”), pa uvjetna i dozvole
+          KATEGORIJE.filter((k) => k.skupina === s && (zbroj.po_kategoriji_ha[k.id] ?? 0) > 0).sort(
+            (a, b) => Number(b.id === SKUPINE_GRADNJE[s].glavna) - Number(a.id === SKUPINE_GRADNJE[s].glavna),
+          ),
+        ]),
+      ),
     [zbroj],
   ) as Record<Skupina, Kategorija[]>;
 
@@ -848,32 +854,7 @@ export function GradnjaPrikaz(props: {
   const onSpremna = useCallback((m: LeafletNS.Map | null) => {
     mapa.current = m;
   }, []);
-  const onKlik = useCallback(
-    (lng: number, lat: number) => {
-      // izdaleka je dozvola točka manja od čestice: klik blizu točke odabere tu česticu i približi kartu
-      const map = mapa.current;
-      if (map && dozvole && vidiDozvole && map.getZoom() < 15) {
-        const klik = map.latLngToContainerPoint([lat, lng]);
-        let najbliza: [number, number] | null = null;
-        let udaljenost = 16;
-        for (const c of dozvole.cestice) {
-          if (!c.akti.length || (c.zeleno_m2 === 0 && c.plan_m2 === 0)) continue;
-          const d = map.latLngToContainerPoint([c.tocka[1], c.tocka[0]]).distanceTo(klik);
-          if (d < udaljenost) {
-            udaljenost = d;
-            najbliza = c.tocka;
-          }
-        }
-        if (najbliza) {
-          pomakni({ tocka: najbliza });
-          void pokaziTocku(najbliza[0], najbliza[1]);
-          return;
-        }
-      }
-      void pokaziTocku(lng, lat);
-    },
-    [pokaziTocku, dozvole, vidiDozvole],
-  );
+  const onKlik = useCallback((lng: number, lat: number) => void pokaziTocku(lng, lat), [pokaziTocku]);
 
   // ------------------------------------------------ slika za dijeljenje
   const legendaSlike = (): StavkaLegende[] => {
@@ -897,16 +878,12 @@ export function GradnjaPrikaz(props: {
       out.push({
         naziv,
         ha: sve.reduce((a, x) => a + (zbroj.po_kategoriji_ha[x.id] ?? 0), 0),
-        ploha: { boja: k.boja, alfa: prepreka ? k.alfa * 0.4 : k.alfa, pruge: k.pruge, mreza: k.mreza },
+        ploha: { boja: k.boja, alfa: prepreka ? k.alfa * 0.4 : k.alfa, pruge: k.pruge, mreza: k.mreza, tocke: k.tocke },
       });
     }
     if ((mapa.current?.getZoom() ?? 0) >= OBRISI_OD_ZUMA) out.push({ naziv: "rub zona za stanovanje", crta: { boja: BOJA_STAMBENE_ZONE, debljina: 2 } });
     out.push({ naziv: "granica GUP-a", crta: { boja: "#18181b", crtice: [10, 7], debljina: 2 } });
     if (kartica?.cestica) out.push({ naziv: `odabrana čestica k.č. ${kartica.cestica.svojstva.kc}`, crta: { boja: "#111111", debljina: 3 } });
-    if (vidiDozvole && dozvole) {
-      out.push({ naziv: "izdana lokacijska ili građevinska dozvola (od 2020.)", ploha: { boja: BOJA_DOZVOLE, alfa: 0.45 } });
-      out.push({ naziv: "zahtjev za dozvolu u obradi", crta: { boja: BOJA_DOZVOLE, crtice: [8, 6], debljina: 3 } });
-    }
     return out;
   };
 
@@ -915,7 +892,6 @@ export function GradnjaPrikaz(props: {
     if (!map) return;
     setPloha(null);
     setSlika("radim");
-    window.dispatchEvent(new Event(DOGADAJ_SLIKE));
     try {
       const vel = map.getSize();
       const z = zaklon;
@@ -1007,7 +983,7 @@ export function GradnjaPrikaz(props: {
                     <span className="block font-semibold text-zinc-900">{SKUPINE_GRADNJE[sk].naslov}</span>
                     <span className="block text-xs text-zinc-500">
                       {sk === "stambeno" &&
-                        `${mjesta.stambeno.od_500_m2.toLocaleString("hr-HR")} gradilišta od barem 500 m² bez uvjeta; ${ha(zbroj.po_kategoriji_ha["uz-cestu-stambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
+                        `${mjesta.stambeno.od_500_m2.toLocaleString("hr-HR")} gradilišta od barem 500 m² bez uvjeta, od toga ${ha(zbroj.po_kategoriji_ha["stambeno-dozvola"])} ha s izdanom i ${ha(zbroj.po_kategoriji_ha["stambeno-zahtjev"])} ha sa zatraženom dozvolom; ${ha(zbroj.po_kategoriji_ha["uz-cestu-stambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
                       {sk === "nestambeno" && `od toga ${ha(zbroj.po_kategoriji_ha["uz-cestu-nestambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
                       {sk === "nista" && "zgrade s dvorištima, ulice, parkovi, premalo zemljišta, čeka UPU…"}
                       {sk === "javno" && `država, Grad, županija; od toga ${ha(zbroj.po_kategoriji_ha.vojska)} ha vojna zona`}
@@ -1033,14 +1009,16 @@ export function GradnjaPrikaz(props: {
               onClick={() => kartaSa("stambeno", null)}
               className="fokus mt-3 flex w-full items-start gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-3 text-left hover:bg-zinc-50 sm:px-4"
             >
-              <span aria-hidden className="mt-1 inline-block h-4 w-6 shrink-0 rounded-sm border-[2.5px] border-zinc-900 bg-zinc-900/20" />
+              <span className="mt-1">
+                <UzorakBoje stil={uzorakKategorije(KATEGORIJA_PO_ID["stambeno-dozvola"])} />
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-zinc-900">Na dijelu tog zemljišta već se gradi ili se traži dozvola</span>
                 <span className="block text-sm text-zinc-600">
                   Od {datumHr(dozvoleZbroj.odDatuma).replace(/^1\. 1\. /, "")} izdano je {dozvoleZbroj.izdanih} dozvola (
                   {dozvoleZbroj.gradjevinskih} građevinskih), a još {dozvoleZbroj.uObradi} zahtjeva je u obradi, na{" "}
-                  {dozvoleZbroj.cestica} čestica koje karta pokazuje kao mjesto za stambenu zgradu ili gdje odlučuje plan na snazi. Na
-                  karti trepću.
+                  {dozvoleZbroj.cestica} čestica. Na karti su to zasebne stavke u skupinama „stambeno” i „nestambeno”: zatražena
+                  dozvola (mreža) i izdana dozvola (točke). Čestice jednog akta karta računa zajedno, kao jednu građevnu česticu.
                 </span>
                 <span className="mt-0.5 block text-xs font-semibold text-zinc-700">Prikaži na karti →</span>
               </span>
@@ -1082,7 +1060,7 @@ export function GradnjaPrikaz(props: {
                 zaklon={zaklon}
                 pocetak={pocetak}
                 dozvole={dozvole}
-                vidiDozvole={vidiDozvole}
+                vidiDozvole={DOZVOLE.some((id) => !skrivene.has(id))}
                 skupina={k?.skupina ?? []}
                 onKlik={onKlik}
                 onPomak={onPomak}
@@ -1142,15 +1120,6 @@ export function GradnjaPrikaz(props: {
                   ×
                 </Cip>
               )}
-              <Cip
-                upaljen={vidiDozvole}
-                onClick={() => setVidiDozvole((v) => !v)}
-                oznaka={`Dozvole i zahtjevi za gradnju: ${vidiDozvole ? "na karti" : "skriveno"}`}
-              >
-                <span aria-hidden className="inline-block h-3 w-3 rounded-full border-2 border-current" />
-                Dozvole
-                {dozvole && <span className="text-xs font-normal opacity-75">{dozvole.akti.length}</span>}
-              </Cip>
               <Cip upaljen={ploha === "slojevi"} otvara onClick={() => setPloha((p) => (p === "slojevi" ? null : "slojevi"))} oznaka="Svi slojevi i tumač">
                 <IkonaSlojeva /> <span className="hidden sm:inline">Slojevi</span>
               </Cip>

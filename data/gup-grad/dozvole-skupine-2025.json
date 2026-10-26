@@ -1,0 +1,2869 @@
+{
+"opis": "Čestice akata (dozvole od 2020-01-01 i zahtjevi u obradi, bez infrastrukture) kao jedna građevna čestica; čita gradnja-skupine.py. Izvedeno skriptom scripts/gup-grad/gradnja-dozvole.py --skupine.",
+"skupine": [
+{
+"klasa": "UP/I-361-03/26-01/000059",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|8883/2"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000011",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|8923/1",
+"SPLIT (SPLIT)|8923/2",
+"SPLIT (SPLIT)|8923/5",
+"SPLIT (SPLIT)|8923/6"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000007",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|5490/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000169",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|2326/5"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000033",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|1044/11"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000169",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT|14113/38"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000107",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT|3827/1",
+"SPLIT|3827/11",
+"SPLIT|3827/15",
+"SPLIT|3827/16",
+"SPLIT|3827/17",
+"SPLIT|3827/18",
+"SPLIT|3827/19",
+"SPLIT|3827/2",
+"SPLIT|3827/20",
+"SPLIT|3827/21",
+"SPLIT|3828/2"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000068",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT|10076/1",
+"SPLIT|10076/3",
+"SPLIT|10076/4",
+"SPLIT|10076/9",
+"SPLIT|13880/10"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000042",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT (SPLIT)|10097/3",
+"SPLIT|10097/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000221",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|10100/2",
+"SPLIT|10100/8"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000211",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|852/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000188",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|852/21"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000080",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|3690/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000198",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|13647/25",
+"SPLIT|6918/15"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000045",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|10120/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000220",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|13647/25",
+"SPLIT|6918/15",
+"SPLIT|6919/8"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000112",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|7664/5"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000113",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|7664/4"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000095",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7664/6",
+"SPLIT|93/6"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000060",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|10123/9"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000045",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7653/3",
+"SPLIT|7653/4",
+"SPLIT|7653/6",
+"SPLIT|7658/10"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000046",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7653/22",
+"SPLIT|7653/4",
+"SPLIT|7653/5",
+"SPLIT|7658/10"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000079",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"LJUBELJ KALNIČKI|2308/48",
+"LJUBELJ KALNIČKI|2308/49",
+"LJUBELJ KALNIČKI|2308/50",
+"LJUBELJ KALNIČKI|2308/51",
+"LJUBELJ KALNIČKI|2308/52",
+"LJUBELJ KALNIČKI|2308/53",
+"LJUBELJ KALNIČKI|2308/54",
+"LJUBELJ KALNIČKI|2308/58",
+"LJUBELJ KALNIČKI|2308/59",
+"LJUBELJ KALNIČKI|2308/60"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000047",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7652/1",
+"SPLIT|7653/2",
+"SPLIT|7653/4",
+"SPLIT|7653/5"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000108",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|3585/5",
+"SPLIT::3583/11 K.O. SPLIT::3583/12 K.O. SPLIT::3583/9 K.O. SPLIT::3585/31 K.O. SPLIT|3585/5"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000082",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|10144/3",
+"SPLIT|10145/3",
+"SPLIT|13889/9"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000154",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT|7614/15",
+"SPLIT|7614/16",
+"SPLIT|7697/613",
+"SPLIT|7697/615",
+"SPLIT|7697/616"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000176",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|10138/4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000264",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|6989/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000032",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3585/24"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000345",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3523/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000134",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|2841/1"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000027",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT (SPLIT)|2873/1"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000066",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|6950/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000191",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|2861/1"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000026",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|2862/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000078",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|7541/4",
+"SPLIT|7541/4"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000077",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7541/12"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000020",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3464/3",
+"SPLIT|3465/8",
+"SPLIT|3477/11",
+"SPLIT|3477/19",
+"SPLIT|3477/28",
+"SPLIT|3477/31"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000092",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3408",
+"SPLIT|3409/1"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000017",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|2885/3",
+"SPLIT (SPLIT)|2943/1",
+"SPLIT (SPLIT)|2943/2"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000019",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|2943/1"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000018",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|2943/1",
+"SPLIT (SPLIT)|2943/2"
+]
+},
+{
+"klasa": "UP/I-350-05/22-01/000039",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"SPLIT|7490/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000259",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|521/1",
+"SPLIT|522/2"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000055",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3334/4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000208",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7380/2"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000068",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|7379/7"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000306",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7379/8"
+]
+},
+{
+"klasa": "UP/I-350-05/24-01/000050",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3212/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000019",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3276/3",
+"SPLIT|3276/4",
+"SPLIT|3277/1",
+"SPLIT|3277/3",
+"SPLIT|3278",
+"SPLIT|3290/1",
+"SPLIT|3290/2"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000206",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|406/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000039",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|3276/3",
+"SPLIT|3276/4",
+"SPLIT|3277/1",
+"SPLIT|3277/3",
+"SPLIT|3278"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000009",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7312/1"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000010",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|10342/2",
+"SPLIT (SPLIT)|10342/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000161",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|10330"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000003",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7203/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000242",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|10334",
+"SPLIT|10335/1",
+"SPLIT|10336/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000240",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"SPLIT|7275/3"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000062",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|1335"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000175",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|24",
+"STOBREČ|25",
+"STOBREČ|26",
+"STOBREČ|27/1",
+"STOBREČ|28/12",
+"STOBREČ|29/5"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000151",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|1382"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000075",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2388/2"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000182",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2323"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000212",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2319"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000063",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|243/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000226",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"STOBREČ (SPLIT)|2452/8"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000014",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2371/4",
+"STOBREČ|2371/5",
+"STOBREČ|2372/1",
+"STOBREČ|2372/3",
+"STOBREČ|2374"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000051",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"STOBREČ|2543",
+"STOBREČ|2563"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000186",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2306",
+"STOBREČ|2307",
+"STOBREČ|2309",
+"STOBREČ|2310",
+"STOBREČ|2313"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000202",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|262/8"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000209",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|280"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000111",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|282/3",
+"STOBREČ|282/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000200",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|315/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000193",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|974"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000185",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2166/7"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000237",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2089/3"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000078",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2145/1",
+"STOBREČ|2146",
+"STOBREČ|2159/1",
+"STOBREČ|2159/2",
+"STOBREČ|2160"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000103",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN (SPLIT)|1832/4",
+"KAMEN (SPLIT)|1833/3"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000170",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|1858/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000189",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|1950/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000195",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN (SPLIT)|1950/1"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000109",
+"ishod": "u obradi",
+"stambeno": false,
+"cestice": [
+"STOBREČ|430/2",
+"STOBREČ|431/2",
+"STOBREČ|444"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000248",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|1870/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000338",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"KAMEN|1891/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000183",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|1359",
+"STOBREČ (SPLIT)|1372",
+"STOBREČ (SPLIT)|1373/1",
+"STOBREČ (SPLIT)|1373/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000302",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1539/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000126",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|600"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000139",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ|813/1",
+"STOBREČ|813/2"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000035",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|6736/20"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000008",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10117/4",
+"SPLIT|121/4"
+]
+},
+{
+"klasa": "UP/I-350-05/21-01/000010",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1425",
+"STOBREČ|1425/1",
+"STOBREČ|2",
+"STOBREČ|733",
+"STOBREČ|733/1",
+"STOBREČ|813"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000034",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2089/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000137",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT (SPLIT)|10110/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000106",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|9788/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000127",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3452/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000174",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10181/10"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000098",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|13585/32",
+"SPLIT|3539/4",
+"SPLIT|3540/10",
+"SPLIT|3567/44"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000271",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7215/4"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000058",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7660/7",
+"SPLIT|7661/8",
+"SPLIT|7662/10",
+"SPLIT|7663/8"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000258",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2317"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000117",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2509/1"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000158",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2",
+"SPLIT|2890/14",
+"SPLIT|2898/1",
+"SPLIT|2898/14",
+"SPLIT|369",
+"SPLIT|400",
+"SPLIT|404/14"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000203",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7665/4"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000036",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2851/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000048",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"ŽRNOVNICA|6088"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000032",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|000",
+"SPLIT|10260/37",
+"SPLIT|1723/37",
+"SPLIT|2",
+"SPLIT|4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000307",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1361/1",
+"STOBREČ|1359",
+"STOBREČ|1360",
+"STOBREČ|1361/1",
+"STOBREČ|1373/1"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000064",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10129/7",
+"SPLIT|130/16"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000051",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|3690/2",
+"SPLIT|3690/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000049",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7658/7"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000071",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|4763/2"
+]
+},
+{
+"klasa": "UP/I-350-05/21-01/000017",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|4763/2",
+"SPLIT|9062/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000158",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2862/4"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000238",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10131/11",
+"SPLIT|127/11"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000086",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1537/1",
+"SPLIT|1537/15",
+"SPLIT|1537/6",
+"SPLIT|7487/1",
+"SPLIT|7487/4",
+"SPLIT|7487/9"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000308",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1359",
+"STOBREČ|1360",
+"STOBREČ|1361/1",
+"STOBREČ|1361/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000226",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13893/5",
+"SPLIT|7530/16",
+"SPLIT|7530/3",
+"SPLIT|7530/4",
+"SPLIT|7532/1",
+"SPLIT|7532/11",
+"SPLIT|7532/3",
+"SPLIT|7532/4",
+"SPLIT|7532/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000191",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7541/5"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000107",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|2096/1"
+]
+},
+{
+"klasa": "UP/I-361-03/17-01/000169",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|158",
+"STOBREČ|159",
+"STOBREČ|161/1",
+"STOBREČ|2",
+"STOBREČ|2103",
+"STOBREČ|2104",
+"STOBREČ|2105",
+"STOBREČ|933"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000139",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7656/5",
+"SPLIT|7658/6",
+"SPLIT|7659/4"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000320",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10117/4",
+"SPLIT|121/4",
+"SPLIT|2",
+"SPLIT|2601"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000289",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|3015/1"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000244",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3278/1",
+"SPLIT|3290/1",
+"SPLIT|3290/2"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000149",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3410/7",
+"SPLIT|3931/2"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000066",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|7665/4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000176",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|134"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000268",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10140/5",
+"SPLIT|10141/11"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000121",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10136/5"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000158",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10138/4"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000101",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2",
+"SPLIT|2833/21",
+"SPLIT|453/6",
+"SPLIT|501"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000188",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2",
+"SPLIT|5400",
+"SPLIT|7539/12",
+"SPLIT|7539/13",
+"SPLIT|7539/3",
+"SPLIT|7539/4",
+"SPLIT|7539/5",
+"SPLIT|7539/8",
+"SPLIT|7540/1",
+"SPLIT|7540/10",
+"SPLIT|7540/11",
+"SPLIT|7540/12",
+"SPLIT|7540/13",
+"SPLIT|7540/14",
+"SPLIT|7540/15",
+"SPLIT|7540/16",
+"SPLIT|7540/2",
+"SPLIT|7540/3",
+"SPLIT|7540/4",
+"SPLIT|7540/6",
+"SPLIT|7540/7",
+"SPLIT|7540/8",
+"SPLIT|7540/9",
+"SPLIT|7548/3",
+"SPLIT|7548/4",
+"SPLIT|7548/8",
+"SPLIT|7549/7"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000295",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2828/1",
+"SPLIT|2828/5",
+"SPLIT|2829/1",
+"SPLIT|2835/2",
+"SPLIT|2835/4"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000028",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1675/3",
+"SPLIT|7414/3"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000067",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10100/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000162",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1023/10",
+"SPLIT|1023/11",
+"SPLIT|1023/12",
+"SPLIT|1023/2",
+"SPLIT|1023/3"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000080",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2862/4",
+"SPLIT|2862/9",
+"SPLIT|3466/12",
+"SPLIT|3466/5"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000126",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10179/12"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000284",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2386/2"
+]
+},
+{
+"klasa": "UP/I-350-05/20-01/000014",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13893/2",
+"SPLIT|13893/4",
+"SPLIT|13893/5",
+"SPLIT|13893/9",
+"SPLIT|7033/12",
+"SPLIT|7033/7",
+"SPLIT|7033/9",
+"SPLIT|7529/2",
+"SPLIT|7529/3",
+"SPLIT|7529/5",
+"SPLIT|7530/1",
+"SPLIT|7530/2",
+"SPLIT|7530/3",
+"SPLIT|7530/4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000069",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT::7546/12 K.O. SPLIT|7546/5",
+"SPLIT|7546/12",
+"SPLIT|7546/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000037",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3410/3"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000214",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7661/4",
+"SPLIT|7663/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000218",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13926/2",
+"SPLIT|7661/3",
+"SPLIT|7663/6"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000026",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3689/11",
+"SPLIT|3689/12",
+"SPLIT|3689/17",
+"SPLIT|3689/20",
+"SPLIT|3689/21",
+"SPLIT|3689/22",
+"SPLIT|3689/25",
+"SPLIT|3689/26",
+"SPLIT|3689/3",
+"SPLIT|3690/2",
+"SPLIT|3690/4",
+"SPLIT|6917/11",
+"SPLIT|6917/12",
+"SPLIT|6917/14",
+"SPLIT|6917/3",
+"SPLIT|6917/4",
+"SPLIT|6917/7"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000210",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2509/3"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000123",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|9847/6"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000158",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2359",
+"STOBREČ|2359/1",
+"STOBREČ|2360"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000259",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1305",
+"KAMEN|1305/1",
+"KAMEN|2",
+"KAMEN|869",
+"KAMEN|902/1"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000095",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|135/1",
+"STOBREČ|135/3",
+"STOBREČ|2",
+"STOBREČ|422/14",
+"STOBREČ|462"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000052",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2357/1",
+"STOBREČ|2359/1",
+"STOBREČ|2360"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000304",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN::2092/2 K.O. KAMEN::2093/2 K.O. KAMEN|2091/2",
+"KAMEN|2092/2"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000159",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13882/1",
+"SPLIT|13882/12",
+"SPLIT|6996/6",
+"SPLIT|7595/1",
+"SPLIT|7595/2",
+"SPLIT|7595/3",
+"SPLIT|7595/4",
+"SPLIT|7595/5",
+"SPLIT|7595/6",
+"SPLIT|7595/7",
+"SPLIT|7596/1",
+"SPLIT|7596/10",
+"SPLIT|7596/2",
+"SPLIT|7596/3",
+"SPLIT|7596/4",
+"SPLIT|7596/5",
+"SPLIT|7596/6",
+"SPLIT|7596/7",
+"SPLIT|7597/1",
+"SPLIT|7597/11",
+"SPLIT|7597/4",
+"SPLIT|7597/7",
+"SPLIT|7597/9"
+]
+},
+{
+"klasa": "UP/I-350-05/26-01/000004",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|406/10"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000095",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2896/10",
+"SPLIT|406/10"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000137",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|4763/2",
+"SPLIT|9062/5"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000090",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"ŽRNOVNICA|6048"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000097",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|10333"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000012",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13893/5",
+"SPLIT|7530/16",
+"SPLIT|7530/3",
+"SPLIT|7530/4",
+"SPLIT|7532/1",
+"SPLIT|7532/11",
+"SPLIT|7532/2",
+"SPLIT|7532/3",
+"SPLIT|7532/4",
+"SPLIT|7532/5",
+"SPLIT|7532/7"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000194",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10036/2"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000089",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3419/1"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000282",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2162/1",
+"STOBREČ|2162/2",
+"STOBREČ|2162/3",
+"STOBREČ|2163/3",
+"STOBREČ|2163/4"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000269",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2855/1"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000002",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|155/1"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000262",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13894/3",
+"SPLIT|13894/40",
+"SPLIT|7452/2",
+"SPLIT|7452/8",
+"SPLIT|7489/1",
+"SPLIT|7489/2",
+"SPLIT|7489/3",
+"SPLIT|7489/4",
+"SPLIT|7490/1",
+"SPLIT|7490/2",
+"SPLIT|7490/3",
+"SPLIT|7490/4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000096",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2509/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/002257",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KOŠUTE|1982/7"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000140",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2855/1",
+"SPLIT|2855/2"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000233",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13893/11",
+"SPLIT|13893/12",
+"SPLIT|13893/4",
+"SPLIT|13893/9",
+"SPLIT|7033/14",
+"SPLIT|7033/15",
+"SPLIT|7033/16",
+"SPLIT|7529/3",
+"SPLIT|7529/5",
+"SPLIT|7529/7",
+"SPLIT|7530/1",
+"SPLIT|7530/5",
+"SPLIT|7530/6",
+"SPLIT|7530/7"
+]
+},
+{
+"klasa": "UP/I-350-05/21-01/000015",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2859/1",
+"SPLIT|2862/2",
+"SPLIT|2862/3",
+"SPLIT|2862/9",
+"SPLIT|3465",
+"SPLIT|3466/12",
+"SPLIT|3466/3",
+"SPLIT|3466/4"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000203",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2862/3"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000092",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|273/19",
+"SPLIT|273/9",
+"SPLIT|7600/18",
+"SPLIT|7600/8"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000189",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10327"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000209",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7247/6",
+"SPLIT|7247/8",
+"SPLIT|7250/2"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000283",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2828/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000140",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1740/1"
+]
+},
+{
+"klasa": "UP/I-350-05/22-01/000047",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10313/1",
+"SPLIT|10313/9",
+"SPLIT|1936/1",
+"SPLIT|1936/12",
+"SPLIT|1936/3",
+"SPLIT|2",
+"SPLIT|7379/2",
+"SPLIT|811"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000042",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3449/5",
+"SPLIT|3450/10",
+"SPLIT|3454/10",
+"SPLIT|3454/11",
+"SPLIT|3454/4",
+"SPLIT|3454/5"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000101",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10179/12"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000322",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3782/6",
+"SPLIT|3872/7",
+"SPLIT|3881/8"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000053",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|8883/2",
+"SPLIT|8922/1"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000267",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3419/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000132",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1302",
+"STOBREČ|1314",
+"STOBREČ|1315"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000277",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7277/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000114",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7585/1",
+"SPLIT|7585/2",
+"SPLIT|7586/4"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000104",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|993/3"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000061",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1211/2",
+"KAMEN|894/13"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000116",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1201/1",
+"KAMEN|1201/2",
+"KAMEN|1201/5"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000197",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|6960"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000229",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3411/1"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000253",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2945/1",
+"SPLIT|3566/2"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000283",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10311/1",
+"SPLIT|10311/2",
+"SPLIT|1949/1",
+"SPLIT|1949/5"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000063",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|315/1",
+"STOBREČ|316/3",
+"STOBREČ|370/10"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000134",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10260/37"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000074",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13893/5",
+"SPLIT|7530/16",
+"SPLIT|7530/3",
+"SPLIT|7530/4",
+"SPLIT|7532/1",
+"SPLIT|7532/11",
+"SPLIT|7532/3",
+"SPLIT|7532/4",
+"SPLIT|7532/5"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000265",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2882/16",
+"SPLIT|3510/16"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000065",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2509/2"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000240",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2896/2",
+"SPLIT|406/1"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000059",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|8883/16"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000143",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2854/1"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000153",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10313/9"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000135",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7658/8"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000216",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10048/1",
+"SPLIT|10050/1",
+"SPLIT|549/2",
+"SPLIT|553/5"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000095",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10104/7",
+"SPLIT|7662/11",
+"SPLIT|7662/5",
+"SPLIT|7663/10",
+"SPLIT|7663/4",
+"SPLIT|95/11",
+"SPLIT|95/12",
+"SPLIT|95/22",
+"SPLIT|95/24",
+"SPLIT|96/8"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000233",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1720",
+"SPLIT|2",
+"SPLIT|2141/1",
+"SPLIT|2141/2",
+"SPLIT|7335",
+"SPLIT|7336"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000171",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1425/1",
+"STOBREČ|733/1"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000213",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1957/1"
+]
+},
+{
+"klasa": "UP/I-350-05/19-01/000027",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|2064/5",
+"KAMEN|2064/7",
+"KAMEN|2064/9",
+"KAMEN|2342/5"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000062",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10147/17",
+"SPLIT|10149/14",
+"SPLIT|10149/15",
+"SPLIT|143/32",
+"SPLIT|145/30",
+"SPLIT|145/31",
+"SPLIT|145/32"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000221",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7033/14"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000147",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2350/1",
+"STOBREČ|338/1"
+]
+},
+{
+"klasa": "UP/I-350-05/24-01/000031",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3523/3"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000135",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|1953"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000099",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|670/2",
+"SPLIT|8102/2"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000228",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|11/1",
+"STOBREČ|447/1"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000251",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|994/1"
+]
+},
+{
+"klasa": "UP/I-361-03/18-01/000025",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10124/1",
+"SPLIT|122/3"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000258",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1616"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000011",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|3689/23",
+"SPLIT|3689/24",
+"SPLIT|3698/33"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000033",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7553/1"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000018",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2323/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000108",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"ŽRNOVNICA|6088/2"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000126",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2",
+"SPLIT|3823/29",
+"SPLIT|566",
+"SPLIT|6920/8"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000344",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10123/1"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000017",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1936/17",
+"SPLIT|7379/7"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000273",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7662/1",
+"SPLIT|7663/9"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000101",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10179/7"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000234",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3501/1",
+"SPLIT|3504/5"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000223",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|531/2"
+]
+},
+{
+"klasa": "UP/I-350-05/21-01/000004",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2882/16",
+"SPLIT|3510/16"
+]
+},
+{
+"klasa": "UP/I-350-05/20-01/000001",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10179/12"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000020",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10117/4",
+"SPLIT|121/4"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000030",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1950/1",
+"KAMEN|1950/10",
+"KAMEN|1950/11",
+"KAMEN|1950/12",
+"KAMEN|1950/13",
+"KAMEN|1950/14",
+"KAMEN|1950/15",
+"KAMEN|1950/2",
+"KAMEN|1950/3",
+"KAMEN|1950/4",
+"KAMEN|1950/5",
+"KAMEN|1950/6",
+"KAMEN|1950/7",
+"KAMEN|1950/8",
+"KAMEN|1950/9"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000051",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3419/1"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000156",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3382/3"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000092",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2869",
+"SPLIT|3471"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000244",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10136/6"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000246",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|13943/25",
+"SPLIT|13943/36",
+"SPLIT|14113/38",
+"SPLIT|14113/44",
+"SPLIT|14113/50"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000292",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10230",
+"SPLIT|10231/1",
+"SPLIT|10231/2"
+]
+},
+{
+"klasa": "UP/I-350-05/24-01/000023",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"ŽRNOVNICA|5996/2",
+"ŽRNOVNICA|5997"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000149",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|000"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000070",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|135/5",
+"STOBREČ|422/21"
+]
+},
+{
+"klasa": "UP/I-350-05/24-01/000027",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2345"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000082",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|406/10"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000113",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10090/1",
+"SPLIT|10091/3",
+"SPLIT|10092/7",
+"SPLIT|10110/1",
+"SPLIT|10112/1",
+"SPLIT|13945/31",
+"SPLIT|14113/54"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000001",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2311",
+"STOBREČ|393/2"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000231",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|1027/1",
+"SPLIT|1044/3",
+"SPLIT|4577/1",
+"SPLIT|4586/4"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000012",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"ŽRNOVNICA|6048"
+]
+},
+{
+"klasa": "UP/I-350-05/22-01/000048",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7380/2"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000046",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10146/3",
+"SPLIT|10147/12",
+"SPLIT|10147/8",
+"SPLIT|143/22"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000206",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10036/2"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000137",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7658/9"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000043",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7661/7",
+"SPLIT|7662/8",
+"SPLIT|7663/7"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000044",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13926/3",
+"SPLIT|7661/5"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000096",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1952",
+"STOBREČ|1953",
+"STOBREČ|226/1",
+"STOBREČ|226/2"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000005",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ (SPLIT)|1953"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000162",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2818/3",
+"SPLIT|2818/8",
+"SPLIT|2819/16",
+"SPLIT|2826/8",
+"SPLIT|2837/1",
+"SPLIT|2838/1",
+"SPLIT|2838/2",
+"SPLIT|2839/1",
+"SPLIT|2839/2",
+"SPLIT|2841/3",
+"SPLIT|2842/1",
+"SPLIT|2843/6",
+"SPLIT|3567/38",
+"SPLIT|3567/7"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000121",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2869",
+"SPLIT|3471"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000280",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10042/2",
+"SPLIT|551/13"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000065",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN (SPLIT)|1740/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000287",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2071/2",
+"SPLIT|2071/3"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000215",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1696",
+"KAMEN|1696/2"
+]
+},
+{
+"klasa": "UP/I-350-05/22-01/000018",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7539/12",
+"SPLIT|7539/13",
+"SPLIT|7539/3",
+"SPLIT|7539/4",
+"SPLIT|7539/5",
+"SPLIT|7539/8",
+"SPLIT|7540/1",
+"SPLIT|7540/10",
+"SPLIT|7540/11",
+"SPLIT|7540/12",
+"SPLIT|7540/13",
+"SPLIT|7540/14",
+"SPLIT|7540/15",
+"SPLIT|7540/16",
+"SPLIT|7540/2",
+"SPLIT|7540/3",
+"SPLIT|7540/4",
+"SPLIT|7540/6",
+"SPLIT|7540/7",
+"SPLIT|7540/8",
+"SPLIT|7540/9",
+"SPLIT|7548/3",
+"SPLIT|7548/4",
+"SPLIT|7548/8",
+"SPLIT|7549/7"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000138",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|1425/1"
+]
+},
+{
+"klasa": "UP/I-350-05/24-01/000032",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10313/9"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000257",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3487/3"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000111",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|2896/11",
+"SPLIT|406/11"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000116",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|2509/2"
+]
+},
+{
+"klasa": "UP/I-350-05/20-01/000049",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|3014/1",
+"SPLIT|3015/1"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000283",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10136/10"
+]
+},
+{
+"klasa": "UP/I-361-03/21-01/000172",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7664/7"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000072",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3513/2",
+"SPLIT|3515/1",
+"SPLIT|3515/4"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000186",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|638/1",
+"SPLIT|9912/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000123",
+"ishod": "u obradi",
+"stambeno": true,
+"cestice": [
+"ŽRNOVNICA (SPLIT)|6088/2"
+]
+},
+{
+"klasa": "UP/I-350-05/21-01/000044",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|13882/1",
+"SPLIT|13882/12",
+"SPLIT|1490/6",
+"SPLIT|266/10",
+"SPLIT|266/11",
+"SPLIT|266/12",
+"SPLIT|266/13",
+"SPLIT|266/16",
+"SPLIT|266/17",
+"SPLIT|266/18",
+"SPLIT|266/2",
+"SPLIT|266/20",
+"SPLIT|266/21",
+"SPLIT|266/23",
+"SPLIT|266/25",
+"SPLIT|266/3",
+"SPLIT|266/30",
+"SPLIT|266/31",
+"SPLIT|266/34",
+"SPLIT|266/35",
+"SPLIT|266/36",
+"SPLIT|266/4",
+"SPLIT|266/9",
+"SPLIT|6996/6",
+"SPLIT|7595/1",
+"SPLIT|7595/2",
+"SPLIT|7595/3",
+"SPLIT|7595/4",
+"SPLIT|7595/5",
+"SPLIT|7595/6",
+"SPLIT|7595/7",
+"SPLIT|7596/1",
+"SPLIT|7596/10",
+"SPLIT|7596/2",
+"SPLIT|7596/3",
+"SPLIT|7596/4",
+"SPLIT|7596/5",
+"SPLIT|7596/6",
+"SPLIT|7596/7",
+"SPLIT|7597/1",
+"SPLIT|7597/11",
+"SPLIT|7597/4",
+"SPLIT|7597/7",
+"SPLIT|7597/9",
+"SPLIT|9941/1",
+"SPLIT|9941/15"
+]
+},
+{
+"klasa": "UP/I-361-03/17-01/000213",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"KAMEN|1383/1"
+]
+},
+{
+"klasa": "UP/I-361-03/23-01/000009",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|133/1",
+"STOBREČ|134",
+"STOBREČ|135/1",
+"STOBREČ|136/1",
+"STOBREČ|137",
+"STOBREČ|2",
+"STOBREČ|422/2",
+"STOBREČ|422/5",
+"STOBREČ|422/6",
+"STOBREČ|422/7",
+"STOBREČ|422/8",
+"STOBREČ|769"
+]
+},
+{
+"klasa": "UP/I-361-03/24-01/000085",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7487/4"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000284",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|3872/6"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000177",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|10047/1"
+]
+},
+{
+"klasa": "UP/I-361-03/26-01/000015",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT (SPLIT)|2945/1"
+]
+},
+{
+"klasa": "UP/I-361-03/19-01/000131",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|10",
+"STOBREČ|11/1",
+"STOBREČ|14/1",
+"STOBREČ|15",
+"STOBREČ|17",
+"STOBREČ|2",
+"STOBREČ|3396",
+"STOBREČ|445",
+"STOBREČ|446/3",
+"STOBREČ|447/1",
+"STOBREČ|448/1",
+"STOBREČ|454",
+"STOBREČ|457/2",
+"STOBREČ|458/1",
+"STOBREČ|8",
+"STOBREČ|9"
+]
+},
+{
+"klasa": "UP/I-361-03/22-01/000128",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|7593/1"
+]
+},
+{
+"klasa": "UP/I-350-05/25-01/000011",
+"ishod": "izdana",
+"stambeno": false,
+"cestice": [
+"SPLIT|7153/4",
+"SPLIT|7154/1",
+"SPLIT|7154/2",
+"SPLIT|7155/1",
+"SPLIT|7155/2",
+"SPLIT|7155/9"
+]
+},
+{
+"klasa": "UP/I-361-03/25-01/000118",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"STOBREČ|162/4",
+"STOBREČ|409/6"
+]
+},
+{
+"klasa": "UP/I-361-03/20-01/000135",
+"ishod": "izdana",
+"stambeno": true,
+"cestice": [
+"SPLIT|10104/8",
+"SPLIT|96/12"
+]
+}
+]
+}

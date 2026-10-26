@@ -125,6 +125,8 @@ function main() {
           odmak: s === 3,
           odmaci: s === 4,
           ostatakKuce: s === 5,
+          // 6–9: zahtjev / izdana dozvola, stambeno / nestambeno (gradnja-skupine.py)
+          dozvola: s >= 6 && s <= 9 ? { ishod: s % 2 === 1 ? "izdana" : "zahtjev", stambeno: s <= 7 } : undefined,
           gradskiProjekt: (jv & 8) > 0,
         });
         // uski javni pojas (gradnja-javno.py, bit 16): javno, ali bez jantarne boje

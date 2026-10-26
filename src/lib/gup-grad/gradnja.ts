@@ -131,7 +131,11 @@ export type IdKategorije =
   | "uz-cestu-stambeno"
   | "uz-cestu-nestambeno"
   | "nestambeno"
-  | "stambeno";
+  | "stambeno"
+  | "stambeno-zahtjev"
+  | "stambeno-dozvola"
+  | "nestambeno-zahtjev"
+  | "nestambeno-dozvola";
 
 export interface Kategorija {
   /** Broj u kanalu B pločica public/geo/gup-grad/gradnja (1…). */
@@ -151,6 +155,8 @@ export interface Kategorija {
   mreza?: boolean;
   /** Neprozirnost pruga, 0–1 (zadano 0,9). */
   prugeAlfa?: number;
+  /** Točke boje `pruge` umjesto pruga: izdana dozvola. */
+  tocke?: boolean;
 }
 
 /**
@@ -375,6 +381,54 @@ export const KATEGORIJE: readonly Kategorija[] = [
     alfa: 0.85,
   },
   {
+    kod: 25,
+    id: "stambeno-zahtjev",
+    skupina: "stambeno",
+    naziv: "Stambeno: zatražena dozvola",
+    razlog:
+      "Za novu stambenu zgradu ovdje je predan zahtjev za lokacijsku ili građevinsku dozvolu, i u obradi je. Sve čestice iz zahtjeva karta računa zajedno, kao jednu građevnu česticu.",
+    boja: "#a1ccb1",
+    alfa: 0.65,
+    pruge: "#15803d",
+    mreza: true,
+  },
+  {
+    kod: 26,
+    id: "stambeno-dozvola",
+    skupina: "stambeno",
+    naziv: "Stambeno: izdana dozvola",
+    razlog:
+      "Za novu stambenu zgradu ovdje je od 2020. izdana lokacijska ili građevinska dozvola: gradnja je odobrena ili već teče. Sve čestice iz dozvole karta računa zajedno, kao jednu građevnu česticu.",
+    boja: "#14532d",
+    alfa: 0.85,
+    pruge: "#bbf7d0",
+    tocke: true,
+  },
+  {
+    kod: 27,
+    id: "nestambeno-zahtjev",
+    skupina: "nestambeno",
+    naziv: "Nestambeno: zatražena dozvola",
+    razlog:
+      "Za novu nestambenu zgradu ovdje je predan zahtjev za lokacijsku ili građevinsku dozvolu, i u obradi je. Sve čestice iz zahtjeva karta računa zajedno, kao jednu građevnu česticu.",
+    boja: "#a8c1f7",
+    alfa: 0.65,
+    pruge: "#2563eb",
+    mreza: true,
+  },
+  {
+    kod: 28,
+    id: "nestambeno-dozvola",
+    skupina: "nestambeno",
+    naziv: "Nestambeno: izdana dozvola",
+    razlog:
+      "Za novu nestambenu zgradu ovdje je od 2020. izdana lokacijska ili građevinska dozvola: gradnja je odobrena ili već teče. Sve čestice iz dozvole karta računa zajedno, kao jednu građevnu česticu.",
+    boja: "#1e3a8a",
+    alfa: 0.85,
+    pruge: "#bfdbfe",
+    tocke: true,
+  },
+  {
     kod: 19,
     id: "javno",
     skupina: "javno",
@@ -497,6 +551,11 @@ export interface UvjetiPiksela {
   odmak?: boolean;
   /** ostatak čestice s kućom koji se ne može odvojiti u svoju građevnu česticu (gradnja-skupine.py) */
   ostatakKuce?: boolean;
+  /**
+   * Gradilište iz zahtjeva ili dozvole za novu gradnju (gradnja-skupine.py): čestice akta su jedna
+   * građevna čestica. Dozvola je odlučila o veličini, pa „premalo” i neuređeno ondje ne vrijede.
+   */
+  dozvola?: { ishod: "zahtjev" | "izdana"; stambeno: boolean };
   /** na čestici s urbanim pravilom GP — gradski projekt (gradnja-javno.py) */
   gradskiProjekt?: boolean;
 }
@@ -518,6 +577,7 @@ export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela 
     odmaci = false,
     odmak = false,
     ostatakKuce = false,
+    dozvola,
     gradskiProjekt = false,
   } = uvjeti;
   const z = zonaKlase(klasa);
@@ -545,6 +605,11 @@ export function kategorija(klasa: number, regija: number, uvjeti: UvjetiPiksela 
   // 2. slobodno, ali namjena ne predviđa zgrade
   if (zona === "promet") return koridor ? K.koridor.kod : K["rezerva-prometa"].kod;
   if (zona === "bez-zgrada") return K["bez-zgrada"].kod;
+  // zahtjev ili dozvola za novu gradnju: što se gradi, kaže akt (stambeno ili ne); neuređeno tako postaje uređeno
+  if (dozvola) {
+    const vrsta = dozvola.stambeno ? "stambeno" : "nestambeno";
+    return K[`${vrsta}-${dozvola.ishod === "izdana" ? "dozvola" : "zahtjev"}`].kod;
+  }
   if (put) return K.put.kod;
   if (gradskiProjekt) return K["gradski-projekt"].kod;
   // 3.–5. razlog iz izračuna po komadu
@@ -579,9 +644,10 @@ const SIVA_SNIMKE = "#a6a6a6";
  * Uzorak kategorije za tumač i brojke kakav je na karti: boja stopljena sa
  * sivom snimkom, i iste pruge. Vraća CSS svojstva (bez Reacta, za poslužitelj i klijent).
  */
-export function uzorakKategorije(k: Kategorija): { backgroundColor: string; backgroundImage?: string } {
+export function uzorakKategorije(k: Kategorija): { backgroundColor: string; backgroundImage?: string; backgroundSize?: string } {
   const ton = `color-mix(in srgb, ${k.boja} ${Math.round(k.alfa * 100)}%, ${SIVA_SNIMKE})`;
   if (!k.pruge) return { backgroundColor: ton };
+  if (k.tocke) return { backgroundColor: ton, backgroundImage: `radial-gradient(${k.pruge} 1.3px, transparent 1.6px)`, backgroundSize: "5px 5px" };
   const pruga = (kut: number) => `repeating-linear-gradient(${kut}deg, ${k.pruge} 0 2px, transparent 2px 6px)`;
   return { backgroundColor: ton, backgroundImage: k.mreza ? `${pruga(45)}, ${pruga(-45)}` : pruga(45) };
 }
@@ -651,4 +717,4 @@ export const ALFA_PREPREKE = 0.85;
 
 /** Isti izgled na karti: kategoriju nije potrebno posebno crtati u tumaču. */
 export const istiIzgled = (a: Kategorija, b: Kategorija) =>
-  a.boja === b.boja && a.alfa === b.alfa && a.pruge === b.pruge && a.mreza === b.mreza;
+  a.boja === b.boja && a.alfa === b.alfa && a.pruge === b.pruge && a.mreza === b.mreza && a.tocke === b.tocke;

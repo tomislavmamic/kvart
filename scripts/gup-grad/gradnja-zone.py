@@ -80,11 +80,12 @@ def main() -> None:
     m2 = (korak * np.cos(np.radians(43.51))) ** 2
     # gradilište = mjesto za zgradu i njegov odmak (gradnja-skupine.py), u stambenoj ili mješovitoj zoni;
     # broji se ono na kojem je barem jedno mjesto za zgradu, veličina je cijelo gradilište
-    gradiliste = maska & np.isin(razlog, (11, 13, 21))
+    # i čestice zahtjeva ili dozvole za stambenu gradnju (25, 26): gradilište bez uvjeta
+    gradiliste = maska & np.isin(razlog, (11, 13, 21, 25, 26))
     oznake, n = ndimage.label(gradiliste, structure=np.ones((3, 3)))
     idx = np.arange(1, n + 1)
     vel = ndimage.sum_labels(np.ones_like(oznake), oznake, index=idx) * m2
-    ima13 = ndimage.maximum(razlog == 13, oznake, index=idx).astype(bool)
+    ima13 = ndimage.maximum(np.isin(razlog, (13, 25, 26)), oznake, index=idx).astype(bool)
     ima11 = ndimage.maximum(razlog == 11, oznake, index=idx).astype(bool)
     mjesta = {}
     for ime, koja in (("stambeno", ima13), ("uz-cestu-stambeno", ima11 & ~ima13)):

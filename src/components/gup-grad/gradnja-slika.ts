@@ -19,7 +19,7 @@ import type * as LeafletNS from "leaflet";
 export interface StavkaLegende {
   naziv: string;
   ha?: number;
-  ploha?: { boja: string; alfa: number; pruge?: string; mreza?: boolean };
+  ploha?: { boja: string; alfa: number; pruge?: string; mreza?: boolean; tocke?: boolean };
   crta?: { boja: string; crtice?: number[]; debljina?: number };
 }
 
@@ -107,7 +107,10 @@ function uzorak(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, 
   ctx.fillStyle = p.boja;
   ctx.fillRect(x, y, w, h);
   ctx.globalAlpha = 1;
-  if (p.pruge) {
+  if (p.pruge && p.tocke) {
+    ctx.fillStyle = p.pruge;
+    for (let yy = y + 3; yy < y + h; yy += 7) for (let xx = x + 3; xx < x + w; xx += 7) ctx.fillRect(xx, yy, 2.5, 2.5);
+  } else if (p.pruge) {
     ctx.strokeStyle = p.pruge;
     ctx.lineWidth = 3;
     for (const smjer of p.mreza ? [1, -1] : [1]) {

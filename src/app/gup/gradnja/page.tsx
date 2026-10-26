@@ -142,6 +142,19 @@ export default async function GradnjaPage() {
                 kolnikom od barem 5,5 m) i kad se čestica može priključiti na kanalizaciju.
               </span>
             </p>
+            <p className="mt-3 flex gap-2.5">
+              <span
+                aria-hidden
+                className="mt-1 inline-block h-3.5 w-3.5 shrink-0 rounded-sm ring-1 ring-inset ring-black/15"
+                style={uzorakKategorije(KATEGORIJA_PO_ID["stambeno-dozvola"])}
+              />
+              <span>
+                <strong className="text-zinc-900">Mreža i točke</strong> znače da je za gradnju ondje već zatražena (mreža) ili od 2020.
+                izdana (tamnije, s točkama) lokacijska ili građevinska dozvola. Sve čestice iz istog zahtjeva ili dozvole karta računa
+                zajedno, kao jednu građevnu česticu, a izbliza među njima crta tanku među. Zahtjev ili dozvola na neuređenom zemljištu
+                znače da je uvjet ulice i kanalizacije riješen, pa to zemljište više nije šrafirano.
+              </span>
+            </p>
             <details className="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm">
               <summary className="fokus cursor-pointer font-semibold text-zinc-900">Što znače pojmovi</summary>
               <dl className="mt-2 space-y-2">
@@ -193,7 +206,9 @@ export default async function GradnjaPage() {
               pojaseva ulica između blokova.
             </p>
             <p className="mt-2">
-              Nova stambena zgrada bez uvjeta moći će stajati na {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u
+              Za {ha(k["stambeno-dozvola"])} ha slobodnog zemljišta za stambenu zgradu već je izdana dozvola, a za još{" "}
+              {ha(k["stambeno-zahtjev"])} ha zatražena. Bez dozvole i bez uvjeta nova stambena zgrada moći će stajati na{" "}
+              {ha(k.stambeno)} ha, gotovo sve ({ha(stambenoMjesovito)} ha) u
               mješovitim zonama, gdje se stanovanje miješa s poslovanjem. Zeleno na karti je samo ono mjesto na kojem zgrada smije
               stajati: 5 m od ulice i 3 m od susjeda. Zajedno s tim odmacima (dvorištem, prilazom) i kad se susjedne slobodne čestice
               spoje u jedno gradilište, to je {broj(mjesta.stambeno.od_250_m2)} gradilišta od ukupno {ha(mjesta.stambeno.ha)} ha, od
@@ -310,6 +325,13 @@ export default async function GradnjaPage() {
                 <strong className="text-zinc-900">Dopušta li plan ondje stanovanje?</strong> Da u stambenim zonama (S), mješovitim
                 zonama (M1–M3) i poslovnim zonama sa stanovanjem (K5). Ne u zonama javne i društvene, gospodarske, poslovne,
                 turističke, športske, lučke i posebne namjene.
+              </li>
+              <li>
+                <strong className="text-zinc-900">Je li za mjesto zatražena ili izdana dozvola?</strong> Iz registra akata na geoportalu
+                ISPU uzimamo lokacijske i građevinske dozvole za novu gradnju izdane od 2020. i zahtjeve u obradi. Njihove čestice
+                računamo zajedno, kao jednu građevnu česticu: dozvola je već odlučila da je dovoljno velika, pa ondje ne vrijede
+                „premalo”, „uska čestica, zapravo put” ni ostatak uz postojeću zgradu, a neuređeno zemljište postaje uređeno. Stambena
+                ili nestambena dozvola ide u svoju skupinu, kao „zatražena dozvola” ili „izdana dozvola”.
               </li>
               <li>
                 <strong className="text-zinc-900">Je li ondje na snazi detaljniji plan?</strong> Gdje je na snazi DPU ili UPU (

@@ -41,7 +41,7 @@ import {
 import type { Geometrija, Okvir } from "@/lib/gup-grad/zabrana";
 import { PODLOGE, podloga, type CiljKarte } from "@/components/gup-grad/zabrana-karta";
 import { procitaj, ucitajIndeks, type PlocicaGradnje } from "@/components/gup-grad/gradnja-plocice";
-import { najjaciAkt, type PodaciDozvola } from "@/lib/gup-grad/gradnja-dozvole";
+import type { PodaciDozvola } from "@/lib/gup-grad/gradnja-dozvole";
 
 /** Ispod ovog zuma piksel rešetke manji je od piksela zaslona: slika se gladi (globals.css). */
 export const ZUM_OSTRIH_PIKSELA = 15;
@@ -54,14 +54,10 @@ export const BOJA_STAMBENE_ZONE = "#27272a";
 export const OBRISI_OD_ZUMA = 15;
 /** Ostali slojevi uz odabranu zapreku: vide se, ali ne natječu se s njom. */
 const ALFA_UZ_PREPREKU = 0.4;
-/** Dozvole: izdaleka točke (čestica je manja od piksela), izbliza obrisi čestica. */
-const DOZVOLE_OBRISI_OD_ZUMA = 15;
-/** Boja dozvola: tamna, jer zelena, plava, jantarna i ljubičasta već nešto znače. */
-export const BOJA_DOZVOLE = "#111111";
-/** Treptanje: dozvola je ono što se sada mijenja na terenu. */
-const TREPTAJ_MS = 700;
-/** Događaj prije slike za dijeljenje: treptanje stane na nekoliko sekundi. */
-export const DOGADAJ_SLIKE = "gradnja-slika";
+/** Od ovog zuma vide se međe unutar skupine čestica jednog akta. */
+const DOZVOLE_OBRISI_OD_ZUMA = 16;
+/** Tinta dozvola: tamna, jer zelena, plava, jantarna i ljubičasta već nešto znače. */
+export const BOJA_DOZVOLE = "#18181b";
 
 /** Više učitanih pločica od ovoga: one daleko od pogleda se otpuste (mobitel ima malo memorije). */
 const NAJVISE_PLOCICA = 48;
@@ -102,7 +98,7 @@ export interface Prikaz {
 
 /**
  * Boje po bajtu kategorije (kanal B, razlog i vlasnik): puna boja, boja pruge i
- * vrsta pruge (0 nema, 1 kose, 2 mreža), te je li razlog istaknuta zapreka.
+ * vrsta pruge (0 nema, 1 kose, 2 mreža, 3 točke), te je li razlog istaknuta zapreka.
  * Računa se jednom po prikazu, pa je bojenje piksela samo čitanje iz tablice.
  */
 interface Paleta {
@@ -131,7 +127,7 @@ function paletaZa(prikaz: Prikaz): Paleta {
     p.boja[bajt] = rgba(hex(k.boja), k.alfa * 255 * blijedi);
     if (k.pruge) {
       p.pruga[bajt] = rgba(hex(k.pruge), (k.prugeAlfa ?? 0.9) * 255 * blijedi);
-      p.vrsta[bajt] = k.mreza ? 2 : 1;
+      p.vrsta[bajt] = k.tocke ? 3 : k.mreza ? 2 : 1;
     }
   }
   palete.set(prikaz, p);
@@ -166,7 +162,12 @@ function obojaj(platno: HTMLCanvasElement, url: string, kodovi: ImageData, prika
       }
       imaPruga = true;
       const gx = x0 + x;
-      const naPrugi = vr === 1 ? (gx + gy) % razmak < debljina : (gx + gy) % razmak < debljinaMreze || (gx - gy + pomak) % razmak < debljinaMreze;
+      const naPrugi =
+        vr === 1
+          ? (gx + gy) % razmak < debljina
+          : vr === 2
+            ? (gx + gy) % razmak < debljinaMreze || (gx - gy + pomak) % razmak < debljinaMreze
+            : gx % razmak < debljina && gy % razmak < debljina;
       izlaz[i] = naPrugi ? pruga[bajt] : boja[bajt];
     }
   }
@@ -245,6 +246,7 @@ export function GradnjaKarta(props: {
   pocetak: Pogled | null;
   /** dozvole na zelenim česticama i pod planom na snazi; null dok se ne učitaju */
   dozvole: PodaciDozvola | null;
+  /** je li koja kategorija dozvole na karti (tada i tanke međe unutar skupina) */
   vidiDozvole: boolean;
   /** čestice (indeksi u dozvole.cestice) akata odabranog mjesta: obrubljuju se kao skupina */
   skupina: readonly number[];
@@ -505,72 +507,34 @@ export function GradnjaKarta(props: {
     ]).addTo(map);
   }, [cestica, spremna]);
 
-  // dozvole: obrisi čestica izbliza, točke izdaleka; izdana puna crta, zahtjev u obradi iscrtkan; trepću
+  // čestice zahtjeva i dozvola: tanka međa unutar skupine, izbliza, dok je koja kategorija dozvole na karti
+  // (sama površina je u pločicama: „zatražena dozvola”, „izdana dozvola”)
   useEffect(() => {
     const map = mapa.current, L = LRef.current;
     if (!map || !L || !dozvole || !vidiDozvole) return;
-    const obrisi = L.layerGroup();
-    const tocke = L.layerGroup();
-    const svi: { sloj: LeafletNS.Path; izdana: boolean }[] = [];
-    dozvole.cestice.forEach((c) => {
-      // čestice akta koje nisu zelene (prilaz) vide se tek kao dio odabrane skupine
-      if (!c.akti.length || (c.zeleno_m2 === 0 && c.plan_m2 === 0)) return;
-      const a = najjaciAkt(dozvole, c.akti);
-      const izdana = a?.ishod === "izdana";
-      const obris = L.geoJSON({ type: "Feature", properties: {}, geometry: c.oblik } as Feature, {
-        interactive: false,
-        style: { color: BOJA_DOZVOLE, weight: 2.5, dashArray: izdana ? undefined : "5 4", fillColor: BOJA_DOZVOLE, fillOpacity: izdana ? 0.18 : 0.06 },
-      });
-      const t = L.circleMarker([c.tocka[1], c.tocka[0]], {
-        radius: 5.5,
-        weight: 2,
-        color: izdana ? "#ffffff" : BOJA_DOZVOLE,
-        fillColor: izdana ? BOJA_DOZVOLE : "#ffffff",
-        fillOpacity: 1,
-        interactive: false,
-      });
-      obrisi.addLayer(obris);
-      tocke.addLayer(t);
-      obris.eachLayer((l) => svi.push({ sloj: l as LeafletNS.Path, izdana }));
-      svi.push({ sloj: t, izdana });
-    });
+    const obrisi = L.layerGroup(
+      dozvole.cestice
+        .filter((c) => c.akti.length)
+        .map((c) =>
+          L.geoJSON({ type: "Feature", properties: {}, geometry: c.oblik } as Feature, {
+            interactive: false,
+            style: { color: BOJA_DOZVOLE, weight: 1, opacity: 0.55, fill: false },
+          }),
+        ),
+    );
     const poZumu = () => {
-      if (map.getZoom() >= DOZVOLE_OBRISI_OD_ZUMA) {
-        tocke.remove();
-        obrisi.addTo(map);
-      } else {
-        obrisi.remove();
-        tocke.addTo(map);
-      }
+      if (map.getZoom() >= DOZVOLE_OBRISI_OD_ZUMA) obrisi.addTo(map);
+      else obrisi.remove();
     };
     poZumu();
     map.on("zoomend", poZumu);
-    let upaljeno = true;
-    const mirno = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let stanka = 0;
-    const treptaj = mirno
-      ? null
-      : setInterval(() => {
-          upaljeno = !upaljeno || Date.now() < stanka;
-          for (const { sloj } of svi) sloj.setStyle({ opacity: upaljeno ? 1 : 0.25 });
-        }, TREPTAJ_MS);
-    // slika za dijeljenje (gradnja-slika.ts): dozvole pune, ne usred treptaja
-    const slika = () => {
-      stanka = Date.now() + 5000;
-      upaljeno = true;
-      for (const { sloj } of svi) sloj.setStyle({ opacity: 1 });
-    };
-    window.addEventListener(DOGADAJ_SLIKE, slika);
     return () => {
-      window.removeEventListener(DOGADAJ_SLIKE, slika);
-      if (treptaj) clearInterval(treptaj);
       map.off("zoomend", poZumu);
       obrisi.remove();
-      tocke.remove();
     };
   }, [dozvole, vidiDozvole, spremna]);
 
-  // odabrana skupina čestica jednog akta: deblji obrub oko svake, bez treptanja
+  // odabrana skupina čestica jednog akta: bijeli rub i tamna crta oko svake, kao odabrana čestica
   useEffect(() => {
     const map = mapa.current, L = LRef.current;
     if (!map || !L || !dozvole || !skupina.length) return;
@@ -578,8 +542,8 @@ export function GradnjaKarta(props: {
       skupina.flatMap((i) => {
         const f = { type: "Feature", properties: {}, geometry: dozvole.cestice[i].oblik } as Feature;
         return [
-          L.geoJSON(f, { interactive: false, style: { color: "#ffffff", weight: 6, opacity: 0.9, fill: false } }),
-          L.geoJSON(f, { interactive: false, style: { color: BOJA_DOZVOLE, weight: 3, fill: false } }),
+          L.geoJSON(f, { interactive: false, style: { color: "#ffffff", weight: 4.5, opacity: 0.9, fill: false } }),
+          L.geoJSON(f, { interactive: false, style: { color: BOJA_DOZVOLE, weight: 2, fill: false } }),
         ];
       }),
     ).addTo(map);
