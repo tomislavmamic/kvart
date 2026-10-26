@@ -30,7 +30,12 @@ Izlaz: public/geo/gup-grad/gradnja-dozvole-2025.json
            karti vidi kao jedna kad akt zahvaća više čestica)
 Javni podaci registra (kao /planovi/dozvole), bez imena investitora.
 
-Pokretanje:  python3 scripts/gup-grad/gradnja-dozvole.py --samo-maska   (maska čestica)
+Čestice svakog akta su jedna građevna čestica: --skupine ih zapiše u
+data/gup-grad/dozvole-skupine-2025.json, a gradnja-skupine.py ih ondje računa
+zajedno (bez puta, ostatka uz zgradu i „premalo” unutar skupine).
+
+Pokretanje:  python3 scripts/gup-grad/gradnja-dozvole.py --skupine       (prije gradnja-skupine.py)
+             python3 scripts/gup-grad/gradnja-dozvole.py --samo-maska   (maska čestica)
   ISPU: ISPU_PODRUCJE=.cache/gup-grad/zelene-cestice.geojson ISPU_IZLAZ=.cache/gup-grad/ispu-akti-zelene.csv \
         python3 scripts/gup-grad/ispu-akti.py
   pa:          python3 scripts/gup-grad/gradnja-dozvole.py
@@ -59,9 +64,11 @@ JAVNO = os.path.join(ROOT, "public", "geo", "gup-grad")
 CACHE = os.path.join(ROOT, ".cache", "gup-grad")
 IZLAZ = os.path.join(JAVNO, "gradnja-dozvole-2025.json")
 MASKA = os.path.join(CACHE, "zelene-cestice.geojson")
+SKUPINE = os.path.join(ROOT, "data", "gup-grad", "dozvole-skupine-2025.json")
 ISPU_AKTI = os.environ.get("ISPU_AKTI") or os.path.join(CACHE, "ispu-akti-zelene.csv")
 
-ZELENO = (13, 11)  # stambeno, stambeno uz uvjet (gradnja.ts)
+# stambeno, stambeno uz uvjet, i gradilišta iz zahtjeva i dozvola (stambeno i nestambeno; gradnja.ts)
+ZELENO = (13, 11, 25, 26, 27, 28)
 PLAN_NA_SNAZI = 7  # gornja tri bita: slobodno pod DPU-om ili UPU-om na snazi (gradnja.ts)
 NAJMANJE_ZELENO_M2 = 20.0
 NAJVISE_CESTICA = 12
@@ -71,6 +78,7 @@ INFRASTRUKTURA = re.compile(
     r"trafostanic|transformatorsk|kabel|plinovod|javn\w* rasvjet|infrastruktur|komunaln|telekomunik|EKI\b|zid\b|potporn",
     re.I,
 )
+NIJE_NOVA = re.compile(r"rekonstrukc|uporab|uklanjanj|ozakonjenj", re.I)
 STAMBENO = re.compile(r"stamben|višestamben|obiteljsk", re.I)
 
 U_HTRS = Transformer.from_crs(4326, 3765, always_xy=True).transform
@@ -175,7 +183,49 @@ def akti_ispu() -> list[dict]:
     return list(akti.values())
 
 
+def prihvatljiv(r: dict, izostavljeno: dict) -> tuple | None:
+    """Ishod, datumi, je li stambeni i popis čestica akta koji ulazi na kartu; None ako ne ulazi (i zašto, u izostavljeno)."""
+    ish = ds.ishod(r["nacin_rjesavanja"] or None, r["status_predmeta"])
+    zaprimljeno, rijeseno = ds.iso(r["datum_zaprimanja"]), ds.iso(r["datum_rjesavanja"])
+    if ish in ("odbijena", "obustavljena", "proslijeđena"):
+        izostavljeno["odbijena ili obustavljena"] += 1
+        return None
+    datum = rijeseno if ish == "izdana" else zaprimljeno
+    if ish not in ("izdana", "u obradi") or not datum or datum < OD_DATUMA:
+        izostavljeno["istekla ili stara"] += 1
+        return None
+    opis = " ".join((r["namjena"], r["vrsta_zahvata"], r["naziv_akta"], r["opis"]))
+    stambeno = bool(STAMBENO.search(r["namjena"]))
+    if not stambeno and INFRASTRUKTURA.search(opis):
+        izostavljeno["infrastruktura"] += 1
+        return None
+    popis = cestice_akta(r["katastarske_cestice"]) + cestice_akta(r["gradjevna_cestica"])
+    if len(set(popis)) > NAJVISE_CESTICA and not stambeno:
+        izostavljeno["mnogo čestica bez stanovanja"] += 1
+        return None
+    return ish, zaprimljeno, rijeseno, stambeno, popis
+
+
+def skupine_akata() -> None:
+    """Čestice svakog akta kao jedna građevna čestica, za gradnja-skupine.py (prije karte, iz istog popisa ISPU-a)."""
+    izostavljeno = {k: 0 for k in ("istekla ili stara", "odbijena ili obustavljena", "infrastruktura", "mnogo čestica bez stanovanja")}
+    skupine = []
+    for r in akti_ispu():
+        odabran = prihvatljiv(r, izostavljeno)
+        # samo nova gradnja određuje novu građevnu česticu; obnova, uporaba i ozakonjenje postojeće ne
+        if odabran and odabran[4] and not NIJE_NOVA.search(r["vrsta_zahvata"]):
+            skupine.append({"klasa": r["klasa"], "ishod": odabran[0], "stambeno": odabran[3],
+                            "cestice": sorted({f"{ko}|{kc}" for ko, kc in odabran[4]})})
+    json.dump({"opis": "Čestice akata (dozvole od " + OD_DATUMA + " i zahtjevi u obradi, bez infrastrukture) kao jedna građevna "
+               "čestica; čita gradnja-skupine.py. Izvedeno skriptom scripts/gup-grad/gradnja-dozvole.py --skupine.",
+               "skupine": skupine}, open(SKUPINE, "w"), ensure_ascii=False, indent=0)
+    print(f"skupina akata: {len(skupine)} → {SKUPINE}", file=sys.stderr)
+
+
 def main() -> None:
+    if "--skupine" in sys.argv:
+        skupine_akata()
+        return
     cestice, sve = zelene_cestice()
     print(f"čestica za gradnju: {len(cestice)}, zeleno {sum(c['zeleno_m2'] for c in cestice) / 1e4:.1f} ha, "
           f"pod planom na snazi {sum(c['plan_m2'] for c in cestice) / 1e4:.1f} ha", file=sys.stderr)
@@ -191,21 +241,10 @@ def main() -> None:
     izostavljeno = {"istekla ili stara": 0, "odbijena ili obustavljena": 0, "infrastruktura": 0, "mnogo čestica bez stanovanja": 0, "nije na zelenoj čestici": 0}
     akti, skupine = [], []
     for r in akti_ispu():
-        ish = ds.ishod(r["nacin_rjesavanja"] or None, r["status_predmeta"])
-        zaprimljeno, rijeseno = ds.iso(r["datum_zaprimanja"]), ds.iso(r["datum_rjesavanja"])
-        if ish in ("odbijena", "obustavljena", "proslijeđena"):
-            izostavljeno["odbijena ili obustavljena"] += 1
+        odabran = prihvatljiv(r, izostavljeno)
+        if not odabran:
             continue
-        datum = rijeseno if ish == "izdana" else zaprimljeno
-        if ish not in ("izdana", "u obradi") or not datum or datum < OD_DATUMA:
-            izostavljeno["istekla ili stara"] += 1
-            continue
-        opis = " ".join((r["namjena"], r["vrsta_zahvata"], r["naziv_akta"], r["opis"]))
-        stambeno = bool(STAMBENO.search(r["namjena"]))
-        if not stambeno and INFRASTRUKTURA.search(opis):
-            izostavljeno["infrastruktura"] += 1
-            continue
-        popis = cestice_akta(r["katastarske_cestice"]) + cestice_akta(r["gradjevna_cestica"])
+        ish, zaprimljeno, rijeseno, stambeno, popis = odabran
         nase = sorted({po_kc[c] for c in popis if c in po_kc})
         if not popis:
             # bez popisa čestica: čestica na kojoj je točka akta
@@ -213,9 +252,6 @@ def main() -> None:
             nase = sorted({int(i) for i in stablo.query(Point(lon, lat), predicate="within")})
         if not nase:
             izostavljeno["nije na zelenoj čestici"] += 1
-            continue
-        if len(set(popis)) > NAJVISE_CESTICA and not stambeno:
-            izostavljeno["mnogo čestica bez stanovanja"] += 1
             continue
         poveznica = (r["poveznica"].split("::", 1)[-1] if "http" in r["poveznica"] else "")
         akti.append({

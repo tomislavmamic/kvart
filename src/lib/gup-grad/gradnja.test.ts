@@ -91,6 +91,12 @@ test("vojna zona, gradski projekt, golf i odmaci", () => {
   assert.equal(sa("S", REGIJE.slobodno, { odmak: true }), "odmak");
   assert.equal(sa("M/K5", REGIJE.slobodno, { ostatakKuce: true }), "ostatak-kuce");
   assert.equal(sa("M/K5", REGIJE.zgrada, { ostatakKuce: true }), "zgrada");
+  // čestice dozvole su jedna građevna čestica: „premalo” i neuređeno ondje ne vrijede, odlučuje akt
+  assert.equal(sa("M/K5", REGIJE.premalo, { dozvola: { ishod: "izdana", stambeno: true } }), "stambeno-dozvola");
+  assert.equal(sa("M/K5", REGIJE.ceka, { neuredeno: true, dozvola: { ishod: "zahtjev", stambeno: true } }), "stambeno-zahtjev");
+  assert.equal(sa("I/K", REGIJE.slobodno, { dozvola: { ishod: "izdana", stambeno: false } }), "nestambeno-dozvola");
+  assert.equal(sa("M/K5", REGIJE.zgrada, { dozvola: { ishod: "izdana", stambeno: true } }), "zgrada");
+  assert.equal(sa("M/K5", REGIJE.premalo), "premalo");
   assert.equal(sa("I/K", REGIJE.slobodno, { odmak: true }), "odmak");
 });
 
