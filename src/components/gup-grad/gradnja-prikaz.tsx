@@ -238,7 +238,7 @@ function ZaglavljeKlika({ k, ishodi }: { k: KarticaSDozvolama; ishodi: Ishod[] }
     <>
       {kat && (
         <span className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-          <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white/60" style={{ background: kat.boja }} />
+          <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white/60" style={uzorakKategorije(kat)} />
           {SKUPINE_GRADNJE[kat.skupina].kratko}
         </span>
       )}
@@ -794,10 +794,8 @@ export function GradnjaPrikaz(props: {
       Object.fromEntries(
         SKUPINE.map((s) => [
           s,
-          // glavna kategorija skupine prva (npr. „Mjesto za stambenu zgradu”), pa uvjetna i dozvole
-          KATEGORIJE.filter((k) => k.skupina === s && (zbroj.po_kategoriji_ha[k.id] ?? 0) > 0).sort(
-            (a, b) => Number(b.id === SKUPINE_GRADNJE[s].glavna) - Number(a.id === SKUPINE_GRADNJE[s].glavna),
-          ),
+          // redom iz KATEGORIJE: u zelenoj i plavoj od svijetlog prema tamnom (neuređeno, mjesto, zahtjev, dozvola)
+          KATEGORIJE.filter((k) => k.skupina === s && (zbroj.po_kategoriji_ha[k.id] ?? 0) > 0),
         ]),
       ),
     [zbroj],
@@ -806,6 +804,12 @@ export function GradnjaPrikaz(props: {
   const prikaz = useMemo<Prikaz>(() => ({ skrivene, prepreka }), [skrivene, prepreka]);
 
   /** Otvori kartu samo s ovom skupinom (iz pregleda). */
+  /** Otvori kartu samo s ovim kategorijama (iz retka u pregledu). */
+  const kartaSaKategorijama = (ids: readonly IdKategorije[]) => {
+    setSkrivene(new Set(KATEGORIJE.map((k) => k.id).filter((id) => !ids.includes(id))));
+    setPrepreka(null);
+    otvoriKartu();
+  };
   const kartaSa = (s: Skupina | null, p: IdPrepreke | null) => {
     const nove = new Set(KATEGORIJE.map((k) => k.id));
     const vidljive = s ? kategorijePoSkupini[s].map((k) => k.id) : [SKUPINE_GRADNJE.stambeno.glavna, SKUPINE_GRADNJE.stambeno.uvjetna!];
@@ -982,9 +986,7 @@ export function GradnjaPrikaz(props: {
                   <span className="min-w-0 flex-1">
                     <span className="block font-semibold text-zinc-900">{SKUPINE_GRADNJE[sk].naslov}</span>
                     <span className="block text-xs text-zinc-500">
-                      {sk === "stambeno" &&
-                        `${mjesta.stambeno.od_500_m2.toLocaleString("hr-HR")} gradilišta od barem 500 m² bez uvjeta, od toga ${ha(zbroj.po_kategoriji_ha["stambeno-dozvola"])} ha s izdanom i ${ha(zbroj.po_kategoriji_ha["stambeno-zahtjev"])} ha sa zatraženom dozvolom; ${ha(zbroj.po_kategoriji_ha["uz-cestu-stambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
-                      {sk === "nestambeno" && `od toga ${ha(zbroj.po_kategoriji_ha["uz-cestu-nestambeno"])} ha tek kad do čestice dođu ulica i kanalizacija`}
+                      {sk === "stambeno" && `${mjesta.stambeno.od_500_m2.toLocaleString("hr-HR")} gradilišta od barem 500 m²`}
                       {sk === "nista" && "zgrade s dvorištima, ulice, parkovi, premalo zemljišta, čeka UPU…"}
                       {sk === "javno" && `država, Grad, županija; od toga ${ha(zbroj.po_kategoriji_ha.vojska)} ha vojna zona`}
                       {sk === "plan" &&
@@ -997,6 +999,7 @@ export function GradnjaPrikaz(props: {
                     <span className="block text-xs tabular-nums text-zinc-500">{posto(s[sk] / zbroj.ukupno_ha)}</span>
                   </span>
                 </button>
+                {kategorijePoSkupini[sk].length > 1 && <RazradaSkupine sk={sk} kategorije={kategorijePoSkupini[sk]} zbroj={zbroj} onKarta={kartaSaKategorijama} />}
               </li>
             ))}
           </ul>
@@ -1018,7 +1021,7 @@ export function GradnjaPrikaz(props: {
                   Od {datumHr(dozvoleZbroj.odDatuma).replace(/^1\. 1\. /, "")} izdano je {dozvoleZbroj.izdanih} dozvola (
                   {dozvoleZbroj.gradjevinskih} građevinskih), a još {dozvoleZbroj.uObradi} zahtjeva je u obradi, na{" "}
                   {dozvoleZbroj.cestica} čestica. Na karti su to zasebne stavke u skupinama „stambeno” i „nestambeno”: zatražena
-                  dozvola (mreža) i izdana dozvola (točke). Čestice jednog akta karta računa zajedno, kao jednu građevnu česticu.
+                  dozvola (tamnija) i izdana dozvola (najtamnija). Čestice jednog akta karta računa zajedno, kao jednu građevnu česticu.
                 </span>
                 <span className="mt-0.5 block text-xs font-semibold text-zinc-700">Prikaži na karti →</span>
               </span>
@@ -1280,6 +1283,48 @@ export function GradnjaPrikaz(props: {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Od čega je skupina u pregledu: traka i redak po kategoriji, istim uzorkom i redom kao na karti; redak otvara kartu
+ * samo s tom kategorijom. „Ništa novo” ima mnogo razloga, pa je sklopljen.
+ */
+function RazradaSkupine(props: { sk: Skupina; kategorije: Kategorija[]; zbroj: ZbrojGradnje; onKarta: (ids: readonly IdKategorije[]) => void }) {
+  const { sk, kategorije, zbroj, onKarta } = props;
+  const ukupno = kategorije.reduce((a, k) => a + (zbroj.po_kategoriji_ha[k.id] ?? 0), 0);
+  const redovi = (
+    <div className="px-3 pb-3 sm:px-4 sm:pl-[3.25rem]">
+      <div className="flex h-2.5 w-full gap-[2px] overflow-hidden rounded" role="img" aria-label={`Od čega je: ${SKUPINE_GRADNJE[sk].naslov}`}>
+        {kategorije.map((k) => (
+          <span key={k.id} style={{ ...uzorakKategorije(k), width: `${((zbroj.po_kategoriji_ha[k.id] ?? 0) / ukupno) * 100}%` }} />
+        ))}
+      </div>
+      <ul className="mt-1.5">
+        {kategorije.map((k) => (
+          <li key={k.id}>
+            <button
+              type="button"
+              onClick={() => onKarta([k.id])}
+              className="fokus meta flex w-full items-center gap-2 rounded px-1 py-1 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+            >
+              <UzorakBoje stil={uzorakKategorije(k)} malo />
+              <span className="min-w-0 flex-1">{k.naziv}</span>
+              <span className="shrink-0 tabular-nums text-zinc-600">{ha(zbroj.po_kategoriji_ha[k.id] ?? 0)} ha</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+  if (sk !== "nista") return redovi;
+  return (
+    <details className="group">
+      <summary className="fokus meta cursor-pointer px-3 pb-2 text-xs font-semibold text-zinc-600 sm:px-4 sm:pl-[3.25rem]">
+        Razlozi ({kategorije.length})
+      </summary>
+      {redovi}
+    </details>
   );
 }
 
