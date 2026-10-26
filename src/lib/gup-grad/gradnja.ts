@@ -347,7 +347,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 11,
     id: "uz-cestu-stambeno",
     skupina: "stambeno",
-    naziv: "Stambeno, ali nedostaje ulica ili kanalizacija",
+    naziv: "Neuređeno (nema pristupne ceste ili kanalizacije)",
     razlog:
       "Ovo je neuređeno područje: ulica i kanalizacija koje plan ovdje predviđa još nisu izgrađene. Novi GUP traži UPU. Dok ga nema, dozvola za novu stambenu zgradu može se dobiti tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje (za pristupnu ulicu pojas od 10 m s kolnikom od barem 5,5 m) i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
     boja: "#d9f99d",
@@ -359,7 +359,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 15,
     id: "uz-cestu-nestambeno",
     skupina: "nestambeno",
-    naziv: "Nestambeno, ali nedostaje ulica ili kanalizacija",
+    naziv: "Neuređeno (nema pristupne ceste ili kanalizacije)",
     razlog:
       "Ovo je neuređeno područje u zoni bez stanovanja: ulica i kanalizacija koje plan predviđa još nisu izgrađene. Stambena zgrada neće se moći graditi ni nakon UPU-a. Nestambena će se do UPU-a moći graditi tek kad do čestice vodi ulica izgrađena u punoj širini koju joj plan određuje i kad se čestica može priključiti na kanalizaciju ili vlastiti sustav odvodnje.",
     boja: "#e0f2fe",
@@ -371,7 +371,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 12,
     id: "nestambeno",
     skupina: "nestambeno",
-    naziv: "Mjesto za nestambenu zgradu",
+    naziv: "Slobodno",
     razlog:
       "Ovdje može stajati nova zgrada, dovoljno daleko od ulice (5 m) i susjeda (3 m), ali novi GUP ovdje predviđa javnu, gospodarsku, turističku ili športsku namjenu, pa stambena zgrada neće biti dopuštena.",
     boja: "#60a5fa",
@@ -381,7 +381,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 13,
     id: "stambeno",
     skupina: "stambeno",
-    naziv: "Mjesto za stambenu zgradu",
+    naziv: "Slobodno",
     razlog:
       "Ovdje može stajati nova stambena ili stambeno-poslovna zgrada: zemljište je slobodno, dovoljno veliko, u zoni gdje novi GUP dopušta stanovanje, i dovoljno daleko od ulice (5 m) i susjeda (3 m). Vrijedi ako to dopuste i uvjeti koje karta ne provjerava.",
     boja: "#4ade80",
@@ -391,7 +391,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 25,
     id: "stambeno-zahtjev",
     skupina: "stambeno",
-    naziv: "Stambeno: zatražena dozvola",
+    naziv: "Zatražena dozvola",
     razlog:
       "Za novu stambenu zgradu ovdje je predan zahtjev za lokacijsku ili građevinsku dozvolu, i u obradi je. Sve čestice iz zahtjeva karta računa zajedno, kao jednu građevnu česticu.",
     boja: "#16a34a",
@@ -401,7 +401,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 26,
     id: "stambeno-dozvola",
     skupina: "stambeno",
-    naziv: "Stambeno: izdana dozvola",
+    naziv: "Izdana dozvola",
     razlog:
       "Za novu stambenu zgradu ovdje je od 2020. izdana lokacijska ili građevinska dozvola: gradnja je odobrena ili već teče. Sve čestice iz dozvole karta računa zajedno, kao jednu građevnu česticu.",
     boja: "#14532d",
@@ -411,7 +411,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 27,
     id: "nestambeno-zahtjev",
     skupina: "nestambeno",
-    naziv: "Nestambeno: zatražena dozvola",
+    naziv: "Zatražena dozvola",
     razlog:
       "Za novu nestambenu zgradu ovdje je predan zahtjev za lokacijsku ili građevinsku dozvolu, i u obradi je. Sve čestice iz zahtjeva karta računa zajedno, kao jednu građevnu česticu.",
     boja: "#2563eb",
@@ -421,7 +421,7 @@ export const KATEGORIJE: readonly Kategorija[] = [
     kod: 28,
     id: "nestambeno-dozvola",
     skupina: "nestambeno",
-    naziv: "Nestambeno: izdana dozvola",
+    naziv: "Izdana dozvola",
     razlog:
       "Za novu nestambenu zgradu ovdje je od 2020. izdana lokacijska ili građevinska dozvola: gradnja je odobrena ili već teče. Sve čestice iz dozvole karta računa zajedno, kao jednu građevnu česticu.",
     boja: "#1e3a8a",
@@ -719,6 +719,15 @@ export const PREPREKE: readonly { id: IdPrepreke; naziv: string; opis: string; k
 export const PREPREKA_PO_ID = Object.fromEntries(PREPREKE.map((p) => [p.id, p])) as Record<IdPrepreke, (typeof PREPREKE)[number]>;
 export const BOJA_PREPREKE = "#7c3aed";
 export const ALFA_PREPREKE = 0.85;
+
+/**
+ * Naziv izvan popisa svoje skupine (tumač klika, sastav čestice, slika): „Slobodno” ili „Izdana dozvola” postoje
+ * i u stambenom i u nestambenom, pa se ondje dodaje skupina („Stambeno: slobodno”).
+ */
+export function punNaziv(k: Kategorija): string {
+  if (k.skupina !== "stambeno" && k.skupina !== "nestambeno") return k.naziv;
+  return `${k.skupina === "stambeno" ? "Stambeno" : "Nestambeno"}: ${k.naziv[0].toLowerCase()}${k.naziv.slice(1)}`;
+}
 
 /** Isti izgled na karti: kategoriju nije potrebno posebno crtati u tumaču. */
 export const istiIzgled = (a: Kategorija, b: Kategorija) =>
