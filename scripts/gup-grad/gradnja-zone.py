@@ -44,7 +44,7 @@ JAVNO = os.path.join(ROOT, "public")
 IZLAZ = os.path.join(JAVNO, "geo", "gup-grad", "gradnja-zone-2025.geojson")
 MRLJE_IZLAZ = os.path.join(JAVNO, "geo", "gup-grad", "gradnja-mrlje-2025.json")
 # kategorije zemljišta za gradnju (gradnja.ts): uz cestu, nestambeno, stambeno, zahtjevi i dozvole, po DPU-u
-MRLJE = (11, 12, 13, 15, 25, 26, 27, 28, 29)
+MRLJE = (11, 12, 13, 15, 25, 26, 27, 28)
 NAJMANJA_MRLJA_M2 = 20.0
 PLOCICA = 512
 # indeksi klasa u src/lib/gup-grad/model.ts
@@ -102,7 +102,7 @@ def main() -> None:
         json.dump({"opis": "Mjesta za gradnju: povezane mrlje kategorije na karti (gradnja-zone.py).", "mjesta": mjesta}, f, indent=1)
     print("mjesta:", mjesta)
 
-    # mrlje po kategoriji: središte, kod i površina (gradnja.ts: 11, 12, 13, 15, 25–29)
+    # mrlje po kategoriji: središte, kod i površina (gradnja.ts: 11, 12, 13, 15, 25–28)
     mrlje = []
     for kod in MRLJE:
         oz, nm = ndimage.label(razlog == kod, structure=np.ones((3, 3)))

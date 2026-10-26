@@ -33,7 +33,6 @@ export const ZADANO_VIDLJIVE: readonly IdKategorije[] = [
   SKUPINE_GRADNJE.stambeno.uvjetna!,
   "stambeno-zahtjev",
   "stambeno-dozvola",
-  "po-dpu-stambeno",
   "po-planu",
 ];
 export const zadanoSkrivene = (): ReadonlySet<IdKategorije> =>

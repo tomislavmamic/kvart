@@ -40,12 +40,25 @@ async function zbrojDozvola(): Promise<ZbrojDozvola | null> {
   }
 }
 
+/** DPU-i po kojima su izdane dozvole za nove stambene zgrade (planovi-dozvole.py). */
+async function stambeniDpuI(): Promise<string[]> {
+  try {
+    const d = JSON.parse(await readFile(path.join(process.cwd(), "data", "gup-grad", "planovi-dozvole-2025.json"), "utf8")) as {
+      dpu_stambeni?: string[];
+    };
+    return d.dpu_stambeni ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function GradnjaPage() {
-  const [zbroj, odredbe, mjesta, dozvoleZbroj] = await Promise.all([
+  const [zbroj, odredbe, mjesta, dozvoleZbroj, stambeniDpu] = await Promise.all([
     ucitajZbrojGradnje(),
     ucitajOdredbeGradnje(),
     ucitajMjestaGradnje(),
     zbrojDozvola(),
+    stambeniDpuI(),
   ]);
   const k = zbroj.po_kategoriji_ha;
   const s = zbroj.po_skupini_ha;
@@ -70,7 +83,7 @@ export default async function GradnjaPage() {
       </p>
 
       <div className="mt-4">
-        <GradnjaPrikaz zbroj={zbroj} odredbe={odredbe} mjesta={mjesta} dozvoleZbroj={dozvoleZbroj}>
+        <GradnjaPrikaz zbroj={zbroj} odredbe={odredbe} mjesta={mjesta} dozvoleZbroj={dozvoleZbroj} stambeniDpu={stambeniDpu}>
           <section className="max-w-3xl text-zinc-600">
             <h2 id="odgovori" className="scroll-mt-20 border-b border-zinc-200 pb-2 text-xl font-bold text-zinc-900">
               Pet odgovora na karti
@@ -114,8 +127,8 @@ export default async function GradnjaPage() {
                     <>
                       <strong className="text-zinc-900">Odlučuje DPU.</strong> Na slobodnom zemljištu na kojem je već na snazi detaljni plan
                       uređenja (DPU) gradi se samo po tom planu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>), a on može
-                      dopustiti i drukčiju namjenu od GUP-a. Gdje po DPU-u već niču stambene zgrade, karta to zemljište ubraja u
-                      stambeno („Po DPU-u”).
+                      dopustiti i drukčiju namjenu od GUP-a. Gdje su po DPU-u već izdane dozvole za nove stambene zgrade, karta to
+                      zemljište ubraja u stambeno.
                     </>,
                   ],
                 ] as const
@@ -242,7 +255,8 @@ export default async function GradnjaPage() {
               zonu, po DPU-u se grade stambene zgrade. Zato smo provjerili u kojim su DPU-ima izdane dozvole za nove stambene
               zgrade. Takvih je osam (Žnjan sjeverno od Bračke, oko Gospe od Žnjana, Bračka i Velebitska, istočno od potoka
               Radoševac, Duilovo, Križine, zona K5 sjeverno od Vukovarske i P26 uz Mall of Split), i u njima je{" "}
-              {ha(k["po-dpu-stambeno"])} ha slobodnog zemljišta u zonama za gradnju karta ubrojila u stambeno („Po DPU-u”). U
+              {ha(zbroj.stambeno_pod_dpu_ha)} ha zemljišta u zonama za gradnju karta ubrojila u stambeno, i kad ga GUP vodi kao
+              poslovno; u tumaču klika piše da ondje vrijedi DPU, a ne GUP. U
               ostalim DPU-ima na {ha(s.plan)} ha odlučuje plan, a karta ne zna što dopušta: njihove crteže nismo pročitali.
             </p>
             <p className="mt-2">
@@ -343,7 +357,7 @@ export default async function GradnjaPage() {
                 <Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>). UPU-i namjenu GUP-a u pravilu ne mijenjaju, pa ondje
                 vrijedi namjena GUP-a. DPU je može mijenjati: granicu DPU-a karta crta iscrtkano, a slobodno zemljište u njemu blago
                 posvijetli („odlučuje DPU”), osim u DPU-ima po kojima su izdane dozvole za nove stambene zgrade, gdje je
-                zemljište u zonama za gradnju prozirno zeleno („po DPU-u, dopušta stanovanje”). U tumaču klika piše koji je to plan. Izgrađeno, javno
+                zemljište u zonama za gradnju u stambenim stavkama (slobodno, neuređeno, zatražena ili izdana dozvola). U tumaču klika piše koji je to plan. Izgrađeno, javno
                 zemljište, putovi i teren koji nije za gradnju ostaju svoji, jer ne ovise o planu.
               </li>
             </ol>

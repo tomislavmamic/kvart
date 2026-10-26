@@ -275,8 +275,13 @@ function TijeloKlika(props: {
   putovi: Putovi | null;
   skriveno: boolean;
   onPrikazi: () => void;
+  /** nazivi DPU-a po kojima su izdane dozvole za nove stambene zgrade (planovi-dozvole.py) */
+  stambeniDpu: ReadonlySet<string>;
 }) {
   const { k, odredbe, listovi, putovi, skriveno, onPrikazi } = props;
+  // detaljni plan (DPU, PUP) na snazi: ondje ne vrijedi namjena GUP-a; UPU-i je u pravilu ne mijenjaju
+  const dpu = k.stanje.rezim === "vazeci" && /^(DPU|PUP)/.test(k.stanje.plan.naziv);
+  const stambeniDpu = dpu && k.stanje.rezim === "vazeci" && props.stambeniDpu.has(k.stanje.plan.naziv);
   if (k.stanje.rezim === "izvan")
     return (
       <p className="mt-2">Ovdje vrijedi Prostorni plan uređenja Grada Splita. Ova karta pokriva samo područje GUP-a, unutar iscrtkane granice.</p>
@@ -331,15 +336,17 @@ function TijeloKlika(props: {
           {kat.razlog}
         </p>
       )}
-      {(kat?.id === "po-planu" || kat?.id === "po-dpu-stambeno") && (
+      {dpu && k.stanje.rezim === "vazeci" && (
         <div className="mt-2 rounded-lg bg-zinc-100 px-2.5 py-2 text-zinc-800">
-          {k.stanje.rezim === "vazeci" && (
-            <p>
-              Plan na snazi: <strong className="text-zinc-900">{k.stanje.plan.naziv}</strong>
-              {k.stanje.plan.glasnik ? ` („Službeni glasnik Grada Splita”, br. ${k.stanje.plan.glasnik})` : ""}. Gradi se samo po
-              njemu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>); njegovu namjenu ovdje nismo provjerili.
-            </p>
-          )}
+          <p>
+            Ovdje ne vrijedi namjena GUP-a, nego detaljni plan koji je na snazi:{" "}
+            <strong className="text-zinc-900">{k.stanje.plan.naziv}</strong>
+            {k.stanje.plan.glasnik ? ` („Službeni glasnik Grada Splita”, br. ${k.stanje.plan.glasnik})` : ""}. Gradi se samo po
+            njemu (<Navod id="plan-na-snazi-2025">čl. 103. st. 5.</Navod>).{" "}
+            {stambeniDpu
+              ? "Po tom su planu izdane dozvole za nove stambene zgrade, pa ga karta računa kao plan koji stanovanje dopušta. Je li baš ova čestica za stambenu zgradu, kaže crtež plana; njega nismo pročitali."
+              : "Što on ovdje dopušta, karta ne zna: crtež plana nismo pročitali."}
+          </p>
           {ispod && kat?.id === "po-planu" && (
             <p className="mt-1 flex items-center gap-2">
               <UzorakBoje stil={uzorakKategorije(ispod)} malo />
@@ -568,9 +575,11 @@ export function GradnjaPrikaz(props: {
   odredbe: OdredbeGradnje;
   mjesta: MjestaGradnje;
   dozvoleZbroj: ZbrojDozvola | null;
+  /** DPU-i (ISPU oznake) po kojima su izdane dozvole za nove stambene zgrade */
+  stambeniDpu: readonly string[];
   children: ReactNode;
 }) {
-  const { zbroj, odredbe, mjesta, dozvoleZbroj, children } = props;
+  const { zbroj, odredbe, mjesta, dozvoleZbroj, stambeniDpu, children } = props;
   const [prozor, setProzor] = useState<Prozor>("pregled");
   const [kartaOtvarana, setKartaOtvarana] = useState(false);
   const [podaci, setPodaci] = useState<Podaci | null>(null);
@@ -970,6 +979,16 @@ export function GradnjaPrikaz(props: {
   const datotekaSlike = (b: Blob) => new File([b], "split-gup-gradnja.png", { type: "image/png" });
   const mozeDijeliti = slika && typeof slika === "object" && "blob" in slika && typeof navigator !== "undefined" && !!navigator.canShare?.({ files: [datotekaSlike(slika.blob)] });
 
+  const naziviStambenihDpu = useMemo(
+    () =>
+      new Set(
+        (podaci?.dpu.features ?? [])
+          .filter((f) => stambeniDpu.includes(String(f.properties?.ispu)))
+          .map((f) => String(f.properties?.naziv)),
+      ),
+    [podaci, stambeniDpu],
+  );
+
   // ------------------------------------------------ iscrtavanje
   const k = useMemo<KarticaSDozvolama | null>(() => {
     if (!kartica) return null;
@@ -1268,6 +1287,7 @@ export function GradnjaPrikaz(props: {
               {(siroko || visina !== "malo") && (
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t border-zinc-100 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   <TijeloKlika
+                    stambeniDpu={naziviStambenihDpu}
                     k={k}
                     odredbe={odredbe}
                     listovi={listovi}

@@ -127,7 +127,6 @@ export type IdKategorije =
   | "javno"
   | "javni-pojas"
   | "po-planu"
-  | "po-dpu-stambeno"
   | "ceka-upu"
   | "uz-cestu-stambeno"
   | "uz-cestu-nestambeno"
@@ -171,8 +170,9 @@ export interface Kategorija {
  * dozvola, izdana dozvola (najtamnije). Šrafura znači samo jedno, neuređeno, i
  * druga je oznaka uz boju: svijetli kraj zelene i plave inače su preblizu.
  * Čekanje na UPU i gradski projekt su svijetla mreža na zatamnjenom. Pod
- * DPU-om je slobodno blago posvijetljeno (ili prozirno zeleno, ako DPU
- * dopušta stanovanje), a granicu DPU-a karta crta iscrtkano. Provjereno validatorom (dataviz) na bojama
+ * DPU-om je slobodno blago posvijetljeno, a granicu DPU-a karta crta
+ * iscrtkano; pod DPU-om koji dopušta stanovanje zemljište je u stambenim
+ * stavkama (gradnja.ts u scripts/). Provjereno validatorom (dataviz) na bojama
  * stopljenim sa sivom snimkom (#a6a6a6): zelena i plava ljestvica prolaze
  * redoslijed (svjetlina raste, koraci vidljivi, svijetli kraj odvojen od
  * snimke), a sve skupa razdvajanje za daltoniste (ΔE ≥ 8) i za normalan
@@ -463,16 +463,6 @@ export const KATEGORIJE: readonly Kategorija[] = [
     alfa: 0.18,
   },
   {
-    kod: 29,
-    id: "po-dpu-stambeno",
-    skupina: "stambeno",
-    naziv: "Stanovanje po DPU-u",
-    razlog:
-      "Ovdje je na snazi detaljni plan uređenja (DPU), a gradi se samo po njemu. Po tom su planu izdane dozvole za nove stambene zgrade, pa on stanovanje dopušta, i kad ga namjena novog GUP-a ovdje ne bi dopustila. Je li baš ova čestica za stambenu zgradu, kaže crtež plana; njega nismo pročitali.",
-    boja: "#4ade80",
-    alfa: 0.5,
-  },
-  {
     kod: 18,
     id: "vojska",
     skupina: "javno",
@@ -511,11 +501,6 @@ export const PO_PLANU: ReadonlySet<IdKategorije> = new Set<IdKategorije>([
   "nestambeno",
   "stambeno",
 ]);
-/**
- * Slobodno zemljište u zoni za gradnju pod DPU-om koji dopušta stanovanje (planovi-dozvole.py,
- * gradnja-javno.py bit 64): odlučuje plan, ali stanovanje je ondje moguće.
- */
-export const PO_DPU_STAMBENO: IdKategorije = "po-dpu-stambeno";
 /** Gornja tri bita bajta kategorije: plan na snazi umjesto vlasnika (vlasnici su 1–4). */
 export const PLAN_NA_SNAZI = 7;
 export const jeJavno = (vlasnik: number) => vlasnik >= 1 && vlasnik <= 4;
