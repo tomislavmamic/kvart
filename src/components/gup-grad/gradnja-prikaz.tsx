@@ -47,6 +47,7 @@ import {
   KATEGORIJA_PO_ID,
   KATEGORIJA_PO_KODU,
   kodNaKarti,
+  punNaziv,
   istiIzgled,
   PREPREKE,
   PREPREKA_PO_ID,
@@ -143,7 +144,7 @@ function SastavCestice({ sastav, ukupno }: { sastav: Map<number, number>; ukupno
         {redovi.map(({ k, v }) => (
           <li key={k.kod} className="flex items-center gap-2">
             <UzorakBoje stil={uzorakKategorije(k)} malo />
-            <span className="flex-1">{k.naziv}</span>
+            <span className="flex-1">{punNaziv(k)}</span>
             <span className="tabular-nums text-zinc-800">{m2(v)}</span>
           </li>
         ))}
@@ -243,7 +244,7 @@ function ZaglavljeKlika({ k, ishodi }: { k: KarticaSDozvolama; ishodi: Ishod[] }
         </span>
       )}
       {k.akti.length > 0 && <OznakaDozvole a={k.akti.reduce((a, b) => ((b.ishod === "izdana") > (a.ishod === "izdana") ? b : a))} />}
-      <h2 className="mt-1.5 text-base font-bold leading-snug text-zinc-900">{kat ? kat.naziv : "Ovdje nema katastarske čestice"}</h2>
+      <h2 className="mt-1.5 text-base font-bold leading-snug text-zinc-900">{kat ? punNaziv(kat) : "Ovdje nema katastarske čestice"}</h2>
       {mjesto && <p className="text-xs text-zinc-500">{mjesto}</p>}
       {(ne > 0 || uvjet > 0) && (
         <p className="mt-1 flex flex-wrap gap-x-3 text-xs font-semibold">
@@ -315,7 +316,7 @@ function TijeloKlika(props: {
             <p className="mt-1 flex items-center gap-2">
               <UzorakBoje stil={uzorakKategorije(ispod)} malo />
               <span>
-                Da plana nema, po namjeni novog GUP-a ovdje bi bilo: <strong className="text-zinc-900">{ispod.naziv}</strong>.
+                Da plana nema, po namjeni novog GUP-a ovdje bi bilo: <strong className="text-zinc-900">{punNaziv(ispod)}</strong>.
               </span>
             </p>
           )}
@@ -794,8 +795,10 @@ export function GradnjaPrikaz(props: {
       Object.fromEntries(
         SKUPINE.map((s) => [
           s,
-          // redom iz KATEGORIJE: u zelenoj i plavoj od svijetlog prema tamnom (neuređeno, mjesto, zahtjev, dozvola)
-          KATEGORIJE.filter((k) => k.skupina === s && (zbroj.po_kategoriji_ha[k.id] ?? 0) > 0),
+          // slobodno, zatražena dozvola, izdana dozvola, pa neuređeno (uvjetna) na kraju
+          KATEGORIJE.filter((k) => k.skupina === s && (zbroj.po_kategoriji_ha[k.id] ?? 0) > 0).sort(
+            (a, b) => Number(a.id === SKUPINE_GRADNJE[s].uvjetna) - Number(b.id === SKUPINE_GRADNJE[s].uvjetna),
+          ),
         ]),
       ),
     [zbroj],
@@ -878,7 +881,7 @@ export function GradnjaPrikaz(props: {
     for (const k of vidjene) {
       // ista boja za cijelu skupinu: u tumaču naziv skupine i zbroj svega što se tako crta
       const sve = kategorijePoSkupini[k.skupina].filter((x) => !skrivene.has(x.id) && istiIzgled(x, k));
-      const naziv = sve.length > 1 ? SKUPINE_GRADNJE[k.skupina].naslov : k.naziv;
+      const naziv = sve.length > 1 ? SKUPINE_GRADNJE[k.skupina].naslov : punNaziv(k);
       out.push({
         naziv,
         ha: sve.reduce((a, x) => a + (zbroj.po_kategoriji_ha[x.id] ?? 0), 0),

@@ -149,9 +149,9 @@ export default async function GradnjaPage() {
                 style={uzorakKategorije(KATEGORIJA_PO_ID["stambeno-dozvola"])}
               />
               <span>
-                <strong className="text-zinc-900">Što tamnije, to bliže gradnji.</strong> Zelena i plava idu od svijetle (nedostaje
-                ulica ili kanalizacija) preko srednje (mjesto za zgradu) do tamne: za gradnju je ondje već zatražena, a najtamnije od
-                2020. izdana lokacijska ili građevinska dozvola. Što se ne može graditi, karta zatamni. Sve čestice iz istog zahtjeva ili dozvole karta računa
+                <strong className="text-zinc-900">Što tamnije, to bliže gradnji.</strong> Zelena i plava idu od svijetle (neuređeno:
+                nema pristupne ceste ili kanalizacije) preko srednje (slobodno) do tamne: zatražena dozvola, a najtamnije izdana
+                dozvola (lokacijska ili građevinska, od 2020.). Što se ne može graditi, karta zatamni. Sve čestice iz istog zahtjeva ili dozvole karta računa
                 zajedno, kao jednu građevnu česticu, a izbliza među njima crta tanku među. Zahtjev ili dozvola na neuređenom zemljištu
                 znače da je uvjet ulice i kanalizacije riješen, pa to zemljište više nije šrafirano.
               </span>
