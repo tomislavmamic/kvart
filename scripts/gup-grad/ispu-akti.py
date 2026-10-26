@@ -23,6 +23,7 @@ Ulaz:   public/geo/gup-grad/zabrana-2025.geojson (zabrana.py)
 Izlaz:  .cache/gup-grad/ispu-akti.csv (nije u gitu: adrese i čestice privatnih
         dozvola), u istim stupcima kao popis iz bilješki uz izvještaj o zabrani,
         pa ga dozvole-sanacija.py čita kao ISPU_AKTI
+Drugo područje: ISPU_PODRUCJE=<geojson> ISPU_IZLAZ=<csv> (gradnja-dozvole.py).
 Pokretanje:  python3 scripts/gup-grad/ispu-akti.py
   slike WMS-a i odgovori identifyja spremaju se u .cache/gup-grad/ispu/
 """
@@ -36,6 +37,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -51,7 +53,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 API = "https://ispu.mgipu.hr/api/v1/gis/"
 ZABRANA = os.path.join(ROOT, "public", "geo", "gup-grad", "zabrana-2025.geojson")
 SPREMISTE = os.path.join(ROOT, ".cache", "gup-grad", "ispu")
-IZLAZ = os.path.join(ROOT, ".cache", "gup-grad", "ispu-akti.csv")
+IZLAZ = os.environ.get("ISPU_IZLAZ") or os.path.join(ROOT, ".cache", "gup-grad", "ispu-akti.csv")
+# drugo područje umjesto sanacije (GeoJSON u WGS84), npr. zelene čestice iz gradnja-dozvole.py
+PODRUCJE = os.environ.get("ISPU_PODRUCJE")
+# točke akta koje padnu malo izvan čestice (na međi, na susjednoj čestici iste građevne)
+ZALIHA_PODRUCJA_M = 5.0
 
 # iz kataloga (catalog-izbornik → Registar dozvola/akata → Registar akata → Prema vrsti akta)
 SLOJEVI = {
@@ -65,7 +71,7 @@ PLOCICA_PX = 1500
 UZORAK_M = 6.0
 ZALIHA_M = 15.0
 MJERILO = 1000  # identify traži oko točke prema mjerilu; 1:1000 je ~ metar
-NITI = 4
+NITI = int(os.environ.get("ISPU_NITI", "4"))
 
 U_HTRS = Transformer.from_crs(4326, 3765, always_xy=True).transform
 U_WGS = Transformer.from_crs(3765, 4326, always_xy=True).transform
@@ -110,7 +116,12 @@ def identify(x: float, y: float) -> list[dict]:
     tijelo = json.dumps({"x": round(x, 2), "y": round(y, 2), "scale": MJERILO,
                          "layers": list(SLOJEVI.values())}).encode()
     ime = f"id-{round(x, 1)}-{round(y, 1)}.json"
-    return json.loads(spremljeno(ime, lambda: dohvati(API + "identify", tijelo)))
+    try:
+        return json.loads(spremljeno(ime, lambda: dohvati(API + "identify", tijelo)))
+    except urllib.error.HTTPError as e:
+        # servis pod opterećenjem zna odbiti upit (400); točka se preskoči i ne pamti, pa je idući prolaz ponovi
+        print(f"  preskačem točku {x:.1f}, {y:.1f}: {e}", file=sys.stderr)
+        return []
 
 
 def tocke_upita(san, sanp) -> list[tuple[float, float]]:
@@ -168,10 +179,14 @@ def polja(stavka: dict) -> dict:
 
 def main() -> None:
     os.makedirs(SPREMISTE, exist_ok=True)
-    zab = json.load(open(ZABRANA))
-    san = unary_union([shape(f["geometry"]) for f in zab["features"]
-                       if "sanacija" in (f["properties"].get("vrsta"), f["properties"].get("podrucje"))])
-    san = stransform(U_HTRS, san).buffer(0)
+    if PODRUCJE:
+        san = unary_union([stransform(U_HTRS, shape(f["geometry"])).buffer(ZALIHA_PODRUCJA_M)
+                           for f in json.load(open(PODRUCJE))["features"]])
+    else:
+        zab = json.load(open(ZABRANA))
+        san = unary_union([shape(f["geometry"]) for f in zab["features"]
+                           if "sanacija" in (f["properties"].get("vrsta"), f["properties"].get("podrucje"))])
+        san = stransform(U_HTRS, san).buffer(0)
     tocke = tocke_upita(san, prep(san))
     print(f"točaka upita: {len(tocke)}", file=sys.stderr)
 

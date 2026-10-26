@@ -153,7 +153,8 @@ def mozaik():
             koridor[y0:y0 + h, x0:x0 + w] = np.array(Image.open(kp).convert("L")) > 127
         jp = os.path.join(JAVNE, os.path.basename(p["url"]))
         if os.path.exists(jp):
-            nije_privatno[y0:y0 + h, x0:x0 + w] = np.array(Image.open(jp)) > 0
+            # vlasnik, gradski projekt, uski javni pojas; bit 32 (plan na snazi) zemljište ne čini javnim
+            nije_privatno[y0:y0 + h, x0:x0 + w] = (np.array(Image.open(jp)) & 31) > 0
     # ishodište iz sjeverozapadnog kuta prve pločice
     r0, c0, p0 = plocice[0]
     (_, zapad), (sjever, _) = p0["granice"]

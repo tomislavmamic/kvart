@@ -21,6 +21,8 @@ export interface ZbrojGradnje {
   po_namjeni_ha: Partial<Record<KodKlase, Partial<Record<IdKategorije, number>>>>;
   /** u zonama za stanovanje (S, M1–M3, K5), po kategoriji kakva je na karti: javno se broji kao javno */
   u_stambenim_zonama_ha: Partial<Record<IdKategorije, number>>;
+  /** razlog po GUP-u na slobodnom zemljištu pod planom na snazi */
+  ispod_plana_ha: Partial<Record<IdKategorije, number>>;
   zona_gradnje: Record<KodKlase, ZonaGradnje>;
 }
 

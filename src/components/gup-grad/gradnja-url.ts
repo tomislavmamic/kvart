@@ -24,8 +24,8 @@ export interface StanjeUrl {
   tocka: [number, number] | null;
 }
 
-/** Zadano je na karti samo stambeno: ono na što stranica odgovara, i najmanje za crtati. */
-export const ZADANO_VIDLJIVE: readonly IdKategorije[] = [SKUPINE_GRADNJE.stambeno.glavna, SKUPINE_GRADNJE.stambeno.uvjetna!];
+/** Zadano je na karti stambeno i ono o čemu odlučuje plan na snazi (ondje stambeno može biti dopušteno). */
+export const ZADANO_VIDLJIVE: readonly IdKategorije[] = [SKUPINE_GRADNJE.stambeno.glavna, SKUPINE_GRADNJE.stambeno.uvjetna!, "po-planu"];
 export const zadanoSkrivene = (): ReadonlySet<IdKategorije> =>
   new Set(KATEGORIJE.map((k) => k.id).filter((id) => !ZADANO_VIDLJIVE.includes(id)));
 
